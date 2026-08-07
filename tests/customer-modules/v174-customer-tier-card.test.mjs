@@ -12,11 +12,21 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
-const start = app.indexOf('function customerTierCardMarkupV174');
-assert.ok(start > 0, 'tier card markup fn must exist');
-const src = app.slice(start, app.indexOf('function customerMerchantExperienceMarkupV95', start));
+/* v194: the card became the Tier PANEL of a two-tab programme card (owner sketch: Tier /
+   Reward points). The motivating half this suite exists to protect — progress bar, exact
+   remaining in the business's own basis, escaping — is unchanged and still asserted here. */
+const start = app.indexOf('function customerTierPanelMarkupV194');
+assert.ok(start > 0, 'tier panel markup fn must exist');
+const src = app.slice(app.indexOf('function customerTierMilestonesMarkupV194'),
+  app.indexOf('function customerProgrammeSummaryTabsV194', start));
+const ladder = app.slice(app.indexOf('function customerTierLadderMarkupV186'),
+  app.indexOf('\nfunction customerTierRequirementTextV189'));
+const requirement = app.slice(app.indexOf('function customerTierRequirementTextV189'),
+  app.indexOf('function customerTierRemainingTextV186'));
+const remaining = app.slice(app.indexOf('function customerTierRemainingTextV186'),
+  app.indexOf('function customerProgrammeSummaryTabsV194'));
 const escFn = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const card = new Function('esc', `${src}; return customerTierCardMarkupV174;`)(escFn);
+const card = new Function('esc', `${src}\n${ladder}\n${requirement}\n${remaining}; return customerTierPanelMarkupV194;`)(escFn);
 
 test('remaining-to-next speaks the business basis, not percentages', () => {
   const visits = card({current:{label:'Explorer',threshold:10,benefits:[]},next:{label:'Pioneer',threshold:40,benefits:[]},progress_percent:90,basis:'visits',metric:37});
@@ -31,7 +41,8 @@ test('top tier gets its badge and no progress bar; empty tiers render nothing', 
   const top = card({current:{label:'Master',threshold:80,benefits:['VIP']},next:null,progress_percent:100,basis:'visits',metric:112});
   assert.match(top, /Top tier/);
   assert.doesNotMatch(top, /more visits to reach/);
-  assert.equal(card({}), '');
+  assert.match(card({}), /has not set up tiers yet/,
+    'v194: the panel is inside a tab that always exists, so it says why it is empty');
 });
 
 test('tier labels and benefits are escaped', () => {
@@ -40,7 +51,8 @@ test('tier labels and benefits are escaped', () => {
   assert.doesNotMatch(hostile, /<script>x<\/script>/);
 });
 
-test('the wallet uses the card instead of the old benefits-only section', () => {
-  assert.match(app, /\$\{customerTierCardMarkupV174\(tier\)\}/);
+test('the wallet uses the panel instead of the old benefits-only section', () => {
+  assert.match(app, /\$\{customerTierPanelMarkupV194\(tier\)\}/);
+  assert.match(app, /\$\{customerProgrammeSummaryTabsV194\(\{tier,loyalty,presentation,reward\}\)\}/);
   assert.doesNotMatch(app, /} benefits<\/h2><ul class="rec-why"/);
 });

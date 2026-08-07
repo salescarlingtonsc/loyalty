@@ -35,7 +35,8 @@ test('V164 Dashboard uses clearer collapse persistence and loading labels', () =
   assert.match(appHtml, /peekaa\.v164\.dashboard\.performance\.open/);
   assert.match(appHtml, /peekaa\.v164\.dashboard\.understand\.open/);
   assert.match(appHtml, /<span class="branch-loading-pill" aria-live="polite">Branch scope<\/span>/);
-  assert.match(appHtml, /<span class="branch-loading-pill" aria-live="polite">Reporting scope<\/span>/);
+  /* V225 removed the on-page reporting-scope pickers; the top-bar branch control above is the
+     one that remains, and it is asserted on the line before this. */
 });
 
 test('V164 merchant insights are concise and remove duplicated revenue CTA', () => {

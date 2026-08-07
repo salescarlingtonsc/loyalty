@@ -13,7 +13,8 @@ const wallet=section('async function renderCustomerWallet','async function rende
 
 test('customer programme makes up to six promotions primary and keeps identity/points compact',()=>{
   assert.match(merchant,/customer-programme-compact-head/);
-  assert.match(merchant,/customer-programme-compact-balance/);
+  // v194 moved the balance into the Reward points tab; v103 owns that assertion now.
+  assert.match(app,/customer-programme-balance/);
   assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,6\)/);
   assert.match(merchant,/customer-promotions-section/);
   assert.match(merchant,/customer-promotions-grid/);

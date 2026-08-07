@@ -30,13 +30,17 @@ test('V183 Home leads with offers and delegates the reward grid to the My Reward
   const homeMarkup=home.slice(home.lastIndexOf("$('walletBody').innerHTML=`${isHome?"),home.lastIndexOf('wireCustomerHomeOffersV167(repaint)'));
   const homeBranch=homeMarkup.slice(0,homeMarkup.indexOf(':`'));
 
-  assert.ok(homeBranch.indexOf('customerHomeOffersMarkupV167(offersState)')<homeBranch.indexOf('customerHomeQuickLinksV183(cards.length)'));
+  /* v194 removed the two quick-link cards (they repeated the permanent nav). Offers are what
+     Home leads with, which is the ordering this line has always been about. */
+  assert.ok(homeBranch.indexOf('customerHomeOffersMarkupV167(offersState)')<homeBranch.indexOf('customerHomeGuidanceV167('));
   assert.doesNotMatch(homeBranch,/customerProgrammeGridMarkupV96/,'the reward grid was crossed out on Home');
   assert.doesNotMatch(homeBranch,/customerMyRewardsHeadingV156/,'the "My Rewards" heading was crossed out on Home');
   assert.ok(homeMarkup.indexOf('customerMyRewardsHeadingV156(cards.length')<homeMarkup.indexOf('customerProgrammeGridMarkupV96(cards)'),
     'the My Rewards tab still puts its heading above its grid');
 
-  assert.match(fallback,/customerHomeQuickLinksV183\(cards\.length,bookingSummary\)/);
+  assert.doesNotMatch(fallback,/customerHomeQuickLinksV183/);
+  assert.match(fallback,/applyCustomerNavCountsV194\(\{programmes:cards\.length/,
+    'the legacy Home still feeds the nav badges that replaced the quick links');
   assert.doesNotMatch(fallback,/customerProgrammeGridMarkupV96\(cards\)/,'legacy Home drops the grid too');
   assert.doesNotMatch(fallback,/Programme guidance is unavailable|<h2 style="margin:20px 0 10px">Programmes<\/h2>/);
 });

@@ -286,7 +286,11 @@ test('v97 localization preserves merchant/customer records even when values coll
 
 test('v97 named templates are an exact reviewed inventory with locale and placeholder parity',()=>{
   const keys=Object.keys(templateCopy);
-  assert.equal(keys.length,116,'mixed-interface interpolation inventory changed without review');
+  /* 116 -> 121: V217 added selectedStaffFree, selectedStaffFreeFairer and recentInWindow for the
+     rewritten availability panel; V215 added welcomeOfferGiven; V225 added accountMenuForBusiness
+     when the business name left the top bar and the account button needed its own name. Each was
+     reviewed with all three locales and matching placeholders, which the assertions below check. */
+  assert.equal(keys.length,121,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

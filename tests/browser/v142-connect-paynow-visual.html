@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="6bfec4d11dbb9b9a74efad5d7763fc2b78b856e660eb833117377add80b0b4a6"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="135ea74d8c5df1e6897b18f043c0c5bbb9f570fc294dce991a05465c750b1ebc"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -212,9 +212,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* The teammate the owner actually chose is marked in the availability list, so the panel and the
    Assign-to field visibly agree. */
 .suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
-/* A branch withheld from the reporting scope is stated, not silently missing. */
-.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
-@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
+
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -231,6 +229,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .appointment-list-filters>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
 .appointment-list-filters>div>label{margin:0 0 6px;min-height:1.15em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appointment-list-filters>div.row{flex-direction:row}
+/* V225 (owner marked this row "misalignment"). From and To are input[type=date] and the status
+   is a select; the two render at different intrinsic heights in every engine, and min-height
+   alone does not settle it — so with align-items:end their bottoms matched while their tops and
+   labels did not. An explicit equal height on every control in this bar removes the variable. */
+.appointment-list-filters>div>input,
+.appointment-list-filters>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
@@ -898,7 +902,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
 .staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
-.staff-row-open{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;flex:1 1 320px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+/* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
+   The row was a flex wrap, so a field landed at a different x-position on every line and could
+   not be read down a column. One shared template drives the header and every row, so the two
+   cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
+:root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.staff-col-v226{min-width:0;overflow-wrap:anywhere}
+@media (max-width:900px){
+  .staff-row-open{grid-template-columns:1fr}
+  .staff-col-head-v226{display:none}
+  .staff-col-v226::before{content:attr(data-staff-col) ": ";color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+}
 .staff-row-open:hover{background:var(--tint)}
 .staff-row-open>b{overflow-wrap:anywhere}
 .staff-profile-panel .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
@@ -1322,9 +1338,39 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-perk-card img,.customer-offer-card img,.customer-reward-card img{width:calc(100% + 32px);height:132px;margin:-16px -16px 14px;object-fit:cover;background:var(--bg)}
 .customer-section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}.customer-section-title h2{font-size:1.35rem}
 .customer-programme-compact-head{display:flex;align-items:center;gap:12px;min-width:0;padding:14px 16px;border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:var(--shadow);margin-bottom:16px}
+/* v194 identity + booking in the programme header, and Tier / Reward points as tabs. */
+.customer-programme-identity{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:0;border:0;background:none;text-align:left;color:inherit}
+.customer-programme-identity .customer-programme-compact-copy{display:block}
+.customer-programme-identity b{display:block;font-size:clamp(1.15rem,3.6vw,1.5rem);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.customer-programme-identity-hint{color:var(--coral)!important;font-weight:600}
+.customer-programme-book{flex:0 0 auto}
+.customer-programme-tabs{margin-bottom:14px;padding:0}
+.customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
+.customer-programme-tab{min-height:44px;border-radius:11px;background:transparent;color:var(--ink2);font-weight:650;letter-spacing:-.01em}
+.customer-programme-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
+#customerProgrammePanel{padding:16px 18px 18px}
+.customer-programme-balance{font-size:clamp(1.6rem,6vw,2.1rem);line-height:1;letter-spacing:-.03em}
+.customer-programme-balance span{font-size:.85rem;font-weight:600;letter-spacing:0}
+.customer-tier-now{font-size:1.02rem}
+.customer-tier-bar{position:relative;margin:14px 0 30px}
+.customer-tier-bar-track{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
+.customer-tier-bar-track span{display:block;height:100%;border-radius:inherit;background:var(--grad)}
+.customer-tier-milestones{position:absolute;inset:0;pointer-events:none}
+.customer-tier-milestone{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px}
+.customer-tier-milestone i{display:block;width:9px;height:9px;border-radius:999px;background:var(--card);border:2px solid var(--line)}
+.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap}
+.customer-tier-milestone.is-achieved i{background:var(--coral);border-color:var(--coral)}
+.customer-tier-milestone.is-current i{background:var(--coral);border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-tier-milestone.is-current b{color:var(--coral)}
+.customer-tier-remaining{margin-top:2px}
+.customer-tier-ladder{margin-top:14px;border-top:1px solid var(--hair);padding-top:12px}
+.customer-tier-ladder>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;cursor:pointer;font-weight:650;list-style-position:inside}
+.customer-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:700;line-height:1}
+.customer-primary-nav a[aria-current="page"] .customer-nav-count{background:var(--coral)}
+@media(max-width:560px){.customer-programme-identity-hint{display:none}.customer-tier-milestone b{font-size:9.5px}}
 .customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
 .customer-programme-compact-copy{min-width:0;flex:1}.customer-programme-compact-copy h1{font-size:clamp(1.25rem,4vw,1.7rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-programme-compact-copy p{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.customer-programme-compact-balance{text-align:right;flex:0 1 auto;min-width:0}.customer-programme-compact-balance b{display:block;font-size:clamp(1.25rem,4vw,1.65rem);line-height:1}.customer-programme-compact-balance span{display:block;margin-top:4px;color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}
+
 .customer-promotions-section{margin-top:6px}.customer-promotions-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.customer-promotions-head h2{font-size:clamp(1.45rem,4vw,2rem)}.customer-promotions-head p{margin-top:4px}
 .customer-promotions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .customer-home-offers{margin:0 0 16px;min-width:0}.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
@@ -1349,7 +1395,6 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .customer-promotions-grid,.promotion-editor-grid{grid-template-columns:1fr}
   .customer-promotion-card{min-height:320px}
   .customer-programme-compact-head{padding:12px}
-  .customer-programme-compact-balance b{font-size:1.2rem}
   .promotion-preview{position:static}
 }
 .customer-programme-guide{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--hair);border-radius:13px;background:#fff}
@@ -1574,7 +1619,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 6bfec4d11dbb9b9a74efad5d7763fc2b78b856e660eb833117377add80b0b4a6</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 135ea74d8c5df1e6897b18f043c0c5bbb9f570fc294dce991a05465c750b1ebc</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2252,7 +2297,7 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
-        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
+        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
         <div id="tErr"></div>
         <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:19})} Next</button>
         <div class="grid frontline-keypad" id="tKeys" aria-label="Phone keypad">
@@ -3453,7 +3498,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'6bfec4d11dbb9b9a74efad5d7763fc2b78b856e660eb833117377add80b0b4a6',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'135ea74d8c5df1e6897b18f043c0c5bbb9f570fc294dce991a05465c750b1ebc',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

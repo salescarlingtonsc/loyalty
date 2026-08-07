@@ -58,7 +58,10 @@ test('V154 appointments separate calendar controls from list filters', () => {
   assert.match(appointments, /appointmentListTo/);
   assert.match(appointments, /appointmentListStatus/);
   assert.match(appointments, /data-appt-preset="today"/);
-  assert.match(appointments, /CUI\.icon\('branch'/);
+  /* V225: the toolbar's own branch picker went — the top bar is the single control for which
+     branch you are looking at, and two pickers on one screen contradicted each other. The staff
+     filter is a genuine per-calendar filter and stays. */
+  assert.doesNotMatch(appointments, /id="calendarBranch"/);
   assert.match(appointments, /CUI\.icon\('staff'/);
   assert.match(appointments, /\.gte\('starts_at'/);
   assert.match(appointments, /\.lt\('starts_at'/);

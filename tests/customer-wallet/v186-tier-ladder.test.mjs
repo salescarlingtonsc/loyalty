@@ -14,8 +14,8 @@ function section(source, start, end) {
   return source.slice(from, to);
 }
 
-const ladder = section(app, 'function customerTierLadderMarkupV186', 'function customerTierRemainingTextV186');
-const render = new Function(`${ladder}\n${section(app, 'function customerTierRemainingTextV186', '\nfunction customerMerchantExperienceMarkupV95')}
+const ladder = section(app, 'function customerTierLadderMarkupV186', 'function customerTierRequirementTextV189');
+const render = new Function(`${ladder}\n${section(app, 'function customerTierRequirementTextV189', 'function customerProgrammeSummaryTabsV194')}
   ;const esc=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
   return customerTierLadderMarkupV186;`)();
 
@@ -80,8 +80,12 @@ test('a single-tier programme renders no ladder at all', () => {
     'a blank label is not a tier');
 });
 
-test('the ladder hangs off the existing tier card', () => {
-  assert.match(app, /\$\{customerTierLadderMarkupV186\(tier\)\}\s*<\/section>/);
+test('the ladder hangs off the tier panel', () => {
+  // v194: the panel is the Tier tab of the programme card, and the ladder folds behind a
+  // disclosure — "too many wordings, make it clickable".
+  assert.match(app, /\$\{customerTierLadderMarkupV186\(tier\)\}`;/);
+  assert.match(app, /<details class="customer-tier-ladder">/);
+  assert.match(app, /<summary><span>All tiers and what they unlock<\/span>/);
 });
 
 /* ------------------------------------------------------------------------------ the server */
@@ -112,7 +116,7 @@ test('the contract is additive — every earlier field survives', () => {
 /* ------------------------------------------------- v189: never a blank where a tier belongs */
 
 test('a member at the top tier still sees the bar they cleared', () => {
-  const card = section(app, 'function customerTierCardMarkupV174', 'function customerTierLadderMarkupV186');
+  const card = section(app, 'function customerTierPanelMarkupV194', 'function customerProgrammeSummaryTabsV194');
   assert.match(card, /const currentRequirement=current&&!next\?customerTierRequirementTextV189\(current\.threshold,basis\):''/);
   assert.match(card, /you are at the highest tier\./);
 });
@@ -130,7 +134,7 @@ test('the header line and the ladder word a threshold identically', () => {
 });
 
 test('a failed or paused tier lookup says which it is instead of rendering nothing', () => {
-  const card = section(app, 'function customerTierCardMarkupV174', 'function customerTierLadderMarkupV186');
+  const card = section(app, 'function customerTierPanelMarkupV194', 'function customerProgrammeSummaryTabsV194');
   assert.match(card, /tier\.unavailable==='not_running'/);
   assert.match(card, /This business is not running a tier programme at the moment\./);
   assert.match(card, /Your points and rewards are unaffected\./);

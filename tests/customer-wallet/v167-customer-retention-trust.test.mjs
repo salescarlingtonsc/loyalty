@@ -91,10 +91,11 @@ test('security readiness is explicit instead of allowing a silent sign-in no-op'
 test('customer Home does not expose operator ranking language',async()=>{
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.doesNotMatch(app,/cannot safely rank an action/i);
-  /* v183: the "Choose what you'd like to do" filler section went with the collapsed guidance
-     disclosure. The jump-off itself is what must survive, and it must stay neutral. */
-  assert.match(app,/function customerHomeQuickLinksV183/);
-  assert.match(app,/href="#\/customer\/programmes">[\s\S]{0,200}href="#\/customer\/bookings"/);
+  /* v183 replaced the "Choose what you'd like to do" filler with a plain two-card jump-off;
+     v194 removed even that, because the same two destinations are permanent navigation tabs.
+     What must survive is the neutral destination itself, wherever it is rendered. */
+  assert.doesNotMatch(app,/customerHomeQuickLinksV183/);
+  assert.match(app,/\{key:'programmes',href:'#\/customer\/programmes'[\s\S]{0,120}\{key:'bookings',href:'#\/customer\/bookings'/);
 });
 
 test('canonical cancellation remains row-locked, scoped and non-economic',async()=>{

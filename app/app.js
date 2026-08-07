@@ -392,7 +392,7 @@ const INDUSTRIES={
 };
 const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
   sales:['sales','Sales & refunds'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
-  inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
+  inventory:['inventory','Products'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
@@ -1969,6 +1969,12 @@ async function route(){
       toast('This area is not available in the business workspace.');
       return nav('#/dashboard');
     }
+    /* V223: hiding the nav link is not a guard — anyone can type the hash. Waitlist is refused
+       outright without Bookings, for the same reason it is hidden. */
+    if(pageKey==='waitlist'&&!canReadModule('bookings')){
+      toast('Waitlist works with Bookings. Turn on Bookings first.');
+      return nav('#/dashboard');
+    }
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)&&pageKey!=='dashboard'
        &&!canReadModule(pageKey)){
       toast('You don\'t have access to that.');
@@ -2777,17 +2783,46 @@ function customerMediaUrlV95(value){
   if(absolutePath&&objectPathPattern.test(absolutePath))return raw;
   return '';
 }
+/* v194: the nav is painted before the wallet data arrives, so the counts are remembered and
+   re-applied in place once they resolve. A stale count is never shown as fresh — see
+   applyCustomerNavCountsV194, which repaints the badges the moment the real numbers land. */
+let customerNavCountsV194={programmes:0,bookings:0};
+function applyCustomerNavCountsV194(counts={}){
+  customerNavCountsV194={...customerNavCountsV194,...counts};
+  const nav=document.querySelector('.customer-primary-nav');
+  if(!nav)return customerNavCountsV194;
+  nav.outerHTML=customerPrimaryNavigation(
+    nav.querySelector('[aria-current="page"]')?.getAttribute('href')==='#/customer/programmes'?'programmes'
+      :nav.querySelector('[aria-current="page"]')?.getAttribute('href')==='#/customer/bookings'?'bookings'
+      :nav.querySelector('[aria-current="page"]')?.getAttribute('href')==='#/wallet'?'home':'',
+    customerNavCountsV194);
+  const scan=$('customerNavScan');
+  if(scan)scan.onclick=openCustomerJoinScanner;
+  return customerNavCountsV194;
+}
 const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',copy:'home'},
   {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'programmes'},
   {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'},
   {key:'scan',icon:'scan',copy:'scanQr'}
 ]);
-function customerPrimaryNavigation(active){
+/* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
+   two tabs that hold countable things now carry that count. A zero is not rendered — a badge
+   reading 0 is noise, and the tab already says what it holds. */
+function customerPrimaryNavigation(active,counts={}){
+  const badge=key=>{
+    const value=Math.max(0,Number(counts?.[key])||0);
+    return value?`<span class="customer-nav-count" aria-hidden="true">${value>99?'99+':value}</span>`:'';
+  };
+  const label=(item)=>{
+    const value=Math.max(0,Number(counts?.[item.key])||0);
+    const text=ct(item.copy);
+    return value?`${text}, ${value}`:text;
+  };
   return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
     ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
       ?`<button type="button" id="customerNavScan">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span></button>`
-      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''}>${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span></a>`).join('')}
+      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
   </nav>`;
 }
 function customerJoinTokenFromQr(value,currentUrl=location.href){
@@ -2936,7 +2971,7 @@ function wireCustomerAccountMenu(){
 }
 /* v178: backTo generalises the business-page circle back button so the "My Rewards" tab can
    carry one too (owner: "There is no back button"). businessSlug keeps its own destination. */
-function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null}={}){
+function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null,navCounts=null}={}){
   setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const inboxAvailable=messagesAvailable===null?customerInboxEnabledV178===true:messagesAvailable===true,
@@ -2952,7 +2987,7 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
       <button id="customerPushMenuControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button>
       <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button>
     </div></details>
-    </header>${customerPrimaryNavigation(active)}
+    </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
     <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
     ${legalLinks()}</div></div>`;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -3215,7 +3250,9 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
 /* v178 (owner sketch "Bookings | Cancelled | History"): the same already-fetched records are
    split client-side into three tabs. No new RPC, no extra round trip. */
 const CUSTOMER_BOOKING_TABS_V178=[
-  ['bookings','Bookings','No bookings yet. Active requests and upcoming appointments appear here.'],
+  /* v194 (owner renamed it on the screenshot): "Bookings" inside a page called Bookings said
+     nothing. "Ongoing" is what the tab actually holds. */
+  ['bookings','Ongoing','No bookings yet. Active requests and upcoming appointments appear here.'],
   ['cancelled','Cancelled','No cancelled bookings.'],
   ['history','History','No past bookings yet.']
 ];
@@ -3225,10 +3262,17 @@ function customerBookingRequestTabV178(request){
   if(isActiveCustomerBookingRequest(request))return 'bookings';
   return CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(String(request?.status||'').toLowerCase())?'cancelled':'history';
 }
-function customerBookingAppointmentTabV178(appointment){
+function customerBookingAppointmentTabV178(appointment,now=Date.now()){
   const status=String(appointment?.status||'').toLowerCase();
   if(CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(status))return 'cancelled';
-  return RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178.has(status)?'history':'bookings';
+  if(RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178.has(status))return 'history';
+  /* v194 (owner: "done should go history"): a business does not always mark an appointment
+     completed, so a visit that has already happened kept sitting under Ongoing. Time decides when
+     status has not: once the slot has passed, it is history. A missing or unparsable time stays
+     Ongoing — that is the safer default for something that might still be coming. */
+  const startsAt=Date.parse(appointment?.starts_at||'');
+  if(Number.isFinite(startsAt)&&startsAt<=now)return 'history';
+  return 'bookings';
 }
 /* v183 (owner annotation, "0 requests · 0 appointments — no booking yet, should not show
    Cubbly"): a business with nothing booked is not a booking. Only records list here; the
@@ -3315,7 +3359,7 @@ async function renderCustomerBookings(){
     const requestCount=requestItems.length;
     const activeRequestCount=requestItems.filter(isActiveCustomerBookingRequest).length;
     const hasMore=!!requestPayload?.next_cursor;
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1><p class="muted">Active requests and appointments, cancellations and past visits stay in separate tabs, grouped by business.</p></div></header>
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div></header>
     ${partialMessages.length?'<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div></div>':''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
@@ -3942,7 +3986,10 @@ function customerHomeOfferMarkupV167(item,seen){
   const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
     versionId=String(item?.version_id||''),isNew=versionId&&!seen.has(versionId),
     endsSoon=customerOfferUrgencyV167(item),validity=customerPromotionValidityV104(item),
-    countdown=customerOfferCountdownV183(item),logo=customerMediaUrlV95(business.logo_url);
+    countdown=customerOfferCountdownV183(item),logo=customerMediaUrlV95(business.logo_url),
+    /* v194 (owner: "put company category"): a customer with several businesses needs to know what
+       KIND of business an offer is from, not only its name. */
+    category=String(business.industry||'').trim();
   const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
   const businessInitial=(String(business.name||'B').trim()[0]||'B').toUpperCase();
   return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
@@ -3950,7 +3997,7 @@ function customerHomeOfferMarkupV167(item,seen){
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
     <p class="customer-home-offer-business">${logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
-      :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`}<span class="muted small">${esc(business.name||'Your business')}</span></p>
+      :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`}<span class="muted small">${esc(business.name||'Your business')}${category?` · ${esc(category)}`:''}</span></p>
     ${countdown?`<p class="customer-home-offer-countdown">${esc(countdown)}</p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
@@ -4086,6 +4133,18 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
       if(offersHost)offersHost.innerHTML='<p class="muted small">Current offers couldn’t load.</p>';
     });
 }
+/* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
+   for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
+   read as a control with no purpose. The tagline is dropped when it echoes the title — compared on
+   letters and digits, so "50% off first prata" is recognised inside "National Day: 50% off first
+   prata" — and the terms are shown as plain small text rather than a mystery disclosure. */
+function customerOfferTaglineV194(name,tagline){
+  const clean=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  const title=clean(name),line=clean(tagline);
+  if(!line)return '';
+  if(!title)return String(tagline).trim();
+  return title.includes(line)||line.includes(title)?'':String(tagline).trim();
+}
 function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
   const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
     facts=String(item?.metadata?.offer_facts||'').trim(),
@@ -4093,6 +4152,7 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
     availability=String(item?.availability_label||'').trim(),
     terms=String(item?.terms||'').trim(),
     cta=item?.metadata?.cta||{},slug=encodeURIComponent(business.slug||''),
+    taglineV194=customerOfferTaglineV194(item?.name,item?.tagline),
     initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase(),
     ctaLabel=String(cta.label||'').trim();
   const overlay=document.createElement('div');
@@ -4103,14 +4163,14 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
     ${facts?`<p class="customer-offer-detail-facts">${esc(facts)}</p>`:''}
-    ${item?.tagline?`<p class="muted" style="margin-top:6px">${esc(item.tagline)}</p>`:''}
+    ${taglineV194?`<p class="muted" style="margin-top:6px">${esc(taglineV194)}</p>`:''}
     ${item?.description?`<p class="muted small" style="margin-top:8px">${esc(item.description)}</p>`:''}
     <div class="customer-offer-detail-meta">
       ${validity?`<p class="small"><b>${esc(validity)}</b></p>`:''}
       ${availability?`<p class="muted small">${esc(availability)}</p>`:''}
       <div data-offer-contact></div>
     </div>
-    ${terms?`<details style="margin-top:10px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
+    ${terms?`<p class="muted small customer-offer-detail-terms" style="margin-top:10px">${esc(terms)}</p>`:''}
     ${business.id?customerCompanyDetailRowV178(business):''}
     <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
       ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`:''}
@@ -4357,46 +4417,48 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
    tier is (exact remaining in the business's own basis — visits, spend or points), what the
    next tier unlocks (two-item teaser), then my current benefits. Renders nothing when the
    business has no tiers, and never shows raw percentages without the human sentence. */
-function customerTierCardMarkupV174(tier={}){
+/* v194 (owner annotations, 2026-08-07): the programme card was one long column — a tier block
+   with two lines of prose above a permanently expanded ladder, and the balance stranded in the
+   header. It is now two tabs, Tier and Reward points, which is what the owner sketched. The tier
+   panel drops "Gold unlocks…" and "Your benefits now" (both struck out as "too many wordings"),
+   names the rung plainly — "You're now at Basic" — marks every rung ON the progress bar, and
+   folds the full ladder behind a disclosure that opens on tap. */
+function customerTierMilestonesMarkupV194(tier={}){
+  const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+  if(rungs.length<2)return '';
+  const top=Math.max(...rungs.map(rung=>Math.max(0,Number(rung.threshold)||0)));
+  if(!(top>0))return '';
+  return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map(rung=>{
+    const at=Math.max(0,Math.min(100,(Math.max(0,Number(rung.threshold)||0)/top)*100));
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i></i><b>${esc(rung.label)}</b></span>`;
+  }).join('')}</div>`;
+}
+function customerTierPanelMarkupV194(tier={}){
   const current=tier.current,next=tier.next;
-  /* v189: never render silence where a tier belongs. "not_running" is the business's own state —
-     the programme is paused or was never published — and saying so beats a blank space that the
-     customer reads as "I have no tier". A fault says it is a fault, and offers a reload. */
   if(tier.unavailable==='not_running'){
-    return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier"><h2 style="margin:0">Tiers</h2>
-      <p class="muted small" style="margin-top:6px">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p></section>`;
+    return `<p class="muted small">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p>`;
   }
   if(tier.unavailable==='error'){
-    return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier"><h2 style="margin:0">Tiers</h2>
-      <p class="muted small" style="margin-top:6px">Your tier could not be checked just now. Nothing has changed — reload to try again.</p></section>`;
+    return `<p class="muted small">Your tier could not be checked just now. Nothing has changed — reload to try again.</p>`;
   }
-  if(!current&&!next)return '';
+  if(!current&&!next)return '<p class="muted small">This business has not set up tiers yet.</p>';
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
   const progress=Math.max(0,Math.min(100,Number(tier.progress_percent||0)));
   const remainingText=(()=>{
     if(!next)return '';
     const remaining=Math.max(0,Number(next.threshold||0)-metric);
-    if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${esc(next.label)}`;
-    if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${esc(next.label)}`;
+    if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${next.label}`;
+    if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${next.label}`;
     const visits=Math.ceil(remaining);
-    return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${esc(next.label)}`;
+    return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${next.label}`;
   })();
-  const nextBenefits=Array.isArray(next?.benefits)?next.benefits.filter(value=>String(value||'').trim()).slice(0,2):[];
-  const currentBenefits=Array.isArray(current?.benefits)?current.benefits.filter(value=>String(value||'').trim()):[];
-  /* v189 (owner: "the required points to reach next stage — old account cannot view"). A member
-     already at the top has no NEXT stage, so the progress line had nothing to say and the card
-     went quiet exactly where the requirement belongs. State the bar they cleared instead. */
   const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
-  return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier">
-    <div class="row" style="align-items:baseline;gap:10px"><h2 style="margin:0">${esc(current?.label||'Getting started')}</h2>${next?'':current?'<span class="pill ok">Top tier</span>':''}</div>
-    ${currentRequirement?`<p class="muted small" style="margin-top:6px">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
-    ${next?`<div style="background:var(--line);border-radius:100px;height:8px;margin-top:12px;overflow:hidden"><div style="background:var(--grad);height:100%;width:${progress}%"></div></div>
-    <p class="muted small" style="margin-top:8px">${remainingText}</p>
-    ${nextBenefits.length?`<p class="small" style="margin-top:6px"><b>${esc(next.label)}</b> unlocks: ${nextBenefits.map(esc).join(' · ')}</p>`:''}`:''}
-    ${currentBenefits.length?`<p class="small" style="margin-top:${next?'12':'10'}px"><b>Your benefits now</b></p><ul class="rec-why" style="margin-top:6px">${currentBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:''}
-    ${customerTierLadderMarkupV186(tier)}
-  </section>`;
+  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>
+    ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
+    <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
+      :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
+    ${customerTierLadderMarkupV186(tier)}`;
 }
 /* v186 (owner: "i want to see different tiers and its benefits… mask other tiers, still can see
    the benefits but very obvious that is not their tier"). A ladder you cannot see is not a
@@ -4411,8 +4473,8 @@ function customerTierLadderMarkupV186(tier={}){
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
   const requirement=threshold=>customerTierRequirementTextV189(threshold,basis);
-  return `<div class="customer-tier-ladder" style="margin-top:16px">
-    <p class="small"><b>All tiers</b></p>
+  return `<details class="customer-tier-ladder">
+    <summary><span>All tiers and what they unlock</span><span class="muted small">${rungs.length} tiers</span></summary>
     <ol class="customer-tier-rungs" aria-label="Every tier and what it unlocks">${rungs.map(rung=>{
       const isCurrent=rung.current===true;
       const achieved=rung.achieved===true&&!isCurrent;
@@ -4430,7 +4492,7 @@ function customerTierLadderMarkupV186(tier={}){
           :'<p class="muted small" style="margin-top:6px">Benefits not published yet.</p>'}
       </li>`;
     }).join('')}</ol>
-  </div>`;
+  </details>`;
 }
 /* What a rung costs, in the business's own basis. Shared by the tier card header and the ladder
    so the two can never word the same threshold differently. */
@@ -4447,6 +4509,57 @@ function customerTierRemainingTextV186(remaining,basis){
   const visits=Math.ceil(remaining);
   return `${visits.toLocaleString('en-SG')} visit${visits===1?'':'s'} to go`;
 }
+/* v194: Tier and Reward points as two tabs, the shape the owner drew over the old stacked block.
+   The balance moves in here from the header, where it sat beside a name it had nothing to do with. */
+function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},reward=null}){
+  const unitLabel=ct(presentation.unit);
+  const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
+  const rewardName=String(reward?.name||'').trim();
+  const remaining=Math.max(0,Number(reward?.remaining_units)||0);
+  const rewardLine=!rewardName?'Rewards from this business appear below as you earn.'
+    :reward?.available_now===true?`${rewardName} is ready to redeem.`
+    :`${customerPointTotalV103(remaining)} ${unitLabel} to ${rewardName}.`;
+  return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
+    <div class="customer-programme-tablist" role="tablist" aria-label="Tier and reward points">
+      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">Tier</button>
+      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">Reward points</button>
+    </div>
+    <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
+      <div data-programme-panel="tier">${customerTierPanelMarkupV194(tier)}</div>
+      <div data-programme-panel="points" hidden>
+        <p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
+        <p class="muted small" style="margin-top:6px">${esc(rewardLine)}</p>
+        ${customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward})}
+      </div>
+    </div>
+  </section>`;
+}
+function wireCustomerProgrammeTabsV194(host=document){
+  const tabs=[...host.querySelectorAll('[data-programme-tab]')];
+  if(!tabs.length)return;
+  const select=(name,focus=false)=>{
+    tabs.forEach(tab=>{
+      const on=tab.dataset.programmeTab===name;
+      tab.setAttribute('aria-selected',String(on));
+      tab.tabIndex=on?0:-1;
+      if(on&&focus)tab.focus();
+    });
+    host.querySelectorAll('[data-programme-panel]').forEach(panel=>{
+      panel.hidden=panel.dataset.programmePanel!==name;
+    });
+    const panel=host.querySelector('#customerProgrammePanel');
+    if(panel)panel.setAttribute('aria-labelledby',`customerProgrammeTab-${name}`);
+  };
+  tabs.forEach((tab,index)=>{
+    tab.onclick=()=>select(tab.dataset.programmeTab);
+    tab.onkeydown=event=>{
+      const step=event.key==='ArrowRight'?1:event.key==='ArrowLeft'?-1:0;
+      if(!step)return;
+      event.preventDefault();
+      select(tabs[(index+step+tabs.length)%tabs.length].dataset.programmeTab,true);
+    };
+  });
+}
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready'}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
@@ -4457,17 +4570,22 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
   const unitLabel=ct(presentation.unit);
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
   const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,6);
+  /* v194 (owner: "show company details, phone number, address" beside the business name): the
+     header is now the way in to the company sheet, and the booking action moved up here — "make
+     it smaller and put upstair" — out of the full-width card that sat below the offers. */
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <header class="customer-programme-compact-head" style="--merchant-accent:${esc(contrastSafeBrandColor(presentation.heroColor))}">
-      <div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
-      <div class="customer-programme-compact-copy"><h1>${esc(business.name||presentation.name)}</h1>
-        <p class="muted small">${esc(presentation.name)}${hasTier&&currentTierLabel?` · ${esc(currentTierLabel)}`:''}</p></div>
-      <div class="customer-programme-compact-balance"><b>${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</b><span>${esc(unitLabel)}</span></div>
+      <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${esc(business.name||presentation.name)}">
+        <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
+        <span class="customer-programme-compact-copy"><b>${esc(business.name||presentation.name)}</b>
+          <span class="muted small">${esc(presentation.name)}${hasTier&&currentTierLabel?` · ${esc(currentTierLabel)}`:''}</span>
+          <span class="muted small customer-programme-identity-hint">Address, phone and offers ›</span></span>
+      </button>
+      ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
     ${customerPointsExplainerMarkupV167(business)}
-    ${customerTierCardMarkupV174(tier)}
+    ${customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward})}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
-    ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><button class="btn" type="button" data-repeat-booking data-business-slug="${esc(business.slug)}">Book again</button></div></section>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
@@ -4613,11 +4731,9 @@ function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=
 function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
   return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
 }
-/* v183: Home's jump-off to the two surfaces that hold everything else. It replaces the
-   collapsed "Guidance & bookings" disclosure — one fewer tap, and it names what is inside. */
-function customerHomeQuickLinksV183(linkedCount=0,bookingSummary='Open your bookings'){
-  return `<div class="customer-home-quick"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>${esc(ct('yourProgrammes'))}</b><p class="muted small">${esc(customerLinkedRewardsLabelV156(linkedCount))}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${esc(bookingSummary)}</p></div></a></div>`;
-}
+/* v194 (owner struck both cards out on Home): the two quick links repeated the primary nav
+   directly above them — My Rewards and Bookings are already one tap away in the tab bar, and
+   the counts they carried now live on those tabs. Home is the offers shelf. */
 /* v178: surface='programmes' is the "My Rewards" tab, which the owner stripped back to the
    reward-account grid alone — no offers shelf, no guidance banner. Home keeps both. */
 function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',note='',rerender=null}={}){
@@ -4632,8 +4748,7 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
      grid is the My Rewards tab's job. Home is now offers first, then a two-way jump-off. */
   $('walletBody').innerHTML=`${isHome?`${customerHomeOffersMarkupV167(offersState)}
-    ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}
-    ${customerHomeQuickLinksV183(cards.length)}`
+    ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}`
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}${note}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
@@ -4682,6 +4797,15 @@ async function renderCustomerWallet(businessSlug=null){
         offersState:offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]},
         pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null
       });
+      /* v194: My Rewards counts the REWARD ACCOUNTS this customer holds; Bookings counts what is
+         still live — a request awaiting the business plus an upcoming appointment. Both come from
+         data already fetched above, so neither badge costs a round trip. */
+      applyCustomerNavCountsV194({
+        programmes:Array.isArray(data?.cards)?data.cards.length:0,
+        bookings:customerHomeOverview.activeRequestCount
+          +customerHomeOverview.walletCards.reduce((total,card)=>
+            total+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0)
+      });
       const inboxSlot=$('customerInboxBellSlot');
       if(inboxSlot&&customerFeatures.customer_in_app_inbox===true){
         const unread=customerHomeOverview.messageCount;
@@ -4719,15 +4843,14 @@ async function renderCustomerWallet(businessSlug=null){
     const activeRequestCount=bookingRequestResult.error?0:(Array.isArray(bookingRequestResult.data?.items)?bookingRequestResult.data.items.filter(isActiveCustomerBookingRequest).length:0);
     const bookingCount=appointmentCount+activeRequestCount;
     const bookingsAvailable=!bookingRequestResult.error||cards.length>0;
-    const bookingsTruncated=!bookingRequestResult.error&&(bookingRequestResult.data?.truncated===true||!!bookingRequestResult.data?.next_cursor);
-    const bookingSummary=bookingsAvailable
-      ?bookingCount?`${bookingCount}${bookingsTruncated?'+':''} active or upcoming`:'No active or upcoming bookings'
-      :'Booking summary is temporarily unavailable.';
     const offersState=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
     $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
       ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
-      ${customerHomeQuickLinksV183(cards.length,bookingSummary)}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}`;
+    /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
+       lands here through the legacy read must not see empty tabs where the other path shows
+       counts. A booking read that failed contributes 0, never a guess. */
+    applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
     focusCustomerRoute();
@@ -4813,6 +4936,10 @@ async function renderCustomerWallet(businessSlug=null){
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
   wireCustomerRepeatBookingV167($('walletBody'));
+  wireCustomerProgrammeTabsV194($('walletBody'));
+  /* v194: the header identity opens the same company sheet the offer sheet uses. */
+  $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
+    showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
   document.querySelectorAll('[data-promotion-counter]').forEach(button=>button.onclick=()=>{
     const card=button.closest('[data-promotion-id]'),status=card?.querySelector('[data-promotion-status]');
     if(status)status.textContent='Show this offer to the team at the counter.';
@@ -6777,10 +6904,14 @@ function navHtml(page,idPrefix='nav'){
      which is fixed by the sector entitlement and does not include it. So an owner could create a
      branch from Settings and then had nowhere to manage one. Branches is structural and
      owner-only, exactly like Staff members, so it is offered on the same terms. */
+  /* V223. Owner: "waitlist is tagged to bookings (so disable / enable together)". A waitlist
+     holds the people a booking could not seat, so it has no meaning without the booking page
+     that produces them — showing one without the other is a dead end. */
   const navModuleVisible=m=>m==='dashboard'
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
-    ||enabled.includes(m);
+    ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
+    ||(m!=='waitlist'&&enabled.includes(m));
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.flat){
@@ -6955,10 +7086,9 @@ async function hydrateProfileBranchSelectorV158(page){
     if(!$('profileBranchScopeV158'))return;
     /* V217: only an ACTIVE branch can be a reporting scope — the server refuses any other, so
        offering one here produced a workspace that could not load its own dashboard or customer
-       list. A branch held back for payment is named below the picker instead of hidden without
-       explanation, so the owner can see it exists and why it is not selectable yet. */
+       list. V224 removed the "awaiting payment" pill the owner struck out of the top bar; the
+       branch and its reason are still stated on the Branches page, which is where it is acted on. */
     const allowed=activeBranchesForScopeV217(branches);
-    const withheld=(branches||[]).filter(branch=>branch.active===false);
     if(selectedBranchId&&!allowed.some(branch=>branch.id===selectedBranchId)){
       selectedBranchId=isAdmin?null:(allowed[0]?.id||null);
     }
@@ -6968,9 +7098,7 @@ async function hydrateProfileBranchSelectorV158(page){
           ${isAdmin?'<option value="">All branches</option>':''}
           ${allowed.map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}
         </select>
-        ${withheld.length?`<span class="topbar-branch-withheld-v217">${esc(withheld.length===1
-          ?`${withheld[0].name}: ${withheld[0].billing_state==='pending_payment'?'awaiting payment':'switched off'}`
-          :`${withheld.length} branches unavailable`)}</span>`:''}`
+        `
       :'<span class="muted small">No branch assigned</span>';
     const select=$('profileBranchScopeSelectV158');
     if(select){
@@ -6993,16 +7121,20 @@ async function hydrateProfileBranchSelectorV158(page){
 function profileHtml(){
   const displayName=userDisplayNameV158();
   return `<div class="profile" id="profwrap">
-      <button type="button" class="who" id="profWho" aria-haspopup="true" aria-expanded="${profileOpen}" aria-controls="profmenu">
-        <div class="avatar">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
-        <div style="min-width:0">
-          <b data-merchant-content style="font-size:13.5px;display:block;line-height:1.25;letter-spacing:-.012em">${esc(S.biz.name)}</b>
-          <div data-merchant-content class="small muted" style="line-height:1.25">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</div>
-        </div>
+      <!-- V225: the owner struck the business name and industry out of the top bar. The avatar
+           initial still identifies the workspace visually, but a lone initial is not an
+           accessible name, so the button carries one and the full name moves inside the menu. -->
+      <button type="button" class="who" id="profWho" aria-haspopup="true" aria-expanded="${profileOpen}" aria-controls="profmenu" ${workspaceTemplateAttributeV97('aria-label','accountMenuForBusiness',{business:S.biz.name||'Workspace'})}>
+        <div class="avatar" aria-hidden="true">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
         <span class="chev" aria-hidden="true">${profileOpen?'−':'+'}</span>
       </button>
       ${profileOpen?`<div class="menu" id="profmenu" aria-label="Account links">
+        <div class="profile-menu-section" style="overflow-wrap:anywhere"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
         <div class="profile-menu-section small muted" style="overflow-wrap:anywhere">Signed in as<br><b style="color:var(--ink)">${esc(displayName||S.user?.email||'User')}</b>${displayName&&S.user?.email?`<br><span>${esc(S.user.email)}</span>`:''}</div>
+        <!-- V225 (owner: "put inside here" pointing from the top-bar language select to the
+             profile menu). Language is a personal preference set once, not a per-task control,
+             so it belongs with the other account settings rather than beside Record sale. -->
+        <div class="profile-menu-section">${workspaceLanguagePickerV97()}</div>
         <form class="profile-menu-section" id="profileNameFormV158">
           <label for="profileDisplayNameV158">Your display name</label>
           <div class="row"><input id="profileDisplayNameV158" autocomplete="name" maxlength="120" value="${esc(displayName)}" placeholder="e.g. Chuan Seng"><button class="btn ghost sm" type="submit">Save</button></div>
@@ -7677,6 +7809,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
      with the FAIREST person, so choosing Kelvin and being told about Devi read as the system
      overruling the choice. It now answers the question actually asked ("is the person I picked
      free?") and offers the fairer option as a suggestion, not a verdict. */
+  /* V225: the top bar no longer prints the business name, so the account button needs an
+     accessible name of its own. Interpolated attribute copy must be a reviewed template. */
+  accountMenuForBusiness:Object.freeze({en:'Account menu for {business}','zh-CN':'{business} 的账户菜单',ms:'Menu akaun untuk {business}'}),
   selectedStaffFree:Object.freeze({en:'{staff} is free at this time.','zh-CN':'{staff} 在这个时间有空。',ms:'{staff} lapang pada masa ini.'}),
   selectedStaffFreeFairer:Object.freeze({en:'{staff} is free at this time. {alt} has had fewer appointments if you would rather spread the work.','zh-CN':'{staff} 在这个时间有空。若想更平均分配，{alt} 的预约较少。',ms:'{staff} lapang pada masa ini. {alt} kurang temu janji jika anda mahu agihkan kerja.'}),
   /* Owner: "recent appointment - how recent?" — the number now states its own window. */
@@ -7747,7 +7882,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany','recentAppointments','reversalOf',
-  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow',
+  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
@@ -7936,7 +8071,7 @@ function renderShell(page){
         ${globalActionsHtml()}
         ${mobileSearchShellHtml()}
         <div class="topbar-branch-scope-v210" id="profileBranchScopeV158" aria-live="polite"></div>
-        ${workspaceLanguagePickerV97()}
+
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
         ${bellHtml()}
         ${profileHtml()}
@@ -8285,16 +8420,27 @@ function normaliseReportingScopeV155({branches=[]}={}){
   }
   return reportingScopeV155;
 }
+/* V225: with the per-page scope pickers removed, the top bar is the only control left — so it
+   has to actually govern. "All branches" there means consolidated reporting; a named branch
+   means that branch. Deriving it here rather than storing a second copy is what stops the two
+   from disagreeing, which is the whole reason the second picker was struck out. */
 function currentReportingScopePayloadV155(branches=[]){
   const scope=normaliseReportingScopeV155({branches});
+  const usable=activeBranchesForScopeV217(branches);
+  const followsTopBar=scope.mode!=='selected';
+  const mode=followsTopBar?(selectedBranchId?'current':'all'):'selected';
   return {
-    p_scope_mode:scope.mode,
-    p_branch_ids:scope.mode==='selected'?scope.branchIds:[],
+    p_scope_mode:usable.length?mode:scope.mode,
+    p_branch_ids:mode==='selected'?scope.branchIds:[],
     p_operational_branch:reportingOperationalBranchIdV155(branches)
   };
 }
 function reportingScopeLabelV155(branches=[]){
   const scope=normaliseReportingScopeV155({branches});
+  /* V225: follow the same derivation as the payload, so a caption never contradicts the numbers. */
+  if(scope.mode!=='selected'&&activeBranchesForScopeV217(branches).length&&!selectedBranchId){
+    return branches.length>1?'All accessible branches':(branches[0]?.name||'All accessible branches');
+  }
   const byId=new Map((branches||[]).map(branch=>[branch.id,branch.name||'Branch']));
   if(scope.mode==='all')return branches.length>1?'All accessible branches':(branches[0]?.name||'All accessible branches');
   if(scope.mode==='selected'){
@@ -8471,7 +8617,7 @@ async function dashboard(){
     <header class="v150-titlebar">
       <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <div class="v150-title-actions dashboard-range">
-        <span id="dashboardReportingScopeWrap" aria-label="Dashboard reporting scope"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></span>
+
         <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
         <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
       </div>
@@ -8588,7 +8734,10 @@ async function dashboard(){
        reporting scope), so only redemptions need fetching. Redeem rows carry no sale and no
        branch, so this one extra read is business-scoped and each loyalty card states which
        scope it belongs to rather than implying they share one. */
-    const loyaltyVisibleV170=canReadModule('loyalty');
+    /* V224: the owner struck out the whole "Loyalty this period" strip. Members joined
+       duplicates the New customer members tile above it, and points earned / rewards redeemed
+       belong in Programmes, where they can be acted on. */
+    const loyaltyVisibleV170=false;
     let response,previousResponse={data:null,error:null},inactiveResponse={data:null,error:null},inactive60Response={data:null,error:null},redeemedResponse={data:null,error:null};
     try{[response,previousResponse,inactiveResponse,inactive60Response,redeemedResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
@@ -8619,18 +8768,27 @@ async function dashboard(){
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
     const newCustomersChange=customerMetricsAvailable&&previousSummary?.availability?.clients!==false?percentageChangeV153(d.new_customers,previousSummary?.new_customers):null;
     const metrics=[
-      {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`,delta:visitsChange},
-      {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`,delta:revenueChange},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:d.metric_labels?.new_customers||'Joined during the selected period.',delta:newCustomersChange}
+      /* V224: the owner struck out every KPI hint line. The scope is already stated once in the
+         top bar, and repeating it under four tiles is the noise, not the information. */
+      {key:'visits',value:String(d.visits||0),hint:'',delta:visitsChange},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange},
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
       const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
-      metrics.push({key:'inactive',value:inactiveTotal,hint:`Inactive in this branch scope · ${scopeLabel}`});
+      metrics.push({key:'inactive',value:inactiveTotal,hint:''});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span><span class="metric-hint">${esc(metric.hint)}</span><span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
+       modal that then offered a link to the report. The tile IS the link — the definition it
+       carried is still available inside the report it lands on, so the modal was a stop on the
+       way to somewhere the owner had already said they wanted to go. */
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
-      openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
+      const route=dashboardMetricDefinitionsV141[key]?.route;
+      if(key==='inactive')pendingCustomerInactivity=30;
+      if(route)nav(route);
+      else openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
     if(loyalty){
       if(!loyaltyVisibleV170)loyalty.innerHTML='';
@@ -8699,6 +8857,10 @@ async function dashboard(){
     if(customerMetricsAvailable)C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     if(customerMetricsAvailable)C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
+  /* V225: the owner struck the "Current branch / Cubbly · Orchard" picker off the Dashboard and
+     the Customers page. The top bar already carries one "Viewing" control for the whole
+     workspace, and a second one on the page contradicted it as often as it agreed. The scope
+     itself still applies — reportingScopeV155 is unchanged and still sent to every RPC. */
   await renderReportingScopeSelectorV155(load,isDashboardCurrent,'dashboardReportingScopeWrap');
   if(isDashboardCurrent())await load();
 }
@@ -8885,7 +9047,7 @@ async function clientsPage(){
     (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
-      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1><p>Find customers, manage consent, and follow up with people who have not visited recently.</p></div></div>
+      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1></div></div>
       <div class="client-summary-cards" id="inactiveCards" aria-label="Inactive customer shortcuts">
         <button type="button" class="client-summary-card" data-inactive-bucket="30_59" aria-pressed="false"><b>—</b><span>Inactive 30–59 days</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="60_89" aria-pressed="false"><b>—</b><span>Inactive 60–89 days</span></button>
@@ -8893,7 +9055,7 @@ async function clientsPage(){
       </div>
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="min-width:min(100%,280px)"><label>Reporting scope</label><div id="clientReportingScopeWrap"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></div></div><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -9514,13 +9676,27 @@ async function clientDetail(id){
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
       ?`${projectedNextReward.name||'Reward'} is ready now`
       :`${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more ${unit} for ${projectedNextReward.name||'a reward'}`;
-    rewardsMarkup=`<p class="eyebrow" style="margin-top:8px">How rewards work</p>
-      <p class="small" style="margin-top:6px"><b>Balance:</b> ${pts} ${unit}</p>
-      <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
-      <p class="small" style="margin-top:5px"><b>Next reward:</b> ${esc(nextCopy)}</p>
-      ${projectedRewards.length?`<div style="margin-top:10px">${projectedRewards.map(reward=>`<div class="row" style="margin-top:7px;flex-wrap:wrap"><span>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${reward.available_now?'ok':'off'}">${!redemptionEnabled?'Unavailable':reward.available_now?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`).join('')}</div>`:''}
-      ${canWriteLoyalty&&redemptionEnabled?`<p class="muted small" style="margin-top:12px">To complete a customer reward, scan their pending QR in Record sale. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:!redemptionEnabled?'<span class="pill off" style="margin-top:10px">Redemption unavailable</span>':'<span class="pill off" style="margin-top:10px">Rewards are read only for this role</span>'}
-      ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+    /* V226 (owner crossed the whole block out: "too confusing", and wrote "show Redeemable
+       Rewards for customer"). It led with an explanation of the SCHEME — how rewards work,
+       balance, earn rate, next milestone — and buried what the person at the counter actually
+       needs: which rewards this customer can take right now. That is the answer to the only
+       question being asked while they are standing there. The scheme facts are kept, because
+       staff do occasionally need them, but folded away underneath. */
+    const readyRewards=redemptionEnabled?projectedRewards.filter(reward=>reward.available_now):[];
+    const pendingRewards=redemptionEnabled?projectedRewards.filter(reward=>!reward.available_now):[];
+    const rewardRow=(reward,ready)=>`<div class="row c360-reward-row-v226"><span data-merchant-content>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${ready?'ok':'off'}">${!redemptionEnabled?'Unavailable':ready?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`;
+    rewardsMarkup=`${readyRewards.length
+      ?`<p class="eyebrow" style="margin-top:8px">Ready to redeem now · ${readyRewards.length}</p>
+        <div style="margin-top:8px">${readyRewards.map(reward=>rewardRow(reward,true)).join('')}</div>`
+      :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
+        <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
+      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<p class="muted small" style="margin-top:12px">Scan the customer's pending QR in Record sale to complete one. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
+      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}
+      <details class="c360-reward-adjust" style="margin-top:10px"><summary>Balance and earning</summary>
+        <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
+        <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
+        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+      </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
@@ -9579,7 +9755,7 @@ async function clientDetail(id){
     ${profileKpis?`<div class="kpis">${profileKpis}</div>`:''}
     <div class="split" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards</b><span>${wholeBusinessLabels?'Balance, earning and next unlock':'Business-wide balance, earning and next unlock'}</span></div></header>
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards for customer</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${rewardsMarkup}</div>
       </section>`:''}
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
@@ -10116,7 +10292,7 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
-        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
+        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
         <div id="tErr"></div>
         <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:19})} Next</button>
         <div class="grid frontline-keypad" id="tKeys" aria-label="Phone keypad">
@@ -11841,16 +12017,15 @@ async function bookingsPage(){
   const canDeclineBooking=canWriteModule('bookings');
   const canDecideChange=canWriteModule('appointments');
   const decisionNotices=new Map(),pendingDecisions=new Set();
+  /* V223: the hold-timer copy promises the waitlist gets flagged. Only say so when this
+     workspace actually has a waitlist — it now travels with Bookings, but a business can still
+     have Bookings without the Waitlist module. */
+  const waitlistLinkedV223=(S.myModules||S.biz.enabled_modules||[]).includes('waitlist');
   routeMain.innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
       <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
-    ${isOwner?`<section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
-      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
-      <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
-      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
-      <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>`:''}
     <div class="card" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
       ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
@@ -11859,23 +12034,33 @@ async function bookingsPage(){
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     ${isOwner?`<div class="split" style="margin-bottom:16px">
-      <div class="card"><div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
+      <div class="card">
+        <!-- V223 (owner: "how can table bookings be present in a spa/salon?"). Seating is not
+             something every business has. A facial spa takes booking REQUESTS through the same
+             public page, but it has no tables, no pax and no when-full overflow — and every
+             salon/spa/massage/fitness sector is granted the full module list, so all of them
+             were shown table management they can never use. The seating controls now appear
+             only for a business that says it seats guests. -->
+        <label style="display:flex;align-items:center;gap:8px;margin:0 0 6px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="setTakesTablesV223" style="width:auto" ${S.biz.takes_table_reservations?'checked':''}> We seat guests at tables</label>
+        <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>
+        ${S.biz.takes_table_reservations?`<div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
         <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
         <div class="row"><input id="tblName" placeholder="e.g. Small (2-seater)">
           <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
           <input id="tblQty" type="number" min="1" value="1" placeholder="Qty" style="max-width:76px">
           <button class="btn sm" id="tblAdd">Add</button></div>
         <div id="capBody" style="margin-top:14px">${CUI.tableSkeleton({rows:3,columns:6})}</div>
-        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">`:''}
         <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
         <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
         <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
-        <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes; your waitlist is then flagged so you know to fill the gap.</p>
-        <label>When you're full</label><select id="setOverflow">
+        <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
+        ${S.biz.takes_table_reservations?`<label>When you're full</label><select id="setOverflow">
           <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
           <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-          <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>
+          <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>`:''}
         <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
         <div id="setErr"></div>
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
@@ -11905,38 +12090,6 @@ async function bookingsPage(){
      load paths, and every id keeps working exactly as before. Same approach the Staff page uses. */
   enhanceBookingsTabsV195(M());
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
-  if(isOwner){
-    const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
-    const status=$('customerCapabilitiesStatus'),save=$('saveCustomerCapabilities');
-    const capabilityResult=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
-    if(!isCurrent())return;
-    $('businessCustomerCapabilities').setAttribute('aria-busy','false');
-    if(capabilityResult.error){
-      status.textContent=capabilityResult.error.code==='PGRST202'||capabilityResult.error.code==='42883'
-        ?'These controls need the latest Peekaa service update. All three remain off.'
-        :'Customer action settings could not be loaded. Nothing was changed.';
-    }else{
-      const value=capabilityResult.data||{};
-      $('customerBookingEnabled').checked=value.booking_enabled===true;
-      $('customerRedemptionEnabled').checked=value.redemption_enabled===true;
-      $('customerAppointmentChangesEnabled').checked=value.appointment_changes_enabled===true;
-      controls.forEach(id=>$(id).disabled=false);save.disabled=false;status.textContent='All customer actions start off until you enable them.';
-      save.onclick=async()=>{
-        save.disabled=true;controls.forEach(id=>$(id).disabled=true);status.textContent='Saving customer actions…';
-        const {data,error}=await sb.rpc('business_set_customer_capabilities_v89',{
-          p_business:S.biz.id,
-          p_booking_enabled:$('customerBookingEnabled').checked,
-          p_redemption_enabled:$('customerRedemptionEnabled').checked,
-          p_appointment_changes_enabled:$('customerAppointmentChangesEnabled').checked
-        });
-        if(!isCurrent())return;
-        controls.forEach(id=>$(id).disabled=false);save.disabled=false;
-        if(error){status.textContent='Customer actions were not changed. Review the settings and try again.';return}
-        status.textContent='Customer actions saved. Existing bookings, redemptions, and appointment history remain visible.';
-        toast(data?.replayed===true?'Customer actions were already saved':'Customer actions saved');
-      };
-    }
-  }
   if(isOwner)$('aac').onchange=async()=>{
     const to=$('aac').checked;
     const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
@@ -12013,6 +12166,7 @@ async function bookingsPage(){
 
   /* ---- Tables / capacity (owner only) ---- */
   async function loadCapacity(){
+    if(!$('capBody'))return;
     const [{data:tbl,error:e1},{data:avail,error:e2}]=await Promise.all([
       sb.from('booking_tables').select('*').eq('business_id',S.biz.id).order('sort'),
       sb.from('v_table_availability').select('*').eq('business_id',S.biz.id)]);
@@ -12029,7 +12183,8 @@ async function bookingsPage(){
       }).join('')}</table>`
       :CUI.emptyState({iconName:'appointments',title:'No tables yet',body:'Add your tables so customers can reserve them.'});
   }
-  $('tblAdd').onclick=async()=>{
+  /* V223: these elements only exist for a business that seats guests. */
+  if($('tblAdd'))$('tblAdd').onclick=async()=>{
     const name=$('tblName').value.trim();
     if(name.length<2) return toast('Name the table type');
     const {error}=await sb.from('booking_tables').insert({business_id:S.biz.id,name,
@@ -12055,16 +12210,31 @@ async function bookingsPage(){
 
   /* ---- Booking rules: hold timer / overflow / auto-confirm (owner only) ---- */
   $('setSave').onclick=async()=>{
-    const hold=parseInt($('setHold').value||'0'),overflow=$('setOverflow').value,autoConfirm=$('setAutoConfirm').checked;
+    const hold=parseInt($('setHold').value||'0');
+    /* V223: overflow and auto-confirm are seating rules and are only rendered when the business
+       seats guests. Sending null leaves each one exactly as it was rather than resetting it. */
+    const overflow=$('setOverflow')?$('setOverflow').value:null;
+    const autoConfirm=$('setAutoConfirm')?$('setAutoConfirm').checked:null;
+    const takesTables=$('setTakesTablesV223')?$('setTakesTablesV223').checked:null;
     $('setSave').disabled=true;
     const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:hold,
-      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm});
+      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm,
+      p_takes_table_reservations:takesTables});
     if(!isCurrent())return;
     $('setSave').disabled=false;
     if(error){$('setErr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
     $('setErr').innerHTML='';
-    Object.assign(S.biz,{booking_hold_minutes:hold,booking_overflow:overflow,booking_auto_confirm:autoConfirm});
+    /* V223: only mirror what was actually sent. The server coalesces a null, keeping the stored
+       value, so copying null into S.biz would make the local copy disagree with the database. */
+    const seatingChanged=takesTables!==null&&takesTables!==(S.biz.takes_table_reservations===true);
+    Object.assign(S.biz,{booking_hold_minutes:hold});
+    if(overflow!==null)S.biz.booking_overflow=overflow;
+    if(autoConfirm!==null)S.biz.booking_auto_confirm=autoConfirm;
+    if(takesTables!==null)S.biz.takes_table_reservations=takesTables;
     toast('Booking rules saved');
+    /* Turning seating on or off changes which controls belong on this page, so redraw rather
+       than leaving the owner to guess that a reload is needed. */
+    if(seatingChanged)bookingsPage().catch(fail);
   };
 
   /* ---- v183 customer booking availability: opening hours + who customers may ask for ---- */
@@ -14444,15 +14614,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2><p class="muted small">${programmeView==='ongoing'?'Running for your customers right now.':programmeView==='available'?'Not running yet — each comes with a suggested starting point you can use in one tap.':'Every programme you can run. Choose one row to set it up, view it or edit it.'}</p></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2></div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       <div class="programme-category"><div class="programme-category-title">Loyalty & rewards</div><div class="grow-programme-list">
-        ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Earning',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
-          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
-          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
+          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
@@ -17829,7 +17999,7 @@ async function appointmentsPage(){
   const staffOpts=(sel,id)=>`${canSeeAll?`<option value="all" ${sel==='all'?'selected':''}>Everyone</option>`:''}`+
     branchStaff(id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(staffLabel(s))}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
   const apptHeaderActions=canWrite?`<button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button>`:'';
-  routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'See today’s appointments by team member and add a booking in a few taps.',iconName:'appointments',actions:apptHeaderActions,canWrite,moduleLabel:'Appointment scheduling'})}</div>
+  routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'',iconName:'appointments',actions:apptHeaderActions,canWrite,moduleLabel:'Appointment scheduling'})}</div>
     ${!visibleBranches.length?CUI.card({title:'No appointment access',description:'This account has no active branch where Appointments is enabled.'}):`
     <div class="appointment-layout" id="appointmentLayout">
       ${canWrite?`<section class="card appointment-form-card" id="appointmentFormCard" aria-labelledby="newAppointmentTitle" hidden><div class="row"><h2 id="newAppointmentTitle" style="font-size:17px">New appointment</h2><span class="spacer"></span><button class="btn ghost sm" type="button" id="closeAppointmentForm">Close</button></div>
@@ -17849,7 +18019,7 @@ async function appointmentsPage(){
           <button class="btn" id="ago">${CUI.icon('check',{size:18})} Book appointment</button></div>
       </section>`:''}
       <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><div class="v150-segment" role="tablist" aria-label="Appointment view"><button type="button" id="appointmentCalendarSeg" aria-pressed="true">Calendar</button><button type="button" id="appointmentListSeg" aria-pressed="false">List</button></div><span class="spacer"></span>
-        <label class="sr-only" for="calendarBranch">Appointment branch</label><span class="appointment-filter-with-icon">${CUI.icon('branch',{size:17,className:'appointment-filter-icon'})}<select id="calendarBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select></span>
+        
         
         <label class="sr-only" for="stfFilter">Appointment staff</label><span class="appointment-filter-with-icon">${CUI.icon('staff',{size:17,className:'appointment-filter-icon'})}<select id="stfFilter">${staffOpts(staffFilter,branchId)}</select></span>
         <span id="calendarOnlyControls" class="appointment-toolbar" style="gap:6px;padding:0;border:0;background:transparent">
@@ -18169,7 +18339,9 @@ async function appointmentsPage(){
       loadCalendar();
     };
   }
-  $('calendarBranch').onchange=()=>{selectedBranchId=$('calendarBranch').value;appointmentsPage().catch(fail)};
+  /* V225: the toolbar's own branch picker is gone — the top bar is the single control. The
+     handler is guarded rather than deleted so a stale render can never throw here. */
+  if($('calendarBranch'))$('calendarBranch').onchange=()=>{selectedBranchId=$('calendarBranch').value;appointmentsPage().catch(fail)};
   /* V194 (owner: "remove this" on the calendar service picker). Filtering the calendar to one
      service hid every other booking, which reads as a broken calendar far more often than it
      helps. calendarServiceId stays declared and empty, so the filter and the slot-click
@@ -19246,7 +19418,7 @@ async function packagesPage(){
    branch is "default" is wired into the v11a BEFORE INSERT trigger that backfills
    sales.branch_id for the 5 unmodified sales writers, so flipping it isn't a cosmetic choice. */
 async function branchesPage(){
-  M().innerHTML=`<div class="topbar"><div><h1>Branches</h1><p class="muted small">Manage your locations. Staff assigned to a branch see only that branch's data — owners and managers always see every branch.</p></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Branches</h1></div>
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
     <div id="brList">${CUI.skeletonGrid({cards:3,lines:3})}</div>`;
@@ -20343,7 +20515,7 @@ function enhanceStaffMembersTabsV164(teamPanel){
      a roster-only teammate — someone who appears on the rota and can be credited for a sale but
      never signs in — is a first-class record. This adds that form. Giving them app access is
      still a separate, deliberate act: an invite. */
-  listPanel.innerHTML=`<div><h2>Staff list</h2><p class="muted small">Active staff and roster-only teammates appear here first.</p></div>
+  listPanel.innerHTML=`<div><h2>Staff list</h2></div>
     <div class="card" id="staffManualAddCard" style="display:none;margin-top:12px">
       <div class="v150-soft-head"><b>Add a teammate</b><p>They appear on the rota and can be credited for sales straight away. They do not get a login until you send an invite.</p></div>
       <!-- V207 (owner: "add staff > then add details later (wrong) — supposed to be during adding
@@ -20487,7 +20659,7 @@ async function staffMembersPage(){
   }
   const topbar=M().querySelector('.topbar');
   if(topbar){
-    topbar.innerHTML=`<div><h1>Staff Members</h1><p class="muted small">Manage staff access, invitations, roles and module permissions.</p></div>`;
+    topbar.innerHTML=`<div><h1>Staff Members</h1></div>`;
   }
   const teamTab=$('settab-team');
   if(teamTab)teamTab.textContent='Staff Members';
@@ -21307,6 +21479,17 @@ async function settingsPage(){
       <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
       <div id="csvprev" style="margin-top:12px"></div></div>
       <div class="card" id="signupWrap">${CUI.skeletonCard({lines:5})}</div></div>
+    <!-- V223 (owner: "customer app settings should not be in bookings - it should be in
+         operation set up"). These switches govern what a customer may do in their own app —
+         booking, redemption QR, appointment changes. Only one of the three is about bookings,
+         so living on the Bookings page made the other two unfindable and made Bookings a
+         settings screen. This tab is where the rest of the customer-facing configuration
+         already lives (sign-up QR, customer fields, import). -->
+    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
+      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
+      <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
+      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
+      <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
     <div class="card" style="margin-top:16px"><b>Customer fields</b>
       <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
       <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" data-merchant-content style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
@@ -21624,11 +21807,17 @@ async function settingsPage(){
       return `<div class="team-member-card">
         <div class="row staff-row-line">
           <button type="button" class="staff-row-open" data-merchant-content onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
-            <b data-merchant-content>${esc(s.full_name||'Member')}</b>
-            <span class="muted small" data-merchant-content>${esc(s.email||'No email')}</span>
-            <span class="muted small" data-merchant-content>${esc(s.phone||'No phone')}</span>
-            <span class="pill ${s.role==='owner'?'ok':'off'}">${esc(ROLE_LABELS[s.role]||s.role)}</span>
-            ${commissionSummary}
+            <!-- V226 (owner drew the columns by hand: Name | phone | email | Position |
+                 Commission, captioned "I want clear segmentation"). The row was a flex wrap, so
+                 the same field landed at a different x-position on every line and nothing could
+                 be compared down a column. It is a grid now, with one header per group so each
+                 column is named once. Position is the job title, falling back to the team role
+                 when nobody has typed one. -->
+            <span class="staff-col-v226" data-staff-col="Name"><b data-merchant-content>${esc(s.full_name||'Member')}</b></span>
+            <span class="staff-col-v226" data-staff-col="Phone"><span class="muted small" data-merchant-content>${esc(s.phone||'—')}</span></span>
+            <span class="staff-col-v226" data-staff-col="Email"><span class="muted small" data-merchant-content>${esc(s.email||'—')}</span></span>
+            <span class="staff-col-v226" data-staff-col="Position"><span class="pill ${s.role==='owner'?'ok':'off'}" data-merchant-content>${esc(s.title||ROLE_LABELS[s.role]||s.role)}</span></span>
+            <span class="staff-col-v226" data-staff-col="Commission">${commissionSummary}</span>
           </button>
           ${accessPill}${modPill}<span class="spacer"></span>
           ${s.role!=='owner'?`${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
@@ -21649,6 +21838,7 @@ async function settingsPage(){
               <h3>${esc(group.title)} <span class="staff-group-count-v209">${members.length}</span></h3>
               <p class="muted small">${esc(group.sub)}</p>
             </div>
+            <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Position</span><span>Commission</span></div>
             ${members.map(staffRowV209).join('')}
           </section>`;
         }).join('')
@@ -21894,6 +22084,7 @@ async function settingsPage(){
   };
   loadBillingConfig();
   loadSignupConfig();
+  loadCustomerCapabilitiesV223();
 }
 /* ---------- V142 merchant-owned customer payments ---------- */
 async function loadMerchantPaymentsV142(){
@@ -22061,6 +22252,42 @@ async function loadBillingConfig(){
   renderPlan();
 }
 /* ---------- customer sign-up QR ---------- */
+/* ---------- customer app actions (moved out of Bookings by V223) ---------- */
+async function loadCustomerCapabilitiesV223(){
+  if(!$('businessCustomerCapabilities'))return;
+
+    const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
+    const status=$('customerCapabilitiesStatus'),save=$('saveCustomerCapabilities');
+    const capabilityResult=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
+    if(!$('businessCustomerCapabilities')?.isConnected)return;
+    $('businessCustomerCapabilities').setAttribute('aria-busy','false');
+    if(capabilityResult.error){
+      status.textContent=capabilityResult.error.code==='PGRST202'||capabilityResult.error.code==='42883'
+        ?'These controls need the latest Peekaa service update. All three remain off.'
+        :'Customer action settings could not be loaded. Nothing was changed.';
+    }else{
+      const value=capabilityResult.data||{};
+      $('customerBookingEnabled').checked=value.booking_enabled===true;
+      $('customerRedemptionEnabled').checked=value.redemption_enabled===true;
+      $('customerAppointmentChangesEnabled').checked=value.appointment_changes_enabled===true;
+      controls.forEach(id=>$(id).disabled=false);save.disabled=false;status.textContent='All customer actions start off until you enable them.';
+      save.onclick=async()=>{
+        save.disabled=true;controls.forEach(id=>$(id).disabled=true);status.textContent='Saving customer actions…';
+        const {data,error}=await sb.rpc('business_set_customer_capabilities_v89',{
+          p_business:S.biz.id,
+          p_booking_enabled:$('customerBookingEnabled').checked,
+          p_redemption_enabled:$('customerRedemptionEnabled').checked,
+          p_appointment_changes_enabled:$('customerAppointmentChangesEnabled').checked
+        });
+        if(!$('businessCustomerCapabilities')?.isConnected)return;
+        controls.forEach(id=>$(id).disabled=false);save.disabled=false;
+        if(error){status.textContent='Customer actions were not changed. Review the settings and try again.';return}
+        status.textContent='Customer actions saved. Existing bookings, redemptions, and appointment history remain visible.';
+        toast(data?.replayed===true?'Customer actions were already saved':'Customer actions saved');
+      };
+    }
+  
+}
 async function loadSignupConfig(){
   $('signupWrap').innerHTML=`<b>Customer sign-up</b>
     <p class="muted small" style="margin:6px 0 10px">Print the current business-issued QR for your counter. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>

@@ -47,7 +47,8 @@ test('merchant home consumes the v95 presentation contract with truthful capabil
   assert.match(wallet,/customerProgrammePresentationV95\(presentationResult\.error\?\{\}:presentationResult\.data/);
   assert.doesNotMatch(wallet,/customerPresentationRetry|programmeUnavailable/);
   assert.match(presentation,/customer-programme-compact-head/);
-  assert.match(presentation,/customer-programme-compact-balance/);
+  // v194: the balance is rendered by customerProgrammeSummaryTabsV194, not the header.
+  assert.match(app,/customer-programme-balance/);
   assert.doesNotMatch(presentation,/customer-merchant-hero/);
   assert.doesNotMatch(presentation,/customer-balance-panel/);
   assert.match(presentation,/customerTierHasProgressV103/);
@@ -58,7 +59,10 @@ test('merchant home consumes the v95 presentation contract with truthful capabil
   assert.match(presentation,/customer-rewards-grid/);
   assert.match(presentation,/customer-perks-grid/);
   assert.match(presentation,/customer-promotions-grid/);
-  assert.match(presentation,/bookingEnabled\?`<section/);
+  /* v194 (owner: "Booking option make it smaller and put upstair"): booking is a compact action in
+     the identity header, not a full-width card below the offers. Still gated on bookingEnabled. */
+  assert.match(presentation,/\$\{bookingEnabled\?`<a class="btn sm customer-programme-book" href="#\/b\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}"/);
+  assert.doesNotMatch(presentation,/bookingEnabled\?`<section/);
   assert.doesNotMatch(presentation,/id="customerMerchantScan"/);
 });
 

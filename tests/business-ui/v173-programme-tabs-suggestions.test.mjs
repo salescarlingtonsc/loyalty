@@ -26,9 +26,12 @@ test('the hidden attribute actually hides programme rows (tab filter is real)', 
    on the headings the views render. */
 test('each programme view says plainly what it shows', () => {
   assert.doesNotMatch(app, /class="programme-tabs"/);
+  /* V224: the owner struck out the blurb under this heading as redundant — the heading
+     already says which view you are in, and the kicker above says Programmes. The three
+     view names are what carry the meaning, so those are what is asserted. */
   assert.match(app, /'To set up':'List'/);
-  assert.match(app, /Running for your customers right now\./);
-  assert.match(app, /suggested starting point you can use in one tap/);
+  assert.match(app, /programmeView==='ongoing'\?'Running'/);
+  assert.doesNotMatch(app, /Running for your customers right now\./);
 });
 
 test('every not-set-up growth surface has a suggestion with a one-tap prefill', () => {

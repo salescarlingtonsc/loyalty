@@ -113,12 +113,25 @@ about:
 | mobile 390 | 763 / 898px | **452 / 587px** |
 | mobile 412 | 700 / 1000px | **385 / 688px** |
 
-⚠️ The three PNGs in this folder still show the pre-v192 card and are stale. The
-metrics JSON — the artefact the acceptance test actually asserts — is current.
-Re-capturing the images needs the Playwright script
-(`tests/browser/verify-v104-promotions-visual.mjs`), which is not installed in
-this environment; the metrics above were collected by driving the same fixture at
-the same three viewports and reading the same `window.v104AcceptanceMetrics()`.
+## v194 re-capture (2026-08-07)
+
+The customer programme page was restructured (tappable company header, Tier /
+Reward points tabs, booking action moved into the header), which changed
+`app/index.html` and therefore the fixture's production-source hash. The fixture
+was regenerated and **all four artefacts in this folder — the metrics JSON and
+the three PNGs — were re-captured from it**, so the stale-image caveat recorded
+under v192 no longer applies.
+
+Capture method: installed Chrome in `--headless=new` driven over the Chrome
+DevTools Protocol from Node's built-in WebSocket client
+(`Emulation.setDeviceMetricsOverride` for the exact viewport,
+`Runtime.evaluate` of the fixture's own `window.v104AcceptanceMetrics()`,
+`Page.captureScreenshot` with `captureBeyondViewport`). No Playwright, and no
+hand-edited numbers: the JSON is the fixture's own report verbatim.
+
+Card heights are unchanged from the v192 figures above (625px desktop,
+452/587px at 390, 385/689px at 412) — this release did not touch the promotion
+card, and the re-capture proves it.
 
 ## Still pending
 

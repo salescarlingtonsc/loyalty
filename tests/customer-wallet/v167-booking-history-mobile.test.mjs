@@ -25,7 +25,10 @@ test('customer surfaces expose Book again only through booking-enabled paths',()
   // live upcoming booking), still only when the business has customer booking enabled.
   assert.match(app,/group\.bookingEnabled&&group\.business_slug&&customerBookingAppointmentTabV178\(item\)!=='bookings'/);
   assert.match(app,/a\.status==='completed'/);
-  assert.match(app,/bookingEnabled\?`<section[\s\S]*Book again/);
+  // v194 shrank the programme's own booking action into the header; Book again on the booking
+  // tabs is unchanged and still gated on the business having customer booking enabled.
+  assert.match(app,/\$\{bookingEnabled\?`<a class="btn sm customer-programme-book"/);
+  assert.match(app,/group\.bookingEnabled&&group\.business_slug[\s\S]{0,400}?Book again/);
   assert.match(app,/repeat_service=/);
   assert.match(app,/customerRepeatBookingPreferencesV167/);
   /* v183: "who would you like" is no longer a free-text preference carried in the notes, so a
