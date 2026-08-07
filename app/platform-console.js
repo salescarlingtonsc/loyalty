@@ -5565,9 +5565,9 @@
       </form>
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt('Five clear operating lanes'))}</b><p class="small">${escapeHtml(pt('The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.'))}</p></div></div>
       ${canWrite?`<p class="muted small platform-kanban-hint" id="platformKanbanMoveHint"${view==='kanban'?'':' hidden'}>${escapeHtml(pt('Drag a card into another column to move it, or focus a card and press Ctrl with the left or right arrow. Every move still asks for its evidence.'))}</p>`:''}
-      <div class="platform-kanban"${view==='kanban'?'':' hidden'} aria-label="${escapeHtml(pt('Onboarding pipeline'))}">${operationalLanes.map(lane=>`<section class="platform-kanban-column" data-lane-column="${lane.key}" aria-labelledby="lane-${lane.key}">
+      <div class="platform-kanban"${view==='kanban'?'':' hidden'} aria-label="${escapeHtml(pt('Onboarding pipeline'))}">${operationalLanes.map(lane=>`<section class="platform-kanban-column" data-lane-column="${lane.key}" data-lane-drop="${lane.key}" aria-labelledby="lane-${lane.key}">
         <header class="platform-kanban-head"><div><h2 id="lane-${lane.key}">${escapeHtml(pt(lane.label))}</h2><p>${escapeHtml(pt(lane.description))}</p></div><span class="platform-count">${byLane[lane.key].length}</span></header>
-        <div class="platform-card-list" data-lane-drop="${lane.key}">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite,compact:true})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
+        <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite,compact:true})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
       </section>`).join('')}</div>
       <div class="platform-prospect-list platform-prospect-list-view"${view==='list'?'':' hidden'} aria-label="${escapeHtml(pt('SME onboarding list'))}">${filtered.length?prospectListTableHtml(filtered,CUI,{canWrite}):CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>
       <div class="platform-paged-summary" data-onboarding-page-summary>
@@ -5972,6 +5972,9 @@
         });
       }
     });
+    /* The drop zone is the whole lane column, not just its card list. A lane
+       holding two cards used to present a target a few pixels tall, with the
+       header and the empty space below the last card both rejecting the drop. */
     main.querySelectorAll('[data-lane-drop]').forEach(zone=>{
       zone.ondragover=event=>{
         if(!draggedProspect)return;
@@ -5979,7 +5982,14 @@
         if(event.dataTransfer)event.dataTransfer.dropEffect='move';
         zone.classList.add('is-drop-target');
       };
-      zone.ondragleave=()=>zone.classList.remove('is-drop-target');
+      /* Now that the zone contains children, dragging across a card fires
+         dragleave on the column itself. Clearing the highlight on that would
+         make it flicker for the whole drag, so only clear it when the pointer
+         has actually left the column. */
+      zone.ondragleave=event=>{
+        if(event.relatedTarget&&zone.contains(event.relatedTarget))return;
+        zone.classList.remove('is-drop-target');
+      };
       zone.ondrop=event=>{
         event.preventDefault();
         zone.classList.remove('is-drop-target');
