@@ -36,7 +36,12 @@ test('v87 rollback suite behaviorally invokes the RPC across success, rejection 
 test('booked appointments expose direct, prefilled amendments including overdue records',()=>{
   assert.match(calendar,/const amendableBooked=item\.status==='booked'&&canWrite/);
   assert.match(calendar,/data-appointment-amend/);
-  assert.match(calendar,/openAppointmentDetails\(item,\{startEditing:true\}\)/);
+  /* V205 routed both calendar entry points through openFromButton so a tap can no longer fail
+     silently. The guarantee this line protects — Amend opens the SAME dialog already in editing
+     mode, rather than a separate half-form — is unchanged, so it is asserted on the new path. */
+  assert.match(calendar,/openFromButton\(button,button\.dataset\.appointmentAmend,\{startEditing:true\}\)/);
+  assert.match(calendar,/return openAppointmentDetails\(item,\{startEditing\}\)/,
+    'the found path must still open the real dialog in editing mode');
   assert.match(calendar,/if\(startEditing\)\{editForm\.hidden=false/);
   assert.match(calendar,/This booked appointment is overdue\. You can move it to a future slot/);
   assert.match(calendar,/The new start must be in the future/);
