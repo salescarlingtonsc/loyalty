@@ -13,8 +13,12 @@ const fn = readFileSync(resolve(root, 'supabase/functions/stripe-billing-command
 const mig = readFileSync(resolve(root, 'db/migrations/20260807_nestly_v202_branch_add_and_billing.sql'), 'utf8');
 const lock = readFileSync(resolve(root, 'db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql'), 'utf8');
 
-test('the owner can reach branches from the profile menu', () => {
-  assert.match(app, /id="pmAddBranch"[^>]*>.*Branches &amp; add branch/);
+/* V209 (owner annotation "move here", arrow pointing at Operations setup): Branches left the
+   profile menu for the sidebar, beside Staff Members and Services where the rest of the setup
+   lives. The account menu is for the account, not for operations. */
+test('the owner reaches branches from Operations setup, not the account menu', () => {
+  assert.match(app, /items:\['staffmembers','branches','services','inventory','packages'\]/);
+  assert.doesNotMatch(app, /id="pmAddBranch"/);
 });
 
 test('creating a branch goes through the paid RPC, never a table insert', () => {

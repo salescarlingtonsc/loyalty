@@ -236,7 +236,13 @@ test('customer sign-up join URL is a safe 44px target without 390px overflow',()
   assert.match(signup,/business_revoke_customer_join_qrs_v90/);
   assert.match(signup,/business_get_customer_join_qr_status_v91/);
   assert.match(signup,/business_ensure_customer_join_qr_v91/);
-  assert.match(signup,/statusResult\.data\?\.created===true&&statusResult\.data\?\.join_token[\s\S]*showJoinQr\(statusResult\.data\)/);
+  /* V209 (owner, twice: "make it static ... only have 1 - not multiple different variations").
+     The panel used to draw the QR ONLY when created === true, so an owner who already had one
+     could never see it again — the only route back to their own code was to destroy it and print
+     a new one. The token is an HMAC of business:version, so the server recomputes the SAME code
+     forever; the panel now draws whenever a token comes back, created or not. */
+  assert.match(signup,/else if\(statusResult\.data\?\.join_token\)\{[\s\S]*showJoinQr\(statusResult\.data\)/);
+  assert.match(signup,/This is your permanent sign-up code/);
   assert.match(signup,/publicAppUrl\(`join\?token=\$\{encodeURIComponent\(data\.join_token\)\}`\)/);
   assert.match(app,/\.portal-link\{[^}]*display:flex[^}]*width:100%[^}]*max-width:100%[^}]*min-height:44px[^}]*overflow-wrap:anywhere[^}]*word-break:break-word/s);
   assert.match(mobile,/\.portal-link-row,\.portal-link\{[^}]*width:100%[^}]*max-width:100%[^}]*min-width:0/s);

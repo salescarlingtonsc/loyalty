@@ -1301,8 +1301,10 @@ function profileHtml(){
         ${S.hasCustomerPersona?`<a href="#/wallet" id="pmWallet">${CUI.icon('wallet',{size:18})}${esc(BRAND.customerLabel)}</a>`:''}
         ${S.myRole==='owner'?`<a href="#/setup" id="pmSetup">${CUI.icon('setup',{size:18})}Get started</a>`:''}
         ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:18})}Settings</a>`:''}
-        ${S.myRole==='owner'?'<a href="#/settings?tab=team" id="pmTeam">Team &amp; staff</a>':''}
-        ${S.myRole==='owner'?`<a href="#/branches" id="pmAddBranch">${CUI.icon('settings',{size:18})}Branches &amp; add branch</a>`:''}
+        <!-- V209 (owner annotations): "remove this" on Team & staff — Staff Members is already in
+             the sidebar, and two doors to one page is the duplicated navigation flagged at V180.
+             "move here" on Branches — it belongs in Operations setup beside Staff and Services,
+             not in the account menu, so it moved to the sidebar and left here. -->
         ${S.isSA?`<a href="#/platform" id="pmPlatform">${CUI.icon('platform',{size:18})}Platform</a>`:''}
         <a href="/data-request.html" id="pmDeleteAccount">${CUI.icon('back',{size:18})}Account &amp; privacy</a>
         <a href="#" id="pmSignout" style="color:var(--red)">${CUI.icon('back',{size:18})}Sign out</a>
@@ -13356,6 +13358,15 @@ function enhanceStaffMembersTabsV164(teamPanel){
       <div class="row" style="margin-top:12px"><button class="btn sm" id="staffAddSave">Add teammate</button><button class="btn ghost sm" id="staffAddCancel">Cancel</button><span class="muted small" id="staffAddStatus" role="status" aria-live="polite"></span></div>
     </div>`;
   card.prepend(listPanel);
+  /* V209 (owner circled it): moving #team into this panel left its old card's "Team" heading and
+     description behind in the source card, rendering as a bare word with nothing under it. Take
+     the heading row and the blurb with the list they describe, so nothing is orphaned. */
+  const teamCard=teamNode.closest('.settings-team-card');
+  if(teamCard){
+    teamCard.querySelectorAll(':scope > .row, :scope > p.muted.small').forEach(node=>{
+      if(!node.contains(teamNode))node.remove();
+    });
+  }
   listPanel.appendChild(teamNode);
   const invitePanel=document.createElement('section');
   invitePanel.className='staff-members-tab-panel staff-members-section-card';
@@ -14201,7 +14212,10 @@ async function loadCustomerProgrammePresentationEditorV95(){
 
 async function settingsPage(){
   const requestedSettingsTab=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('tab');
-  if(['workspace','programme','modules','catalogue','team','data','fields'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
+  /* V209: 'data' was the Import & sign-up tab, now folded into 'fields' (Customer interface).
+     Old ?tab=data links still land somewhere sensible rather than on a dead tab. */
+  if(requestedSettingsTab==='data')requestedSettingsTab='fields';
+  if(['workspace','programme','modules','catalogue','team','fields'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
   const [{data:moduleRules,error:moduleRulesError},{data:fieldDefs,error:fieldDefsError}]=await Promise.all([
     sb.from('module_registry').select('module_key,requires_modules').order('sort_order'),
@@ -14217,8 +14231,12 @@ async function settingsPage(){
       <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
-      <button type="button" class="settings-tab" role="tab" id="settab-data" aria-controls="setpanel-data" aria-selected="false" tabindex="-1" data-settab="data">Import &amp; sign-up</button>
-      <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer fields &amp; privacy</button>
+      <!-- V209 (owner annotations): "Import & sign-up" struck out, and an arrow from "Customer
+           fields & privacy" reading "should be here under new tab Customer Interface". Everything
+           the CUSTOMER meets — the sign-up QR they scan and the fields they are asked for — now
+           sits behind one tab named for them, instead of being filed under an operations word
+           ("Import") that describes what the owner does rather than what the customer sees. -->
+      <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer interface</button>
     </div>
     <section class="settings-panel" id="setpanel-workspace" role="tabpanel" aria-labelledby="settab-workspace" tabindex="-1"><div class="card"><b>Business</b>
       ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'business'})}</div>`:''}
@@ -14268,13 +14286,13 @@ async function settingsPage(){
       <div id="tplList">${CUI.skeletonGrid({cards:1,lines:3})}</div>
     </div>
 </section>
-    <section class="settings-panel" id="setpanel-data" role="tabpanel" aria-labelledby="settab-data" tabindex="-1" hidden><div class="split"><div class="card"><b>Import customers (CSV)</b>
+    <section class="settings-panel" id="setpanel-fields" role="tabpanel" aria-labelledby="settab-fields" tabindex="-1" hidden>
+    <div class="split"><div class="card"><b>Import customers (CSV)</b>
       <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, birth_date (YYYY-MM-DD).</p>
       <label for="csvf">Customer CSV file</label>
       <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
       <div id="csvprev" style="margin-top:12px"></div></div>
-      <div class="card" id="signupWrap">${CUI.skeletonCard({lines:5})}</div></div></section>
-    <section class="settings-panel" id="setpanel-fields" role="tabpanel" aria-labelledby="settab-fields" tabindex="-1" hidden>
+      <div class="card" id="signupWrap">${CUI.skeletonCard({lines:5})}</div></div>
     <div class="card" style="margin-top:16px"><b>Customer fields</b>
       <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
       <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" data-merchant-content style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
@@ -14558,7 +14576,24 @@ async function settingsPage(){
     if(staffError||inviteError)return fail(staffError||inviteError);
     teamRowsById=new Map((st||[]).map(row=>[row.id,row]));
     myStaffId=(st||[]).find(x=>x.user_id===S.user?.id)?.id||null;
-    $('team').innerHTML=(st&&st.length)?st.map(s=>{
+    /* V209 (owner: "staff list very messy, no title/subtitle for each category ... make it
+       visually nice"). One flat list mixed the owner, staff who can sign in, and roster-only
+       teammates, so the three things an owner actually needs to tell apart looked identical.
+       Grouped, each with a heading that says what the group IS and a subtitle that says what it
+       MEANS. Empty groups are dropped rather than rendered as a bare heading — which is the
+       orphaned "Team" the owner circled. */
+    const staffGroupsV209=[
+      {key:'owner',title:'Owner & managers',
+       sub:'Full access to every module. Cannot be restricted.',
+       match:row=>['owner','manager'].includes(row.role)},
+      {key:'access',title:'Team with app access',
+       sub:'They can sign in. Each active login is a billable seat.',
+       match:row=>!['owner','manager'].includes(row.role)&&!!row.user_id},
+      {key:'roster',title:'Roster only',
+       sub:'On the rota and creditable for sales, with no login. No seat is billed.',
+       match:row=>!['owner','manager'].includes(row.role)&&!row.user_id}
+    ];
+    const staffRowV209=s=>{
       const explicitCount=s.module_perms&&typeof s.module_perms==='object'?Object.keys(s.module_perms).length:0;
       const modPill=s.role==='owner'?'':(s.module_perms===null?'<span class="pill on">Inherits enabled modules</span>':`<span class="pill off">${explicitCount} explicit module${explicitCount===1?'':'s'}</span>`);
       const accessPill=s.user_id?'<span class="pill ok">App access active</span>':'<span class="pill off">No app access</span>';
@@ -14588,7 +14623,21 @@ async function settingsPage(){
         ${openProfileId===s.id?staffProfilePanelHtml(s):''}
         ${(s.role!=='owner'&&openModId===s.id)?modPanelHtml(s):''}
       </div>`;
-    }).join(''):'<p class="muted small">No teammates yet — invite one below.</p>';
+    };
+    const rows=st||[];
+    $('team').innerHTML=rows.length
+      ?staffGroupsV209.map(group=>{
+          const members=rows.filter(group.match);
+          if(!members.length)return '';
+          return `<section class="staff-group-v209">
+            <div class="staff-group-head-v209">
+              <h3>${esc(group.title)} <span class="staff-group-count-v209">${members.length}</span></h3>
+              <p class="muted small">${esc(group.sub)}</p>
+            </div>
+            ${members.map(staffRowV209).join('')}
+          </section>`;
+        }).join('')
+      :'<p class="muted small">No teammates yet — add one above, or invite one below.</p>';
     $('invites').innerHTML=(inv&&inv.length)?inv.map(i=>{
       const code=normalizeCompanyInviteCodeV151(i.code)||i.code;
       const link=staffInviteLinkV151(code);
@@ -14999,9 +15048,21 @@ async function loadSignupConfig(){
   if(!$('joinQrStatus'))return;
   if(statusResult.error){
     $('joinQrStatus').textContent='Join QR status could not be loaded. Try again.';
-  }else if(statusResult.data?.created===true&&statusResult.data?.join_token){
+  }else if(statusResult.data?.join_token){
+    /* V209 (owner, twice: "i want a STATIC qrcode ... why the qrcode requires me to generate new
+       one every single time?"). This used to draw the QR only when created === true, so an owner
+       who already HAD one was shown "an active QR already exists" and a Replace button — and the
+       only way to see their own code again was to destroy it and print a new one.
+       The token was never random: it is an HMAC of business:version, so the server can recompute
+       the SAME code forever, and both the ensure and the status paths now return it. One business,
+       one code, drawn every time. Replace still exists, but it is now genuinely for a lost or
+       compromised print rather than the only way to see what you already have. */
     await showJoinQr(statusResult.data);
-  }else if(statusResult.data?.created===false||Number(statusResult.data?.active_count||0)>0){
+    if(statusResult.data.created!==true){
+      $('createJoinQr').querySelector('span').textContent='Replace join QR';
+      $('joinQrStatus').innerHTML='This is your permanent sign-up code. Print it once — it stays the same, so a saved or printed copy never stops working. Replace it only if that copy is lost.';
+    }
+  }else if(Number(statusResult.data?.active_count||0)>0){
     const activeExpiry=statusResult.data?.latest_expires_at||statusResult.data?.expires_at;
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(activeExpiry?'activeQrExistsUntil':'activeQrExists',{expires:activeExpiry?sgt(activeExpiry):''});
     $('createJoinQr').querySelector('span').textContent='Replace join QR';
