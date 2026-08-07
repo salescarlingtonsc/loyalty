@@ -66,8 +66,11 @@ create table if not exists public.platform_accounting_receipts_v199(
 );
 
 alter table public.platform_accounting_receipts_v199 enable row level security;
--- Deliberately no policy: like every other platform table, reads and writes go
--- through the SECURITY DEFINER RPCs below, never PostgREST.
+-- Deliberately no policy, and the browser roles are stripped of table rights
+-- outright: like every other platform table, reads and writes go through the
+-- SECURITY DEFINER RPCs below, never PostgREST. Receipts are financial records,
+-- so "no policy" alone is not stated clearly enough — the ACL says it too.
+revoke all on table public.platform_accounting_receipts_v199 from anon, authenticated;
 
 create index if not exists platform_accounting_receipts_v199_queue_idx
   on public.platform_accounting_receipts_v199(created_at)

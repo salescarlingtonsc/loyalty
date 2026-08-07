@@ -76,11 +76,20 @@ const NAVGROUPS=[
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
   {key:'grow',icon:'star',label:'Programmes',items:['loyalty','retention','referrals','memberships','giftcards']},
+  /* V206 (owner: "allow firms to reverse the transactions if needed to easily at ease").
+     Reversing already worked — every row of this list carries Reverse and Correct amount — so
+     the gap was that "Sales" does not say so. Renamed rather than moved: I did move it next to
+     Record sale first, and V150 caught it, because keeping operational actions separate from
+     money history is a decision that was made on purpose. Overturning it is the owner's call,
+     not a side effect of a label fix. */
   {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf']},
   {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages']}
 ];
 let navOpen={};
 let pendingCustomerInactivity=null;
+/* Consumed once by whichever page the notification lands on, then cleared — a stale focus id
+   would highlight an unrelated row on the next visit. */
+let pendingNotificationFocusV206='';
 let pendingTillRedemptionScan=false;
 let pendingProgrammeSuggestV172=null;
 let customerUiObserver=null;
@@ -1401,7 +1410,7 @@ function notifMenuHtml(){
       ${notifState.unread>0?`<button class="btn ghost sm" id="markAll" style="padding:4px 10px;font-size:11.5px">Mark all read</button>`:''}</div>
     ${notifError?`<div class="err" style="margin:0 6px 8px">${esc(notifError)}</div>`:''}
     ${!notifLoaded?`<div class="notif-empty">Loading…</div>`
-      :items.length?items.map(it=>`<button type="button" class="notif-item ${it.read_at?'':'unread'}" data-nid="${esc(it.id)}" data-ref="${esc(it.kind)}">
+      :items.length?items.map(it=>`<button type="button" class="notif-item ${it.read_at?'':'unread'}" data-nid="${esc(it.id)}" data-ref="${esc(it.kind)}" data-refid="${esc(it.ref_id||'')}">
           <div class="t">${esc(it.title||'')}</div>
           ${it.body?`<div class="b">${esc(it.body)}</div>`:''}
           <div class="ago">${timeAgo(it.created_at)}</div></button>`).join('')
@@ -1433,6 +1442,11 @@ function wireBell(page){
       if(item&&!item.read_at){item.read_at=new Date().toISOString();notifState.unread=Math.max(0,notifState.unread-1);}
     }
     bellOpen=false;
+    /* V206 (owner: "clicking in the specific notification should brings me to the specific page
+       to approve or reject or call customer"). notifications already carried ref_table/ref_id —
+       the exact record — and the panel was throwing it away and landing you on the list to hunt
+       for the row you had just been told about. */
+    pendingNotificationFocusV206=el.dataset.refid||'';
     nav(NOTIF_ROUTE[kind]||'#/bookings');
   });
   const tgl=$('notifToggle');
@@ -4060,8 +4074,10 @@ async function tillPage(){
     }
     CUI.announce(workspaceTemplateTextV97('itemAdded',{item:bundle.name}));onSaleLinesChanged();
   }
-  // Custom "Other item": a mandatory staff reason (3..200 chars) rides with the line and is sent
-  // to evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates it.
+  // Custom "Other item": an OPTIONAL note rides with the line and is sent to
+  // evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates both.
+  // The amount may be negative — a correction the other way — and the server refuses to let one
+  // take the sale to zero or below.
   function addCustomLine(cents,reason){
     if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1,reason});
@@ -4478,8 +4494,9 @@ async function tillPage(){
       <div class="row"><div><h2 id="tCustomTitle">Other item</h2><p class="muted small">A one-off charge that isn't in your catalogue. Owner and manager only.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tCustomClose">Close</button></div>
       <label for="tCustomAmt">Amount (${S.biz.currency||'SGD'})</label>
       <input id="tCustomAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;text-align:center;height:52px">
-      <label for="tCustomReason">Reason (required, 3–200 characters)</label>
-      <input id="tCustomReason" maxlength="200" placeholder="e.g. item not in list, price adjustment">
+      <p class="muted small" style="margin-top:6px">Use a minus for a correction the other way — <b>-5.00</b> takes $5 off and reduces the points earned to match.</p>
+      <label for="tCustomReason">Note (optional)</label>
+      <input id="tCustomReason" maxlength="200" placeholder="Leave blank if you are in a hurry">
       <div id="tCustomErr"></div>
       <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:17})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
     </div></div>`);
@@ -4488,12 +4505,18 @@ async function tillPage(){
     deactivate=CUI.activateDialog($('tCustomModal'),{onClose:close,initialFocus:'#tCustomAmt'});
     $('tCustomClose').onclick=$('tCustomCancel').onclick=close;
     const submit=()=>{
+      /* V206 (owner: "dont need reason when add item ... for over sold or ad hoc purchase that
+         need fast transactions (like negative transaction = minus points away, or positive
+         transactions maybe due to under charge)"). A minus sign is now allowed, and the note is
+         optional — this control exists to keep a queue moving. The server still records WHO
+         keyed it, which is the half of the audit trail that matters, and still refuses to let a
+         negative take a sale to zero or below. */
       const raw=($('tCustomAmt').value||'').trim();
-      if(!/^\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50</div>';return;}
+      if(!/^-?\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50 or -5.00</div>';return;}
       const c=Math.round(Number(raw)*100);
-      if(!(c>0)||c>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount between 0.01 and 21,474,836.47</div>';return;}
+      if(!c||Math.abs(c)>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount other than zero, for example 12.50 or -5.00</div>';return;}
       const reason=($('tCustomReason').value||'').trim();
-      if(reason.length<3||reason.length>200){$('tCustomErr').innerHTML='<div class="err">Write a short reason (3–200 characters)</div>';return;}
+      if(reason.length>200){$('tCustomErr').innerHTML='<div class="err">Keep the note under 200 characters</div>';return;}
       close();addCustomLine(c,reason);
     };
     $('tCustomConfirm').onclick=submit;
@@ -5203,6 +5226,23 @@ async function saveCustomerRedemptionCapabilityV89({businessId,redemptionEnabled
     p_appointment_changes_enabled:value.appointment_changes_enabled===true
   });
 }
+/* V206: land on the row the notification was about, highlight it briefly so the eye finds it,
+   and move focus to its first action so a keyboard or screen-reader user arrives at Confirm
+   rather than at the top of a table. Consumed once — a stale id would highlight the wrong row on
+   the next visit. If the row is not on this list (already handled, or filtered out) it clears
+   quietly rather than pretending something happened. */
+function focusNotifiedBookingV206(list){
+  const id=pendingNotificationFocusV206;
+  pendingNotificationFocusV206='';
+  if(!id||!list)return;
+  const row=list.querySelector(`[data-booking-row="${CSS.escape(id)}"]`);
+  if(!row)return;
+  row.classList.add('is-notified-v206');
+  row.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+  const action=row.querySelector('.booking-decision,a[href^="tel:"]');
+  if(action)action.focus({preventScroll:true});
+  setTimeout(()=>row.classList.remove('is-notified-v206'),2600);
+}
 function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
@@ -5451,14 +5491,17 @@ async function bookingsPage(){
     if(error) return fail(error);
     const list=$('blist');if(!list?.isConnected)return;
     list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
-      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
-      <td class="small" data-label="Contact">${esc(b.phone||b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
+      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
+      <td class="small" data-label="Contact">${b.phone
+        ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:15})} ${esc(b.phone)}</a>`
+        : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}">${esc(b.status)}</span></td>
       <td data-label="Actions">${actionable?`${canConvertBooking?`<button class="btn sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''}>Confirm</button>`:''}
       ${canDeclineBooking?`<button class="btn ghost sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','decline')" ${pendingDecisions.has(b.id)?'disabled':''}>Decline</button>`:''}`:'<span class="muted small">No action needed</span>'}
       ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div>`
       :CUI.emptyState({iconName:'appointments',title:'No booking requests yet',body:'Customer booking requests will appear here after customers use your booking link.'});
+    focusNotifiedBookingV206(list);
   }
   async function loadCr(){
     const {data:cr,error}=await sb.from('change_requests').select('*, appointments(starts_at, clients(full_name))')

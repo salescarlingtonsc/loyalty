@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="202e4fe1696e2f35af0b95062a84357278109b62e2a781204424e2ef4715b7a6"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="12e0f645b111f98ab7554dcc9dc2105b0d71f00123e14129109a445aae900340"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -112,6 +112,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .section-subtabs-v200{display:flex;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .section-subtabs-v200::-webkit-scrollbar{display:none}
 .section-subtabs-v200 button{flex:0 0 auto;white-space:nowrap}
+/* V206: the row a notification sent you to. A brief tint, not a permanent one — it is a "here it
+   is", and a highlight that never fades becomes noise on the next render. Respects reduced
+   motion by simply not animating; the tint still lands. */
+.is-notified-v206>td{background:var(--tint)!important;transition:background .5s var(--ease)}
+@media(prefers-reduced-motion:reduce){.is-notified-v206>td{transition:none}}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -1523,7 +1528,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 202e4fe1696e2f35af0b95062a84357278109b62e2a781204424e2ef4715b7a6</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 12e0f645b111f98ab7554dcc9dc2105b0d71f00123e14129109a445aae900340</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2685,7 +2690,7 @@ function pruneRewardSiblingsV139(root){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'202e4fe1696e2f35af0b95062a84357278109b62e2a781204424e2ef4715b7a6',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'12e0f645b111f98ab7554dcc9dc2105b0d71f00123e14129109a445aae900340',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

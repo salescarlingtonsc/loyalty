@@ -1383,6 +1383,12 @@
       "path": "db/migrations/20260807_nestly_v199_receipt_capture.sql",
       "semanticVersion": "v199",
       "proposedDeployVersion": "20260807090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v206_fast_corrections.sql",
+      "semanticVersion": "v206",
+      "proposedDeployVersion": "20260807100000"
     }
   ]
 }

@@ -1384,6 +1384,12 @@
       "version": "20260807090000",
       "name": "nestly_v199_receipt_capture",
       "sourcePath": "db/migrations/20260807_nestly_v199_receipt_capture.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807100000",
+      "name": "nestly_v206_fast_corrections",
+      "sourcePath": "db/migrations/20260807_nestly_v206_fast_corrections.sql"
     }
   ]
 }

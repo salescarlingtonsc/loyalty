@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="0cc693e1b77888b4078927db9404700cc2c1ebb2881465e6a780cd5b8b17fe25"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="5bf9c8ff12613ae6e4e4a46af1108234cb394197eff585de544fc085a44efcaf"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -112,6 +112,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .section-subtabs-v200{display:flex;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .section-subtabs-v200::-webkit-scrollbar{display:none}
 .section-subtabs-v200 button{flex:0 0 auto;white-space:nowrap}
+/* V206: the row a notification sent you to. A brief tint, not a permanent one — it is a "here it
+   is", and a highlight that never fades becomes noise on the next render. Respects reduced
+   motion by simply not animating; the tint still lands. */
+.is-notified-v206>td{background:var(--tint)!important;transition:background .5s var(--ease)}
+@media(prefers-reduced-motion:reduce){.is-notified-v206>td{transition:none}}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -1524,7 +1529,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 0cc693e1b77888b4078927db9404700cc2c1ebb2881465e6a780cd5b8b17fe25</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 5bf9c8ff12613ae6e4e4a46af1108234cb394197eff585de544fc085a44efcaf</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2500,8 +2505,10 @@ async function tillPage(){
     }
     CUI.announce(workspaceTemplateTextV97('itemAdded',{item:bundle.name}));onSaleLinesChanged();
   }
-  // Custom "Other item": a mandatory staff reason (3..200 chars) rides with the line and is sent
-  // to evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates it.
+  // Custom "Other item": an OPTIONAL note rides with the line and is sent to
+  // evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates both.
+  // The amount may be negative — a correction the other way — and the server refuses to let one
+  // take the sale to zero or below.
   function addCustomLine(cents,reason){
     if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1,reason});
@@ -2918,8 +2925,9 @@ async function tillPage(){
       <div class="row"><div><h2 id="tCustomTitle">Other item</h2><p class="muted small">A one-off charge that isn't in your catalogue. Owner and manager only.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tCustomClose">Close</button></div>
       <label for="tCustomAmt">Amount (${S.biz.currency||'SGD'})</label>
       <input id="tCustomAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;text-align:center;height:52px">
-      <label for="tCustomReason">Reason (required, 3–200 characters)</label>
-      <input id="tCustomReason" maxlength="200" placeholder="e.g. item not in list, price adjustment">
+      <p class="muted small" style="margin-top:6px">Use a minus for a correction the other way — <b>-5.00</b> takes $5 off and reduces the points earned to match.</p>
+      <label for="tCustomReason">Note (optional)</label>
+      <input id="tCustomReason" maxlength="200" placeholder="Leave blank if you are in a hurry">
       <div id="tCustomErr"></div>
       <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:17})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
     </div></div>`);
@@ -2928,12 +2936,18 @@ async function tillPage(){
     deactivate=CUI.activateDialog($('tCustomModal'),{onClose:close,initialFocus:'#tCustomAmt'});
     $('tCustomClose').onclick=$('tCustomCancel').onclick=close;
     const submit=()=>{
+      /* V206 (owner: "dont need reason when add item ... for over sold or ad hoc purchase that
+         need fast transactions (like negative transaction = minus points away, or positive
+         transactions maybe due to under charge)"). A minus sign is now allowed, and the note is
+         optional — this control exists to keep a queue moving. The server still records WHO
+         keyed it, which is the half of the audit trail that matters, and still refuses to let a
+         negative take a sale to zero or below. */
       const raw=($('tCustomAmt').value||'').trim();
-      if(!/^\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50</div>';return;}
+      if(!/^-?\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50 or -5.00</div>';return;}
       const c=Math.round(Number(raw)*100);
-      if(!(c>0)||c>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount between 0.01 and 21,474,836.47</div>';return;}
+      if(!c||Math.abs(c)>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount other than zero, for example 12.50 or -5.00</div>';return;}
       const reason=($('tCustomReason').value||'').trim();
-      if(reason.length<3||reason.length>200){$('tCustomErr').innerHTML='<div class="err">Write a short reason (3–200 characters)</div>';return;}
+      if(reason.length>200){$('tCustomErr').innerHTML='<div class="err">Keep the note under 200 characters</div>';return;}
       close();addCustomLine(c,reason);
     };
     $('tCustomConfirm').onclick=submit;
@@ -3298,7 +3312,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'0cc693e1b77888b4078927db9404700cc2c1ebb2881465e6a780cd5b8b17fe25',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'5bf9c8ff12613ae6e4e4a46af1108234cb394197eff585de544fc085a44efcaf',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

@@ -263,7 +263,7 @@ function authChallengeHtml(locale='en'){
 let passwordRecoveryActive=false,passwordRecoveryError=false;
 
 const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
-  sales:['sales','Sales'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
+  sales:['sales','Sales & refunds'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
   inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
@@ -2348,6 +2348,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   viewAppointmentAgenda:Object.freeze({en:'View {service} for {customer}, {day}, {time}, {duration} minutes','zh-CN':'查看 {customer} 的 {service}：{day}，{time}，{duration} 分钟',ms:'Lihat {service} untuk {customer}, {day}, {time}, {duration} minit'}),
   calendarAppointment:Object.freeze({en:'{service} for {customer}, {time}, {duration} minutes, {staff}','zh-CN':'{customer} 的 {service}，{time}，{duration} 分钟，{staff}',ms:'{service} untuk {customer}, {time}, {duration} minit, {staff}'}),
   bookAppointmentSlot:Object.freeze({en:'Book {service} with {staff} at {time}','zh-CN':'预约 {service}：{staff}，{time}',ms:'Tempah {service} dengan {staff} pada {time}'}),
+  callBookingCustomer:Object.freeze({en:'Call {customer} on {phone}','zh-CN':'致电 {customer}：{phone}',ms:'Hubungi {customer} di {phone}'}),
   removeFromWaitlist:Object.freeze({en:'Remove {customer} from waitlist','zh-CN':'将 {customer} 从候补名单中移除',ms:'Alih keluar {customer} daripada senarai menunggu'}),
   joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
   viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
@@ -2395,7 +2396,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
   'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
-  'viewAppointmentAgenda','calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt',
+  'viewAppointmentAgenda','calendarAppointment','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails',
   'growPublishedReward','growPublishedRewards','growPublishedBringBackRule',
   'growPublishedBringBackRules','growDraftReady','publishImpactAction',

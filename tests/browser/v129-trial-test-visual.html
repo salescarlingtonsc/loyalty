@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="79ce615663644ff60bcb910e9a481f9b54cb1c5648ee74319b59651ba1effc75"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="c25af993f2b1ae7ab47863660e3726c2318af1421443adabd2557b2566b517ef"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -112,6 +112,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .section-subtabs-v200{display:flex;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .section-subtabs-v200::-webkit-scrollbar{display:none}
 .section-subtabs-v200 button{flex:0 0 auto;white-space:nowrap}
+/* V206: the row a notification sent you to. A brief tint, not a permanent one — it is a "here it
+   is", and a highlight that never fades becomes noise on the next render. Respects reduced
+   motion by simply not animating; the tint still lands. */
+.is-notified-v206>td{background:var(--tint)!important;transition:background .5s var(--ease)}
+@media(prefers-reduced-motion:reduce){.is-notified-v206>td{transition:none}}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -1524,7 +1529,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 79ce615663644ff60bcb910e9a481f9b54cb1c5648ee74319b59651ba1effc75</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · c25af993f2b1ae7ab47863660e3726c2318af1421443adabd2557b2566b517ef</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -3576,8 +3581,10 @@ async function tillPage(){
     }
     CUI.announce(workspaceTemplateTextV97('itemAdded',{item:bundle.name}));onSaleLinesChanged();
   }
-  // Custom "Other item": a mandatory staff reason (3..200 chars) rides with the line and is sent
-  // to evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates it.
+  // Custom "Other item": an OPTIONAL note rides with the line and is sent to
+  // evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates both.
+  // The amount may be negative — a correction the other way — and the server refuses to let one
+  // take the sale to zero or below.
   function addCustomLine(cents,reason){
     if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1,reason});
@@ -3994,8 +4001,9 @@ async function tillPage(){
       <div class="row"><div><h2 id="tCustomTitle">Other item</h2><p class="muted small">A one-off charge that isn't in your catalogue. Owner and manager only.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tCustomClose">Close</button></div>
       <label for="tCustomAmt">Amount (${S.biz.currency||'SGD'})</label>
       <input id="tCustomAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;text-align:center;height:52px">
-      <label for="tCustomReason">Reason (required, 3–200 characters)</label>
-      <input id="tCustomReason" maxlength="200" placeholder="e.g. item not in list, price adjustment">
+      <p class="muted small" style="margin-top:6px">Use a minus for a correction the other way — <b>-5.00</b> takes $5 off and reduces the points earned to match.</p>
+      <label for="tCustomReason">Note (optional)</label>
+      <input id="tCustomReason" maxlength="200" placeholder="Leave blank if you are in a hurry">
       <div id="tCustomErr"></div>
       <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:17})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
     </div></div>`);
@@ -4004,12 +4012,18 @@ async function tillPage(){
     deactivate=CUI.activateDialog($('tCustomModal'),{onClose:close,initialFocus:'#tCustomAmt'});
     $('tCustomClose').onclick=$('tCustomCancel').onclick=close;
     const submit=()=>{
+      /* V206 (owner: "dont need reason when add item ... for over sold or ad hoc purchase that
+         need fast transactions (like negative transaction = minus points away, or positive
+         transactions maybe due to under charge)"). A minus sign is now allowed, and the note is
+         optional — this control exists to keep a queue moving. The server still records WHO
+         keyed it, which is the half of the audit trail that matters, and still refuses to let a
+         negative take a sale to zero or below. */
       const raw=($('tCustomAmt').value||'').trim();
-      if(!/^\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50</div>';return;}
+      if(!/^-?\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50 or -5.00</div>';return;}
       const c=Math.round(Number(raw)*100);
-      if(!(c>0)||c>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount between 0.01 and 21,474,836.47</div>';return;}
+      if(!c||Math.abs(c)>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount other than zero, for example 12.50 or -5.00</div>';return;}
       const reason=($('tCustomReason').value||'').trim();
-      if(reason.length<3||reason.length>200){$('tCustomErr').innerHTML='<div class="err">Write a short reason (3–200 characters)</div>';return;}
+      if(reason.length>200){$('tCustomErr').innerHTML='<div class="err">Keep the note under 200 characters</div>';return;}
       close();addCustomLine(c,reason);
     };
     $('tCustomConfirm').onclick=submit;
@@ -4719,6 +4733,23 @@ async function saveCustomerRedemptionCapabilityV89({businessId,redemptionEnabled
     p_appointment_changes_enabled:value.appointment_changes_enabled===true
   });
 }
+/* V206: land on the row the notification was about, highlight it briefly so the eye finds it,
+   and move focus to its first action so a keyboard or screen-reader user arrives at Confirm
+   rather than at the top of a table. Consumed once — a stale id would highlight the wrong row on
+   the next visit. If the row is not on this list (already handled, or filtered out) it clears
+   quietly rather than pretending something happened. */
+function focusNotifiedBookingV206(list){
+  const id=pendingNotificationFocusV206;
+  pendingNotificationFocusV206='';
+  if(!id||!list)return;
+  const row=list.querySelector(`[data-booking-row="${CSS.escape(id)}"]`);
+  if(!row)return;
+  row.classList.add('is-notified-v206');
+  row.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+  const action=row.querySelector('.booking-decision,a[href^="tel:"]');
+  if(action)action.focus({preventScroll:true});
+  setTimeout(()=>row.classList.remove('is-notified-v206'),2600);
+}
 function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
@@ -4991,14 +5022,17 @@ async function bookingsPage(){
     if(error) return fail(error);
     const list=$('blist');if(!list?.isConnected)return;
     list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
-      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
-      <td class="small" data-label="Contact">${esc(b.phone||b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
+      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
+      <td class="small" data-label="Contact">${b.phone
+        ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:15})} ${esc(b.phone)}</a>`
+        : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}">${esc(b.status)}</span></td>
       <td data-label="Actions">${actionable?`${canConvertBooking?`<button class="btn sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''}>Confirm</button>`:''}
       ${canDeclineBooking?`<button class="btn ghost sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','decline')" ${pendingDecisions.has(b.id)?'disabled':''}>Decline</button>`:''}`:'<span class="muted small">No action needed</span>'}
       ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div>`
       :CUI.emptyState({iconName:'appointments',title:'No booking requests yet',body:'Customer booking requests will appear here after customers use your booking link.'});
+    focusNotifiedBookingV206(list);
   }
   async function loadCr(){
     const {data:cr,error}=await sb.from('change_requests').select('*, appointments(starts_at, clients(full_name))')
@@ -10773,8 +10807,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
     }
     CUI.announce(workspaceTemplateTextV97('itemAdded',{item:bundle.name}));onSaleLinesChanged();
   }
-  // Custom "Other item": a mandatory staff reason (3..200 chars) rides with the line and is sent
-  // to evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates it.
+  // Custom "Other item": an OPTIONAL note rides with the line and is sent to
+  // evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates both.
+  // The amount may be negative — a correction the other way — and the server refuses to let one
+  // take the sale to zero or below.
   function addCustomLine(cents,reason){
     if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1,reason});
@@ -11191,8 +11227,9 @@ async function svRunTopupFlow({branches,state,testOnly}){
       <div class="row"><div><h2 id="tCustomTitle">Other item</h2><p class="muted small">A one-off charge that isn't in your catalogue. Owner and manager only.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tCustomClose">Close</button></div>
       <label for="tCustomAmt">Amount (${S.biz.currency||'SGD'})</label>
       <input id="tCustomAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;text-align:center;height:52px">
-      <label for="tCustomReason">Reason (required, 3–200 characters)</label>
-      <input id="tCustomReason" maxlength="200" placeholder="e.g. item not in list, price adjustment">
+      <p class="muted small" style="margin-top:6px">Use a minus for a correction the other way — <b>-5.00</b> takes $5 off and reduces the points earned to match.</p>
+      <label for="tCustomReason">Note (optional)</label>
+      <input id="tCustomReason" maxlength="200" placeholder="Leave blank if you are in a hurry">
       <div id="tCustomErr"></div>
       <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:17})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
     </div></div>`);
@@ -11201,12 +11238,18 @@ async function svRunTopupFlow({branches,state,testOnly}){
     deactivate=CUI.activateDialog($('tCustomModal'),{onClose:close,initialFocus:'#tCustomAmt'});
     $('tCustomClose').onclick=$('tCustomCancel').onclick=close;
     const submit=()=>{
+      /* V206 (owner: "dont need reason when add item ... for over sold or ad hoc purchase that
+         need fast transactions (like negative transaction = minus points away, or positive
+         transactions maybe due to under charge)"). A minus sign is now allowed, and the note is
+         optional — this control exists to keep a queue moving. The server still records WHO
+         keyed it, which is the half of the audit trail that matters, and still refuses to let a
+         negative take a sale to zero or below. */
       const raw=($('tCustomAmt').value||'').trim();
-      if(!/^\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50</div>';return;}
+      if(!/^-?\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50 or -5.00</div>';return;}
       const c=Math.round(Number(raw)*100);
-      if(!(c>0)||c>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount between 0.01 and 21,474,836.47</div>';return;}
+      if(!c||Math.abs(c)>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount other than zero, for example 12.50 or -5.00</div>';return;}
       const reason=($('tCustomReason').value||'').trim();
-      if(reason.length<3||reason.length>200){$('tCustomErr').innerHTML='<div class="err">Write a short reason (3–200 characters)</div>';return;}
+      if(reason.length>200){$('tCustomErr').innerHTML='<div class="err">Keep the note under 200 characters</div>';return;}
       close();addCustomLine(c,reason);
     };
     $('tCustomConfirm').onclick=submit;
@@ -11685,6 +11728,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'79ce615663644ff60bcb910e9a481f9b54cb1c5648ee74319b59651ba1effc75',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'c25af993f2b1ae7ab47863660e3726c2318af1421443adabd2557b2566b517ef',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
