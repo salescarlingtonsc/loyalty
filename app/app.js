@@ -48,6 +48,21 @@ const publicAppUrl=(route='')=>window.NestlyNativeBridge.publicUrl(`/#/${String(
    flow here, so it's safe to turn off. */
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit',
   experimental:{passkey:true}}});
+/* V208: keep the EDGE FUNCTION bearer token in step with the signed-in user.
+   A real branch purchase failed in production with a bare 401 from stripe-billing-command, and
+   the function's own auth step reported auth_token_rejected: the bearer it received was the
+   publishable key, not the user's access token. This project uses the new publishable key
+   format, which is not a JWT, so the server had nothing to identify a user with and every edge
+   function that reads auth.uid() would refuse. Billing surfaced it first only because it is the
+   one a customer pays for. Re-pointing functions at the live session on every auth change fixes
+   all of them at once, without touching a single call site. */
+/* (The key-format name is spelled out in the commit message rather than here: this file is
+   scanned for hardcoded credentials and the literal prefix trips that scanner.) */
+const syncEdgeFunctionAuthV208=session=>{
+  try{sb.functions.setAuth(session?.access_token||SB_KEY)}catch(error){}
+};
+sb.auth.onAuthStateChange((_event,session)=>syncEdgeFunctionAuthV208(session));
+sb.auth.getSession().then(({data})=>syncEdgeFunctionAuthV208(data?.session)).catch(()=>{});
 /* Public pre-auth capability checks must not inherit a stale persisted customer
    or staff session. A rejected historical access token would otherwise make an
    anonymous availability RPC fail closed even while the hosted provider and
@@ -377,6 +392,10 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
+/* V207: the roles an owner may hand out. 'owner' is deliberately absent — it is not invitable
+   (v14 ruling). The add form and the invite form both read this list so they cannot drift. */
+const STAFF_ROLE_OPTIONS_V207=Object.freeze(
+  ['manager','staff','frontdesk','bookkeeper'].map(role=>[role,ROLE_LABELS[role]]));
 const ROLE_CAPABILITIES={
   owner:new Set(['create_sales','view_finance']),manager:new Set(['create_sales','view_finance']),staff:new Set(['create_sales']),
   frontdesk:new Set(['create_sales']),bookkeeper:new Set(['view_finance'])
@@ -19787,10 +19806,29 @@ function enhanceStaffMembersTabsV164(teamPanel){
   listPanel.innerHTML=`<div><h2>Staff list</h2><p class="muted small">Active staff and roster-only teammates appear here first.</p></div>
     <div class="card" id="staffManualAddCard" style="display:none;margin-top:12px">
       <div class="v150-soft-head"><b>Add a teammate</b><p>They appear on the rota and can be credited for sales straight away. They do not get a login until you send an invite.</p></div>
+      <!-- V207 (owner: "add staff > then add details later (wrong) — supposed to be during adding
+           process already add those information"). The add form now asks for everything the edit
+           form does. Only the name is required: a shop adding four therapists between customers
+           should not be blocked on a phone number it does not have yet. -->
       <div class="field-grid">
         <div><label for="staffAddName">Name</label><input id="staffAddName" maxlength="120" placeholder="e.g. Siti"></div>
         <div><label for="staffAddTitle">Job title (optional)</label><input id="staffAddTitle" maxlength="80" placeholder="e.g. Senior therapist"></div>
+        <div><label for="staffAddEmail">Email (optional)</label><input id="staffAddEmail" type="email" maxlength="254" placeholder="name@example.com"></div>
+        <div><label for="staffAddPhone">Phone (optional)</label><input id="staffAddPhone" maxlength="24" placeholder="+65"></div>
+        <div><label for="staffAddRole">Team role</label><select id="staffAddRole">${STAFF_ROLE_OPTIONS_V207.map(([value,label])=>`<option value="${value}"${value==='staff'?' selected':''}>${esc(label)}</option>`).join('')}</select></div>
+        <div><label for="staffAddSvc">Service commission % (optional)</label><input id="staffAddSvc" type="number" min="0" max="100" step="0.1" placeholder="blank = not set"></div>
+        <div><label for="staffAddProd">Product commission % (optional)</label><input id="staffAddProd" type="number" min="0" max="100" step="0.1" placeholder="blank = not set"></div>
       </div>
+      <p class="muted small" style="margin-top:6px">Leave a commission blank if it is not decided. 0% is a real setting and means no commission on that kind of sale.</p>
+      <!-- V207 item 4: "work week (can preset or dont preset because some off days are different)
+           ... so can block out its calendar automatically." Ticked by default because a teammate
+           with NO hours cannot be booked at all (v118/v119: missing hours are closed, not open),
+           and silently unbookable is the worse failure. -->
+      <label class="checkrow" for="staffAddHours" style="margin-top:10px">
+        <input id="staffAddHours" type="checkbox" checked>
+        <span><b>Give them the branch opening hours as their work week</b><br>
+        <span class="muted small">Untick if their days off differ — you can set their hours later, but they cannot be booked until you do.</span></span>
+      </label>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="staffAddSave">Add teammate</button><button class="btn ghost sm" id="staffAddCancel">Cancel</button><span class="muted small" id="staffAddStatus" role="status" aria-live="polite"></span></div>
     </div>`;
   card.prepend(listPanel);
@@ -19838,13 +19876,30 @@ function enhanceStaffMembersTabsV164(teamPanel){
     const status=listPanel.querySelector('#staffAddStatus');
     const nameInput=listPanel.querySelector('#staffAddName');
     const name=(nameInput?.value||'').trim();
-    const title=(listPanel.querySelector('#staffAddTitle')?.value||'').trim()||null;
+    const val=id=>(listPanel.querySelector(id)?.value||'').trim();
+    const title=val('#staffAddTitle')||null;
+    const email=val('#staffAddEmail')||null;
+    const phone=val('#staffAddPhone')||null;
+    const role=val('#staffAddRole')||'staff';
+    /* Blank is "not decided" and 0 is a real setting meaning no commission — so an empty field
+       must stay NULL rather than collapsing to zero, which would quietly promise someone 0%. */
+    const bps=id=>{const raw=val(id);if(!raw)return null;const pct=Number(raw);
+      return Number.isFinite(pct)&&pct>=0&&pct<=100?Math.round(pct*100):null;};
+    const commission_service_bps=bps('#staffAddSvc');
+    const commission_product_bps=bps('#staffAddProd');
+    const wantsHours=listPanel.querySelector('#staffAddHours')?.checked!==false;
     if(name.length<2){if(status)status.textContent='Give this teammate a name.';nameInput?.focus();return}
+    if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      if(status)status.textContent='That email does not look right.';
+      listPanel.querySelector('#staffAddEmail')?.focus();return;
+    }
     const button=listPanel.querySelector('#staffAddSave');
     CUI.setButtonBusy(button,{busy:true,label:'Adding…'});
-    /* Roster-only: user_id stays NULL, so no seat is consumed and no login is created. */
+    /* Roster-only: user_id stays NULL, so no seat is consumed and no login is created. Giving
+       them app access is a separate, deliberate act — an invite the owner then approves. */
     const {data,error}=await sb.from('staff')
-      .insert({business_id:S.biz.id,full_name:name,role:'staff',active:true,title})
+      .insert({business_id:S.biz.id,full_name:name,role,active:true,title,email,phone,
+        commission_service_bps,commission_product_bps})
       .select('id').limit(1);
     if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     if(error){if(status)status.textContent=ownerErrorText(error);return}
@@ -19859,8 +19914,15 @@ function enhanceStaffMembersTabsV164(teamPanel){
           branches.map(branch=>({business_id:S.biz.id,staff_id:newStaffId,branch_id:branch.id}))
         );
       }
+      /* The V185 trigger seeds their work week from those branches' opening hours. If the owner
+         said their days off differ, clear it so they set the real ones — better an empty week the
+         owner fills in than a wrong one that quietly takes bookings on someone's day off. */
+      if(!wantsHours){
+        await sb.from('staff_hours').delete()
+          .eq('business_id',S.biz.id).eq('staff_id',newStaffId);
+      }
     }
-    toast('Teammate added');
+    toast(wantsHours?'Teammate added':'Teammate added — set their work week before booking them');
     staffMembersPage();
   });
   setTab('list');

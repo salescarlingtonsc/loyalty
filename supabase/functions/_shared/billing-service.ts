@@ -77,17 +77,26 @@ export async function sha256Hex(value: string): Promise<string> {
     .join('');
 }
 
+/* V208: this used to throw one undifferentiated Error, which the callers turn into a bare 401.
+   A branch purchase failed in production with exactly that 401 and there was no way to tell
+   whether the browser sent no token, the token was rejected, or the function's own service key
+   was missing — three completely different faults with one indistinguishable symptom. The reason
+   is now on the thrown error so the caller can report it. It names the FAULT, never the token. */
 export async function authenticatedUserId(req: Request): Promise<string> {
   const authorization = req.headers.get('authorization') || '';
   const match = authorization.match(/^Bearer\s+(\S+)$/i);
-  if (!match) throw new Error('authentication required');
-  const { data, error } = await billingAdminClient().auth.getUser(match[1]);
+  if (!match) throw new Error('auth_no_bearer_token');
+  let admin;
+  try {
+    admin = billingAdminClient();
+  } catch {
+    throw new Error('auth_service_key_unavailable');
+  }
+  const { data, error } = await admin.auth.getUser(match[1]);
   const userId = data?.user?.id || '';
-  if (
-    error ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)
-  ) {
-    throw new Error('authentication required');
+  if (error) throw new Error('auth_token_rejected');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+    throw new Error('auth_user_id_unusable');
   }
   return userId;
 }

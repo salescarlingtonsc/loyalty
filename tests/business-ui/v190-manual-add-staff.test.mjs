@@ -14,9 +14,15 @@ test('a teammate can be added by hand, not only by CSV import or invite', () => 
 });
 
 test('a manually added teammate is roster-only and consumes no seat', () => {
+  /* V207 widened this handler: the owner asked for the full profile at add time rather than
+     "add, then fill in later", so the slice is longer and the role is now a chosen value rather
+     than a hardcoded 'staff'. What this test protects — roster-only, no login, no billable seat —
+     is unchanged and asserted below. */
   const i = app.indexOf("#staffAddSave')?.addEventListener");
-  const src = app.slice(i, i + 1800);
-  assert.match(src, /role:'staff',active:true,title/);
+  const src = app.slice(i, i + 3600);
+  assert.match(src, /full_name:name,role,active:true,title/);
+  assert.match(src, /const role=val\('#staffAddRole'\)\|\|'staff'/,
+    'the role still defaults to staff when nothing is chosen');
   // The insert must not SET user_id (mentioning it in a comment is fine): a roster-only
   // teammate has no login, and a seat is billed per active user_id.
   assert.ok(!/insert\(\{[^}]*user_id/.test(src),
@@ -27,7 +33,8 @@ test('a manually added teammate is roster-only and consumes no seat', () => {
 
 test('a new teammate is immediately rosterable and creditable', () => {
   const i = app.indexOf("#staffAddSave')?.addEventListener");
-  const src = app.slice(i, i + 1800);
+  // V207 widened the handler; the branch assignment now sits further down the same block
+  const src = app.slice(i, i + 3600);
   assert.match(src, /from\('staff_branches'\)\.insert/);
   assert.match(src, /eq\('active',true\)/);
 });

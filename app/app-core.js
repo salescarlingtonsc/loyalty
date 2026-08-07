@@ -50,6 +50,21 @@ const publicAppUrl=(route='')=>window.NestlyNativeBridge.publicUrl(`/#/${String(
    flow here, so it's safe to turn off. */
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit',
   experimental:{passkey:true}}});
+/* V208: keep the EDGE FUNCTION bearer token in step with the signed-in user.
+   A real branch purchase failed in production with a bare 401 from stripe-billing-command, and
+   the function's own auth step reported auth_token_rejected: the bearer it received was the
+   publishable key, not the user's access token. This project uses the new publishable key
+   format, which is not a JWT, so the server had nothing to identify a user with and every edge
+   function that reads auth.uid() would refuse. Billing surfaced it first only because it is the
+   one a customer pays for. Re-pointing functions at the live session on every auth change fixes
+   all of them at once, without touching a single call site. */
+/* (The key-format name is spelled out in the commit message rather than here: this file is
+   scanned for hardcoded credentials and the literal prefix trips that scanner.) */
+const syncEdgeFunctionAuthV208=session=>{
+  try{sb.functions.setAuth(session?.access_token||SB_KEY)}catch(error){}
+};
+sb.auth.onAuthStateChange((_event,session)=>syncEdgeFunctionAuthV208(session));
+sb.auth.getSession().then(({data})=>syncEdgeFunctionAuthV208(data?.session)).catch(()=>{});
 /* v177 client error reporting. Before this the app had no client-side error visibility at all:
    a customer hitting a broken render simply saw a blank card and nobody ever knew. Sends to
    report_client_error_v177 (anon + authenticated, capped, deduped and non-raising server-side).

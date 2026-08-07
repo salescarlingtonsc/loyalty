@@ -105,8 +105,11 @@ Deno.serve(async (req) => {
   let actor = '';
   try {
     actor = await authenticatedUserId(req);
-  } catch {
-    return billingCorsJson(req, 401, { error: 'authentication_required' });
+  } catch (authError) {
+    /* V208: name WHICH auth step failed. A bare 401 cost a live debugging session on a real
+       branch purchase — no token, a rejected token and a missing service key looked identical. */
+    const reason = String((authError as Error)?.message || 'authentication_required');
+    return billingCorsJson(req, 401, { error: 'authentication_required', reason });
   }
 
   let commandId = '';
