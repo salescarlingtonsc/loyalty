@@ -6,13 +6,16 @@ import vm from 'node:vm';
 const root = new URL('../..', import.meta.url);
 const read = path => readFile(new URL(path, root), 'utf8');
 
+// Mirrors public.sme_pipeline_stages in production, in sort_order. v174 added
+// site_visit and quotation_sent between meeting_sent and pending_decision, so
+// the official set is 19, not the original 17.
 const officialStages = [
   'new_lead','appt_set','npu_1','npu_2','npu_3','npu_4','npu_5','npu_6',
-  'call_back','reschedule','meeting_sent','pending_decision','client',
-  'account_created','onboarding','activated','lost'
+  'call_back','reschedule','meeting_sent','site_visit','quotation_sent',
+  'pending_decision','client','account_created','onboarding','activated','lost'
 ];
 
-test('onboarding exposes all 17 official stages and maps them into five operational lanes', async () => {
+test('onboarding exposes all 19 official stages and maps them into five operational lanes', async () => {
   const source = await read('app/platform-console.js');
   const context = { Object };
   context.globalThis = context;

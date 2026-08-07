@@ -1342,6 +1342,12 @@
       "version": "20260807040000",
       "name": "nestly_v196_list_archived_prospects",
       "sourcePath": "db/migrations/20260807_nestly_v196_list_archived_prospects.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807050000",
+      "name": "nestly_v197_persistent_join_qr",
+      "sourcePath": "db/migrations/20260807_nestly_v197_persistent_join_qr.sql"
     }
   ]
 }

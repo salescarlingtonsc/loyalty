@@ -1341,6 +1341,12 @@
       "path": "db/migrations/20260807_nestly_v196_list_archived_prospects.sql",
       "semanticVersion": "v196",
       "proposedDeployVersion": "20260807040000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v197_persistent_join_qr.sql",
+      "semanticVersion": "v197",
+      "proposedDeployVersion": "20260807050000"
     }
   ]
 }
