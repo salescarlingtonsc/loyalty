@@ -1378,6 +1378,12 @@
       "version": "20260807080000",
       "name": "nestly_v198_join_qr_print_lock",
       "sourcePath": "db/migrations/20260807_nestly_v198_join_qr_print_lock.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807090000",
+      "name": "nestly_v199_receipt_capture",
+      "sourcePath": "db/migrations/20260807_nestly_v199_receipt_capture.sql"
     }
   ]
 }

@@ -1377,6 +1377,12 @@
       "path": "db/migrations/20260807_nestly_v198_join_qr_print_lock.sql",
       "semanticVersion": "v198",
       "proposedDeployVersion": "20260807080000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v199_receipt_capture.sql",
+      "semanticVersion": "v199",
+      "proposedDeployVersion": "20260807090000"
     }
   ]
 }
