@@ -71,6 +71,7 @@ async function retrieveRecoveredProviderResult(
   commandType: string,
   providerObjectId: string,
   data: Record<string, unknown>,
+  expectedBaseQuantity = 1,
 ): Promise<{ providerObjectId: string; redirectUrl?: string } | null> {
   if (commandType === 'create_checkout') {
     const session = await stripe.checkout.sessions.retrieve(providerObjectId);
@@ -82,7 +83,9 @@ async function retrieveRecoveredProviderResult(
     ['change_cadence', 'change_capacity', 'cancel_at_period_end', 'resume'].includes(commandType)
   ) {
     const subscription = await stripe.subscriptions.retrieve(providerObjectId);
-    return stripeSubscriptionMatchesCommandV125(subscription, commandType, data)
+    return stripeSubscriptionMatchesCommandV125(
+      subscription, commandType, data, expectedBaseQuantity,
+    )
       ? { providerObjectId: subscription.id }
       : null;
   }
@@ -213,6 +216,7 @@ Deno.serve(async (req) => {
           commandType,
           String(data.prior_provider_object_id),
           data,
+          planUnits,
         );
         if (recovered) {
           providerObjectId = recovered.providerObjectId;
@@ -360,7 +364,7 @@ Deno.serve(async (req) => {
         capacityModel && verifiedSubscription.pending_update !== null;
       if (
         !providerConfirmationPending &&
-        !stripeSubscriptionMatchesCommandV125(verifiedSubscription, commandType, data)
+        !stripeSubscriptionMatchesCommandV125(verifiedSubscription, commandType, data, planUnits)
       ) {
         throw new Error('Stripe subscription does not match the requested command');
       }
@@ -386,7 +390,7 @@ Deno.serve(async (req) => {
       if (!stripeSubscriptionHasNoTaxV125(verifiedSubscription)) {
         throw new Error('Stripe subscription retained a tax configuration');
       }
-      if (!stripeSubscriptionMatchesCommandV125(verifiedSubscription, commandType, data)) {
+      if (!stripeSubscriptionMatchesCommandV125(verifiedSubscription, commandType, data, planUnits)) {
         throw new Error('Stripe subscription does not match the requested command');
       }
       providerObjectId = subscription.id;

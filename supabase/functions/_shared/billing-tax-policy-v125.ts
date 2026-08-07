@@ -58,10 +58,16 @@ function stripeItemPriceIdV125(item: StripeSubscriptionItemLike): string {
   return typeof item.price === 'string' ? item.price : String(item.price?.id || '');
 }
 
+/* V202: expectedBaseQuantity defaults to 1, which is every caller that predates branches.
+   A branch is billed as another UNIT of the base plan, so a firm with two paid branches
+   carries base quantity 3 — and this matcher used to hard-assert 1, which would report a
+   perfectly correct subscription as "does not match the command" and send recovery down the
+   replay path forever. */
 export function stripeSubscriptionMatchesCommandV125(
   subscription: StripeSubscriptionLike,
   commandType: string,
   data: Record<string, unknown>,
+  expectedBaseQuantity = 1,
 ): boolean {
   if (!stripeSubscriptionHasNoTaxV125(subscription)) return false;
   if (commandType === 'cancel_at_period_end') {
@@ -80,7 +86,7 @@ export function stripeSubscriptionMatchesCommandV125(
   if (
     !baseItem ||
     stripeItemPriceIdV125(baseItem) !== String(data.provider_base_price_id || '') ||
-    baseItem.quantity !== 1
+    baseItem.quantity !== expectedBaseQuantity
   ) {
     return false;
   }
