@@ -1389,6 +1389,18 @@
       "path": "db/migrations/20260807_nestly_v206_fast_corrections.sql",
       "semanticVersion": "v206",
       "proposedDeployVersion": "20260807100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v200_subscription_revenue.sql",
+      "semanticVersion": "v200",
+      "proposedDeployVersion": "20260807110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v200a_subscription_revenue_schedule.sql",
+      "semanticVersion": "v200a",
+      "proposedDeployVersion": "20260807120000"
     }
   ]
 }

@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 229,
-  "executableCount": 215,
+  "itemCount": 231,
+  "executableCount": 217,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -322,7 +322,7 @@
     },
     {
       "sourceDeployVersion": "20260807",
-      "count": 17,
+      "count": 19,
       "paths": [
         "db/migrations/20260807_nestly_v185_prospect_archive_merge_erase.sql",
         "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql",
@@ -336,6 +336,8 @@
         "db/migrations/20260807_nestly_v197_recommendation_duplicate_root_cause.sql",
         "db/migrations/20260807_nestly_v198_join_qr_print_lock.sql",
         "db/migrations/20260807_nestly_v199_receipt_capture.sql",
+        "db/migrations/20260807_nestly_v200_subscription_revenue.sql",
+        "db/migrations/20260807_nestly_v200a_subscription_revenue_schedule.sql",
         "db/migrations/20260807_nestly_v202_branch_add_and_billing.sql",
         "db/migrations/20260807_nestly_v202a_activate_branch_on_paid_command.sql",
         "db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql",
@@ -2176,6 +2178,22 @@
       "semanticVersion": "v206",
       "proposedDeployVersion": "20260807100000",
       "sha256": "0ffc4eda0ad9b04c9b4fb119ff7e6f847d39a10b6c0890f3403c961e1c9321aa"
+    },
+    {
+      "order": 230,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v200_subscription_revenue.sql",
+      "semanticVersion": "v200",
+      "proposedDeployVersion": "20260807110000",
+      "sha256": "d899fcd5a03ae5d680b86ce91a893a9b0de60d66e3178f7db51359a16af6113e"
+    },
+    {
+      "order": 231,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v200a_subscription_revenue_schedule.sql",
+      "semanticVersion": "v200a",
+      "proposedDeployVersion": "20260807120000",
+      "sha256": "91ce96e409e1565d76b7dc5f946e8916229e466f85013e5b3e85781e9a9ef2bc"
     }
   ]
 }
