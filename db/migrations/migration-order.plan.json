@@ -1455,6 +1455,12 @@
       "path": "db/migrations/20260807_nestly_v203_company_directory.sql",
       "semanticVersion": "v203",
       "proposedDeployVersion": "20260807235000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v223_table_reservations_opt_in.sql",
+      "semanticVersion": "v223",
+      "proposedDeployVersion": "20260807235500"
     }
   ]
 }

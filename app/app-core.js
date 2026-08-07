@@ -287,7 +287,7 @@ let passwordRecoveryActive=false,passwordRecoveryError=false;
 
 const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
   sales:['sales','Sales & refunds'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
-  inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
+  inventory:['inventory','Products'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
@@ -1091,6 +1091,12 @@ async function route(){
     }
     if(HIDDEN_BUSINESS_SURFACES.has(pageKey)){
       toast('This area is not available in the business workspace.');
+      return nav('#/dashboard');
+    }
+    /* V223: hiding the nav link is not a guard — anyone can type the hash. Waitlist is refused
+       outright without Bookings, for the same reason it is hidden. */
+    if(pageKey==='waitlist'&&!canReadModule('bookings')){
+      toast('Waitlist works with Bookings. Turn on Bookings first.');
       return nav('#/dashboard');
     }
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)&&pageKey!=='dashboard'

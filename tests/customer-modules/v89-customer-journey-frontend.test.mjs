@@ -156,12 +156,20 @@ test('customer booking and changes require the business v89 enablement',async()=
   assert.match(wallet,/customer_get_business_actions_v89/);
   assert.match(wallet,/capabilities\.booking_request&&bookingEnabled/);
   assert.match(app,/customerFeatures\.customer_actions&&appointmentChangesEnabled&&a\.status==='booked'/);
+  /* V223 (owner: "customer app settings should not be in bookings - it should be in operation
+     set up") moved these switches to Settings -> Customer interface, where the rest of the
+     customer-facing configuration already lives. Only one of the three was ever about bookings.
+     The contract this test protects — the owner enablement the customer app reads — is
+     unchanged; it is asserted against the loader that now owns it, and Bookings is asserted to
+     have let go of it. */
+  const capabilities=section(app,'async function loadCustomerCapabilitiesV223','async function loadSignupConfig');
+  assert.match(capabilities,/business_get_customer_capabilities_v89/);
+  assert.match(capabilities,/business_set_customer_capabilities_v89/);
+  assert.match(capabilities,/p_booking_enabled/);
+  assert.match(capabilities,/p_redemption_enabled/);
+  assert.match(capabilities,/p_appointment_changes_enabled/);
   const bookings=section(app,'async function bookingsPage','/* ---------- grow recommender');
-  assert.match(bookings,/business_get_customer_capabilities_v89/);
-  assert.match(bookings,/business_set_customer_capabilities_v89/);
-  assert.match(bookings,/p_booking_enabled/);
-  assert.match(bookings,/p_redemption_enabled/);
-  assert.match(bookings,/p_appointment_changes_enabled/);
+  assert.doesNotMatch(bookings,/customer_capabilities_v89/);
 });
 
 test('Bookings shows enabled zero-history firms and hides only disabled firms without history',async()=>{

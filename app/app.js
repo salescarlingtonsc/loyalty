@@ -392,7 +392,7 @@ const INDUSTRIES={
 };
 const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
   sales:['sales','Sales & refunds'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
-  inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
+  inventory:['inventory','Products'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
@@ -1967,6 +1967,12 @@ async function route(){
     }
     if(HIDDEN_BUSINESS_SURFACES.has(pageKey)){
       toast('This area is not available in the business workspace.');
+      return nav('#/dashboard');
+    }
+    /* V223: hiding the nav link is not a guard — anyone can type the hash. Waitlist is refused
+       outright without Bookings, for the same reason it is hidden. */
+    if(pageKey==='waitlist'&&!canReadModule('bookings')){
+      toast('Waitlist works with Bookings. Turn on Bookings first.');
       return nav('#/dashboard');
     }
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)&&pageKey!=='dashboard'
@@ -6898,10 +6904,14 @@ function navHtml(page,idPrefix='nav'){
      which is fixed by the sector entitlement and does not include it. So an owner could create a
      branch from Settings and then had nowhere to manage one. Branches is structural and
      owner-only, exactly like Staff members, so it is offered on the same terms. */
+  /* V223. Owner: "waitlist is tagged to bookings (so disable / enable together)". A waitlist
+     holds the people a booking could not seat, so it has no meaning without the booking page
+     that produces them — showing one without the other is a dead end. */
   const navModuleVisible=m=>m==='dashboard'
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
-    ||enabled.includes(m);
+    ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
+    ||(m!=='waitlist'&&enabled.includes(m));
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.flat){
@@ -11962,16 +11972,15 @@ async function bookingsPage(){
   const canDeclineBooking=canWriteModule('bookings');
   const canDecideChange=canWriteModule('appointments');
   const decisionNotices=new Map(),pendingDecisions=new Set();
+  /* V223: the hold-timer copy promises the waitlist gets flagged. Only say so when this
+     workspace actually has a waitlist — it now travels with Bookings, but a business can still
+     have Bookings without the Waitlist module. */
+  const waitlistLinkedV223=(S.myModules||S.biz.enabled_modules||[]).includes('waitlist');
   routeMain.innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
       <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
-    ${isOwner?`<section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
-      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
-      <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
-      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
-      <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>`:''}
     <div class="card" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
       ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
@@ -11980,23 +11989,33 @@ async function bookingsPage(){
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     ${isOwner?`<div class="split" style="margin-bottom:16px">
-      <div class="card"><div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
+      <div class="card">
+        <!-- V223 (owner: "how can table bookings be present in a spa/salon?"). Seating is not
+             something every business has. A facial spa takes booking REQUESTS through the same
+             public page, but it has no tables, no pax and no when-full overflow — and every
+             salon/spa/massage/fitness sector is granted the full module list, so all of them
+             were shown table management they can never use. The seating controls now appear
+             only for a business that says it seats guests. -->
+        <label style="display:flex;align-items:center;gap:8px;margin:0 0 6px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="setTakesTablesV223" style="width:auto" ${S.biz.takes_table_reservations?'checked':''}> We seat guests at tables</label>
+        <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>
+        ${S.biz.takes_table_reservations?`<div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
         <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
         <div class="row"><input id="tblName" placeholder="e.g. Small (2-seater)">
           <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
           <input id="tblQty" type="number" min="1" value="1" placeholder="Qty" style="max-width:76px">
           <button class="btn sm" id="tblAdd">Add</button></div>
         <div id="capBody" style="margin-top:14px">${CUI.tableSkeleton({rows:3,columns:6})}</div>
-        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">`:''}
         <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
         <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
         <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
-        <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes; your waitlist is then flagged so you know to fill the gap.</p>
-        <label>When you're full</label><select id="setOverflow">
+        <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
+        ${S.biz.takes_table_reservations?`<label>When you're full</label><select id="setOverflow">
           <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
           <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-          <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>
+          <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>`:''}
         <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
         <div id="setErr"></div>
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
@@ -12026,38 +12045,6 @@ async function bookingsPage(){
      load paths, and every id keeps working exactly as before. Same approach the Staff page uses. */
   enhanceBookingsTabsV195(M());
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
-  if(isOwner){
-    const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
-    const status=$('customerCapabilitiesStatus'),save=$('saveCustomerCapabilities');
-    const capabilityResult=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
-    if(!isCurrent())return;
-    $('businessCustomerCapabilities').setAttribute('aria-busy','false');
-    if(capabilityResult.error){
-      status.textContent=capabilityResult.error.code==='PGRST202'||capabilityResult.error.code==='42883'
-        ?'These controls need the latest Peekaa service update. All three remain off.'
-        :'Customer action settings could not be loaded. Nothing was changed.';
-    }else{
-      const value=capabilityResult.data||{};
-      $('customerBookingEnabled').checked=value.booking_enabled===true;
-      $('customerRedemptionEnabled').checked=value.redemption_enabled===true;
-      $('customerAppointmentChangesEnabled').checked=value.appointment_changes_enabled===true;
-      controls.forEach(id=>$(id).disabled=false);save.disabled=false;status.textContent='All customer actions start off until you enable them.';
-      save.onclick=async()=>{
-        save.disabled=true;controls.forEach(id=>$(id).disabled=true);status.textContent='Saving customer actions…';
-        const {data,error}=await sb.rpc('business_set_customer_capabilities_v89',{
-          p_business:S.biz.id,
-          p_booking_enabled:$('customerBookingEnabled').checked,
-          p_redemption_enabled:$('customerRedemptionEnabled').checked,
-          p_appointment_changes_enabled:$('customerAppointmentChangesEnabled').checked
-        });
-        if(!isCurrent())return;
-        controls.forEach(id=>$(id).disabled=false);save.disabled=false;
-        if(error){status.textContent='Customer actions were not changed. Review the settings and try again.';return}
-        status.textContent='Customer actions saved. Existing bookings, redemptions, and appointment history remain visible.';
-        toast(data?.replayed===true?'Customer actions were already saved':'Customer actions saved');
-      };
-    }
-  }
   if(isOwner)$('aac').onchange=async()=>{
     const to=$('aac').checked;
     const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
@@ -12134,6 +12121,7 @@ async function bookingsPage(){
 
   /* ---- Tables / capacity (owner only) ---- */
   async function loadCapacity(){
+    if(!$('capBody'))return;
     const [{data:tbl,error:e1},{data:avail,error:e2}]=await Promise.all([
       sb.from('booking_tables').select('*').eq('business_id',S.biz.id).order('sort'),
       sb.from('v_table_availability').select('*').eq('business_id',S.biz.id)]);
@@ -12150,7 +12138,8 @@ async function bookingsPage(){
       }).join('')}</table>`
       :CUI.emptyState({iconName:'appointments',title:'No tables yet',body:'Add your tables so customers can reserve them.'});
   }
-  $('tblAdd').onclick=async()=>{
+  /* V223: these elements only exist for a business that seats guests. */
+  if($('tblAdd'))$('tblAdd').onclick=async()=>{
     const name=$('tblName').value.trim();
     if(name.length<2) return toast('Name the table type');
     const {error}=await sb.from('booking_tables').insert({business_id:S.biz.id,name,
@@ -12176,16 +12165,31 @@ async function bookingsPage(){
 
   /* ---- Booking rules: hold timer / overflow / auto-confirm (owner only) ---- */
   $('setSave').onclick=async()=>{
-    const hold=parseInt($('setHold').value||'0'),overflow=$('setOverflow').value,autoConfirm=$('setAutoConfirm').checked;
+    const hold=parseInt($('setHold').value||'0');
+    /* V223: overflow and auto-confirm are seating rules and are only rendered when the business
+       seats guests. Sending null leaves each one exactly as it was rather than resetting it. */
+    const overflow=$('setOverflow')?$('setOverflow').value:null;
+    const autoConfirm=$('setAutoConfirm')?$('setAutoConfirm').checked:null;
+    const takesTables=$('setTakesTablesV223')?$('setTakesTablesV223').checked:null;
     $('setSave').disabled=true;
     const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:hold,
-      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm});
+      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm,
+      p_takes_table_reservations:takesTables});
     if(!isCurrent())return;
     $('setSave').disabled=false;
     if(error){$('setErr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
     $('setErr').innerHTML='';
-    Object.assign(S.biz,{booking_hold_minutes:hold,booking_overflow:overflow,booking_auto_confirm:autoConfirm});
+    /* V223: only mirror what was actually sent. The server coalesces a null, keeping the stored
+       value, so copying null into S.biz would make the local copy disagree with the database. */
+    const seatingChanged=takesTables!==null&&takesTables!==(S.biz.takes_table_reservations===true);
+    Object.assign(S.biz,{booking_hold_minutes:hold});
+    if(overflow!==null)S.biz.booking_overflow=overflow;
+    if(autoConfirm!==null)S.biz.booking_auto_confirm=autoConfirm;
+    if(takesTables!==null)S.biz.takes_table_reservations=takesTables;
     toast('Booking rules saved');
+    /* Turning seating on or off changes which controls belong on this page, so redraw rather
+       than leaving the owner to guess that a reload is needed. */
+    if(seatingChanged)bookingsPage().catch(fail);
   };
 
   /* ---- v183 customer booking availability: opening hours + who customers may ask for ---- */
@@ -21428,6 +21432,17 @@ async function settingsPage(){
       <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
       <div id="csvprev" style="margin-top:12px"></div></div>
       <div class="card" id="signupWrap">${CUI.skeletonCard({lines:5})}</div></div>
+    <!-- V223 (owner: "customer app settings should not be in bookings - it should be in
+         operation set up"). These switches govern what a customer may do in their own app —
+         booking, redemption QR, appointment changes. Only one of the three is about bookings,
+         so living on the Bookings page made the other two unfindable and made Bookings a
+         settings screen. This tab is where the rest of the customer-facing configuration
+         already lives (sign-up QR, customer fields, import). -->
+    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
+      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
+      <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
+      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
+      <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
     <div class="card" style="margin-top:16px"><b>Customer fields</b>
       <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
       <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" data-merchant-content style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
@@ -22015,6 +22030,7 @@ async function settingsPage(){
   };
   loadBillingConfig();
   loadSignupConfig();
+  loadCustomerCapabilitiesV223();
 }
 /* ---------- V142 merchant-owned customer payments ---------- */
 async function loadMerchantPaymentsV142(){
@@ -22182,6 +22198,42 @@ async function loadBillingConfig(){
   renderPlan();
 }
 /* ---------- customer sign-up QR ---------- */
+/* ---------- customer app actions (moved out of Bookings by V223) ---------- */
+async function loadCustomerCapabilitiesV223(){
+  if(!$('businessCustomerCapabilities'))return;
+
+    const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
+    const status=$('customerCapabilitiesStatus'),save=$('saveCustomerCapabilities');
+    const capabilityResult=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
+    if(!$('businessCustomerCapabilities')?.isConnected)return;
+    $('businessCustomerCapabilities').setAttribute('aria-busy','false');
+    if(capabilityResult.error){
+      status.textContent=capabilityResult.error.code==='PGRST202'||capabilityResult.error.code==='42883'
+        ?'These controls need the latest Peekaa service update. All three remain off.'
+        :'Customer action settings could not be loaded. Nothing was changed.';
+    }else{
+      const value=capabilityResult.data||{};
+      $('customerBookingEnabled').checked=value.booking_enabled===true;
+      $('customerRedemptionEnabled').checked=value.redemption_enabled===true;
+      $('customerAppointmentChangesEnabled').checked=value.appointment_changes_enabled===true;
+      controls.forEach(id=>$(id).disabled=false);save.disabled=false;status.textContent='All customer actions start off until you enable them.';
+      save.onclick=async()=>{
+        save.disabled=true;controls.forEach(id=>$(id).disabled=true);status.textContent='Saving customer actions…';
+        const {data,error}=await sb.rpc('business_set_customer_capabilities_v89',{
+          p_business:S.biz.id,
+          p_booking_enabled:$('customerBookingEnabled').checked,
+          p_redemption_enabled:$('customerRedemptionEnabled').checked,
+          p_appointment_changes_enabled:$('customerAppointmentChangesEnabled').checked
+        });
+        if(!$('businessCustomerCapabilities')?.isConnected)return;
+        controls.forEach(id=>$(id).disabled=false);save.disabled=false;
+        if(error){status.textContent='Customer actions were not changed. Review the settings and try again.';return}
+        status.textContent='Customer actions saved. Existing bookings, redemptions, and appointment history remain visible.';
+        toast(data?.replayed===true?'Customer actions were already saved':'Customer actions saved');
+      };
+    }
+  
+}
 async function loadSignupConfig(){
   $('signupWrap').innerHTML=`<b>Customer sign-up</b>
     <p class="muted small" style="margin:6px 0 10px">Print the current business-issued QR for your counter. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
