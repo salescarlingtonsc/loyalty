@@ -1347,6 +1347,24 @@
       "path": "db/migrations/20260807_nestly_v197_persistent_join_qr.sql",
       "semanticVersion": "v197",
       "proposedDeployVersion": "20260807050000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v202_branch_add_and_billing.sql",
+      "semanticVersion": "v202",
+      "proposedDeployVersion": "20260807060000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v202a_activate_branch_on_paid_command.sql",
+      "semanticVersion": "v202a",
+      "proposedDeployVersion": "20260807061000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql",
+      "semanticVersion": "v202b",
+      "proposedDeployVersion": "20260807062000"
     }
   ]
 }

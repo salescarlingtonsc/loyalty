@@ -2205,10 +2205,6 @@
       "reason": "v183 browser direct write to non-value config table staff_hours (UPSERT); a team member's own weekly working hours, keyed (staff_id, weekday). RLS-gated owner setup data, not customer value."
     },
     {
-      "id": "browser.write:app/app.js:branches:INSERT",
-      "reason": "browser direct write to non-value catalog/config table branches (INSERT); RLS-gated setup data, not customer value"
-    },
-    {
       "id": "browser.write:app/app.js:branches:UPDATE",
       "reason": "browser direct write to non-value catalog/config table branches (UPDATE); RLS-gated setup data, not customer value"
     },
@@ -2747,6 +2743,10 @@
     {
       "id": "browser.write:app/app.js:staff:INSERT",
       "reason": "V190 manual add of a roster-only teammate (user_id NULL, so no login and no billable seat). RLS restricts INSERT to the business owner. staff is an operational directory, not a value table; commission is resolved per sale from staff_id at sale time and is unaffected by adding a person."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_add_branch_v202",
+      "reason": "V202 add-branch. Creates a branch UNPAID (active=false, billing_state=pending_payment) and mints the billing command that charges for it; the branch is not operational until the command completes. It writes branches plus the copied configuration the owner selected, and billing_commands. It reaches no ledger and mints no points, credit or stored value \u2014 the CHARGE is made by Stripe from the command, not by this function, and the amount comes from billing_plan_catalog_v124."
     }
   ]
 }

@@ -1289,6 +1289,7 @@ function profileHtml(){
         ${S.myRole==='owner'?`<a href="#/setup" id="pmSetup">${CUI.icon('setup',{size:18})}Get started</a>`:''}
         ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:18})}Settings</a>`:''}
         ${S.myRole==='owner'?'<a href="#/settings?tab=team" id="pmTeam">Team &amp; staff</a>':''}
+        ${S.myRole==='owner'?`<a href="#/branches" id="pmAddBranch">${CUI.icon('settings',{size:18})}Branches &amp; add branch</a>`:''}
         ${S.isSA?`<a href="#/platform" id="pmPlatform">${CUI.icon('platform',{size:18})}Platform</a>`:''}
         <a href="/data-request.html" id="pmDeleteAccount">${CUI.icon('back',{size:18})}Account &amp; privacy</a>
         <a href="#" id="pmSignout" style="color:var(--red)">${CUI.icon('back',{size:18})}Sign out</a>
@@ -12184,7 +12185,7 @@ async function branchesPage(){
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
     <div id="brList">${CUI.skeletonGrid({cards:3,lines:3})}</div>`;
-  let branchList=[],staffList=[],openAssignId=null,editId=null;
+  let branchList=[],staffList=[],openAssignId=null,editId=null,branchAddAttemptKey=null;
   $('addBr').onclick=()=>openForm(null);
   function openForm(b){
     editId=b?b.id:null;
@@ -12194,8 +12195,15 @@ async function branchesPage(){
       <div><label>Phone</label><input id="brPhone" value="${b?esc(b.phone||''):''}"></div></div>
       <div class="split"><div><label>Email</label><input id="brEmail" type="email" value="${b?esc(b.email||''):''}"></div>
       <div><label>Address</label><input id="brAddr" value="${b?esc(b.address||''):''}"></div></div>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-        <input type="checkbox" id="brActive" style="width:auto" ${(!b||b.active)?'checked':''}> Active</label>
+      ${b?`<label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="brActive" style="width:auto" ${b.active?'checked':''}> Active</label>`
+       :`<label for="brCopyFrom" style="margin-top:16px">Copy settings from</label>
+         <select id="brCopyFrom">
+           <option value="">Start empty</option>
+           ${branchList.filter(item=>item.active).map(item=>`<option value="${esc(item.id)}"${item.is_default?' selected':''}>${esc(item.name)}</option>`).join('')}
+         </select>
+         <p class="muted small" style="margin-top:6px">Copies opening hours, which services it offers, who works there, and any loyalty settings that branch overrides. Prices and products are already shared across every branch.</p>
+         <div class="imp-note" style="margin-top:14px"><b>An extra branch is charged like another shop.</b> The exact amount and billing date are shown on the secure payment page before anything is charged. The branch stays switched off until that payment confirms.</div>`}
       <div class="row" style="margin-top:16px"><button class="btn" id="brSave">${b?'Save changes':'Create branch'}</button>
       <button class="btn ghost sm" id="brCancel">Cancel</button></div>`;
     $('brCancel').onclick=()=>{$('brForm').style.display='none';};
@@ -12203,15 +12211,47 @@ async function branchesPage(){
       const name=$('brName').value.trim();
       if(name.length<2) return toast('Branch name required');
       const payload={name,phone:$('brPhone').value.trim()||null,email:$('brEmail').value.trim()||null,
-        address:$('brAddr').value.trim()||null,active:$('brActive').checked};
+        address:$('brAddr').value.trim()||null,
+        ...( $('brActive') ? {active:$('brActive').checked} : {} )};
       CUI.setButtonBusy($('brSave'),{busy:true,label:b?'Saving…':'Creating…'});
-      const {error}=editId
-        ? await sb.from('branches').update(payload).eq('id',editId).eq('business_id',S.biz.id)
-        : await sb.from('branches').insert({...payload,business_id:S.biz.id});
-      if(error){fail(error);CUI.setButtonBusy($('brSave'),{busy:false});return}
-      toast(editId?'Branch updated':'Branch created');
-      $('brForm').style.display='none';
-      load();
+      /* V202: editing a branch is still a plain update, but CREATING one is a billable act
+         and no longer a table insert — RLS has no INSERT policy on branches any more, so
+         business_add_branch_v202 is the only path. It creates the branch unpaid and not
+         operational, copies the settings the owner chose, and returns the billing command
+         we hand to Stripe. The branch only switches on when the payment confirms. */
+      if(editId){
+        const {error}=await sb.from('branches').update(payload).eq('id',editId).eq('business_id',S.biz.id);
+        if(error){fail(error);CUI.setButtonBusy($('brSave'),{busy:false});return}
+        toast('Branch updated');
+        $('brForm').style.display='none';
+        load();
+        return;
+      }
+      /* One key per attempt, stable across retries: a double-tap or a retry after a dropped
+         response replays the SAME branch and the SAME command rather than minting a second
+         branch and a second charge. */
+      if(!branchAddAttemptKey)branchAddAttemptKey=crypto.randomUUID();
+      const copyFrom=$('brCopyFrom')?$('brCopyFrom').value||null:null;
+      const {data:added,error:addError}=await sb.rpc('business_add_branch_v202',{
+        p_business:S.biz.id,p_name:payload.name,p_address:payload.address,
+        p_phone:payload.phone,p_email:payload.email,p_copy_from:copyFrom,
+        p_idempotency_key:branchAddAttemptKey});
+      if(addError){fail(addError);CUI.setButtonBusy($('brSave'),{busy:false});return}
+      const commandId=added?.command_id;
+      if(!commandId){
+        CUI.setButtonBusy($('brSave'),{busy:false});
+        return fail(new Error('The branch was created but no payment could be started. Retry with the same details.'));
+      }
+      CUI.setButtonBusy($('brSave'),{busy:true,label:'Opening secure payment…'});
+      const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
+      if(executed.error||!executed.data?.redirect_url){
+        CUI.setButtonBusy($('brSave'),{busy:false});
+        /* The branch row survives on purpose. The attempt key is kept too, so "Create branch"
+           again resumes THIS branch and this charge instead of creating another one. */
+        return fail(new Error('Payment could not be started. Your branch is saved and switched off — press Create branch again to retry the payment.'));
+      }
+      branchAddAttemptKey=null;
+      location.href=executed.data.redirect_url;
     };
   }
   async function load(){
@@ -12225,11 +12265,12 @@ async function branchesPage(){
     const {data:sbRows,error:sbErr}=await sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id);
     if(sbErr) return fail(sbErr);
     const assigned={};(sbRows||[]).forEach(r=>{(assigned[r.branch_id]=assigned[r.branch_id]||new Set()).add(r.staff_id)});
-    $('brList').innerHTML=branchList.map(b=>{
+    const awaiting=branchList.filter(b=>b.billing_state==='pending_payment').length;
+    $('brList').innerHTML=(awaiting?`<div class="imp-note" style="margin-bottom:12px" role="status">${awaiting===1?'One branch is':`${awaiting} branches are`} saved but switched off until payment confirms. Nothing at ${awaiting===1?'it':'them'} can take a booking or a sale yet.</div>`:'')+branchList.map(b=>{
       const aset=assigned[b.id]||new Set();
       return `<div class="card" style="margin-bottom:12px">
         <div class="row" style="flex-wrap:wrap">
-          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${b.active?'Active':'Inactive'}</span>
+          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${b.active?'Active':'Inactive'}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':''}
           <div data-merchant-content class="muted small" style="margin-top:4px">${esc(b.address||'No address set')}${b.phone?' · '+esc(b.phone):''}${b.email?' · '+esc(b.email):''}</div></div>
           <span class="spacer"></span>
           <button class="btn ghost sm" onclick="editBranch('${b.id}')">Edit</button>

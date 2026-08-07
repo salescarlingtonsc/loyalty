@@ -74,7 +74,7 @@ $v197_secret$;
 
 create or replace function app.v197_join_qr_secret()
 returns text language plpgsql security definer stable
-set search_path to 'pg_catalog','public','app','vault','pg_temp' as $$
+set search_path to 'pg_catalog','public','app','pg_temp' as $$
 declare v_secret text;
 begin
   select decrypted_secret into v_secret
@@ -198,5 +198,16 @@ begin
     'replaced_legacy_token',found
   );
 end $$;
+
+-- create-or-replace preserves existing grants, but a replay from an empty
+-- database would inherit PostgreSQL's default EXECUTE-to-PUBLIC, so both
+-- recreated overloads restate their access explicitly. create() stays
+-- internal: only ensure()/rotate() call it, and both are SECURITY DEFINER.
+revoke all on function public.business_create_customer_join_qr_v89(uuid,timestamptz)
+  from public, anon, authenticated;
+revoke all on function public.business_ensure_customer_join_qr_v91(uuid,timestamptz)
+  from public, anon, authenticated;
+grant execute on function public.business_ensure_customer_join_qr_v91(uuid,timestamptz)
+  to authenticated;
 
 commit;

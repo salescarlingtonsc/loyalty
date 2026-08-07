@@ -1348,6 +1348,24 @@
       "version": "20260807050000",
       "name": "nestly_v197_persistent_join_qr",
       "sourcePath": "db/migrations/20260807_nestly_v197_persistent_join_qr.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807060000",
+      "name": "nestly_v202_branch_add_and_billing",
+      "sourcePath": "db/migrations/20260807_nestly_v202_branch_add_and_billing.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807061000",
+      "name": "nestly_v202a_activate_branch_on_paid_command",
+      "sourcePath": "db/migrations/20260807_nestly_v202a_activate_branch_on_paid_command.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807062000",
+      "name": "nestly_v202b_branch_insert_only_via_paid_rpc",
+      "sourcePath": "db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql"
     }
   ]
 }

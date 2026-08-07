@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 222,
-  "executableCount": 208,
+  "itemCount": 225,
+  "executableCount": 211,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -322,7 +322,7 @@
     },
     {
       "sourceDeployVersion": "20260807",
-      "count": 10,
+      "count": 13,
       "paths": [
         "db/migrations/20260807_nestly_v185_prospect_archive_merge_erase.sql",
         "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql",
@@ -333,7 +333,10 @@
         "db/migrations/20260807_nestly_v195_merge_keeps_source_lineage.sql",
         "db/migrations/20260807_nestly_v196_list_archived_prospects.sql",
         "db/migrations/20260807_nestly_v197_persistent_join_qr.sql",
-        "db/migrations/20260807_nestly_v197_recommendation_duplicate_root_cause.sql"
+        "db/migrations/20260807_nestly_v197_recommendation_duplicate_root_cause.sql",
+        "db/migrations/20260807_nestly_v202_branch_add_and_billing.sql",
+        "db/migrations/20260807_nestly_v202a_activate_branch_on_paid_command.sql",
+        "db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql"
       ]
     }
   ],
@@ -2112,7 +2115,31 @@
       "path": "db/migrations/20260807_nestly_v197_persistent_join_qr.sql",
       "semanticVersion": "v197",
       "proposedDeployVersion": "20260807050000",
-      "sha256": "f797d6aacbae4182908737591ac3d6e741f4449550f2212faba4c79044500780"
+      "sha256": "3213ecbf939097db630e60cb9342f4f6b0c43b326c4cef77d8a7103c25d5f89d"
+    },
+    {
+      "order": 223,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v202_branch_add_and_billing.sql",
+      "semanticVersion": "v202",
+      "proposedDeployVersion": "20260807060000",
+      "sha256": "406d65259b08f1f4de8017478096e26eee467c3dd2cf5c27e5daef984f99e40d"
+    },
+    {
+      "order": 224,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v202a_activate_branch_on_paid_command.sql",
+      "semanticVersion": "v202a",
+      "proposedDeployVersion": "20260807061000",
+      "sha256": "6330f3047fb845bd759d075b266ebba53c24c6e70a46e37651a9bb69be410bde"
+    },
+    {
+      "order": 225,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql",
+      "semanticVersion": "v202b",
+      "proposedDeployVersion": "20260807062000",
+      "sha256": "74408717424c6639319f8fc7910986db0553d3eff64a7a17575e6932109ab36a"
     }
   ]
 }
