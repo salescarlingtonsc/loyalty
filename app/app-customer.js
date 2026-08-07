@@ -523,7 +523,7 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
     renderCustomerPasswordSignIn(isRouteCurrent,{notice:'Password updated. Sign in with your mobile number and new password.'});
   };
 }
-function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice=''}={}){
+function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeTone='success'}={}){
   if(!isRouteCurrent())return;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerPasswordTitle">
     <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerPasswordTitle">Welcome to ${esc(BRAND.productName)}</h1><p class="muted small" style="margin-top:5px">Sign in with your mobile number and password. Normal sign-in does not send an OTP.</p></div></div>
@@ -531,7 +531,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice=''}={}){
     <input id="customerPasswordPhone" type="tel" inputmode="tel" autocomplete="tel webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
     <label for="customerPassword">Password</label>
     ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn'})}
-    <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px;color:var(--green)">${esc(notice)}</p>`:''}</div>
+    <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px${noticeTone==='success'?';color:var(--green)':''}">${esc(notice)}</p>`:''}</div>
     <div style="margin-top:14px">${authChallengeHtml()}</div>
     <button class="btn" id="customerPasswordSignIn" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
@@ -793,6 +793,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     <p class="muted small" style="margin-top:14px">${signupConsentRecorded?`Your Terms and Privacy Notice acceptance was captured before phone verification.${customerSignupMarketingOptedIn()?' You also opted in to offers and updates — you can change this anytime in Profile.':''}`:'Consent was not recorded for this browser session. Return to Create account and tick the Terms agreement box before verifying your phone.'}</p>
     <div id="customerProfileError" role="alert" aria-live="assertive"></div>
     <button class="btn" id="customerRegister" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:18})}<span>Create my customer account</span></button>
+    <div class="row" style="margin-top:12px"><button class="btn ghost sm" id="customerProfileStartOver" type="button">Start again</button><span class="spacer"></span></div>
   </section>`);
   const register=$('customerRegister'),profileForm=$('customerProfileForm'),profileError=$('customerProfileError');
   const fullNameInput=$('customerFullName'),birthDateInput=$('customerDob'),genderInput=$('customerGender'),languageInput=$('customerLanguage');
@@ -836,6 +837,16 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
         profileError.innerHTML='<div class="err">Customer registration is not available yet. Please try again later.</div>';
       }
     });
+  };
+  /* v191: an escape hatch, so this screen can never become the trap described above. */
+  const startOver=$('customerProfileStartOver');
+  if(startOver)startOver.onclick=async()=>{
+    startOver.disabled=true;
+    await sb.auth.signOut();
+    resetClientSessionState();resetCustomerRegistrationState();S.user=null;
+    if(!isRouteCurrent())return;
+    renderCustomerPasswordSignIn(isRouteCurrent,{noticeTone:'info',
+      notice:'Signed out. Tap Create account to start again.'});
   };
   if(signupStash&&customerSignupConsentRecorded())register.onclick();
 }
@@ -887,6 +898,21 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
       nav('#/claim?business='+encodeURIComponent(intent));return;
     }
     if(!isRouteCurrent())return;
+    /* v191 (owner: "default peekaa.asia is customer log in, not sign up"). A signed-out visitor
+       already lands on sign-in. What the owner hit was a STRANDED session: the phone was verified
+       but the account was never finished, and this browser holds no consent evidence — so the
+       profile form below refuses its own submit ("Return to Create account and tick the Terms
+       agreement box"), with no way back to Create account. That is a trap, not a resume. Clear the
+       unusable session and land on sign-in, where Create account is one tap away. Nothing is lost:
+       an account with no profile holds no rewards, bookings or history. */
+    if(!customerSignupConsentRecorded()){
+      await sb.auth.signOut();
+      resetClientSessionState();
+      S.user=null;
+      if(!isRouteCurrent())return;
+      return renderCustomerPasswordSignIn(isRouteCurrent,{noticeTone:'info',
+        notice:'That sign-up was never finished. Sign in if you already have an account, or tap Create account to start again.'});
+    }
     return renderCustomerRegistrationProfile(isRouteCurrent);
   }
   return renderCustomerPasswordSignIn(isRouteCurrent);
