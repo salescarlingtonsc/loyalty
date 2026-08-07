@@ -1486,6 +1486,18 @@
       "version": "20260807235930",
       "name": "nestly_v232_promotion_lock_cannot_take_down_the_api",
       "sourcePath": "db/migrations/20260808_nestly_v232_promotion_lock_cannot_take_down_the_api.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235940",
+      "name": "nestly_v233_admin_sessions_get_the_same_reaper",
+      "sourcePath": "db/migrations/20260808_nestly_v233_admin_sessions_get_the_same_reaper.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235950",
+      "name": "nestly_v234_advisor_hygiene",
+      "sourcePath": "db/migrations/20260808_nestly_v234_advisor_hygiene.sql"
     }
   ]
 }

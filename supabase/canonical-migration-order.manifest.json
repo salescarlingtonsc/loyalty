@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 202,
-  "itemCount": 247,
+  "pendingCount": 204,
+  "itemCount": 249,
   "items": [
     {
       "order": 1,
@@ -2477,6 +2477,26 @@
       "path": "supabase/migrations/20260807235930_nestly_v232_promotion_lock_cannot_take_down_the_api.sql",
       "octetLength": 2915,
       "sha256": "83b97fc9c323565f0b99979c4b2bb5b7c434a2949d271bd56a7ed23ad15be20b",
+      "provenance": "local-source"
+    },
+    {
+      "order": 248,
+      "kind": "pending",
+      "version": "20260807235940",
+      "name": "nestly_v233_admin_sessions_get_the_same_reaper",
+      "path": "supabase/migrations/20260807235940_nestly_v233_admin_sessions_get_the_same_reaper.sql",
+      "octetLength": 670,
+      "sha256": "dadcc0d24021a34ad532ee812ae9d1e7477198a36cb552c6d9466b9d42d0d0c1",
+      "provenance": "local-source"
+    },
+    {
+      "order": 249,
+      "kind": "pending",
+      "version": "20260807235950",
+      "name": "nestly_v234_advisor_hygiene",
+      "path": "supabase/migrations/20260807235950_nestly_v234_advisor_hygiene.sql",
+      "octetLength": 921,
+      "sha256": "cbf7437011d40895de3b9a69000ec7eb66441ec410e61b6f8f7ee4262be11192",
       "provenance": "local-source"
     }
   ]
