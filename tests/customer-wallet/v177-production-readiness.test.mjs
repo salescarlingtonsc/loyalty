@@ -133,7 +133,8 @@ test('customer decisions use the in-app dialog, never a native prompt or confirm
 });
 
 test('the service worker ships the v177 shell and keeps navigation network-first',()=>{
-  assert.match(sw,/const CACHE_VERSION='v8-20260806-v177-production-polish';/);
+  // v195 moved the shell to v9 so the un-fingerprinted customer-ui.js (two new icons) is refetched.
+  assert.match(sw,/const CACHE_VERSION='v9-20260808-v195-tier-icons';/);
   const fetchHandler=section(sw,"self.addEventListener('fetch'",'const CUSTOMER_PUSH_TYPES=');
   assert.match(fetchHandler,/if\(request\.mode==='navigate'\)\{/);
   assert.match(fetchHandler,/return await fetch\(request\)/,'navigation must try the network first');

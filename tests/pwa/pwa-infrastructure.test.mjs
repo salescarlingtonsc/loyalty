@@ -229,6 +229,7 @@ test('service worker reloads open pages after replacing a stale auth/legal shell
       'nestly-shell-v6-20260804-v164-auth-cache-convergence',
       'nestly-shell-v7-20260805-v167-customer-trust',
       'nestly-shell-v8-20260806-v177-production-polish',
+      'nestly-shell-v9-20260808-v195-tier-icons',
       'unrelated-cache'
     ]
   });
@@ -241,15 +242,18 @@ test('service worker reloads open pages after replacing a stale auth/legal shell
   });
   await activatePromise;
 
+  /* Every shell older than the current one goes, and only the current one survives — which is
+     what makes a stale customer-ui.js impossible to keep. v8 joins the list because v195 is v9. */
   assert.deepEqual(harness.deletedCaches, [
     'nestly-shell-v5-20260802-v138-peekaa-convergence',
     'nestly-shell-v6-20260804-v164-auth-cache-convergence',
-    'nestly-shell-v7-20260805-v167-customer-trust'
+    'nestly-shell-v7-20260805-v167-customer-trust',
+    'nestly-shell-v8-20260806-v177-production-polish'
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(harness.clientMessages)), [
     {
       type: 'PEEKAA_SW_ACTIVATED',
-      cacheVersion: 'v8-20260806-v177-production-polish'
+      cacheVersion: 'v9-20260808-v195-tier-icons'
     }
   ]);
   assert.deepEqual(harness.clientNavigations, [

@@ -66,6 +66,10 @@ test('global recovery guard is user-bound and precedes every authenticated route
 });
 
 test('auth-control cache identity changes with the versioned customer UI asset',()=>{
-  assert.match(app,/<script src="\/customer-ui\.js\?v=20260728-auth-controls"><\/script>/);
-  assert.match(sw,/CACHE_VERSION='v8-20260806-v177-production-polish'/);
+  /* v195 added two icons (crown, gem) to customer-ui.js. That file is NOT fingerprinted — it
+     carries a hand-written ?v= token — so a returning visitor would have kept the cached copy
+     and rendered the fallback glyph on every tier rung. Both cache identities move together:
+     the asset token and the service worker's CACHE_VERSION, which also caches this file. */
+  assert.match(app,/<script src="\/customer-ui\.js\?v=20260808-v195-tier-icons"><\/script>/);
+  assert.match(sw,/CACHE_VERSION='v9-20260808-v195-tier-icons'/);
 });
