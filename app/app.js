@@ -190,15 +190,50 @@ const mountedTurnstileControls=new Set();
 function destroyMountedTurnstiles(){
   [...mountedTurnstileControls].forEach(control=>control.destroy());
 }
+/* V206: Turnstile must never be able to strand the sign-in form.
+   Two failure shapes were reaching users on iPadOS/WebKit:
+   (1) the api.js request hangs with NEITHER onload NOR onerror — a content blocker, a captive
+       portal, or a stalled TLS handshake to challenges.cloudflare.com. The promise never settled,
+       so `await loadTurnstile()` never returned, the status stayed on "Loading security check…"
+       with the Retry button hidden, and Sign in stayed disabled forever.
+   (2) the loader promise was CACHED after it rejected, so once the first attempt failed every
+       later Retry re-awaited the same rejected promise and could never recover.
+   Both are fixed here: a hard deadline settles the promise, and every failure path drops the
+   cached promise so a Retry genuinely re-requests the script. */
+const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
+/* How long a rendered widget may sit with no callback of any kind before the UI declares it
+   wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
+   SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
+const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
+const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
 function loadTurnstile(){
-  if(window.turnstile) return Promise.resolve(window.turnstile);
+  const ready=turnstileApiReady();
+  if(ready) return Promise.resolve(ready);
   if(turnstileLoader) return turnstileLoader;
   turnstileLoader=new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
     script.async=true;script.defer=true;
-    script.onload=()=>window.turnstile?resolve(window.turnstile):reject(new Error('Security check unavailable.'));
-    script.onerror=()=>{turnstileLoader=null;script.remove();reject(new Error('Security check unavailable.'))};
+    let settled=false;
+    const fail=(message,{remove=true}={})=>{
+      if(settled)return;
+      settled=true;clearTimeout(deadline);turnstileLoader=null;
+      if(remove)script.remove();
+      reject(new Error(message));
+    };
+    const succeed=()=>{
+      if(settled)return;
+      const api=turnstileApiReady();
+      /* onload fired but the global is absent: the response was not the real api.js (a captive
+         portal or an interception proxy). Treat it as a load failure, not as success. */
+      if(!api)return fail('Security check unavailable.');
+      settled=true;clearTimeout(deadline);resolve(api);
+    };
+    /* The script element is deliberately LEFT in place on timeout: a slow-but-alive request may
+       still define window.turnstile, and the next Retry then resolves instantly from the global. */
+    const deadline=setTimeout(()=>fail('Security check timed out.',{remove:false}),TURNSTILE_SCRIPT_TIMEOUT_MS);
+    script.onload=succeed;
+    script.onerror=()=>fail('Security check unavailable.');
     document.head.appendChild(script);
   });
   return turnstileLoader;
@@ -263,31 +298,58 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
     widgetId=undefined;
     host?.replaceChildren();
   };
+  /* Every render attempt gets a generation. A widget torn down by a Retry (or by a re-render of
+     the screen) can still invoke its callbacks afterwards on WebKit; without this, a stale
+     challenge could write its token into the CURRENT form — or blank a token the user had
+     already earned. A callback from an older generation is ignored outright. */
+  let generation=0;
+  let stall=null;
+  const stopStall=()=>{clearTimeout(stall);stall=null};
+  /* The widget rendered but nothing came back: no token, no checkbox prompt, no error callback.
+     Turnstile has no client-side guarantee that any of its callbacks ever fire, so this is the
+     backstop that converts "silently wedged" into an actionable failure with a Retry. */
+  const armStall=(mine)=>{
+    stopStall();
+    stall=setTimeout(()=>{
+      if(destroyed||mine!==generation)return;
+      clear(security('timeout'),true);retryEl.hidden=false;
+    },TURNSTILE_SOLVE_TIMEOUT_MS);
+  };
   const render=async()=>{
     if(destroyed)return;
+    generation+=1;
+    const mine=generation;
+    const live=()=>!destroyed&&mine===generation;
     message(security('loading'));retryEl.hidden=true;
+    armStall(mine);
     try{
       api=await loadTurnstile();
-      if(destroyed||!document.getElementById(container)) return;
+      if(!live()||!document.getElementById(container)){stopStall();return}
       removeWidget();
-      if(destroyed)return;
+      if(!live()){stopStall();return}
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
+        callback:(token)=>{if(!live())return;stopStall();onToken(token);retryEl.hidden=true;setPassed(true)},
         /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
            security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
            and the passkey button looked broken while the app was simply waiting for a tick. */
-        'before-interactive-callback':()=>{if(destroyed)return;message(security('interactive'))},
-        'after-interactive-callback':()=>{if(destroyed)return;message(security('loading'))},
-        'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
-        'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
-        'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
-    }catch{if(!destroyed){clear(security('load'),true);retryEl.hidden=false}}
+        'before-interactive-callback':()=>{if(!live())return;stopStall();message(security('interactive'))},
+        'after-interactive-callback':()=>{if(!live())return;armStall(mine);message(security('loading'))},
+        'expired-callback':()=>{if(!live())return;stopStall();clear(security('expired'),true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(!live())return;stopStall();clear(security('timeout'),true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(!live())return true;stopStall();logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
+    }catch{
+      stopStall();
+      /* The one guarantee this whole block exists to make: on ANY failure the user sees what
+         happened and gets a Retry. Never a hidden button under a permanent "Loading…". */
+      if(live()){clear(security('load'),true);retryEl.hidden=false}
+    }
   };
   const retryRender=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;render()};
   const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
   const destroy=()=>{
     if(destroyed)return;
-    destroyed=true;retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
+    destroyed=true;generation+=1;stopStall();
+    retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
   };
   const control={reset,destroy};
   mountedTurnstileControls.add(control);
@@ -464,6 +526,12 @@ let pendingApptClientId=''; // Customer 360 → New appointment: prefills the ex
    behind its own button — so a control labelled "New appointment" produced a calendar and no
    form. This flag is consumed once by the appointments page, exactly like pendingApptClientId. */
 let pendingOpenApptFormV217=false;
+/* V229 (owner: "i need a clean overview before zooming in"). Which Programmes topic is drilled
+   into, '' = the tile overview. In-session only, consumed by growPage. */
+let growTopicV229='';
+/* V230: the loyalty editor's pending model selection (redeem/tiers) before Save writes it.
+   Reset on every fresh entry so a preview never leaks across visits. */
+let loyaltyModeDraftV230=null;
 /* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
    birthday / bring-back / referral editors. Module-level because those editors live in
    different page functions from the Programmes overview that sets it. */
@@ -668,7 +736,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';growTopicV229='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -1562,8 +1630,51 @@ async function loadCustomerFeatureCapabilities({refresh=false}={}){
 const APP_SURFACE_CHUNKS_V185=(()=>{
   try{return JSON.parse(document.getElementById('appSurfaceChunks')?.textContent||'{}')}catch{return {}}
 })();
+/* V200 surface assets. grow-recommender.js, v95-media-sync.js, revenue-truth.js, growth-offers.js
+   and sector-economics.js (plus their stylesheets) were plain <script defer>/<link> tags in
+   index.html, so every visitor — including a customer opening a booking link — downloaded, parsed
+   and ran all of them before first paint, for globals only a workspace page or the customer offer
+   strip ever touches. Every consumption site sits inside a function, so they can arrive with the
+   surface that needs them. They are injected BEFORE the surface chunk and with async=false, which
+   means that even if a future edit does read one of these globals at chunk load time, the global is
+   already there. A failure resolves rather than rejects: a missing enhancement must not stop the
+   surface from rendering, exactly as a failed <script defer> did not stop boot. */
+const APP_SURFACE_ASSETS_V200=(()=>{
+  try{return JSON.parse(document.getElementById('appSurfaceAssets')?.textContent||'{}')}catch{return {}}
+})();
+const surfaceAssetPromisesV200=new Map();
+/* Same-origin absolute paths only, and each url is fetched once however many surfaces list it —
+   growth-offers is shared by the customer and the workspace surfaces. */
+function loadSurfaceAssetV200(url,kind){
+  const src=String(url||'');
+  if(!/^\/[\w./?=-]*$/.test(src))return Promise.resolve('');
+  if(surfaceAssetPromisesV200.has(src))return surfaceAssetPromisesV200.get(src);
+  const promise=new Promise(resolve=>{
+    const node=document.createElement(kind==='css'?'link':'script');
+    if(kind==='css'){node.rel='stylesheet';node.href=src}
+    else {node.src=src;node.async=false}
+    node.onload=()=>resolve(src);
+    node.onerror=()=>{console.error(`Surface asset failed to load: ${src}`);resolve('')};
+    document.head.appendChild(node);
+  });
+  surfaceAssetPromisesV200.set(src,promise);
+  return promise;
+}
+function loadSurfaceAssetsV200(name){
+  const entry=APP_SURFACE_ASSETS_V200[name]||{};
+  const css=Array.isArray(entry.css)?entry.css:[];
+  const js=Array.isArray(entry.js)?entry.js:[];
+  return Promise.all([...css.map(url=>loadSurfaceAssetV200(url,'css')),...js.map(url=>loadSurfaceAssetV200(url,'js'))]);
+}
 const appChunkPromisesV185=new Map();
 let appSurfaceRetriedV185=false;
+/* v200: surfaces that cannot stand alone. The workspace chunk is built on the assumption that the
+   auth chunk is already there — a persona chooser, a suspended-workspace card and the invite
+   acceptance screen are reached both signed out AND from inside the workspace, so they live in the
+   small chunk and the big one declares the dependency instead of duplicating them or pushing them
+   back into the always-loaded core. Mirrors SURFACE_PREREQUISITES in
+   scripts/quality/split-app-bundle.mjs, which refuses to build a chunk that breaks the rule. */
+const APP_SURFACE_PREREQUISITES_V185={business:['auth']};
 function loadAppChunkV185(name){
   if(appChunkPromisesV185.has(name))return appChunkPromisesV185.get(name);
   const src=String(APP_SURFACE_CHUNKS_V185[name]||'');
@@ -1573,6 +1684,12 @@ function loadAppChunkV185(name){
     const missing=Promise.reject(new Error(`Application chunk "${name}" is not available.`));
     missing.catch(()=>{});appChunkPromisesV185.set(name,missing);return missing;
   }
+  /* The prerequisite chunk and this surface's assets are injected FIRST. Every tag carries
+     async=false, so the browser downloads them in parallel but executes them in insertion order —
+     whatever the chunk depends on is defined before its first line runs, without serialising the
+     round trips. */
+  const prerequisites=(APP_SURFACE_PREREQUISITES_V185[name]||[]).map(dependency=>loadAppChunkV185(dependency));
+  prerequisites.push(loadSurfaceAssetsV200(name));
   const promise=new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src=src;script.async=false;
@@ -1580,8 +1697,12 @@ function loadAppChunkV185(name){
     script.onerror=()=>{appChunkPromisesV185.delete(name);reject(new Error('Part of the app could not be loaded. Check your connection and reload.'))};
     document.head.appendChild(script);
   });
-  appChunkPromisesV185.set(name,promise);
-  return promise;
+  /* A rejection drops the cache entry too, so a retry genuinely re-requests instead of re-awaiting
+     the failure. */
+  const ready=Promise.all([...prerequisites,promise])
+    .then(()=>name,error=>{appChunkPromisesV185.delete(name);throw error});
+  appChunkPromisesV185.set(name,ready);
+  return ready;
 }
 /* Which chunk a route needs. The hash alone is not enough — "#/" is the customer entry for a
    signed-out visitor and the workspace for signed-in staff — so the caller passes the session it
@@ -1600,7 +1721,12 @@ function appSurfaceForRouteV185(hash,{signedIn=false}={}){
      downloading EVERY surface — the self-heal worked, so it only ever showed up as wasted
      bandwidth on the most-hit route. */
   if(route==='#/'||route==='')return 'customer';
-  return 'business';
+  /* V200: a signed-out merchant on /business is shown one card — sign in, sign up, accept an
+     invite, or activate an approved business. That used to cost the entire 1.2MB workspace chunk
+     before the form could be typed into. Those screens are their own ~17KB chunk now; the
+     workspace only downloads once there IS a session to open it with (and it pulls the auth chunk
+     along with it, so the signed-in persona/suspension screens are still present). */
+  return signedIn?'business':'auth';
 }
 /* The zh-CN / ms lookup tables are ~200KB of source and are consulted only when the active locale
    is not English, so they ship as their own chunk. Until it arrives, translation returns the
@@ -1621,7 +1747,7 @@ function loadPlatformConsoleAssetsV184(){
   if(platformConsoleAssetsPromiseV184)return platformConsoleAssetsPromiseV184;
   let assets={};
   try{assets=JSON.parse(document.getElementById('platformConsoleAssets')?.textContent||'{}')}catch{assets={}}
-  const scriptUrl=String(assets.js||''),styleUrl=String(assets.css||'');
+  const scriptUrl=String(assets.js||''),styleUrl=String(assets.css||''),crmUrl=String(assets.crm||'');
   if(!scriptUrl.startsWith('/')){
     /* A missing or tampered manifest must not become a script injection. */
     return Promise.resolve(null);
@@ -1631,8 +1757,19 @@ function loadPlatformConsoleAssetsV184(){
       const style=document.createElement('link');
       style.rel='stylesheet';style.href=styleUrl;document.head.appendChild(style);
     }
+    /* V200: NestlyPlatformCRMUtils has exactly one consumer — platform-console.js — so it moved off
+       the initial page load and onto this path. Injected before the console and with async=false,
+       so it is defined by the time the console's first line runs. */
+    if(crmUrl.startsWith('/')){
+      const crm=document.createElement('script');
+      crm.src=crmUrl;crm.async=false;document.head.appendChild(crm);
+    }
     const script=document.createElement('script');
-    script.src=scriptUrl;script.defer=true;
+    /* async=false, not defer: `defer` is ignored on a dynamically created script, which would leave
+       this racing the CRM helper above — and platform-console.js reads NestlyPlatformCRMUtils at
+       ITS load time (`const CRM=globalObject.NestlyPlatformCRMUtils||null`). async=false is the
+       only flag that guarantees the two execute in insertion order. */
+    script.src=scriptUrl;script.async=false;
     script.onload=()=>resolve(globalThis.NestlyPlatformConsole||null);
     script.onerror=()=>{platformConsoleAssetsPromiseV184=null;resolve(null)};
     document.head.appendChild(script);
@@ -2800,11 +2937,14 @@ function applyCustomerNavCountsV194(counts={}){
   if(scan)scan.onclick=openCustomerJoinScanner;
   return customerNavCountsV194;
 }
+/* v195 (owner circled Scan QR and drew it up beside the bell): scanning is an ACTION, not a
+   destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
+   claimed a quarter of the navigation and read like a fourth page. It is now the header control
+   next to notifications, on every customer screen, and the nav holds only real destinations. */
 const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',copy:'home'},
   {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'programmes'},
-  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'},
-  {key:'scan',icon:'scan',copy:'scanQr'}
+  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
 ]);
 /* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
    two tabs that hold countable things now carry that count. A zero is not rendered — a badge
@@ -2820,9 +2960,8 @@ function customerPrimaryNavigation(active,counts={}){
     return value?`${text}, ${value}`:text;
   };
   return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
-    ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
-      ?`<button type="button" id="customerNavScan">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span></button>`
-      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
+    ${CUSTOMER_PRIMARY_NAV.map(item=>
+      `<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
   </nav>`;
 }
 function customerJoinTokenFromQr(value,currentUrl=location.href){
@@ -2980,7 +3119,7 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
   root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head">
     ${backHref?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
     <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    <span class="spacer"></span><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
+    <span class="spacer"></span><button class="customer-head-scan" id="customerNavScan" type="button" aria-label="${esc(ct('scanQr'))}" title="${esc(ct('scanQr'))}">${CUI.icon('scan',{size:19})}</button><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
     ${customerWorkspaceSwitchHtml(staffWorkspaces)}
     <details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu">
       <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a>
@@ -3159,16 +3298,19 @@ async function renderCustomerProgrammes(){
   /* v178 (owner annotation): "My Rewards" is back button + heading with Scan to join + the
      reward-account grid. The offers shelf and the next-best-action banner belong to Home only. */
   renderCustomerShell({active:'programmes',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:`<div class="card"><p class="muted">${esc(ct('loadingProgrammes'))}</p></div>`});
-  /* The QR-only join rule stays stated on this page — the owner removed the offers shelf and the
-     guidance banner from "My Rewards", not the explanation of how a rewards account gets here. */
-  const scanGuide=`<div class="customer-programme-guide" role="note">${CUI.icon('scan',{size:22})}<div><b>Joining a new rewards account</b><p class="muted small" style="margin-top:4px">Visit the business and scan its Peekaa QR. After you sign in, the verified rewards account appears here automatically.</p></div></div>`;
+  /* v196 (owner struck the whole card out): "Joining a new rewards account — visit the business
+     and scan its Peekaa QR" explained a rule the page now demonstrates. Scan to join sits in the
+     heading row beside the title, and the scanner is in the header on every screen; the paragraph
+     under a customer's own reward accounts was telling them how to get what they already have.
+     The QR-only join rule itself is unchanged — nothing but the explanatory card is gone, and the
+     first-programme quest (a customer with NO accounts) still spells it out in full. */
   if(context.features.customer_actionable_wallet===true){
     const {data,error}=await sb.rpc('customer_get_actionable_wallet');
     if(!isCurrent())return;
     if(error)return renderCustomerWalletRetry('Your rewards are temporarily unavailable.',null,()=>renderCustomerProgrammes(),error);
     const cards=Array.isArray(data?.cards)?data.cards:[];
     if(!cards.length){renderCustomerFirstProgrammeQuest();return}
-    renderActionableWalletHome(data,{surface:'programmes',note:scanGuide,rerender:()=>renderCustomerProgrammes()});
+    renderActionableWalletHome(data,{surface:'programmes',rerender:()=>renderCustomerProgrammes()});
     focusCustomerRoute();return;
   }
   const [walletResult,selectorMediaResult]=await Promise.all([
@@ -3183,8 +3325,9 @@ async function renderCustomerProgrammes(){
   );
   if(!cards.length){renderCustomerFirstProgrammeQuest();return}
   $('walletBody').innerHTML=`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
-    ${customerProgrammeGridMarkupV96(cards)}${scanGuide}`;
+    ${customerProgrammeGridMarkupV96(cards)}`;
   $('customerHomeScan').onclick=openCustomerJoinScanner;
+  wireCustomerProgrammeSearchV195($('walletBody'));
   focusCustomerRoute();
 }
 
@@ -3215,7 +3358,7 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
   const groups=new Map();
   const ensure=(slug,name='Business')=>{
     const key=String(slug||'');
-    if(!groups.has(key))groups.set(key,{business_slug:key,business_name:name||'Business',bookingEnabled:false,requests:[],activeRequests:[],recentRequests:[],appointments:[]});
+    if(!groups.has(key))groups.set(key,{business_slug:key,business_name:name||'Business',business_logo:'',bookingEnabled:false,requests:[],activeRequests:[],recentRequests:[],appointments:[]});
     else if(name&&groups.get(key).business_name==='Business')groups.get(key).business_name=name;
     return groups.get(key);
   };
@@ -3223,6 +3366,10 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
     const business=card?.business||{};
     const group=ensure(business.slug,business.name);
     group.bookingEnabled=card?.booking_enabled===true||card?.booking?.enabled===true;
+    /* v195 (owner circled the bare name: "company photo"): a booking is easier to recognise by
+       the shop's own mark than by reading a name. Falls back to the initial when a business has
+       not uploaded a logo — never a placeholder image pretending to be theirs. */
+    if(!group.business_logo)group.business_logo=String(business.logo_url||'');
   }
   const seenRequests=new Set();
   for(const request of Array.isArray(requestPayload?.items)?requestPayload.items:[]){
@@ -3278,11 +3425,63 @@ function customerBookingAppointmentTabV178(appointment,now=Date.now()){
    Cubbly"): a business with nothing booked is not a booking. Only records list here; the
    "book with them" entry point moved into the empty state below, where it reads as an
    invitation rather than as a phantom booking. */
-function customerBookingTabGroupsV178(groups=[],tab='bookings'){
+/* v195 (owner: "put filter time here", beside the page title): the tabs answer WHAT a booking
+   is; this answers WHEN. It filters records already fetched — no request — and reads in the
+   direction the tab points: Ongoing looks forward, Cancelled and History look back. */
+/* v196 (owner circled the "Any time" control: "i need the date to date filter"): fixed windows
+   answered "how soon", not "between these two dates" — a customer looking for the visit they made
+   in March could not ask for March. Two date fields, either one optional, filtering the records
+   already fetched. Dates are read in Singapore time, the zone every other date on this surface is
+   printed in, so a booking shown as 8 Aug is included by a range ending 8 Aug. */
+function customerBookingRangeBoundV195(value,{end=false}={}){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||'')))return null;
+  const at=Date.parse(`${value}T${end?'23:59:59.999':'00:00:00.000'}+08:00`);
+  return Number.isFinite(at)?at:null;
+}
+function customerBookingWithinRangeV196(value,{from='',to=''}={}){
+  const start=customerBookingRangeBoundV195(from),finish=customerBookingRangeBoundV195(to,{end:true});
+  if(start===null&&finish===null)return true;
+  const at=Date.parse(value||'');
+  /* A record with no usable time is never filtered out — hiding it would be a silent loss, and
+     the customer cannot tell an empty list from a hidden one. */
+  if(!Number.isFinite(at))return true;
+  if(start!==null&&at<start)return false;
+  if(finish!==null&&at>finish)return false;
+  return true;
+}
+/* An inverted range (to before from) would match nothing and read as "you have no bookings",
+   which is a lie. The fields are swapped instead, and the control says so. */
+function customerBookingNormaliseRangeV196({from='',to=''}={}){
+  const start=customerBookingRangeBoundV195(from),finish=customerBookingRangeBoundV195(to,{end:true});
+  return (start!==null&&finish!==null&&finish<start)?{from:to,to:from}:{from,to};
+}
+function customerBookingFilterMarkupV195(range={from:'',to:''}){
+  const {from,to}=range||{};
+  const active=!!(from||to);
+  return `<div class="customer-booking-filter" role="group" aria-label="Filter bookings by date">
+    ${CUI.icon('appointments',{size:16})}
+    <label class="sr-only" for="customerBookingFrom">From date</label>
+    <input id="customerBookingFrom" type="date" value="${esc(from||'')}" max="2999-12-31">
+    <span aria-hidden="true">–</span>
+    <label class="sr-only" for="customerBookingTo">To date</label>
+    <input id="customerBookingTo" type="date" value="${esc(to||'')}" max="2999-12-31">
+    ${active?`<button class="btn ghost sm" id="customerBookingRangeClear" type="button">Clear</button>`:''}
+  </div>`;
+}
+function customerBookingBusinessLogoV195(group={}){
+  const url=customerMediaUrlV95(group?.business_logo),name=String(group?.business_name||'Business');
+  return url
+    ?`<img class="customer-booking-logo" src="${esc(url)}" alt="" loading="lazy" width="40" height="40">`
+    :`<span class="customer-booking-logo customer-booking-logo--fallback" aria-hidden="true">${esc((name[0]||'B').toUpperCase())}</span>`;
+}
+function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to:''}){
+  const inWindow=value=>customerBookingWithinRangeV196(value,range);
   return groups.map(group=>({
     ...group,
-    tabRequests:group.requests.filter(item=>customerBookingRequestTabV178(item)===tab),
-    tabAppointments:group.appointments.filter(item=>customerBookingAppointmentTabV178(item)===tab)
+    tabRequests:group.requests.filter(item=>customerBookingRequestTabV178(item)===tab
+      &&inWindow(item.preferred_at||item.created_at)),
+    tabAppointments:group.appointments.filter(item=>customerBookingAppointmentTabV178(item)===tab
+      &&inWindow(item.starts_at))
   })).filter(group=>group.tabRequests.length||group.tabAppointments.length);
 }
 function customerBookingEmptyMarkupV183(tab='bookings',emptyCopy='',groups=[]){
@@ -3293,26 +3492,36 @@ function customerBookingEmptyMarkupV183(tab='bookings',emptyCopy='',groups=[]){
   return `<section class="card"><h2>${esc(label)}</h2><p class="muted small" style="margin-top:6px">${esc(emptyCopy)}</p>
     ${bookable.length?`<div class="customer-booking-invite">${bookable.map(group=>`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${CUI.icon('bookings',{size:16})}<span>Book with ${esc(group.business_name)}</span></button>`).join('')}</div>`:''}</section>`;
 }
+/* v196 (owner: "remove the (1) from history — dont need to know how many transactions in
+   history"): a count is a prompt to act. Ongoing and Cancelled hold things a customer may still
+   need to do something about; History is a record, and numbering it only added noise. */
+const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set(['history']);
 function customerBookingTablistMarkupV178(currentTab='bookings',counts={}){
   return `<div class="customer-booking-tabs" role="tablist" aria-label="Booking status">${CUSTOMER_BOOKING_TABS_V178.map(([tab,label])=>{
-    const selected=tab===currentTab;
-    return `<button type="button" role="tab" id="customerBookingTab-${esc(tab)}" class="customer-booking-tab" data-booking-tab="${esc(tab)}" aria-selected="${selected}" aria-controls="customerBookingPanel" tabindex="${selected?'0':'-1'}">${esc(label)}${Number(counts[tab])>0?` <span class="customer-booking-tab-count">${Number(counts[tab])}</span>`:''}</button>`;
+    const selected=tab===currentTab,showCount=!CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196.has(tab);
+    return `<button type="button" role="tab" id="customerBookingTab-${esc(tab)}" class="customer-booking-tab" data-booking-tab="${esc(tab)}" aria-selected="${selected}" aria-controls="customerBookingPanel" tabindex="${selected?'0':'-1'}">${esc(label)}${showCount&&Number(counts[tab])>0?` <span class="customer-booking-tab-count">${Number(counts[tab])}</span>`:''}</button>`;
   }).join('')}</div>`;
 }
 async function renderCustomerBookings(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
   renderCustomerShell({active:'bookings',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your bookings…</p></div>'});
-  const [walletResult,programmeResult,requestResult]=await Promise.all([
+  const [walletResult,programmeResult,requestResult,selectorMediaResult]=await Promise.all([
     sb.rpc('customer_get_wallet'),
     sb.rpc('customer_list_programmes_v89'),
-    sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null})
+    sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
+    /* v195: the programme feeds carry no logo, so the same media projection My Rewards uses
+       supplies it here. A failure costs the photo and nothing else — the initial is the fallback. */
+    sb.rpc('customer_get_programme_selector_media_v96')
   ]);
   if(!isCurrent())return;
   const legacyProgrammes=walletResult.error?[]:(Array.isArray(walletResult.data)?walletResult.data:[]);
-  const linkedProgrammes=programmeResult.error
-    ?legacyProgrammes
-    :(Array.isArray(programmeResult.data?.programmes)?programmeResult.data.programmes:[]);
+  const linkedProgrammes=mergeCustomerProgrammeSelectorMediaV96(
+    programmeResult.error
+      ?legacyProgrammes
+      :(Array.isArray(programmeResult.data?.programmes)?programmeResult.data.programmes:[]),
+    selectorMediaResult.error?null:selectorMediaResult.data
+  );
   const actionResults=await Promise.all(linkedProgrammes.map(async card=>{
     const business=card?.business||{};
     const response=business.id
@@ -3336,14 +3545,14 @@ async function renderCustomerBookings(){
   if(walletResult.error&&programmeResult.error&&requestResult.error){
     return renderCustomerWalletRetry('Your booking requests and appointments are temporarily unavailable.',null,()=>renderCustomerBookings(),walletResult.error);
   }
-  let currentBookingTab='bookings';
+  let currentBookingTab='bookings',currentBookingRange={from:'',to:''};
   const paintBookings=()=>{
     if(!isCurrent()||!$('walletBody')?.isConnected)return;
     const allGroups=composeCustomerBookingGroups(programmes,requestPayload,results);
     const tabCounts={};
-    for(const [tab] of CUSTOMER_BOOKING_TABS_V178)tabCounts[tab]=customerBookingTabGroupsV178(allGroups,tab)
+    for(const [tab] of CUSTOMER_BOOKING_TABS_V178)tabCounts[tab]=customerBookingTabGroupsV178(allGroups,tab,currentBookingRange)
       .reduce((sum,group)=>sum+group.tabRequests.length+group.tabAppointments.length,0);
-    const groups=customerBookingTabGroupsV178(allGroups,currentBookingTab);
+    const groups=customerBookingTabGroupsV178(allGroups,currentBookingTab,currentBookingRange);
     const emptyCopy=(CUSTOMER_BOOKING_TABS_V178.find(([tab])=>tab===currentBookingTab)||[])[2]||'Nothing here yet.';
     const requestHeading=currentBookingTab==='bookings'?'Awaiting the business':currentBookingTab==='cancelled'?'Cancelled requests':'Earlier request updates';
     const appointmentHeading=currentBookingTab==='bookings'?'Appointments':currentBookingTab==='cancelled'?'Cancelled appointments':'Past appointments';
@@ -3359,18 +3568,28 @@ async function renderCustomerBookings(){
     const requestCount=requestItems.length;
     const activeRequestCount=requestItems.filter(isActiveCustomerBookingRequest).length;
     const hasMore=!!requestPayload?.next_cursor;
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div></header>
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingFilterMarkupV195(currentBookingRange)}</header>
     ${partialMessages.length?'<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div></div>':''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
-    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head"><div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
+    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span></div>`).join('')}`:''}
       ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
     </section>`).join('')}</div>`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
+    const applyRange=(next,focusId)=>{
+      currentBookingRange=customerBookingNormaliseRangeV196(next);
+      paintBookings();
+      if(focusId)$(focusId)?.focus();
+    };
+    const fromInput=$('customerBookingFrom'),toInput=$('customerBookingTo');
+    if(fromInput)fromInput.onchange=()=>applyRange({from:fromInput.value,to:currentBookingRange.to},'customerBookingFrom');
+    if(toInput)toInput.onchange=()=>applyRange({from:currentBookingRange.from,to:toInput.value},'customerBookingTo');
+    const clearRange=$('customerBookingRangeClear');
+    if(clearRange)clearRange.onclick=()=>applyRange({from:'',to:''},'customerBookingFrom');
     const tabButtons=[...$('walletBody').querySelectorAll('[data-booking-tab]')];
     const selectTab=(tab,focus=false)=>{
       if(!isCurrent()||!CUSTOMER_BOOKING_TABS_V178.some(([name])=>name===tab))return;
@@ -4019,6 +4238,36 @@ function interleaveCustomerOffersV173(items){
   return out;
 }
 let customerHomeOfferIndexV173=new Map();
+/* v195 (owner, arrow above Limited offers: "before limited offers i want to see a glance of my
+   expiring rewards"): points that quietly expire are the one thing a loyalty app must never let
+   a customer be surprised by. Built from the wallet cards Home already fetched — no extra round
+   trip — and it states the honest empty case rather than disappearing, so a customer can tell the
+   difference between "nothing expires soon" and "we did not check". */
+function customerExpiringRewardsMarkupV195(cards=[]){
+  const list=(Array.isArray(cards)?cards:[]).map(card=>{
+    const expiry=card?.expiry||{},units=Math.max(0,Number(expiry.expiring_units)||0);
+    if(!(units>0)||!expiry.next_expiry_at)return null;
+    return {
+      name:String(card?.business?.name||'').trim()||ct('localBusiness'),
+      units,unit:String(card?.loyalty?.unit||'points'),
+      soon:Math.max(0,Number(expiry.expiring_within_7_days)||0)>0,
+      at:expiry.next_expiry_at,when:walletDate(expiry.next_expiry_at)
+    };
+  }).filter(Boolean).sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(0,4);
+  if(!(Array.isArray(cards)&&cards.length))return '';
+  return `<section class="card customer-expiring-glance" aria-labelledby="customerExpiringTitle">
+    <div class="customer-expiring-head">
+      <h2 id="customerExpiringTitle">${CUI.icon('retention',{size:18})}<span>Expiring rewards</span></h2>
+      ${list.length?`<span class="pill new">${list.length} to use</span>`:'<span class="muted small">Nothing in 30 days</span>'}
+    </div>
+    ${list.length
+      ?`<ul class="customer-expiring-list">${list.map(row=>`<li${row.soon?' class="is-urgent"':''}>
+        <a href="#/customer/programmes"><b>${esc(customerPointTotalV103(row.units))} ${esc(row.unit)}</b>
+        <span class="muted small">${esc(row.name)}</span>
+        <span class="customer-expiring-when${row.soon?' is-urgent':''}">${esc(row.when)}</span></a></li>`).join('')}</ul>`
+      :`<p class="muted small">None of your points expire in the next 30 days.</p>`}
+  </section>`;
+}
 function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   const items=interleaveCustomerOffersV173(state.items);
   customerHomeOfferIndexV173=new Map(items.map(item=>[String(item?.id||''),item]));
@@ -4044,11 +4293,15 @@ function customerCompanyIdentityMarkupV178(business={}){
     ?`<img class="customer-company-logo" src="${esc(logo)}" alt="" loading="lazy">`
     :`<span class="customer-company-logo customer-company-logo--fallback" aria-hidden="true">${esc(initial)}</span>`;
 }
-function customerCompanyDetailRowV178(business={}){
+/* v195 (owner: "→ address phone number" on this row, and "click here straightaway go company
+   profile"): the row said "Company details", which described the destination instead of showing
+   anything. It now carries the branch address and phone as soon as they load, and one tap still
+   opens the full company profile. */
+function customerCompanyDetailRowV178(business={},{lines=''}={}){
   const name=String(business?.name||'').trim()||'Your business';
-  return `<button class="customer-company-row" type="button" data-company-detail aria-label="Company details for ${esc(name)}">
+  return `<button class="customer-company-row" type="button" data-company-detail aria-label="Open the company profile for ${esc(name)}">
     ${customerCompanyIdentityMarkupV178(business)}
-    <span class="customer-company-row-copy"><b>${esc(name)}</b><span class="muted small">Company details</span></span>
+    <span class="customer-company-row-copy"><b>${esc(name)}</b><span class="muted small" data-company-row-lines>${lines||'Company profile'}</span></span>
     <span class="spacer"></span><span class="customer-company-row-chevron" aria-hidden="true">›</span>
   </button>`;
 }
@@ -4145,14 +4398,32 @@ function customerOfferTaglineV194(name,tagline){
   if(!title)return String(tagline).trim();
   return title.includes(line)||line.includes(title)?'':String(tagline).trim();
 }
+/* v195 (owner struck the repeated line on the CARD too, and struck the tail of the description):
+   both are copy this app generated, not copy a merchant wrote. promotionCopyAssistV104 builds the
+   description as "<facts> at <business>. Available until <date>. <call to action>", and the sheet
+   already prints the validity as its own row and the action as a button — so the tail says the
+   same thing three times. Only OUR generated sentences are removed, matched exactly; a merchant's
+   own words, including their own dates, are never touched. */
+const PROMOTION_GENERATED_TAIL_V195=Object.freeze([
+  /\s*Book now to enjoy this offer\.\s*$/i,
+  /\s*View the offer and plan your visit\.\s*$/i,
+  /\s*Show this offer at the counter when you visit\.\s*$/i,
+  /\s*Available until [^.]{3,40}\.\s*$/i
+]);
+function customerOfferDescriptionV195(description){
+  let text=String(description||'').trim();
+  for(const pattern of PROMOTION_GENERATED_TAIL_V195)text=text.replace(pattern,'').trim();
+  return text;
+}
 function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
   const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
-    facts=String(item?.metadata?.offer_facts||'').trim(),
     validity=customerPromotionValidityV104(item),
     availability=String(item?.availability_label||'').trim(),
     terms=String(item?.terms||'').trim(),
     cta=item?.metadata?.cta||{},slug=encodeURIComponent(business.slug||''),
     taglineV194=customerOfferTaglineV194(item?.name,item?.tagline),
+    factsV195=customerOfferTaglineV194(item?.name,String(item?.metadata?.offer_facts||'')),
+    descriptionV195=customerOfferDescriptionV195(item?.description),
     initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase(),
     ctaLabel=String(cta.label||'').trim();
   const overlay=document.createElement('div');
@@ -4162,9 +4433,9 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
     <div class="row"><p class="customer-quest-kicker">Limited-time offer · ${esc(business.name||'Your business')}</p><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:18})}</button></div>
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
-    ${facts?`<p class="customer-offer-detail-facts">${esc(facts)}</p>`:''}
+    ${factsV195?`<p class="customer-offer-detail-facts">${esc(factsV195)}</p>`:''}
     ${taglineV194?`<p class="muted" style="margin-top:6px">${esc(taglineV194)}</p>`:''}
-    ${item?.description?`<p class="muted small" style="margin-top:8px">${esc(item.description)}</p>`:''}
+    ${descriptionV195?`<p class="muted small" style="margin-top:8px">${esc(descriptionV195)}</p>`:''}
     <div class="customer-offer-detail-meta">
       ${validity?`<p class="small"><b>${esc(validity)}</b></p>`:''}
       ${availability?`<p class="muted small">${esc(availability)}</p>`:''}
@@ -4173,7 +4444,12 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
     ${terms?`<p class="muted small customer-offer-detail-terms" style="margin-top:10px">${esc(terms)}</p>`:''}
     ${business.id?customerCompanyDetailRowV178(business):''}
     <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
-      ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`:''}
+      ${/* v195 (owner: "add book appt button"): an offer a customer wants is worthless if booking
+           it means leaving the sheet and finding the business again. The button is rendered only
+           once the business itself confirms customer booking is on — the v183 fail-closed rule —
+           so it can never send someone to a booking page that will refuse them. */''}
+      ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`
+        :`<span data-offer-book></span>`}
     </div></section>`;
   document.body.appendChild(overlay);
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerOfferDetailClose',inheritHistoryId});
@@ -4204,7 +4480,23 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
           branch.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
         ].filter(Boolean).join('');
         host.innerHTML=lines||'';
+        const rowLines=overlay.querySelector('[data-company-row-lines]');
+        if(rowLines){
+          const summary=[branch.address,branch.phone].map(value=>String(value||'').trim()).filter(Boolean);
+          if(summary.length)rowLines.textContent=summary.join(' · ');
+        }
       }).catch(()=>contactFailed());
+    if(business.slug&&cta.kind!=='book'){
+      Promise.resolve(sb.rpc('customer_get_business_actions_v89',{p_business:business.id}))
+        .then(({data,error})=>{
+          const host=overlay.isConnected?overlay.querySelector('[data-offer-book]'):null;
+          if(!host||error||data?.booking?.enabled!==true)return;
+          /* filled INSIDE the placeholder, then wired within it, so the links already bound
+             above are not given a second click handler. */
+          host.innerHTML=`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ct('bookNow'))}</a>`;
+          wireCustomerSheetNavV183(host,deactivate);
+        }).catch(()=>{});
+    }
   }
 }
 function wireCustomerHomeOffersV167(rerender){
@@ -4290,7 +4582,8 @@ function customerPromotionValidityV104(item={}){
 function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
   const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
     validity=customerPromotionValidityV104(item),
-    facts=String(item?.metadata?.offer_facts||'').trim(),
+    facts=customerOfferTaglineV194(item?.name,String(item?.metadata?.offer_facts||'')),
+    description=customerOfferDescriptionV195(item?.description),
     terms=String(item?.terms||'').trim();
   const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
   return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
@@ -4299,7 +4592,7 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       <p class="customer-quest-kicker">Limited-time offer</p>
       <h3>${esc(item?.name||'Latest offer')}</h3>
       ${facts?`<p class="customer-promotion-card-facts">${esc(facts)}</p>`:''}
-      ${item?.tagline||item?.description?`<p>${esc(item.tagline||item.description)}</p>`:''}
+      ${customerOfferTaglineV194(item?.name,item?.tagline)||description?`<p>${esc(customerOfferTaglineV194(item?.name,item?.tagline)||description)}</p>`:''}
       ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
       <div class="customer-promotion-card-actions">
         ${customerPromotionCtaV104(item,business,bookingEnabled)}
@@ -4307,7 +4600,7 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       </div>
       <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>
       <template data-promotion-details-template>
-        <p>${esc(item?.description||item?.tagline||facts||item?.name||'Latest offer')}</p>
+        <p>${esc(description||item?.tagline||facts||item?.name||'Latest offer')}</p>
         <dl class="customer-promotion-detail-list">
           ${facts?`<div><dt>Offer</dt><dd>${esc(facts)}</dd></div>`:''}
           ${validity?`<div><dt>Validity</dt><dd>${esc(validity)}</dd></div>`:''}
@@ -4423,18 +4716,32 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
    panel drops "Gold unlocks…" and "Your benefits now" (both struck out as "too many wordings"),
    names the rung plainly — "You're now at Basic" — marks every rung ON the progress bar, and
    folds the full ladder behind a disclosure that opens on tap. */
+/* v195 (owner drew a star, a crown and a gem onto the rungs): the marker is positional, not a
+   claim about the tier's name — first rung star, top rung gem, everything between a crown — so a
+   business that calls its tiers Bronze/Silver/Gold gets the same read as one using Basic/Diamond. */
+function customerTierRungIconV195(index,total){
+  if(index<=0)return 'star';
+  return index>=total-1?'diamond':'crown';
+}
 function customerTierMilestonesMarkupV194(tier={}){
   const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
   if(rungs.length<2)return '';
   const top=Math.max(...rungs.map(rung=>Math.max(0,Number(rung.threshold)||0)));
   if(!(top>0))return '';
-  return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map(rung=>{
+  return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map((rung,index)=>{
     const at=Math.max(0,Math.min(100,(Math.max(0,Number(rung.threshold)||0)/top)*100));
-    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i></i><b>${esc(rung.label)}</b></span>`;
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i><b>${esc(rung.label)}</b></span>`;
   }).join('')}</div>`;
 }
 function customerTierPanelMarkupV194(tier={}){
   const current=tier.current,next=tier.next;
+  /* V230 (owner: "only 1 can be live at any go ... reflected in the customer portal"). When the
+     firm redeems points for rewards, the tier ladder is not the story — showing it alongside
+     "spend your points" was exactly the double narrative the owner ruled out. The reader tells
+     us the firm's choice; an unchosen firm keeps today's behaviour. */
+  if(String(tier.points_mode||'')==='redeem'){
+    return '';
+  }
   if(tier.unavailable==='not_running'){
     return `<p class="muted small">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p>`;
   }
@@ -4511,25 +4818,65 @@ function customerTierRemainingTextV186(remaining,basis){
 }
 /* v194: Tier and Reward points as two tabs, the shape the owner drew over the old stacked block.
    The balance moves in here from the header, where it sat beside a name it had nothing to do with. */
-function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},reward=null}){
+/* v230 (owner, looking at Cubbly: "instead of showing different points to redeem rewards - it
+   should show the relevant selected model. in this case selected tier - it should reflect the
+   different tiers and its benefits"): v229 makes a firm choose ONE use for points, and refuses
+   redemption server-side when that choice is tiers. Cubbly had chosen tiers, and the customer was
+   still being shown a point-priced catalogue with "Show QR at counter" buttons the server would
+   reject. The panel is now built from the choice:
+     tiers  — one panel: where you stand, what your tier gives you, and every tier above it.
+     redeem — one panel: your balance and what it buys. No tier ladder for a firm not running one.
+     unset  — both, as before, because nothing has been put away yet.
+   The capability comes from the server (customer_portal_capabilities), so the surface and the
+   redemption gate can never disagree about which one this firm runs. */
+function customerProgrammeModeV230({points_mode=null,tiers=false,rewards=false}={}){
+  if(points_mode==='tiers')return 'tiers';
+  if(points_mode==='redeem')return 'redeem';
+  return tiers&&rewards?'both':tiers?'tiers':'redeem';
+}
+function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false}){
   const unitLabel=ct(presentation.unit);
   const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
-  const rewardName=String(reward?.name||'').trim();
-  const remaining=Math.max(0,Number(reward?.remaining_units)||0);
-  const rewardLine=!rewardName?'Rewards from this business appear below as you earn.'
-    :reward?.available_now===true?`${rewardName} is ready to redeem.`
-    :`${customerPointTotalV103(remaining)} ${unitLabel} to ${rewardName}.`;
+  const progress=customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward});
+  return `<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
+    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}
+    ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}`;
+}
+/* In tiers mode the balance is not a wallet — it is the distance travelled — so it is stated as
+   what it counts toward rather than as something to spend. */
+function customerProgrammeTierPanelV230({tier={},loyalty={},presentation={}}){
+  const unitLabel=ct(presentation.unit);
+  const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
+  const basis=String(tier.basis||'visits');
+  const counted=basis==='points_earned'
+    ?`<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)} earned</span></p>
+       <p class="muted small" style="margin-top:6px">Your ${esc(unitLabel)} count toward membership here — they are not spent.</p>`
+    :'';
+  return `${counted}${customerTierPanelMarkupV194(tier)}`;
+}
+function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},reward=null,rewardsHost=false,capabilities={}}){
+  const mode=customerProgrammeModeV230(capabilities);
+  if(mode==='tiers'){
+    return `<section class="card customer-programme-tabs customer-programme-single" aria-label="Your tier">
+      <h2 class="customer-programme-single-head">${CUI.icon('star',{size:17})}<span>Tier</span></h2>
+      ${customerProgrammeTierPanelV230({tier,loyalty,presentation})}
+    </section>`;
+  }
+  if(mode==='redeem'){
+    return `<section class="card customer-programme-tabs customer-programme-single" aria-label="Reward points">
+      <h2 class="customer-programme-single-head">${CUI.icon('redeem',{size:17})}<span>Reward points</span></h2>
+      ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
+    </section>`;
+  }
   return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
     <div class="customer-programme-tablist" role="tablist" aria-label="Tier and reward points">
-      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">Tier</button>
-      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">Reward points</button>
+      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('star',{size:17})}<span>Tier</span></button>
+      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">${CUI.icon('redeem',{size:17})}<span>Reward points</span></button>
     </div>
     <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
       <div data-programme-panel="tier">${customerTierPanelMarkupV194(tier)}</div>
       <div data-programme-panel="points" hidden>
-        <p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
-        <p class="muted small" style="margin-top:6px">${esc(rewardLine)}</p>
-        ${customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward})}
+        ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
       </div>
     </div>
   </section>`;
@@ -4560,7 +4907,7 @@ function wireCustomerProgrammeTabsV194(host=document){
     };
   });
 }
-function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready'}){
+function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready',rewardsHost=false,programmeCapabilities={}}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
   const hasTier=customerTierHasProgressV103(tier);
@@ -4578,13 +4925,12 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${esc(business.name||presentation.name)}">
         <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
         <span class="customer-programme-compact-copy"><b>${esc(business.name||presentation.name)}</b>
-          <span class="muted small">${esc(presentation.name)}${hasTier&&currentTierLabel?` · ${esc(currentTierLabel)}`:''}</span>
-          <span class="muted small customer-programme-identity-hint">Address, phone and offers ›</span></span>
+          <span class="muted small customer-programme-identity-hint">${hasTier&&currentTierLabel?`${esc(currentTierLabel)} · `:''}Address, phone and offers ›</span></span>
       </button>
       ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
     ${customerPointsExplainerMarkupV167(business)}
-    ${customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward})}
+    ${customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
@@ -4686,7 +5032,7 @@ function customerProgrammeTileMarkupV96(card){
   const accent=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f');
   const unit=ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points');
   const holdings=customerProgrammeHoldingsMarkupV183(card);
-  return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b><span>${esc(unit)}</span></div>${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}${reward?`<div style="grid-column:1/-1">${customerRewardProgressMarkupV167(card)}</div>`:''}</div></a>`;
+  return `<a class="card customer-programme-card customer-programme-card-v95" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b><span>${esc(unit)}</span></div>${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}${reward?`<div style="grid-column:1/-1">${customerRewardProgressMarkupV167(card)}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -4709,14 +5055,45 @@ function customerProgrammeGridMarkupV96(cards=[]){
       <div class="customer-programme-category-grid">${grouped.get(category).map(customerProgrammeTileMarkupV96).join('')}</div>
     </section>`).join('')}</div>`;
 }
-function customerLinkedRewardsLabelV156(count=0){
-  const safeCount=Math.max(0,Number(count)||0);
-  return `${safeCount} linked reward account${safeCount===1?'':'s'}`;
-}
 /* v178 (owner annotation): the crossed-out page-head title block is gone from Home, so the
    "Scan to join" control lives in this section heading row instead of a separate header. */
+/* v195 (owner struck the subtitle out and drew a search field beside the title): the count was
+   already visible — the tab badge carries it and every category prints its own — so the line only
+   repeated. The search filters the tiles already on the page: no request, no spinner, and a
+   customer with twenty reward accounts can reach one by typing its name. */
 function customerMyRewardsHeadingV156(count=0,{scanId=''}={}){
-  return `<div class="customer-my-rewards-title"><div><h2>${esc(ct('yourProgrammes'))}</h2><p class="muted small">${esc(customerLinkedRewardsLabelV156(count))}</p></div>${scanId?`<button class="btn sm" id="${esc(scanId)}" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button>`:''}</div>`;
+  return `<div class="customer-my-rewards-title"><div><h2>${esc(ct('yourProgrammes'))}</h2></div>
+    <div class="customer-my-rewards-search"><label class="sr-only" for="customerProgrammeSearch">Search company name</label>
+      ${CUI.icon('search',{size:17})}<input id="customerProgrammeSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerProgrammeSearchStatus"></div>
+    ${scanId?`<button class="btn sm" id="${esc(scanId)}" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button>`:''}</div>
+    <p class="muted small" id="customerProgrammeSearchStatus" role="status" hidden></p>`;
+}
+/* Filtering is done on the rendered tiles rather than by re-rendering, so a keystroke never
+   re-reads the wallet and an empty search restores every tile exactly as the server sent it. */
+function wireCustomerProgrammeSearchV195(host=document){
+  const input=host.querySelector('#customerProgrammeSearch');
+  if(!input)return;
+  const status=host.querySelector('#customerProgrammeSearchStatus');
+  const tiles=[...host.querySelectorAll('[data-programme-name]')];
+  const groups=[...host.querySelectorAll('.customer-programme-category')];
+  const apply=()=>{
+    const query=String(input.value||'').trim().toLowerCase();
+    let shown=0;
+    tiles.forEach(tile=>{
+      const match=!query||String(tile.dataset.programmeName||'').includes(query);
+      tile.hidden=!match;
+      if(match)shown++;
+    });
+    groups.forEach(group=>{
+      const visible=[...group.querySelectorAll('[data-programme-name]')].some(tile=>!tile.hidden);
+      group.hidden=!visible;
+    });
+    if(!status)return;
+    status.hidden=!query;
+    status.textContent=query?(shown?`${shown} of ${tiles.length} shown`:`No reward account matches “${query}”.`):'';
+  };
+  input.addEventListener('input',apply);
+  apply();
 }
 /* v178 (owner annotation, crossed out twice): Home no longer carries a "Next best action"
    banner for reward-ready, package or appointment states. Reward readiness already reads on
@@ -4736,7 +5113,7 @@ function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],leg
    the counts they carried now live on those tabs. Home is the offers shelf. */
 /* v178: surface='programmes' is the "My Rewards" tab, which the owner stripped back to the
    reward-account grid alone — no offers shelf, no guidance banner. Home keeps both. */
-function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',note='',rerender=null}={}){
+function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',rerender=null}={}){
   const cards=Array.isArray(payload?.cards)?payload.cards:[],isHome=surface!=='programmes';
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
   if(!cards.length){
@@ -4747,12 +5124,14 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   }
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
      grid is the My Rewards tab's job. Home is now offers first, then a two-way jump-off. */
-  $('walletBody').innerHTML=`${isHome?`${customerHomeOffersMarkupV167(offersState)}
+  $('walletBody').innerHTML=`${isHome?`${customerExpiringRewardsMarkupV195(cards)}
+    ${customerHomeOffersMarkupV167(offersState)}
     ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}`
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
-    ${customerProgrammeGridMarkupV96(cards)}${note}
+    ${customerProgrammeGridMarkupV96(cards)}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
+  if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));
   wireCustomerHomeOffersV167(repaint);
 }
 async function renderCustomerWallet(businessSlug=null){
@@ -4911,7 +5290,7 @@ async function renderCustomerWallet(businessSlug=null){
   const showMembershipMetric=capabilities.membership===true&&membership.active===true;
   const showSecondaryMetrics=!actionableCard&&(showCreditMetric||showPackageMetric||showMembershipMetric);
   const hasWalletSection=true;
-  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus})}
+  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities})}
     ${showSecondaryMetrics?`<div class="wallet-metrics">
       ${showCreditMetric?`<div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents)/100).toFixed(2)}</b></div>`:''}
       ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
@@ -4919,7 +5298,6 @@ async function renderCustomerWallet(businessSlug=null){
     </div>`:''}
     <div class="wallet-sections" id="walletSections">
       ${window.NestlyGrowthOffers?window.NestlyGrowthOffers.renderCustomerOffers({state:'loading'}):''}
-      ${capabilities.rewards?walletSectionShell('walletRewards','Rewards','Choose an eligible reward and show its QR at the counter.'):''}
       <details class="card wallet-history-disclosure" id="walletHistoryDisclosure">
         <summary><span>History</span><span class="muted small">Transactions and loyalty activity</span></summary>
         <div class="wallet-history-disclosure-body">
@@ -5053,6 +5431,14 @@ async function renderCustomerWallet(businessSlug=null){
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?'Rewards are not available for this account.':'Rewards could not be loaded.',loadRewards,error);
+    /* V230: this firm uses points for tier membership. There is nothing to redeem — the server
+       refuses intents too — so the section says what points DO here instead of listing rewards
+       that cannot be claimed. */
+    if(String(data?.points_mode||'')==='tiers'){
+      host.setAttribute('aria-busy','false');
+      host.innerHTML=`<div class="card customer-home-offers-state"><b>Your points build your tier</b><p class="muted small" style="margin-top:6px">Every point earned here counts toward your membership tier and its benefits — there is nothing to redeem. Your tier and what it unlocks are shown above.</p></div>`;
+      return;
+    }
     const classicAction=!actionsResult.error&&actionsResult.data?.redemption?.classic
       ?actionsResult.data.redemption.classic:null;
     const actionRewards=actionsResult.error?[]:[
@@ -5092,12 +5478,11 @@ async function renderCustomerWallet(businessSlug=null){
     };
     host.setAttribute('aria-busy','false');
     const rewardUnit=loyalty.unit||'points',rewardBalance=Math.max(0,Number(loyalty.balance)||0);
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Rewards</h2><p class="muted small">You have <b>${esc(customerPointTotalV103(rewardBalance))} ${esc(rewardUnit)}</b></p><p class="muted small">Choose an eligible reward, then let the team scan its QR at the counter.</p></div></div>
-      <ol class="wallet-reward-steps" aria-label="How rewards work">
-        <li>${CUI.icon('redeem',{size:18})}<span><b>1</b> Pick a reward</span></li>
-        <li>${CUI.icon('scan',{size:18})}<span><b>2</b> Show its QR</span></li>
-        <li>${CUI.icon('check',{size:18})}<span><b>3</b> Staff scans — points used</span></li>
-      </ol><div class="wallet-rewards">${rewards.map(r=>{
+    /* v195: this now renders inside the Reward points tab, which already prints the balance in
+       full. The repeated balance and the three-step "how rewards work" strip went with the card
+       the owner crossed out; one line of instruction survives, on the control it describes. */
+    host.innerHTML=`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
+      <div class="wallet-rewards">${rewards.map(r=>{
       const ready=!!(r.action_key&&customerRewardCanRedeem(r,redemptionEnabled)),
         cost=Math.max(0,Number(r.cost_points)||0),gap=Math.max(0,cost-rewardBalance),
         progress=cost>0?Math.min(100,Math.max(0,Math.round((rewardBalance/cost)*100))):100,
@@ -12009,6 +12394,19 @@ function enhanceBookingsTabsV195(root){
   tabs.querySelector('#bookingsTabSettings').onclick=()=>setTab('settings');
   setTab('requests');
 }
+/* V228: lifted out of bookingsPage so the Staff page can render the same weekday rows.
+   The owner asked for the staff schedule to live with the staff, and duplicating this
+   markup would have let the two grids drift apart. */
+const V183_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+/* v183b: one weekday row, reused by the shop hours grid and by each person's own rota.
+   `scope` namespaces the data attributes so a rota row can never be mistaken for a shop row. */
+const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-hours-row">
+  <label style="margin:0" for="v183Open-${esc(scope)}-${weekday}">${esc(label)}</label>
+  <label class="v183-hours-open" for="v183Closed-${esc(scope)}-${weekday}"><input type="checkbox" id="v183Closed-${esc(scope)}-${weekday}" data-day-closed="${weekday}" data-day-scope="${esc(scope)}" style="width:auto" ${row?'':'checked'}> Closed</label>
+  <input type="time" id="v183Open-${esc(scope)}-${weekday}" data-day-opens="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.opens_at||fallback.opens).slice(0,5))}" ${row?'':'disabled'}>
+  <input type="time" id="v183Close-${esc(scope)}-${weekday}" data-day-closes="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.closes_at||fallback.closes).slice(0,5))}" ${row?'':'disabled'}>
+</div>`;
+
 async function bookingsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const portal=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
@@ -12238,58 +12636,29 @@ async function bookingsPage(){
   };
 
   /* ---- v183 customer booking availability: opening hours + who customers may ask for ---- */
-  const V183_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  /* v183b: one weekday row, reused by the shop hours grid and by each person's own rota.
-     `scope` namespaces the data attributes so a rota row can never be mistaken for a shop row. */
-  const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-hours-row">
-    <label style="margin:0" for="v183Open-${esc(scope)}-${weekday}">${esc(label)}</label>
-    <label class="v183-hours-open" for="v183Closed-${esc(scope)}-${weekday}"><input type="checkbox" id="v183Closed-${esc(scope)}-${weekday}" data-day-closed="${weekday}" data-day-scope="${esc(scope)}" style="width:auto" ${row?'':'checked'}> Closed</label>
-    <input type="time" id="v183Open-${esc(scope)}-${weekday}" data-day-opens="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.opens_at||fallback.opens).slice(0,5))}" ${row?'':'disabled'}>
-    <input type="time" id="v183Close-${esc(scope)}-${weekday}" data-day-closes="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.closes_at||fallback.closes).slice(0,5))}" ${row?'':'disabled'}>
-  </div>`;
   const loadBookingAvailability=async()=>{
     const host=$('setAvailabilityBody');if(!host)return;
-    const [branchResult,hoursResult,staffResult,rotaResult]=await Promise.all([
+    /* V228: the team rota moved to Staff Members, so this only loads the shop's own hours. */
+    const [branchResult,hoursResult]=await Promise.all([
       sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
-      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id),
-      sb.from('staff').select('id,full_name,title,active,customer_bookable').eq('business_id',S.biz.id).order('full_name'),
-      sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at').eq('business_id',S.biz.id)
+      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id)
     ]);
     if(!isCurrent()||!host.isConnected)return;
     host.setAttribute('aria-busy','false');
-    if(branchResult.error||hoursResult.error||staffResult.error||rotaResult.error){
-      host.innerHTML='<p class="err small">Opening hours and team availability could not be loaded. Nothing has been changed.</p>';
+    if(branchResult.error||hoursResult.error){
+      host.innerHTML='<p class="err small">Opening hours could not be loaded. Nothing has been changed.</p>';
       const save=$('setAvailabilitySave');if(save)save.disabled=true;
       return;
     }
     const branches=(branchResult.data||[]).filter(branch=>branch.active!==false);
     const branch=branches[0]||null;
     const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
-    const team=(staffResult.data||[]).filter(member=>member.active!==false);
-    /* A person's rota is stored as starts_at/ends_at; the shared row markup speaks
-       opens_at/closes_at, so translate once here rather than branching in the template. */
-    const rotaByStaff=new Map();
-    for(const row of rotaResult.data||[]){
-      const key=String(row.staff_id||'');
-      if(!rotaByStaff.has(key))rotaByStaff.set(key,new Map());
-      rotaByStaff.get(key).set(Number(row.weekday),{opens_at:row.starts_at,closes_at:row.ends_at});
-    }
     host.dataset.branchId=branch?.id||'';
     host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
       <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
       <div class="v183-hours">${V183_DAYS.map((label,weekday)=>
         v183HourRowMarkup('shop',weekday,label,hours.get(weekday),{opens:'09:00',closes:'18:00'})).join('')}</div>
-      <p class="muted small" style="margin:14px 0 6px">Who customers may ask for</p>
-      ${team.length?`<div class="v183-team">${team.map(member=>{
-        const staffId=String(member.id),rota=rotaByStaff.get(staffId)||null;
-        return `<div class="v183-team-member" data-staff-member="${esc(staffId)}">
-          <label class="v183-team-row" for="v183Staff-${esc(staffId)}"><input type="checkbox" id="v183Staff-${esc(staffId)}" data-staff-bookable="${esc(staffId)}" style="width:auto" ${member.customer_bookable===false?'':'checked'}> <span><b>${esc(member.full_name||'Team member')}</b>${member.title?` <span class="muted small">· ${esc(member.title)}</span>`:''}</span><span class="pill v183-rota-pill" data-rota-pill>${rota?'Own rota':'Shop hours'}</span></label>
-          <label class="v183-team-rota" for="v183Rota-${esc(staffId)}"><input type="checkbox" id="v183Rota-${esc(staffId)}" data-staff-rota="${esc(staffId)}" style="width:auto;margin-top:2px" ${rota?'checked':''}> <span>Works their own hours<span class="muted small" style="display:block;font-weight:400">Replaces the shop hours for this person — including days the shop is closed.</span></span></label>
-          <div class="v183-hours v183-staff-hours" data-staff-hours="${esc(staffId)}" ${rota?'':'hidden'}>${V183_DAYS.map((label,weekday)=>
-            v183HourRowMarkup(staffId,weekday,label,rota?.get(weekday),{opens:'10:00',closes:'18:00'})).join('')}</div>
-        </div>`;
-      }).join('')}</div>`
-        :'<p class="muted small">No active team members yet.</p>'}`;
+`;
     host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
       const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
       const within=box.closest('.v183-hours')||host;
@@ -12297,12 +12666,6 @@ async function bookingsPage(){
       const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
       if(opens)opens.disabled=box.checked;
       if(closes)closes.disabled=box.checked;
-    });
-    host.querySelectorAll('[data-staff-rota]').forEach(box=>box.onchange=()=>{
-      const member=box.closest('[data-staff-member]');
-      const grid=member?.querySelector('[data-staff-hours]'),pill=member?.querySelector('[data-rota-pill]');
-      if(grid)grid.hidden=!box.checked;
-      if(pill)pill.textContent=box.checked?'Own rota':'Shop hours';
     });
   };
   loadBookingAvailability();
@@ -12327,33 +12690,10 @@ async function bookingsPage(){
     const shop=readDayGrid('shop',host);
     const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
     const closedDays=shop.closed;
-    const bookable=[...host.querySelectorAll('[data-staff-bookable]')]
-      .map(box=>({id:box.dataset.staffBookable,customer_bookable:box.checked}));
-    const rotas=[...host.querySelectorAll('[data-staff-member]')].map(member=>{
-      const staffId=member.dataset.staffMember;
-      const wantsRota=member.querySelector('[data-staff-rota]')?.checked===true;
-      const grid=readDayGrid(staffId,member);
-      return {staffId,wantsRota,name:member.querySelector('b')?.textContent||'This person',...grid};
-    });
-    /* A rota with no working day would delete every row and silently fall back to the shop
-       hours — the opposite of what "they work different hours" means. Refuse the whole save
-       rather than write a state the owner did not ask for. */
-    const emptyRota=rotas.find(rota=>rota.wantsRota&&!rota.open.length);
-    if(emptyRota){
-      save.disabled=false;
-      err.innerHTML=`<div class="err">${esc(emptyRota.name)} works their own hours but has no open day. Add a day, or untick "Works their own hours" to follow the shop hours.</div>`;
-      return;
-    }
     const results=await Promise.all([
       sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
       branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
       branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
-      ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id)),
-      ...rotas.flatMap(rota=>rota.wantsRota
-        ?[sb.from('staff_hours').upsert(rota.open.map(day=>({business_id:S.biz.id,staff_id:rota.staffId,weekday:day.weekday,starts_at:day.opens,ends_at:day.closes})),{onConflict:'staff_id,weekday'}),
-          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null})]
-        /* Unticking clears the whole rota, which is what returns this person to shop hours. */
-        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
     ]);
     if(!isCurrent())return;
     save.disabled=false;
@@ -12595,6 +12935,7 @@ function openProtectedGrowPublishReview(draftVersionId){
 }
 
 async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null,stableRefresh=false,editorIntent=null){
+  if(!stableRefresh)loyaltyModeDraftV230=null;
   const routeMain=M();
   const isLoyaltyCurrent=()=>routeMain.isConnected&&M()===routeMain;
   if(!stableRefresh)routeMain.innerHTML=CUI.loadingState({title:'Loyalty',iconName:'loyalty'});
@@ -12666,6 +13007,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const publishedBirthdayProgram=publishedBirthdayPrograms[0]||null;
   const rewards=rw||[],tiers=tr||[];
   const model=modelOverride||p?.loyalty_model||'classic';
+  /* V230 (owner: "can just change to Points Redemption / Tiered Membership / stamp card (only 1
+     can be live at any go)"). One three-way choice. Underneath, 'redeem' and 'tiers' share the
+     points engine (loyalty_model classic/points_tiers) and differ by businesses.points_mode —
+     which the server already enforces — while 'stamps' is its own model. */
+  const loyaltyModeV230=loyaltyModeDraftV230||S.biz.points_mode||'redeem';
+  const loyaltySelectionV230=model==='stamps'?'stamps':(loyaltyModeV230==='tiers'?'tiers':'redeem');
   const unit=model==='stamps'?'stamps':'points';
   const groupEligibility=(rows,key)=>rows.reduce((a,x)=>{
     (a[x.reward_id]??=[]).push(x[key]);
@@ -12775,8 +13122,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
   const tierRows=()=>`
-    <b style="display:block;margin-top:18px">Tiers (optional)</b>
-    ${tiers.length&&!(p&&p.active)?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but this programme is not live. Nobody sees their tier, its benefits or how far they are from the next one until you publish it.</p></div>`:''}
+    <b style="display:block;margin-top:18px">${loyaltySelectionV230==='tiers'?'Your tiers':'Tiers (optional)'}</b>
+    ${tiers.length&&!(p&&p.active)?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but the programme Status above is Paused. Set Status to Active, then ${draftVersionId?'Review & publish':'Save'} — that is the whole fix.</p></div>`:''}
     <label>Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
       <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
       <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
@@ -12841,13 +13188,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     </section>
     <div class="split"><div class="card" id="loyaltyProgramEditor"><b>Program settings</b>
       <label>Status</label><select id="la"${loyaltyControlDisabled}><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${!p?.active?'selected':''}>Paused</option></select>
-      <label>Loyalty model</label><select id="lm"${loyaltyControlDisabled}>
-        <option value="classic" ${model==='classic'?'selected':''}>Simple points — fixed redeem into credit</option>
-        <option value="points_tiers" ${model==='points_tiers'?'selected':''}>Points + reward catalog + tiers</option>
-        <option value="stamps" ${model==='stamps'?'selected':''}>Stamp card — $ per stamp, milestone rewards</option></select>
+      <label>Loyalty model — only one is live at a time</label><select id="lm"${loyaltyControlDisabled}>
+        <option value="redeem" ${loyaltySelectionV230==='redeem'?'selected':''}>Points redemption — earn points, redeem rewards</option>
+        <option value="tiers" ${loyaltySelectionV230==='tiers'?'selected':''}>Tiered membership — points build a tier and its benefits</option>
+        <option value="stamps" ${loyaltySelectionV230==='stamps'?'selected':''}>Stamp card — collect stamps, milestone rewards</option></select>
+      ${loyaltySelectionV230==='redeem'?`<label>Redemption style</label><select id="lmStyle"${loyaltyControlDisabled}>
+        <option value="points_tiers" ${model!=='classic'?'selected':''}>Reward catalogue — customers pick from rewards you define</option>
+        <option value="classic" ${model==='classic'?'selected':''}>Fixed redeem — points become store credit automatically</option></select>`:''}
       ${model==='stamps'
         ?`<label>Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
-          <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>`
+          <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>
+          <p class="muted small" style="margin-top:4px">Stack several milestones below — e.g. 3 stamps = free drink, 8 stamps = $5 credit or a "10% off" benefit. Each is its own reward with its own stamp cost.</p>`
         :`<label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>`}
       ${model==='classic'
         ?`<label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
@@ -12871,7 +13222,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
             <div id="growRecBody"></div></div>`:''}`
         :model==='stamps'
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('stampsEligibleEarning')}</p>${rewardRows('Your milestones')}`
-        :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
+        :loyaltySelectionV230==='tiers'
+        ?`<b>Tiers — your loyalty model</b><p class="muted small" style="margin-top:6px">Customers climb these tiers, and each tier carries its own benefits. Points build the tier — they are not redeemed.</p>
+          <p class="muted small" style="margin-top:8px">Point rewards are off in this model. Rewards you saved earlier are kept and come back if you switch to Points redemption.</p>
+          ${tierRows()}`
+        :`<b>Reward catalogue</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define.</p>${rewardRows('Your rewards')}
+          <p class="muted small" style="margin-top:14px">Tiers are off in this model — choose Tiered membership above to run them instead. Saved tiers are kept.</p>`}
     </div></div>${birthdayEditor}`;
   applyGrowLoyaltyEditorIsolationV139(routeMain,editorIntent);
   const growDraftBarPublish=$('growDraftBarPublishV170');
@@ -13126,7 +13482,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     refreshLoyaltyPanel(data.model,data.draft_config_version_id,data,'Recommended Grow draft ready.',false,editorIntent);
   };
   const loyaltyModelInput=$('lm');
-  if(loyaltyModelInput)loyaltyModelInput.onchange=()=>refreshLoyaltyPanel(loyaltyModelInput.value,draftVersionId,recommendation,'Earning model preview updated.',false,editorIntent);
+  if(loyaltyModelInput)loyaltyModelInput.onchange=()=>{
+    /* V230: the selection is the owner's three-way choice; map it to the stored pieces.
+       Nothing is written here — Save is the decision point. */
+    const sel=loyaltyModelInput.value;
+    loyaltyModeDraftV230=sel==='tiers'?'tiers':'redeem';
+    const nextModel=sel==='stamps'?'stamps':(sel==='tiers'?'points_tiers':(model==='classic'?'classic':'points_tiers'));
+    refreshLoyaltyPanel(nextModel,draftVersionId,recommendation,'Loyalty model preview updated — Save to apply.',false,editorIntent);
+  };
+  const loyaltyStyleInput=$('lmStyle');
+  if(loyaltyStyleInput)loyaltyStyleInput.onchange=()=>refreshLoyaltyPanel(loyaltyStyleInput.value,draftVersionId,recommendation,'Redemption style preview updated — Save to apply.',false,editorIntent);
   if($('lx')&&$('lxd')&&$('lxdField'))bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
   document.querySelectorAll('[data-bo-expiry]').forEach(modeInput=>{
     const idx=modeInput.dataset.boExpiry;
@@ -13169,6 +13534,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   if(loyaltySave)loyaltySave.onclick=async()=>{
     const expiryMode=$('lx').value,expiryDays=expiryDaysForMode(expiryMode,$('lxd'));
     if(Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');$('lxd').focus();return}
+    /* V230: the three-way selection decides BOTH stores. loyalty_model goes into the draft as
+       before; points_mode is the instant business switch the server enforces, so switching away
+       from a chosen model asks first and states what it stops. */
+    const targetModeV230=loyaltySelectionV230==='tiers'?'tiers':'redeem';
+    if(S.biz.points_mode&&targetModeV230!==S.biz.points_mode&&!confirm(targetModeV230==='tiers'
+      ?'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.'
+      :'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.'))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
       expiry_mode:expiryMode};
@@ -13191,6 +13563,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
     if(!isLoyaltyCurrent())return;
     if(saveError){$('lsave').disabled=false;return fail(saveError)}
+    /* V230: the mode is an instant business switch (the server gate reads it live), unlike the
+       numbers, which wait for publish. Writing it here keeps one Save meaning one decision. */
+    if(targetModeV230!==(S.biz.points_mode||null)){
+      const {error:modeError}=await sb.from('businesses').update({points_mode:targetModeV230}).eq('id',S.biz.id);
+      if(!isLoyaltyCurrent())return;
+      if(modeError){$('lsave').disabled=false;return fail(modeError)}
+      S.biz.points_mode=targetModeV230;
+      loyaltyModeDraftV230=null;
+      toast(targetModeV230==='tiers'?'Points now build tier membership':'Points are now redeemed for rewards');
+    }
     if(draftVersionId){
       toast('Grow draft saved — customers are still using the published programme');
       if(editorIntent){nav('#/grow');return}
@@ -14493,6 +14875,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     ?await sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
     :null;
   if(!isGrowCurrent())return;
+  /* V229: the Tiered membership tile needs the ladder, and the whole page needs the firm's
+     one choice for what points are FOR. tier_basis measures LIFETIME earn, so redemption never
+     mechanically drops a tier — the choice exists because telling customers "spend your points"
+     and "your points make you Gold" at the same time is two stories, and the owner wants one. */
+  const loyaltyTiersV229=canRewards
+    ?await sb.from('loyalty_tiers').select('id,name,threshold').eq('business_id',S.biz.id).order('threshold')
+      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :[];
+  if(!isGrowCurrent())return;
+  const pointsModeV229=S.biz.points_mode||null;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
@@ -14598,6 +14990,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      destinations — having both was the duplicated navigation the owner flagged. The
      'available' and 'settings' hashes still resolve so existing links do not break. */
   const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
+  /* V229: the Ongoing / To set up views are flat lists; a drilled topic only makes sense from
+     the tile overview, so arriving via those views clears it. */
+  if(programmeView!=='list')growTopicV229='';
   /* V198 (owner: "edited name inside but not shown"). This list is deliberately the PUBLISHED
      programme — it answers "what can my customers use right now", so a reward renamed in an open
      draft must keep its live name here or the list would promise something no customer can see.
@@ -14607,6 +15002,60 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const growUnpublishedMarkerV198=growDraftPendingId&&canRewards
     ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
+  /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
+     Reward milestones live INSIDE Point system — the overview never floods. */
+  const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
+  const lifestyleLiveV229=(welcomeOfferStatusV215?.active?1:0)+(rewardJourney.birthday?.active?1:0)+bringBackLiveV229;
+  const growTopicDefsV229=[
+    {key:'points',icon:'till',title:'Point system',blurb:'Earning, and what points are for.',
+      status:!canRewards?['Not included','off']:loyaltyLive?['Live','on']:(rewardJourney.earning?['Paused','off']:['Not set up','off']),
+      summary:pointsModeV229==='tiers'?'Points build tier membership'
+        :rewardCount?`${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`:'Set the earning rate and rewards'},
+    {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
+      status:!canRewards?['Not included','off']
+        :pointsModeV229==='redeem'?['Off','off']
+        :(loyaltyTiersV229&&loyaltyTiersV229.length
+          ?(pointsModeV229==='tiers'?(loyaltyLive?['Live','on']:['Not live yet','off']):['Configured','off'])
+          :['Not set up','off']),
+      summary:pointsModeV229==='redeem'?'Points are redeemed for rewards instead'
+        :loyaltyTiersV229===null?'Tier details could not be loaded'
+        :(pointsModeV229==='tiers'&&loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
+        :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
+        :'Create the ladder customers climb'},
+    {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
+      status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
+      summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
+    {key:'promotions',icon:'loyalty',title:'Promotions',blurb:'Offers customers see in their programme.',
+      status:publishedPromotions?['Live','on']:promotionDrafts?['Draft','new']:['Not set up','off'],
+      summary:publishedPromotions?`${publishedPromotions} published promotion${publishedPromotions===1?'':'s'}`
+        :promotionDrafts?`${promotionDrafts} saved draft${promotionDrafts===1?'':'s'}`:'Create an offer customers can see'},
+    {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Customers earn for introductions.',
+      status:!modules.includes('referrals')?['Not included','off']:referralLive?['Live','on']:referralConfigured?['Paused','off']:['Not set up','off'],
+      summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
+    {key:'recurring',icon:'memberships',title:'Memberships & gift cards',blurb:'Recurring plans and prepaid value.',
+      status:(activeMembershipCount||giftCardsLive)?['Live','on']:['Not set up','off'],
+      summary:[activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:'',giftCardsLive?'gift cards on':''].filter(Boolean).join(' · ')||'Plans and gift cards'},
+  ];
+  const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
+  const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
+  const topicOnV229=key=>growActiveTopicV229?growActiveTopicV229.key===key:!growTilesModeV229;
+  const growTilesHtmlV229=growTopicDefsV229.map(topic=>`<button type="button" class="grow-topic-tile-v229" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">View →</span></button>`).join('');
+  /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
+  const growPointsModeChooserV229=(()=>{
+    if(!canRewards)return '';
+    const locked=!canSetupGrow;
+    if(!pointsModeV229)return `<div class="points-mode-chooser-v229" role="group" aria-label="How customers use points">
+      <p class="points-mode-lead-v229"><b>Choose how customers use their points</b><br><span class="muted small">One model at a time keeps the customer story clear. You can change this later.</span></p>
+      <div class="points-mode-cards-v229">
+        <button type="button" class="points-mode-card-v229" data-points-mode-v229="redeem" ${locked?'disabled':''}><b>Redeem rewards</b><span class="muted small">Points are spent on discounts, vouchers and free items.</span></button>
+        <button type="button" class="points-mode-card-v229" data-points-mode-v229="tiers" ${locked?'disabled':''}><b>Tier membership</b><span class="muted small">Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits.</span></button>
+      </div></div>`;
+    const currentLabel=pointsModeV229==='tiers'?'Tier membership':'Redeem rewards';
+    const nextMode=pointsModeV229==='tiers'?'redeem':'tiers';
+    const nextLabel=pointsModeV229==='tiers'?'redeeming rewards':'tier membership';
+    return `<div class="points-mode-chosen-v229"><span class="pill on">Points are used for: ${currentLabel}</span>${locked?'':`<button type="button" class="btn ghost sm" data-points-mode-v229="${nextMode}">Switch to ${esc(nextLabel)}</button>`}</div>`;
+  })();
+  const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
       <div class="cui-page-title"><h1 id="growTitle">Programmes</h1>
@@ -14614,42 +15063,73 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
-      <div class="programme-category"><div class="programme-category-title">Loyalty & rewards</div><div class="grow-programme-list">
+      ${growTilesModeV229?`<div class="grow-topic-tiles-v229">${growTilesHtmlV229}</div>`:''}
+      ${topicOnV229('points')?`
+      <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
+           rewards, Add another reward and Start from a template onto the Point system row).
+           Everything that is earned and spent in POINTS now sits together under one heading,
+           so the point scheme reads as one thing. Rewards that have nothing to do with a
+           points balance — the welcome offer for a first visit, a birthday benefit, a
+           bring-back for someone who has drifted — are their own group. -->
+      <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
+        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>`:''}
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
           <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
-        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
+        ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.milestones.map((milestone,index)=>canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="catalogue" data-reward-id="${esc(milestone.id)}">
           <span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div><span class="grow-programme-meta">${programmeStatus(milestone.availableToCustomers?'Live':milestone.availability==='not_started'?'Scheduled':milestone.availability==='ended'?'Ended':'Paused',milestone.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable" data-reward-milestone><span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div><span class="grow-programme-meta">${programmeStatus(milestone.availableToCustomers?'Live':milestone.availability==='not_started'?'Scheduled':milestone.availability==='ended'?'Ended':'Paused',milestone.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`).join('')}
+        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
+        ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
+        <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
+        ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
+        `}
+      </div></div>
+      `:''}
+      ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
+        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>
+        ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
+          :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0} · lifetime, so redeeming never drops a tier</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
+          :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
+        ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
+      </div></div>`:''}
+      ${topicOnV229('lifestyle')?`
+      <div class="programme-category"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
+        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
           <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
-        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
-        ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
-        <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
-        ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
-      <div class="programme-category"><div class="programme-category-title">Promotions & growth</div><div class="grow-programme-list">
+      `:''}
+      ${topicOnV229('promotions')?`
+      <div class="programme-category"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
         ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
+      </div></div>
+      `:''}
+      ${topicOnV229('referrals')?`
+      <div class="programme-category"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
       </div></div>
-      <div class="programme-category"><div class="programme-category-title">Recurring value</div><div class="grow-programme-list">
+      `:''}
+      ${topicOnV229('recurring')?`
+      <div class="programme-category"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
-      </div></div>
+      </div></div>      `:''}
     </section>
+    ${(growActiveTopicV229?.key==='points'||(!growTilesModeV229&&!growActiveTopicV229)||routedSurface==='studio')?`
     <details class="grow-secondary" id="growSecondarySettings">
       <summary>More reward settings</summary><div class="grow-secondary-body">
       <div class="grow-secondary-intro"><h2>How the programme fits together</h2><p class="muted small">Open these controls only when you want to fine-tune the automatic draft or review reward economics.</p></div>
@@ -14693,7 +15173,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${canWinback?'<button type="button" class="btn ghost" data-grow-open="winback">Bring-back rules and taxonomy</button>':''}
       </div></details>`:''}
       </div>
-    </details>
+    </details>`:''}
     <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
@@ -15084,6 +15564,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      programme rows themselves, which call it as the draft-creation gate when no draft exists. */
   /* v215: re-render the Programmes list after a save so the row reflects the new state
      immediately — an owner who just switched the offer on must not still see "Not set up". */
+  /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
+  outerMain.querySelectorAll('[data-grow-topic-v229]').forEach(tile=>tile.onclick=()=>{
+    growTopicV229=tile.dataset.growTopicV229;
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
+  const growTopicBack=$('growTopicBackV229');
+  if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
+  outerMain.querySelectorAll('[data-points-mode-v229]').forEach(button=>button.onclick=async()=>{
+    const next=button.dataset.pointsModeV229;
+    /* Switching away from a chosen model changes what customers can do; first-time choice needs
+       no confirm. The tiers warning states the concrete consequence the server enforces. */
+    if(S.biz.points_mode&&!confirm(next==='tiers'
+      ?'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.'
+      :'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.'))return;
+    button.disabled=true;
+    const {error}=await sb.from('businesses').update({points_mode:next}).eq('id',S.biz.id);
+    if(error){button.disabled=false;return fail(error)}
+    S.biz.points_mode=next;
+    toast(next==='tiers'?'Points now build tier membership':'Points are now redeemed for rewards');
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));
@@ -20516,6 +21017,13 @@ function enhanceStaffMembersTabsV164(teamPanel){
      never signs in — is a first-class record. This adds that form. Giving them app access is
      still a separate, deliberate act: an invite. */
   listPanel.innerHTML=`<div><h2>Staff list</h2></div>
+    <!-- V228: working hours live with the people they belong to. -->
+    <section class="card" id="staffRotaCardV228" style="margin-top:12px" aria-busy="true">
+      <div class="v150-soft-head"><b>Working hours</b><p>Who customers may ask for, and anyone who works different hours from the shop. The shop's own opening hours stay in Bookings.</p></div>
+      <div id="staffRotaBodyV228" style="margin-top:12px"><p class="muted small">Loading working hours…</p></div>
+      <div class="row" style="margin-top:14px"><button type="button" class="btn sm" id="staffRotaSaveV228">Save working hours</button></div>
+      <div id="staffRotaErrV228" role="status"></div>
+    </section>
     <div class="card" id="staffManualAddCard" style="display:none;margin-top:12px">
       <div class="v150-soft-head"><b>Add a teammate</b><p>They appear on the rota and can be credited for sales straight away. They do not get a login until you send an invite.</p></div>
       <!-- V207 (owner: "add staff > then add details later (wrong) — supposed to be during adding
@@ -20649,6 +21157,24 @@ function enhanceStaffMembersTabsV164(teamPanel){
   setTab('list');
 }
 
+/* V228 (owner: "staff schedule should not be in bookings - it should be in staff modules").
+   The per-person rota used to live on the Bookings page, wedged between the shop's opening
+   hours and the CSV import, because that is where customer-facing availability was first
+   built. It is a property of the person, so it belongs where people are managed. The markup
+   is the one that was there — moved, not rewritten — so every state it already handled
+   (own rota vs shop hours, the pill, the hidden grid) behaves exactly as before. */
+function staffRotaSectionMarkupV228(team,rotaByStaff){
+  return `${team.length?`<div class="v183-team">${team.map(member=>{
+        const staffId=String(member.id),rota=rotaByStaff.get(staffId)||null;
+        return `<div class="v183-team-member" data-staff-member="${esc(staffId)}">
+          <label class="v183-team-row" for="v183Staff-${esc(staffId)}"><input type="checkbox" id="v183Staff-${esc(staffId)}" data-staff-bookable="${esc(staffId)}" style="width:auto" ${member.customer_bookable===false?'':'checked'}> <span><b>${esc(member.full_name||'Team member')}</b>${member.title?` <span class="muted small">· ${esc(member.title)}</span>`:''}</span><span class="pill v183-rota-pill" data-rota-pill>${rota?'Own rota':'Shop hours'}</span></label>
+          <label class="v183-team-rota" for="v183Rota-${esc(staffId)}"><input type="checkbox" id="v183Rota-${esc(staffId)}" data-staff-rota="${esc(staffId)}" style="width:auto;margin-top:2px" ${rota?'checked':''}> <span>Works their own hours<span class="muted small" style="display:block;font-weight:400">Replaces the shop hours for this person — including days the shop is closed.</span></span></label>
+          <div class="v183-hours v183-staff-hours" data-staff-hours="${esc(staffId)}" ${rota?'':'hidden'}>${V183_DAYS.map((label,weekday)=>
+            v183HourRowMarkup(staffId,weekday,label,rota?.get(weekday),{opens:'10:00',closes:'18:00'})).join('')}</div>
+        </div>`;
+      }).join('')}</div>`
+    :'<p class="muted small">No active team members yet.</p>'}`;
+}
 async function staffMembersPage(){
   settingsActiveTab='team';
   await settingsPage();
@@ -21414,15 +21940,20 @@ async function settingsPage(){
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
       <button type="button" class="settings-tab" role="tab" id="settab-workspace" aria-controls="setpanel-workspace" aria-selected="true" data-settab="workspace">Workspace &amp; brand</button>
       ${S.myRole==='owner'?'<button type="button" class="settings-tab" role="tab" id="settab-programme" aria-controls="setpanel-programme" aria-selected="false" tabindex="-1" data-settab="programme">Customer programme</button>':''}
-      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
-      <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
-      <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
       <!-- V209 (owner annotations): "Import & sign-up" struck out, and an arrow from "Customer
            fields & privacy" reading "should be here under new tab Customer Interface". Everything
            the CUSTOMER meets — the sign-up QR they scan and the fields they are asked for — now
            sits behind one tab named for them, instead of being filed under an operations word
-           ("Import") that describes what the owner does rather than what the customer sees. -->
+           ("Import") that describes what the owner does rather than what the customer sees.
+           V228 (owner drew arrows from Workspace & brand, Customer programme and Customer
+           interface onto one spot, captioned "Put new tab here · Customer Interface"): it now
+           sits BESIDE the other customer-facing tabs instead of last, after the operations ones.
+           Everything the customer meets is reachable without crossing Modules, Checkout and
+           Team to get there. -->
       <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer interface</button>
+      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
+      <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
+      <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
     </div>
     <section class="settings-panel" id="setpanel-workspace" role="tabpanel" aria-labelledby="settab-workspace" tabindex="-1"><div class="card"><b>Business</b>
       ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'business'})}</div>`:''}
@@ -21766,6 +22297,98 @@ async function settingsPage(){
         <button class="btn ghost sm" onclick="applyModTemplateV74('${s.id}')">Apply as Edit access</button></div>
     </div>`;
   }
+  /* V228: the working-hours editor the owner asked to move out of Bookings. It reads and
+     writes exactly what the Bookings version did — staff.customer_bookable and staff_hours —
+     so a rota saved before this move is the same rota afterwards. The shop's own opening
+     hours stay in Bookings, because they belong to the branch, not to a person. */
+  async function loadStaffRotaV228(){
+    const host=$('staffRotaBodyV228');if(!host)return;
+    const [staffResult,rotaResult]=await Promise.all([
+      sb.from('staff').select('id,full_name,title,active,customer_bookable').eq('business_id',S.biz.id).order('full_name'),
+      sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at').eq('business_id',S.biz.id)
+    ]);
+    if(!host.isConnected)return;
+    $('staffRotaCardV228')?.setAttribute('aria-busy','false');
+    if(staffResult.error||rotaResult.error){
+      host.innerHTML='<p class="err small">Working hours could not be loaded. Nothing has been changed.</p>';
+      const save=$('staffRotaSaveV228');if(save)save.disabled=true;
+      return;
+    }
+    const team=(staffResult.data||[]).filter(member=>member.active!==false);
+    /* A person's rota is stored as starts_at/ends_at; the shared row markup speaks
+       opens_at/closes_at, so translate once here rather than branching in the template. */
+    const rotaByStaff=new Map();
+    for(const row of rotaResult.data||[]){
+      const key=String(row.staff_id||'');
+      if(!rotaByStaff.has(key))rotaByStaff.set(key,new Map());
+      rotaByStaff.get(key).set(Number(row.weekday),{opens_at:row.starts_at,closes_at:row.ends_at});
+    }
+    host.innerHTML=staffRotaSectionMarkupV228(team,rotaByStaff);
+    host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
+      const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
+      const within=box.closest('.v183-hours')||host;
+      const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+      const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+      if(opens)opens.disabled=box.checked;
+      if(closes)closes.disabled=box.checked;
+    });
+    host.querySelectorAll('[data-staff-rota]').forEach(box=>box.onchange=()=>{
+      const member=box.closest('[data-staff-member]');
+      const grid=member?.querySelector('[data-staff-hours]'),pill=member?.querySelector('[data-rota-pill]');
+      if(grid)grid.hidden=!box.checked;
+      if(pill)pill.textContent=box.checked?'Own rota':'Shop hours';
+    });
+    const save=$('staffRotaSaveV228');
+    if(save)save.onclick=()=>saveStaffRotaV228();
+  }
+  async function saveStaffRotaV228(){
+    const host=$('staffRotaBodyV228'),save=$('staffRotaSaveV228'),err=$('staffRotaErrV228');
+    if(!host||!save)return;
+    save.disabled=true;err.innerHTML='';
+    /* An open day needs a real, ordered range; anything else is recorded as closed rather
+       than half-saved. Scoped reads keep one person's rota out of another's grid. */
+    const readDayGrid=(scope,within)=>{
+      const open=[],closed=[];
+      within.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
+        const weekday=Number(box.dataset.dayClosed);
+        const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+        const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+        if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
+        open.push({weekday,opens,closes});
+      });
+      return {open,closed};
+    };
+    const bookable=[...host.querySelectorAll('[data-staff-bookable]')]
+      .map(box=>({id:box.dataset.staffBookable,customer_bookable:box.checked}));
+    const rotas=[...host.querySelectorAll('[data-staff-member]')].map(member=>{
+      const staffId=member.dataset.staffMember;
+      const wantsRota=member.querySelector('[data-staff-rota]')?.checked===true;
+      const grid=readDayGrid(staffId,member);
+      return {staffId,wantsRota,name:member.querySelector('b')?.textContent||'This person',...grid};
+    });
+    /* A rota with no working day would delete every row and silently fall back to the shop
+       hours — the opposite of what "they work different hours" means. Refuse the whole save
+       rather than write a state the owner did not ask for. */
+    const emptyRota=rotas.find(rota=>rota.wantsRota&&!rota.open.length);
+    if(emptyRota){
+      save.disabled=false;
+      err.innerHTML=`<div class="err">${esc(emptyRota.name)} works their own hours but has no open day. Add a day, or untick "Works their own hours" to follow the shop hours.</div>`;
+      return;
+    }
+    const results=await Promise.all([
+      ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id)),
+      ...rotas.flatMap(rota=>rota.wantsRota
+        ?[sb.from('staff_hours').upsert(rota.open.map(day=>({business_id:S.biz.id,staff_id:rota.staffId,weekday:day.weekday,starts_at:day.opens,ends_at:day.closes})),{onConflict:'staff_id,weekday'}),
+          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null})]
+        /* Unticking clears the whole rota, which is what returns this person to shop hours. */
+        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
+    ]);
+    save.disabled=false;
+    const failure=results.find(result=>result?.error);
+    if(failure){err.innerHTML=`<div class="err">${esc(ownerErrorText(failure.error))}</div>`;return}
+    toast('Working hours saved');
+    loadStaffRotaV228();
+  }
   async function loadTeam(){
     const [{data:st,error:staffError},{data:inv,error:inviteError}]=await Promise.all([
       sb.from('staff').select('*').eq('business_id',S.biz.id).order('created_at'),
@@ -22016,6 +22639,7 @@ async function settingsPage(){
   };
   await loadTemplates();
   loadTeam();
+  loadStaffRotaV228();
   /* CSV import */
   $('csvf').onchange=async(ev)=>{
     const file=ev.target.files[0];if(!file)return;

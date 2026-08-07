@@ -73,5 +73,13 @@ test('Turnstile controls are destroyed before route and direct-render replacemen
   assert.match(auth,/destroyMountedTurnstiles\(\)/);
   assert.match(registration,/destroyMountedTurnstiles\(\)/);
   assert.match(portal,/const draw=\(\)=>\{\n    destroyMountedTurnstiles\(\)/);
-  assert.match(turnstile,/if\(destroyed\|\|!document\.getElementById\(container\)\) return/);
+  // V206: the plain `destroyed` check after the async loadTurnstile() await was replaced by a
+  // per-render generation guard (`live()`) — a widget torn down and re-rendered mid-flight must
+  // not have the STALE attempt's post-await continuation touch the DOM or the current token.
+  assert.match(turnstile,/const live=\(\)=>!destroyed&&mine===generation;/);
+  assert.match(turnstile,/if\(!live\(\)\|\|!document\.getElementById\(container\)\)\{stopStall\(\);return\}/);
+  assert.match(turnstile,/if\(!live\(\)\)\{stopStall\(\);return\}/);
+  // destroy() bumps the generation so any in-flight render's callbacks are ignored, and stops
+  // the stall watchdog so a destroyed widget cannot fire a Retry-prompting timeout later.
+  assert.match(turnstile,/const destroy=\(\)=>\{\n\s*if\(destroyed\)return;\n\s*destroyed=true;generation\+=1;stopStall\(\);/);
 });

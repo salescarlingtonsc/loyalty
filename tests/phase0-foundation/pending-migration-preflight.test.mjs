@@ -201,6 +201,12 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v219_products_module_follows_business_config', 'db/tests/v219_v220_products_module_and_staff_slots.sql'],
   ['nestly_v220_next_best_times_for_selected_staff', 'db/tests/v219_v220_products_module_and_staff_slots.sql'],
   ['nestly_v223_table_reservations_opt_in', 'db/tests/v223_table_reservations_opt_in.sql'],
+  ['nestly_v229_points_mode_choice', 'db/tests/v229_points_mode_choice.sql'],
+  ['nestly_v230_points_mode_in_customer_portal', 'db/tests/v230_points_mode_in_customer_portal.sql'],
+  ['nestly_v231_capabilities_follow_the_points_mode', 'db/tests/v231_capabilities_follow_the_points_mode.sql'],
+  ['nestly_v232_promotion_lock_cannot_take_down_the_api', 'db/tests/v232_promotion_lock_guard.sql'],
+  ['nestly_v233_admin_sessions_get_the_same_reaper', 'db/tests/v233_admin_session_reaper.sql'],
+  ['nestly_v234_advisor_hygiene', 'db/tests/v234_advisor_hygiene.sql'],
   ['nestly_v197_persistent_join_qr', 'db/tests/v197_persistent_join_qr.sql'],
   ['nestly_v198_join_qr_print_lock', 'db/tests/v198_join_qr_print_lock.sql'],
   ['nestly_v199_receipt_capture', 'db/tests/v199_receipt_capture.sql'],
@@ -713,7 +719,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 200);
+  assert.equal(pending.length, 206);
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

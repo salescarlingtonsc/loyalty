@@ -59,7 +59,8 @@ test('Home keeps only the pending-redemption next-best-action variant',()=>{
 test('My Rewards has a back button and no offers shelf or guidance banner',()=>{
   const programmes=section('async function renderCustomerProgrammes','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
   assert.match(programmes,/renderCustomerShell\(\{active:'programmes',backTo:'#\/wallet'/);
-  assert.match(programmes,/renderActionableWalletHome\(data,\{surface:'programmes',note:scanGuide,rerender:\(\)=>renderCustomerProgrammes\(\)\}\)/);
+  // v196 removed the scan-guide note; the surface flag is what this test is about.
+  assert.match(programmes,/renderActionableWalletHome\(data,\{surface:'programmes',rerender:\(\)=>renderCustomerProgrammes\(\)\}\)/);
   assert.doesNotMatch(programmes,/customerHomeOffersMarkupV167|customer_get_home_offers_v167|customerHomeGuidanceV167/);
   assert.match(programmes,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
 
@@ -70,7 +71,9 @@ test('My Rewards has a back button and no offers shelf or guidance banner',()=>{
 
   const render=section('function renderActionableWalletHome','async function renderCustomerWallet');
   assert.match(render,/isHome=surface!=='programmes'/);
-  assert.match(render,/\$\{isHome\?`\$\{customerHomeOffersMarkupV167\(offersState\)\}/);
+  /* v195 (owner arrow above Limited offers): the expiring-rewards glance sits ahead of the
+     offers on Home only — My Rewards is still the grid alone. */
+  assert.match(render,/\$\{isHome\?`\$\{customerExpiringRewardsMarkupV195\(cards\)\}\s*\n\s*\$\{customerHomeOffersMarkupV167\(offersState\)\}/);
 });
 
 test('Bookings is a three-tab client-side filter of already-fetched records',()=>{
@@ -94,14 +97,22 @@ test('Bookings is a three-tab client-side filter of already-fetched records',()=
   assert.match(app,/function customerBookingTabGroupsV178/);
   assert.match(app,/data-repeat-booking data-business-slug/);
   const bookings=section('async function renderCustomerBookings(){','async function renderCustomerMessages(){');
-  assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab\)/);
+  assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingRange\)/);
   assert.doesNotMatch(bookings,/sb\.rpc\('customer_get_booking_tab/,'tabs must not add new RPCs');
+  /* v195 (owner: "put filter time here"): the time window is the same client-side filter over the
+     same fetched records — it narrows what a tab shows, it never asks the server again. */
+  assert.match(app,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingRange\)/);
+  assert.match(app,/function customerBookingWithinRangeV196/);
+  assert.doesNotMatch(bookings,/sb\.rpc\('customer_get_booking_requests',\{p_limit:50,p_cursor:null\}\)[\s\S]{0,200}windowKey/);
 });
 
 test('offer details open a company sheet with contact, current offers and a per-offer reopen',()=>{
   assert.match(app,/function customerCompanyDetailRowV178/);
-  assert.match(app,/data-company-detail aria-label="Company details for \$\{esc\(name\)\}"/);
-  assert.match(app,/<span class="muted small">Company details<\/span>/);
+  /* v195 (owner: "→ address phone number", "click here straightaway go company profile"): the row
+     shows the branch address and phone once they load, and its label now says where it goes. */
+  assert.match(app,/data-company-detail aria-label="Open the company profile for \$\{esc\(name\)\}"/);
+  assert.match(app,/<span class="muted small" data-company-row-lines>\$\{lines\|\|'Company profile'\}<\/span>/);
+  assert.match(app,/const summary=\[branch\.address,branch\.phone\]/);
   assert.match(app,/\.customer-company-row,\.customer-business-offer\{[^}]*min-height:52px/);
   assert.match(app,/companyButton\.onclick=\(\)=>\{[\s\S]{0,260}showCustomerBusinessDetailV178\(business,\{inheritHistoryId:handOff\}\)/);
 

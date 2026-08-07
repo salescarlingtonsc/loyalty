@@ -53,6 +53,6 @@ test('tier labels and benefits are escaped', () => {
 
 test('the wallet uses the panel instead of the old benefits-only section', () => {
   assert.match(app, /\$\{customerTierPanelMarkupV194\(tier\)\}/);
-  assert.match(app, /\$\{customerProgrammeSummaryTabsV194\(\{tier,loyalty,presentation,reward\}\)\}/);
+  assert.match(app, /\$\{customerProgrammeSummaryTabsV194\(\{tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities\}\)\}/);
   assert.doesNotMatch(app, /} benefits<\/h2><ul class="rec-why"/);
 });

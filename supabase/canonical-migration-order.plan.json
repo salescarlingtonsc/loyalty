@@ -1465,6 +1465,42 @@
     },
     {
       "kind": "pending",
+      "version": "20260807235800",
+      "name": "nestly_v229_points_mode_choice",
+      "sourcePath": "db/migrations/20260808_nestly_v229_points_mode_choice.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235900",
+      "name": "nestly_v230_points_mode_in_customer_portal",
+      "sourcePath": "db/migrations/20260808_nestly_v230_points_mode_in_customer_portal.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235910",
+      "name": "nestly_v231_capabilities_follow_the_points_mode",
+      "sourcePath": "db/migrations/20260808_nestly_v231_capabilities_follow_the_points_mode.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235930",
+      "name": "nestly_v232_promotion_lock_cannot_take_down_the_api",
+      "sourcePath": "db/migrations/20260808_nestly_v232_promotion_lock_cannot_take_down_the_api.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235940",
+      "name": "nestly_v233_admin_sessions_get_the_same_reaper",
+      "sourcePath": "db/migrations/20260808_nestly_v233_admin_sessions_get_the_same_reaper.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235950",
+      "name": "nestly_v234_advisor_hygiene",
+      "sourcePath": "db/migrations/20260808_nestly_v234_advisor_hygiene.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260808020000",
       "name": "nestly_v225_company_detail",
       "sourcePath": "db/migrations/20260808_nestly_v225_company_detail.sql"

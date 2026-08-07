@@ -130,6 +130,6 @@ test('customer booking requests split active from recent terminal outcomes and H
   assert.match(bookings,/Cancelled requests/);
   assert.match(bookings,/group\.tabRequests/);
   assert.match(bookings,/group\.tabAppointments/);
-  assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab\)/);
+  assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingRange\)/);
   assert.match(app,/bookingRequestResult\.data\.items\.filter\(isActiveCustomerBookingRequest\)\.length/);
 });

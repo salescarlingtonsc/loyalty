@@ -21,6 +21,11 @@ function productionSources(app){
   if(!style)throw new Error('production inline stylesheet missing');
   const functions=[
     sourceBetween(app,'function promotionDateTextV104','function promotionBoundaryV104'),
+    /* v195: the card drops copy this app generated and that only repeats the title or the
+       validity row. Those two helpers are production code the card calls, so the fixture must
+       carry them or it would render a card production no longer produces. */
+    sourceBetween(app,'function customerOfferTaglineV194','function customerOfferDescriptionV195'),
+    sourceBetween(app,'function customerOfferDescriptionV195','function showCustomerOfferDetailV173'),
     sourceBetween(app,'function customerPromotionCtaV104','function customerPromotionValidityV104'),
     sourceBetween(app,'function customerPromotionValidityV104','function customerPromotionCardV104'),
     sourceBetween(app,'function customerPromotionCardV104','function openCustomerPromotionDetailsV104'),

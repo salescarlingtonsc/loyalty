@@ -12,15 +12,18 @@ const rewards=section('const loadRewards=async()=>','const activityState={items:
 const promotion=section('function customerPromotionCardV104','function openCustomerPromotionDetailsV104');
 const homeOffer=section('function customerHomeOfferMarkupV167','function customerHomeOffersMarkupV167');
 
-test('rewards lead with the balance and a three-step pictogram strip',()=>{
+test('rewards are shown under the balance that pays for them, with the steps said once',()=>{
+  /* v195: the reward list renders inside the Reward points tab, which prints the balance in full.
+     The card that repeated it — and the three-step strip above it — is what the owner crossed
+     out. The balance is still the thing a reward is read against, so it is still asserted, on the
+     tab that now owns it, and the instruction survives as one line. */
   assert.match(rewards,/rewardBalance=Math\.max\(0,Number\(loyalty\.balance\)\|\|0\)/);
-  assert.match(rewards,/You have <b>\$\{esc\(customerPointTotalV103\(rewardBalance\)\)\} \$\{esc\(rewardUnit\)\}<\/b>/);
-  assert.match(rewards,/<ol class="wallet-reward-steps" aria-label="How rewards work">/);
-  assert.match(rewards,/<b>1<\/b> Pick a reward/);
-  assert.match(rewards,/<b>2<\/b> Show its QR/);
-  assert.match(rewards,/<b>3<\/b> Staff scans — points used/);
-  for(const glyph of ['redeem','scan','check'])assert.match(rewards,new RegExp(`CUI\\.icon\\('${glyph}'`));
-  assert.match(app,/\.wallet-reward-steps li\{[^}]*min-height:44px/s,'steps must keep a large tap-sized row');
+  assert.match(app,/<p class="customer-programme-balance"><b>\$\{esc\(balance\)\}<\/b>/);
+  assert.match(rewards,/Pick a reward, then show its QR at the counter/);
+  assert.doesNotMatch(rewards,/<ol class="wallet-reward-steps"/);
+  assert.doesNotMatch(rewards,/<b>3<\/b> Staff scans — points used/);
+  assert.match(rewards,/CUI\.icon\('scan'/,'the redeem control still carries its QR pictogram');
+  assert.doesNotMatch(app,/\.wallet-reward-steps/,'the step strip CSS went with the strip');
 });
 
 test('a reward short of points shows computed progress with an accessible text equivalent',()=>{
@@ -71,7 +74,8 @@ test('the Home offer shelf is image-forward, snap-scrolling, and keeps its track
 
 test('new promotion and reward surfaces stay on theme tokens instead of hardcoded light colours',()=>{
   const tokenised=[
-    /\.wallet-reward-steps li\{[^}]*background:var\(--bg\)/s,
+    // v195 removed the step strip; the reward list's own surfaces carry the same rule.
+    /\.customer-programme-rewards\{[^}]*border-top:1px solid var\(--hair\)/s,
     /\.wallet-reward-progress\{[^}]*background:var\(--hair\)/s,
     /\.customer-home-offer-media--fallback\{[^}]*linear-gradient\(135deg,var\(--tint\),var\(--card\)\)/s
   ];

@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v8-20260806-v177-production-polish';
+const CACHE_VERSION='v9-20260808-v195-tier-icons';
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 const APP_SHELL=Object.freeze([
   '/offline.html',
