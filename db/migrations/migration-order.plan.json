@@ -1509,6 +1509,12 @@
       "path": "db/migrations/20260808_nestly_v226_crm_consultant_scope.sql",
       "semanticVersion": "v226",
       "proposedDeployVersion": "20260808030000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v233_login_path_rpc_indexes.sql",
+      "semanticVersion": "v233",
+      "proposedDeployVersion": "20260808120000"
     }
   ]
 }
