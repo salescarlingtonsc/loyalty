@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 237,
-  "executableCount": 223,
+  "itemCount": 239,
+  "executableCount": 225,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -322,7 +322,7 @@
     },
     {
       "sourceDeployVersion": "20260807",
-      "count": 25,
+      "count": 27,
       "paths": [
         "db/migrations/20260807_nestly_v185_prospect_archive_merge_erase.sql",
         "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql",
@@ -348,7 +348,9 @@
         "db/migrations/20260807_nestly_v209_static_single_join_qr.sql",
         "db/migrations/20260807_nestly_v213_sales_mix_audit_column.sql",
         "db/migrations/20260807_nestly_v215_signup_welcome_offer.sql",
-        "db/migrations/20260807_nestly_v217_recent_window_and_staff_reference_code.sql"
+        "db/migrations/20260807_nestly_v217_recent_window_and_staff_reference_code.sql",
+        "db/migrations/20260807_nestly_v219_products_module_follows_business_config.sql",
+        "db/migrations/20260807_nestly_v220_next_best_times_for_selected_staff.sql"
       ]
     }
   ],
@@ -2248,6 +2250,22 @@
       "semanticVersion": "v217",
       "proposedDeployVersion": "20260807195000",
       "sha256": "1b8ad9ee599567071e9aaf32fa75538ae615971dc5d08a0f2d087096fdef4f11"
+    },
+    {
+      "order": 238,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v219_products_module_follows_business_config.sql",
+      "semanticVersion": "v219",
+      "proposedDeployVersion": "20260807195500",
+      "sha256": "8f4df0343f6cdd346ade9c1f339f6f0a1a0debc23b2dc884a5b543b04b0c8693"
+    },
+    {
+      "order": 239,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v220_next_best_times_for_selected_staff.sql",
+      "semanticVersion": "v220",
+      "proposedDeployVersion": "20260807195900",
+      "sha256": "27e7b58b84d12a5effb961022aeeb4e4b43a5478456e610d0fef31ffa9b209b7"
     }
   ]
 }

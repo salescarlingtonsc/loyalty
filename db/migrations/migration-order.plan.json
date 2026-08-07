@@ -1437,6 +1437,18 @@
       "path": "db/migrations/20260807_nestly_v217_recent_window_and_staff_reference_code.sql",
       "semanticVersion": "v217",
       "proposedDeployVersion": "20260807195000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v219_products_module_follows_business_config.sql",
+      "semanticVersion": "v219",
+      "proposedDeployVersion": "20260807195500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v220_next_best_times_for_selected_staff.sql",
+      "semanticVersion": "v220",
+      "proposedDeployVersion": "20260807195900"
     }
   ]
 }

@@ -6771,9 +6771,16 @@ function navHtml(page,idPrefix='nav'){
     .filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module));
   const activeKey=page[0]==='client'?'clients':page[0];
   const activeGrp=activeGroupKey(page[0]);
+  /* V219. Owner: "add branch inside (so can add or manage branches using the module as well)".
+     branchesPage exists and is routed, but the nav required 'branches' to be in the resolved
+     module list — and it never is, because staff_module_perms is built from enabled_modules,
+     which is fixed by the sector entitlement and does not include it. So an owner could create a
+     branch from Settings and then had nowhere to manage one. Branches is structural and
+     owner-only, exactly like Staff members, so it is offered on the same terms. */
   const navModuleVisible=m=>m==='dashboard'
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
-    ||(enabled.includes(m)&&(m!=='branches'||S.myRole==='owner'));
+    ||(m==='branches'&&S.myRole==='owner')
+    ||enabled.includes(m);
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.flat){
@@ -7031,10 +7038,15 @@ function profileHtml(){
    re-renders only itself. */
 function wireProfile(page){
   $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen){bellOpen=false;renderBell(page);}renderProfile(page);};
+  /* V219. Owner: "i need a drop down in the header to select which branch they want to view now".
+     V210 moved this selector OUT of the profile menu and into the top bar, but left its
+     hydration inside `if(profileOpen)`. The mount div was rendered on every page and filled on
+     none of them, so the header carried an invisible empty box. It is populated whenever the
+     shell is wired, which is what the top-bar position always meant. */
+  hydrateProfileBranchSelectorV158(page);
   if(profileOpen){
     const menu=$('profmenu');
     menu.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();profileOpen=false;renderProfile(page);$('profWho')?.focus()}};
-    hydrateProfileBranchSelectorV158(page);
     const profileNameForm=$('profileNameFormV158');
     if(profileNameForm)profileNameForm.onsubmit=async(e)=>{
       e.preventDefault();
@@ -18029,6 +18041,46 @@ async function appointmentsPage(){
       renderAvailability();
     });
   }
+  /* V220 — the clash prompt. Two routes out, both one tap, and no dead end: either move the
+     time (these are the chosen person's own free times) or hand the booking to someone who IS
+     free. Choosing either only fills the form — the owner still presses Book, so nothing is
+     booked behind their back. */
+  function openClashPromptV220({staffLabel='',payload={}}={}){
+    const times=(payload.next_best_slots||[]).slice(0,4);
+    const free=(payload.available_staff||[]).slice(0,4);
+    const who=staffLabel?esc(staffLabel):'That team member';
+    document.querySelector('#clashPromptV220')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="clashPromptV220" role="dialog" aria-modal="true" aria-labelledby="clashTitleV220" tabindex="-1">
+      <section class="modal-card" style="max-width:520px">
+        <div class="row"><div><p class="eyebrow">Not booked</p><h2 id="clashTitleV220" style="margin-top:4px">${who} is already busy then</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="clashCloseV220" aria-label="Close">Close</button></div>
+        <p class="muted small">Nothing has been booked. Pick another time, or give this booking to someone who is free.</p>
+        ${times.length?`<b class="small" style="display:block;margin-top:14px">${staffLabel?`Other times ${esc(staffLabel)} is free`:'Other times that work'}</b>
+          <div class="schedule-suggestion-actions">${times.map(slot=>`<button type="button" class="btn ghost sm" data-clash-time="${esc(slot.starts_at)}" data-clash-time-staff="${esc(slot.staff_id||'')}">${esc(sgt(slot.starts_at))}${staffLabel?'':` · ${esc(staffName[slot.staff_id]||slot.staff_name||'')}`}</button>`).join('')}</div>`
+          :`<p class="small" style="margin-top:14px">${staffLabel?`${esc(staffLabel)} has no other free time left today.`:'No other time is free later today.'}</p>`}
+        ${free.length?`<b class="small" style="display:block;margin-top:16px">Free at this time</b>
+          <div class="schedule-suggestion-actions">${free.map(person=>`<button type="button" class="btn ghost sm" data-clash-staff="${esc(person.staff_id)}">${esc(staffName[person.staff_id]||person.staff_name||'')}</button>`).join('')}</div>`
+          :'<p class="small" style="margin-top:16px">Nobody else is free at this time either.</p>'}
+        <div class="row" style="margin-top:18px"><button type="button" class="btn ghost sm" id="clashCancelV220">Keep editing</button></div>
+      </section></div>`);
+    const dialog=$('clashPromptV220');
+    let deactivate;
+    const close=()=>deactivate?.();
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#clashCloseV220'});
+    $('clashCloseV220').onclick=close;
+    $('clashCancelV220').onclick=close;
+    dialog.querySelectorAll('[data-clash-time]').forEach(button=>button.onclick=()=>{
+      const local=sgInput(button.dataset.clashTime);
+      invalidateFormRequests();
+      $('ad').value=local.slice(0,10);$('at').value=local.slice(11,16);
+      if(button.dataset.clashTimeStaff)$('astf').value=button.dataset.clashTimeStaff;
+      close();renderAvailability();
+    });
+    dialog.querySelectorAll('[data-clash-staff]').forEach(button=>button.onclick=()=>{
+      invalidateFormRequests();
+      $('astf').value=button.dataset.clashStaff;
+      close();renderAvailability();
+    });
+  }
   async function renderAvailability(){
     const stillCurrent=availabilityGate.begin();
     const starts=selectedStart(),duration=selectedDuration(),formError=$('appointmentFormError');
@@ -18038,7 +18090,10 @@ async function appointmentsPage(){
     formError.innerHTML='';$('checkAvailability').disabled=true;
     const {data,error}=await sb.rpc('suggest_appointment_staff_v47',{p_business:S.biz.id,p_branch:branchId,
       p_service:$('as').value||null,p_starts:starts,p_duration_minutes:duration,p_limit:5,
-      p_recent_days:recentWindowDaysV217});
+      p_recent_days:recentWindowDaysV217,
+      /* V220: when a teammate is chosen, the alternative TIMES must be theirs. Auto-assign
+         sends null, so the fair rotation still decides who each suggested time belongs to. */
+      p_staff:$('astf').value==='auto'?null:$('astf').value});
     if(!stillCurrent())return null;
     $('checkAvailability').disabled=false;
     if(error){formError.innerHTML=`<div class="err">${esc(error.message)}</div>`;return null}
@@ -18089,7 +18144,25 @@ async function appointmentsPage(){
       if(!stillCurrent())return;
       $('ago').disabled=false;
       if(error){$('appointmentFormError').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
-      if(data?.status==='conflict'){renderSuggestions(data.suggestions||{},true);CUI.announce('Appointment clash found. Choose an available staff member or another time.',{assertive:true});return}
+      if(data?.status==='conflict'){
+        /* V220. Owner: "if the timing is clashed, when press book appointment - should pop up
+           prompt to notify user, direct them to change timing / suggest free staff".
+           It used to redraw the suggestion panel further down the page and announce to screen
+           readers only — nothing visibly happened where the owner was looking, so a clash read
+           as the button doing nothing. Now it interrupts, and the times it offers are the chosen
+           person's (p_staff below), with whoever IS free as the other route. */
+        renderSuggestions(data.suggestions||{},true);
+        CUI.announce('Appointment clash found. Choose an available staff member or another time.',{assertive:true});
+        const fresh=await sb.rpc('suggest_appointment_staff_v47',{p_business:S.biz.id,p_branch:branchId,
+          p_service:$('as').value||null,p_starts:starts,p_duration_minutes:duration,p_limit:5,
+          p_recent_days:recentWindowDaysV217,p_staff:assignment==='auto'?null:assignment});
+        if(!stillCurrent())return;
+        openClashPromptV220({
+          staffLabel:assignment==='auto'?'':(staffName[assignment]||''),
+          payload:(fresh.error?null:fresh.data)||data.suggestions||{}
+        });
+        return;
+      }
       bookingAttempt=null;$('an').value='';$('scheduleSuggestion').innerHTML='';
       toast(data?.replayed?'Appointment already booked — no duplicate created':workspaceTemplateTextV97('bookedWith',{staff:data?.staff_name||staffName[data?.staff_id]||workspaceTranslationV97('staff')}));
       closeNewAppointmentForm();
