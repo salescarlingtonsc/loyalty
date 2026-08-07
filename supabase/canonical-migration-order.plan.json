@@ -1468,6 +1468,12 @@
       "version": "20260808020000",
       "name": "nestly_v225_company_detail",
       "sourcePath": "db/migrations/20260808_nestly_v225_company_detail.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260808030000",
+      "name": "nestly_v226_crm_consultant_scope",
+      "sourcePath": "db/migrations/20260808_nestly_v226_crm_consultant_scope.sql"
     }
   ]
 }

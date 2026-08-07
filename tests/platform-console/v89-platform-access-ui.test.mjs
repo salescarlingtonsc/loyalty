@@ -30,7 +30,7 @@ test('super admin sees every module plus grant management with write access',asy
   assert.equal(api.canWriteModule(access,'automation'),true);
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['overview','onboarding','customer-lifecycle','firms','companies','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access']
+    ['overview','onboarding','crm','customer-lifecycle','firms','companies','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access']
   );
 });
 
@@ -46,7 +46,7 @@ test('read-only admin keeps permitted routes but cannot write and off modules di
   assert.equal(api.canAccessModule(access,'billing'),false);
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['overview','onboarding','firms','reports']
+    ['overview','onboarding','crm','firms','reports']
   );
   assert.equal(api.isFullLegacyAdmin(access),false);
   const full=api.normalizePlatformAccess({role:'admin',scope:'all',module_perms:{'*':'rw'}});
@@ -62,7 +62,7 @@ test('Sales A navigation and scope copy expose only scoped CRM and reports',asyn
   });
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['onboarding','firms','reports']
+    ['onboarding','crm','firms','reports']
   );
   assert.equal(api.canWriteModule(access,'onboarding'),true);
   assert.equal(api.canWriteModule(access,'firms'),false);
@@ -116,7 +116,7 @@ test('partially customized admins use server-scoped onboarding, firms and report
   });
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['onboarding','firms','reports']
+    ['onboarding','crm','firms','reports']
   );
   assert.equal(api.canWriteModule(access,'onboarding'),true);
   assert.equal(api.canWriteModule(access,'firms'),false);

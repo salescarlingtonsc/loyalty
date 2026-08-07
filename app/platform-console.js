@@ -820,6 +820,29 @@
       'More companies exist':'还有更多公司',
       'Narrow the search or a filter to see the rest.':'请缩小搜索或筛选范围以查看其余部分。',
       'Companies unavailable':'无法加载公司',
+      'CRM':'客户关系管理',
+      'CRM unavailable':'无法加载客户关系管理',
+      'The firms you are working, by stage.':'您正在跟进的公司，按阶段排列。',
+      'Loading your assigned firms…':'正在加载分配给您的公司…',
+      'Search firms':'搜索公司',
+      'Company, contact or phone':'公司、联系人或电话',
+      'All stages':'所有阶段',
+      'All consultants':'所有顾问',
+      'No stage yet':'尚无阶段',
+      'No firms here':'这里没有公司',
+      'Nothing matches this search and stage.':'没有符合此搜索与阶段的记录。',
+      'Your assigned firms':'分配给您的公司',
+      'You see the firms assigned to you. Other consultants’ firms are not shown.':'您只能看到分配给您的公司，其他顾问的公司不会显示。',
+      'Every consultant’s firms':'所有顾问的公司',
+      'You see the whole pipeline. Filter by consultant to work one book at a time.':'您可以看到全部管道。按顾问筛选可逐一处理。',
+      'No consultant record linked':'未关联顾问记录',
+      'Your login has CRM access but is not linked to a consultant, so no firms are assigned to you yet. Ask a super admin to link your login.':'您的账号拥有客户关系管理权限，但尚未关联顾问记录，因此还没有公司分配给您。请联系超级管理员进行关联。',
+      'AI reports':'AI 报告',
+      'Ask for a written read on a firm that is already live.':'为已上线的公司申请一份书面分析。',
+      'Generate AI report':'生成 AI 报告',
+      'No firm here has become a live business yet, so there is nothing to report on.':'此处尚无公司已成为上线商户，因此没有可生成的报告。',
+      'AI report requested. It appears on the firm once it is written.':'已提交 AI 报告申请。生成后会显示在该公司下。',
+      'Action':'操作',
       'Company detail':'公司详情',
       'Company detail unavailable':'无法加载公司详情',
       'Loading subscription, payments and contacts…':'正在加载订阅、付款与联系人…',
@@ -1131,6 +1154,29 @@
       'More companies exist':'Terdapat lebih banyak syarikat',
       'Narrow the search or a filter to see the rest.':'Perincikan carian atau penapis untuk melihat selebihnya.',
       'Companies unavailable':'Syarikat tidak tersedia',
+      'CRM':'CRM',
+      'CRM unavailable':'CRM tidak tersedia',
+      'The firms you are working, by stage.':'Firma yang anda uruskan, mengikut peringkat.',
+      'Loading your assigned firms…':'Memuatkan firma yang ditugaskan kepada anda…',
+      'Search firms':'Cari firma',
+      'Company, contact or phone':'Syarikat, kenalan atau telefon',
+      'All stages':'Semua peringkat',
+      'All consultants':'Semua perunding',
+      'No stage yet':'Belum ada peringkat',
+      'No firms here':'Tiada firma di sini',
+      'Nothing matches this search and stage.':'Tiada rekod sepadan dengan carian dan peringkat ini.',
+      'Your assigned firms':'Firma yang ditugaskan kepada anda',
+      'You see the firms assigned to you. Other consultants’ firms are not shown.':'Anda melihat firma yang ditugaskan kepada anda sahaja. Firma perunding lain tidak dipaparkan.',
+      'Every consultant’s firms':'Firma setiap perunding',
+      'You see the whole pipeline. Filter by consultant to work one book at a time.':'Anda melihat keseluruhan saluran. Tapis mengikut perunding untuk uruskan satu senarai pada satu masa.',
+      'No consultant record linked':'Tiada rekod perunding dipautkan',
+      'Your login has CRM access but is not linked to a consultant, so no firms are assigned to you yet. Ask a super admin to link your login.':'Log masuk anda mempunyai akses CRM tetapi belum dipautkan kepada seorang perunding, jadi tiada firma ditugaskan kepada anda lagi. Minta super admin memautkan log masuk anda.',
+      'AI reports':'Laporan AI',
+      'Ask for a written read on a firm that is already live.':'Minta analisis bertulis bagi firma yang sudah beroperasi.',
+      'Generate AI report':'Jana laporan AI',
+      'No firm here has become a live business yet, so there is nothing to report on.':'Belum ada firma di sini yang menjadi perniagaan aktif, jadi tiada apa untuk dilaporkan.',
+      'AI report requested. It appears on the firm once it is written.':'Laporan AI telah diminta. Ia akan dipaparkan pada firma itu setelah siap ditulis.',
+      'Action':'Tindakan',
       'Company detail':'Butiran syarikat',
       'Company detail unavailable':'Butiran syarikat tidak tersedia',
       'Loading subscription, payments and contacts…':'Memuatkan langganan, pembayaran dan kenalan…',
@@ -2720,6 +2766,12 @@
   const routes = Object.freeze([
     {key:'overview',label:'Today',shortLabel:'Today',hash:'#/platform',icon:'home'},
     {key:'onboarding',label:'Onboarding',shortLabel:'Onboard',hash:'#/platform/onboarding',icon:'setup'},
+    /* CRM is its own module rather than a tab inside Onboarding: a consultant
+       works a book of firms, which is a different job from processing signups
+       and applications. It reuses the 'onboarding' module key deliberately —
+       the DB gate (app.v89_platform_can('onboarding','r')) is the same one, so
+       a new key here would let the two drift apart. */
+    {key:'crm',moduleKey:'onboarding',label:'CRM',shortLabel:'CRM',hash:'#/platform/crm',icon:'customers'},
     {key:'customer-lifecycle',moduleKey:'billing',label:'Customer lifecycle',shortLabel:'Customers',hash:'#/platform/customer-lifecycle',icon:'branch'},
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
     {key:'companies',label:'Companies',shortLabel:'Companies',hash:'#/platform/companies',icon:'branch',superAdminOnly:true},
@@ -2927,7 +2979,7 @@
   }
   const platformNavigationBlueprint=Object.freeze([
     Object.freeze({key:'overview',label:'Today',icon:'home',routeKeys:Object.freeze(['overview'])}),
-    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding'])}),
+    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['crm','onboarding'])}),
     Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms','companies'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
@@ -8061,6 +8113,132 @@
       ];
     });
   }
+  // CRM. A consultant's own book of firms, and for an all-scope operator every
+  // book with a filter to pick one. The scope is decided by the server
+  // (platform_crm_pipeline_v226) and only described here — the console must
+  // never be the thing that decides who sees whose firms.
+  function crmFiltersFromHash(hash='') {
+    const params=new URLSearchParams(String(hash).split('?')[1]||'');
+    return {search:params.get('q')||'',stage:params.get('stage')||'',consultant:params.get('consultant')||''};
+  }
+  function crmHash(filters={}) {
+    const entries=[];
+    if(filters.search)entries.push(`q=${encodeURIComponent(filters.search)}`);
+    if(filters.stage)entries.push(`stage=${encodeURIComponent(filters.stage)}`);
+    if(filters.consultant)entries.push(`consultant=${encodeURIComponent(filters.consultant)}`);
+    return`#/platform/crm${entries.length?`?${entries.join('&')}`:''}`;
+  }
+  // The scope line is stated in full rather than implied by an empty list: an
+  // operator who sees three firms must know whether that is the whole pipeline
+  // or only their share of it.
+  function crmScopeNoteHtml(payload) {
+    if(payload.consultant_unlinked)return localizedRouteNoteHtml(
+      'No consultant record linked',
+      'Your login has CRM access but is not linked to a consultant, so no firms are assigned to you yet. Ask a super admin to link your login.');
+    return payload.scope==='own'
+      ?localizedRouteNoteHtml('Your assigned firms','You see the firms assigned to you. Other consultants’ firms are not shown.')
+      :localizedRouteNoteHtml('Every consultant’s firms','You see the whole pipeline. Filter by consultant to work one book at a time.');
+  }
+  function crmBoardHtml(items,stages,CUI,canWrite) {
+    const byStage=new Map();
+    asArray(items).forEach(item=>{
+      const key=prospectStage(item)||'unmapped';
+      if(!byStage.has(key))byStage.set(key,[]);
+      byStage.get(key).push(item);
+    });
+    const columns=asArray(stages).filter(stage=>byStage.has(stage.stage_key));
+    const unmapped=byStage.get('unmapped')||[];
+    return `<div class="platform-kanban" role="list">${columns.map(stage=>`
+      <section class="platform-kanban-column" role="listitem" aria-label="${escapeHtml(pt(stage.label||platformStatus(stage.stage_key)))}">
+        <header class="platform-kanban-head"><b>${escapeHtml(pt(stage.label||platformStatus(stage.stage_key)))}</b><span class="pill">${escapeHtml(String(stage.n??(byStage.get(stage.stage_key)||[]).length))}</span></header>
+        ${(byStage.get(stage.stage_key)||[]).map(item=>prospectCompactCardHtml(item,CUI,{canWrite})).join('')}
+      </section>`).join('')}
+      ${unmapped.length?`<section class="platform-kanban-column" role="listitem" aria-label="${escapeHtml(pt('No stage yet'))}">
+        <header class="platform-kanban-head"><b>${escapeHtml(pt('No stage yet'))}</b><span class="pill">${unmapped.length}</span></header>
+        ${unmapped.map(item=>prospectCompactCardHtml(item,CUI,{canWrite})).join('')}
+      </section>`:''}</div>`;
+  }
+  // The AI report action is offered only for a firm that has become a business,
+  // because that is exactly the condition platform_request_ai_firm_report_v176
+  // enforces. Showing it anywhere else would be a button that always fails.
+  function crmAiReportListHtml(items,CUI) {
+    const ready=asArray(items).filter(item=>item.can_request_ai_report&&item.converted_business_id);
+    if(!ready.length)return localizedEmptyHtml('No firm here has become a live business yet, so there is nothing to report on.');
+    return CUI.table({caption:'AI reports',headers:['Firm','Action'],rows:ready.map(item=>[
+      `<b>${escapeHtml(prospectCompany(item))}</b>`,
+      `<button type="button" class="btn ghost sm" data-crm-ai-report="${escapeHtml(item.converted_business_id)}">${escapeHtml(pt('Generate AI report'))}</button>`
+    ])});
+  }
+  async function renderCrm(context,filters=null) {
+    const {main,CUI,sb,hash}=context;
+    const active=filters||crmFiltersFromHash(hash);
+    main.innerHTML=loading(CUI,'CRM','Loading your assigned firms…','customers');
+    try{
+      const payload=asObject(await rpc(sb,'platform_crm_pipeline_v226',{
+        p_search:active.search||null,
+        p_stage:active.stage||null,
+        p_consultant:active.consultant||null,
+        p_limit:200,p_before:null}));
+      const items=asArray(payload.items),stages=asArray(payload.stages);
+      const consultants=asArray(payload.consultants);
+      const canWrite=context.canWrite===true;
+      const chip=(label,value,key,current)=>`<button type="button" class="btn ${current===value?'':'ghost'} sm" data-crm-filter="${escapeHtml(key)}" data-crm-value="${escapeHtml(value)}">${escapeHtml(label)}</button>`;
+      main.innerHTML=`${CUI.pageHeader({title:'CRM',subtitle:'The firms you are working, by stage.',iconName:'customers'})}
+        ${crmScopeNoteHtml(payload)}
+        <section class="card">
+          <form id="crmSearch" class="platform-filter-grid"><label>${escapeHtml(pt('Search firms'))}<input type="search" name="q" value="${escapeHtml(active.search)}" placeholder="${escapeHtml(pt('Company, contact or phone'))}"></label><button class="btn" type="submit">${escapeHtml(pt('Search'))}</button></form>
+          <div class="platform-actions" style="margin-top:12px">
+            ${chip(pt('All stages'),'','stage',active.stage)}
+            ${stages.filter(stage=>Number(stage.n||0)>0).map(stage=>chip(`${pt(stage.label||platformStatus(stage.stage_key))} (${stage.n})`,String(stage.stage_key),'stage',active.stage)).join('')}
+          </div>
+          ${consultants.length?`<div class="platform-actions" style="margin-top:8px">
+            ${chip(pt('All consultants'),'','consultant',active.consultant)}
+            ${consultants.map(entry=>chip(`${entry.display_name} (${entry.n})`,String(entry.id),'consultant',active.consultant)).join('')}
+          </div>`:''}
+        </section>
+        ${items.length
+          ? crmBoardHtml(items,stages,CUI,canWrite)
+          : CUI.emptyState({iconName:'customers',title:'No firms here',body:'Nothing matches this search and stage.'})}
+        ${CUI.card({title:'AI reports',description:'Ask for a written read on a firm that is already live.',body:crmAiReportListHtml(items,CUI)})}`;
+      main.querySelector('#crmSearch').onsubmit=event=>{
+        event.preventDefault();
+        renderCrm(context,{...active,search:String(new FormData(event.currentTarget).get('q')||'')});
+      };
+      main.querySelectorAll('[data-crm-filter]').forEach(button=>button.onclick=()=>{
+        const next={...active,[button.dataset.crmFilter]:button.dataset.crmValue};
+        if(globalObject.history?.replaceState)globalObject.history.replaceState(null,'',crmHash(next));
+        renderCrm({...context,hash:crmHash(next)},next);
+      });
+      main.querySelectorAll('[data-prospect]').forEach(card=>{
+        card.onclick=()=>{
+          const item=items.find(entry=>String(entry.id||entry.prospect_id)===card.dataset.prospect);
+          if(item)openProspectDetail(item,{...context,prospectCloseHash:crmHash(active)});
+        };
+      });
+      main.querySelectorAll('[data-crm-ai-report]').forEach(button=>button.onclick=async()=>{
+        button.disabled=true;
+        try{
+          await rpc(sb,'platform_request_ai_firm_report_v176',{
+            p_business:button.dataset.crmAiReport,p_period_kind:'month',p_period_start:null});
+          /* The queue is drained by a scheduled run; nudging the function just
+             starts it sooner. A failed nudge is not a failed request. */
+          try{await sb.functions.invoke('ai-firm-reports',{body:{}})}catch{/* queued anyway */}
+          CUI.announce(pt('AI report requested. It appears on the firm once it is written.'));
+        }catch(error){
+          CUI.announce(platformErrorMessage(error,'The AI report could not be requested.'));
+          button.disabled=false;
+        }
+      });
+      CUI.focusRoute(main);
+    }catch(error){
+      main.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'CRM')
+        :CUI.errorState({title:'CRM unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'crmRetry'});
+      const retry=main.querySelector('#crmRetry');
+      if(retry)retry.onclick=()=>renderCrm(context,active);
+      CUI.focusRoute(main);
+    }
+  }
   // Company detail drawer. Everything the operator needs before picking up the
   // phone, on one surface: who they are, what they are on, what they owe, how
   // they have paid before, and who to call.
@@ -10086,6 +10264,7 @@
     if(!task&&activeKey==='subscription-operations')task=renderSubscriptionOperations(context);
     if(!task&&activeKey==='customer-lifecycle')task=renderCustomerLifecycle(context);
     if(!task&&activeKey==='companies')task=renderCompanies(context);
+    if(!task&&activeKey==='crm')task=renderCrm(context);
     if(!task&&activeKey==='pnl')task=renderPlatformFinance(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);

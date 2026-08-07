@@ -1467,6 +1467,12 @@
       "path": "db/migrations/20260808_nestly_v225_company_detail.sql",
       "semanticVersion": "v225",
       "proposedDeployVersion": "20260808020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v226_crm_consultant_scope.sql",
+      "semanticVersion": "v226",
+      "proposedDeployVersion": "20260808030000"
     }
   ]
 }

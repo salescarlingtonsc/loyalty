@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 242,
-  "executableCount": 228,
+  "itemCount": 243,
+  "executableCount": 229,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -353,6 +353,14 @@
         "db/migrations/20260807_nestly_v219_products_module_follows_business_config.sql",
         "db/migrations/20260807_nestly_v220_next_best_times_for_selected_staff.sql",
         "db/migrations/20260807_nestly_v223_table_reservations_opt_in.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260808",
+      "count": 2,
+      "paths": [
+        "db/migrations/20260808_nestly_v225_company_detail.sql",
+        "db/migrations/20260808_nestly_v226_crm_consultant_scope.sql"
       ]
     }
   ],
@@ -2292,6 +2300,14 @@
       "semanticVersion": "v225",
       "proposedDeployVersion": "20260808020000",
       "sha256": "732dc5f8d05a2fdadffecd050c175c2a959b8ba170627dc126257b902fd39a77"
+    },
+    {
+      "order": 243,
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v226_crm_consultant_scope.sql",
+      "semanticVersion": "v226",
+      "proposedDeployVersion": "20260808030000",
+      "sha256": "941322e171e44a7c51baa27b168964bff6e58c50ca14dc7d4dbc1f12ce56acd6"
     }
   ]
 }

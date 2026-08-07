@@ -28,7 +28,7 @@ test('desktop administration has six primary task areas plus secondary platform 
     })),
     [
       {key:'overview',routes:['overview']},
-      {key:'sales',routes:['onboarding']},
+      {key:'sales',routes:['crm','onboarding']},
       {key:'customers',routes:['customer-lifecycle','firms','companies']},
       {key:'reports',routes:['reports']},
       {key:'finance',routes:['subscription-operations','billing','pnl','commissions']},
@@ -40,7 +40,7 @@ test('desktop administration has six primary task areas plus secondary platform 
   assert.equal(groups.find(group=>group.key==='platform-controls')?.secondary,true);
   assert.deepEqual(
     Array.from(allowed,route=>route.key),
-    ['overview','onboarding','customer-lifecycle','firms','companies','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access'],
+    ['overview','onboarding','crm','customer-lifecycle','firms','companies','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access'],
     'streamlining must not delete a capability or deep link'
   );
 });
@@ -54,7 +54,7 @@ test('restricted platform roles only see task groups containing authorised route
   const groups=Console.platformNavigationGroups(Console.visibleRoutes(access));
   assert.deepEqual(
     Array.from(groups,group=>Array.from(group.routes,route=>route.key)),
-    [['overview'],['onboarding'],['firms'],['reports']]
+    [['overview'],['crm','onboarding'],['firms'],['reports']]
   );
 });
 
