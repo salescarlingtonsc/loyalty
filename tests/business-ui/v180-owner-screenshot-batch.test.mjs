@@ -42,7 +42,9 @@ test('#/grow lands on the full list, not a filtered view', () => {
 test('staff row carries every detail on one line and opens an editable profile', () => {
   const i = app.indexOf('const commissionSummary=');
   assert.ok(i > 0, 'commission summary missing from the staff row');
-  const row = app.slice(i, i + 1400);
+  /* Slice to the end of the row builder rather than a fixed byte count — V226 turned the row
+     into a labelled grid and the extra markup pushed real fields outside a fixed window. */
+  const row = app.slice(i, app.indexOf('const rows=st||[];', i));
   for (const field of ['s.email', 's.phone', 'ROLE_LABELS[s.role]', 'commissionSummary']) {
     assert.ok(row.includes(field), `staff row is missing ${field}`);
   }

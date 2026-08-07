@@ -43,10 +43,17 @@ test('customer-facing staff profile removes empty gender noise and explains rewa
   assert.doesNotMatch(profile,/gender not set|\.gender/);
   assert.doesNotMatch(app,/<b>Customer gender<\/b>|labels:\['Female','Male','Other','Not set'\]/);
   assert.doesNotMatch(executableApp,/Columns (?:we recognise|recognised):[^\n<]*gender|iG=col\('gender'\)|p_gender:rec\.gender/);
-  assert.match(profile,/<b>Rewards<\/b>/);
-  assert.match(profile,/How rewards work/);
+  /* V226 renamed this card "Rewards for customer" — the owner's own wording. */
+  assert.match(profile,/<b>Rewards for customer<\/b>/);
+  /* V226: the owner crossed the "How rewards work / Balance / Earn / Next reward" block out as
+     "too confusing" and asked for redeemable rewards to lead instead. The facts this test
+     protects — that staff can still see the balance, the earn rate and how far off the next
+     reward is — are all still rendered; they are folded behind a summary rather than leading. */
+  assert.match(profile,/Ready to redeem now/);
+  assert.match(profile,/<summary>Balance and earning<\/summary>/);
+  assert.match(profile,/Balance:/);
   assert.match(profile,/Earn:/);
-  assert.match(profile,/Next reward:/);
+  assert.match(profile,/Nothing ready to redeem yet/);
   assert.match(profile,/<details[^>]+class="c360-reward-adjust"/);
   assert.match(profile,/<b>Activity history<\/b>/);
   assert.doesNotMatch(profile,/<b>Timeline<\/b>/);

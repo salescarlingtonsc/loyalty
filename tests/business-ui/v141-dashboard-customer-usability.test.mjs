@@ -23,8 +23,12 @@ const profile=section('async function clientDetail(id){','/* ---------- quick ea
 test('V141 dashboard removes duplicate launchers and keeps branch-scoped performance visible',()=>{
   assert.match(app,/flat:'Dashboard',items:\['dashboard'\]/);
   assert.doesNotMatch(dashboard,/taskLauncher|task-launcher-grid|<details class="card performance-panel"/);
-  assert.match(dashboard,/id="dashboardReportingScopeWrap"/);
-  assert.match(dashboard,/renderReportingScopeSelectorV155\([^\n]+dashboardReportingScopeWrap/);
+  /* V225: the owner struck the per-page reporting-scope picker off the Dashboard and
+     Customers. The top bar carries one "Viewing" control for the whole workspace, and a
+     second on-page picker contradicted it as often as it agreed. The scope still applies —
+     currentReportingScopePayloadV155 now derives it from that single control. */
+  assert.doesNotMatch(dashboard,/id="dashboardReportingScopeWrap"/);
+  assert.match(app,/const mode=followsTopBar\?\(selectedBranchId\?'current':'all'\):'selected';/);
   assert.match(dashboard,/data-d="1"[^>]*>Today</);
   assert.match(dashboard,/class="performance-heading ux154-collapsible-head"[\s\S]*CUI\.icon\('reports'/);
   assert.doesNotMatch(dashboard,/performance-panel>summary|<summary>Performance/);

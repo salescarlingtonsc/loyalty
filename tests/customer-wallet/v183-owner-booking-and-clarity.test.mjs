@@ -180,8 +180,13 @@ test('a signed-in customer sees their own bookings instead of being asked for a 
 
 /* --------------------------------------------------------------- business side */
 
+/* V228 (owner: "staff schedule should not be in bookings - it should be in staff modules").
+   The rota moved to Staff Members; the shop's own opening hours stayed in Bookings, because
+   they belong to the branch and not to a person. Every rule these tests protect is unchanged —
+   they are pointed at the two places that now own them. */
 test('each person can work their own rota, and unticking returns them to shop hours',()=>{
-  const load=section(app,'const loadBookingAvailability=async','loadBookingAvailability();');
+  const load=section(app,'async function loadStaffRotaV228','async function saveStaffRotaV228')
+    +section(app,'function staffRotaSectionMarkupV228','\nasync function staffMembersPage');
   assert.match(load,/sb\.from\('staff_hours'\)\.select\('staff_id,weekday,starts_at,ends_at'\)/);
   assert.match(load,/rotaResult\.error/,'a failed rota read must not render a half-truthful editor');
   assert.match(load,/\{opens_at:row\.starts_at,closes_at:row\.ends_at\}/,'rota columns are translated once');
@@ -191,15 +196,14 @@ test('each person can work their own rota, and unticking returns them to shop ho
     'the copy states the engine’s actual rule rather than implying an intersection');
   assert.match(load,/pill\.textContent=box\.checked\?'Own rota':'Shop hours'/);
   // one row template, namespaced so a rota row can never be read as a shop row
-  const row=section(app,'const v183HourRowMarkup=','const loadBookingAvailability=async');
+  const row=section(app,'const v183HourRowMarkup=','async function bookingsPage');
   assert.match(row,/data-day-scope="\$\{esc\(scope\)\}"/);
   assert.match(row,/id="v183Open-\$\{esc\(scope\)\}-\$\{weekday\}"/,'ids stay unique across every grid on the page');
 });
 
 test('a rota save is scoped, ordered and refuses to publish an empty rota',()=>{
-  const save=section(app,"$('setAvailabilitySave').onclick=",'/* ---- CSV import of existing bookings');
+  const save=section(app,'async function saveStaffRotaV228','async function loadTeam');
   assert.match(save,/\[data-day-closed\]\[data-day-scope="\$\{CSS\.escape\(scope\)\}"\]/);
-  assert.match(save,/const shop=readDayGrid\('shop',host\)/);
   assert.match(save,/readDayGrid\(staffId,member\)/);
   assert.match(save,/box\.checked\|\|!opens\|\|!closes\|\|closes<=opens/,'an inverted or blank range is closed, never saved');
   assert.match(save,/const emptyRota=rotas\.find\(rota=>rota\.wantsRota&&!rota\.open\.length\)/);
@@ -228,8 +232,10 @@ test('the business owns the switch, the opening hours and who is bookable',()=>{
   assert.match(save,/sb\.from\('businesses'\)\.update\(\{booking_staff_choice:staffChoice\}\)/);
   assert.match(save,/sb\.from\('branch_hours'\)\.upsert\(rows,\{onConflict:'branch_id,weekday'\}\)/);
   assert.match(save,/sb\.from\('branch_hours'\)\.delete\(\)/,'unchecking a day removes its hours');
-  assert.match(save,/sb\.from\('staff'\)\.update\(\{customer_bookable:member\.customer_bookable\}\)/);
   assert.match(save,/closes<=opens/,'an inverted or empty range is treated as closed, never saved');
+  /* Who is bookable travels with the rota, to Staff Members. */
+  const rotaSave=section(app,'async function saveStaffRotaV228','async function loadTeam');
+  assert.match(rotaSave,/sb\.from\('staff'\)\.update\(\{customer_bookable:member\.customer_bookable\}\)/);
 });
 
 /* ----------------------------------------------------------------- gateway/DB */

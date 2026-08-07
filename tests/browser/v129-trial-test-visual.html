@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="6178c72c0ae3b9d8cf66e0db65bdef09f60a7c015a971213e7aa3e652b9e9715"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="9a83a9aa7bf213193b4f2d8b8526e63fcf1c44b80800c7f71c1c24ffc83021a1"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -212,9 +212,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* The teammate the owner actually chose is marked in the availability list, so the panel and the
    Assign-to field visibly agree. */
 .suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
-/* A branch withheld from the reporting scope is stated, not silently missing. */
-.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
-@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
+
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -231,6 +229,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .appointment-list-filters>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
 .appointment-list-filters>div>label{margin:0 0 6px;min-height:1.15em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appointment-list-filters>div.row{flex-direction:row}
+/* V225 (owner marked this row "misalignment"). From and To are input[type=date] and the status
+   is a select; the two render at different intrinsic heights in every engine, and min-height
+   alone does not settle it — so with align-items:end their bottoms matched while their tops and
+   labels did not. An explicit equal height on every control in this bar removes the variable. */
+.appointment-list-filters>div>input,
+.appointment-list-filters>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
@@ -898,7 +902,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
 .staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
-.staff-row-open{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;flex:1 1 320px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+/* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
+   The row was a flex wrap, so a field landed at a different x-position on every line and could
+   not be read down a column. One shared template drives the header and every row, so the two
+   cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
+:root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.staff-col-v226{min-width:0;overflow-wrap:anywhere}
+@media (max-width:900px){
+  .staff-row-open{grid-template-columns:1fr}
+  .staff-col-head-v226{display:none}
+  .staff-col-v226::before{content:attr(data-staff-col) ": ";color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+}
 .staff-row-open:hover{background:var(--tint)}
 .staff-row-open>b{overflow-wrap:anywhere}
 .staff-profile-panel .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
@@ -1629,7 +1645,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 6178c72c0ae3b9d8cf66e0db65bdef09f60a7c015a971213e7aa3e652b9e9715</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 9a83a9aa7bf213193b4f2d8b8526e63fcf1c44b80800c7f71c1c24ffc83021a1</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -2191,7 +2207,7 @@ async function clientsPage(){
     (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
-      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1><p>Find customers, manage consent, and follow up with people who have not visited recently.</p></div></div>
+      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1></div></div>
       <div class="client-summary-cards" id="inactiveCards" aria-label="Inactive customer shortcuts">
         <button type="button" class="client-summary-card" data-inactive-bucket="30_59" aria-pressed="false"><b>—</b><span>Inactive 30–59 days</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="60_89" aria-pressed="false"><b>—</b><span>Inactive 60–89 days</span></button>
@@ -2199,7 +2215,7 @@ async function clientsPage(){
       </div>
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="min-width:min(100%,280px)"><label>Reporting scope</label><div id="clientReportingScopeWrap"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></div></div><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -2819,13 +2835,27 @@ async function clientsPage(){
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
       ?`${projectedNextReward.name||'Reward'} is ready now`
       :`${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more ${unit} for ${projectedNextReward.name||'a reward'}`;
-    rewardsMarkup=`<p class="eyebrow" style="margin-top:8px">How rewards work</p>
-      <p class="small" style="margin-top:6px"><b>Balance:</b> ${pts} ${unit}</p>
-      <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
-      <p class="small" style="margin-top:5px"><b>Next reward:</b> ${esc(nextCopy)}</p>
-      ${projectedRewards.length?`<div style="margin-top:10px">${projectedRewards.map(reward=>`<div class="row" style="margin-top:7px;flex-wrap:wrap"><span>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${reward.available_now?'ok':'off'}">${!redemptionEnabled?'Unavailable':reward.available_now?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`).join('')}</div>`:''}
-      ${canWriteLoyalty&&redemptionEnabled?`<p class="muted small" style="margin-top:12px">To complete a customer reward, scan their pending QR in Record sale. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:!redemptionEnabled?'<span class="pill off" style="margin-top:10px">Redemption unavailable</span>':'<span class="pill off" style="margin-top:10px">Rewards are read only for this role</span>'}
-      ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+    /* V226 (owner crossed the whole block out: "too confusing", and wrote "show Redeemable
+       Rewards for customer"). It led with an explanation of the SCHEME — how rewards work,
+       balance, earn rate, next milestone — and buried what the person at the counter actually
+       needs: which rewards this customer can take right now. That is the answer to the only
+       question being asked while they are standing there. The scheme facts are kept, because
+       staff do occasionally need them, but folded away underneath. */
+    const readyRewards=redemptionEnabled?projectedRewards.filter(reward=>reward.available_now):[];
+    const pendingRewards=redemptionEnabled?projectedRewards.filter(reward=>!reward.available_now):[];
+    const rewardRow=(reward,ready)=>`<div class="row c360-reward-row-v226"><span data-merchant-content>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${ready?'ok':'off'}">${!redemptionEnabled?'Unavailable':ready?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`;
+    rewardsMarkup=`${readyRewards.length
+      ?`<p class="eyebrow" style="margin-top:8px">Ready to redeem now · ${readyRewards.length}</p>
+        <div style="margin-top:8px">${readyRewards.map(reward=>rewardRow(reward,true)).join('')}</div>`
+      :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
+        <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
+      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<p class="muted small" style="margin-top:12px">Scan the customer's pending QR in Record sale to complete one. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
+      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}
+      <details class="c360-reward-adjust" style="margin-top:10px"><summary>Balance and earning</summary>
+        <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
+        <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
+        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+      </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
@@ -2884,7 +2914,7 @@ async function clientsPage(){
     ${profileKpis?`<div class="kpis">${profileKpis}</div>`:''}
     <div class="split" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards</b><span>${wholeBusinessLabels?'Balance, earning and next unlock':'Business-wide balance, earning and next unlock'}</span></div></header>
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards for customer</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${rewardsMarkup}</div>
       </section>`:''}
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
@@ -3421,7 +3451,7 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
-        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
+        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
         <div id="tErr"></div>
         <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:19})} Next</button>
         <div class="grid frontline-keypad" id="tKeys" aria-label="Phone keypad">
@@ -5138,6 +5168,19 @@ function enhanceBookingsTabsV195(root){
   tabs.querySelector('#bookingsTabSettings').onclick=()=>setTab('settings');
   setTab('requests');
 }
+/* V228: lifted out of bookingsPage so the Staff page can render the same weekday rows.
+   The owner asked for the staff schedule to live with the staff, and duplicating this
+   markup would have let the two grids drift apart. */
+const V183_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+/* v183b: one weekday row, reused by the shop hours grid and by each person's own rota.
+   `scope` namespaces the data attributes so a rota row can never be mistaken for a shop row. */
+const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-hours-row">
+  <label style="margin:0" for="v183Open-${esc(scope)}-${weekday}">${esc(label)}</label>
+  <label class="v183-hours-open" for="v183Closed-${esc(scope)}-${weekday}"><input type="checkbox" id="v183Closed-${esc(scope)}-${weekday}" data-day-closed="${weekday}" data-day-scope="${esc(scope)}" style="width:auto" ${row?'':'checked'}> Closed</label>
+  <input type="time" id="v183Open-${esc(scope)}-${weekday}" data-day-opens="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.opens_at||fallback.opens).slice(0,5))}" ${row?'':'disabled'}>
+  <input type="time" id="v183Close-${esc(scope)}-${weekday}" data-day-closes="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.closes_at||fallback.closes).slice(0,5))}" ${row?'':'disabled'}>
+</div>`;
+
 async function bookingsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const portal=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
@@ -5146,16 +5189,15 @@ async function bookingsPage(){
   const canDeclineBooking=canWriteModule('bookings');
   const canDecideChange=canWriteModule('appointments');
   const decisionNotices=new Map(),pendingDecisions=new Set();
+  /* V223: the hold-timer copy promises the waitlist gets flagged. Only say so when this
+     workspace actually has a waitlist — it now travels with Bookings, but a business can still
+     have Bookings without the Waitlist module. */
+  const waitlistLinkedV223=(S.myModules||S.biz.enabled_modules||[]).includes('waitlist');
   routeMain.innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
       <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
-    ${isOwner?`<section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
-      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
-      <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
-      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
-      <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>`:''}
     <div class="card" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
       ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
@@ -5164,23 +5206,33 @@ async function bookingsPage(){
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     ${isOwner?`<div class="split" style="margin-bottom:16px">
-      <div class="card"><div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
+      <div class="card">
+        <!-- V223 (owner: "how can table bookings be present in a spa/salon?"). Seating is not
+             something every business has. A facial spa takes booking REQUESTS through the same
+             public page, but it has no tables, no pax and no when-full overflow — and every
+             salon/spa/massage/fitness sector is granted the full module list, so all of them
+             were shown table management they can never use. The seating controls now appear
+             only for a business that says it seats guests. -->
+        <label style="display:flex;align-items:center;gap:8px;margin:0 0 6px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="setTakesTablesV223" style="width:auto" ${S.biz.takes_table_reservations?'checked':''}> We seat guests at tables</label>
+        <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>
+        ${S.biz.takes_table_reservations?`<div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
         <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
         <div class="row"><input id="tblName" placeholder="e.g. Small (2-seater)">
           <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
           <input id="tblQty" type="number" min="1" value="1" placeholder="Qty" style="max-width:76px">
           <button class="btn sm" id="tblAdd">Add</button></div>
         <div id="capBody" style="margin-top:14px">${CUI.tableSkeleton({rows:3,columns:6})}</div>
-        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">`:''}
         <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
         <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
         <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
-        <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes; your waitlist is then flagged so you know to fill the gap.</p>
-        <label>When you're full</label><select id="setOverflow">
+        <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
+        ${S.biz.takes_table_reservations?`<label>When you're full</label><select id="setOverflow">
           <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
           <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-          <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>
+          <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>`:''}
         <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
         <div id="setErr"></div>
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
@@ -5210,38 +5262,6 @@ async function bookingsPage(){
      load paths, and every id keeps working exactly as before. Same approach the Staff page uses. */
   enhanceBookingsTabsV195(M());
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
-  if(isOwner){
-    const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
-    const status=$('customerCapabilitiesStatus'),save=$('saveCustomerCapabilities');
-    const capabilityResult=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
-    if(!isCurrent())return;
-    $('businessCustomerCapabilities').setAttribute('aria-busy','false');
-    if(capabilityResult.error){
-      status.textContent=capabilityResult.error.code==='PGRST202'||capabilityResult.error.code==='42883'
-        ?'These controls need the latest Peekaa service update. All three remain off.'
-        :'Customer action settings could not be loaded. Nothing was changed.';
-    }else{
-      const value=capabilityResult.data||{};
-      $('customerBookingEnabled').checked=value.booking_enabled===true;
-      $('customerRedemptionEnabled').checked=value.redemption_enabled===true;
-      $('customerAppointmentChangesEnabled').checked=value.appointment_changes_enabled===true;
-      controls.forEach(id=>$(id).disabled=false);save.disabled=false;status.textContent='All customer actions start off until you enable them.';
-      save.onclick=async()=>{
-        save.disabled=true;controls.forEach(id=>$(id).disabled=true);status.textContent='Saving customer actions…';
-        const {data,error}=await sb.rpc('business_set_customer_capabilities_v89',{
-          p_business:S.biz.id,
-          p_booking_enabled:$('customerBookingEnabled').checked,
-          p_redemption_enabled:$('customerRedemptionEnabled').checked,
-          p_appointment_changes_enabled:$('customerAppointmentChangesEnabled').checked
-        });
-        if(!isCurrent())return;
-        controls.forEach(id=>$(id).disabled=false);save.disabled=false;
-        if(error){status.textContent='Customer actions were not changed. Review the settings and try again.';return}
-        status.textContent='Customer actions saved. Existing bookings, redemptions, and appointment history remain visible.';
-        toast(data?.replayed===true?'Customer actions were already saved':'Customer actions saved');
-      };
-    }
-  }
   if(isOwner)$('aac').onchange=async()=>{
     const to=$('aac').checked;
     const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
@@ -5318,6 +5338,7 @@ async function bookingsPage(){
 
   /* ---- Tables / capacity (owner only) ---- */
   async function loadCapacity(){
+    if(!$('capBody'))return;
     const [{data:tbl,error:e1},{data:avail,error:e2}]=await Promise.all([
       sb.from('booking_tables').select('*').eq('business_id',S.biz.id).order('sort'),
       sb.from('v_table_availability').select('*').eq('business_id',S.biz.id)]);
@@ -5334,7 +5355,8 @@ async function bookingsPage(){
       }).join('')}</table>`
       :CUI.emptyState({iconName:'appointments',title:'No tables yet',body:'Add your tables so customers can reserve them.'});
   }
-  $('tblAdd').onclick=async()=>{
+  /* V223: these elements only exist for a business that seats guests. */
+  if($('tblAdd'))$('tblAdd').onclick=async()=>{
     const name=$('tblName').value.trim();
     if(name.length<2) return toast('Name the table type');
     const {error}=await sb.from('booking_tables').insert({business_id:S.biz.id,name,
@@ -5360,71 +5382,57 @@ async function bookingsPage(){
 
   /* ---- Booking rules: hold timer / overflow / auto-confirm (owner only) ---- */
   $('setSave').onclick=async()=>{
-    const hold=parseInt($('setHold').value||'0'),overflow=$('setOverflow').value,autoConfirm=$('setAutoConfirm').checked;
+    const hold=parseInt($('setHold').value||'0');
+    /* V223: overflow and auto-confirm are seating rules and are only rendered when the business
+       seats guests. Sending null leaves each one exactly as it was rather than resetting it. */
+    const overflow=$('setOverflow')?$('setOverflow').value:null;
+    const autoConfirm=$('setAutoConfirm')?$('setAutoConfirm').checked:null;
+    const takesTables=$('setTakesTablesV223')?$('setTakesTablesV223').checked:null;
     $('setSave').disabled=true;
     const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:hold,
-      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm});
+      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm,
+      p_takes_table_reservations:takesTables});
     if(!isCurrent())return;
     $('setSave').disabled=false;
     if(error){$('setErr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
     $('setErr').innerHTML='';
-    Object.assign(S.biz,{booking_hold_minutes:hold,booking_overflow:overflow,booking_auto_confirm:autoConfirm});
+    /* V223: only mirror what was actually sent. The server coalesces a null, keeping the stored
+       value, so copying null into S.biz would make the local copy disagree with the database. */
+    const seatingChanged=takesTables!==null&&takesTables!==(S.biz.takes_table_reservations===true);
+    Object.assign(S.biz,{booking_hold_minutes:hold});
+    if(overflow!==null)S.biz.booking_overflow=overflow;
+    if(autoConfirm!==null)S.biz.booking_auto_confirm=autoConfirm;
+    if(takesTables!==null)S.biz.takes_table_reservations=takesTables;
     toast('Booking rules saved');
+    /* Turning seating on or off changes which controls belong on this page, so redraw rather
+       than leaving the owner to guess that a reload is needed. */
+    if(seatingChanged)bookingsPage().catch(fail);
   };
 
   /* ---- v183 customer booking availability: opening hours + who customers may ask for ---- */
-  const V183_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  /* v183b: one weekday row, reused by the shop hours grid and by each person's own rota.
-     `scope` namespaces the data attributes so a rota row can never be mistaken for a shop row. */
-  const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-hours-row">
-    <label style="margin:0" for="v183Open-${esc(scope)}-${weekday}">${esc(label)}</label>
-    <label class="v183-hours-open" for="v183Closed-${esc(scope)}-${weekday}"><input type="checkbox" id="v183Closed-${esc(scope)}-${weekday}" data-day-closed="${weekday}" data-day-scope="${esc(scope)}" style="width:auto" ${row?'':'checked'}> Closed</label>
-    <input type="time" id="v183Open-${esc(scope)}-${weekday}" data-day-opens="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.opens_at||fallback.opens).slice(0,5))}" ${row?'':'disabled'}>
-    <input type="time" id="v183Close-${esc(scope)}-${weekday}" data-day-closes="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.closes_at||fallback.closes).slice(0,5))}" ${row?'':'disabled'}>
-  </div>`;
   const loadBookingAvailability=async()=>{
     const host=$('setAvailabilityBody');if(!host)return;
-    const [branchResult,hoursResult,staffResult,rotaResult]=await Promise.all([
+    /* V228: the team rota moved to Staff Members, so this only loads the shop's own hours. */
+    const [branchResult,hoursResult]=await Promise.all([
       sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
-      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id),
-      sb.from('staff').select('id,full_name,title,active,customer_bookable').eq('business_id',S.biz.id).order('full_name'),
-      sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at').eq('business_id',S.biz.id)
+      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id)
     ]);
     if(!isCurrent()||!host.isConnected)return;
     host.setAttribute('aria-busy','false');
-    if(branchResult.error||hoursResult.error||staffResult.error||rotaResult.error){
-      host.innerHTML='<p class="err small">Opening hours and team availability could not be loaded. Nothing has been changed.</p>';
+    if(branchResult.error||hoursResult.error){
+      host.innerHTML='<p class="err small">Opening hours could not be loaded. Nothing has been changed.</p>';
       const save=$('setAvailabilitySave');if(save)save.disabled=true;
       return;
     }
     const branches=(branchResult.data||[]).filter(branch=>branch.active!==false);
     const branch=branches[0]||null;
     const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
-    const team=(staffResult.data||[]).filter(member=>member.active!==false);
-    /* A person's rota is stored as starts_at/ends_at; the shared row markup speaks
-       opens_at/closes_at, so translate once here rather than branching in the template. */
-    const rotaByStaff=new Map();
-    for(const row of rotaResult.data||[]){
-      const key=String(row.staff_id||'');
-      if(!rotaByStaff.has(key))rotaByStaff.set(key,new Map());
-      rotaByStaff.get(key).set(Number(row.weekday),{opens_at:row.starts_at,closes_at:row.ends_at});
-    }
     host.dataset.branchId=branch?.id||'';
     host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
       <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
       <div class="v183-hours">${V183_DAYS.map((label,weekday)=>
         v183HourRowMarkup('shop',weekday,label,hours.get(weekday),{opens:'09:00',closes:'18:00'})).join('')}</div>
-      <p class="muted small" style="margin:14px 0 6px">Who customers may ask for</p>
-      ${team.length?`<div class="v183-team">${team.map(member=>{
-        const staffId=String(member.id),rota=rotaByStaff.get(staffId)||null;
-        return `<div class="v183-team-member" data-staff-member="${esc(staffId)}">
-          <label class="v183-team-row" for="v183Staff-${esc(staffId)}"><input type="checkbox" id="v183Staff-${esc(staffId)}" data-staff-bookable="${esc(staffId)}" style="width:auto" ${member.customer_bookable===false?'':'checked'}> <span><b>${esc(member.full_name||'Team member')}</b>${member.title?` <span class="muted small">· ${esc(member.title)}</span>`:''}</span><span class="pill v183-rota-pill" data-rota-pill>${rota?'Own rota':'Shop hours'}</span></label>
-          <label class="v183-team-rota" for="v183Rota-${esc(staffId)}"><input type="checkbox" id="v183Rota-${esc(staffId)}" data-staff-rota="${esc(staffId)}" style="width:auto;margin-top:2px" ${rota?'checked':''}> <span>Works their own hours<span class="muted small" style="display:block;font-weight:400">Replaces the shop hours for this person — including days the shop is closed.</span></span></label>
-          <div class="v183-hours v183-staff-hours" data-staff-hours="${esc(staffId)}" ${rota?'':'hidden'}>${V183_DAYS.map((label,weekday)=>
-            v183HourRowMarkup(staffId,weekday,label,rota?.get(weekday),{opens:'10:00',closes:'18:00'})).join('')}</div>
-        </div>`;
-      }).join('')}</div>`
-        :'<p class="muted small">No active team members yet.</p>'}`;
+`;
     host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
       const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
       const within=box.closest('.v183-hours')||host;
@@ -5432,12 +5440,6 @@ async function bookingsPage(){
       const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
       if(opens)opens.disabled=box.checked;
       if(closes)closes.disabled=box.checked;
-    });
-    host.querySelectorAll('[data-staff-rota]').forEach(box=>box.onchange=()=>{
-      const member=box.closest('[data-staff-member]');
-      const grid=member?.querySelector('[data-staff-hours]'),pill=member?.querySelector('[data-rota-pill]');
-      if(grid)grid.hidden=!box.checked;
-      if(pill)pill.textContent=box.checked?'Own rota':'Shop hours';
     });
   };
   loadBookingAvailability();
@@ -5462,33 +5464,10 @@ async function bookingsPage(){
     const shop=readDayGrid('shop',host);
     const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
     const closedDays=shop.closed;
-    const bookable=[...host.querySelectorAll('[data-staff-bookable]')]
-      .map(box=>({id:box.dataset.staffBookable,customer_bookable:box.checked}));
-    const rotas=[...host.querySelectorAll('[data-staff-member]')].map(member=>{
-      const staffId=member.dataset.staffMember;
-      const wantsRota=member.querySelector('[data-staff-rota]')?.checked===true;
-      const grid=readDayGrid(staffId,member);
-      return {staffId,wantsRota,name:member.querySelector('b')?.textContent||'This person',...grid};
-    });
-    /* A rota with no working day would delete every row and silently fall back to the shop
-       hours — the opposite of what "they work different hours" means. Refuse the whole save
-       rather than write a state the owner did not ask for. */
-    const emptyRota=rotas.find(rota=>rota.wantsRota&&!rota.open.length);
-    if(emptyRota){
-      save.disabled=false;
-      err.innerHTML=`<div class="err">${esc(emptyRota.name)} works their own hours but has no open day. Add a day, or untick "Works their own hours" to follow the shop hours.</div>`;
-      return;
-    }
     const results=await Promise.all([
       sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
       branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
       branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
-      ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id)),
-      ...rotas.flatMap(rota=>rota.wantsRota
-        ?[sb.from('staff_hours').upsert(rota.open.map(day=>({business_id:S.biz.id,staff_id:rota.staffId,weekday:day.weekday,starts_at:day.opens,ends_at:day.closes})),{onConflict:'staff_id,weekday'}),
-          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null})]
-        /* Unticking clears the whole rota, which is what returns this person to shop hours. */
-        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
     ]);
     if(!isCurrent())return;
     save.disabled=false;
@@ -7749,31 +7728,39 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2><p class="muted small">${programmeView==='ongoing'?'Running for your customers right now.':programmeView==='available'?'Not running yet — each comes with a suggested starting point you can use in one tap.':'Every programme you can run. Choose one row to set it up, view it or edit it.'}</p></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2></div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
-      <div class="programme-category"><div class="programme-category-title">Loyalty & rewards</div><div class="grow-programme-list">
-        ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Earning',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
-          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
-          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
-        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
+      <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
+           rewards, Add another reward and Start from a template onto the Point system row).
+           Everything that is earned and spent in POINTS now sits together under one heading,
+           so the point scheme reads as one thing. Rewards that have nothing to do with a
+           points balance — the welcome offer for a first visit, a birthday benefit, a
+           bring-back for someone who has drifted — are their own group. -->
+      <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
+        ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
+          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.milestones.map((milestone,index)=>canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="catalogue" data-reward-id="${esc(milestone.id)}">
           <span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div><span class="grow-programme-meta">${programmeStatus(milestone.availableToCustomers?'Live':milestone.availability==='not_started'?'Scheduled':milestone.availability==='ended'?'Ended':'Paused',milestone.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable" data-reward-milestone><span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div><span class="grow-programme-meta">${programmeStatus(milestone.availableToCustomers?'Live':milestone.availability==='not_started'?'Scheduled':milestone.availability==='ended'?'Ended':'Paused',milestone.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`).join('')}
+        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
+        ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
+        <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
+        ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
+      </div></div>
+      <div class="programme-category"><div class="programme-category-title">Other rewards</div><div class="grow-programme-list">
+        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
           <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
-        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
-        ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
-        <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
-        ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
       <div class="programme-category"><div class="programme-category-title">Promotions & growth</div><div class="grow-programme-list">
@@ -10866,7 +10853,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
-        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
+        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
         <div id="tErr"></div>
         <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:19})} Next</button>
         <div class="grid frontline-keypad" id="tKeys" aria-label="Phone keypad">
@@ -12181,6 +12168,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'6178c72c0ae3b9d8cf66e0db65bdef09f60a7c015a971213e7aa3e652b9e9715',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'9a83a9aa7bf213193b4f2d8b8526e63fcf1c44b80800c7f71c1c24ffc83021a1',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

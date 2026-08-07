@@ -58,7 +58,10 @@ test('V154 appointments separate calendar controls from list filters', () => {
   assert.match(appointments, /appointmentListTo/);
   assert.match(appointments, /appointmentListStatus/);
   assert.match(appointments, /data-appt-preset="today"/);
-  assert.match(appointments, /CUI\.icon\('branch'/);
+  /* V225: the toolbar's own branch picker went — the top bar is the single control for which
+     branch you are looking at, and two pickers on one screen contradicted each other. The staff
+     filter is a genuine per-calendar filter and stays. */
+  assert.doesNotMatch(appointments, /id="calendarBranch"/);
   assert.match(appointments, /CUI\.icon\('staff'/);
   assert.match(appointments, /\.gte\('starts_at'/);
   assert.match(appointments, /\.lt\('starts_at'/);
@@ -106,7 +109,12 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
   assert.match(app, /Ongoing programmes/);
   assert.match(app, /Available programmes/);
   assert.match(grow, /<h1 id="growTitle">Programmes<\/h1>/);
-  assert.match(grow, /Loyalty & rewards/);
+  /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two
+     categories: Point system holds everything earned and spent in points, Other rewards
+     holds the ones that do not use a balance. The behaviour this test protects — that the
+     programme rows are categorised rather than one flat list — is unchanged. */
+  assert.match(grow, /programme-category-title">Point system</);
+  assert.match(grow, /programme-category-title">Other rewards</);
   assert.match(grow, /Promotions & growth/);
   assert.match(grow, /Recurring value/);
   assert.doesNotMatch(grow, /Start automatically or choose the exact programme below/);

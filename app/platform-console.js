@@ -792,6 +792,34 @@
       'Qualification and discovery':'资格评估与需求探索','Record commercial detail':'记录商业详情',
       'Record departure':'记录离职','Record qualification':'记录资格评估',
       '{count} not recorded':'{count} 项未填写',
+      'No payment date':'无付款日期',
+      '{days} days overdue':'逾期 {days} 天',
+      'Due today':'今天到期',
+      'Due in {days} days':'{days} 天后到期',
+      'No contact number':'没有联络号码',
+      'Auto-collect':'自动扣款',
+      'Chase':'需催收',
+      'Companies':'公司',
+      'Every firm by sector, with who pays by itself and who has to be chased.':'按行业列出所有公司，标明哪些自动扣款、哪些需要催收。',
+      'Loading the company directory…':'正在加载公司名录…',
+      'Collection summary':'收款概览',
+      'To chase':'需催收',
+      'Search companies':'搜索公司',
+      'Name, contact, phone or email':'名称、联系人、电话或邮箱',
+      'All companies':'所有公司',
+      'Any date':'任何日期',
+      'Next 14 days':'未来 14 天',
+      'Next 30 days':'未来 30 天',
+      'Company directory':'公司名录',
+      'Overdue first, then whatever falls due soonest.':'先显示逾期，再按最快到期排序。',
+      'Company & sector':'公司与行业',
+      'Collection':'收款方式',
+      'Payment due':'付款到期',
+      'No companies match':'没有匹配的公司',
+      'Clear a filter or widen the search to see more.':'请清除筛选或扩大搜索范围。',
+      'More companies exist':'还有更多公司',
+      'Narrow the search or a filter to see the rest.':'请缩小搜索或筛选范围以查看其余部分。',
+      'Companies unavailable':'无法加载公司',
       'Scan a receipt':'扫描收据',
       'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.':'在此拍摄收据即可直接进入支出账簿。在您于现金损益表确认金额之前，不会入账。',
       'Receipt saved. Confirm the amounts in Cash P&L to post it.':'收据已保存。请在现金损益表中确认金额以完成入账。',
@@ -1042,6 +1070,34 @@
       'Qualification and discovery':'Kelayakan dan penemuan','Record commercial detail':'Rekod butiran komersial',
       'Record departure':'Rekod pemergian','Record qualification':'Rekod kelayakan',
       '{count} not recorded':'{count} belum direkodkan',
+      'No payment date':'Tiada tarikh bayaran',
+      '{days} days overdue':'{days} hari tertunggak',
+      'Due today':'Perlu dibayar hari ini',
+      'Due in {days} days':'Perlu dibayar dalam {days} hari',
+      'No contact number':'Tiada nombor untuk dihubungi',
+      'Auto-collect':'Kutipan automatik',
+      'Chase':'Perlu dikejar',
+      'Companies':'Syarikat',
+      'Every firm by sector, with who pays by itself and who has to be chased.':'Setiap firma mengikut sektor, menunjukkan siapa membayar sendiri dan siapa perlu dikejar.',
+      'Loading the company directory…':'Memuatkan direktori syarikat…',
+      'Collection summary':'Ringkasan kutipan',
+      'To chase':'Perlu dikejar',
+      'Search companies':'Cari syarikat',
+      'Name, contact, phone or email':'Nama, kenalan, telefon atau e-mel',
+      'All companies':'Semua syarikat',
+      'Any date':'Sebarang tarikh',
+      'Next 14 days':'14 hari akan datang',
+      'Next 30 days':'30 hari akan datang',
+      'Company directory':'Direktori syarikat',
+      'Overdue first, then whatever falls due soonest.':'Tertunggak dahulu, kemudian yang paling hampir tempoh.',
+      'Company & sector':'Syarikat & sektor',
+      'Collection':'Kutipan',
+      'Payment due':'Bayaran perlu dijelaskan',
+      'No companies match':'Tiada syarikat sepadan',
+      'Clear a filter or widen the search to see more.':'Kosongkan penapis atau luaskan carian untuk melihat lagi.',
+      'More companies exist':'Terdapat lebih banyak syarikat',
+      'Narrow the search or a filter to see the rest.':'Perincikan carian atau penapis untuk melihat selebihnya.',
+      'Companies unavailable':'Syarikat tidak tersedia',
       'Scan a receipt':'Imbas resit',
       'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.':'Ambil gambar resit di sini dan ia terus masuk ke buku perbelanjaan. Tiada apa-apa dipos sehingga anda mengesahkan angka dalam Untung Rugi Tunai.',
       'Receipt saved. Confirm the amounts in Cash P&L to post it.':'Resit disimpan. Sahkan jumlahnya dalam Untung Rugi Tunai untuk mengeposnya.',
@@ -2600,6 +2656,7 @@
     {key:'onboarding',label:'Onboarding',shortLabel:'Onboard',hash:'#/platform/onboarding',icon:'setup'},
     {key:'customer-lifecycle',moduleKey:'billing',label:'Customer lifecycle',shortLabel:'Customers',hash:'#/platform/customer-lifecycle',icon:'branch'},
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
+    {key:'companies',label:'Companies',shortLabel:'Companies',hash:'#/platform/companies',icon:'branch',superAdminOnly:true},
     {key:'reports',label:'Reports',shortLabel:'Reports',hash:'#/platform/reports',icon:'reports'},
     {key:'billing',label:'Billing',shortLabel:'Billing',hash:'#/platform/billing',icon:'reports'},
     {key:'subscription-operations',moduleKey:'billing',label:'Subscription operations',shortLabel:'Subscriptions',hash:'#/platform/subscription-operations',icon:'reports'},
@@ -2805,7 +2862,7 @@
   const platformNavigationBlueprint=Object.freeze([
     Object.freeze({key:'overview',label:'Today',icon:'home',routeKeys:Object.freeze(['overview'])}),
     Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding'])}),
-    Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms'])}),
+    Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms','companies'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
@@ -7891,6 +7948,113 @@
     const {CUI,sb}=context;const attemptKey=idempotencyKey();
     modal({title:locked?'Unlock accounting period':'Lock accounting period',submitLabel:locked?'Unlock period':'Lock period',CUI,body:`<p class="platform-route-note">${escapeHtml(range.from)} – ${escapeHtml(range.to)}</p><div class="platform-form-grid"><div class="wide">${CUI.field({id:'booksPeriodReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" rows="3"'})}</div></div>`,onSubmit:async(form,controls)=>{await rpc(sb,'platform_set_accounting_period_lock_v147',{p_from:range.from,p_to:range.to,p_locked:!locked,p_reason:form.get('reason'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt(locked?'Accounting period unlocked.':'Accounting period locked.'))}});
   }
+  // Companies. One directory answering "who do I chase today", grouped by sector
+  // so the list stays finite instead of scrolling forever.
+  function companyFiltersFromHash(hash='') {
+    const params=new URLSearchParams(String(hash).split('?')[1]||'');
+    return {
+      search:params.get('q')||'',
+      sector:params.get('sector')||'',
+      collection:params.get('collection')||'',
+      due:params.get('due')||''
+    };
+  }
+  function companyDueLabel(days) {
+    if(days===null||days===undefined)return pt('No payment date');
+    const n=Number(days);
+    if(n<0)return pt('{days} days overdue',{days:Math.abs(n)});
+    if(n===0)return pt('Due today');
+    return pt('Due in {days} days',{days:n});
+  }
+  // A phone number is only actionable if we can dial it, so the buttons appear
+  // exactly when there is a number and are absent otherwise — never dead.
+  function companyContactActions(company,CUI) {
+    const phone=normalizePlatformPhone(company.contact_phone||'');
+    if(!phone)return `<span class="muted small">${escapeHtml(pt('No contact number'))}</span>`;
+    const digits=phone.replace(/[^0-9]/g,'');
+    return `<a class="btn ghost sm" href="tel:${escapeHtml(phone)}">${escapeHtml(pt('Call'))}</a>
+      <a class="btn ghost sm" href="https://wa.me/${escapeHtml(digits)}" target="_blank" rel="noopener noreferrer">${escapeHtml(pt('WhatsApp'))}</a>`;
+  }
+  function companyRows(companies,CUI) {
+    return companies.map(company=>{
+      const days=company.days_until_due;
+      const overdue=Number.isFinite(Number(days))&&Number(days)<0;
+      const period=[company.current_period_start,company.current_period_end]
+        .map(value=>value?String(value).slice(0,10):'—').join(' → ');
+      return [
+        `<b>${escapeHtml(company.name||'—')}</b><br><span class="muted small">${escapeHtml(platformStatus(company.sector||'unclassified'))}</span>`,
+        escapeHtml(platformStatus(company.status||'none')),
+        company.collection_mode==='auto'
+          ? `<span class="platform-chip">${escapeHtml(pt('Auto-collect'))}</span>`
+          : `<span class="platform-chip">${escapeHtml(pt('Chase'))}</span>`,
+        escapeHtml(period),
+        `${overdue?'<b>':''}${escapeHtml(companyDueLabel(days))}${overdue?'</b>':''}`,
+        companyContactActions(company,CUI)
+      ];
+    });
+  }
+  async function renderCompanies(context,filters=null) {
+    const {main,CUI,sb,hash}=context;
+    const active=filters||companyFiltersFromHash(hash);
+    main.innerHTML=loading(CUI,'Companies','Loading the company directory…','branch');
+    try{
+      const payload=asObject(await rpc(sb,'platform_company_directory_v202',{
+        p_search:active.search||null,
+        p_sector:active.sector||null,
+        p_collection:active.collection||null,
+        p_due_window:active.due||null,
+        p_limit:200,p_offset:0}));
+      const companies=asArray(payload.items),sectors=asArray(payload.sectors);
+      const collection=asObject(payload.collection),due=asObject(payload.due);
+      const chip=(label,value,key,current)=>`<button type="button" class="btn ${current===value?'':'ghost'} sm" data-company-filter="${escapeHtml(key)}" data-company-value="${escapeHtml(value)}">${escapeHtml(label)}</button>`;
+      main.innerHTML=`${CUI.pageHeader({title:'Companies',subtitle:'Every firm by sector, with who pays by itself and who has to be chased.',iconName:'branch'})}
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Collection summary'))}">${[
+          ['To chase',Number(collection.chase||0),'info'],
+          ['Auto-collect',Number(collection.auto||0),'check'],
+          ['Overdue',Number(due.overdue||0),'retention'],
+          ['Due today',Number(due.today||0),'reports']
+        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>
+        <section class="card">
+          <form id="companySearch" class="platform-filter-grid"><label>${escapeHtml(pt('Search companies'))}<input type="search" name="q" value="${escapeHtml(active.search)}" placeholder="${escapeHtml(pt('Name, contact, phone or email'))}"></label><button class="btn" type="submit">${escapeHtml(pt('Search'))}</button></form>
+          <div class="platform-actions" style="margin-top:12px">
+            ${chip(pt('All companies'),'','collection',active.collection)}
+            ${chip(pt('To chase'),'chase','collection',active.collection)}
+            ${chip(pt('Auto-collect'),'auto','collection',active.collection)}
+          </div>
+          <div class="platform-actions" style="margin-top:8px">
+            ${chip(pt('Any date'),'','due',active.due)}
+            ${chip(pt('Overdue'),'overdue','due',active.due)}
+            ${chip(pt('Due today'),'today','due',active.due)}
+            ${chip(pt('Next 7 days'),'7','due',active.due)}
+            ${chip(pt('Next 14 days'),'14','due',active.due)}
+            ${chip(pt('Next 30 days'),'30','due',active.due)}
+          </div>
+          <div class="platform-actions" style="margin-top:8px">
+            ${chip(pt('All sectors'),'','sector',active.sector)}
+            ${sectors.map(entry=>chip(`${pt(platformStatus(entry.sector))} (${entry.n})`,String(entry.sector),'sector',active.sector)).join('')}
+          </div>
+        </section>
+        ${companies.length
+          ? CUI.card({title:'Company directory',description:'Overdue first, then whatever falls due soonest.',body:CUI.table({caption:'Companies',headers:['Company & sector','Subscription','Collection','Current period','Payment due','Contact'],rows:companyRows(companies,CUI)})})
+          : CUI.emptyState({iconName:'branch',title:'No companies match',body:'Clear a filter or widen the search to see more.'})}
+        ${payload.has_more?localizedRouteNoteHtml('More companies exist','Narrow the search or a filter to see the rest.'):''}`;
+      main.querySelector('#companySearch').onsubmit=event=>{
+        event.preventDefault();
+        renderCompanies(context,{...active,search:String(new FormData(event.currentTarget).get('q')||'')});
+      };
+      main.querySelectorAll('[data-company-filter]').forEach(button=>button.onclick=()=>{
+        renderCompanies(context,{...active,[button.dataset.companyFilter==='collection'?'collection':button.dataset.companyFilter]:button.dataset.companyValue});
+      });
+      CUI.focusRoute(main);
+    }catch(error){
+      main.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Companies')
+        :CUI.errorState({title:'Companies unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'companyRetry'});
+      const retry=main.querySelector('#companyRetry');
+      if(retry)retry.onclick=()=>renderCompanies(context,active);
+      CUI.focusRoute(main);
+    }
+  }
   async function renderPlatformFinance(context,range=financeMonthRange()) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Cash P&L','Loading provider cash and operating expenses…','reports');
@@ -9734,6 +9898,7 @@
     if(!task&&activeKey==='billing')task=renderBilling(context);
     if(!task&&activeKey==='subscription-operations')task=renderSubscriptionOperations(context);
     if(!task&&activeKey==='customer-lifecycle')task=renderCustomerLifecycle(context);
+    if(!task&&activeKey==='companies')task=renderCompanies(context);
     if(!task&&activeKey==='pnl')task=renderPlatformFinance(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);

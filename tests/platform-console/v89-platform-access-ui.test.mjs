@@ -30,7 +30,7 @@ test('super admin sees every module plus grant management with write access',asy
   assert.equal(api.canWriteModule(access,'automation'),true);
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['overview','onboarding','customer-lifecycle','firms','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access']
+    ['overview','onboarding','customer-lifecycle','firms','companies','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access']
   );
 });
 

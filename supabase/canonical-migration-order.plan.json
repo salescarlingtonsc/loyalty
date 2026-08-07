@@ -1456,6 +1456,12 @@
       "version": "20260807235000",
       "name": "nestly_v203_company_directory",
       "sourcePath": "db/migrations/20260807_nestly_v203_company_directory.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235500",
+      "name": "nestly_v223_table_reservations_opt_in",
+      "sourcePath": "db/migrations/20260807_nestly_v223_table_reservations_opt_in.sql"
     }
   ]
 }

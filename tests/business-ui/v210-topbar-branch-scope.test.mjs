@@ -18,7 +18,11 @@ test('the branch scope lives in the top bar, not inside the account menu', () =>
   // it sits with the other persistent bar controls
   const bar = app.slice(app.indexOf('${mobileSearchShellHtml()}'), app.indexOf('${bellHtml()}'));
   assert.match(bar, /topbar-branch-scope-v210/);
-  assert.match(bar, /workspaceLanguagePickerV97\(\)/);
+  /* V225 (owner: "put inside here", pointing from the language select to the profile menu).
+     Language is set once and is not a per-task control, so it moved in with the account
+     settings. The branch scope asserted above is what must stay in the bar. */
+  assert.doesNotMatch(bar, /workspaceLanguagePickerV97\(\)/);
+  assert.match(app, /<div class="profile-menu-section">\$\{workspaceLanguagePickerV97\(\)\}<\/div>/);
 });
 
 test('it stays put and keeps a 44px target', () => {

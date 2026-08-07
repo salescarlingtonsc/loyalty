@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="19498d3b90b04fa943f9536644be1026a4000ae3bdb2e647b3e59f8f797089ee"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="d02d4ae1aaffceb76665eb7e1ecfd17baaf3dc8fa0389f6f2f30d51652378b11"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -213,9 +213,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* The teammate the owner actually chose is marked in the availability list, so the panel and the
    Assign-to field visibly agree. */
 .suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
-/* A branch withheld from the reporting scope is stated, not silently missing. */
-.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
-@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
+
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -232,6 +230,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .appointment-list-filters>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
 .appointment-list-filters>div>label{margin:0 0 6px;min-height:1.15em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appointment-list-filters>div.row{flex-direction:row}
+/* V225 (owner marked this row "misalignment"). From and To are input[type=date] and the status
+   is a select; the two render at different intrinsic heights in every engine, and min-height
+   alone does not settle it — so with align-items:end their bottoms matched while their tops and
+   labels did not. An explicit equal height on every control in this bar removes the variable. */
+.appointment-list-filters>div>input,
+.appointment-list-filters>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
@@ -899,7 +903,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
 .staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
-.staff-row-open{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;flex:1 1 320px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+/* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
+   The row was a flex wrap, so a field landed at a different x-position on every line and could
+   not be read down a column. One shared template drives the header and every row, so the two
+   cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
+:root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.staff-col-v226{min-width:0;overflow-wrap:anywhere}
+@media (max-width:900px){
+  .staff-row-open{grid-template-columns:1fr}
+  .staff-col-head-v226{display:none}
+  .staff-col-v226::before{content:attr(data-staff-col) ": ";color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+}
 .staff-row-open:hover{background:var(--tint)}
 .staff-row-open>b{overflow-wrap:anywhere}
 .staff-profile-panel .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
@@ -2111,16 +2127,27 @@ function normaliseReportingScopeV155({branches=[]}={}){
   }
   return reportingScopeV155;
 }
+/* V225: with the per-page scope pickers removed, the top bar is the only control left — so it
+   has to actually govern. "All branches" there means consolidated reporting; a named branch
+   means that branch. Deriving it here rather than storing a second copy is what stops the two
+   from disagreeing, which is the whole reason the second picker was struck out. */
 function currentReportingScopePayloadV155(branches=[]){
   const scope=normaliseReportingScopeV155({branches});
+  const usable=activeBranchesForScopeV217(branches);
+  const followsTopBar=scope.mode!=='selected';
+  const mode=followsTopBar?(selectedBranchId?'current':'all'):'selected';
   return {
-    p_scope_mode:scope.mode,
-    p_branch_ids:scope.mode==='selected'?scope.branchIds:[],
+    p_scope_mode:usable.length?mode:scope.mode,
+    p_branch_ids:mode==='selected'?scope.branchIds:[],
     p_operational_branch:reportingOperationalBranchIdV155(branches)
   };
 }
 function reportingScopeLabelV155(branches=[]){
   const scope=normaliseReportingScopeV155({branches});
+  /* V225: follow the same derivation as the payload, so a caption never contradicts the numbers. */
+  if(scope.mode!=='selected'&&activeBranchesForScopeV217(branches).length&&!selectedBranchId){
+    return branches.length>1?'All accessible branches':(branches[0]?.name||'All accessible branches');
+  }
   const byId=new Map((branches||[]).map(branch=>[branch.id,branch.name||'Branch']));
   if(scope.mode==='all')return branches.length>1?'All accessible branches':(branches[0]?.name||'All accessible branches');
   if(scope.mode==='selected'){
@@ -2189,7 +2216,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     <header class="v150-titlebar">
       <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <div class="v150-title-actions dashboard-range">
-        <span id="dashboardReportingScopeWrap" aria-label="Dashboard reporting scope"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></span>
+
         <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
         <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
       </div>
@@ -2306,7 +2333,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        reporting scope), so only redemptions need fetching. Redeem rows carry no sale and no
        branch, so this one extra read is business-scoped and each loyalty card states which
        scope it belongs to rather than implying they share one. */
-    const loyaltyVisibleV170=canReadModule('loyalty');
+    /* V224: the owner struck out the whole "Loyalty this period" strip. Members joined
+       duplicates the New customer members tile above it, and points earned / rewards redeemed
+       belong in Programmes, where they can be acted on. */
+    const loyaltyVisibleV170=false;
     let response,previousResponse={data:null,error:null},inactiveResponse={data:null,error:null},inactive60Response={data:null,error:null},redeemedResponse={data:null,error:null};
     try{[response,previousResponse,inactiveResponse,inactive60Response,redeemedResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
@@ -2337,18 +2367,27 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
     const newCustomersChange=customerMetricsAvailable&&previousSummary?.availability?.clients!==false?percentageChangeV153(d.new_customers,previousSummary?.new_customers):null;
     const metrics=[
-      {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`,delta:visitsChange},
-      {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`,delta:revenueChange},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:d.metric_labels?.new_customers||'Joined during the selected period.',delta:newCustomersChange}
+      /* V224: the owner struck out every KPI hint line. The scope is already stated once in the
+         top bar, and repeating it under four tiles is the noise, not the information. */
+      {key:'visits',value:String(d.visits||0),hint:'',delta:visitsChange},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange},
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
       const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
-      metrics.push({key:'inactive',value:inactiveTotal,hint:`Inactive in this branch scope · ${scopeLabel}`});
+      metrics.push({key:'inactive',value:inactiveTotal,hint:''});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span><span class="metric-hint">${esc(metric.hint)}</span><span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
+       modal that then offered a link to the report. The tile IS the link — the definition it
+       carried is still available inside the report it lands on, so the modal was a stop on the
+       way to somewhere the owner had already said they wanted to go. */
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
-      openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
+      const route=dashboardMetricDefinitionsV141[key]?.route;
+      if(key==='inactive')pendingCustomerInactivity=30;
+      if(route)nav(route);
+      else openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
     if(loyalty){
       if(!loyaltyVisibleV170)loyalty.innerHTML='';
@@ -2417,10 +2456,14 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     if(customerMetricsAvailable)C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     if(customerMetricsAvailable)C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
+  /* V225: the owner struck the "Current branch / Cubbly · Orchard" picker off the Dashboard and
+     the Customers page. The top bar already carries one "Viewing" control for the whole
+     workspace, and a second one on the page contradicted it as often as it agreed. The scope
+     itself still applies — reportingScopeV155 is unchanged and still sent to every RPC. */
   await renderReportingScopeSelectorV155(load,isDashboardCurrent,'dashboardReportingScopeWrap');
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'19498d3b90b04fa943f9536644be1026a4000ae3bdb2e647b3e59f8f797089ee',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'d02d4ae1aaffceb76665eb7e1ecfd17baaf3dc8fa0389f6f2f30d51652378b11',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
