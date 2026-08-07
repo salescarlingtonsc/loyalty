@@ -1431,6 +1431,12 @@
       "path": "db/migrations/20260807_nestly_v215_signup_welcome_offer.sql",
       "semanticVersion": "v215",
       "proposedDeployVersion": "20260807190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v217_recent_window_and_staff_reference_code.sql",
+      "semanticVersion": "v217",
+      "proposedDeployVersion": "20260807195000"
     }
   ]
 }

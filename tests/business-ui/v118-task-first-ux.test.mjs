@@ -68,7 +68,12 @@ test('day view derives availability only from persisted staff and branch schedul
   assert.match(appointments, /state:'unknown',label:'Working hours not set'/);
   assert.match(appointments, /state:'off',label:'Off',reason:leave\.reason\|\|'Time off'/);
   assert.match(appointments, /state:'off',label:'Branch closed'/);
-  assert.match(appointments, /function availableCalendarStarts\(column\)/);
+  /* V217 gave this a second argument — the earliest minute that can still be booked — so past
+     times stop being drawn as green bookable slots. The intent this test protects (availability
+     comes from persisted schedules, not from anything the browser invents) is unchanged, and is
+     asserted below. */
+  assert.match(appointments, /function availableCalendarStarts\(column,earliestBookableMinute=-Infinity\)/);
+  assert.match(appointments, /const alreadyPassed=start<earliestBookableMinute;/);
   assert.match(appointments, /selectedCalendarServiceTiming\(\)/);
   assert.match(appointments, /intervalsOverlap\(occupiedStart,occupiedEnd,interval\.from,interval\.to\)/);
   assert.match(appointments, /buffer_before_min/);

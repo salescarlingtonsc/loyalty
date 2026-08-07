@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="586335f112a009da341c627dc7574591692dd5aeadcec7ed7fc2a913f7f09bec"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="3d0230f211744f1226549620fb4f461225a7d8dc41ae6f2f25f904aa52638d79"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -206,6 +206,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* V214: the scope sentence must stay readable next to the heading, and must not push the
    scope pills off the row on a phone. It wraps under the heading and keeps a measure. */
 .merchant-insights-scope-note-v214{margin:6px 0 0;max-width:56ch;line-height:1.45}
+/* V217: the reference code is read aloud or copied onto paper, so it is set large, spaced and
+   monospaced — a code that is misread costs the teammate a sign-up attempt. */
+.staff-reference-code-v217{margin:16px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:2rem;font-weight:700;letter-spacing:.22em;text-align:center;padding:16px 10px;border:1px dashed var(--line);border-radius:14px;background:var(--tint);word-break:break-all}
+/* The teammate the owner actually chose is marked in the availability list, so the panel and the
+   Assign-to field visibly agree. */
+.suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
+/* A branch withheld from the reporting scope is stated, not silently missing. */
+.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -1565,7 +1574,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 586335f112a009da341c627dc7574591692dd5aeadcec7ed7fc2a913f7f09bec</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 3d0230f211744f1226549620fb4f461225a7d8dc41ae6f2f25f904aa52638d79</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -2305,7 +2314,7 @@ async function clientsPage(){
       if(result?.customers)result.customers=sortCustomersV150(result.customers,$('clientSort')?.value||'name_asc');
     }
     if(!isCurrent())return;
-    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
+    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
     if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveBucket?'No customers in this inactive group':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveBucket?'Choose another inactivity group, Never visited, or All customers.':'Customers will appear here after joining your loyalty programme or making a purchase. You can also add a customer manually from the button above.'});return}
     const loyaltyAvailable=result?.loyalty_available===true;
@@ -2349,7 +2358,7 @@ async function clientsPage(){
     const {data,error}=await sb.rpc('staff_list_visit_feedback_v145',{p_business:S.biz.id,p_status:feedbackFilter||null,
       p_limit:FEEDBACK_PAGE_SIZE,p_offset:feedbackPage*FEEDBACK_PAGE_SIZE});
     if(!isLatest()||!isCustomersCurrent()||$('fbQueue')!==host)return;
-    if(error){host.innerHTML=`<div class="err" role="alert">${esc(error.message||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
+    if(error){host.innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
     const rows=Array.isArray(data?.feedback)?data.feedback:[];
     const total=Math.max(0,Number(data?.total||0));
     const pages=Math.max(1,Math.ceil(total/FEEDBACK_PAGE_SIZE));
@@ -12113,6 +12122,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'586335f112a009da341c627dc7574591692dd5aeadcec7ed7fc2a913f7f09bec',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'3d0230f211744f1226549620fb4f461225a7d8dc41ae6f2f25f904aa52638d79',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

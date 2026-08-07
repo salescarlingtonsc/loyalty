@@ -2773,6 +2773,10 @@
     {
       "id": "browser.rpc:app/app.js:business_get_welcome_offer_v215",
       "reason": "V215 welcome-offer reader. Read-only: returns the configuration, the granted/redeemed counts and whether the chosen free item is still active. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:create_staff_reference_code_v217",
+      "reason": "V217 staff reference code. Mints a pending staff_invites row bound to one EXISTING roster teammate so that person can claim their own record instead of a duplicate being created — accept_invite already handles the claim. It writes no value: no ledger, no points, no credit, no stored value, no sale, and no seat is billed until the owner separately approves the resulting access_state='pending' login. Owner/manager only, the teammate must have no login and must not be the owner, and re-issuing revokes the previous code so only one is ever live."
     }
   ]
 }

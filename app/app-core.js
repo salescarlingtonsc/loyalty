@@ -312,9 +312,11 @@ const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?m
 let pendingCustomerSearch='';
 let pendingTillPhone='';
 let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
-/* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
-   birthday / bring-back / referral editors. Module-level because those editors live in
-   different page functions from the Programmes overview that sets it. */
+/* V217. Owner: "new appointment here does not work (in the header - beside record sale)".
+   It navigated to #/appointments and stopped there, with the booking form still collapsed
+   behind its own button — so a control labelled "New appointment" produced a calendar and no
+   form. This flag is consumed once by the appointments page, exactly like pendingApptClientId. */
+let pendingOpenApptFormV217=false;
 let settingsActiveTab='workspace';
 let profileOpen=false;
 let routeDispose=()=>{};
@@ -491,7 +493,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -559,6 +561,15 @@ const OWNER_ERROR_NOISE_RULES_V170=[
   /* Browser-runtime TypeErrors (WebKit: "undefined is not an object (evaluating ...)",
      Chromium: "Cannot read properties of undefined") are app bugs, never owner input errors. */
   [/undefined is not an object|null is not an object|cannot read propert|is not a function|is not defined/i,'Something went wrong on our side. Try again, or contact Peekaa if it continues.'],
+  /* V217. The owner was shown the bare string `foreign_or_inactive_branch_scope` where the
+     customer list should have been. These are precise server codes and correct ones, but they
+     are not sentences. They are translated here rather than at each call site so every surface
+     that surfaces a server error gets the plain-English version. */
+  [/foreign_or_inactive_branch_scope/i,'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.'],
+  [/unauthorised_branch_scope|branch_visibility/i,'You do not have access to the branch being viewed. Choose another branch at the top.'],
+  [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
+  [/empty_selected_branch_scope/i,'Choose at least one branch to report on.'],
+  [/unsupported_reporting_branch_scope/i,'That reporting scope is not supported. Choose a branch at the top.'],
 ];
 const ownerErrorText=error=>{
   const raw=String(error?.message||(typeof error==='string'?error:'')||'').trim();
@@ -2344,6 +2355,14 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   wizardStepReview:Object.freeze({en:'Step {step} of {total} — Review','zh-CN':'第 {step} 步，共 {total} 步——审核',ms:'Langkah {step} daripada {total} — Semakan'}),
   availableStaff:Object.freeze({en:'{staff} is the fairest available choice now. Showing {count} eligible staff member.','zh-CN':'{staff} 是目前最公平的可用选择。显示 {count} 位符合条件的员工。',ms:'{staff} ialah pilihan tersedia yang paling adil sekarang. Menunjukkan {count} kakitangan yang layak.'}),
   availableStaffMany:Object.freeze({en:'{staff} is the fairest available choice now. Showing {count} eligible staff members.','zh-CN':'{staff} 是目前最公平的可用选择。显示 {count} 位符合条件的员工。',ms:'{staff} ialah pilihan tersedia yang paling adil sekarang. Menunjukkan {count} kakitangan yang layak.'}),
+  /* V217. Owner: "i selected kelvin - why it show devi next best time?" — the panel always led
+     with the FAIREST person, so choosing Kelvin and being told about Devi read as the system
+     overruling the choice. It now answers the question actually asked ("is the person I picked
+     free?") and offers the fairer option as a suggestion, not a verdict. */
+  selectedStaffFree:Object.freeze({en:'{staff} is free at this time.','zh-CN':'{staff} 在这个时间有空。',ms:'{staff} lapang pada masa ini.'}),
+  selectedStaffFreeFairer:Object.freeze({en:'{staff} is free at this time. {alt} has had fewer appointments if you would rather spread the work.','zh-CN':'{staff} 在这个时间有空。若想更平均分配，{alt} 的预约较少。',ms:'{staff} lapang pada masa ini. {alt} kurang temu janji jika anda mahu agihkan kerja.'}),
+  /* Owner: "recent appointment - how recent?" — the number now states its own window. */
+  recentInWindow:Object.freeze({en:'{count} in last {window}','zh-CN':'过去{window}内 {count} 个',ms:'{count} dalam {window} lalu'}),
   recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
   reversalOf:Object.freeze({en:'Reversal of {id}','zh-CN':'冲销自 {id}',ms:'Pembalikan bagi {id}'}),
   usedSessionReversedBy:Object.freeze({en:'Used session → reversed by {id}','zh-CN':'已用次数 → 由 {id} 冲销',ms:'Sesi digunakan → dibalikkan oleh {id}'}),
@@ -2410,6 +2429,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany','recentAppointments','reversalOf',
+  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="9628bce94709af2737e37bf3388b6406a6351d8085109a26445986a463a01337"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="d84f32761616b3996d09c2c7f4b8fd8bd9b811d7b252e2c2fa6a3bf8f419a044"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -206,6 +206,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* V214: the scope sentence must stay readable next to the heading, and must not push the
    scope pills off the row on a phone. It wraps under the heading and keeps a measure. */
 .merchant-insights-scope-note-v214{margin:6px 0 0;max-width:56ch;line-height:1.45}
+/* V217: the reference code is read aloud or copied onto paper, so it is set large, spaced and
+   monospaced — a code that is misread costs the teammate a sign-up attempt. */
+.staff-reference-code-v217{margin:16px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:2rem;font-weight:700;letter-spacing:.22em;text-align:center;padding:16px 10px;border:1px dashed var(--line);border-radius:14px;background:var(--tint);word-break:break-all}
+/* The teammate the owner actually chose is marked in the availability list, so the panel and the
+   Assign-to field visibly agree. */
+.suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
+/* A branch withheld from the reporting scope is stated, not silently missing. */
+.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -1564,7 +1573,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 9628bce94709af2737e37bf3388b6406a6351d8085109a26445986a463a01337</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · d84f32761616b3996d09c2c7f4b8fd8bd9b811d7b252e2c2fa6a3bf8f419a044</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2849,7 +2858,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'9628bce94709af2737e37bf3388b6406a6351d8085109a26445986a463a01337',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'d84f32761616b3996d09c2c7f4b8fd8bd9b811d7b252e2c2fa6a3bf8f419a044',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

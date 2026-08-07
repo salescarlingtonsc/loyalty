@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="661ac4a315ba4239cd1b8a84da62aa79c80f0cae3d868c7807ab0a738cb479ac"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="c5940b2e13d844eba1a21033e36fe20b11be8669df83db8f5e4e0f4c3681cf86"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -206,6 +206,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* V214: the scope sentence must stay readable next to the heading, and must not push the
    scope pills off the row on a phone. It wraps under the heading and keeps a measure. */
 .merchant-insights-scope-note-v214{margin:6px 0 0;max-width:56ch;line-height:1.45}
+/* V217: the reference code is read aloud or copied onto paper, so it is set large, spaced and
+   monospaced — a code that is misread costs the teammate a sign-up attempt. */
+.staff-reference-code-v217{margin:16px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:2rem;font-weight:700;letter-spacing:.22em;text-align:center;padding:16px 10px;border:1px dashed var(--line);border-radius:14px;background:var(--tint);word-break:break-all}
+/* The teammate the owner actually chose is marked in the availability list, so the panel and the
+   Assign-to field visibly agree. */
+.suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
+/* A branch withheld from the reporting scope is stated, not silently missing. */
+.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -1565,7 +1574,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 661ac4a315ba4239cd1b8a84da62aa79c80f0cae3d868c7807ab0a738cb479ac</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · c5940b2e13d844eba1a21033e36fe20b11be8669df83db8f5e4e0f4c3681cf86</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -1976,14 +1985,14 @@ function setReportRetryState(isInstanceCurrent,button,body,message,retryId,onRet
   const isAdmin=S.myRole==='owner'||S.myRole==='manager';
   let branches=[];
   if(isAdmin){
-    const {data,error}=await sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name');
+    const {data,error}=await sb.from('branches').select('id,name,active,billing_state').eq('business_id',S.biz.id).order('name');
     if(error)throw error;
     branches=data||[];
   }else{
     const {data:me,error:staffError}=await sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
     if(staffError)throw staffError;
     if(me&&me.length){
-      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
+      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active,billing_state)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
       if(error)throw error;
       branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     }
@@ -2011,6 +2020,9 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   }
   const wraps=currentWraps();
   if(!isCurrent()||!wraps.length)return;
+  /* V217: same rule as the top bar — an inactive branch is never a selectable reporting scope. */
+  const withheldBranchesV217=branches.filter(branch=>branch.active===false);
+  branches=activeBranchesForScopeV217(branches);
   if(!branches.some(branch=>branch.id===selectedBranchId)){
     /* Employees can't request consolidated (the server raises branch_visibility on
        p_branch=null for them) — default to their first assigned branch so the page loads
@@ -2029,8 +2041,8 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     wrap.innerHTML=(branches.length||isAdmin)
       ? `<select class="qbtn" aria-label="Business branch" style="padding-right:22px">
         ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
-        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}${b.active===false?' (inactive)':''}</option>`).join('')}
-      </select>`
+        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+      </select>${withheldBranchesV217.length?`<p class="muted small" style="margin:6px 0 0">${esc(withheldBranchesV217.map(branchScopeUnavailableReasonV217).join(' '))}</p>`:''}`
       : `<span class="muted small">No branch assigned — ask the owner</span>`;
     const sel=wrap.querySelector('select');
     if(sel){
@@ -2041,12 +2053,44 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   onChange(branches.find(branch=>branch.id===selectedBranchId)||null);
 }
 let reportingScopeV155={mode:'current',branchIds:[]};
+/* V217. Owner: the dashboard said "Performance data could not be loaded" and Customers said
+   "foreign_or_inactive_branch_scope". One cause for both. A branch added but not yet paid for is
+   created active=false / billing_state=pending_payment, and this function fell back to
+   branches[0] without looking at `active`. The demo tenant's unpaid branch was named "abc",
+   which sorts first, so it silently became the reporting scope for the whole workspace — and
+   every reporting RPC refuses an inactive branch by design (v155 raises
+   foreign_or_inactive_branch_scope). The workspace was offering a scope the server can never
+   answer. An inactive branch is never a valid reporting scope, so it is never chosen here. */
+function activeBranchesForScopeV217(branches=[]){
+  return (branches||[]).filter(branch=>branch&&branch.active!==false);
+}
+function branchScopeUnavailableReasonV217(branch){
+  if(!branch||branch.active!==false)return '';
+  return branch.billing_state==='pending_payment'
+    ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
+    :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
+}
+/* V217: the server's scope codes are precise but unreadable. An owner should never be shown
+   `foreign_or_inactive_branch_scope` — they should be told which branch is unavailable and why,
+   which after this change should not happen at all, since the pickers no longer offer one. */
+function branchScopeErrorHintV217(error){
+  const message=String(error?.message||error||'');
+  if(/foreign_or_inactive_branch_scope/.test(message))
+    return 'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.';
+  if(/unauthorised_branch_scope/.test(message))
+    return 'You do not have access to the branch being viewed. Choose another branch at the top.';
+  if(/operational_branch_required_for_current_scope/.test(message))
+    return 'No branch is selected. Choose one at the top.';
+  return '';
+}
 function reportingOperationalBranchIdV155(branches=[]){
-  if(selectedBranchId&&branches.some(branch=>branch.id===selectedBranchId))return selectedBranchId;
-  return branches[0]?.id||null;
+  const usable=activeBranchesForScopeV217(branches);
+  if(selectedBranchId&&usable.some(branch=>branch.id===selectedBranchId))return selectedBranchId;
+  return usable[0]?.id||null;
 }
 function normaliseReportingScopeV155({branches=[]}={}){
-  const authorisedIds=new Set((branches||[]).map(branch=>branch.id));
+  /* V217: an inactive branch is not an authorised scope — see reportingOperationalBranchIdV155. */
+  const authorisedIds=new Set(activeBranchesForScopeV217(branches).map(branch=>branch.id));
   reportingScopeV155={
     mode:['current','selected','all'].includes(reportingScopeV155?.mode)?reportingScopeV155.mode:'current',
     branchIds:[...new Set(reportingScopeV155?.branchIds||[])].filter(id=>authorisedIds.has(id))
@@ -2219,11 +2263,18 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     if(!isCurrent())return;
     const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value;
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
-    const showLoadError=(message,retryId)=>{
+    const showLoadError=(message,retryId,detail='')=>{
       if(!status)return;
       kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');loyalty?.setAttribute('aria-busy','false');
       if(loyalty)loyalty.innerHTML='';
-      status.innerHTML=`<div class="err" role="alert">${esc(message)} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
+      /* V217. Owner: "it takes forever to load the dashboard". It was not slow — it had already
+         failed. The error banner appeared but the loading skeletons were left shimmering
+         underneath it, so the page read as still working. A failed load must stop looking like
+         a load in progress. */
+      if(kpis)kpis.innerHTML='';
+      if(insights)insights.innerHTML='';
+      if(charts)charts.innerHTML='';
+      status.innerHTML=`<div class="err" role="alert">${esc(message)}${detail?` ${esc(detail)}`:''} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
       status.querySelector('#'+retryId).onclick=load;
       localizeWorkspaceSubtreeV97(status);
     };
@@ -2254,10 +2305,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       canReadModule('clients')?sb.rpc('preview_campaign_audience_v155',{p_business:S.biz.id,p_audience_key:'inactive_60_plus',...scopePayload}):Promise.resolve({data:null,error:null}),
       loyaltyVisibleV170?fetchAllRowsResult(()=>sb.from('points_ledger').select('points',{count:'exact'}).eq('business_id',S.biz.id).eq('entry_type','redeem').gte('created_at',sgDateBoundary(from,0)).lt('created_at',sgDateBoundary(to,1)).order('id')):Promise.resolve({data:null,error:null})
     ])}
-    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
+    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error));return}
     if(!isCurrent())return;
     const {data,error}=response;
-    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
+    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error));return}
     const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
     if(d.availability?.sales===false){
       status.innerHTML='';
@@ -3838,7 +3889,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'661ac4a315ba4239cd1b8a84da62aa79c80f0cae3d868c7807ab0a738cb479ac',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'c5940b2e13d844eba1a21033e36fe20b11be8669df83db8f5e4e0f4c3681cf86',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

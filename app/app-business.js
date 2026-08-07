@@ -95,6 +95,9 @@ let pendingCustomerInactivity=null;
    would highlight an unrelated row on the next visit. */
 let pendingNotificationFocusV206='';
 let pendingTillRedemptionScan=false;
+/* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
+   birthday / bring-back / referral editors. Module-level because those editors live in
+   different page functions from the Programmes overview that sets it. */
 let pendingProgrammeSuggestV172=null;
 let customerUiObserver=null;
 let shellRenderEpoch=0;
@@ -1229,7 +1232,14 @@ function wireGlobalActions(){
     const go=$('globalSearchGo');if(go)go.onclick=run;
   }
   const qe=$('globalQuickEarn');if(qe)qe.onclick=()=>nav('#/till');
-  const na=$('globalNewAppt');if(na)na.onclick=()=>nav('#/appointments');
+  const na=$('globalNewAppt');if(na)na.onclick=()=>{
+    /* Only ask for the form when this user may actually book; otherwise the button is the
+       "View calendar" affordance and must stay one. canWriteModule is re-read here rather than
+       reused from globalActionsHtml, whose `canNewAppt` is scoped to that function. */
+    pendingOpenApptFormV217=canWriteModule('appointments');
+    nav('#/appointments');
+    if(location.hash==='#/appointments')route();
+  };
 }
 function userDisplayNameV158(){
   const meta=S.user?.user_metadata||{};
@@ -1247,16 +1257,24 @@ async function hydrateProfileBranchSelectorV158(page){
   try{
     const {isAdmin,branches}=await visibleBranchesForCurrentUser();
     if(!$('profileBranchScopeV158'))return;
-    const allowed=branches||[];
-    if(!isAdmin&&selectedBranchId&&!allowed.some(branch=>branch.id===selectedBranchId)){
-      selectedBranchId=allowed[0]?.id||null;
+    /* V217: only an ACTIVE branch can be a reporting scope — the server refuses any other, so
+       offering one here produced a workspace that could not load its own dashboard or customer
+       list. A branch held back for payment is named below the picker instead of hidden without
+       explanation, so the owner can see it exists and why it is not selectable yet. */
+    const allowed=activeBranchesForScopeV217(branches);
+    const withheld=(branches||[]).filter(branch=>branch.active===false);
+    if(selectedBranchId&&!allowed.some(branch=>branch.id===selectedBranchId)){
+      selectedBranchId=isAdmin?null:(allowed[0]?.id||null);
     }
     mount.innerHTML=(allowed.length||isAdmin)
       ?`<span class="topbar-branch-label-v210" aria-hidden="true">Viewing</span>
         <select id="profileBranchScopeSelectV158" aria-label="View data for branch" title="This changes the workspace view. Operational actions still use one selected branch.">
           ${isAdmin?'<option value="">All branches</option>':''}
-          ${allowed.map(branch=>`<option value="${branch.id}">${esc(branch.name)}${branch.active===false?' (inactive)':''}</option>`).join('')}
-        </select>`
+          ${allowed.map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}
+        </select>
+        ${withheld.length?`<span class="topbar-branch-withheld-v217">${esc(withheld.length===1
+          ?`${withheld[0].name}: ${withheld[0].billing_state==='pending_payment'?'awaiting payment':'switched off'}`
+          :`${withheld.length} branches unavailable`)}</span>`:''}`
       :'<span class="muted small">No branch assigned</span>';
     const select=$('profileBranchScopeSelectV158');
     if(select){
@@ -1933,14 +1951,14 @@ async function visibleBranchesForCurrentUser(){
   const isAdmin=S.myRole==='owner'||S.myRole==='manager';
   let branches=[];
   if(isAdmin){
-    const {data,error}=await sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name');
+    const {data,error}=await sb.from('branches').select('id,name,active,billing_state').eq('business_id',S.biz.id).order('name');
     if(error)throw error;
     branches=data||[];
   }else{
     const {data:me,error:staffError}=await sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
     if(staffError)throw staffError;
     if(me&&me.length){
-      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
+      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active,billing_state)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
       if(error)throw error;
       branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     }
@@ -1968,6 +1986,9 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   }
   const wraps=currentWraps();
   if(!isCurrent()||!wraps.length)return;
+  /* V217: same rule as the top bar — an inactive branch is never a selectable reporting scope. */
+  const withheldBranchesV217=branches.filter(branch=>branch.active===false);
+  branches=activeBranchesForScopeV217(branches);
   if(!branches.some(branch=>branch.id===selectedBranchId)){
     /* Employees can't request consolidated (the server raises branch_visibility on
        p_branch=null for them) — default to their first assigned branch so the page loads
@@ -1986,8 +2007,8 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     wrap.innerHTML=(branches.length||isAdmin)
       ? `<select class="qbtn" aria-label="Business branch" style="padding-right:22px">
         ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
-        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}${b.active===false?' (inactive)':''}</option>`).join('')}
-      </select>`
+        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+      </select>${withheldBranchesV217.length?`<p class="muted small" style="margin:6px 0 0">${esc(withheldBranchesV217.map(branchScopeUnavailableReasonV217).join(' '))}</p>`:''}`
       : `<span class="muted small">No branch assigned — ask the owner</span>`;
     const sel=wrap.querySelector('select');
     if(sel){
@@ -1998,12 +2019,44 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   onChange(branches.find(branch=>branch.id===selectedBranchId)||null);
 }
 let reportingScopeV155={mode:'current',branchIds:[]};
+/* V217. Owner: the dashboard said "Performance data could not be loaded" and Customers said
+   "foreign_or_inactive_branch_scope". One cause for both. A branch added but not yet paid for is
+   created active=false / billing_state=pending_payment, and this function fell back to
+   branches[0] without looking at `active`. The demo tenant's unpaid branch was named "abc",
+   which sorts first, so it silently became the reporting scope for the whole workspace — and
+   every reporting RPC refuses an inactive branch by design (v155 raises
+   foreign_or_inactive_branch_scope). The workspace was offering a scope the server can never
+   answer. An inactive branch is never a valid reporting scope, so it is never chosen here. */
+function activeBranchesForScopeV217(branches=[]){
+  return (branches||[]).filter(branch=>branch&&branch.active!==false);
+}
+function branchScopeUnavailableReasonV217(branch){
+  if(!branch||branch.active!==false)return '';
+  return branch.billing_state==='pending_payment'
+    ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
+    :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
+}
+/* V217: the server's scope codes are precise but unreadable. An owner should never be shown
+   `foreign_or_inactive_branch_scope` — they should be told which branch is unavailable and why,
+   which after this change should not happen at all, since the pickers no longer offer one. */
+function branchScopeErrorHintV217(error){
+  const message=String(error?.message||error||'');
+  if(/foreign_or_inactive_branch_scope/.test(message))
+    return 'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.';
+  if(/unauthorised_branch_scope/.test(message))
+    return 'You do not have access to the branch being viewed. Choose another branch at the top.';
+  if(/operational_branch_required_for_current_scope/.test(message))
+    return 'No branch is selected. Choose one at the top.';
+  return '';
+}
 function reportingOperationalBranchIdV155(branches=[]){
-  if(selectedBranchId&&branches.some(branch=>branch.id===selectedBranchId))return selectedBranchId;
-  return branches[0]?.id||null;
+  const usable=activeBranchesForScopeV217(branches);
+  if(selectedBranchId&&usable.some(branch=>branch.id===selectedBranchId))return selectedBranchId;
+  return usable[0]?.id||null;
 }
 function normaliseReportingScopeV155({branches=[]}={}){
-  const authorisedIds=new Set((branches||[]).map(branch=>branch.id));
+  /* V217: an inactive branch is not an authorised scope — see reportingOperationalBranchIdV155. */
+  const authorisedIds=new Set(activeBranchesForScopeV217(branches).map(branch=>branch.id));
   reportingScopeV155={
     mode:['current','selected','all'].includes(reportingScopeV155?.mode)?reportingScopeV155.mode:'current',
     branchIds:[...new Set(reportingScopeV155?.branchIds||[])].filter(id=>authorisedIds.has(id))
@@ -2284,11 +2337,18 @@ async function dashboard(){
     if(!isCurrent())return;
     const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value;
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
-    const showLoadError=(message,retryId)=>{
+    const showLoadError=(message,retryId,detail='')=>{
       if(!status)return;
       kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');loyalty?.setAttribute('aria-busy','false');
       if(loyalty)loyalty.innerHTML='';
-      status.innerHTML=`<div class="err" role="alert">${esc(message)} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
+      /* V217. Owner: "it takes forever to load the dashboard". It was not slow — it had already
+         failed. The error banner appeared but the loading skeletons were left shimmering
+         underneath it, so the page read as still working. A failed load must stop looking like
+         a load in progress. */
+      if(kpis)kpis.innerHTML='';
+      if(insights)insights.innerHTML='';
+      if(charts)charts.innerHTML='';
+      status.innerHTML=`<div class="err" role="alert">${esc(message)}${detail?` ${esc(detail)}`:''} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
       status.querySelector('#'+retryId).onclick=load;
       localizeWorkspaceSubtreeV97(status);
     };
@@ -2319,10 +2379,10 @@ async function dashboard(){
       canReadModule('clients')?sb.rpc('preview_campaign_audience_v155',{p_business:S.biz.id,p_audience_key:'inactive_60_plus',...scopePayload}):Promise.resolve({data:null,error:null}),
       loyaltyVisibleV170?fetchAllRowsResult(()=>sb.from('points_ledger').select('points',{count:'exact'}).eq('business_id',S.biz.id).eq('entry_type','redeem').gte('created_at',sgDateBoundary(from,0)).lt('created_at',sgDateBoundary(to,1)).order('id')):Promise.resolve({data:null,error:null})
     ])}
-    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
+    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error));return}
     if(!isCurrent())return;
     const {data,error}=response;
-    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
+    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error));return}
     const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
     if(d.availability?.sales===false){
       status.innerHTML='';
@@ -2783,7 +2843,7 @@ async function clientsPage(){
       if(result?.customers)result.customers=sortCustomersV150(result.customers,$('clientSort')?.value||'name_asc');
     }
     if(!isCurrent())return;
-    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
+    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
     if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveBucket?'No customers in this inactive group':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveBucket?'Choose another inactivity group, Never visited, or All customers.':'Customers will appear here after joining your loyalty programme or making a purchase. You can also add a customer manually from the button above.'});return}
     const loyaltyAvailable=result?.loyalty_available===true;
@@ -2827,7 +2887,7 @@ async function clientsPage(){
     const {data,error}=await sb.rpc('staff_list_visit_feedback_v145',{p_business:S.biz.id,p_status:feedbackFilter||null,
       p_limit:FEEDBACK_PAGE_SIZE,p_offset:feedbackPage*FEEDBACK_PAGE_SIZE});
     if(!isLatest()||!isCustomersCurrent()||$('fbQueue')!==host)return;
-    if(error){host.innerHTML=`<div class="err" role="alert">${esc(error.message||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
+    if(error){host.innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
     const rows=Array.isArray(data?.feedback)?data.feedback:[];
     const total=Math.max(0,Number(data?.total||0));
     const pages=Math.max(1,Math.ceil(total/FEEDBACK_PAGE_SIZE));
@@ -11124,6 +11184,7 @@ async function appointmentsPage(){
   // Customer 360 hand-off: capture the prefilled customer once, up front, so it can never leak
   // into a later visit even if this page early-returns (no branch / read-only).
   const apptPrefillClient=pendingApptClientId;pendingApptClientId='';
+  const apptOpenFormV217=pendingOpenApptFormV217;pendingOpenApptFormV217=false;
   let canWrite=false,canComplete=false;
   routeMain.innerHTML=CUI.loadingState({title:'Appointments',iconName:'appointments'});
   const [
@@ -11348,7 +11409,17 @@ async function appointmentsPage(){
   function syncFormOptions(){
     if(!canWrite)return;
     const services=branchServices(branchId),people=branchStaff(branchId);
-    $('as').innerHTML=`<option value="">General visit</option>${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}" data-buffer-before="${s.buffer_before_min||0}" data-buffer-after="${s.buffer_after_min||0}">${esc(serviceDisplayName(s))}</option>`).join('')}`;
+    /* V217. Owner, on this dropdown: "instead of general visit, put ...". A business that has
+       real services was still offered "General visit" first and by default, so the common case —
+       booking an actual service, with its own duration and buffers — took an extra step, and an
+       untouched form booked an unnamed 60-minute hold instead of the thing being sold. Real
+       services now lead and the first one is preselected. "General visit" stays, last and named
+       for what it is, because a walk-in with no service chosen is a real thing to book. */
+    const previousServiceV217=$('as').value;
+    $('as').innerHTML=`${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}" data-buffer-before="${s.buffer_before_min||0}" data-buffer-after="${s.buffer_after_min||0}">${esc(serviceDisplayName(s))}</option>`).join('')}<option value="">${services.length?'No specific service · general visit':'General visit'}</option>`;
+    $('as').value=[...$('as').options].some(option=>option.value===previousServiceV217)
+      ?previousServiceV217
+      :(services[0]?.id||'');
     $('astf').innerHTML=`<option value="auto">Auto-assign · fair rotation</option>${people.map(s=>`<option value="${s.id}">${esc(staffLabel(s))}</option>`).join('')}`;
     $('generalDuration').hidden=$('as').value!=='';
   }
@@ -11362,20 +11433,56 @@ async function appointmentsPage(){
     if($('ago'))$('ago').disabled=false;
     if(clearSuggestions&&$('scheduleSuggestion'))$('scheduleSuggestion').innerHTML='';
   }
+  /* V217 — two owner reports about this one panel.
+     (5) "i selected kelvin - why it show devi next best time?" It always led with available[0],
+         the FAIREST person, even when the person the owner had actually chosen was free. Being
+         told about Devi after choosing Kelvin reads as the system overruling the choice. It now
+         answers the question that was asked — is the person I picked free? — and offers the
+         fairer option as a suggestion underneath, which is what it always was.
+     (6) "recent appointment - how recent?" The count had no stated window (it was a hidden 30
+         days). The window is now on the label AND selectable, and it drives the server's
+         fairness ranking too, so changing it changes the advice rather than just the wording. */
+  const RECENT_WINDOWS_V217=[{days:1,label:'day'},{days:3,label:'3 days'},{days:7,label:'week'},{days:30,label:'month'}];
+  let recentWindowDaysV217=30;
+  const recentWindowLabelV217=days=>RECENT_WINDOWS_V217.find(w=>w.days===days)?.label||'month';
   function renderSuggestions(payload,conflict=false){
     const host=$('scheduleSuggestion');if(!host)return;
     const available=payload?.available_staff||[],next=payload?.next_best_slots||[];
     const selected=$('astf').value;
-    const selectedFree=selected==='auto'||available.some(x=>x.staff_id===selected);
-    const recommended=available[0];
+    const isAuto=selected==='auto';
+    const selectedEntry=available.find(x=>x.staff_id===selected)||null;
+    const selectedFree=isAuto||!!selectedEntry;
+    const fairest=available[0];
+    const windowLabel=recentWindowLabelV217(recentWindowDaysV217);
+    /* A fairer alternative is only worth naming when it is genuinely fairer — same-count
+       staff are not an argument for changing the owner's choice. */
+    const fairerThanSelected=selectedEntry&&fairest&&fairest.staff_id!==selectedEntry.staff_id
+      &&Number(fairest.recent_appointments)<Number(selectedEntry.recent_appointments)?fairest:null;
+    const headline=!available.length
+      ?'No eligible staff member is free at this time.'
+      :selectedEntry
+      ?(fairerThanSelected
+        ?workspaceTemplateHtmlV97('selectedStaffFreeFairer',{
+            staff:staffName[selectedEntry.staff_id]||selectedEntry.staff_name,
+            alt:staffName[fairerThanSelected.staff_id]||fairerThanSelected.staff_name})
+        :workspaceTemplateHtmlV97('selectedStaffFree',{
+            staff:staffName[selectedEntry.staff_id]||selectedEntry.staff_name}))
+      :workspaceTemplateHtmlV97(available.length===1?'availableStaff':'availableStaffMany',
+          {staff:staffName[fairest.staff_id]||fairest.staff_name,count:available.length});
     host.innerHTML=`<div class="schedule-suggestion">
       <h3>${conflict||!selectedFree?'That person is not free':'Availability checked'}</h3>
-      <p class="muted small" style="margin-top:5px">${available.length
-        ?workspaceTemplateHtmlV97(available.length===1?'availableStaff':'availableStaffMany',{staff:staffName[recommended.staff_id]||recommended.staff_name,count:available.length})
-        :'No eligible staff member is free at this time.'}</p>
-      ${available.length?`<div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm suggestionStaff" data-staff="${person.staff_id}" data-staff-name="${esc(staffName[person.staff_id]||person.staff_name)}">${CUI.icon('staff',{size:16})} <span data-merchant-content>${esc(staffName[person.staff_id]||person.staff_name)}</span> · ${workspaceTemplateHtmlV97('recentAppointments',{count:person.recent_appointments})}</button>`).join('')}</div>`:''}
+      <p class="muted small" style="margin-top:5px">${headline}</p>
+      <label for="recentWindowV217" class="small" style="display:block;margin-top:11px">Count appointments from the last</label>
+      <select id="recentWindowV217" style="margin-top:4px">${RECENT_WINDOWS_V217.map(w=>`<option value="${w.days}" ${w.days===recentWindowDaysV217?'selected':''}>${esc(w.label)}</option>`).join('')}</select>
+      <p class="muted small" style="margin:5px 0 0">This is the window used to decide who has had the fewest appointments.</p>
+      ${available.length?`<div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm suggestionStaff${person.staff_id===selected?' is-selected-v217':''}" data-staff="${person.staff_id}" data-staff-name="${esc(staffName[person.staff_id]||person.staff_name)}">${CUI.icon('staff',{size:16})} <span data-merchant-content>${esc(staffName[person.staff_id]||person.staff_name)}</span> · ${workspaceTemplateHtmlV97('recentInWindow',{count:person.recent_appointments,window:windowLabel})}</button>`).join('')}</div>`:''}
       ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm suggestionTime" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(sgt(slot.starts_at))} · ${esc(staffName[slot.staff_id]||slot.staff_name)}</button>`).join('')}</div>`:''}
     </div>`;
+    const windowSelect=$('recentWindowV217');
+    if(windowSelect)windowSelect.onchange=()=>{
+      recentWindowDaysV217=Number(windowSelect.value)||30;
+      renderAvailability();
+    };
     host.querySelectorAll('.suggestionStaff').forEach(button=>button.onclick=()=>{
       invalidateFormRequests();$('astf').value=button.dataset.staff;
       CUI.announce(workspaceTemplateTextV97('itemSelected',{item:button.dataset.staffName||button.textContent.trim()}));
@@ -11394,7 +11501,8 @@ async function appointmentsPage(){
     }
     formError.innerHTML='';$('checkAvailability').disabled=true;
     const {data,error}=await sb.rpc('suggest_appointment_staff_v47',{p_business:S.biz.id,p_branch:branchId,
-      p_service:$('as').value||null,p_starts:starts,p_duration_minutes:duration,p_limit:5});
+      p_service:$('as').value||null,p_starts:starts,p_duration_minutes:duration,p_limit:5,
+      p_recent_days:recentWindowDaysV217});
     if(!stillCurrent())return null;
     $('checkAvailability').disabled=false;
     if(error){formError.innerHTML=`<div class="err">${esc(error.message)}</div>`;return null}
@@ -11406,6 +11514,7 @@ async function appointmentsPage(){
     /* Customer 360 deep-link: a customer handed in via pendingApptClientId (captured above as
        apptPrefillClient) pre-selects that customer in the existing #ac dropdown — same select,
        no new query. The form is then brought into view so staff land ready to pick a time. */
+    if(apptOpenFormV217&&!apptPrefillClient)openNewAppointmentForm({date:addDays(todaySg,dayOffset)});
     if(apptPrefillClient){
       openNewAppointmentForm({date:todaySg});
       const clientSelect=$('ac');
@@ -11767,9 +11876,17 @@ async function appointmentsPage(){
       to:to+Math.max(0,Number(item.services?.buffer_after_min)||0)
     };
   }
-  function availableCalendarStarts(column){
+  /* V217. Owner: "it shows appointment must be in the future (but it shows green bar to press?
+     - that is misleading)". Every 15-minute start inside working hours was drawn as a bookable
+     green slot, including ones that had already passed. At 19:35 the whole afternoon still
+     invited a tap, and the server then refused it with `appointment start must be in the
+     future`. A time you cannot book must not look bookable. `earliestBookableMinute` is the
+     now-line on today, +Infinity on a past day (nothing is bookable), and -Infinity on a future
+     day (everything within working hours is). */
+  function availableCalendarStarts(column,earliestBookableMinute=-Infinity){
     const {duration,before,after}=selectedCalendarServiceTiming();
     if(column.schedule.state!=='working')return [];
+    if(earliestBookableMinute===Infinity)return [];
     const starts=[];
     for(let start=column.schedule.start+before;start+duration+after<=column.schedule.end;start+=15){
       const occupiedStart=start-before,occupiedEnd=start+duration+after;
@@ -11784,7 +11901,8 @@ async function appointmentsPage(){
         const blockStart=eventParts(block.starts_at).minutes,blockEnd=eventParts(block.ends_at).minutes;
         return intervalsOverlap(occupiedStart,occupiedEnd,blockStart,blockEnd);
       });
-      if(!hitsBreak&&!hitsAppointment&&!hitsBlockedTime)starts.push(start);
+      const alreadyPassed=start<earliestBookableMinute;
+      if(!alreadyPassed&&!hitsBreak&&!hitsAppointment&&!hitsBlockedTime)starts.push(start);
     }
     return starts;
   }
@@ -11837,12 +11955,28 @@ async function appointmentsPage(){
     const rangeEnd=Math.min(1440,Math.max(rangeStart+6*60,Math.ceil((allMinutes.length?Math.max(...allMinutes):20*60)/60)*60));
     const hourHeight=176,bodyHeight=(rangeEnd-rangeStart)/60*hourHeight;
     const hasWorking=columns.some(column=>column.schedule.state==='working');
-    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small">Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.</p>`:''}</div>
+    /* V217: once past slots stop being drawn, an evening or a past day legitimately has none
+       left. Telling staff to "choose a green start time" when there is no green left is the
+       same misdirection in words, so say which it is. */
+    const dayEarliestV217=day===todaySg?(Number.isFinite(todayMinutes)?todayMinutes:-Infinity):(day<todaySg?Infinity:-Infinity);
+    const hasBookableV217=canWrite&&columns.some(column=>column.id&&availableCalendarStarts(column,dayEarliestV217).length);
+    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small">${hasBookableV217
+      ?`Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.`
+      :day<todaySg
+        ?'This day has already passed — appointments can only be booked for a time still to come.'
+        :day===todaySg
+          ?`No ${selectedTiming.duration}-minute slot is left today. Move to another day, or use New appointment to pick a time.`
+          :'No free slot is long enough on this day. Try another day or a shorter service.'}</p>`:''}</div>
       <div class="day-timeline-scroll"><div class="day-timeline" data-range-start="${rangeStart}" data-range-end="${rangeEnd}" data-hour-height="${hourHeight}" style="--day-columns:${columns.length};--day-height:${bodyHeight}px">
         <div class="day-timeline-head" aria-hidden="true"></div>${columns.map(column=>`<div class="day-team-head"><span class="day-team-avatar" style="--staff-color:${esc(column.color)}">${esc(column.label.slice(0,1).toUpperCase())}</span><div><h3>${esc(column.label)}</h3><p class="small ${column.schedule.state==='working'?'':'muted'}">${esc(column.schedule.label)} · ${column.items.length} appointment${column.items.length===1?'':'s'}</p></div></div>`).join('')}
         <div class="day-time-axis" style="height:${bodyHeight}px">${[...Array(Math.floor((rangeEnd-rangeStart)/60)+1)].map((_,i)=>`<span style="top:${i*hourHeight}px">${minuteClock(rangeStart+i*60)}</span>`).join('')}</div>
         ${columns.map(column=>{
           const schedule=column.schedule;
+          /* V217: today books forward from the current minute; a past day books nothing; a
+             future day books anywhere inside working hours. */
+          const earliestBookableMinuteV217=day===todaySg
+            ?(Number.isFinite(todayMinutes)?todayMinutes:-Infinity)
+            :(day<todaySg?Infinity:-Infinity);
           const workingTop=schedule.state==='working'?(schedule.start-rangeStart)/60*hourHeight:0;
           const workingHeight=schedule.state==='working'?(schedule.end-schedule.start)/60*hourHeight:bodyHeight;
           const events=layoutCalendarDay(column.items).map(({item,from,to,lane,laneCount})=>{
@@ -11857,7 +11991,7 @@ async function appointmentsPage(){
           }).join('');
           const state=schedule.state!=='working'?`<div class="day-track-state"><b>${esc(schedule.label)}</b>${schedule.reason?`<span>${esc(schedule.reason)}</span>`:''}</div>`:'';
           const working=schedule.state==='working'?`<div class="day-schedule-window" style="top:${workingTop}px;height:${workingHeight}px" aria-hidden="true"></div>`:'';
-          const slots=canWrite&&column.id?availableCalendarStarts(column).map(start=>{
+          const slots=canWrite&&column.id?availableCalendarStarts(column,earliestBookableMinuteV217).map(start=>{
             return `<button type="button" class="day-slot-button" data-day="${day}" data-staff="${column.id}" data-time="${minuteClock(start)}" data-service="${esc(calendarServiceId)}" style="top:${(start-rangeStart)/60*hourHeight}px;height:44px" ${workspaceTemplateAttributeV97('aria-label','bookAppointmentSlot',{service:selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit',staff:column.label,time:minuteClock(start)})}><span>${minuteClock(start)}</span><b>Book</b></button>`;
           }).join(''):'';
           const now=Number.isFinite(todayMinutes)&&todayMinutes>=rangeStart&&todayMinutes<=rangeEnd?`<div class="day-now-line" style="top:${(todayMinutes-rangeStart)/60*hourHeight}px"><span>${minuteClock(todayMinutes)}</span></div>`:'';
@@ -14886,7 +15020,8 @@ async function settingsPage(){
             ${commissionSummary}
           </button>
           ${accessPill}${modPill}<span class="spacer"></span>
-          ${s.role!=='owner'?`<button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
+          ${s.role!=='owner'?`${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
+          <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
           <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Remove</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
         </div>
         ${openProfileId===s.id?staffProfilePanelHtml(s):''}
@@ -14942,6 +15077,45 @@ async function settingsPage(){
     const removedUserId=teamRowsById.get(id)?.user_id||'';const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:removedUserId});toast('Removed');await loadTeam();};
   window.cpInv=async(c)=>copyTextToClipboard(c,{success:'Code copied — send it to your teammate'});
   window.cpInvLink=async(c)=>copyTextToClipboard(staffInviteLinkV151(c),{success:'Invite link copied — send it to your teammate'});
+  /* V217. Owner: "there must be a reference code here - example kelvin sign up an account and
+     input the reference code - he will be tagged into the business (so we dont need to duplicate
+     any data over, he can just take over as the staff)".
+     accept_invite already upgrades an EXISTING roster row when the invite names one — the name,
+     job title, commission, working hours, rota and every past sale stay on the same person. What
+     was missing is that nothing could ever bind an invite to a teammate: create_invite takes only
+     a role and an email, so every code created a SECOND staff row and the roster data had to be
+     re-keyed. This mints a code bound to this exact teammate. */
+  window.staffReferenceCodeV217=async(staffId,button)=>{
+    const name=button?.dataset?.name||'this teammate';
+    if(button)button.disabled=true;
+    const {data,error}=await sb.rpc('create_staff_reference_code_v217',{p_business:S.biz.id,p_staff:staffId});
+    if(button)button.disabled=false;
+    if(error)return fail(error);
+    const code=data?.code||'';
+    if(!code)return fail(new Error('The reference code was not returned. Try again.'));
+    document.querySelector('#staffReferenceModalV217')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="staffReferenceModalV217" role="dialog" aria-modal="true" aria-labelledby="staffReferenceTitleV217" tabindex="-1">
+      <section class="modal-card" style="max-width:480px">
+        <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for ${esc(name)}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
+        <p class="staff-reference-code-v217" data-merchant-content>${esc(code)}</p>
+        <ol class="small" style="margin:14px 0 0;padding-left:20px;line-height:1.7">
+          <li>Give this code to ${esc(name)}.</li>
+          <li>They create their own account, then enter the code.</li>
+          <li>You approve them, and they take over this exact record — their job title, commission, hours and past sales stay as they are. No details are re-entered.</li>
+        </ol>
+        <p class="muted small" style="margin-top:12px">The code expires in 14 days and works once. Creating a new code for ${esc(name)} cancels this one.</p>
+        <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="staffReferenceCopyV217">Copy code</button><button type="button" class="btn ghost sm" id="staffReferenceDoneV217">Done</button></div>
+      </section></div>`);
+    const dialog=$('staffReferenceModalV217');
+    let deactivate;
+    const close=()=>deactivate?.();
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#staffReferenceCopyV217'});
+    $('staffReferenceCloseV217').onclick=close;
+    $('staffReferenceDoneV217').onclick=()=>{close();loadTeam()};
+    $('staffReferenceCopyV217').onclick=()=>copyTextToClipboard(code,{
+      success:workspaceTemplateTextV97('inviteCreated',{code}),
+      failure:'Copy was blocked. Read the code out or write it down.'});
+  };
   window.rvInv=async(id)=>{const {error}=await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);if(error)return fail(error);toast('Invite revoked');loadTeam();};
   window.toggleStaffProfile=(staffId)=>{openProfileId=(openProfileId===staffId)?null:staffId;loadTeam();};
   window.saveStaffProfile=async(staffId,btn)=>{

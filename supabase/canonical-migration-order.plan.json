@@ -1432,6 +1432,12 @@
       "version": "20260807190000",
       "name": "nestly_v215_signup_welcome_offer",
       "sourcePath": "db/migrations/20260807_nestly_v215_signup_welcome_offer.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807195000",
+      "name": "nestly_v217_recent_window_and_staff_reference_code",
+      "sourcePath": "db/migrations/20260807_nestly_v217_recent_window_and_staff_reference_code.sql"
     }
   ]
 }

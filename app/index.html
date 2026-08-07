@@ -235,6 +235,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* V214: the scope sentence must stay readable next to the heading, and must not push the
    scope pills off the row on a phone. It wraps under the heading and keeps a measure. */
 .merchant-insights-scope-note-v214{margin:6px 0 0;max-width:56ch;line-height:1.45}
+/* V217: the reference code is read aloud or copied onto paper, so it is set large, spaced and
+   monospaced — a code that is misread costs the teammate a sign-up attempt. */
+.staff-reference-code-v217{margin:16px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:2rem;font-weight:700;letter-spacing:.22em;text-align:center;padding:16px 10px;border:1px dashed var(--line);border-radius:14px;background:var(--tint);word-break:break-all}
+/* The teammate the owner actually chose is marked in the availability list, so the panel and the
+   Assign-to field visibly agree. */
+.suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
+/* A branch withheld from the reporting scope is stated, not silently missing. */
+.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -1632,7 +1641,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"customer":"/app-customer.js?b=c94c0ac7656e","business":"/app-business.js?b=27e8b13e561f","i18n":"/app-i18n.js?b=232400221146"}
+{"customer":"/app-customer.js?b=c94c0ac7656e","business":"/app-business.js?b=4631116e1ad6","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -1650,6 +1659,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=ae75aa600b44" defer></script>
+<script src="/app-core.js?b=29bf728ec4f5" defer></script>
 </body>
 </html>
