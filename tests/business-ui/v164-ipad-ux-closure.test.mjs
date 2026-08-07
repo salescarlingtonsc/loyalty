@@ -79,7 +79,12 @@ test('V164 Programmes removes persistent setup CTA and keeps categorised overvie
   assert.match(appHtml, /<h1 id="growTitle">Programmes<\/h1>/);
   assert.match(appHtml, /Create and manage rewards, promotions and customer programmes\./);
   assert.match(appHtml, /<div class="v150-title-actions"><\/div>/);
-  assert.match(appHtml, /Loyalty & rewards/);
+  /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two
+     categories: Point system holds everything earned and spent in points, Other rewards
+     holds the ones that do not use a balance. The behaviour this test protects — that the
+     programme rows are categorised rather than one flat list — is unchanged. */
+  assert.match(appHtml, /programme-category-title">Point system</);
+  assert.match(appHtml, /programme-category-title">Other rewards</);
   assert.match(appHtml, /Promotions & growth/);
   assert.match(appHtml, /Recurring value/);
   assert.doesNotMatch(appHtml, /<button type="button" class="btn grow-primary" id="growAutoSetup">Continue setup<\/button>/);
