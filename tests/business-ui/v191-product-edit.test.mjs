@@ -9,15 +9,28 @@ test('a mistyped product can be corrected', () => {
   // created — and a whole café menu now lives here after the V188 migration.
   assert.match(inv, /data-prod-edit=/);
   assert.match(inv, /data-prod-save=/);
-  assert.match(inv, /prodEditName|prodEditPrice|prodEditCost/);
-  assert.match(inv, /update\(\{name,sku,retail_price_cents:price,cost_cents:cost\}\)/);
+  assert.match(inv, /prodEditName|prodEditPrice/);
+  assert.match(inv, /update\(\{name,sku,retail_price_cents:price\}/);
 });
 
-test('cost may be cleared, and blank is not the same as zero', () => {
-  const i = inv.indexOf("const costRaw=");
-  const src = inv.slice(i, i + 260);
-  assert.match(src, /costRaw===''\?null:/);
-  assert.match(inv, /Cost must be 0 or more, or left blank/);
+test('V222 the Products page does not ask about cost at all', () => {
+  /* Owner: "scrap the cost - just put selling price for products - if not will be complex".
+     This test used to assert that a cost could be cleared and that blank was not zero. That
+     nuance was real, but it belonged to a field that should never have been on this page —
+     cost was REQUIRED to add a product, so a hawker could not enter chicken rice without
+     first answering a question about margin. The field is gone from Products.
+     cost_cents itself is untouched in the database, and cost is still collected in
+     Programmes -> More reward settings, where it decides what a reward can safely cost.
+     That path is asserted below, so the capability is still covered — just in one place. */
+  const page = inv.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  assert.doesNotMatch(page, /cost/i, 'Products asks for a name and a selling price, nothing else');
+  assert.doesNotMatch(page, /profit/i);
+
+  // The one remaining place cost is entered still guards the value it writes.
+  assert.match(app, /data-product-cost-save/);
+  assert.match(app, /Enter a product cost, for example 24\.00/);
+  assert.match(app, /p_expected_cost_cents:expectedRaw===''\?null:Number\(expectedRaw\)/,
+    'blank still means "not set", never zero, on the path that survived');
 });
 
 test('products are disabled, never deleted', () => {

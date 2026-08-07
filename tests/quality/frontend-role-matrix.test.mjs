@@ -66,7 +66,8 @@ test('services and inventory render explicit read-only states and bind mutations
   assert.match(services,/id="servicesRetry"/);
 
   assert.match(inventory,/const canWrite=canWriteModule\('inventory'\)/);
-  assert.match(inventory,/Read-only inventory access/);
+  /* V221 renamed the module to Products; the read-only state it guards is unchanged. */
+  assert.match(inventory,/Read-only product access/);
   assert.match(inventory,/canWrite\?importBtn\('inventory'\):''/);
   assert.match(inventory,/if\(canWrite\)\$\('padd2'\)\.onclick/);
   assert.match(inventory,/if\(canWrite\)\$\('badd2'\)\.onclick/);
