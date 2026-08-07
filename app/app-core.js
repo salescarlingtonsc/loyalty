@@ -387,6 +387,9 @@ let pendingApptClientId=''; // Customer 360 → New appointment: prefills the ex
    behind its own button — so a control labelled "New appointment" produced a calendar and no
    form. This flag is consumed once by the appointments page, exactly like pendingApptClientId. */
 let pendingOpenApptFormV217=false;
+/* V229 (owner: "i need a clean overview before zooming in"). Which Programmes topic is drilled
+   into, '' = the tile overview. In-session only, consumed by growPage. */
+let growTopicV229='';
 let settingsActiveTab='workspace';
 let profileOpen=false;
 let routeDispose=()=>{};
@@ -563,7 +566,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';growTopicV229='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';

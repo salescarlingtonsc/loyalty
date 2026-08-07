@@ -113,10 +113,17 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
      categories: Point system holds everything earned and spent in points, Other rewards
      holds the ones that do not use a balance. The behaviour this test protects — that the
      programme rows are categorised rather than one flat list — is unchanged. */
+  /* V229 (owner: "square boxes for each topics then press in"; "instead of promotion & growth")
+     restructured the overview into topic tiles and renamed the categories in the owner's own
+     words. The categorisation these tests protect is unchanged. */
   assert.match(grow, /programme-category-title">Point system</);
-  assert.match(grow, /programme-category-title">Other rewards</);
-  assert.match(grow, /Promotions & growth/);
-  assert.match(grow, /Recurring value/);
+  assert.match(grow, /programme-category-title">Lifestyle rewards</);
+  /* V229: renamed to plain "Promotions" (the owner's word) and Referrals became its own
+     category, so both remain distinct from the points work — which is the point here. */
+  assert.match(grow, /programme-category-title">Promotions</);
+  assert.match(grow, /programme-category-title">Referrals</);
+  /* V229: renamed to say what is in it rather than what it is like. */
+  assert.match(grow, /programme-category-title">Memberships & gift cards</);
   assert.doesNotMatch(grow, /Start automatically or choose the exact programme below/);
 });
 

@@ -83,9 +83,16 @@ test('V164 Programmes removes persistent setup CTA and keeps categorised overvie
      categories: Point system holds everything earned and spent in points, Other rewards
      holds the ones that do not use a balance. The behaviour this test protects — that the
      programme rows are categorised rather than one flat list — is unchanged. */
+  /* V229 (owner: "square boxes for each topics then press in"; "instead of promotion & growth")
+     restructured the overview into topic tiles and renamed the categories in the owner's own
+     words. The categorisation these tests protect is unchanged. */
   assert.match(appHtml, /programme-category-title">Point system</);
-  assert.match(appHtml, /programme-category-title">Other rewards</);
-  assert.match(appHtml, /Promotions & growth/);
-  assert.match(appHtml, /Recurring value/);
+  assert.match(appHtml, /programme-category-title">Lifestyle rewards</);
+  /* V229: renamed to plain "Promotions" (the owner's word) and Referrals became its own
+     category, so both remain distinct from the points work — which is the point here. */
+  assert.match(appHtml, /programme-category-title">Promotions</);
+  assert.match(appHtml, /programme-category-title">Referrals</);
+  /* V229: renamed to say what is in it rather than what it is like. */
+  assert.match(appHtml, /programme-category-title">Memberships & gift cards</);
   assert.doesNotMatch(appHtml, /<button type="button" class="btn grow-primary" id="growAutoSetup">Continue setup<\/button>/);
 });
