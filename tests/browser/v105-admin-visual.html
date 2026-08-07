@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="299ea820e755632ec75899766ad697f074fc9bd107948dc1f19247956900ac7d">
+<meta name="v105-production-component-sha256" content="f0a365b539b6c8ef36d0c12674ba85ae6210254810025a631e6fcbf71c88c79a">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -209,6 +209,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .merchant-insights{margin-top:18px}.merchant-insights-head,.retention-readiness-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
 .merchant-insights-head h2,.retention-readiness-head h2{margin:0;font-size:1.22rem}.merchant-insights-head p,.retention-readiness-head p{margin:3px 0 0}
 .merchant-insights-context{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+/* V214: the scope sentence must stay readable next to the heading, and must not push the
+   scope pills off the row on a phone. It wraps under the heading and keeps a measure. */
+.merchant-insights-scope-note-v214{margin:6px 0 0;max-width:56ch;line-height:1.45}
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -2255,7 +2258,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 299ea820e755</span>
+<span class="v105-provenance">v105 production-component harness · f0a365b539b6</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2380,7 +2383,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'299ea820e755632ec75899766ad697f074fc9bd107948dc1f19247956900ac7d',
+  sourceHash:'f0a365b539b6c8ef36d0c12674ba85ae6210254810025a631e6fcbf71c88c79a',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

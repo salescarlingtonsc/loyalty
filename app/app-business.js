@@ -2381,6 +2381,14 @@ async function dashboard(){
       insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
       insights.setAttribute('aria-busy','false');
       insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=Number(link.dataset.insightInactive)||60}));
+      /* V214: the quiet-branch card offers a way back out of the branch it is scoped to,
+         so the owner can see immediately that the business as a whole is not quiet. */
+      insights.querySelectorAll('[data-insight-scope-all-v214]').forEach(button=>button.addEventListener('click',()=>{
+        const select=$('profileBranchScopeSelectV158');
+        if(!select||!select.querySelector('option[value=""]')){toast('Only an owner or manager can view all branches at once');return}
+        select.value='';
+        select.dispatchEvent(new Event('change'));
+      }));
       insights.querySelectorAll('[data-campaign-prep-v153]').forEach(button=>button.addEventListener('click',()=>openCampaignPrepV153({audienceKey:button.dataset.audienceKey,audienceLabel:button.dataset.audienceLabel,definition:'Customers with no valid visit for at least 60 complete Singapore days in the selected reporting scope.',count:Number(button.dataset.audienceCount)||0,branchLabel:scopeLabel})));
     }
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -2441,6 +2449,40 @@ function percentageChangeV153(current,previous){
 }
 function insightScopeLabelV153(branchId,branchName){
   return branchId?`Branch: ${branchName||'Selected branch'}`:'All branches consolidated';
+}
+/* V214. Owner question: "why is merchant insights different for each branch? would it be
+   confusing why some branch have insights some dont have?"
+   It is different because every recommendation is computed from the activity of the branch
+   currently in scope, and a recommendation only appears once there is enough activity to
+   support it (a >=10% revenue move, an inactive customer, at least 2 visits for a busiest
+   day). A quiet or newly opened branch therefore legitimately has fewer cards than a busy
+   one. That is correct, but the panel never SAID so, so an owner saw a near-empty box and
+   read it as broken. These two helpers make the scope and the reason explicit. */
+function insightScopeExplainerV214(branchId,branchName){
+  return branchId
+    ?`Counted from ${branchName||'this branch'} only. Other branches are excluded — switch "Viewing" at the top to compare.`
+    :'Every branch you can see is counted together. Switch "Viewing" at the top to read one branch on its own.';
+}
+function insightQuietScopeV214({current,branchId,branchName}){
+  const visits=Number(current?.visits)||0;
+  const revenueCents=Number(current?.revenue_cents)||0;
+  const where=branchId?(branchName||'This branch'):'This business';
+  const activity=visits||revenueCents
+    ?`${where} recorded ${visits} ${visits===1?'visit':'visits'} and ${money(revenueCents)} in this period — not yet enough to call a trend.`
+    :`${where} recorded no visits or sales in this period, so there is nothing to compare yet.`;
+  return {
+    tone:'neutral',icon:'info',category:'Readiness',
+    title:branchId?`Not enough activity at ${branchName||'this branch'} yet`:'More activity is needed',
+    explanation:activity,
+    why:branchId
+      ?'Each branch is measured on its own, so a quieter branch shows fewer recommendations than a busy one. Nothing is broken.'
+      :'Recommendations appear once there is enough recorded activity to compare one period against the last.',
+    actions:[
+      branchId?{label:'Show all branches',dataset:'data-insight-scope-all-v214',variant:'ghost'}:null,
+      {label:'Record sale',href:'#/till',variant:'ghost'},
+      {label:'Add customers',href:'#/clients',variant:'ghost'}
+    ].filter(Boolean)
+  };
 }
 function insightPeriodLabelV153(from,to){return `${from} – ${to}`}
 function classifyInactiveCustomersV153(customers){
@@ -2547,9 +2589,9 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
     insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits.`,why:`Review staffing and availability for ${day}s.`,actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
   }
   if(!insights.length){
-    insights.push({tone:'neutral',icon:'info',category:'Readiness',title:'More activity is needed',explanation:'Peekaa will show recommendations after more sales, visits or appointments are recorded.',why:'Continue recording sales and customer visits.',actions:[{label:'Record sale',href:'#/till',variant:'ghost'},{label:'Add customers',href:'#/clients',variant:'ghost'}]});
+    insights.push(insightQuietScopeV214({current,branchId,branchName}));
   }
-  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
+  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p><p class="muted small merchant-insights-scope-note-v214">${esc(insightScopeExplainerV214(branchId,branchName))}</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
 }
 async function clientsPage(){
   const routeMain=M();

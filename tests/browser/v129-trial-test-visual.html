@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="1c2689532e8205a9ea2b73681549b41ec25d165a766028f8cb7eed6c2c8b457e"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="6f82b9d57b57370c473e53fdfcb86446c858108c5e14face82f96c8e6e8af237"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -203,6 +203,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .merchant-insights{margin-top:18px}.merchant-insights-head,.retention-readiness-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
 .merchant-insights-head h2,.retention-readiness-head h2{margin:0;font-size:1.22rem}.merchant-insights-head p,.retention-readiness-head p{margin:3px 0 0}
 .merchant-insights-context{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+/* V214: the scope sentence must stay readable next to the heading, and must not push the
+   scope pills off the row on a phone. It wraps under the heading and keeps a measure. */
+.merchant-insights-scope-note-v214{margin:6px 0 0;max-width:56ch;line-height:1.45}
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -1558,7 +1561,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1c2689532e8205a9ea2b73681549b41ec25d165a766028f8cb7eed6c2c8b457e</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 6f82b9d57b57370c473e53fdfcb86446c858108c5e14face82f96c8e6e8af237</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -1965,6 +1968,40 @@ function percentageChangeV153(current,previous){
 function insightScopeLabelV153(branchId,branchName){
   return branchId?`Branch: ${branchName||'Selected branch'}`:'All branches consolidated';
 }
+/* V214. Owner question: "why is merchant insights different for each branch? would it be
+   confusing why some branch have insights some dont have?"
+   It is different because every recommendation is computed from the activity of the branch
+   currently in scope, and a recommendation only appears once there is enough activity to
+   support it (a >=10% revenue move, an inactive customer, at least 2 visits for a busiest
+   day). A quiet or newly opened branch therefore legitimately has fewer cards than a busy
+   one. That is correct, but the panel never SAID so, so an owner saw a near-empty box and
+   read it as broken. These two helpers make the scope and the reason explicit. */
+function insightScopeExplainerV214(branchId,branchName){
+  return branchId
+    ?`Counted from ${branchName||'this branch'} only. Other branches are excluded — switch "Viewing" at the top to compare.`
+    :'Every branch you can see is counted together. Switch "Viewing" at the top to read one branch on its own.';
+}
+function insightQuietScopeV214({current,branchId,branchName}){
+  const visits=Number(current?.visits)||0;
+  const revenueCents=Number(current?.revenue_cents)||0;
+  const where=branchId?(branchName||'This branch'):'This business';
+  const activity=visits||revenueCents
+    ?`${where} recorded ${visits} ${visits===1?'visit':'visits'} and ${money(revenueCents)} in this period — not yet enough to call a trend.`
+    :`${where} recorded no visits or sales in this period, so there is nothing to compare yet.`;
+  return {
+    tone:'neutral',icon:'info',category:'Readiness',
+    title:branchId?`Not enough activity at ${branchName||'this branch'} yet`:'More activity is needed',
+    explanation:activity,
+    why:branchId
+      ?'Each branch is measured on its own, so a quieter branch shows fewer recommendations than a busy one. Nothing is broken.'
+      :'Recommendations appear once there is enough recorded activity to compare one period against the last.',
+    actions:[
+      branchId?{label:'Show all branches',dataset:'data-insight-scope-all-v214',variant:'ghost'}:null,
+      {label:'Record sale',href:'#/till',variant:'ghost'},
+      {label:'Add customers',href:'#/clients',variant:'ghost'}
+    ].filter(Boolean)
+  };
+}
 function insightPeriodLabelV153(from,to){return `${from} – ${to}`}
 function classifyInactiveCustomersV153(customers){
   const buckets={
@@ -2070,9 +2107,9 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
     insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits.`,why:`Review staffing and availability for ${day}s.`,actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
   }
   if(!insights.length){
-    insights.push({tone:'neutral',icon:'info',category:'Readiness',title:'More activity is needed',explanation:'Peekaa will show recommendations after more sales, visits or appointments are recorded.',why:'Continue recording sales and customer visits.',actions:[{label:'Record sale',href:'#/till',variant:'ghost'},{label:'Add customers',href:'#/clients',variant:'ghost'}]});
+    insights.push(insightQuietScopeV214({current,branchId,branchName}));
   }
-  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
+  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p><p class="muted small merchant-insights-scope-note-v214">${esc(insightScopeExplainerV214(branchId,branchName))}</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
 }
 async function clientsPage(){
   const routeMain=M();
@@ -11803,6 +11840,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'1c2689532e8205a9ea2b73681549b41ec25d165a766028f8cb7eed6c2c8b457e',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'6f82b9d57b57370c473e53fdfcb86446c858108c5e14face82f96c8e6e8af237',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
