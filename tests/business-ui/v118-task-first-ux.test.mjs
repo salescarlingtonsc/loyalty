@@ -17,7 +17,11 @@ test('V141 supersedes duplicate home tasks: app bar keeps primary jobs and dashb
   const shell = section('function renderShell(page){', '/* ---------- dashboard ---------- */');
   assert.doesNotMatch(dashboard, /Common tasks|Record a sale|Add appointment|Find a customer|Set up rewards/);
   assert.match(shell, /globalActionsHtml\(\)/);
-  assert.match(dashboard, /id="dashboardReportingScopeWrap"/);
+  /* V225: the owner struck the per-page reporting-scope picker off the Dashboard and
+     Customers. The top bar carries one "Viewing" control for the whole workspace, and a
+     second on-page picker contradicted it as often as it agreed. The scope still applies —
+     currentReportingScopePayloadV155 now derives it from that single control. */
+  assert.doesNotMatch(dashboard, /id="dashboardReportingScopeWrap"/);
   assert.match(dashboard, /<section class="card performance-panel"/);
   assert.match(dashboard, /<h2 id="performanceTitle">Performance<\/h2>/);
   assert.doesNotMatch(dashboard, /<details class="card performance-panel"/);

@@ -7121,16 +7121,20 @@ async function hydrateProfileBranchSelectorV158(page){
 function profileHtml(){
   const displayName=userDisplayNameV158();
   return `<div class="profile" id="profwrap">
-      <button type="button" class="who" id="profWho" aria-haspopup="true" aria-expanded="${profileOpen}" aria-controls="profmenu">
-        <div class="avatar">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
-        <div style="min-width:0">
-          <b data-merchant-content style="font-size:13.5px;display:block;line-height:1.25;letter-spacing:-.012em">${esc(S.biz.name)}</b>
-          <div data-merchant-content class="small muted" style="line-height:1.25">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</div>
-        </div>
+      <!-- V225: the owner struck the business name and industry out of the top bar. The avatar
+           initial still identifies the workspace visually, but a lone initial is not an
+           accessible name, so the button carries one and the full name moves inside the menu. -->
+      <button type="button" class="who" id="profWho" aria-haspopup="true" aria-expanded="${profileOpen}" aria-controls="profmenu" ${workspaceTemplateAttributeV97('aria-label','accountMenuForBusiness',{business:S.biz.name||'Workspace'})}>
+        <div class="avatar" aria-hidden="true">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
         <span class="chev" aria-hidden="true">${profileOpen?'−':'+'}</span>
       </button>
       ${profileOpen?`<div class="menu" id="profmenu" aria-label="Account links">
+        <div class="profile-menu-section" style="overflow-wrap:anywhere"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
         <div class="profile-menu-section small muted" style="overflow-wrap:anywhere">Signed in as<br><b style="color:var(--ink)">${esc(displayName||S.user?.email||'User')}</b>${displayName&&S.user?.email?`<br><span>${esc(S.user.email)}</span>`:''}</div>
+        <!-- V225 (owner: "put inside here" pointing from the top-bar language select to the
+             profile menu). Language is a personal preference set once, not a per-task control,
+             so it belongs with the other account settings rather than beside Record sale. -->
+        <div class="profile-menu-section">${workspaceLanguagePickerV97()}</div>
         <form class="profile-menu-section" id="profileNameFormV158">
           <label for="profileDisplayNameV158">Your display name</label>
           <div class="row"><input id="profileDisplayNameV158" autocomplete="name" maxlength="120" value="${esc(displayName)}" placeholder="e.g. Chuan Seng"><button class="btn ghost sm" type="submit">Save</button></div>
@@ -7805,6 +7809,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
      with the FAIREST person, so choosing Kelvin and being told about Devi read as the system
      overruling the choice. It now answers the question actually asked ("is the person I picked
      free?") and offers the fairer option as a suggestion, not a verdict. */
+  /* V225: the top bar no longer prints the business name, so the account button needs an
+     accessible name of its own. Interpolated attribute copy must be a reviewed template. */
+  accountMenuForBusiness:Object.freeze({en:'Account menu for {business}','zh-CN':'{business} 的账户菜单',ms:'Menu akaun untuk {business}'}),
   selectedStaffFree:Object.freeze({en:'{staff} is free at this time.','zh-CN':'{staff} 在这个时间有空。',ms:'{staff} lapang pada masa ini.'}),
   selectedStaffFreeFairer:Object.freeze({en:'{staff} is free at this time. {alt} has had fewer appointments if you would rather spread the work.','zh-CN':'{staff} 在这个时间有空。若想更平均分配，{alt} 的预约较少。',ms:'{staff} lapang pada masa ini. {alt} kurang temu janji jika anda mahu agihkan kerja.'}),
   /* Owner: "recent appointment - how recent?" — the number now states its own window. */
@@ -7875,7 +7882,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany','recentAppointments','reversalOf',
-  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow',
+  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
@@ -8064,7 +8071,7 @@ function renderShell(page){
         ${globalActionsHtml()}
         ${mobileSearchShellHtml()}
         <div class="topbar-branch-scope-v210" id="profileBranchScopeV158" aria-live="polite"></div>
-        ${workspaceLanguagePickerV97()}
+
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
         ${bellHtml()}
         ${profileHtml()}
@@ -8413,16 +8420,27 @@ function normaliseReportingScopeV155({branches=[]}={}){
   }
   return reportingScopeV155;
 }
+/* V225: with the per-page scope pickers removed, the top bar is the only control left — so it
+   has to actually govern. "All branches" there means consolidated reporting; a named branch
+   means that branch. Deriving it here rather than storing a second copy is what stops the two
+   from disagreeing, which is the whole reason the second picker was struck out. */
 function currentReportingScopePayloadV155(branches=[]){
   const scope=normaliseReportingScopeV155({branches});
+  const usable=activeBranchesForScopeV217(branches);
+  const followsTopBar=scope.mode!=='selected';
+  const mode=followsTopBar?(selectedBranchId?'current':'all'):'selected';
   return {
-    p_scope_mode:scope.mode,
-    p_branch_ids:scope.mode==='selected'?scope.branchIds:[],
+    p_scope_mode:usable.length?mode:scope.mode,
+    p_branch_ids:mode==='selected'?scope.branchIds:[],
     p_operational_branch:reportingOperationalBranchIdV155(branches)
   };
 }
 function reportingScopeLabelV155(branches=[]){
   const scope=normaliseReportingScopeV155({branches});
+  /* V225: follow the same derivation as the payload, so a caption never contradicts the numbers. */
+  if(scope.mode!=='selected'&&activeBranchesForScopeV217(branches).length&&!selectedBranchId){
+    return branches.length>1?'All accessible branches':(branches[0]?.name||'All accessible branches');
+  }
   const byId=new Map((branches||[]).map(branch=>[branch.id,branch.name||'Branch']));
   if(scope.mode==='all')return branches.length>1?'All accessible branches':(branches[0]?.name||'All accessible branches');
   if(scope.mode==='selected'){
@@ -8599,7 +8617,7 @@ async function dashboard(){
     <header class="v150-titlebar">
       <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <div class="v150-title-actions dashboard-range">
-        <span id="dashboardReportingScopeWrap" aria-label="Dashboard reporting scope"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></span>
+
         <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
         <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
       </div>
@@ -8761,9 +8779,16 @@ async function dashboard(){
       metrics.push({key:'inactive',value:inactiveTotal,hint:''});
     }
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
+       modal that then offered a link to the report. The tile IS the link — the definition it
+       carried is still available inside the report it lands on, so the modal was a stop on the
+       way to somewhere the owner had already said they wanted to go. */
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
-      openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
+      const route=dashboardMetricDefinitionsV141[key]?.route;
+      if(key==='inactive')pendingCustomerInactivity=30;
+      if(route)nav(route);
+      else openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
     if(loyalty){
       if(!loyaltyVisibleV170)loyalty.innerHTML='';
@@ -8832,6 +8857,10 @@ async function dashboard(){
     if(customerMetricsAvailable)C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     if(customerMetricsAvailable)C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
+  /* V225: the owner struck the "Current branch / Cubbly · Orchard" picker off the Dashboard and
+     the Customers page. The top bar already carries one "Viewing" control for the whole
+     workspace, and a second one on the page contradicted it as often as it agreed. The scope
+     itself still applies — reportingScopeV155 is unchanged and still sent to every RPC. */
   await renderReportingScopeSelectorV155(load,isDashboardCurrent,'dashboardReportingScopeWrap');
   if(isDashboardCurrent())await load();
 }
@@ -9026,7 +9055,7 @@ async function clientsPage(){
       </div>
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="min-width:min(100%,280px)"><label>Reporting scope</label><div id="clientReportingScopeWrap"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></div></div><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -17976,7 +18005,7 @@ async function appointmentsPage(){
           <button class="btn" id="ago">${CUI.icon('check',{size:18})} Book appointment</button></div>
       </section>`:''}
       <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><div class="v150-segment" role="tablist" aria-label="Appointment view"><button type="button" id="appointmentCalendarSeg" aria-pressed="true">Calendar</button><button type="button" id="appointmentListSeg" aria-pressed="false">List</button></div><span class="spacer"></span>
-        <label class="sr-only" for="calendarBranch">Appointment branch</label><span class="appointment-filter-with-icon">${CUI.icon('branch',{size:17,className:'appointment-filter-icon'})}<select id="calendarBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select></span>
+        
         
         <label class="sr-only" for="stfFilter">Appointment staff</label><span class="appointment-filter-with-icon">${CUI.icon('staff',{size:17,className:'appointment-filter-icon'})}<select id="stfFilter">${staffOpts(staffFilter,branchId)}</select></span>
         <span id="calendarOnlyControls" class="appointment-toolbar" style="gap:6px;padding:0;border:0;background:transparent">
@@ -18296,7 +18325,9 @@ async function appointmentsPage(){
       loadCalendar();
     };
   }
-  $('calendarBranch').onchange=()=>{selectedBranchId=$('calendarBranch').value;appointmentsPage().catch(fail)};
+  /* V225: the toolbar's own branch picker is gone — the top bar is the single control. The
+     handler is guarded rather than deleted so a stale render can never throw here. */
+  if($('calendarBranch'))$('calendarBranch').onchange=()=>{selectedBranchId=$('calendarBranch').value;appointmentsPage().catch(fail)};
   /* V194 (owner: "remove this" on the calendar service picker). Filtering the calendar to one
      service hid every other booking, which reads as a broken calendar far more often than it
      helps. calendarServiceId stays declared and empty, so the filter and the slot-click

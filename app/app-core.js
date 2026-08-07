@@ -2377,6 +2377,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
      with the FAIREST person, so choosing Kelvin and being told about Devi read as the system
      overruling the choice. It now answers the question actually asked ("is the person I picked
      free?") and offers the fairer option as a suggestion, not a verdict. */
+  /* V225: the top bar no longer prints the business name, so the account button needs an
+     accessible name of its own. Interpolated attribute copy must be a reviewed template. */
+  accountMenuForBusiness:Object.freeze({en:'Account menu for {business}','zh-CN':'{business} 的账户菜单',ms:'Menu akaun untuk {business}'}),
   selectedStaffFree:Object.freeze({en:'{staff} is free at this time.','zh-CN':'{staff} 在这个时间有空。',ms:'{staff} lapang pada masa ini.'}),
   selectedStaffFreeFairer:Object.freeze({en:'{staff} is free at this time. {alt} has had fewer appointments if you would rather spread the work.','zh-CN':'{staff} 在这个时间有空。若想更平均分配，{alt} 的预约较少。',ms:'{staff} lapang pada masa ini. {alt} kurang temu janji jika anda mahu agihkan kerja.'}),
   /* Owner: "recent appointment - how recent?" — the number now states its own window. */
@@ -2447,7 +2450,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany','recentAppointments','reversalOf',
-  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow',
+  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
