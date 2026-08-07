@@ -1425,6 +1425,12 @@
       "path": "db/migrations/20260807_nestly_v213_sales_mix_audit_column.sql",
       "semanticVersion": "v213",
       "proposedDeployVersion": "20260807170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v215_signup_welcome_offer.sql",
+      "semanticVersion": "v215",
+      "proposedDeployVersion": "20260807190000"
     }
   ]
 }

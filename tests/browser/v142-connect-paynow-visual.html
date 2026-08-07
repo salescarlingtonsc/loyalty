@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="85c7c2db17d6677bc7c0da87a9f7def6530bf66808835107b29bedf92ae00db3"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="55644d0169d3726c692adcd751352f9d245b66a2e2329ec30e88e87b3330a756"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1561,7 +1561,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 85c7c2db17d6677bc7c0da87a9f7def6530bf66808835107b29bedf92ae00db3</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 55644d0169d3726c692adcd751352f9d245b66a2e2329ec30e88e87b3330a756</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2484,6 +2484,10 @@ async function tillPage(){
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
+      /* v215: the welcome offer for a first-time sign-up rides in the same entitlements
+         payload as packages and vouchers, because this is the one read the till already
+         makes for a looked-up customer. */
+      customerWelcomeOffer:entitlements.error?null:(entitlements.data?.welcome_offer||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
          missing a service is not the deal the customer was quoted, so it is withheld rather than
@@ -2572,6 +2576,29 @@ async function tillPage(){
     packageUseAttemptsV102.delete(attempt.slot);
     toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
     catalog=null;draw();
+  }
+  /* v215: give the first-visit free item. p_qualifying_sale is the sale that proves the
+     owner's minimum spend; it is null only for a zero-minimum offer, which needs no purchase.
+     The key is stable per grant + sale so a double-tap replays instead of giving a second item. */
+  async function redeemWelcomeOfferV215(qualifyingSaleId){
+    const offer=catalog?.customerWelcomeOffer;
+    if(!offer||busy)return;
+    const label=offer.reward_label||'the free item';
+    if(!confirm(`Give ${label} free to ${cust?.full_name||'this customer'}? This can only be done once.`))return;
+    busy=true;
+    const {data,error}=await sb.rpc('staff_redeem_welcome_offer_v215',{
+      p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,
+      p_qualifying_sale:qualifyingSaleId||null,
+      p_idempotency_key:`v215-${offer.grant_id}-${qualifyingSaleId||'no-sale'}`
+    });
+    if(!isTillCurrent())return;
+    busy=false;
+    if(error)return fail(error);
+    if(data?.status!=='completed')return fail(new Error('The welcome-offer receipt was incomplete. Check the customer before retrying.'));
+    toast(workspaceTemplateTextV97('welcomeOfferGiven',{item:label}));
+    catalog=null;
+    if(doneInfo)doneInfo.welcomeOfferGivenV215=label;
+    draw();
   }
   function changeQty(lineId,delta){
     if(cartLocked())return;
@@ -2819,7 +2846,24 @@ async function tillPage(){
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
             ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
           :'';
-        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        /* v215 (owner: "i need to enable new sign ups redeemption ... minimum spend $5 (get
+           free xx product) ... or no minimum spend and free xx product"). The welcome offer sits
+           at the top of the picker because it is the first thing to settle at a counter.
+           Where the button lives follows the server contract, not convenience: a minimum spend is
+           proved against a REAL recorded sale, so that button appears on the receipt once the
+           sale exists. A zero-minimum offer needs no purchase, so it is given straight from here.
+           Nothing here decides eligibility — staff_redeem_welcome_offer_v215 re-checks all of it. */
+        const welcomeOffer=(!walkin&&catalog.customerWelcomeOffer)?catalog.customerWelcomeOffer:null;
+        const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
+        const welcomeBanner=welcomeOffer
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
+            <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+            ${welcomeMin
+              ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
+              :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
+                <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
+          :'';
+        picker=`${welcomeBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -2916,6 +2960,9 @@ async function tillPage(){
        nothing called it. */
     document.querySelectorAll('[data-use-package]').forEach(b=>b.onclick=()=>
       useCustomerPackage(b.dataset.usePackage));
+    /* v215 */
+    const welcomeButton=$('tWelcomeRedeemV215');
+    if(welcomeButton)welcomeButton.onclick=()=>redeemWelcomeOfferV215();
     document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
@@ -3244,6 +3291,13 @@ async function tillPage(){
         pointsTotal:l.type==='package'&&Number.isFinite(Number(l._packageResult?.pointsTotal))
           ?Number(l._packageResult.pointsTotal):null})),
       hasSale:!!r,extrasTotal:extrasTotalCents(),
+      /* v215: the receipt is where a minimum-spend welcome offer becomes redeemable, because
+         only now does a real sale exist to prove the spend against. Withheld when the sale
+         falls short, so staff are never shown a button the server will refuse. */
+      welcomeOfferV215:(!walkin&&catalog?.customerWelcomeOffer&&r&&r.saleId
+        &&Number(r.total)>=(Number(catalog.customerWelcomeOffer.min_spend_cents)||0))
+        ?{label:catalog.customerWelcomeOffer.reward_label||'Free item',saleId:r.saleId}:null,
+
       pointsEarned:pointsReceipt.pointsEarned,
       pointsTotal:pointsReceipt.pointsTotal,
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
@@ -3312,6 +3366,13 @@ async function tillPage(){
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
+        ${d.welcomeOfferGivenV215
+          ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
+          :d.welcomeOfferV215
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
+              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free for this first-time customer.</p>
+              <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
+          :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
         ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
@@ -3328,6 +3389,10 @@ async function tillPage(){
       businessId:S.biz.id,branchId:tillBranchId,
       saleId:d.saleId,customerName:d.name,isCurrent:isTillCurrent
     });
+    /* v215: the sale that unlocked the offer is passed as the qualifying sale, so the server
+       proves the minimum spend against a real record rather than trusting this screen. */
+    if($('tWelcomeReceiptRedeemV215'))$('tWelcomeReceiptRedeemV215').onclick=()=>
+      redeemWelcomeOfferV215(d.welcomeOfferV215?.saleId||null);
     /* V196 (owner: "allow for QRcode to let user to download or view").
        The QR points at THIS BUSINESS'S customer portal, not at a per-receipt URL. A public
        receipt link would put a purchase record — items, amounts, staff, the customer's points
@@ -3367,7 +3432,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'85c7c2db17d6677bc7c0da87a9f7def6530bf66808835107b29bedf92ae00db3',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'55644d0169d3726c692adcd751352f9d245b66a2e2329ec30e88e87b3330a756',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

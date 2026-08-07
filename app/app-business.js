@@ -4077,6 +4077,10 @@ async function tillPage(){
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
+      /* v215: the welcome offer for a first-time sign-up rides in the same entitlements
+         payload as packages and vouchers, because this is the one read the till already
+         makes for a looked-up customer. */
+      customerWelcomeOffer:entitlements.error?null:(entitlements.data?.welcome_offer||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
          missing a service is not the deal the customer was quoted, so it is withheld rather than
@@ -4165,6 +4169,29 @@ async function tillPage(){
     packageUseAttemptsV102.delete(attempt.slot);
     toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
     catalog=null;draw();
+  }
+  /* v215: give the first-visit free item. p_qualifying_sale is the sale that proves the
+     owner's minimum spend; it is null only for a zero-minimum offer, which needs no purchase.
+     The key is stable per grant + sale so a double-tap replays instead of giving a second item. */
+  async function redeemWelcomeOfferV215(qualifyingSaleId){
+    const offer=catalog?.customerWelcomeOffer;
+    if(!offer||busy)return;
+    const label=offer.reward_label||'the free item';
+    if(!confirm(`Give ${label} free to ${cust?.full_name||'this customer'}? This can only be done once.`))return;
+    busy=true;
+    const {data,error}=await sb.rpc('staff_redeem_welcome_offer_v215',{
+      p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,
+      p_qualifying_sale:qualifyingSaleId||null,
+      p_idempotency_key:`v215-${offer.grant_id}-${qualifyingSaleId||'no-sale'}`
+    });
+    if(!isTillCurrent())return;
+    busy=false;
+    if(error)return fail(error);
+    if(data?.status!=='completed')return fail(new Error('The welcome-offer receipt was incomplete. Check the customer before retrying.'));
+    toast(workspaceTemplateTextV97('welcomeOfferGiven',{item:label}));
+    catalog=null;
+    if(doneInfo)doneInfo.welcomeOfferGivenV215=label;
+    draw();
   }
   function changeQty(lineId,delta){
     if(cartLocked())return;
@@ -4412,7 +4439,24 @@ async function tillPage(){
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
             ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
           :'';
-        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        /* v215 (owner: "i need to enable new sign ups redeemption ... minimum spend $5 (get
+           free xx product) ... or no minimum spend and free xx product"). The welcome offer sits
+           at the top of the picker because it is the first thing to settle at a counter.
+           Where the button lives follows the server contract, not convenience: a minimum spend is
+           proved against a REAL recorded sale, so that button appears on the receipt once the
+           sale exists. A zero-minimum offer needs no purchase, so it is given straight from here.
+           Nothing here decides eligibility — staff_redeem_welcome_offer_v215 re-checks all of it. */
+        const welcomeOffer=(!walkin&&catalog.customerWelcomeOffer)?catalog.customerWelcomeOffer:null;
+        const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
+        const welcomeBanner=welcomeOffer
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
+            <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+            ${welcomeMin
+              ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
+              :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
+                <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
+          :'';
+        picker=`${welcomeBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -4509,6 +4553,9 @@ async function tillPage(){
        nothing called it. */
     document.querySelectorAll('[data-use-package]').forEach(b=>b.onclick=()=>
       useCustomerPackage(b.dataset.usePackage));
+    /* v215 */
+    const welcomeButton=$('tWelcomeRedeemV215');
+    if(welcomeButton)welcomeButton.onclick=()=>redeemWelcomeOfferV215();
     document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
@@ -4837,6 +4884,13 @@ async function tillPage(){
         pointsTotal:l.type==='package'&&Number.isFinite(Number(l._packageResult?.pointsTotal))
           ?Number(l._packageResult.pointsTotal):null})),
       hasSale:!!r,extrasTotal:extrasTotalCents(),
+      /* v215: the receipt is where a minimum-spend welcome offer becomes redeemable, because
+         only now does a real sale exist to prove the spend against. Withheld when the sale
+         falls short, so staff are never shown a button the server will refuse. */
+      welcomeOfferV215:(!walkin&&catalog?.customerWelcomeOffer&&r&&r.saleId
+        &&Number(r.total)>=(Number(catalog.customerWelcomeOffer.min_spend_cents)||0))
+        ?{label:catalog.customerWelcomeOffer.reward_label||'Free item',saleId:r.saleId}:null,
+
       pointsEarned:pointsReceipt.pointsEarned,
       pointsTotal:pointsReceipt.pointsTotal,
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
@@ -4905,6 +4959,13 @@ async function tillPage(){
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
+        ${d.welcomeOfferGivenV215
+          ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
+          :d.welcomeOfferV215
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
+              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free for this first-time customer.</p>
+              <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
+          :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
         ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
@@ -4921,6 +4982,10 @@ async function tillPage(){
       businessId:S.biz.id,branchId:tillBranchId,
       saleId:d.saleId,customerName:d.name,isCurrent:isTillCurrent
     });
+    /* v215: the sale that unlocked the offer is passed as the qualifying sale, so the server
+       proves the minimum spend against a real record rather than trusting this screen. */
+    if($('tWelcomeReceiptRedeemV215'))$('tWelcomeReceiptRedeemV215').onclick=()=>
+      redeemWelcomeOfferV215(d.welcomeOfferV215?.saleId||null);
     /* V196 (owner: "allow for QRcode to let user to download or view").
        The QR points at THIS BUSINESS'S customer portal, not at a per-receipt URL. A public
        receipt link would put a purchase record — items, amounts, staff, the customer's points
@@ -7117,6 +7182,117 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
       giftcards:Boolean(giftcardsError)||Boolean(modules.includes('giftcards')&&giftcardPreferences?.status!=='available')}
   };
 }
+/* v215 — welcome offer for first-time sign-ups.
+   Owner: "i need to enable new sign ups redeemption (criteria set by boss): - example minimum
+   spend $5 (get free xx product) - redeem using qrcode for first time sign ups only. or no
+   minimum spend and free xx product."
+   It lives in the Programmes list next to the other rewards because that is where an owner
+   looks for "what do my customers get", not in Settings. */
+function welcomeOfferRowV215(status,canSetup,canRewards){
+  if(!canRewards)return '';
+  const configured=!!status?.configured;
+  const active=configured&&status.active===true;
+  const min=Number(status?.min_spend_cents)||0;
+  const label=status?.reward_label||'';
+  const copy=!status
+    ?'Status could not be confirmed. Retry the programme overview.'
+    :!configured
+    ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
+    :status.item_available===false
+    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
+    :active
+    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
+    :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
+  const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
+    :active?'Live':'Paused';
+  const tone=active&&status?.item_available!==false?'on':'off';
+  const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
+    ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
+  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
+    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p></div>`
+    +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
+    +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
+  return canSetup
+    ?`<button type="button" class="grow-programme-row" data-programme-kind="welcome" data-welcome-offer-edit-v215>${inner}</button>`
+    :`<article class="grow-programme-row" data-programme-kind="welcome">${inner}</article>`;
+}
+/* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
+   with a free item, or no minimum with a free item. The item comes from the live catalogue —
+   a free item that is not on sale cannot be handed over, so it cannot be chosen. */
+async function openWelcomeOfferEditorV215(current,onSaved){
+  const [services,products]=await Promise.all([
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+  ]);
+  if(services.error&&products.error)return fail(services.error||products.error);
+  const items=[
+    ...(services.data||[]).map(row=>({kind:'service',id:row.id,name:row.name})),
+    ...(products.data||[]).map(row=>({kind:'product',id:row.id,name:row.name}))
+  ];
+  if(!items.length)return toast('Add a service or product first — the welcome offer gives one away');
+  const selected=current?.reward_catalog_id
+    ?`${current.reward_catalog_kind}:${current.reward_catalog_id}`
+    :`${items[0].kind}:${items[0].id}`;
+  const minValue=Number(current?.min_spend_cents)||0;
+  document.querySelector('#welcomeOfferModalV215')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="welcomeOfferModalV215" role="dialog" aria-modal="true" aria-labelledby="welcomeOfferTitleV215" tabindex="-1">
+    <section class="modal-card" style="max-width:560px">
+      <div class="row"><div><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px">Welcome offer</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button></div>
+      <p class="muted small">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p>
+      <label class="check-row" style="margin-top:12px"><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}><span>Give new sign-ups a welcome offer</span></label>
+      <label for="welcomeItemV215" style="margin-top:14px">Free item</label>
+      <select id="welcomeItemV215">${items.map(item=>`<option value="${esc(item.kind+':'+item.id)}" ${selected===item.kind+':'+item.id?'selected':''}>${esc(item.name)} (${item.kind})</option>`).join('')}</select>
+      <fieldset style="margin-top:16px;border:0;padding:0">
+        <legend class="small"><b>When can they claim it?</b></legend>
+        <label class="check-row"><input type="radio" name="welcomeMinV215" value="none" ${minValue?'':'checked'}><span>Straight away — no minimum spend</span></label>
+        <label class="check-row"><input type="radio" name="welcomeMinV215" value="min" ${minValue?'checked':''}><span>After they spend a minimum amount</span></label>
+        <label for="welcomeMinAmountV215" style="margin-top:10px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
+        <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
+      </fieldset>
+      <label for="welcomeExpiryV215" style="margin-top:14px">Expires after (days, optional)</label>
+      <input id="welcomeExpiryV215" inputmode="numeric" placeholder="Leave blank for no expiry" value="${current?.expiry_days?String(current.expiry_days):''}">
+      <p class="muted small" style="margin-top:12px">Staff give the item from Record sale after looking the customer up. Nothing is charged, and the visit is recorded at zero.</p>
+      <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="welcomeSaveV215">Save welcome offer</button><button type="button" class="btn ghost sm" id="welcomeCancelV215">Cancel</button></div>
+    </section></div>`);
+  const dialog=$('welcomeOfferModalV215');
+  let deactivate;
+  const close=()=>deactivate?.();
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#welcomeItemV215'});
+  $('welcomeCloseV215').onclick=close;
+  $('welcomeCancelV215').onclick=close;
+  const syncMin=()=>{
+    const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    $('welcomeMinAmountV215').disabled=!wantsMin;
+  };
+  document.querySelectorAll('input[name="welcomeMinV215"]').forEach(radio=>radio.onchange=syncMin);
+  syncMin();
+  $('welcomeSaveV215').onclick=async()=>{
+    const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    let minCents=0;
+    if(wantsMin){
+      const raw=String($('welcomeMinAmountV215').value||'').trim();
+      if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter the minimum spend, for example 5.00');
+      minCents=Math.round(parseFloat(raw)*100);
+      if(minCents<1)return toast('A minimum spend must be more than zero — or choose "no minimum spend"');
+    }
+    const expiryRaw=String($('welcomeExpiryV215').value||'').trim();
+    let expiry=null;
+    if(expiryRaw){
+      if(!/^\d+$/.test(expiryRaw)||Number(expiryRaw)<1||Number(expiryRaw)>3650)return toast('Expiry must be a whole number of days from 1 to 3650');
+      expiry=Number(expiryRaw);
+    }
+    const [kind,id]=String($('welcomeItemV215').value||'').split(':');
+    const {error}=await sb.rpc('business_set_welcome_offer_v215',{
+      p_business:S.biz.id,p_active:$('welcomeActiveV215').checked,
+      p_min_spend_cents:minCents,p_reward_catalog_kind:kind,
+      p_reward_catalog_id:id,p_expiry_days:expiry
+    });
+    if(error)return fail(error);
+    toast('Welcome offer saved');
+    close();
+    if(onSaved)onSaved();
+  };
+}
 function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null}={}){
   const model=loyalty?.loyalty_model||loyaltyModel||'points';
   const unit=model==='stamps'?'stamps':'points';
@@ -7819,6 +7995,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const rewardJourney=ownerRewardJourneyV122({
     rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
   });
+  /* v215: the welcome offer is a reward, so it belongs in this list rather than buried in
+     Settings. Read separately: a failure here must not blank the whole programme overview. */
+  const welcomeOfferStatusV215=canRewards
+    ?await sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
+    :null;
+  if(!isGrowCurrent())return;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
@@ -7949,6 +8131,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
@@ -8407,6 +8590,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      simplified to one list (owner: "alot of overlapping roles ... i need it more simplified").
      Its wiring outlived it and could never fire — openRewardsAutoSetup is now reached from the
      programme rows themselves, which call it as the draft-creation gate when no draft exists. */
+  /* v215: re-render the Programmes list after a save so the row reflects the new state
+     immediately — an owner who just switched the offer on must not still see "Not set up". */
+  document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
+    openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+      ()=>growPage(routedSurface,hashParam,routedFocus)));
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'

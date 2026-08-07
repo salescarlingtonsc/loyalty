@@ -2313,6 +2313,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   packageSoldWithPoints:Object.freeze({en:'Package sold · {earned} points earned · {total} total points','zh-CN':'配套已售出 · 获得 {earned} 分 · 总积分 {total}',ms:'Pakej dijual · {earned} mata diperoleh · jumlah mata {total}'}),
   packageSoldNoPoints:Object.freeze({en:'Package sold · 0 points earned · {total} total points','zh-CN':'配套已售出 · 获得 0 分 · 总积分 {total}',ms:'Pakej dijual · 0 mata diperoleh · jumlah mata {total}'}),
   giftCardLoaded:Object.freeze({en:'{amount} loaded onto account 🎉','zh-CN':'已将 {amount} 存入账户 🎉',ms:'{amount} dimasukkan ke dalam akaun 🎉'}),
+  /* v215: the welcome offer names the item that was handed over, so staff and customer are
+     looking at the same words. Interpolated runtime copy has to be a reviewed template. */
+  welcomeOfferGiven:Object.freeze({en:'{item} given free — welcome offer used ✓','zh-CN':'已免费赠送 {item} —— 迎新礼遇已使用 ✓',ms:'{item} diberi percuma — tawaran selamat datang digunakan ✓'}),
   sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
   catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
   catalogueDisabled:Object.freeze({en:'Catalogue-first checkout disabled','zh-CN':'已停用目录优先结账',ms:'Pembayaran katalog dahulu dinyahaktifkan'}),
@@ -2398,7 +2401,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'receiptConfirmationFailed','receiptConfirmationsFailed',
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
   'packageVersionCreated','packageSoldWithPoints','packageSoldNoPoints',
-  'giftCardLoaded','sessionUsed',
+  'giftCardLoaded','sessionUsed','welcomeOfferGiven',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',

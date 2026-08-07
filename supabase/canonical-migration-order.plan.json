@@ -1426,6 +1426,12 @@
       "version": "20260807170000",
       "name": "nestly_v213_sales_mix_audit_column",
       "sourcePath": "db/migrations/20260807_nestly_v213_sales_mix_audit_column.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807190000",
+      "name": "nestly_v215_signup_welcome_offer",
+      "sourcePath": "db/migrations/20260807_nestly_v215_signup_welcome_offer.sql"
     }
   ]
 }

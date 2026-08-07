@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="528b0a9baaf0b586dc06072e065733ae31ef97abff11e9c3b5495ea9a2ecc763"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="a9c5a8bb87e641969b0b70e606118bce1ae4db736483d75a8a4efb1b56ca4237"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1560,7 +1560,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 528b0a9baaf0b586dc06072e065733ae31ef97abff11e9c3b5495ea9a2ecc763</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · a9c5a8bb87e641969b0b70e606118bce1ae4db736483d75a8a4efb1b56ca4237</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -1949,6 +1949,117 @@ function pruneRewardSiblingsV139(root){
       giftcards:Boolean(giftcardsError)||Boolean(modules.includes('giftcards')&&giftcardPreferences?.status!=='available')}
   };
 }
+/* v215 — welcome offer for first-time sign-ups.
+   Owner: "i need to enable new sign ups redeemption (criteria set by boss): - example minimum
+   spend $5 (get free xx product) - redeem using qrcode for first time sign ups only. or no
+   minimum spend and free xx product."
+   It lives in the Programmes list next to the other rewards because that is where an owner
+   looks for "what do my customers get", not in Settings. */
+function welcomeOfferRowV215(status,canSetup,canRewards){
+  if(!canRewards)return '';
+  const configured=!!status?.configured;
+  const active=configured&&status.active===true;
+  const min=Number(status?.min_spend_cents)||0;
+  const label=status?.reward_label||'';
+  const copy=!status
+    ?'Status could not be confirmed. Retry the programme overview.'
+    :!configured
+    ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
+    :status.item_available===false
+    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
+    :active
+    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
+    :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
+  const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
+    :active?'Live':'Paused';
+  const tone=active&&status?.item_available!==false?'on':'off';
+  const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
+    ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
+  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
+    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p></div>`
+    +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
+    +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
+  return canSetup
+    ?`<button type="button" class="grow-programme-row" data-programme-kind="welcome" data-welcome-offer-edit-v215>${inner}</button>`
+    :`<article class="grow-programme-row" data-programme-kind="welcome">${inner}</article>`;
+}
+/* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
+   with a free item, or no minimum with a free item. The item comes from the live catalogue —
+   a free item that is not on sale cannot be handed over, so it cannot be chosen. */
+async function openWelcomeOfferEditorV215(current,onSaved){
+  const [services,products]=await Promise.all([
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+  ]);
+  if(services.error&&products.error)return fail(services.error||products.error);
+  const items=[
+    ...(services.data||[]).map(row=>({kind:'service',id:row.id,name:row.name})),
+    ...(products.data||[]).map(row=>({kind:'product',id:row.id,name:row.name}))
+  ];
+  if(!items.length)return toast('Add a service or product first — the welcome offer gives one away');
+  const selected=current?.reward_catalog_id
+    ?`${current.reward_catalog_kind}:${current.reward_catalog_id}`
+    :`${items[0].kind}:${items[0].id}`;
+  const minValue=Number(current?.min_spend_cents)||0;
+  document.querySelector('#welcomeOfferModalV215')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="welcomeOfferModalV215" role="dialog" aria-modal="true" aria-labelledby="welcomeOfferTitleV215" tabindex="-1">
+    <section class="modal-card" style="max-width:560px">
+      <div class="row"><div><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px">Welcome offer</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button></div>
+      <p class="muted small">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p>
+      <label class="check-row" style="margin-top:12px"><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}><span>Give new sign-ups a welcome offer</span></label>
+      <label for="welcomeItemV215" style="margin-top:14px">Free item</label>
+      <select id="welcomeItemV215">${items.map(item=>`<option value="${esc(item.kind+':'+item.id)}" ${selected===item.kind+':'+item.id?'selected':''}>${esc(item.name)} (${item.kind})</option>`).join('')}</select>
+      <fieldset style="margin-top:16px;border:0;padding:0">
+        <legend class="small"><b>When can they claim it?</b></legend>
+        <label class="check-row"><input type="radio" name="welcomeMinV215" value="none" ${minValue?'':'checked'}><span>Straight away — no minimum spend</span></label>
+        <label class="check-row"><input type="radio" name="welcomeMinV215" value="min" ${minValue?'checked':''}><span>After they spend a minimum amount</span></label>
+        <label for="welcomeMinAmountV215" style="margin-top:10px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
+        <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
+      </fieldset>
+      <label for="welcomeExpiryV215" style="margin-top:14px">Expires after (days, optional)</label>
+      <input id="welcomeExpiryV215" inputmode="numeric" placeholder="Leave blank for no expiry" value="${current?.expiry_days?String(current.expiry_days):''}">
+      <p class="muted small" style="margin-top:12px">Staff give the item from Record sale after looking the customer up. Nothing is charged, and the visit is recorded at zero.</p>
+      <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="welcomeSaveV215">Save welcome offer</button><button type="button" class="btn ghost sm" id="welcomeCancelV215">Cancel</button></div>
+    </section></div>`);
+  const dialog=$('welcomeOfferModalV215');
+  let deactivate;
+  const close=()=>deactivate?.();
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#welcomeItemV215'});
+  $('welcomeCloseV215').onclick=close;
+  $('welcomeCancelV215').onclick=close;
+  const syncMin=()=>{
+    const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    $('welcomeMinAmountV215').disabled=!wantsMin;
+  };
+  document.querySelectorAll('input[name="welcomeMinV215"]').forEach(radio=>radio.onchange=syncMin);
+  syncMin();
+  $('welcomeSaveV215').onclick=async()=>{
+    const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    let minCents=0;
+    if(wantsMin){
+      const raw=String($('welcomeMinAmountV215').value||'').trim();
+      if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter the minimum spend, for example 5.00');
+      minCents=Math.round(parseFloat(raw)*100);
+      if(minCents<1)return toast('A minimum spend must be more than zero — or choose "no minimum spend"');
+    }
+    const expiryRaw=String($('welcomeExpiryV215').value||'').trim();
+    let expiry=null;
+    if(expiryRaw){
+      if(!/^\d+$/.test(expiryRaw)||Number(expiryRaw)<1||Number(expiryRaw)>3650)return toast('Expiry must be a whole number of days from 1 to 3650');
+      expiry=Number(expiryRaw);
+    }
+    const [kind,id]=String($('welcomeItemV215').value||'').split(':');
+    const {error}=await sb.rpc('business_set_welcome_offer_v215',{
+      p_business:S.biz.id,p_active:$('welcomeActiveV215').checked,
+      p_min_spend_cents:minCents,p_reward_catalog_kind:kind,
+      p_reward_catalog_id:id,p_expiry_days:expiry
+    });
+    if(error)return fail(error);
+    toast('Welcome offer saved');
+    close();
+    if(onSaved)onSaved();
+  };
+}
     function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null}={}){
   const model=loyalty?.loyalty_model||loyaltyModel||'points';
   const unit=model==='stamps'?'stamps':'points';
@@ -2026,6 +2137,12 @@ function pruneRewardSiblingsV139(root){
   const rewardJourney=ownerRewardJourneyV122({
     rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
   });
+  /* v215: the welcome offer is a reward, so it belongs in this list rather than buried in
+     Settings. Read separately: a failure here must not blank the whole programme overview. */
+  const welcomeOfferStatusV215=canRewards
+    ?await sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
+    :null;
+  if(!isGrowCurrent())return;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
@@ -2156,6 +2273,7 @@ function pruneRewardSiblingsV139(root){
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
@@ -2614,6 +2732,11 @@ function pruneRewardSiblingsV139(root){
      simplified to one list (owner: "alot of overlapping roles ... i need it more simplified").
      Its wiring outlived it and could never fire — openRewardsAutoSetup is now reached from the
      programme rows themselves, which call it as the draft-creation gate when no draft exists. */
+  /* v215: re-render the Programmes list after a save so the row reflects the new state
+     immediately — an owner who just switched the offer on must not still see "Not set up". */
+  document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
+    openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+      ()=>growPage(routedSurface,hashParam,routedFocus)));
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -2722,7 +2845,7 @@ function pruneRewardSiblingsV139(root){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'528b0a9baaf0b586dc06072e065733ae31ef97abff11e9c3b5495ea9a2ecc763',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'a9c5a8bb87e641969b0b70e606118bce1ae4db736483d75a8a4efb1b56ca4237',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
