@@ -1407,6 +1407,18 @@
       "path": "db/migrations/20260807_nestly_v201_receipt_storage_policies.sql",
       "semanticVersion": "v201",
       "proposedDeployVersion": "20260807130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v207_staff_invite_and_owner_approval.sql",
+      "semanticVersion": "v207",
+      "proposedDeployVersion": "20260807140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v209_static_single_join_qr.sql",
+      "semanticVersion": "v209",
+      "proposedDeployVersion": "20260807150000"
     }
   ]
 }

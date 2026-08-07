@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 232,
-  "executableCount": 218,
+  "itemCount": 234,
+  "executableCount": 220,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -322,7 +322,7 @@
     },
     {
       "sourceDeployVersion": "20260807",
-      "count": 20,
+      "count": 22,
       "paths": [
         "db/migrations/20260807_nestly_v185_prospect_archive_merge_erase.sql",
         "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql",
@@ -343,7 +343,9 @@
         "db/migrations/20260807_nestly_v202a_activate_branch_on_paid_command.sql",
         "db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql",
         "db/migrations/20260807_nestly_v204_bundle_priced_by_the_server.sql",
-        "db/migrations/20260807_nestly_v206_fast_corrections.sql"
+        "db/migrations/20260807_nestly_v206_fast_corrections.sql",
+        "db/migrations/20260807_nestly_v207_staff_invite_and_owner_approval.sql",
+        "db/migrations/20260807_nestly_v209_static_single_join_qr.sql"
       ]
     }
   ],
@@ -2203,6 +2205,22 @@
       "semanticVersion": "v201",
       "proposedDeployVersion": "20260807130000",
       "sha256": "4b3e0ad3b6d178ad6469a8b1eba3fe6adf7b3ffb5c80969b1b148a889547d47d"
+    },
+    {
+      "order": 233,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v207_staff_invite_and_owner_approval.sql",
+      "semanticVersion": "v207",
+      "proposedDeployVersion": "20260807140000",
+      "sha256": "9e4cca4d1ab94c236a6b1e5e34c9eeb2664104478ff097bcc90bc3cadf1681de"
+    },
+    {
+      "order": 234,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v209_static_single_join_qr.sql",
+      "semanticVersion": "v209",
+      "proposedDeployVersion": "20260807150000",
+      "sha256": "6463cde8249525c2b543b1956b09344a247438d1ef4c944bbe86cae667c67b08"
     }
   ]
 }

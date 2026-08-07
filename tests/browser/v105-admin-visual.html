@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="4db336ff0090423bbc8ac740f0b7c9da6006b938b0f4bdb2a82059fb4539798f">
+<meta name="v105-production-component-sha256" content="d7a1fbc4d08a53e2b3e92138e528ed0541c798be0eb17c64fd34db3578c5c184">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -126,6 +126,16 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .staff-group-head-v209 h3{font-size:1rem;display:flex;align-items:center;gap:8px}
 .staff-group-count-v209{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--tint);color:var(--coral);font-size:12px;font-weight:750}
 .staff-group-head-v209 p{margin-top:3px}
+/* V210 branch scope in the top bar. It sits beside the language picker and stays put: the owner
+   asked for it "fixed all the way", because the scope decides what every figure on the page
+   means. Hidden below 900px, where the bar is already tight — the profile menu still carries the
+   branch NAME there, so the scope is never invisible, only relocated. */
+.topbar-branch-scope-v210{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.topbar-branch-scope-v210 select{width:auto;min-width:150px;max-width:220px;min-height:44px;padding:8px 12px;border-radius:999px;font-size:13.5px;font-weight:600}
+.topbar-branch-label-v210{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:750}
+@media(max-width:900px){.topbar-branch-scope-v210{display:none}}
+.profile-branch-readout-v210{display:none}
+@media(max-width:900px){.profile-branch-readout-v210{display:block}}
 /* V206: the row a notification sent you to. A brief tint, not a permanent one — it is a "here it
    is", and a highlight that never fades becomes noise on the next render. Respects reduced
    motion by simply not animating; the tint still lands. */
@@ -2234,7 +2244,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 4db336ff0090</span>
+<span class="v105-provenance">v105 production-component harness · d7a1fbc4d08a</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2359,7 +2369,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'4db336ff0090423bbc8ac740f0b7c9da6006b938b0f4bdb2a82059fb4539798f',
+  sourceHash:'d7a1fbc4d08a53e2b3e92138e528ed0541c798be0eb17c64fd34db3578c5c184',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

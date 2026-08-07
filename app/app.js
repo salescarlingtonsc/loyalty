@@ -6893,12 +6893,12 @@ async function hydrateProfileBranchSelectorV158(page){
       selectedBranchId=allowed[0]?.id||null;
     }
     mount.innerHTML=(allowed.length||isAdmin)
-      ?`<select id="profileBranchScopeSelectV158" aria-label="View data for branch">
+      ?`<span class="topbar-branch-label-v210" aria-hidden="true">Viewing</span>
+        <select id="profileBranchScopeSelectV158" aria-label="View data for branch" title="This changes the workspace view. Operational actions still use one selected branch.">
           ${isAdmin?'<option value="">All branches</option>':''}
           ${allowed.map(branch=>`<option value="${branch.id}">${esc(branch.name)}${branch.active===false?' (inactive)':''}</option>`).join('')}
-        </select>
-        <p class="muted small" style="margin:6px 0 0">This changes the workspace view. Operational actions still use one selected branch.</p>`
-      :'<span class="muted small">No branch assigned — ask the owner.</span>';
+        </select>`
+      :'<span class="muted small">No branch assigned</span>';
     const select=$('profileBranchScopeSelectV158');
     if(select){
       select.value=selectedBranchId||'';
@@ -6935,9 +6935,16 @@ function profileHtml(){
           <div class="row"><input id="profileDisplayNameV158" autocomplete="name" maxlength="120" value="${esc(displayName)}" placeholder="e.g. Chuan Seng"><button class="btn ghost sm" type="submit">Save</button></div>
           <div class="profile-menu-saved" id="profileNameStatusV158" aria-live="polite"></div>
         </form>
-        <div class="profile-menu-section">
-          <label for="profileBranchScopeSelectV158">View data for</label>
-          <div id="profileBranchScopeV158"><span class="muted small">${esc(profileBranchScopeLabelV158())}</span></div>
+        <!-- V210 (owner annotation: "move out to outside here at upper right and fixed all the
+             way"). The branch scope decides what every number on the screen MEANS, so burying it
+             two taps inside an account menu meant an owner could read a dashboard without seeing
+             which branch it was for. It now lives in the top bar, always visible. -->
+        <!-- The picker moved to the top bar, but the top bar hides it under 900px where space
+             runs out. So the menu still states WHICH branch is in view on a phone — the scope
+             must never be invisible, only relocated. -->
+        <div class="profile-menu-section profile-branch-readout-v210">
+          <label>Viewing data for</label>
+          <div class="muted small">${esc(profileBranchScopeLabelV158())}</div>
         </div>
         ${S.hasCustomerPersona?`<a href="#/wallet" id="pmWallet">${CUI.icon('wallet',{size:18})}${esc(BRAND.customerLabel)}</a>`:''}
         ${S.myRole==='owner'?`<a href="#/setup" id="pmSetup">${CUI.icon('setup',{size:18})}Get started</a>`:''}
@@ -7838,6 +7845,7 @@ function renderShell(page){
         ${mobileWorkspaceTitleHtml(page)}
         ${globalActionsHtml()}
         ${mobileSearchShellHtml()}
+        <div class="topbar-branch-scope-v210" id="profileBranchScopeV158" aria-live="polite"></div>
         ${workspaceLanguagePickerV97()}
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
         ${bellHtml()}

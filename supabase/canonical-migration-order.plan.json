@@ -1408,6 +1408,18 @@
       "version": "20260807130000",
       "name": "nestly_v201_receipt_storage_policies",
       "sourcePath": "db/migrations/20260807_nestly_v201_receipt_storage_policies.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807140000",
+      "name": "nestly_v207_staff_invite_and_owner_approval",
+      "sourcePath": "db/migrations/20260807_nestly_v207_staff_invite_and_owner_approval.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807150000",
+      "name": "nestly_v209_static_single_join_qr",
+      "sourcePath": "db/migrations/20260807_nestly_v209_static_single_join_qr.sql"
     }
   ]
 }

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="4582825de03d7a7e4424b50cdeff1178c22caa45c3571cc87669f12dbea1bddb"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d0626bddbcee9e3f9443831739ea2b708eeb3aab6d435bc23c983076196acdcb"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -120,6 +120,16 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .staff-group-head-v209 h3{font-size:1rem;display:flex;align-items:center;gap:8px}
 .staff-group-count-v209{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--tint);color:var(--coral);font-size:12px;font-weight:750}
 .staff-group-head-v209 p{margin-top:3px}
+/* V210 branch scope in the top bar. It sits beside the language picker and stays put: the owner
+   asked for it "fixed all the way", because the scope decides what every figure on the page
+   means. Hidden below 900px, where the bar is already tight — the profile menu still carries the
+   branch NAME there, so the scope is never invisible, only relocated. */
+.topbar-branch-scope-v210{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.topbar-branch-scope-v210 select{width:auto;min-width:150px;max-width:220px;min-height:44px;padding:8px 12px;border-radius:999px;font-size:13.5px;font-weight:600}
+.topbar-branch-label-v210{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:750}
+@media(max-width:900px){.topbar-branch-scope-v210{display:none}}
+.profile-branch-readout-v210{display:none}
+@media(max-width:900px){.profile-branch-readout-v210{display:block}}
 /* V206: the row a notification sent you to. A brief tint, not a permanent one — it is a "here it
    is", and a highlight that never fades becomes noise on the next render. Respects reduced
    motion by simply not animating; the tint still lands. */
@@ -1537,7 +1547,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 4582825de03d7a7e4424b50cdeff1178c22caa45c3571cc87669f12dbea1bddb</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d0626bddbcee9e3f9443831739ea2b708eeb3aab6d435bc23c983076196acdcb</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3802,7 +3812,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'4582825de03d7a7e4424b50cdeff1178c22caa45c3571cc87669f12dbea1bddb',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'d0626bddbcee9e3f9443831739ea2b708eeb3aab6d435bc23c983076196acdcb',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
