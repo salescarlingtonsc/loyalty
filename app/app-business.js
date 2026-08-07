@@ -4336,6 +4336,23 @@ async function tillPage(){
 	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
           :'';
+        /* V211 (owner: "i still dont see the package here in record sale - not able to use
+           sessions"). The customer's OWNED packages had no UI at all: catalog.customerPackages
+           was loaded and useCustomerPackage() was defined, but nothing ever called it, so a
+           customer with four paid-for sessions had no way to spend one. The v102 test had been
+           failing on exactly this copy and I had written it off as a stale assertion — it was
+           reporting a live regression.
+           This sits ABOVE "Sell package": at a counter the far commoner act is spending a session
+           the customer already bought, not selling them another one. */
+        const ownedPkgs=(catalog.customerPackages||[]).filter(item=>Number(item.remaining)>0);
+        const ownedPackages=ownedPkgs.length
+          ?`<b class="small" style="display:block;margin-top:14px">Use an existing customer package</b>
+            <p class="muted small" style="margin:4px 0 8px">No payment is taken. One session is deducted and recorded as a visit. No points are earned — they were earned when the package was bought.</p>
+            <div class="till-cart-catalog">${ownedPkgs.map(item=>`<button type="button" class="choice-button" data-use-package="${esc(item.client_package_id)}">
+              <b>${esc(item.plan_name||'Package')}</b>
+              <span class="muted small">${esc(item.service_name||'Session')}${item.variant_label?' · '+esc(item.variant_label):''}</span>
+              <span class="pill ok">${Number(item.remaining)} left</span></button>`).join('')}</div>`
+          :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
           ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
           :'';
@@ -4348,7 +4365,6 @@ async function tillPage(){
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
-        const ownedPackages='';
         const pendingVouchers=(!walkin&&(catalog.customerVouchers||[]).length)
           ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
@@ -4444,6 +4460,13 @@ async function tillPage(){
       const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addCatalogLine(type,item);
     });
+    /* V211: spend a session the customer already paid for. useCustomerPackage confirms, calls
+       use_package_session_v102 with a stable idempotency key, and is reversible afterwards —
+       reversing that session's sale restores it (reverse_sale -> v40_base -> v34_base writes
+       package_session_reversals). This handler is what was missing: the function existed and
+       nothing called it. */
+    document.querySelectorAll('[data-use-package]').forEach(b=>b.onclick=()=>
+      useCustomerPackage(b.dataset.usePackage));
     document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);

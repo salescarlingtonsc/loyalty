@@ -195,6 +195,7 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v206_fast_corrections', 'db/tests/v206_fast_corrections.sql'],
   ['nestly_v207_staff_invite_and_owner_approval', 'db/tests/v207_staff_invite_and_owner_approval.sql'],
   ['nestly_v209_static_single_join_qr', 'db/tests/v209_static_single_join_qr.sql'],
+  ['nestly_v213_sales_mix_audit_column', 'db/tests/v213_sales_mix_audit_column.sql'],
   ['nestly_v197_persistent_join_qr', 'db/tests/v197_persistent_join_qr.sql'],
   ['nestly_v198_join_qr_print_lock', 'db/tests/v198_join_qr_print_lock.sql'],
   ['nestly_v199_receipt_capture', 'db/tests/v199_receipt_capture.sql'],
@@ -704,7 +705,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 191);
+  assert.equal(pending.length, 192);
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

@@ -1419,6 +1419,12 @@
       "path": "db/migrations/20260807_nestly_v209_static_single_join_qr.sql",
       "semanticVersion": "v209",
       "proposedDeployVersion": "20260807150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v213_sales_mix_audit_column.sql",
+      "semanticVersion": "v213",
+      "proposedDeployVersion": "20260807170000"
     }
   ]
 }

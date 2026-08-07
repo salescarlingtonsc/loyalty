@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="d7a1fbc4d08a53e2b3e92138e528ed0541c798be0eb17c64fd34db3578c5c184">
+<meta name="v105-production-component-sha256" content="299ea820e755632ec75899766ad697f074fc9bd107948dc1f19247956900ac7d">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -941,7 +941,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .day-timeline-scroll{max-height:72vh;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
 .day-timeline{display:grid;grid-template-columns:64px repeat(var(--day-columns),minmax(190px,1fr));grid-template-rows:auto var(--day-height);min-width:calc(64px + var(--day-columns)*190px)}
 .day-timeline-head{position:sticky;top:0;left:0;z-index:8;background:#FBFAF8;border-bottom:1px solid var(--line)}
-.day-team-head{position:sticky;top:0;z-index:7;display:flex;align-items:center;gap:10px;min-height:72px;padding:10px 12px;border-left:1px solid var(--hair);border-bottom:1px solid var(--line);background:#FBFAF8}.day-team-head h3{font-size:14px}.day-team-head p{margin:2px 0 0;line-height:1.3}
+/* V212 (owner, third report: "calendar still not able to press into the appointment details").
+   This header is sticky at z-index 7 and the appointment buttons are z-index 6, so once the track
+   is scrolled the header sits OVER the top of an appointment — including its name, which is
+   exactly where anyone taps. Measured in the browser: at one ordinary scroll position the block's
+   title was 68px underneath the header, and that region belongs to the header, which does
+   nothing when clicked. Scroll-dependent, which is why it read as intermittent and why two
+   earlier fixes of mine missed it.
+   The header carries no controls at all — an avatar, a name and the opening hours — so it can
+   keep covering the content visually while never intercepting a tap. scroll-padding-top then
+   stops programmatic scrolls parking an appointment underneath it in the first place. */
+.day-team-head{position:sticky;top:0;z-index:7;display:flex;align-items:center;gap:10px;min-height:72px;padding:10px 12px;border-left:1px solid var(--hair);border-bottom:1px solid var(--line);background:#FBFAF8;pointer-events:none}
+.day-timeline-scroll{scroll-padding-top:76px}.day-team-head h3{font-size:14px}.day-team-head p{margin:2px 0 0;line-height:1.3}
 .day-team-avatar{display:grid;place-items:center;width:38px;height:38px;flex:0 0 auto;border:3px solid var(--staff-color);border-radius:50%;background:#fff;font-weight:800}
 .day-time-axis{position:sticky;left:0;z-index:5;border-right:1px solid var(--line);background:#fff}.day-time-axis span{position:absolute;right:8px;transform:translateY(-8px);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .day-team-track{position:relative;border-right:1px solid var(--hair);background-image:linear-gradient(to bottom,transparent calc(100% - 1px),var(--line) 0);background-size:100% var(--day-hour-height,176px);background-repeat:repeat-y}
@@ -2244,7 +2255,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · d7a1fbc4d08a</span>
+<span class="v105-provenance">v105 production-component harness · 299ea820e755</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2369,7 +2380,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'d7a1fbc4d08a53e2b3e92138e528ed0541c798be0eb17c64fd34db3578c5c184',
+  sourceHash:'299ea820e755632ec75899766ad697f074fc9bd107948dc1f19247956900ac7d',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
