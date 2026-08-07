@@ -1480,6 +1480,12 @@
       "version": "20260807235910",
       "name": "nestly_v231_capabilities_follow_the_points_mode",
       "sourcePath": "db/migrations/20260808_nestly_v231_capabilities_follow_the_points_mode.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235930",
+      "name": "nestly_v232_promotion_lock_cannot_take_down_the_api",
+      "sourcePath": "db/migrations/20260808_nestly_v232_promotion_lock_cannot_take_down_the_api.sql"
     }
   ]
 }

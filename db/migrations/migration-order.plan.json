@@ -1479,6 +1479,12 @@
       "path": "db/migrations/20260808_nestly_v231_capabilities_follow_the_points_mode.sql",
       "semanticVersion": "v231",
       "proposedDeployVersion": "20260807235910"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v232_promotion_lock_cannot_take_down_the_api.sql",
+      "semanticVersion": "v232",
+      "proposedDeployVersion": "20260807235930"
     }
   ]
 }
