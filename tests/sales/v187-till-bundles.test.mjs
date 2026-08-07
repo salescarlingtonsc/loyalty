@@ -82,6 +82,11 @@ test('the picker shows bundles with what is inside them', () => {
   assert.match(app, /data-add-bundle="\$\{esc\(bundle\.id\)\}"/);
   assert.match(app, /bundle\.items\.map\(item=>item\.name\)\.join\(' \+ '\)/);
   assert.match(app, /A bundle adds each of its services at the bundle price\./);
-  assert.match(app, /\$\{svcBtns\}\$\{bundleBtns\}\$\{prodBtns\}/, 'bundles belong with the services');
+  /* V216 inserted per-group headings, so this no longer pins one exact string. The intent —
+     bundles sit immediately after the services they are made of, and before the products — is
+     what is asserted, which is stronger than the literal it replaces. */
+  assert.match(app, /\$\{svcBtns\}\$\{bundleBtns\}/, 'bundles belong with the services');
+  assert.match(app, /\$\{svcHeadingV216\}\$\{svcBtns\}\$\{bundleBtns\}\$\{prodHeadingV216\}\$\{prodBtns\}/,
+    'bundles must stay between the services and the products');
   assert.match(app, /const bundle=\(catalog\.bundles\|\|\[\]\)\.find\(x=>x\.id===b\.dataset\.addBundle\)/);
 });

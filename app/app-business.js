@@ -4456,7 +4456,15 @@ async function tillPage(){
               :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
                 <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
           :'';
-        picker=`${welcomeBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        /* V216 (owner: "i need a product modules - instead of just services (because products
+           have no minutes)"). The picker printed a hardcoded "Services" heading and gave the
+           products no heading at all. A cafe or chicken-rice shop with seven products and no
+           services therefore saw an empty "Services" label followed by unlabelled buttons —
+           the app insisting on a concept that business does not have. Each group now names
+           itself, and a group with nothing in it prints no heading. */
+        const svcHeadingV216=catalog.services.length?'<b class="small" style="display:block">Services</b>':'';
+        const prodHeadingV216=(catalog.products&&catalog.products.length)?'<b class="small" style="display:block;margin-top:14px">Products</b>':'';
+        picker=`${welcomeBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
