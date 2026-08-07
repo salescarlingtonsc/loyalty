@@ -1407,6 +1407,48 @@
       "path": "db/migrations/20260807_nestly_v201_receipt_storage_policies.sql",
       "semanticVersion": "v201",
       "proposedDeployVersion": "20260807130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v207_staff_invite_and_owner_approval.sql",
+      "semanticVersion": "v207",
+      "proposedDeployVersion": "20260807140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v209_static_single_join_qr.sql",
+      "semanticVersion": "v209",
+      "proposedDeployVersion": "20260807150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v213_sales_mix_audit_column.sql",
+      "semanticVersion": "v213",
+      "proposedDeployVersion": "20260807170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v215_signup_welcome_offer.sql",
+      "semanticVersion": "v215",
+      "proposedDeployVersion": "20260807190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v217_recent_window_and_staff_reference_code.sql",
+      "semanticVersion": "v217",
+      "proposedDeployVersion": "20260807195000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v219_products_module_follows_business_config.sql",
+      "semanticVersion": "v219",
+      "proposedDeployVersion": "20260807195500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v220_next_best_times_for_selected_staff.sql",
+      "semanticVersion": "v220",
+      "proposedDeployVersion": "20260807195900"
     }
   ]
 }

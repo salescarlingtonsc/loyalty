@@ -185,6 +185,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Security check could not connect. Please retry, or check your browser and network settings.',
       load:'Security check could not load. Check your connection and try again.',
       continue:'Complete the security check to continue.',
+      interactive:'Tick “Verify you are human” above to continue.',
       showPassword:'Show password',hidePassword:'Hide password',
       passkey:'Sign in with Face ID, Touch ID or passkey',passkeyTitle:'Use Face ID, Touch ID or passkey'
     },
@@ -194,6 +195,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'无法连接安全验证。请重试，或检查浏览器及网络设置。',
       load:'无法加载安全验证。请检查网络连接后重试。',
       continue:'请完成安全验证以继续。',
+      interactive:'请勾选上方的“确认您是真人”以继续。',
       showPassword:'显示密码',hidePassword:'隐藏密码',
       passkey:'使用面容 ID、触控 ID 或通行密钥登录',passkeyTitle:'使用面容 ID、触控 ID 或通行密钥'
     },
@@ -203,6 +205,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Semakan keselamatan tidak dapat disambungkan. Cuba lagi atau semak tetapan pelayar dan rangkaian anda.',
       load:'Semakan keselamatan tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
       continue:'Lengkapkan semakan keselamatan untuk meneruskan.',
+      interactive:'Tandakan “Verify you are human” di atas untuk meneruskan.',
       showPassword:'Tunjukkan kata laluan',hidePassword:'Sembunyikan kata laluan',
       passkey:'Log masuk dengan Face ID, Touch ID atau kunci laluan',passkeyTitle:'Gunakan Face ID, Touch ID atau kunci laluan'
     }
@@ -244,6 +247,11 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       if(destroyed)return;
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
         callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
+        /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
+           security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
+           and the passkey button looked broken while the app was simply waiting for a tick. */
+        'before-interactive-callback':()=>{if(destroyed)return;message(security('interactive'))},
+        'after-interactive-callback':()=>{if(destroyed)return;message(security('loading'))},
         'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
         'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
         'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
@@ -312,9 +320,11 @@ const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?m
 let pendingCustomerSearch='';
 let pendingTillPhone='';
 let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
-/* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
-   birthday / bring-back / referral editors. Module-level because those editors live in
-   different page functions from the Programmes overview that sets it. */
+/* V217. Owner: "new appointment here does not work (in the header - beside record sale)".
+   It navigated to #/appointments and stopped there, with the booking form still collapsed
+   behind its own button — so a control labelled "New appointment" produced a calendar and no
+   form. This flag is consumed once by the appointments page, exactly like pendingApptClientId. */
+let pendingOpenApptFormV217=false;
 let settingsActiveTab='workspace';
 let profileOpen=false;
 let routeDispose=()=>{};
@@ -491,7 +501,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -559,6 +569,15 @@ const OWNER_ERROR_NOISE_RULES_V170=[
   /* Browser-runtime TypeErrors (WebKit: "undefined is not an object (evaluating ...)",
      Chromium: "Cannot read properties of undefined") are app bugs, never owner input errors. */
   [/undefined is not an object|null is not an object|cannot read propert|is not a function|is not defined/i,'Something went wrong on our side. Try again, or contact Peekaa if it continues.'],
+  /* V217. The owner was shown the bare string `foreign_or_inactive_branch_scope` where the
+     customer list should have been. These are precise server codes and correct ones, but they
+     are not sentences. They are translated here rather than at each call site so every surface
+     that surfaces a server error gets the plain-English version. */
+  [/foreign_or_inactive_branch_scope/i,'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.'],
+  [/unauthorised_branch_scope|branch_visibility/i,'You do not have access to the branch being viewed. Choose another branch at the top.'],
+  [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
+  [/empty_selected_branch_scope/i,'Choose at least one branch to report on.'],
+  [/unsupported_reporting_branch_scope/i,'That reporting scope is not supported. Choose a branch at the top.'],
 ];
 const ownerErrorText=error=>{
   const raw=String(error?.message||(typeof error==='string'?error:'')||'').trim();
@@ -1108,10 +1127,14 @@ async function route(){
   }
 }
 
-function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId='',locale='en'}={}){
+function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId='',locale='en',name=''}={}){
   const showLabel=authSecurityCopy(locale,'showPassword'),hideLabel=authSecurityCopy(locale,'hidePassword');
   const inputAttributes=[
     `id="${esc(id)}"`,`type="password"`,`autocomplete="${esc(autocomplete)}"`,
+    /* v193: a password manager pairs a credential from the FIELD NAMES inside a form. Without
+       name="password" next to name="username", Chrome and Safari see two anonymous inputs and
+       never offer to save. */
+    name?`name="${esc(name)}"`:'',
     minlength?`minlength="${esc(minlength)}"`:'',
     describedBy?`aria-describedby="${esc(describedBy)}"`:'',
     placeholder?`placeholder="${esc(placeholder)}"`:''
@@ -2313,6 +2336,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   packageSoldWithPoints:Object.freeze({en:'Package sold · {earned} points earned · {total} total points','zh-CN':'配套已售出 · 获得 {earned} 分 · 总积分 {total}',ms:'Pakej dijual · {earned} mata diperoleh · jumlah mata {total}'}),
   packageSoldNoPoints:Object.freeze({en:'Package sold · 0 points earned · {total} total points','zh-CN':'配套已售出 · 获得 0 分 · 总积分 {total}',ms:'Pakej dijual · 0 mata diperoleh · jumlah mata {total}'}),
   giftCardLoaded:Object.freeze({en:'{amount} loaded onto account 🎉','zh-CN':'已将 {amount} 存入账户 🎉',ms:'{amount} dimasukkan ke dalam akaun 🎉'}),
+  /* v215: the welcome offer names the item that was handed over, so staff and customer are
+     looking at the same words. Interpolated runtime copy has to be a reviewed template. */
+  welcomeOfferGiven:Object.freeze({en:'{item} given free — welcome offer used ✓','zh-CN':'已免费赠送 {item} —— 迎新礼遇已使用 ✓',ms:'{item} diberi percuma — tawaran selamat datang digunakan ✓'}),
   sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
   catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
   catalogueDisabled:Object.freeze({en:'Catalogue-first checkout disabled','zh-CN':'已停用目录优先结账',ms:'Pembayaran katalog dahulu dinyahaktifkan'}),
@@ -2341,6 +2367,14 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   wizardStepReview:Object.freeze({en:'Step {step} of {total} — Review','zh-CN':'第 {step} 步，共 {total} 步——审核',ms:'Langkah {step} daripada {total} — Semakan'}),
   availableStaff:Object.freeze({en:'{staff} is the fairest available choice now. Showing {count} eligible staff member.','zh-CN':'{staff} 是目前最公平的可用选择。显示 {count} 位符合条件的员工。',ms:'{staff} ialah pilihan tersedia yang paling adil sekarang. Menunjukkan {count} kakitangan yang layak.'}),
   availableStaffMany:Object.freeze({en:'{staff} is the fairest available choice now. Showing {count} eligible staff members.','zh-CN':'{staff} 是目前最公平的可用选择。显示 {count} 位符合条件的员工。',ms:'{staff} ialah pilihan tersedia yang paling adil sekarang. Menunjukkan {count} kakitangan yang layak.'}),
+  /* V217. Owner: "i selected kelvin - why it show devi next best time?" — the panel always led
+     with the FAIREST person, so choosing Kelvin and being told about Devi read as the system
+     overruling the choice. It now answers the question actually asked ("is the person I picked
+     free?") and offers the fairer option as a suggestion, not a verdict. */
+  selectedStaffFree:Object.freeze({en:'{staff} is free at this time.','zh-CN':'{staff} 在这个时间有空。',ms:'{staff} lapang pada masa ini.'}),
+  selectedStaffFreeFairer:Object.freeze({en:'{staff} is free at this time. {alt} has had fewer appointments if you would rather spread the work.','zh-CN':'{staff} 在这个时间有空。若想更平均分配，{alt} 的预约较少。',ms:'{staff} lapang pada masa ini. {alt} kurang temu janji jika anda mahu agihkan kerja.'}),
+  /* Owner: "recent appointment - how recent?" — the number now states its own window. */
+  recentInWindow:Object.freeze({en:'{count} in last {window}','zh-CN':'过去{window}内 {count} 个',ms:'{count} dalam {window} lalu'}),
   recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
   reversalOf:Object.freeze({en:'Reversal of {id}','zh-CN':'冲销自 {id}',ms:'Pembalikan bagi {id}'}),
   usedSessionReversedBy:Object.freeze({en:'Used session → reversed by {id}','zh-CN':'已用次数 → 由 {id} 冲销',ms:'Sesi digunakan → dibalikkan oleh {id}'}),
@@ -2398,7 +2432,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'receiptConfirmationFailed','receiptConfirmationsFailed',
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
   'packageVersionCreated','packageSoldWithPoints','packageSoldNoPoints',
-  'giftCardLoaded','sessionUsed',
+  'giftCardLoaded','sessionUsed','welcomeOfferGiven',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
@@ -2407,6 +2441,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany','recentAppointments','reversalOf',
+  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',

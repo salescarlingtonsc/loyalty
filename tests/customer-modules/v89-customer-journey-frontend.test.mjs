@@ -138,7 +138,7 @@ test('passkey sign-in and complete customer passkey management are capability ga
   assert.match(app,/\.modal\{position:fixed;inset:0;z-index:210/,
     'passkey setup must stay above the delayed PWA install prompt on mobile');
   assert.match(app,/sb\.auth\.signInWithPasskey\(\{options:\{captchaToken:challenge\}\}\)/);
-  assert.match(app,/if\(!passkeySupported\|\|!captchaToken\)[\s\S]*Complete the security check before using Face ID, Touch ID or your passkey/);
+  assert.match(app,/if\(!passkeySupported\|\|!captchaToken\)[\s\S]*Complete the security check above first — then Face ID, Touch ID or your passkey/);
   assert.match(app,/captchaToken='';[\s\S]*signInWithPasskey[\s\S]*captchaControl\?\.reset\(\)/);
   assert.match(app,/sb\.auth\.registerPasskey\(\)/);
   assert.match(app,/sb\.auth\.passkey\.list\(\)/);

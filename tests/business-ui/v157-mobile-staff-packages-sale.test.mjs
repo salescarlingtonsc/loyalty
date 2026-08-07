@@ -38,7 +38,16 @@ test('V157 keeps Record sale focused by collapsing package sales and showing ite
   assert.match(recordSale, /class="till-choice-qty"/);
   assert.match(recordSale, /aria-label="\$\{qty\} selected"/);
   assert.match(recordSale, /<details class="till-sale-package-options"><summary>Sell package<\/summary>/);
-  assert.match(recordSale, /const ownedPackages=''/);
+  /* V211: this used to assert `const ownedPackages=''` — it pinned the STUB that emptied the
+     owned-package list. That stub is why an owner could not spend a session a customer had
+     already paid for, and it stood in direct contradiction to the v102 test, which requires the
+     till to show owned packages and consume sessions. The owner reported the symptom directly:
+     "i still dont see the package here in record sale - not able to use sessions".
+     The compactness this test protects is real and is still asserted above: package SALES stay
+     collapsed behind the <details> summary. Spending an existing session is the common act at a
+     counter and is not hidden. */
+  assert.match(recordSale, /const ownedPackages=ownedPkgs\.length/);
+  assert.match(recordSale, /Use an existing customer package/);
 });
 
 test('V157 reorganises Packages into My packages and Customer packages without a sale form', () => {

@@ -211,6 +211,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Security check could not connect. Please retry, or check your browser and network settings.',
       load:'Security check could not load. Check your connection and try again.',
       continue:'Complete the security check to continue.',
+      interactive:'Tick “Verify you are human” above to continue.',
       showPassword:'Show password',hidePassword:'Hide password',
       passkey:'Sign in with Face ID, Touch ID or passkey',passkeyTitle:'Use Face ID, Touch ID or passkey'
     },
@@ -220,6 +221,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'无法连接安全验证。请重试，或检查浏览器及网络设置。',
       load:'无法加载安全验证。请检查网络连接后重试。',
       continue:'请完成安全验证以继续。',
+      interactive:'请勾选上方的“确认您是真人”以继续。',
       showPassword:'显示密码',hidePassword:'隐藏密码',
       passkey:'使用面容 ID、触控 ID 或通行密钥登录',passkeyTitle:'使用面容 ID、触控 ID 或通行密钥'
     },
@@ -229,6 +231,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Semakan keselamatan tidak dapat disambungkan. Cuba lagi atau semak tetapan pelayar dan rangkaian anda.',
       load:'Semakan keselamatan tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
       continue:'Lengkapkan semakan keselamatan untuk meneruskan.',
+      interactive:'Tandakan “Verify you are human” di atas untuk meneruskan.',
       showPassword:'Tunjukkan kata laluan',hidePassword:'Sembunyikan kata laluan',
       passkey:'Log masuk dengan Face ID, Touch ID atau kunci laluan',passkeyTitle:'Gunakan Face ID, Touch ID atau kunci laluan'
     }
@@ -270,6 +273,11 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       if(destroyed)return;
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
         callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
+        /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
+           security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
+           and the passkey button looked broken while the app was simply waiting for a tick. */
+        'before-interactive-callback':()=>{if(destroyed)return;message(security('interactive'))},
+        'after-interactive-callback':()=>{if(destroyed)return;message(security('loading'))},
         'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
         'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
         'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
@@ -451,6 +459,11 @@ let pendingTillPhone='';
 let pendingNotificationFocusV206='';
 let pendingTillRedemptionScan=false;
 let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
+/* V217. Owner: "new appointment here does not work (in the header - beside record sale)".
+   It navigated to #/appointments and stopped there, with the booking form still collapsed
+   behind its own button — so a control labelled "New appointment" produced a calendar and no
+   form. This flag is consumed once by the appointments page, exactly like pendingApptClientId. */
+let pendingOpenApptFormV217=false;
 /* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
    birthday / bring-back / referral editors. Module-level because those editors live in
    different page functions from the Programmes overview that sets it. */
@@ -655,7 +668,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -738,6 +751,15 @@ const OWNER_ERROR_NOISE_RULES_V170=[
   /* Browser-runtime TypeErrors (WebKit: "undefined is not an object (evaluating ...)",
      Chromium: "Cannot read properties of undefined") are app bugs, never owner input errors. */
   [/undefined is not an object|null is not an object|cannot read propert|is not a function|is not defined/i,'Something went wrong on our side. Try again, or contact Peekaa if it continues.'],
+  /* V217. The owner was shown the bare string `foreign_or_inactive_branch_scope` where the
+     customer list should have been. These are precise server codes and correct ones, but they
+     are not sentences. They are translated here rather than at each call site so every surface
+     that surfaces a server error gets the plain-English version. */
+  [/foreign_or_inactive_branch_scope/i,'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.'],
+  [/unauthorised_branch_scope|branch_visibility/i,'You do not have access to the branch being viewed. Choose another branch at the top.'],
+  [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
+  [/empty_selected_branch_scope/i,'Choose at least one branch to report on.'],
+  [/unsupported_reporting_branch_scope/i,'That reporting scope is not supported. Choose a branch at the top.'],
 ];
 const ownerErrorText=error=>{
   const raw=String(error?.message||(typeof error==='string'?error:'')||'').trim();
@@ -1986,10 +2008,14 @@ let customerRegistrationState={
   phone:'',channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false
 };
 let customerAutomaticPasskeyAttempted=false;
-function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId='',locale='en'}={}){
+function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId='',locale='en',name=''}={}){
   const showLabel=authSecurityCopy(locale,'showPassword'),hideLabel=authSecurityCopy(locale,'hidePassword');
   const inputAttributes=[
     `id="${esc(id)}"`,`type="password"`,`autocomplete="${esc(autocomplete)}"`,
+    /* v193: a password manager pairs a credential from the FIELD NAMES inside a form. Without
+       name="password" next to name="username", Chrome and Safari see two anonymous inputs and
+       never offer to save. */
+    name?`name="${esc(name)}"`:'',
     minlength?`minlength="${esc(minlength)}"`:'',
     describedBy?`aria-describedby="${esc(describedBy)}"`:'',
     placeholder?`placeholder="${esc(placeholder)}"`:''
@@ -2283,17 +2309,24 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
     renderCustomerPasswordSignIn(isRouteCurrent,{notice:'Password updated. Sign in with your mobile number and new password.'});
   };
 }
+/* v193 (owner: "save password not working"). A password manager offers to save on a real FORM
+   SUBMIT, from fields it can name: username + password. This screen was two loose inputs and a
+   type="button", so Chrome and Safari had nothing to recognise and never prompted. The phone field
+   also carried autocomplete="tel", which is not the username hint a manager pairs a credential to
+   — and "username webauthn" is the documented pairing for passkey autofill as well. */
 function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeTone='success'}={}){
   if(!isRouteCurrent())return;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerPasswordTitle">
     <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerPasswordTitle">Welcome to ${esc(BRAND.productName)}</h1><p class="muted small" style="margin-top:5px">Sign in with your mobile number and password. Normal sign-in does not send an OTP.</p></div></div>
+    <form id="customerPasswordForm" novalidate>
     <label for="customerPasswordPhone">Singapore mobile number</label>
-    <input id="customerPasswordPhone" type="tel" inputmode="tel" autocomplete="tel webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
+    <input id="customerPasswordPhone" name="username" type="tel" inputmode="tel" autocomplete="username webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
     <label for="customerPassword">Password</label>
-    ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn'})}
+    ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'})}
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px${noticeTone==='success'?';color:var(--green)':''}">${esc(notice)}</p>`:''}</div>
     <div style="margin-top:14px">${authChallengeHtml()}</div>
-    <button class="btn" id="customerPasswordSignIn" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
+    <button class="btn" id="customerPasswordSignIn" type="submit" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
+    </form>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
   </section>`);
@@ -2315,7 +2348,9 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     onToken:(token)=>{
       if(!isRouteCurrent()||!signIn.isConnected)return;
       captchaToken=token;signIn.disabled=!token;passkeyButton.disabled=!passkeySupported||!token;
-      signIn.querySelector('span').textContent=token?'Sign in':'Checking…';
+      /* v193: "Checking…" claimed the APP was busy. Until a token arrives the app is waiting for
+         the security check — and if that check is a checkbox, for the person. */
+      signIn.querySelector('span').textContent=token?'Sign in':'Waiting for security check…';
       if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
         customerAutomaticPasskeyAttempted=true;
         runPasskeySignIn({automatic:true});
@@ -2324,7 +2359,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
       if(!isRouteCurrent()||!signIn.isConnected){control?.destroy();return}
       captchaControl=control;
     });
-  signIn.onclick=async()=>{
+  const submitSignIn=async()=>{
     const phone=normalizeSingaporeCustomerPhone(phoneInput.value),password=passwordInput.value;
     if(!phone||!password){
       errorHost.innerHTML='<div class="err">Enter your Singapore mobile number and password.</div>';return;
@@ -2347,13 +2382,29 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
       signIn.querySelector('span').textContent='Sign in';
       errorHost.innerHTML='<div class="err">The mobile number or password is incorrect.</div>';return;
     }
+    /* Offer the credential to the browser's own manager. The form submit is what makes Chrome and
+       Safari prompt; this is the explicit path for browsers that implement it, and a no-op
+       everywhere else. Peekaa itself never stores the password. */
+    try{
+      if(globalThis.PasswordCredential&&navigator.credentials?.store){
+        await navigator.credentials.store(new globalThis.PasswordCredential({id:phone,password,name:phone}));
+      }
+    }catch{}
     resetCustomerRegistrationState({phone});
     resetClientSessionState({preserveInvitation:true});
     route();
   };
+  /* A real submit — Enter in either field, or the button — is what a password manager listens for. */
+  const signInForm=$('customerPasswordForm');
+  if(signInForm)signInForm.onsubmit=event=>{event.preventDefault();submitSignIn()};
+  else signIn.onclick=submitSignIn;
   const runPasskeySignIn=async({automatic=false}={})=>{
     if(!passkeySupported||!captchaToken){
-      if(!automatic)passkeyStatus.textContent='Complete the security check before using Face ID, Touch ID or your passkey.';
+      if(!automatic){
+        passkeyStatus.textContent=passkeySupported
+          ?'Complete the security check above first — then Face ID, Touch ID or your passkey.'
+          :'Passkeys are not supported in this browser. Sign in with your password.';
+      }
       return;
     }
     const challenge=captchaToken;captchaToken='';passkeyButton.disabled=true;signIn.disabled=true;
@@ -6720,9 +6771,16 @@ function navHtml(page,idPrefix='nav'){
     .filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module));
   const activeKey=page[0]==='client'?'clients':page[0];
   const activeGrp=activeGroupKey(page[0]);
+  /* V219. Owner: "add branch inside (so can add or manage branches using the module as well)".
+     branchesPage exists and is routed, but the nav required 'branches' to be in the resolved
+     module list — and it never is, because staff_module_perms is built from enabled_modules,
+     which is fixed by the sector entitlement and does not include it. So an owner could create a
+     branch from Settings and then had nowhere to manage one. Branches is structural and
+     owner-only, exactly like Staff members, so it is offered on the same terms. */
   const navModuleVisible=m=>m==='dashboard'
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
-    ||(enabled.includes(m)&&(m!=='branches'||S.myRole==='owner'));
+    ||(m==='branches'&&S.myRole==='owner')
+    ||enabled.includes(m);
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.flat){
@@ -6870,7 +6928,14 @@ function wireGlobalActions(){
     const go=$('globalSearchGo');if(go)go.onclick=run;
   }
   const qe=$('globalQuickEarn');if(qe)qe.onclick=()=>nav('#/till');
-  const na=$('globalNewAppt');if(na)na.onclick=()=>nav('#/appointments');
+  const na=$('globalNewAppt');if(na)na.onclick=()=>{
+    /* Only ask for the form when this user may actually book; otherwise the button is the
+       "View calendar" affordance and must stay one. canWriteModule is re-read here rather than
+       reused from globalActionsHtml, whose `canNewAppt` is scoped to that function. */
+    pendingOpenApptFormV217=canWriteModule('appointments');
+    nav('#/appointments');
+    if(location.hash==='#/appointments')route();
+  };
 }
 function userDisplayNameV158(){
   const meta=S.user?.user_metadata||{};
@@ -6888,17 +6953,25 @@ async function hydrateProfileBranchSelectorV158(page){
   try{
     const {isAdmin,branches}=await visibleBranchesForCurrentUser();
     if(!$('profileBranchScopeV158'))return;
-    const allowed=branches||[];
-    if(!isAdmin&&selectedBranchId&&!allowed.some(branch=>branch.id===selectedBranchId)){
-      selectedBranchId=allowed[0]?.id||null;
+    /* V217: only an ACTIVE branch can be a reporting scope — the server refuses any other, so
+       offering one here produced a workspace that could not load its own dashboard or customer
+       list. A branch held back for payment is named below the picker instead of hidden without
+       explanation, so the owner can see it exists and why it is not selectable yet. */
+    const allowed=activeBranchesForScopeV217(branches);
+    const withheld=(branches||[]).filter(branch=>branch.active===false);
+    if(selectedBranchId&&!allowed.some(branch=>branch.id===selectedBranchId)){
+      selectedBranchId=isAdmin?null:(allowed[0]?.id||null);
     }
     mount.innerHTML=(allowed.length||isAdmin)
-      ?`<select id="profileBranchScopeSelectV158" aria-label="View data for branch">
+      ?`<span class="topbar-branch-label-v210" aria-hidden="true">Viewing</span>
+        <select id="profileBranchScopeSelectV158" aria-label="View data for branch" title="This changes the workspace view. Operational actions still use one selected branch.">
           ${isAdmin?'<option value="">All branches</option>':''}
-          ${allowed.map(branch=>`<option value="${branch.id}">${esc(branch.name)}${branch.active===false?' (inactive)':''}</option>`).join('')}
+          ${allowed.map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}
         </select>
-        <p class="muted small" style="margin:6px 0 0">This changes the workspace view. Operational actions still use one selected branch.</p>`
-      :'<span class="muted small">No branch assigned — ask the owner.</span>';
+        ${withheld.length?`<span class="topbar-branch-withheld-v217">${esc(withheld.length===1
+          ?`${withheld[0].name}: ${withheld[0].billing_state==='pending_payment'?'awaiting payment':'switched off'}`
+          :`${withheld.length} branches unavailable`)}</span>`:''}`
+      :'<span class="muted small">No branch assigned</span>';
     const select=$('profileBranchScopeSelectV158');
     if(select){
       select.value=selectedBranchId||'';
@@ -6935,9 +7008,16 @@ function profileHtml(){
           <div class="row"><input id="profileDisplayNameV158" autocomplete="name" maxlength="120" value="${esc(displayName)}" placeholder="e.g. Chuan Seng"><button class="btn ghost sm" type="submit">Save</button></div>
           <div class="profile-menu-saved" id="profileNameStatusV158" aria-live="polite"></div>
         </form>
-        <div class="profile-menu-section">
-          <label for="profileBranchScopeSelectV158">View data for</label>
-          <div id="profileBranchScopeV158"><span class="muted small">${esc(profileBranchScopeLabelV158())}</span></div>
+        <!-- V210 (owner annotation: "move out to outside here at upper right and fixed all the
+             way"). The branch scope decides what every number on the screen MEANS, so burying it
+             two taps inside an account menu meant an owner could read a dashboard without seeing
+             which branch it was for. It now lives in the top bar, always visible. -->
+        <!-- The picker moved to the top bar, but the top bar hides it under 900px where space
+             runs out. So the menu still states WHICH branch is in view on a phone — the scope
+             must never be invisible, only relocated. -->
+        <div class="profile-menu-section profile-branch-readout-v210">
+          <label>Viewing data for</label>
+          <div class="muted small">${esc(profileBranchScopeLabelV158())}</div>
         </div>
         ${S.hasCustomerPersona?`<a href="#/wallet" id="pmWallet">${CUI.icon('wallet',{size:18})}${esc(BRAND.customerLabel)}</a>`:''}
         ${S.myRole==='owner'?`<a href="#/setup" id="pmSetup">${CUI.icon('setup',{size:18})}Get started</a>`:''}
@@ -6958,10 +7038,15 @@ function profileHtml(){
    re-renders only itself. */
 function wireProfile(page){
   $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen){bellOpen=false;renderBell(page);}renderProfile(page);};
+  /* V219. Owner: "i need a drop down in the header to select which branch they want to view now".
+     V210 moved this selector OUT of the profile menu and into the top bar, but left its
+     hydration inside `if(profileOpen)`. The mount div was rendered on every page and filled on
+     none of them, so the header carried an invisible empty box. It is populated whenever the
+     shell is wired, which is what the top-bar position always meant. */
+  hydrateProfileBranchSelectorV158(page);
   if(profileOpen){
     const menu=$('profmenu');
     menu.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();profileOpen=false;renderProfile(page);$('profWho')?.focus()}};
-    hydrateProfileBranchSelectorV158(page);
     const profileNameForm=$('profileNameFormV158');
     if(profileNameForm)profileNameForm.onsubmit=async(e)=>{
       e.preventDefault();
@@ -7557,6 +7642,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   packageSoldWithPoints:Object.freeze({en:'Package sold · {earned} points earned · {total} total points','zh-CN':'配套已售出 · 获得 {earned} 分 · 总积分 {total}',ms:'Pakej dijual · {earned} mata diperoleh · jumlah mata {total}'}),
   packageSoldNoPoints:Object.freeze({en:'Package sold · 0 points earned · {total} total points','zh-CN':'配套已售出 · 获得 0 分 · 总积分 {total}',ms:'Pakej dijual · 0 mata diperoleh · jumlah mata {total}'}),
   giftCardLoaded:Object.freeze({en:'{amount} loaded onto account 🎉','zh-CN':'已将 {amount} 存入账户 🎉',ms:'{amount} dimasukkan ke dalam akaun 🎉'}),
+  /* v215: the welcome offer names the item that was handed over, so staff and customer are
+     looking at the same words. Interpolated runtime copy has to be a reviewed template. */
+  welcomeOfferGiven:Object.freeze({en:'{item} given free — welcome offer used ✓','zh-CN':'已免费赠送 {item} —— 迎新礼遇已使用 ✓',ms:'{item} diberi percuma — tawaran selamat datang digunakan ✓'}),
   sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
   catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
   catalogueDisabled:Object.freeze({en:'Catalogue-first checkout disabled','zh-CN':'已停用目录优先结账',ms:'Pembayaran katalog dahulu dinyahaktifkan'}),
@@ -7585,6 +7673,14 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   wizardStepReview:Object.freeze({en:'Step {step} of {total} — Review','zh-CN':'第 {step} 步，共 {total} 步——审核',ms:'Langkah {step} daripada {total} — Semakan'}),
   availableStaff:Object.freeze({en:'{staff} is the fairest available choice now. Showing {count} eligible staff member.','zh-CN':'{staff} 是目前最公平的可用选择。显示 {count} 位符合条件的员工。',ms:'{staff} ialah pilihan tersedia yang paling adil sekarang. Menunjukkan {count} kakitangan yang layak.'}),
   availableStaffMany:Object.freeze({en:'{staff} is the fairest available choice now. Showing {count} eligible staff members.','zh-CN':'{staff} 是目前最公平的可用选择。显示 {count} 位符合条件的员工。',ms:'{staff} ialah pilihan tersedia yang paling adil sekarang. Menunjukkan {count} kakitangan yang layak.'}),
+  /* V217. Owner: "i selected kelvin - why it show devi next best time?" — the panel always led
+     with the FAIREST person, so choosing Kelvin and being told about Devi read as the system
+     overruling the choice. It now answers the question actually asked ("is the person I picked
+     free?") and offers the fairer option as a suggestion, not a verdict. */
+  selectedStaffFree:Object.freeze({en:'{staff} is free at this time.','zh-CN':'{staff} 在这个时间有空。',ms:'{staff} lapang pada masa ini.'}),
+  selectedStaffFreeFairer:Object.freeze({en:'{staff} is free at this time. {alt} has had fewer appointments if you would rather spread the work.','zh-CN':'{staff} 在这个时间有空。若想更平均分配，{alt} 的预约较少。',ms:'{staff} lapang pada masa ini. {alt} kurang temu janji jika anda mahu agihkan kerja.'}),
+  /* Owner: "recent appointment - how recent?" — the number now states its own window. */
+  recentInWindow:Object.freeze({en:'{count} in last {window}','zh-CN':'过去{window}内 {count} 个',ms:'{count} dalam {window} lalu'}),
   recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
   reversalOf:Object.freeze({en:'Reversal of {id}','zh-CN':'冲销自 {id}',ms:'Pembalikan bagi {id}'}),
   usedSessionReversedBy:Object.freeze({en:'Used session → reversed by {id}','zh-CN':'已用次数 → 由 {id} 冲销',ms:'Sesi digunakan → dibalikkan oleh {id}'}),
@@ -7642,7 +7738,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'receiptConfirmationFailed','receiptConfirmationsFailed',
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
   'packageVersionCreated','packageSoldWithPoints','packageSoldNoPoints',
-  'giftCardLoaded','sessionUsed',
+  'giftCardLoaded','sessionUsed','welcomeOfferGiven',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
@@ -7651,6 +7747,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany','recentAppointments','reversalOf',
+  'selectedStaffFree','selectedStaffFreeFairer','recentInWindow',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
@@ -7838,6 +7935,7 @@ function renderShell(page){
         ${mobileWorkspaceTitleHtml(page)}
         ${globalActionsHtml()}
         ${mobileSearchShellHtml()}
+        <div class="topbar-branch-scope-v210" id="profileBranchScopeV158" aria-live="polite"></div>
         ${workspaceLanguagePickerV97()}
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
         ${bellHtml()}
@@ -8071,14 +8169,14 @@ async function visibleBranchesForCurrentUser(){
   const isAdmin=S.myRole==='owner'||S.myRole==='manager';
   let branches=[];
   if(isAdmin){
-    const {data,error}=await sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name');
+    const {data,error}=await sb.from('branches').select('id,name,active,billing_state').eq('business_id',S.biz.id).order('name');
     if(error)throw error;
     branches=data||[];
   }else{
     const {data:me,error:staffError}=await sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
     if(staffError)throw staffError;
     if(me&&me.length){
-      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
+      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active,billing_state)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
       if(error)throw error;
       branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     }
@@ -8106,6 +8204,9 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   }
   const wraps=currentWraps();
   if(!isCurrent()||!wraps.length)return;
+  /* V217: same rule as the top bar — an inactive branch is never a selectable reporting scope. */
+  const withheldBranchesV217=branches.filter(branch=>branch.active===false);
+  branches=activeBranchesForScopeV217(branches);
   if(!branches.some(branch=>branch.id===selectedBranchId)){
     /* Employees can't request consolidated (the server raises branch_visibility on
        p_branch=null for them) — default to their first assigned branch so the page loads
@@ -8124,8 +8225,8 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     wrap.innerHTML=(branches.length||isAdmin)
       ? `<select class="qbtn" aria-label="Business branch" style="padding-right:22px">
         ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
-        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}${b.active===false?' (inactive)':''}</option>`).join('')}
-      </select>`
+        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+      </select>${withheldBranchesV217.length?`<p class="muted small" style="margin:6px 0 0">${esc(withheldBranchesV217.map(branchScopeUnavailableReasonV217).join(' '))}</p>`:''}`
       : `<span class="muted small">No branch assigned — ask the owner</span>`;
     const sel=wrap.querySelector('select');
     if(sel){
@@ -8136,12 +8237,44 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   onChange(branches.find(branch=>branch.id===selectedBranchId)||null);
 }
 let reportingScopeV155={mode:'current',branchIds:[]};
+/* V217. Owner: the dashboard said "Performance data could not be loaded" and Customers said
+   "foreign_or_inactive_branch_scope". One cause for both. A branch added but not yet paid for is
+   created active=false / billing_state=pending_payment, and this function fell back to
+   branches[0] without looking at `active`. The demo tenant's unpaid branch was named "abc",
+   which sorts first, so it silently became the reporting scope for the whole workspace — and
+   every reporting RPC refuses an inactive branch by design (v155 raises
+   foreign_or_inactive_branch_scope). The workspace was offering a scope the server can never
+   answer. An inactive branch is never a valid reporting scope, so it is never chosen here. */
+function activeBranchesForScopeV217(branches=[]){
+  return (branches||[]).filter(branch=>branch&&branch.active!==false);
+}
+function branchScopeUnavailableReasonV217(branch){
+  if(!branch||branch.active!==false)return '';
+  return branch.billing_state==='pending_payment'
+    ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
+    :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
+}
+/* V217: the server's scope codes are precise but unreadable. An owner should never be shown
+   `foreign_or_inactive_branch_scope` — they should be told which branch is unavailable and why,
+   which after this change should not happen at all, since the pickers no longer offer one. */
+function branchScopeErrorHintV217(error){
+  const message=String(error?.message||error||'');
+  if(/foreign_or_inactive_branch_scope/.test(message))
+    return 'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.';
+  if(/unauthorised_branch_scope/.test(message))
+    return 'You do not have access to the branch being viewed. Choose another branch at the top.';
+  if(/operational_branch_required_for_current_scope/.test(message))
+    return 'No branch is selected. Choose one at the top.';
+  return '';
+}
 function reportingOperationalBranchIdV155(branches=[]){
-  if(selectedBranchId&&branches.some(branch=>branch.id===selectedBranchId))return selectedBranchId;
-  return branches[0]?.id||null;
+  const usable=activeBranchesForScopeV217(branches);
+  if(selectedBranchId&&usable.some(branch=>branch.id===selectedBranchId))return selectedBranchId;
+  return usable[0]?.id||null;
 }
 function normaliseReportingScopeV155({branches=[]}={}){
-  const authorisedIds=new Set((branches||[]).map(branch=>branch.id));
+  /* V217: an inactive branch is not an authorised scope — see reportingOperationalBranchIdV155. */
+  const authorisedIds=new Set(activeBranchesForScopeV217(branches).map(branch=>branch.id));
   reportingScopeV155={
     mode:['current','selected','all'].includes(reportingScopeV155?.mode)?reportingScopeV155.mode:'current',
     branchIds:[...new Set(reportingScopeV155?.branchIds||[])].filter(id=>authorisedIds.has(id))
@@ -8422,11 +8555,18 @@ async function dashboard(){
     if(!isCurrent())return;
     const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value;
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
-    const showLoadError=(message,retryId)=>{
+    const showLoadError=(message,retryId,detail='')=>{
       if(!status)return;
       kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');loyalty?.setAttribute('aria-busy','false');
       if(loyalty)loyalty.innerHTML='';
-      status.innerHTML=`<div class="err" role="alert">${esc(message)} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
+      /* V217. Owner: "it takes forever to load the dashboard". It was not slow — it had already
+         failed. The error banner appeared but the loading skeletons were left shimmering
+         underneath it, so the page read as still working. A failed load must stop looking like
+         a load in progress. */
+      if(kpis)kpis.innerHTML='';
+      if(insights)insights.innerHTML='';
+      if(charts)charts.innerHTML='';
+      status.innerHTML=`<div class="err" role="alert">${esc(message)}${detail?` ${esc(detail)}`:''} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
       status.querySelector('#'+retryId).onclick=load;
       localizeWorkspaceSubtreeV97(status);
     };
@@ -8457,10 +8597,10 @@ async function dashboard(){
       canReadModule('clients')?sb.rpc('preview_campaign_audience_v155',{p_business:S.biz.id,p_audience_key:'inactive_60_plus',...scopePayload}):Promise.resolve({data:null,error:null}),
       loyaltyVisibleV170?fetchAllRowsResult(()=>sb.from('points_ledger').select('points',{count:'exact'}).eq('business_id',S.biz.id).eq('entry_type','redeem').gte('created_at',sgDateBoundary(from,0)).lt('created_at',sgDateBoundary(to,1)).order('id')):Promise.resolve({data:null,error:null})
     ])}
-    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
+    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error));return}
     if(!isCurrent())return;
     const {data,error}=response;
-    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
+    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error));return}
     const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
     if(d.availability?.sales===false){
       status.innerHTML='';
@@ -8519,6 +8659,14 @@ async function dashboard(){
       insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
       insights.setAttribute('aria-busy','false');
       insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=Number(link.dataset.insightInactive)||60}));
+      /* V214: the quiet-branch card offers a way back out of the branch it is scoped to,
+         so the owner can see immediately that the business as a whole is not quiet. */
+      insights.querySelectorAll('[data-insight-scope-all-v214]').forEach(button=>button.addEventListener('click',()=>{
+        const select=$('profileBranchScopeSelectV158');
+        if(!select||!select.querySelector('option[value=""]')){toast('Only an owner or manager can view all branches at once');return}
+        select.value='';
+        select.dispatchEvent(new Event('change'));
+      }));
       insights.querySelectorAll('[data-campaign-prep-v153]').forEach(button=>button.addEventListener('click',()=>openCampaignPrepV153({audienceKey:button.dataset.audienceKey,audienceLabel:button.dataset.audienceLabel,definition:'Customers with no valid visit for at least 60 complete Singapore days in the selected reporting scope.',count:Number(button.dataset.audienceCount)||0,branchLabel:scopeLabel})));
     }
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -8585,6 +8733,40 @@ function percentageChangeV153(current,previous){
 }
 function insightScopeLabelV153(branchId,branchName){
   return branchId?`Branch: ${branchName||'Selected branch'}`:'All branches consolidated';
+}
+/* V214. Owner question: "why is merchant insights different for each branch? would it be
+   confusing why some branch have insights some dont have?"
+   It is different because every recommendation is computed from the activity of the branch
+   currently in scope, and a recommendation only appears once there is enough activity to
+   support it (a >=10% revenue move, an inactive customer, at least 2 visits for a busiest
+   day). A quiet or newly opened branch therefore legitimately has fewer cards than a busy
+   one. That is correct, but the panel never SAID so, so an owner saw a near-empty box and
+   read it as broken. These two helpers make the scope and the reason explicit. */
+function insightScopeExplainerV214(branchId,branchName){
+  return branchId
+    ?`Counted from ${branchName||'this branch'} only. Other branches are excluded — switch "Viewing" at the top to compare.`
+    :'Every branch you can see is counted together. Switch "Viewing" at the top to read one branch on its own.';
+}
+function insightQuietScopeV214({current,branchId,branchName}){
+  const visits=Number(current?.visits)||0;
+  const revenueCents=Number(current?.revenue_cents)||0;
+  const where=branchId?(branchName||'This branch'):'This business';
+  const activity=visits||revenueCents
+    ?`${where} recorded ${visits} ${visits===1?'visit':'visits'} and ${money(revenueCents)} in this period — not yet enough to call a trend.`
+    :`${where} recorded no visits or sales in this period, so there is nothing to compare yet.`;
+  return {
+    tone:'neutral',icon:'info',category:'Readiness',
+    title:branchId?`Not enough activity at ${branchName||'this branch'} yet`:'More activity is needed',
+    explanation:activity,
+    why:branchId
+      ?'Each branch is measured on its own, so a quieter branch shows fewer recommendations than a busy one. Nothing is broken.'
+      :'Recommendations appear once there is enough recorded activity to compare one period against the last.',
+    actions:[
+      branchId?{label:'Show all branches',dataset:'data-insight-scope-all-v214',variant:'ghost'}:null,
+      {label:'Record sale',href:'#/till',variant:'ghost'},
+      {label:'Add customers',href:'#/clients',variant:'ghost'}
+    ].filter(Boolean)
+  };
 }
 function insightPeriodLabelV153(from,to){return `${from} – ${to}`}
 function classifyInactiveCustomersV153(customers){
@@ -8691,9 +8873,9 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
     insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits.`,why:`Review staffing and availability for ${day}s.`,actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
   }
   if(!insights.length){
-    insights.push({tone:'neutral',icon:'info',category:'Readiness',title:'More activity is needed',explanation:'Peekaa will show recommendations after more sales, visits or appointments are recorded.',why:'Continue recording sales and customer visits.',actions:[{label:'Record sale',href:'#/till',variant:'ghost'},{label:'Add customers',href:'#/clients',variant:'ghost'}]});
+    insights.push(insightQuietScopeV214({current,branchId,branchName}));
   }
-  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
+  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p><p class="muted small merchant-insights-scope-note-v214">${esc(insightScopeExplainerV214(branchId,branchName))}</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
 }
 async function clientsPage(){
   const routeMain=M();
@@ -8885,7 +9067,7 @@ async function clientsPage(){
       if(result?.customers)result.customers=sortCustomersV150(result.customers,$('clientSort')?.value||'name_asc');
     }
     if(!isCurrent())return;
-    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
+    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
     if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveBucket?'No customers in this inactive group':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveBucket?'Choose another inactivity group, Never visited, or All customers.':'Customers will appear here after joining your loyalty programme or making a purchase. You can also add a customer manually from the button above.'});return}
     const loyaltyAvailable=result?.loyalty_available===true;
@@ -8929,7 +9111,7 @@ async function clientsPage(){
     const {data,error}=await sb.rpc('staff_list_visit_feedback_v145',{p_business:S.biz.id,p_status:feedbackFilter||null,
       p_limit:FEEDBACK_PAGE_SIZE,p_offset:feedbackPage*FEEDBACK_PAGE_SIZE});
     if(!isLatest()||!isCustomersCurrent()||$('fbQueue')!==host)return;
-    if(error){host.innerHTML=`<div class="err" role="alert">${esc(error.message||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
+    if(error){host.innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
     const rows=Array.isArray(data?.feedback)?data.feedback:[];
     const total=Math.max(0,Number(data?.total||0));
     const pages=Math.max(1,Math.ceil(total/FEEDBACK_PAGE_SIZE));
@@ -10179,6 +10361,10 @@ async function tillPage(){
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
+      /* v215: the welcome offer for a first-time sign-up rides in the same entitlements
+         payload as packages and vouchers, because this is the one read the till already
+         makes for a looked-up customer. */
+      customerWelcomeOffer:entitlements.error?null:(entitlements.data?.welcome_offer||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
          missing a service is not the deal the customer was quoted, so it is withheld rather than
@@ -10267,6 +10453,29 @@ async function tillPage(){
     packageUseAttemptsV102.delete(attempt.slot);
     toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
     catalog=null;draw();
+  }
+  /* v215: give the first-visit free item. p_qualifying_sale is the sale that proves the
+     owner's minimum spend; it is null only for a zero-minimum offer, which needs no purchase.
+     The key is stable per grant + sale so a double-tap replays instead of giving a second item. */
+  async function redeemWelcomeOfferV215(qualifyingSaleId){
+    const offer=catalog?.customerWelcomeOffer;
+    if(!offer||busy)return;
+    const label=offer.reward_label||'the free item';
+    if(!confirm(`Give ${label} free to ${cust?.full_name||'this customer'}? This can only be done once.`))return;
+    busy=true;
+    const {data,error}=await sb.rpc('staff_redeem_welcome_offer_v215',{
+      p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,
+      p_qualifying_sale:qualifyingSaleId||null,
+      p_idempotency_key:`v215-${offer.grant_id}-${qualifyingSaleId||'no-sale'}`
+    });
+    if(!isTillCurrent())return;
+    busy=false;
+    if(error)return fail(error);
+    if(data?.status!=='completed')return fail(new Error('The welcome-offer receipt was incomplete. Check the customer before retrying.'));
+    toast(workspaceTemplateTextV97('welcomeOfferGiven',{item:label}));
+    catalog=null;
+    if(doneInfo)doneInfo.welcomeOfferGivenV215=label;
+    draw();
   }
   function changeQty(lineId,delta){
     if(cartLocked())return;
@@ -10480,6 +10689,23 @@ async function tillPage(){
 	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
           :'';
+        /* V211 (owner: "i still dont see the package here in record sale - not able to use
+           sessions"). The customer's OWNED packages had no UI at all: catalog.customerPackages
+           was loaded and useCustomerPackage() was defined, but nothing ever called it, so a
+           customer with four paid-for sessions had no way to spend one. The v102 test had been
+           failing on exactly this copy and I had written it off as a stale assertion — it was
+           reporting a live regression.
+           This sits ABOVE "Sell package": at a counter the far commoner act is spending a session
+           the customer already bought, not selling them another one. */
+        const ownedPkgs=(catalog.customerPackages||[]).filter(item=>Number(item.remaining)>0);
+        const ownedPackages=ownedPkgs.length
+          ?`<b class="small" style="display:block;margin-top:14px">Use an existing customer package</b>
+            <p class="muted small" style="margin:4px 0 8px">No payment is taken. One session is deducted and recorded as a visit. No points are earned — they were earned when the package was bought.</p>
+            <div class="till-cart-catalog">${ownedPkgs.map(item=>`<button type="button" class="choice-button" data-use-package="${esc(item.client_package_id)}">
+              <b>${esc(item.plan_name||'Package')}</b>
+              <span class="muted small">${esc(item.service_name||'Session')}${item.variant_label?' · '+esc(item.variant_label):''}</span>
+              <span class="pill ok">${Number(item.remaining)} left</span></button>`).join('')}</div>`
+          :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
           ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
           :'';
@@ -10492,13 +10718,37 @@ async function tillPage(){
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
-        const ownedPackages='';
         const pendingVouchers=(!walkin&&(catalog.customerVouchers||[]).length)
           ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
             ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
           :'';
-        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        /* v215 (owner: "i need to enable new sign ups redeemption ... minimum spend $5 (get
+           free xx product) ... or no minimum spend and free xx product"). The welcome offer sits
+           at the top of the picker because it is the first thing to settle at a counter.
+           Where the button lives follows the server contract, not convenience: a minimum spend is
+           proved against a REAL recorded sale, so that button appears on the receipt once the
+           sale exists. A zero-minimum offer needs no purchase, so it is given straight from here.
+           Nothing here decides eligibility — staff_redeem_welcome_offer_v215 re-checks all of it. */
+        const welcomeOffer=(!walkin&&catalog.customerWelcomeOffer)?catalog.customerWelcomeOffer:null;
+        const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
+        const welcomeBanner=welcomeOffer
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
+            <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+            ${welcomeMin
+              ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
+              :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
+                <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
+          :'';
+        /* V216 (owner: "i need a product modules - instead of just services (because products
+           have no minutes)"). The picker printed a hardcoded "Services" heading and gave the
+           products no heading at all. A cafe or chicken-rice shop with seven products and no
+           services therefore saw an empty "Services" label followed by unlabelled buttons —
+           the app insisting on a concept that business does not have. Each group now names
+           itself, and a group with nothing in it prints no heading. */
+        const svcHeadingV216=catalog.services.length?'<b class="small" style="display:block">Services</b>':'';
+        const prodHeadingV216=(catalog.products&&catalog.products.length)?'<b class="small" style="display:block;margin-top:14px">Products</b>':'';
+        picker=`${welcomeBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -10588,6 +10838,16 @@ async function tillPage(){
       const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addCatalogLine(type,item);
     });
+    /* V211: spend a session the customer already paid for. useCustomerPackage confirms, calls
+       use_package_session_v102 with a stable idempotency key, and is reversible afterwards —
+       reversing that session's sale restores it (reverse_sale -> v40_base -> v34_base writes
+       package_session_reversals). This handler is what was missing: the function existed and
+       nothing called it. */
+    document.querySelectorAll('[data-use-package]').forEach(b=>b.onclick=()=>
+      useCustomerPackage(b.dataset.usePackage));
+    /* v215 */
+    const welcomeButton=$('tWelcomeRedeemV215');
+    if(welcomeButton)welcomeButton.onclick=()=>redeemWelcomeOfferV215();
     document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
@@ -10916,6 +11176,13 @@ async function tillPage(){
         pointsTotal:l.type==='package'&&Number.isFinite(Number(l._packageResult?.pointsTotal))
           ?Number(l._packageResult.pointsTotal):null})),
       hasSale:!!r,extrasTotal:extrasTotalCents(),
+      /* v215: the receipt is where a minimum-spend welcome offer becomes redeemable, because
+         only now does a real sale exist to prove the spend against. Withheld when the sale
+         falls short, so staff are never shown a button the server will refuse. */
+      welcomeOfferV215:(!walkin&&catalog?.customerWelcomeOffer&&r&&r.saleId
+        &&Number(r.total)>=(Number(catalog.customerWelcomeOffer.min_spend_cents)||0))
+        ?{label:catalog.customerWelcomeOffer.reward_label||'Free item',saleId:r.saleId}:null,
+
       pointsEarned:pointsReceipt.pointsEarned,
       pointsTotal:pointsReceipt.pointsTotal,
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
@@ -10984,6 +11251,13 @@ async function tillPage(){
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
+        ${d.welcomeOfferGivenV215
+          ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
+          :d.welcomeOfferV215
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
+              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free for this first-time customer.</p>
+              <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
+          :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
         ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
@@ -11000,6 +11274,10 @@ async function tillPage(){
       businessId:S.biz.id,branchId:tillBranchId,
       saleId:d.saleId,customerName:d.name,isCurrent:isTillCurrent
     });
+    /* v215: the sale that unlocked the offer is passed as the qualifying sale, so the server
+       proves the minimum spend against a real record rather than trusting this screen. */
+    if($('tWelcomeReceiptRedeemV215'))$('tWelcomeReceiptRedeemV215').onclick=()=>
+      redeemWelcomeOfferV215(d.welcomeOfferV215?.saleId||null);
     /* V196 (owner: "allow for QRcode to let user to download or view").
        The QR points at THIS BUSINESS'S customer portal, not at a per-receipt URL. A public
        receipt link would put a purchase record — items, amounts, staff, the customer's points
@@ -13220,6 +13498,117 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
       giftcards:Boolean(giftcardsError)||Boolean(modules.includes('giftcards')&&giftcardPreferences?.status!=='available')}
   };
 }
+/* v215 — welcome offer for first-time sign-ups.
+   Owner: "i need to enable new sign ups redeemption (criteria set by boss): - example minimum
+   spend $5 (get free xx product) - redeem using qrcode for first time sign ups only. or no
+   minimum spend and free xx product."
+   It lives in the Programmes list next to the other rewards because that is where an owner
+   looks for "what do my customers get", not in Settings. */
+function welcomeOfferRowV215(status,canSetup,canRewards){
+  if(!canRewards)return '';
+  const configured=!!status?.configured;
+  const active=configured&&status.active===true;
+  const min=Number(status?.min_spend_cents)||0;
+  const label=status?.reward_label||'';
+  const copy=!status
+    ?'Status could not be confirmed. Retry the programme overview.'
+    :!configured
+    ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
+    :status.item_available===false
+    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
+    :active
+    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
+    :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
+  const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
+    :active?'Live':'Paused';
+  const tone=active&&status?.item_available!==false?'on':'off';
+  const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
+    ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
+  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
+    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p></div>`
+    +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
+    +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
+  return canSetup
+    ?`<button type="button" class="grow-programme-row" data-programme-kind="welcome" data-welcome-offer-edit-v215>${inner}</button>`
+    :`<article class="grow-programme-row" data-programme-kind="welcome">${inner}</article>`;
+}
+/* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
+   with a free item, or no minimum with a free item. The item comes from the live catalogue —
+   a free item that is not on sale cannot be handed over, so it cannot be chosen. */
+async function openWelcomeOfferEditorV215(current,onSaved){
+  const [services,products]=await Promise.all([
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+  ]);
+  if(services.error&&products.error)return fail(services.error||products.error);
+  const items=[
+    ...(services.data||[]).map(row=>({kind:'service',id:row.id,name:row.name})),
+    ...(products.data||[]).map(row=>({kind:'product',id:row.id,name:row.name}))
+  ];
+  if(!items.length)return toast('Add a service or product first — the welcome offer gives one away');
+  const selected=current?.reward_catalog_id
+    ?`${current.reward_catalog_kind}:${current.reward_catalog_id}`
+    :`${items[0].kind}:${items[0].id}`;
+  const minValue=Number(current?.min_spend_cents)||0;
+  document.querySelector('#welcomeOfferModalV215')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="welcomeOfferModalV215" role="dialog" aria-modal="true" aria-labelledby="welcomeOfferTitleV215" tabindex="-1">
+    <section class="modal-card" style="max-width:560px">
+      <div class="row"><div><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px">Welcome offer</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button></div>
+      <p class="muted small">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p>
+      <label class="check-row" style="margin-top:12px"><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}><span>Give new sign-ups a welcome offer</span></label>
+      <label for="welcomeItemV215" style="margin-top:14px">Free item</label>
+      <select id="welcomeItemV215">${items.map(item=>`<option value="${esc(item.kind+':'+item.id)}" ${selected===item.kind+':'+item.id?'selected':''}>${esc(item.name)} (${item.kind})</option>`).join('')}</select>
+      <fieldset style="margin-top:16px;border:0;padding:0">
+        <legend class="small"><b>When can they claim it?</b></legend>
+        <label class="check-row"><input type="radio" name="welcomeMinV215" value="none" ${minValue?'':'checked'}><span>Straight away — no minimum spend</span></label>
+        <label class="check-row"><input type="radio" name="welcomeMinV215" value="min" ${minValue?'checked':''}><span>After they spend a minimum amount</span></label>
+        <label for="welcomeMinAmountV215" style="margin-top:10px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
+        <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
+      </fieldset>
+      <label for="welcomeExpiryV215" style="margin-top:14px">Expires after (days, optional)</label>
+      <input id="welcomeExpiryV215" inputmode="numeric" placeholder="Leave blank for no expiry" value="${current?.expiry_days?String(current.expiry_days):''}">
+      <p class="muted small" style="margin-top:12px">Staff give the item from Record sale after looking the customer up. Nothing is charged, and the visit is recorded at zero.</p>
+      <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="welcomeSaveV215">Save welcome offer</button><button type="button" class="btn ghost sm" id="welcomeCancelV215">Cancel</button></div>
+    </section></div>`);
+  const dialog=$('welcomeOfferModalV215');
+  let deactivate;
+  const close=()=>deactivate?.();
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#welcomeItemV215'});
+  $('welcomeCloseV215').onclick=close;
+  $('welcomeCancelV215').onclick=close;
+  const syncMin=()=>{
+    const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    $('welcomeMinAmountV215').disabled=!wantsMin;
+  };
+  document.querySelectorAll('input[name="welcomeMinV215"]').forEach(radio=>radio.onchange=syncMin);
+  syncMin();
+  $('welcomeSaveV215').onclick=async()=>{
+    const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    let minCents=0;
+    if(wantsMin){
+      const raw=String($('welcomeMinAmountV215').value||'').trim();
+      if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter the minimum spend, for example 5.00');
+      minCents=Math.round(parseFloat(raw)*100);
+      if(minCents<1)return toast('A minimum spend must be more than zero — or choose "no minimum spend"');
+    }
+    const expiryRaw=String($('welcomeExpiryV215').value||'').trim();
+    let expiry=null;
+    if(expiryRaw){
+      if(!/^\d+$/.test(expiryRaw)||Number(expiryRaw)<1||Number(expiryRaw)>3650)return toast('Expiry must be a whole number of days from 1 to 3650');
+      expiry=Number(expiryRaw);
+    }
+    const [kind,id]=String($('welcomeItemV215').value||'').split(':');
+    const {error}=await sb.rpc('business_set_welcome_offer_v215',{
+      p_business:S.biz.id,p_active:$('welcomeActiveV215').checked,
+      p_min_spend_cents:minCents,p_reward_catalog_kind:kind,
+      p_reward_catalog_id:id,p_expiry_days:expiry
+    });
+    if(error)return fail(error);
+    toast('Welcome offer saved');
+    close();
+    if(onSaved)onSaved();
+  };
+}
 function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null}={}){
   const model=loyalty?.loyalty_model||loyaltyModel||'points';
   const unit=model==='stamps'?'stamps':'points';
@@ -13928,6 +14317,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const rewardJourney=ownerRewardJourneyV122({
     rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
   });
+  /* v215: the welcome offer is a reward, so it belongs in this list rather than buried in
+     Settings. Read separately: a failure here must not blank the whole programme overview. */
+  const welcomeOfferStatusV215=canRewards
+    ?await sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
+    :null;
+  if(!isGrowCurrent())return;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
@@ -14058,6 +14453,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
@@ -14516,6 +14912,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      simplified to one list (owner: "alot of overlapping roles ... i need it more simplified").
      Its wiring outlived it and could never fire — openRewardsAutoSetup is now reached from the
      programme rows themselves, which call it as the draft-creation gate when no draft exists. */
+  /* v215: re-render the Programmes list after a save so the row reflects the new state
+     immediately — an owner who just switched the offer on must not still see "Not set up". */
+  document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
+    openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+      ()=>growPage(routedSurface,hashParam,routedFocus)));
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -17331,6 +17732,7 @@ async function appointmentsPage(){
   // Customer 360 hand-off: capture the prefilled customer once, up front, so it can never leak
   // into a later visit even if this page early-returns (no branch / read-only).
   const apptPrefillClient=pendingApptClientId;pendingApptClientId='';
+  const apptOpenFormV217=pendingOpenApptFormV217;pendingOpenApptFormV217=false;
   let canWrite=false,canComplete=false;
   routeMain.innerHTML=CUI.loadingState({title:'Appointments',iconName:'appointments'});
   const [
@@ -17555,7 +17957,17 @@ async function appointmentsPage(){
   function syncFormOptions(){
     if(!canWrite)return;
     const services=branchServices(branchId),people=branchStaff(branchId);
-    $('as').innerHTML=`<option value="">General visit</option>${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}" data-buffer-before="${s.buffer_before_min||0}" data-buffer-after="${s.buffer_after_min||0}">${esc(serviceDisplayName(s))}</option>`).join('')}`;
+    /* V217. Owner, on this dropdown: "instead of general visit, put ...". A business that has
+       real services was still offered "General visit" first and by default, so the common case —
+       booking an actual service, with its own duration and buffers — took an extra step, and an
+       untouched form booked an unnamed 60-minute hold instead of the thing being sold. Real
+       services now lead and the first one is preselected. "General visit" stays, last and named
+       for what it is, because a walk-in with no service chosen is a real thing to book. */
+    const previousServiceV217=$('as').value;
+    $('as').innerHTML=`${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}" data-buffer-before="${s.buffer_before_min||0}" data-buffer-after="${s.buffer_after_min||0}">${esc(serviceDisplayName(s))}</option>`).join('')}<option value="">${services.length?'No specific service · general visit':'General visit'}</option>`;
+    $('as').value=[...$('as').options].some(option=>option.value===previousServiceV217)
+      ?previousServiceV217
+      :(services[0]?.id||'');
     $('astf').innerHTML=`<option value="auto">Auto-assign · fair rotation</option>${people.map(s=>`<option value="${s.id}">${esc(staffLabel(s))}</option>`).join('')}`;
     $('generalDuration').hidden=$('as').value!=='';
   }
@@ -17569,20 +17981,56 @@ async function appointmentsPage(){
     if($('ago'))$('ago').disabled=false;
     if(clearSuggestions&&$('scheduleSuggestion'))$('scheduleSuggestion').innerHTML='';
   }
+  /* V217 — two owner reports about this one panel.
+     (5) "i selected kelvin - why it show devi next best time?" It always led with available[0],
+         the FAIREST person, even when the person the owner had actually chosen was free. Being
+         told about Devi after choosing Kelvin reads as the system overruling the choice. It now
+         answers the question that was asked — is the person I picked free? — and offers the
+         fairer option as a suggestion underneath, which is what it always was.
+     (6) "recent appointment - how recent?" The count had no stated window (it was a hidden 30
+         days). The window is now on the label AND selectable, and it drives the server's
+         fairness ranking too, so changing it changes the advice rather than just the wording. */
+  const RECENT_WINDOWS_V217=[{days:1,label:'day'},{days:3,label:'3 days'},{days:7,label:'week'},{days:30,label:'month'}];
+  let recentWindowDaysV217=30;
+  const recentWindowLabelV217=days=>RECENT_WINDOWS_V217.find(w=>w.days===days)?.label||'month';
   function renderSuggestions(payload,conflict=false){
     const host=$('scheduleSuggestion');if(!host)return;
     const available=payload?.available_staff||[],next=payload?.next_best_slots||[];
     const selected=$('astf').value;
-    const selectedFree=selected==='auto'||available.some(x=>x.staff_id===selected);
-    const recommended=available[0];
+    const isAuto=selected==='auto';
+    const selectedEntry=available.find(x=>x.staff_id===selected)||null;
+    const selectedFree=isAuto||!!selectedEntry;
+    const fairest=available[0];
+    const windowLabel=recentWindowLabelV217(recentWindowDaysV217);
+    /* A fairer alternative is only worth naming when it is genuinely fairer — same-count
+       staff are not an argument for changing the owner's choice. */
+    const fairerThanSelected=selectedEntry&&fairest&&fairest.staff_id!==selectedEntry.staff_id
+      &&Number(fairest.recent_appointments)<Number(selectedEntry.recent_appointments)?fairest:null;
+    const headline=!available.length
+      ?'No eligible staff member is free at this time.'
+      :selectedEntry
+      ?(fairerThanSelected
+        ?workspaceTemplateHtmlV97('selectedStaffFreeFairer',{
+            staff:staffName[selectedEntry.staff_id]||selectedEntry.staff_name,
+            alt:staffName[fairerThanSelected.staff_id]||fairerThanSelected.staff_name})
+        :workspaceTemplateHtmlV97('selectedStaffFree',{
+            staff:staffName[selectedEntry.staff_id]||selectedEntry.staff_name}))
+      :workspaceTemplateHtmlV97(available.length===1?'availableStaff':'availableStaffMany',
+          {staff:staffName[fairest.staff_id]||fairest.staff_name,count:available.length});
     host.innerHTML=`<div class="schedule-suggestion">
       <h3>${conflict||!selectedFree?'That person is not free':'Availability checked'}</h3>
-      <p class="muted small" style="margin-top:5px">${available.length
-        ?workspaceTemplateHtmlV97(available.length===1?'availableStaff':'availableStaffMany',{staff:staffName[recommended.staff_id]||recommended.staff_name,count:available.length})
-        :'No eligible staff member is free at this time.'}</p>
-      ${available.length?`<div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm suggestionStaff" data-staff="${person.staff_id}" data-staff-name="${esc(staffName[person.staff_id]||person.staff_name)}">${CUI.icon('staff',{size:16})} <span data-merchant-content>${esc(staffName[person.staff_id]||person.staff_name)}</span> · ${workspaceTemplateHtmlV97('recentAppointments',{count:person.recent_appointments})}</button>`).join('')}</div>`:''}
+      <p class="muted small" style="margin-top:5px">${headline}</p>
+      <label for="recentWindowV217" class="small" style="display:block;margin-top:11px">Count appointments from the last</label>
+      <select id="recentWindowV217" style="margin-top:4px">${RECENT_WINDOWS_V217.map(w=>`<option value="${w.days}" ${w.days===recentWindowDaysV217?'selected':''}>${esc(w.label)}</option>`).join('')}</select>
+      <p class="muted small" style="margin:5px 0 0">This is the window used to decide who has had the fewest appointments.</p>
+      ${available.length?`<div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm suggestionStaff${person.staff_id===selected?' is-selected-v217':''}" data-staff="${person.staff_id}" data-staff-name="${esc(staffName[person.staff_id]||person.staff_name)}">${CUI.icon('staff',{size:16})} <span data-merchant-content>${esc(staffName[person.staff_id]||person.staff_name)}</span> · ${workspaceTemplateHtmlV97('recentInWindow',{count:person.recent_appointments,window:windowLabel})}</button>`).join('')}</div>`:''}
       ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm suggestionTime" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(sgt(slot.starts_at))} · ${esc(staffName[slot.staff_id]||slot.staff_name)}</button>`).join('')}</div>`:''}
     </div>`;
+    const windowSelect=$('recentWindowV217');
+    if(windowSelect)windowSelect.onchange=()=>{
+      recentWindowDaysV217=Number(windowSelect.value)||30;
+      renderAvailability();
+    };
     host.querySelectorAll('.suggestionStaff').forEach(button=>button.onclick=()=>{
       invalidateFormRequests();$('astf').value=button.dataset.staff;
       CUI.announce(workspaceTemplateTextV97('itemSelected',{item:button.dataset.staffName||button.textContent.trim()}));
@@ -17593,6 +18041,46 @@ async function appointmentsPage(){
       renderAvailability();
     });
   }
+  /* V220 — the clash prompt. Two routes out, both one tap, and no dead end: either move the
+     time (these are the chosen person's own free times) or hand the booking to someone who IS
+     free. Choosing either only fills the form — the owner still presses Book, so nothing is
+     booked behind their back. */
+  function openClashPromptV220({staffLabel='',payload={}}={}){
+    const times=(payload.next_best_slots||[]).slice(0,4);
+    const free=(payload.available_staff||[]).slice(0,4);
+    const who=staffLabel?esc(staffLabel):'That team member';
+    document.querySelector('#clashPromptV220')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="clashPromptV220" role="dialog" aria-modal="true" aria-labelledby="clashTitleV220" tabindex="-1">
+      <section class="modal-card" style="max-width:520px">
+        <div class="row"><div><p class="eyebrow">Not booked</p><h2 id="clashTitleV220" style="margin-top:4px">${who} is already busy then</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="clashCloseV220" aria-label="Close">Close</button></div>
+        <p class="muted small">Nothing has been booked. Pick another time, or give this booking to someone who is free.</p>
+        ${times.length?`<b class="small" style="display:block;margin-top:14px">${staffLabel?`Other times ${esc(staffLabel)} is free`:'Other times that work'}</b>
+          <div class="schedule-suggestion-actions">${times.map(slot=>`<button type="button" class="btn ghost sm" data-clash-time="${esc(slot.starts_at)}" data-clash-time-staff="${esc(slot.staff_id||'')}">${esc(sgt(slot.starts_at))}${staffLabel?'':` · ${esc(staffName[slot.staff_id]||slot.staff_name||'')}`}</button>`).join('')}</div>`
+          :`<p class="small" style="margin-top:14px">${staffLabel?`${esc(staffLabel)} has no other free time left today.`:'No other time is free later today.'}</p>`}
+        ${free.length?`<b class="small" style="display:block;margin-top:16px">Free at this time</b>
+          <div class="schedule-suggestion-actions">${free.map(person=>`<button type="button" class="btn ghost sm" data-clash-staff="${esc(person.staff_id)}">${esc(staffName[person.staff_id]||person.staff_name||'')}</button>`).join('')}</div>`
+          :'<p class="small" style="margin-top:16px">Nobody else is free at this time either.</p>'}
+        <div class="row" style="margin-top:18px"><button type="button" class="btn ghost sm" id="clashCancelV220">Keep editing</button></div>
+      </section></div>`);
+    const dialog=$('clashPromptV220');
+    let deactivate;
+    const close=()=>deactivate?.();
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#clashCloseV220'});
+    $('clashCloseV220').onclick=close;
+    $('clashCancelV220').onclick=close;
+    dialog.querySelectorAll('[data-clash-time]').forEach(button=>button.onclick=()=>{
+      const local=sgInput(button.dataset.clashTime);
+      invalidateFormRequests();
+      $('ad').value=local.slice(0,10);$('at').value=local.slice(11,16);
+      if(button.dataset.clashTimeStaff)$('astf').value=button.dataset.clashTimeStaff;
+      close();renderAvailability();
+    });
+    dialog.querySelectorAll('[data-clash-staff]').forEach(button=>button.onclick=()=>{
+      invalidateFormRequests();
+      $('astf').value=button.dataset.clashStaff;
+      close();renderAvailability();
+    });
+  }
   async function renderAvailability(){
     const stillCurrent=availabilityGate.begin();
     const starts=selectedStart(),duration=selectedDuration(),formError=$('appointmentFormError');
@@ -17601,7 +18089,11 @@ async function appointmentsPage(){
     }
     formError.innerHTML='';$('checkAvailability').disabled=true;
     const {data,error}=await sb.rpc('suggest_appointment_staff_v47',{p_business:S.biz.id,p_branch:branchId,
-      p_service:$('as').value||null,p_starts:starts,p_duration_minutes:duration,p_limit:5});
+      p_service:$('as').value||null,p_starts:starts,p_duration_minutes:duration,p_limit:5,
+      p_recent_days:recentWindowDaysV217,
+      /* V220: when a teammate is chosen, the alternative TIMES must be theirs. Auto-assign
+         sends null, so the fair rotation still decides who each suggested time belongs to. */
+      p_staff:$('astf').value==='auto'?null:$('astf').value});
     if(!stillCurrent())return null;
     $('checkAvailability').disabled=false;
     if(error){formError.innerHTML=`<div class="err">${esc(error.message)}</div>`;return null}
@@ -17613,6 +18105,12 @@ async function appointmentsPage(){
     /* Customer 360 deep-link: a customer handed in via pendingApptClientId (captured above as
        apptPrefillClient) pre-selects that customer in the existing #ac dropdown — same select,
        no new query. The form is then brought into view so staff land ready to pick a time. */
+    /* V218: opens with the date already on the form (todaySg, set when #ad was rendered).
+       V217 called addDays(todaySg,dayOffset) here, but addDays is a `const` declared further
+       down this function — this line runs during the synchronous render, before that binding
+       exists, so it threw "Cannot access 'addDays' before initialization" and took the whole
+       Appointments page down. Passing no date leaves #ad's own value untouched. */
+    if(apptOpenFormV217&&!apptPrefillClient)openNewAppointmentForm({});
     if(apptPrefillClient){
       openNewAppointmentForm({date:todaySg});
       const clientSelect=$('ac');
@@ -17646,7 +18144,25 @@ async function appointmentsPage(){
       if(!stillCurrent())return;
       $('ago').disabled=false;
       if(error){$('appointmentFormError').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
-      if(data?.status==='conflict'){renderSuggestions(data.suggestions||{},true);CUI.announce('Appointment clash found. Choose an available staff member or another time.',{assertive:true});return}
+      if(data?.status==='conflict'){
+        /* V220. Owner: "if the timing is clashed, when press book appointment - should pop up
+           prompt to notify user, direct them to change timing / suggest free staff".
+           It used to redraw the suggestion panel further down the page and announce to screen
+           readers only — nothing visibly happened where the owner was looking, so a clash read
+           as the button doing nothing. Now it interrupts, and the times it offers are the chosen
+           person's (p_staff below), with whoever IS free as the other route. */
+        renderSuggestions(data.suggestions||{},true);
+        CUI.announce('Appointment clash found. Choose an available staff member or another time.',{assertive:true});
+        const fresh=await sb.rpc('suggest_appointment_staff_v47',{p_business:S.biz.id,p_branch:branchId,
+          p_service:$('as').value||null,p_starts:starts,p_duration_minutes:duration,p_limit:5,
+          p_recent_days:recentWindowDaysV217,p_staff:assignment==='auto'?null:assignment});
+        if(!stillCurrent())return;
+        openClashPromptV220({
+          staffLabel:assignment==='auto'?'':(staffName[assignment]||''),
+          payload:(fresh.error?null:fresh.data)||data.suggestions||{}
+        });
+        return;
+      }
       bookingAttempt=null;$('an').value='';$('scheduleSuggestion').innerHTML='';
       toast(data?.replayed?'Appointment already booked — no duplicate created':workspaceTemplateTextV97('bookedWith',{staff:data?.staff_name||staffName[data?.staff_id]||workspaceTranslationV97('staff')}));
       closeNewAppointmentForm();
@@ -17974,9 +18490,17 @@ async function appointmentsPage(){
       to:to+Math.max(0,Number(item.services?.buffer_after_min)||0)
     };
   }
-  function availableCalendarStarts(column){
+  /* V217. Owner: "it shows appointment must be in the future (but it shows green bar to press?
+     - that is misleading)". Every 15-minute start inside working hours was drawn as a bookable
+     green slot, including ones that had already passed. At 19:35 the whole afternoon still
+     invited a tap, and the server then refused it with `appointment start must be in the
+     future`. A time you cannot book must not look bookable. `earliestBookableMinute` is the
+     now-line on today, +Infinity on a past day (nothing is bookable), and -Infinity on a future
+     day (everything within working hours is). */
+  function availableCalendarStarts(column,earliestBookableMinute=-Infinity){
     const {duration,before,after}=selectedCalendarServiceTiming();
     if(column.schedule.state!=='working')return [];
+    if(earliestBookableMinute===Infinity)return [];
     const starts=[];
     for(let start=column.schedule.start+before;start+duration+after<=column.schedule.end;start+=15){
       const occupiedStart=start-before,occupiedEnd=start+duration+after;
@@ -17991,7 +18515,8 @@ async function appointmentsPage(){
         const blockStart=eventParts(block.starts_at).minutes,blockEnd=eventParts(block.ends_at).minutes;
         return intervalsOverlap(occupiedStart,occupiedEnd,blockStart,blockEnd);
       });
-      if(!hitsBreak&&!hitsAppointment&&!hitsBlockedTime)starts.push(start);
+      const alreadyPassed=start<earliestBookableMinute;
+      if(!alreadyPassed&&!hitsBreak&&!hitsAppointment&&!hitsBlockedTime)starts.push(start);
     }
     return starts;
   }
@@ -18044,12 +18569,28 @@ async function appointmentsPage(){
     const rangeEnd=Math.min(1440,Math.max(rangeStart+6*60,Math.ceil((allMinutes.length?Math.max(...allMinutes):20*60)/60)*60));
     const hourHeight=176,bodyHeight=(rangeEnd-rangeStart)/60*hourHeight;
     const hasWorking=columns.some(column=>column.schedule.state==='working');
-    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small">Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.</p>`:''}</div>
+    /* V217: once past slots stop being drawn, an evening or a past day legitimately has none
+       left. Telling staff to "choose a green start time" when there is no green left is the
+       same misdirection in words, so say which it is. */
+    const dayEarliestV217=day===todaySg?(Number.isFinite(todayMinutes)?todayMinutes:-Infinity):(day<todaySg?Infinity:-Infinity);
+    const hasBookableV217=canWrite&&columns.some(column=>column.id&&availableCalendarStarts(column,dayEarliestV217).length);
+    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small">${hasBookableV217
+      ?`Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.`
+      :day<todaySg
+        ?'This day has already passed — appointments can only be booked for a time still to come.'
+        :day===todaySg
+          ?`No ${selectedTiming.duration}-minute slot is left today. Move to another day, or use New appointment to pick a time.`
+          :'No free slot is long enough on this day. Try another day or a shorter service.'}</p>`:''}</div>
       <div class="day-timeline-scroll"><div class="day-timeline" data-range-start="${rangeStart}" data-range-end="${rangeEnd}" data-hour-height="${hourHeight}" style="--day-columns:${columns.length};--day-height:${bodyHeight}px">
         <div class="day-timeline-head" aria-hidden="true"></div>${columns.map(column=>`<div class="day-team-head"><span class="day-team-avatar" style="--staff-color:${esc(column.color)}">${esc(column.label.slice(0,1).toUpperCase())}</span><div><h3>${esc(column.label)}</h3><p class="small ${column.schedule.state==='working'?'':'muted'}">${esc(column.schedule.label)} · ${column.items.length} appointment${column.items.length===1?'':'s'}</p></div></div>`).join('')}
         <div class="day-time-axis" style="height:${bodyHeight}px">${[...Array(Math.floor((rangeEnd-rangeStart)/60)+1)].map((_,i)=>`<span style="top:${i*hourHeight}px">${minuteClock(rangeStart+i*60)}</span>`).join('')}</div>
         ${columns.map(column=>{
           const schedule=column.schedule;
+          /* V217: today books forward from the current minute; a past day books nothing; a
+             future day books anywhere inside working hours. */
+          const earliestBookableMinuteV217=day===todaySg
+            ?(Number.isFinite(todayMinutes)?todayMinutes:-Infinity)
+            :(day<todaySg?Infinity:-Infinity);
           const workingTop=schedule.state==='working'?(schedule.start-rangeStart)/60*hourHeight:0;
           const workingHeight=schedule.state==='working'?(schedule.end-schedule.start)/60*hourHeight:bodyHeight;
           const events=layoutCalendarDay(column.items).map(({item,from,to,lane,laneCount})=>{
@@ -18064,7 +18605,7 @@ async function appointmentsPage(){
           }).join('');
           const state=schedule.state!=='working'?`<div class="day-track-state"><b>${esc(schedule.label)}</b>${schedule.reason?`<span>${esc(schedule.reason)}</span>`:''}</div>`:'';
           const working=schedule.state==='working'?`<div class="day-schedule-window" style="top:${workingTop}px;height:${workingHeight}px" aria-hidden="true"></div>`:'';
-          const slots=canWrite&&column.id?availableCalendarStarts(column).map(start=>{
+          const slots=canWrite&&column.id?availableCalendarStarts(column,earliestBookableMinuteV217).map(start=>{
             return `<button type="button" class="day-slot-button" data-day="${day}" data-staff="${column.id}" data-time="${minuteClock(start)}" data-service="${esc(calendarServiceId)}" style="top:${(start-rangeStart)/60*hourHeight}px;height:44px" ${workspaceTemplateAttributeV97('aria-label','bookAppointmentSlot',{service:selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit',staff:column.label,time:minuteClock(start)})}><span>${minuteClock(start)}</span><b>Book</b></button>`;
           }).join(''):'';
           const now=Number.isFinite(todayMinutes)&&todayMinutes>=rangeStart&&todayMinutes<=rangeEnd?`<div class="day-now-line" style="top:${(todayMinutes-rangeStart)/60*hourHeight}px"><span>${minuteClock(todayMinutes)}</span></div>`:'';
@@ -21093,7 +21634,8 @@ async function settingsPage(){
             ${commissionSummary}
           </button>
           ${accessPill}${modPill}<span class="spacer"></span>
-          ${s.role!=='owner'?`<button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
+          ${s.role!=='owner'?`${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
+          <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
           <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Remove</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
         </div>
         ${openProfileId===s.id?staffProfilePanelHtml(s):''}
@@ -21149,6 +21691,45 @@ async function settingsPage(){
     const removedUserId=teamRowsById.get(id)?.user_id||'';const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:removedUserId});toast('Removed');await loadTeam();};
   window.cpInv=async(c)=>copyTextToClipboard(c,{success:'Code copied — send it to your teammate'});
   window.cpInvLink=async(c)=>copyTextToClipboard(staffInviteLinkV151(c),{success:'Invite link copied — send it to your teammate'});
+  /* V217. Owner: "there must be a reference code here - example kelvin sign up an account and
+     input the reference code - he will be tagged into the business (so we dont need to duplicate
+     any data over, he can just take over as the staff)".
+     accept_invite already upgrades an EXISTING roster row when the invite names one — the name,
+     job title, commission, working hours, rota and every past sale stay on the same person. What
+     was missing is that nothing could ever bind an invite to a teammate: create_invite takes only
+     a role and an email, so every code created a SECOND staff row and the roster data had to be
+     re-keyed. This mints a code bound to this exact teammate. */
+  window.staffReferenceCodeV217=async(staffId,button)=>{
+    const name=button?.dataset?.name||'this teammate';
+    if(button)button.disabled=true;
+    const {data,error}=await sb.rpc('create_staff_reference_code_v217',{p_business:S.biz.id,p_staff:staffId});
+    if(button)button.disabled=false;
+    if(error)return fail(error);
+    const code=data?.code||'';
+    if(!code)return fail(new Error('The reference code was not returned. Try again.'));
+    document.querySelector('#staffReferenceModalV217')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="staffReferenceModalV217" role="dialog" aria-modal="true" aria-labelledby="staffReferenceTitleV217" tabindex="-1">
+      <section class="modal-card" style="max-width:480px">
+        <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for ${esc(name)}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
+        <p class="staff-reference-code-v217" data-merchant-content>${esc(code)}</p>
+        <ol class="small" style="margin:14px 0 0;padding-left:20px;line-height:1.7">
+          <li>Give this code to ${esc(name)}.</li>
+          <li>They create their own account, then enter the code.</li>
+          <li>You approve them, and they take over this exact record — their job title, commission, hours and past sales stay as they are. No details are re-entered.</li>
+        </ol>
+        <p class="muted small" style="margin-top:12px">The code expires in 14 days and works once. Creating a new code for ${esc(name)} cancels this one.</p>
+        <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="staffReferenceCopyV217">Copy code</button><button type="button" class="btn ghost sm" id="staffReferenceDoneV217">Done</button></div>
+      </section></div>`);
+    const dialog=$('staffReferenceModalV217');
+    let deactivate;
+    const close=()=>deactivate?.();
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#staffReferenceCopyV217'});
+    $('staffReferenceCloseV217').onclick=close;
+    $('staffReferenceDoneV217').onclick=()=>{close();loadTeam()};
+    $('staffReferenceCopyV217').onclick=()=>copyTextToClipboard(code,{
+      success:workspaceTemplateTextV97('inviteCreated',{code}),
+      failure:'Copy was blocked. Read the code out or write it down.'});
+  };
   window.rvInv=async(id)=>{const {error}=await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);if(error)return fail(error);toast('Invite revoked');loadTeam();};
   window.toggleStaffProfile=(staffId)=>{openProfileId=(openProfileId===staffId)?null:staffId;loadTeam();};
   window.saveStaffProfile=async(staffId,btn)=>{
@@ -21684,7 +22265,12 @@ function prefillEmptyPortalDetails({profile=null,user=null}={}){
   const name=$('pn'),phone=$('pp'),email=$('pe'),country=$('ppcc');
   const metadata=user?.user_metadata||{};
   const fullName=String(profile?.full_name||metadata.full_name||metadata.name||'').trim();
-  const authPhone=String(user?.phone||'').trim();
+  /* v192 (owner: "already has +65 — why the number auto generated 6581863833?"). Supabase stores
+     the verified phone in E.164 WITHOUT the leading plus (6581863833), so the country-code match
+     below never fired and the whole number was pasted into the local field, next to a +65 select.
+     Normalise first, then split. */
+  const storedPhone=String(user?.phone||'').replace(/[^\d+]/g,'');
+  const authPhone=storedPhone&&!storedPhone.startsWith('+')?`+${storedPhone}`:storedPhone;
   const authEmail=String(user?.email||'').trim();
   if(name&&!name.value.trim()&&fullName)name.value=fullName;
   if(email&&!email.value.trim()&&authEmail)email.value=authEmail;
@@ -21784,6 +22370,12 @@ async function renderPortal(slug){
   const repeatService=repeatServiceParam?services.find(service=>service.id===repeatServiceParam)||null:null;
   const repeatPreference=repeatService?customerRepeatBookingPreferencesV167.get(`${slug}:${repeatService.id}`)||null:null;
   const usesTables=!!biz.uses_tables;
+  /* v192 (owner: "pressing booking will lead me to this page — but there's no way to back").
+     The portal is also a public page a stranger opens from a QR, and that visitor has nothing to
+     go back TO. So the control appears only for someone who arrived from their own wallet: a
+     signed-in customer. It points at that business's programme when they are linked, otherwise at
+     the wallet home. */
+  let portalBackHrefV192=signedInUser?'#/wallet':'';
   const tables=(biz.tables&&biz.tables.length)?biz.tables:[];
   /* v183 (owner: "if services allow customers to choose staff, please enable it… business still
      will approve/reject"): the team step is now REAL. When the business turns staff choice on,
@@ -21836,6 +22428,10 @@ async function renderPortal(slug){
     const at=new Date(`${date}T00:00:00+08:00`);
     return Number.isNaN(at.getTime())?date:at.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'Asia/Singapore'});
   };
+  /* v192: the signed-in banner is injected AFTER draw() returns, so its handler cannot see
+     showStep — which lives inside draw(). "Edit booking details" threw a ReferenceError and did
+     nothing at all. draw() now publishes the current stepper here. */
+  let portalShowStepV192=null;
   const fmtPicked=v=>{if(!v)return 'Not chosen yet';const t=v.split('T')[1]||'';const dt=new Date(v);return isNaN(dt)?v:dt.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'})+(t?' · '+t:'');};
   const draw=()=>{
     destroyMountedTurnstiles();
@@ -21847,7 +22443,7 @@ async function renderPortal(slug){
         ${services.map(s=>`<button class="svc${selSvc===s.id?' sel':''}" type="button" aria-pressed="${selSvc===s.id}" data-svc="${esc(s.id)}">
           <span><b>${esc(s.name)}</b> <span class="muted small">· ${s.duration_min} min</span></span>
           <b>${esc(currency)} ${(s.price_cents/100).toFixed(2)}</b></button>`).join('')}
-        <button class="svc${(serviceChosen&&selSvc===null)?' sel':''}" type="button" aria-pressed="${serviceChosen&&selSvc===null}" data-svc=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button>
+        ${usesTables?`<button class="svc${(serviceChosen&&selSvc===null)?' sel':''}" type="button" aria-pressed="${serviceChosen&&selSvc===null}" data-svc=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button>`:''}
       </div>`:`<p class="muted small">We'll note this as a general visit — pick your time on the next step.</p>`}
       <div class="pf-inlineerr" id="err-service" role="alert"></div>
       <div class="pf-nav"><button class="btn" id="next-service" type="button">Continue</button></div>
@@ -21902,7 +22498,7 @@ async function renderPortal(slug){
     </section>`;
     const stepBody={service:serviceStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
     root.innerHTML=`<div class="portal customer-surface" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
-      <div class="head"><h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
+      <div class="head">${portalBackHrefV192?`<a class="btn ghost sm portal-back" href="${esc(portalBackHrefV192)}">${CUI.icon('back',{size:17})}<span>Back</span></a>`:''}<h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
       <div id="portalSignedInSlot"></div>
       <div class="card" id="bookingFormCard">
         ${progressHtml}
@@ -21990,7 +22586,7 @@ async function renderPortal(slug){
       availabilityState=data?{status:'ready',key,data}:{status:'error',key,data:null};
       renderSlots();
     };
-    const showStep=(idx)=>{
+    const showStep=portalShowStepV192=(idx)=>{
       stepIdx=Math.max(0,Math.min(idx,steps.length-1));
       const key=steps[stepIdx];
       root.querySelectorAll('.pf-step').forEach(el=>{el.hidden=el.dataset.step!==key;});
@@ -22151,12 +22747,15 @@ async function renderPortal(slug){
     const customer=!personaResult?.error&&(personaResult?.data?.customer||[]).find(p=>p.business_slug===slug);
     if(customer){
       linkedCustomer=true;
+      portalBackHrefV192=`#/wallet/${encodeURIComponent(slug)}`;
+      const back=root.querySelector('.portal-back');
+      if(back)back.setAttribute('href',portalBackHrefV192);
       loadPortalUpcomingBookingsV183(slug,isPortalCurrent);
       const identity=customerBookingIdentitySummaryV167({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
       slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><div><b>Booking as ${esc(identity.name)}${identity.contact?` · ${esc(identity.contact)}`:''}</b><p class="muted small" style="margin-top:4px">This request will be securely attached to your ${esc(customer.business_name||biz.name)} programme.</p></div><span class="spacer"></span><button class="btn ghost sm" id="portalBookingEditIdentity" type="button">Edit booking details</button></div></div>`;
       if(!isPortalCurrent()||!slot.isConnected)return;
       prefillEmptyPortalDetails({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
-      $('portalBookingEditIdentity')?.addEventListener('click',()=>showStep(steps.indexOf('details')));
+      $('portalBookingEditIdentity')?.addEventListener('click',()=>portalShowStepV192?.(steps.indexOf('details')));
     }else if(personaResult?.error){
       slot.innerHTML=`<div class="card" style="margin-bottom:16px"><b>Signed in</b><p class="muted small" style="margin-top:4px">The programme link could not be displayed here. Your verified relationship will be validated securely when you submit.</p></div>`;
     }else{

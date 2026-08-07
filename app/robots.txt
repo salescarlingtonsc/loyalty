@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /business/
+
+Sitemap: https://peekaa.asia/sitemap.xml

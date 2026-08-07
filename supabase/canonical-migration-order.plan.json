@@ -1408,6 +1408,48 @@
       "version": "20260807130000",
       "name": "nestly_v201_receipt_storage_policies",
       "sourcePath": "db/migrations/20260807_nestly_v201_receipt_storage_policies.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807140000",
+      "name": "nestly_v207_staff_invite_and_owner_approval",
+      "sourcePath": "db/migrations/20260807_nestly_v207_staff_invite_and_owner_approval.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807150000",
+      "name": "nestly_v209_static_single_join_qr",
+      "sourcePath": "db/migrations/20260807_nestly_v209_static_single_join_qr.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807170000",
+      "name": "nestly_v213_sales_mix_audit_column",
+      "sourcePath": "db/migrations/20260807_nestly_v213_sales_mix_audit_column.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807190000",
+      "name": "nestly_v215_signup_welcome_offer",
+      "sourcePath": "db/migrations/20260807_nestly_v215_signup_welcome_offer.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807195000",
+      "name": "nestly_v217_recent_window_and_staff_reference_code",
+      "sourcePath": "db/migrations/20260807_nestly_v217_recent_window_and_staff_reference_code.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807195500",
+      "name": "nestly_v219_products_module_follows_business_config",
+      "sourcePath": "db/migrations/20260807_nestly_v219_products_module_follows_business_config.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807195900",
+      "name": "nestly_v220_next_best_times_for_selected_staff",
+      "sourcePath": "db/migrations/20260807_nestly_v220_next_best_times_for_selected_staff.sql"
     }
   ]
 }

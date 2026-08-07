@@ -523,17 +523,24 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
     renderCustomerPasswordSignIn(isRouteCurrent,{notice:'Password updated. Sign in with your mobile number and new password.'});
   };
 }
+/* v193 (owner: "save password not working"). A password manager offers to save on a real FORM
+   SUBMIT, from fields it can name: username + password. This screen was two loose inputs and a
+   type="button", so Chrome and Safari had nothing to recognise and never prompted. The phone field
+   also carried autocomplete="tel", which is not the username hint a manager pairs a credential to
+   — and "username webauthn" is the documented pairing for passkey autofill as well. */
 function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeTone='success'}={}){
   if(!isRouteCurrent())return;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerPasswordTitle">
     <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerPasswordTitle">Welcome to ${esc(BRAND.productName)}</h1><p class="muted small" style="margin-top:5px">Sign in with your mobile number and password. Normal sign-in does not send an OTP.</p></div></div>
+    <form id="customerPasswordForm" novalidate>
     <label for="customerPasswordPhone">Singapore mobile number</label>
-    <input id="customerPasswordPhone" type="tel" inputmode="tel" autocomplete="tel webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
+    <input id="customerPasswordPhone" name="username" type="tel" inputmode="tel" autocomplete="username webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
     <label for="customerPassword">Password</label>
-    ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn'})}
+    ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'})}
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px${noticeTone==='success'?';color:var(--green)':''}">${esc(notice)}</p>`:''}</div>
     <div style="margin-top:14px">${authChallengeHtml()}</div>
-    <button class="btn" id="customerPasswordSignIn" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
+    <button class="btn" id="customerPasswordSignIn" type="submit" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
+    </form>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
   </section>`);
@@ -555,7 +562,9 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     onToken:(token)=>{
       if(!isRouteCurrent()||!signIn.isConnected)return;
       captchaToken=token;signIn.disabled=!token;passkeyButton.disabled=!passkeySupported||!token;
-      signIn.querySelector('span').textContent=token?'Sign in':'Checking…';
+      /* v193: "Checking…" claimed the APP was busy. Until a token arrives the app is waiting for
+         the security check — and if that check is a checkbox, for the person. */
+      signIn.querySelector('span').textContent=token?'Sign in':'Waiting for security check…';
       if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
         customerAutomaticPasskeyAttempted=true;
         runPasskeySignIn({automatic:true});
@@ -564,7 +573,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
       if(!isRouteCurrent()||!signIn.isConnected){control?.destroy();return}
       captchaControl=control;
     });
-  signIn.onclick=async()=>{
+  const submitSignIn=async()=>{
     const phone=normalizeSingaporeCustomerPhone(phoneInput.value),password=passwordInput.value;
     if(!phone||!password){
       errorHost.innerHTML='<div class="err">Enter your Singapore mobile number and password.</div>';return;
@@ -587,13 +596,29 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
       signIn.querySelector('span').textContent='Sign in';
       errorHost.innerHTML='<div class="err">The mobile number or password is incorrect.</div>';return;
     }
+    /* Offer the credential to the browser's own manager. The form submit is what makes Chrome and
+       Safari prompt; this is the explicit path for browsers that implement it, and a no-op
+       everywhere else. Peekaa itself never stores the password. */
+    try{
+      if(globalThis.PasswordCredential&&navigator.credentials?.store){
+        await navigator.credentials.store(new globalThis.PasswordCredential({id:phone,password,name:phone}));
+      }
+    }catch{}
     resetCustomerRegistrationState({phone});
     resetClientSessionState({preserveInvitation:true});
     route();
   };
+  /* A real submit — Enter in either field, or the button — is what a password manager listens for. */
+  const signInForm=$('customerPasswordForm');
+  if(signInForm)signInForm.onsubmit=event=>{event.preventDefault();submitSignIn()};
+  else signIn.onclick=submitSignIn;
   const runPasskeySignIn=async({automatic=false}={})=>{
     if(!passkeySupported||!captchaToken){
-      if(!automatic)passkeyStatus.textContent='Complete the security check before using Face ID, Touch ID or your passkey.';
+      if(!automatic){
+        passkeyStatus.textContent=passkeySupported
+          ?'Complete the security check above first — then Face ID, Touch ID or your passkey.'
+          :'Passkeys are not supported in this browser. Sign in with your password.';
+      }
       return;
     }
     const challenge=captchaToken;captchaToken='';passkeyButton.disabled=true;signIn.disabled=true;
@@ -3419,7 +3444,12 @@ function prefillEmptyPortalDetails({profile=null,user=null}={}){
   const name=$('pn'),phone=$('pp'),email=$('pe'),country=$('ppcc');
   const metadata=user?.user_metadata||{};
   const fullName=String(profile?.full_name||metadata.full_name||metadata.name||'').trim();
-  const authPhone=String(user?.phone||'').trim();
+  /* v192 (owner: "already has +65 — why the number auto generated 6581863833?"). Supabase stores
+     the verified phone in E.164 WITHOUT the leading plus (6581863833), so the country-code match
+     below never fired and the whole number was pasted into the local field, next to a +65 select.
+     Normalise first, then split. */
+  const storedPhone=String(user?.phone||'').replace(/[^\d+]/g,'');
+  const authPhone=storedPhone&&!storedPhone.startsWith('+')?`+${storedPhone}`:storedPhone;
   const authEmail=String(user?.email||'').trim();
   if(name&&!name.value.trim()&&fullName)name.value=fullName;
   if(email&&!email.value.trim()&&authEmail)email.value=authEmail;
@@ -3519,6 +3549,12 @@ async function renderPortal(slug){
   const repeatService=repeatServiceParam?services.find(service=>service.id===repeatServiceParam)||null:null;
   const repeatPreference=repeatService?customerRepeatBookingPreferencesV167.get(`${slug}:${repeatService.id}`)||null:null;
   const usesTables=!!biz.uses_tables;
+  /* v192 (owner: "pressing booking will lead me to this page — but there's no way to back").
+     The portal is also a public page a stranger opens from a QR, and that visitor has nothing to
+     go back TO. So the control appears only for someone who arrived from their own wallet: a
+     signed-in customer. It points at that business's programme when they are linked, otherwise at
+     the wallet home. */
+  let portalBackHrefV192=signedInUser?'#/wallet':'';
   const tables=(biz.tables&&biz.tables.length)?biz.tables:[];
   /* v183 (owner: "if services allow customers to choose staff, please enable it… business still
      will approve/reject"): the team step is now REAL. When the business turns staff choice on,
@@ -3571,6 +3607,10 @@ async function renderPortal(slug){
     const at=new Date(`${date}T00:00:00+08:00`);
     return Number.isNaN(at.getTime())?date:at.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'Asia/Singapore'});
   };
+  /* v192: the signed-in banner is injected AFTER draw() returns, so its handler cannot see
+     showStep — which lives inside draw(). "Edit booking details" threw a ReferenceError and did
+     nothing at all. draw() now publishes the current stepper here. */
+  let portalShowStepV192=null;
   const fmtPicked=v=>{if(!v)return 'Not chosen yet';const t=v.split('T')[1]||'';const dt=new Date(v);return isNaN(dt)?v:dt.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'})+(t?' · '+t:'');};
   const draw=()=>{
     destroyMountedTurnstiles();
@@ -3582,7 +3622,7 @@ async function renderPortal(slug){
         ${services.map(s=>`<button class="svc${selSvc===s.id?' sel':''}" type="button" aria-pressed="${selSvc===s.id}" data-svc="${esc(s.id)}">
           <span><b>${esc(s.name)}</b> <span class="muted small">· ${s.duration_min} min</span></span>
           <b>${esc(currency)} ${(s.price_cents/100).toFixed(2)}</b></button>`).join('')}
-        <button class="svc${(serviceChosen&&selSvc===null)?' sel':''}" type="button" aria-pressed="${serviceChosen&&selSvc===null}" data-svc=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button>
+        ${usesTables?`<button class="svc${(serviceChosen&&selSvc===null)?' sel':''}" type="button" aria-pressed="${serviceChosen&&selSvc===null}" data-svc=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button>`:''}
       </div>`:`<p class="muted small">We'll note this as a general visit — pick your time on the next step.</p>`}
       <div class="pf-inlineerr" id="err-service" role="alert"></div>
       <div class="pf-nav"><button class="btn" id="next-service" type="button">Continue</button></div>
@@ -3637,7 +3677,7 @@ async function renderPortal(slug){
     </section>`;
     const stepBody={service:serviceStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
     root.innerHTML=`<div class="portal customer-surface" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
-      <div class="head"><h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
+      <div class="head">${portalBackHrefV192?`<a class="btn ghost sm portal-back" href="${esc(portalBackHrefV192)}">${CUI.icon('back',{size:17})}<span>Back</span></a>`:''}<h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
       <div id="portalSignedInSlot"></div>
       <div class="card" id="bookingFormCard">
         ${progressHtml}
@@ -3725,7 +3765,7 @@ async function renderPortal(slug){
       availabilityState=data?{status:'ready',key,data}:{status:'error',key,data:null};
       renderSlots();
     };
-    const showStep=(idx)=>{
+    const showStep=portalShowStepV192=(idx)=>{
       stepIdx=Math.max(0,Math.min(idx,steps.length-1));
       const key=steps[stepIdx];
       root.querySelectorAll('.pf-step').forEach(el=>{el.hidden=el.dataset.step!==key;});
@@ -3886,12 +3926,15 @@ async function renderPortal(slug){
     const customer=!personaResult?.error&&(personaResult?.data?.customer||[]).find(p=>p.business_slug===slug);
     if(customer){
       linkedCustomer=true;
+      portalBackHrefV192=`#/wallet/${encodeURIComponent(slug)}`;
+      const back=root.querySelector('.portal-back');
+      if(back)back.setAttribute('href',portalBackHrefV192);
       loadPortalUpcomingBookingsV183(slug,isPortalCurrent);
       const identity=customerBookingIdentitySummaryV167({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
       slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><div><b>Booking as ${esc(identity.name)}${identity.contact?` · ${esc(identity.contact)}`:''}</b><p class="muted small" style="margin-top:4px">This request will be securely attached to your ${esc(customer.business_name||biz.name)} programme.</p></div><span class="spacer"></span><button class="btn ghost sm" id="portalBookingEditIdentity" type="button">Edit booking details</button></div></div>`;
       if(!isPortalCurrent()||!slot.isConnected)return;
       prefillEmptyPortalDetails({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
-      $('portalBookingEditIdentity')?.addEventListener('click',()=>showStep(steps.indexOf('details')));
+      $('portalBookingEditIdentity')?.addEventListener('click',()=>portalShowStepV192?.(steps.indexOf('details')));
     }else if(personaResult?.error){
       slot.innerHTML=`<div class="card" style="margin-bottom:16px"><b>Signed in</b><p class="muted small" style="margin-top:4px">The programme link could not be displayed here. Your verified relationship will be validated securely when you submit.</p></div>`;
     }else{

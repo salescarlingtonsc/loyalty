@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="15536c37afc55210be66d73b61957bc0a0ce254863ed575a2e099bfb3ee58636"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="3d0230f211744f1226549620fb4f461225a7d8dc41ae6f2f25f904aa52638d79"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -120,6 +120,16 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .staff-group-head-v209 h3{font-size:1rem;display:flex;align-items:center;gap:8px}
 .staff-group-count-v209{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--tint);color:var(--coral);font-size:12px;font-weight:750}
 .staff-group-head-v209 p{margin-top:3px}
+/* V210 branch scope in the top bar. It sits beside the language picker and stays put: the owner
+   asked for it "fixed all the way", because the scope decides what every figure on the page
+   means. Hidden below 900px, where the bar is already tight — the profile menu still carries the
+   branch NAME there, so the scope is never invisible, only relocated. */
+.topbar-branch-scope-v210{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.topbar-branch-scope-v210 select{width:auto;min-width:150px;max-width:220px;min-height:44px;padding:8px 12px;border-radius:999px;font-size:13.5px;font-weight:600}
+.topbar-branch-label-v210{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:750}
+@media(max-width:900px){.topbar-branch-scope-v210{display:none}}
+.profile-branch-readout-v210{display:none}
+@media(max-width:900px){.profile-branch-readout-v210{display:block}}
 /* V206: the row a notification sent you to. A brief tint, not a permanent one — it is a "here it
    is", and a highlight that never fades becomes noise on the next render. Respects reduced
    motion by simply not animating; the tint still lands. */
@@ -193,6 +203,18 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .merchant-insights{margin-top:18px}.merchant-insights-head,.retention-readiness-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
 .merchant-insights-head h2,.retention-readiness-head h2{margin:0;font-size:1.22rem}.merchant-insights-head p,.retention-readiness-head p{margin:3px 0 0}
 .merchant-insights-context{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+/* V214: the scope sentence must stay readable next to the heading, and must not push the
+   scope pills off the row on a phone. It wraps under the heading and keeps a measure. */
+.merchant-insights-scope-note-v214{margin:6px 0 0;max-width:56ch;line-height:1.45}
+/* V217: the reference code is read aloud or copied onto paper, so it is set large, spaced and
+   monospaced — a code that is misread costs the teammate a sign-up attempt. */
+.staff-reference-code-v217{margin:16px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:2rem;font-weight:700;letter-spacing:.22em;text-align:center;padding:16px 10px;border:1px dashed var(--line);border-radius:14px;background:var(--tint);word-break:break-all}
+/* The teammate the owner actually chose is marked in the availability list, so the panel and the
+   Assign-to field visibly agree. */
+.suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
+/* A branch withheld from the reporting scope is stated, not silently missing. */
+.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -925,7 +947,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .day-timeline-scroll{max-height:72vh;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
 .day-timeline{display:grid;grid-template-columns:64px repeat(var(--day-columns),minmax(190px,1fr));grid-template-rows:auto var(--day-height);min-width:calc(64px + var(--day-columns)*190px)}
 .day-timeline-head{position:sticky;top:0;left:0;z-index:8;background:#FBFAF8;border-bottom:1px solid var(--line)}
-.day-team-head{position:sticky;top:0;z-index:7;display:flex;align-items:center;gap:10px;min-height:72px;padding:10px 12px;border-left:1px solid var(--hair);border-bottom:1px solid var(--line);background:#FBFAF8}.day-team-head h3{font-size:14px}.day-team-head p{margin:2px 0 0;line-height:1.3}
+/* V212 (owner, third report: "calendar still not able to press into the appointment details").
+   This header is sticky at z-index 7 and the appointment buttons are z-index 6, so once the track
+   is scrolled the header sits OVER the top of an appointment — including its name, which is
+   exactly where anyone taps. Measured in the browser: at one ordinary scroll position the block's
+   title was 68px underneath the header, and that region belongs to the header, which does
+   nothing when clicked. Scroll-dependent, which is why it read as intermittent and why two
+   earlier fixes of mine missed it.
+   The header carries no controls at all — an avatar, a name and the opening hours — so it can
+   keep covering the content visually while never intercepting a tap. scroll-padding-top then
+   stops programmatic scrolls parking an appointment underneath it in the first place. */
+.day-team-head{position:sticky;top:0;z-index:7;display:flex;align-items:center;gap:10px;min-height:72px;padding:10px 12px;border-left:1px solid var(--hair);border-bottom:1px solid var(--line);background:#FBFAF8;pointer-events:none}
+.day-timeline-scroll{scroll-padding-top:76px}.day-team-head h3{font-size:14px}.day-team-head p{margin:2px 0 0;line-height:1.3}
 .day-team-avatar{display:grid;place-items:center;width:38px;height:38px;flex:0 0 auto;border:3px solid var(--staff-color);border-radius:50%;background:#fff;font-weight:800}
 .day-time-axis{position:sticky;left:0;z-index:5;border-right:1px solid var(--line);background:#fff}.day-time-axis span{position:absolute;right:8px;transform:translateY(-8px);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .day-team-track{position:relative;border-right:1px solid var(--hair);background-image:linear-gradient(to bottom,transparent calc(100% - 1px),var(--line) 0);background-size:100% var(--day-hour-height,176px);background-repeat:repeat-y}
@@ -1295,17 +1328,21 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-promotions-section{margin-top:6px}.customer-promotions-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.customer-promotions-head h2{font-size:clamp(1.45rem,4vw,2rem)}.customer-promotions-head p{margin-top:4px}
 .customer-promotions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .customer-home-offers{margin:0 0 16px;min-width:0}.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
-.customer-promotion-card{position:relative;overflow:hidden;min-height:360px;border-radius:22px;background:#17161a;color:#fff;box-shadow:0 18px 42px rgba(23,22,26,.18);display:flex;flex-direction:column}
+/* v192 (owner: "the promotion content occupies more than a screen — i need it to be smaller").
+   The artwork is still never cropped and never painted over: object-fit:contain only SCALES it,
+   so an EDM with its words baked in stays whole — just smaller in the list. Full size is one tap
+   away in the offer sheet, which is what that sheet is for. */
+.customer-promotion-card{position:relative;overflow:hidden;border-radius:18px;background:#17161a;color:#fff;box-shadow:0 12px 30px rgba(23,22,26,.16);display:flex;flex-direction:column}
 /* Uploaded promotion artwork is the business's own marketing creative — often an
    EDM with its words baked in. Never crop it and never paint anything over it:
    contain at natural ratio (height-capped) with the card's copy strictly below.
    Only the no-photo fallback keeps a fixed ratio and decorative gradient. */
-.customer-promotion-card-media{position:relative;width:100%;flex:0 0 auto;overflow:hidden;background:linear-gradient(135deg,#3b2a45,#17161a)}.customer-promotion-card-media img{display:block;width:100%;height:auto;max-height:460px;object-fit:contain;margin:0 auto}
-.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:16/9}.customer-promotion-card-media--fallback span{position:relative;z-index:1;font-size:clamp(2.4rem,9vw,3.6rem);font-weight:750;letter-spacing:-.04em;color:rgba(255,255,255,.92)}
-.customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;padding:22px}
-.customer-promotion-card-copy .customer-promotion-card-facts{margin-top:7px;font-size:clamp(1.1rem,3.4vw,1.4rem);font-weight:760;line-height:1.2;letter-spacing:-.02em;color:#fff}.customer-promotion-card-copy h3{font-size:clamp(1.45rem,4vw,2.05rem);line-height:1.08;letter-spacing:-.025em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
+.customer-promotion-card-media{position:relative;width:100%;flex:0 0 auto;overflow:hidden;background:linear-gradient(135deg,#3b2a45,#17161a)}.customer-promotion-card-media img{display:block;width:100%;height:auto;max-height:clamp(140px,34vw,220px);object-fit:contain;margin:0 auto}
+.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9}.customer-promotion-card-media--fallback span{position:relative;z-index:1;font-size:clamp(1.7rem,6vw,2.4rem);font-weight:750;letter-spacing:-.04em;color:rgba(255,255,255,.92)}
+.customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;padding:15px 16px 16px}
+.customer-promotion-card-copy .customer-promotion-card-facts{margin-top:5px;font-size:clamp(.98rem,2.9vw,1.12rem);font-weight:750;line-height:1.25;letter-spacing:-.015em;color:#fff}.customer-promotion-card-copy h3{font-size:clamp(1.15rem,3.2vw,1.4rem);line-height:1.15;letter-spacing:-.02em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
 .customer-promotion-validity{font-weight:750}.customer-promotion-detail-list{display:grid;gap:10px;margin:16px 0}.customer-promotion-detail-list>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px}.customer-promotion-detail-list dt{color:var(--muted);font-size:.78rem;font-weight:750}.customer-promotion-detail-list dd{margin:0;overflow-wrap:anywhere}
-.customer-promotion-card-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}.customer-promotion-card-actions .btn{background:#fff;color:#17161a;box-shadow:none}.customer-promotion-card details{min-width:0}.customer-promotion-card details[open]{flex:1 1 100%;width:100%}.customer-promotion-card details summary{color:rgba(255,255,255,.88)}
+.customer-promotion-card-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}.customer-promotion-card-actions .btn{background:#fff;color:#17161a;box-shadow:none}.customer-promotion-card details{min-width:0}.customer-promotion-card details[open]{flex:1 1 100%;width:100%}.customer-promotion-card details summary{color:rgba(255,255,255,.88)}
 #customerPromotionDetailsModal .modal-card,#customerPromotionDetailsModal .row,#customerPromotionDetailsModal h2{min-width:0}#customerPromotionDetailsModal h2{flex:1 1 auto}#customerPromotionDetailsModal h2,#customerPromotionDetailsModal p,#customerPromotionDetailsModal dd{overflow-wrap:anywhere;word-break:break-word}
 .promotion-studio{display:grid;gap:16px}.promotion-studio-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;list-style:none}.promotion-studio-progress li{padding:11px;border-radius:13px;background:var(--bg);font-size:.84rem;font-weight:750}.promotion-studio-progress li strong{display:block;color:var(--coral);margin-bottom:3px}.promotion-editor-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:16px}.promotion-preview{position:sticky;top:92px;align-self:start}.promotion-preview .customer-promotion-card{min-height:410px}.promotion-item-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}.promotion-item-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--bg)}.promotion-item-row:last-child{border-bottom:0}.promotion-quota{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.promotion-quota-meter{height:8px;flex:1 1 180px;overflow:hidden;border-radius:999px;background:var(--hair)}.promotion-quota-meter span{display:block;height:100%;width:var(--quota-progress,0%);background:var(--coral)}
 @media(max-width:760px){
@@ -1537,7 +1574,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 15536c37afc55210be66d73b61957bc0a0ce254863ed575a2e099bfb3ee58636</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 3d0230f211744f1226549620fb4f461225a7d8dc41ae6f2f25f904aa52638d79</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -1944,6 +1981,40 @@ function percentageChangeV153(current,previous){
 function insightScopeLabelV153(branchId,branchName){
   return branchId?`Branch: ${branchName||'Selected branch'}`:'All branches consolidated';
 }
+/* V214. Owner question: "why is merchant insights different for each branch? would it be
+   confusing why some branch have insights some dont have?"
+   It is different because every recommendation is computed from the activity of the branch
+   currently in scope, and a recommendation only appears once there is enough activity to
+   support it (a >=10% revenue move, an inactive customer, at least 2 visits for a busiest
+   day). A quiet or newly opened branch therefore legitimately has fewer cards than a busy
+   one. That is correct, but the panel never SAID so, so an owner saw a near-empty box and
+   read it as broken. These two helpers make the scope and the reason explicit. */
+function insightScopeExplainerV214(branchId,branchName){
+  return branchId
+    ?`Counted from ${branchName||'this branch'} only. Other branches are excluded — switch "Viewing" at the top to compare.`
+    :'Every branch you can see is counted together. Switch "Viewing" at the top to read one branch on its own.';
+}
+function insightQuietScopeV214({current,branchId,branchName}){
+  const visits=Number(current?.visits)||0;
+  const revenueCents=Number(current?.revenue_cents)||0;
+  const where=branchId?(branchName||'This branch'):'This business';
+  const activity=visits||revenueCents
+    ?`${where} recorded ${visits} ${visits===1?'visit':'visits'} and ${money(revenueCents)} in this period — not yet enough to call a trend.`
+    :`${where} recorded no visits or sales in this period, so there is nothing to compare yet.`;
+  return {
+    tone:'neutral',icon:'info',category:'Readiness',
+    title:branchId?`Not enough activity at ${branchName||'this branch'} yet`:'More activity is needed',
+    explanation:activity,
+    why:branchId
+      ?'Each branch is measured on its own, so a quieter branch shows fewer recommendations than a busy one. Nothing is broken.'
+      :'Recommendations appear once there is enough recorded activity to compare one period against the last.',
+    actions:[
+      branchId?{label:'Show all branches',dataset:'data-insight-scope-all-v214',variant:'ghost'}:null,
+      {label:'Record sale',href:'#/till',variant:'ghost'},
+      {label:'Add customers',href:'#/clients',variant:'ghost'}
+    ].filter(Boolean)
+  };
+}
 function insightPeriodLabelV153(from,to){return `${from} – ${to}`}
 function classifyInactiveCustomersV153(customers){
   const buckets={
@@ -2049,9 +2120,9 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
     insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits.`,why:`Review staffing and availability for ${day}s.`,actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
   }
   if(!insights.length){
-    insights.push({tone:'neutral',icon:'info',category:'Readiness',title:'More activity is needed',explanation:'Peekaa will show recommendations after more sales, visits or appointments are recorded.',why:'Continue recording sales and customer visits.',actions:[{label:'Record sale',href:'#/till',variant:'ghost'},{label:'Add customers',href:'#/clients',variant:'ghost'}]});
+    insights.push(insightQuietScopeV214({current,branchId,branchName}));
   }
-  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
+  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p><p class="muted small merchant-insights-scope-note-v214">${esc(insightScopeExplainerV214(branchId,branchName))}</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
 }
 async function clientsPage(){
   const routeMain=M();
@@ -2243,7 +2314,7 @@ async function clientsPage(){
       if(result?.customers)result.customers=sortCustomersV150(result.customers,$('clientSort')?.value||'name_asc');
     }
     if(!isCurrent())return;
-    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
+    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
     if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveBucket?'No customers in this inactive group':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveBucket?'Choose another inactivity group, Never visited, or All customers.':'Customers will appear here after joining your loyalty programme or making a purchase. You can also add a customer manually from the button above.'});return}
     const loyaltyAvailable=result?.loyalty_available===true;
@@ -2287,7 +2358,7 @@ async function clientsPage(){
     const {data,error}=await sb.rpc('staff_list_visit_feedback_v145',{p_business:S.biz.id,p_status:feedbackFilter||null,
       p_limit:FEEDBACK_PAGE_SIZE,p_offset:feedbackPage*FEEDBACK_PAGE_SIZE});
     if(!isLatest()||!isCustomersCurrent()||$('fbQueue')!==host)return;
-    if(error){host.innerHTML=`<div class="err" role="alert">${esc(error.message||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
+    if(error){host.innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
     const rows=Array.isArray(data?.feedback)?data.feedback:[];
     const total=Math.max(0,Number(data?.total||0));
     const pages=Math.max(1,Math.ceil(total/FEEDBACK_PAGE_SIZE));
@@ -3536,6 +3607,10 @@ async function tillPage(){
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
+      /* v215: the welcome offer for a first-time sign-up rides in the same entitlements
+         payload as packages and vouchers, because this is the one read the till already
+         makes for a looked-up customer. */
+      customerWelcomeOffer:entitlements.error?null:(entitlements.data?.welcome_offer||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
          missing a service is not the deal the customer was quoted, so it is withheld rather than
@@ -3624,6 +3699,29 @@ async function tillPage(){
     packageUseAttemptsV102.delete(attempt.slot);
     toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
     catalog=null;draw();
+  }
+  /* v215: give the first-visit free item. p_qualifying_sale is the sale that proves the
+     owner's minimum spend; it is null only for a zero-minimum offer, which needs no purchase.
+     The key is stable per grant + sale so a double-tap replays instead of giving a second item. */
+  async function redeemWelcomeOfferV215(qualifyingSaleId){
+    const offer=catalog?.customerWelcomeOffer;
+    if(!offer||busy)return;
+    const label=offer.reward_label||'the free item';
+    if(!confirm(`Give ${label} free to ${cust?.full_name||'this customer'}? This can only be done once.`))return;
+    busy=true;
+    const {data,error}=await sb.rpc('staff_redeem_welcome_offer_v215',{
+      p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,
+      p_qualifying_sale:qualifyingSaleId||null,
+      p_idempotency_key:`v215-${offer.grant_id}-${qualifyingSaleId||'no-sale'}`
+    });
+    if(!isTillCurrent())return;
+    busy=false;
+    if(error)return fail(error);
+    if(data?.status!=='completed')return fail(new Error('The welcome-offer receipt was incomplete. Check the customer before retrying.'));
+    toast(workspaceTemplateTextV97('welcomeOfferGiven',{item:label}));
+    catalog=null;
+    if(doneInfo)doneInfo.welcomeOfferGivenV215=label;
+    draw();
   }
   function changeQty(lineId,delta){
     if(cartLocked())return;
@@ -3837,6 +3935,23 @@ async function tillPage(){
 	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
           :'';
+        /* V211 (owner: "i still dont see the package here in record sale - not able to use
+           sessions"). The customer's OWNED packages had no UI at all: catalog.customerPackages
+           was loaded and useCustomerPackage() was defined, but nothing ever called it, so a
+           customer with four paid-for sessions had no way to spend one. The v102 test had been
+           failing on exactly this copy and I had written it off as a stale assertion — it was
+           reporting a live regression.
+           This sits ABOVE "Sell package": at a counter the far commoner act is spending a session
+           the customer already bought, not selling them another one. */
+        const ownedPkgs=(catalog.customerPackages||[]).filter(item=>Number(item.remaining)>0);
+        const ownedPackages=ownedPkgs.length
+          ?`<b class="small" style="display:block;margin-top:14px">Use an existing customer package</b>
+            <p class="muted small" style="margin:4px 0 8px">No payment is taken. One session is deducted and recorded as a visit. No points are earned — they were earned when the package was bought.</p>
+            <div class="till-cart-catalog">${ownedPkgs.map(item=>`<button type="button" class="choice-button" data-use-package="${esc(item.client_package_id)}">
+              <b>${esc(item.plan_name||'Package')}</b>
+              <span class="muted small">${esc(item.service_name||'Session')}${item.variant_label?' · '+esc(item.variant_label):''}</span>
+              <span class="pill ok">${Number(item.remaining)} left</span></button>`).join('')}</div>`
+          :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
           ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
           :'';
@@ -3849,13 +3964,37 @@ async function tillPage(){
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
-        const ownedPackages='';
         const pendingVouchers=(!walkin&&(catalog.customerVouchers||[]).length)
           ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
             ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
           :'';
-        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        /* v215 (owner: "i need to enable new sign ups redeemption ... minimum spend $5 (get
+           free xx product) ... or no minimum spend and free xx product"). The welcome offer sits
+           at the top of the picker because it is the first thing to settle at a counter.
+           Where the button lives follows the server contract, not convenience: a minimum spend is
+           proved against a REAL recorded sale, so that button appears on the receipt once the
+           sale exists. A zero-minimum offer needs no purchase, so it is given straight from here.
+           Nothing here decides eligibility — staff_redeem_welcome_offer_v215 re-checks all of it. */
+        const welcomeOffer=(!walkin&&catalog.customerWelcomeOffer)?catalog.customerWelcomeOffer:null;
+        const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
+        const welcomeBanner=welcomeOffer
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
+            <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+            ${welcomeMin
+              ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
+              :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
+                <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
+          :'';
+        /* V216 (owner: "i need a product modules - instead of just services (because products
+           have no minutes)"). The picker printed a hardcoded "Services" heading and gave the
+           products no heading at all. A cafe or chicken-rice shop with seven products and no
+           services therefore saw an empty "Services" label followed by unlabelled buttons —
+           the app insisting on a concept that business does not have. Each group now names
+           itself, and a group with nothing in it prints no heading. */
+        const svcHeadingV216=catalog.services.length?'<b class="small" style="display:block">Services</b>':'';
+        const prodHeadingV216=(catalog.products&&catalog.products.length)?'<b class="small" style="display:block;margin-top:14px">Products</b>':'';
+        picker=`${welcomeBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -3945,6 +4084,16 @@ async function tillPage(){
       const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addCatalogLine(type,item);
     });
+    /* V211: spend a session the customer already paid for. useCustomerPackage confirms, calls
+       use_package_session_v102 with a stable idempotency key, and is reversible afterwards —
+       reversing that session's sale restores it (reverse_sale -> v40_base -> v34_base writes
+       package_session_reversals). This handler is what was missing: the function existed and
+       nothing called it. */
+    document.querySelectorAll('[data-use-package]').forEach(b=>b.onclick=()=>
+      useCustomerPackage(b.dataset.usePackage));
+    /* v215 */
+    const welcomeButton=$('tWelcomeRedeemV215');
+    if(welcomeButton)welcomeButton.onclick=()=>redeemWelcomeOfferV215();
     document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
@@ -4273,6 +4422,13 @@ async function tillPage(){
         pointsTotal:l.type==='package'&&Number.isFinite(Number(l._packageResult?.pointsTotal))
           ?Number(l._packageResult.pointsTotal):null})),
       hasSale:!!r,extrasTotal:extrasTotalCents(),
+      /* v215: the receipt is where a minimum-spend welcome offer becomes redeemable, because
+         only now does a real sale exist to prove the spend against. Withheld when the sale
+         falls short, so staff are never shown a button the server will refuse. */
+      welcomeOfferV215:(!walkin&&catalog?.customerWelcomeOffer&&r&&r.saleId
+        &&Number(r.total)>=(Number(catalog.customerWelcomeOffer.min_spend_cents)||0))
+        ?{label:catalog.customerWelcomeOffer.reward_label||'Free item',saleId:r.saleId}:null,
+
       pointsEarned:pointsReceipt.pointsEarned,
       pointsTotal:pointsReceipt.pointsTotal,
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
@@ -4341,6 +4497,13 @@ async function tillPage(){
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
+        ${d.welcomeOfferGivenV215
+          ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
+          :d.welcomeOfferV215
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
+              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free for this first-time customer.</p>
+              <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
+          :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
         ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
@@ -4357,6 +4520,10 @@ async function tillPage(){
       businessId:S.biz.id,branchId:tillBranchId,
       saleId:d.saleId,customerName:d.name,isCurrent:isTillCurrent
     });
+    /* v215: the sale that unlocked the offer is passed as the qualifying sale, so the server
+       proves the minimum spend against a real record rather than trusting this screen. */
+    if($('tWelcomeReceiptRedeemV215'))$('tWelcomeReceiptRedeemV215').onclick=()=>
+      redeemWelcomeOfferV215(d.welcomeOfferV215?.saleId||null);
     /* V196 (owner: "allow for QRcode to let user to download or view").
        The QR points at THIS BUSINESS'S customer portal, not at a per-receipt URL. A public
        receipt link would put a purchase record — items, amounts, staff, the customer's points
@@ -6577,6 +6744,117 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
       giftcards:Boolean(giftcardsError)||Boolean(modules.includes('giftcards')&&giftcardPreferences?.status!=='available')}
   };
 }
+/* v215 — welcome offer for first-time sign-ups.
+   Owner: "i need to enable new sign ups redeemption (criteria set by boss): - example minimum
+   spend $5 (get free xx product) - redeem using qrcode for first time sign ups only. or no
+   minimum spend and free xx product."
+   It lives in the Programmes list next to the other rewards because that is where an owner
+   looks for "what do my customers get", not in Settings. */
+function welcomeOfferRowV215(status,canSetup,canRewards){
+  if(!canRewards)return '';
+  const configured=!!status?.configured;
+  const active=configured&&status.active===true;
+  const min=Number(status?.min_spend_cents)||0;
+  const label=status?.reward_label||'';
+  const copy=!status
+    ?'Status could not be confirmed. Retry the programme overview.'
+    :!configured
+    ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
+    :status.item_available===false
+    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
+    :active
+    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
+    :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
+  const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
+    :active?'Live':'Paused';
+  const tone=active&&status?.item_available!==false?'on':'off';
+  const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
+    ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
+  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
+    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p></div>`
+    +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
+    +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
+  return canSetup
+    ?`<button type="button" class="grow-programme-row" data-programme-kind="welcome" data-welcome-offer-edit-v215>${inner}</button>`
+    :`<article class="grow-programme-row" data-programme-kind="welcome">${inner}</article>`;
+}
+/* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
+   with a free item, or no minimum with a free item. The item comes from the live catalogue —
+   a free item that is not on sale cannot be handed over, so it cannot be chosen. */
+async function openWelcomeOfferEditorV215(current,onSaved){
+  const [services,products]=await Promise.all([
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+  ]);
+  if(services.error&&products.error)return fail(services.error||products.error);
+  const items=[
+    ...(services.data||[]).map(row=>({kind:'service',id:row.id,name:row.name})),
+    ...(products.data||[]).map(row=>({kind:'product',id:row.id,name:row.name}))
+  ];
+  if(!items.length)return toast('Add a service or product first — the welcome offer gives one away');
+  const selected=current?.reward_catalog_id
+    ?`${current.reward_catalog_kind}:${current.reward_catalog_id}`
+    :`${items[0].kind}:${items[0].id}`;
+  const minValue=Number(current?.min_spend_cents)||0;
+  document.querySelector('#welcomeOfferModalV215')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="welcomeOfferModalV215" role="dialog" aria-modal="true" aria-labelledby="welcomeOfferTitleV215" tabindex="-1">
+    <section class="modal-card" style="max-width:560px">
+      <div class="row"><div><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px">Welcome offer</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button></div>
+      <p class="muted small">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p>
+      <label class="check-row" style="margin-top:12px"><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}><span>Give new sign-ups a welcome offer</span></label>
+      <label for="welcomeItemV215" style="margin-top:14px">Free item</label>
+      <select id="welcomeItemV215">${items.map(item=>`<option value="${esc(item.kind+':'+item.id)}" ${selected===item.kind+':'+item.id?'selected':''}>${esc(item.name)} (${item.kind})</option>`).join('')}</select>
+      <fieldset style="margin-top:16px;border:0;padding:0">
+        <legend class="small"><b>When can they claim it?</b></legend>
+        <label class="check-row"><input type="radio" name="welcomeMinV215" value="none" ${minValue?'':'checked'}><span>Straight away — no minimum spend</span></label>
+        <label class="check-row"><input type="radio" name="welcomeMinV215" value="min" ${minValue?'checked':''}><span>After they spend a minimum amount</span></label>
+        <label for="welcomeMinAmountV215" style="margin-top:10px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
+        <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
+      </fieldset>
+      <label for="welcomeExpiryV215" style="margin-top:14px">Expires after (days, optional)</label>
+      <input id="welcomeExpiryV215" inputmode="numeric" placeholder="Leave blank for no expiry" value="${current?.expiry_days?String(current.expiry_days):''}">
+      <p class="muted small" style="margin-top:12px">Staff give the item from Record sale after looking the customer up. Nothing is charged, and the visit is recorded at zero.</p>
+      <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="welcomeSaveV215">Save welcome offer</button><button type="button" class="btn ghost sm" id="welcomeCancelV215">Cancel</button></div>
+    </section></div>`);
+  const dialog=$('welcomeOfferModalV215');
+  let deactivate;
+  const close=()=>deactivate?.();
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#welcomeItemV215'});
+  $('welcomeCloseV215').onclick=close;
+  $('welcomeCancelV215').onclick=close;
+  const syncMin=()=>{
+    const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    $('welcomeMinAmountV215').disabled=!wantsMin;
+  };
+  document.querySelectorAll('input[name="welcomeMinV215"]').forEach(radio=>radio.onchange=syncMin);
+  syncMin();
+  $('welcomeSaveV215').onclick=async()=>{
+    const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    let minCents=0;
+    if(wantsMin){
+      const raw=String($('welcomeMinAmountV215').value||'').trim();
+      if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter the minimum spend, for example 5.00');
+      minCents=Math.round(parseFloat(raw)*100);
+      if(minCents<1)return toast('A minimum spend must be more than zero — or choose "no minimum spend"');
+    }
+    const expiryRaw=String($('welcomeExpiryV215').value||'').trim();
+    let expiry=null;
+    if(expiryRaw){
+      if(!/^\d+$/.test(expiryRaw)||Number(expiryRaw)<1||Number(expiryRaw)>3650)return toast('Expiry must be a whole number of days from 1 to 3650');
+      expiry=Number(expiryRaw);
+    }
+    const [kind,id]=String($('welcomeItemV215').value||'').split(':');
+    const {error}=await sb.rpc('business_set_welcome_offer_v215',{
+      p_business:S.biz.id,p_active:$('welcomeActiveV215').checked,
+      p_min_spend_cents:minCents,p_reward_catalog_kind:kind,
+      p_reward_catalog_id:id,p_expiry_days:expiry
+    });
+    if(error)return fail(error);
+    toast('Welcome offer saved');
+    close();
+    if(onSaved)onSaved();
+  };
+}
 function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null}={}){
   const model=loyalty?.loyalty_model||loyaltyModel||'points';
   const unit=model==='stamps'?'stamps':'points';
@@ -7285,6 +7563,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const rewardJourney=ownerRewardJourneyV122({
     rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
   });
+  /* v215: the welcome offer is a reward, so it belongs in this list rather than buried in
+     Settings. Read separately: a failure here must not blank the whole programme overview. */
+  const welcomeOfferStatusV215=canRewards
+    ?await sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
+    :null;
+  if(!isGrowCurrent())return;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
@@ -7415,6 +7699,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
@@ -7873,6 +8158,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      simplified to one list (owner: "alot of overlapping roles ... i need it more simplified").
      Its wiring outlived it and could never fire — openRewardsAutoSetup is now reached from the
      programme rows themselves, which call it as the draft-creation gate when no draft exists. */
+  /* v215: re-render the Programmes list after a save so the row reflects the new state
+     immediately — an owner who just switched the offer on must not still see "Not set up". */
+  document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
+    openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+      ()=>growPage(routedSurface,hashParam,routedFocus)));
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -10762,6 +11052,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
+      /* v215: the welcome offer for a first-time sign-up rides in the same entitlements
+         payload as packages and vouchers, because this is the one read the till already
+         makes for a looked-up customer. */
+      customerWelcomeOffer:entitlements.error?null:(entitlements.data?.welcome_offer||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
          missing a service is not the deal the customer was quoted, so it is withheld rather than
@@ -10850,6 +11144,29 @@ async function svRunTopupFlow({branches,state,testOnly}){
     packageUseAttemptsV102.delete(attempt.slot);
     toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
     catalog=null;draw();
+  }
+  /* v215: give the first-visit free item. p_qualifying_sale is the sale that proves the
+     owner's minimum spend; it is null only for a zero-minimum offer, which needs no purchase.
+     The key is stable per grant + sale so a double-tap replays instead of giving a second item. */
+  async function redeemWelcomeOfferV215(qualifyingSaleId){
+    const offer=catalog?.customerWelcomeOffer;
+    if(!offer||busy)return;
+    const label=offer.reward_label||'the free item';
+    if(!confirm(`Give ${label} free to ${cust?.full_name||'this customer'}? This can only be done once.`))return;
+    busy=true;
+    const {data,error}=await sb.rpc('staff_redeem_welcome_offer_v215',{
+      p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,
+      p_qualifying_sale:qualifyingSaleId||null,
+      p_idempotency_key:`v215-${offer.grant_id}-${qualifyingSaleId||'no-sale'}`
+    });
+    if(!isTillCurrent())return;
+    busy=false;
+    if(error)return fail(error);
+    if(data?.status!=='completed')return fail(new Error('The welcome-offer receipt was incomplete. Check the customer before retrying.'));
+    toast(workspaceTemplateTextV97('welcomeOfferGiven',{item:label}));
+    catalog=null;
+    if(doneInfo)doneInfo.welcomeOfferGivenV215=label;
+    draw();
   }
   function changeQty(lineId,delta){
     if(cartLocked())return;
@@ -11063,6 +11380,23 @@ async function svRunTopupFlow({branches,state,testOnly}){
 	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
           :'';
+        /* V211 (owner: "i still dont see the package here in record sale - not able to use
+           sessions"). The customer's OWNED packages had no UI at all: catalog.customerPackages
+           was loaded and useCustomerPackage() was defined, but nothing ever called it, so a
+           customer with four paid-for sessions had no way to spend one. The v102 test had been
+           failing on exactly this copy and I had written it off as a stale assertion — it was
+           reporting a live regression.
+           This sits ABOVE "Sell package": at a counter the far commoner act is spending a session
+           the customer already bought, not selling them another one. */
+        const ownedPkgs=(catalog.customerPackages||[]).filter(item=>Number(item.remaining)>0);
+        const ownedPackages=ownedPkgs.length
+          ?`<b class="small" style="display:block;margin-top:14px">Use an existing customer package</b>
+            <p class="muted small" style="margin:4px 0 8px">No payment is taken. One session is deducted and recorded as a visit. No points are earned — they were earned when the package was bought.</p>
+            <div class="till-cart-catalog">${ownedPkgs.map(item=>`<button type="button" class="choice-button" data-use-package="${esc(item.client_package_id)}">
+              <b>${esc(item.plan_name||'Package')}</b>
+              <span class="muted small">${esc(item.service_name||'Session')}${item.variant_label?' · '+esc(item.variant_label):''}</span>
+              <span class="pill ok">${Number(item.remaining)} left</span></button>`).join('')}</div>`
+          :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
           ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
           :'';
@@ -11075,13 +11409,37 @@ async function svRunTopupFlow({branches,state,testOnly}){
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
-        const ownedPackages='';
         const pendingVouchers=(!walkin&&(catalog.customerVouchers||[]).length)
           ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
             ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
           :'';
-        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        /* v215 (owner: "i need to enable new sign ups redeemption ... minimum spend $5 (get
+           free xx product) ... or no minimum spend and free xx product"). The welcome offer sits
+           at the top of the picker because it is the first thing to settle at a counter.
+           Where the button lives follows the server contract, not convenience: a minimum spend is
+           proved against a REAL recorded sale, so that button appears on the receipt once the
+           sale exists. A zero-minimum offer needs no purchase, so it is given straight from here.
+           Nothing here decides eligibility — staff_redeem_welcome_offer_v215 re-checks all of it. */
+        const welcomeOffer=(!walkin&&catalog.customerWelcomeOffer)?catalog.customerWelcomeOffer:null;
+        const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
+        const welcomeBanner=welcomeOffer
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
+            <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+            ${welcomeMin
+              ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
+              :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
+                <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
+          :'';
+        /* V216 (owner: "i need a product modules - instead of just services (because products
+           have no minutes)"). The picker printed a hardcoded "Services" heading and gave the
+           products no heading at all. A cafe or chicken-rice shop with seven products and no
+           services therefore saw an empty "Services" label followed by unlabelled buttons —
+           the app insisting on a concept that business does not have. Each group now names
+           itself, and a group with nothing in it prints no heading. */
+        const svcHeadingV216=catalog.services.length?'<b class="small" style="display:block">Services</b>':'';
+        const prodHeadingV216=(catalog.products&&catalog.products.length)?'<b class="small" style="display:block;margin-top:14px">Products</b>':'';
+        picker=`${welcomeBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -11171,6 +11529,16 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addCatalogLine(type,item);
     });
+    /* V211: spend a session the customer already paid for. useCustomerPackage confirms, calls
+       use_package_session_v102 with a stable idempotency key, and is reversible afterwards —
+       reversing that session's sale restores it (reverse_sale -> v40_base -> v34_base writes
+       package_session_reversals). This handler is what was missing: the function existed and
+       nothing called it. */
+    document.querySelectorAll('[data-use-package]').forEach(b=>b.onclick=()=>
+      useCustomerPackage(b.dataset.usePackage));
+    /* v215 */
+    const welcomeButton=$('tWelcomeRedeemV215');
+    if(welcomeButton)welcomeButton.onclick=()=>redeemWelcomeOfferV215();
     document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
@@ -11499,6 +11867,13 @@ async function svRunTopupFlow({branches,state,testOnly}){
         pointsTotal:l.type==='package'&&Number.isFinite(Number(l._packageResult?.pointsTotal))
           ?Number(l._packageResult.pointsTotal):null})),
       hasSale:!!r,extrasTotal:extrasTotalCents(),
+      /* v215: the receipt is where a minimum-spend welcome offer becomes redeemable, because
+         only now does a real sale exist to prove the spend against. Withheld when the sale
+         falls short, so staff are never shown a button the server will refuse. */
+      welcomeOfferV215:(!walkin&&catalog?.customerWelcomeOffer&&r&&r.saleId
+        &&Number(r.total)>=(Number(catalog.customerWelcomeOffer.min_spend_cents)||0))
+        ?{label:catalog.customerWelcomeOffer.reward_label||'Free item',saleId:r.saleId}:null,
+
       pointsEarned:pointsReceipt.pointsEarned,
       pointsTotal:pointsReceipt.pointsTotal,
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
@@ -11567,6 +11942,13 @@ async function svRunTopupFlow({branches,state,testOnly}){
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
+        ${d.welcomeOfferGivenV215
+          ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
+          :d.welcomeOfferV215
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
+              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free for this first-time customer.</p>
+              <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
+          :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
         ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
@@ -11583,6 +11965,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
       businessId:S.biz.id,branchId:tillBranchId,
       saleId:d.saleId,customerName:d.name,isCurrent:isTillCurrent
     });
+    /* v215: the sale that unlocked the offer is passed as the qualifying sale, so the server
+       proves the minimum spend against a real record rather than trusting this screen. */
+    if($('tWelcomeReceiptRedeemV215'))$('tWelcomeReceiptRedeemV215').onclick=()=>
+      redeemWelcomeOfferV215(d.welcomeOfferV215?.saleId||null);
     /* V196 (owner: "allow for QRcode to let user to download or view").
        The QR points at THIS BUSINESS'S customer portal, not at a per-receipt URL. A public
        receipt link would put a purchase record — items, amounts, staff, the customer's points
@@ -11736,6 +12122,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'15536c37afc55210be66d73b61957bc0a0ce254863ed575a2e099bfb3ee58636',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'3d0230f211744f1226549620fb4f461225a7d8dc41ae6f2f25f904aa52638d79',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

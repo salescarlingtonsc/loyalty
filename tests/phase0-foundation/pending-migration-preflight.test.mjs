@@ -193,6 +193,13 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v202b_branch_insert_only_via_paid_rpc', 'db/tests/v202_branch_add_and_billing.sql'],
   ['nestly_v204_bundle_priced_by_the_server', 'db/tests/v204_bundle_priced_by_the_server.sql'],
   ['nestly_v206_fast_corrections', 'db/tests/v206_fast_corrections.sql'],
+  ['nestly_v207_staff_invite_and_owner_approval', 'db/tests/v207_staff_invite_and_owner_approval.sql'],
+  ['nestly_v209_static_single_join_qr', 'db/tests/v209_static_single_join_qr.sql'],
+  ['nestly_v213_sales_mix_audit_column', 'db/tests/v213_sales_mix_audit_column.sql'],
+  ['nestly_v215_signup_welcome_offer', 'db/tests/v215_signup_welcome_offer.sql'],
+  ['nestly_v217_recent_window_and_staff_reference_code', 'db/tests/v217_recent_window_and_staff_reference_code.sql'],
+  ['nestly_v219_products_module_follows_business_config', 'db/tests/v219_v220_products_module_and_staff_slots.sql'],
+  ['nestly_v220_next_best_times_for_selected_staff', 'db/tests/v219_v220_products_module_and_staff_slots.sql'],
   ['nestly_v197_persistent_join_qr', 'db/tests/v197_persistent_join_qr.sql'],
   ['nestly_v198_join_qr_print_lock', 'db/tests/v198_join_qr_print_lock.sql'],
   ['nestly_v199_receipt_capture', 'db/tests/v199_receipt_capture.sql'],
@@ -702,7 +709,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 189);
+  assert.equal(pending.length, 196);
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
