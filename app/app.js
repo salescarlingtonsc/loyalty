@@ -3161,16 +3161,19 @@ async function renderCustomerProgrammes(){
   /* v178 (owner annotation): "My Rewards" is back button + heading with Scan to join + the
      reward-account grid. The offers shelf and the next-best-action banner belong to Home only. */
   renderCustomerShell({active:'programmes',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:`<div class="card"><p class="muted">${esc(ct('loadingProgrammes'))}</p></div>`});
-  /* The QR-only join rule stays stated on this page — the owner removed the offers shelf and the
-     guidance banner from "My Rewards", not the explanation of how a rewards account gets here. */
-  const scanGuide=`<div class="customer-programme-guide" role="note">${CUI.icon('scan',{size:22})}<div><b>Joining a new rewards account</b><p class="muted small" style="margin-top:4px">Visit the business and scan its Peekaa QR. After you sign in, the verified rewards account appears here automatically.</p></div></div>`;
+  /* v196 (owner struck the whole card out): "Joining a new rewards account — visit the business
+     and scan its Peekaa QR" explained a rule the page now demonstrates. Scan to join sits in the
+     heading row beside the title, and the scanner is in the header on every screen; the paragraph
+     under a customer's own reward accounts was telling them how to get what they already have.
+     The QR-only join rule itself is unchanged — nothing but the explanatory card is gone, and the
+     first-programme quest (a customer with NO accounts) still spells it out in full. */
   if(context.features.customer_actionable_wallet===true){
     const {data,error}=await sb.rpc('customer_get_actionable_wallet');
     if(!isCurrent())return;
     if(error)return renderCustomerWalletRetry('Your rewards are temporarily unavailable.',null,()=>renderCustomerProgrammes(),error);
     const cards=Array.isArray(data?.cards)?data.cards:[];
     if(!cards.length){renderCustomerFirstProgrammeQuest();return}
-    renderActionableWalletHome(data,{surface:'programmes',note:scanGuide,rerender:()=>renderCustomerProgrammes()});
+    renderActionableWalletHome(data,{surface:'programmes',rerender:()=>renderCustomerProgrammes()});
     focusCustomerRoute();return;
   }
   const [walletResult,selectorMediaResult]=await Promise.all([
@@ -3185,7 +3188,7 @@ async function renderCustomerProgrammes(){
   );
   if(!cards.length){renderCustomerFirstProgrammeQuest();return}
   $('walletBody').innerHTML=`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
-    ${customerProgrammeGridMarkupV96(cards)}${scanGuide}`;
+    ${customerProgrammeGridMarkupV96(cards)}`;
   $('customerHomeScan').onclick=openCustomerJoinScanner;
   wireCustomerProgrammeSearchV195($('walletBody'));
   focusCustomerRoute();
@@ -3288,21 +3291,45 @@ function customerBookingAppointmentTabV178(appointment,now=Date.now()){
 /* v195 (owner: "put filter time here", beside the page title): the tabs answer WHAT a booking
    is; this answers WHEN. It filters records already fetched — no request — and reads in the
    direction the tab points: Ongoing looks forward, Cancelled and History look back. */
-const CUSTOMER_BOOKING_WINDOWS_V195=[
-  ['all','Any time',0],
-  ['7','Within 7 days',7],
-  ['30','Within 30 days',30],
-  ['90','Within 90 days',90]
-];
-function customerBookingWithinWindowV195(value,windowKey='all',tab='bookings',now=Date.now()){
-  const days=Number((CUSTOMER_BOOKING_WINDOWS_V195.find(([key])=>key===windowKey)||[])[2]||0);
-  if(!(days>0))return true;
+/* v196 (owner circled the "Any time" control: "i need the date to date filter"): fixed windows
+   answered "how soon", not "between these two dates" — a customer looking for the visit they made
+   in March could not ask for March. Two date fields, either one optional, filtering the records
+   already fetched. Dates are read in Singapore time, the zone every other date on this surface is
+   printed in, so a booking shown as 8 Aug is included by a range ending 8 Aug. */
+function customerBookingRangeBoundV195(value,{end=false}={}){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||'')))return null;
+  const at=Date.parse(`${value}T${end?'23:59:59.999':'00:00:00.000'}+08:00`);
+  return Number.isFinite(at)?at:null;
+}
+function customerBookingWithinRangeV196(value,{from='',to=''}={}){
+  const start=customerBookingRangeBoundV195(from),finish=customerBookingRangeBoundV195(to,{end:true});
+  if(start===null&&finish===null)return true;
   const at=Date.parse(value||'');
   /* A record with no usable time is never filtered out — hiding it would be a silent loss, and
      the customer cannot tell an empty list from a hidden one. */
   if(!Number.isFinite(at))return true;
-  const span=days*86400000;
-  return tab==='bookings'?at<=now+span:at>=now-span;
+  if(start!==null&&at<start)return false;
+  if(finish!==null&&at>finish)return false;
+  return true;
+}
+/* An inverted range (to before from) would match nothing and read as "you have no bookings",
+   which is a lie. The fields are swapped instead, and the control says so. */
+function customerBookingNormaliseRangeV196({from='',to=''}={}){
+  const start=customerBookingRangeBoundV195(from),finish=customerBookingRangeBoundV195(to,{end:true});
+  return (start!==null&&finish!==null&&finish<start)?{from:to,to:from}:{from,to};
+}
+function customerBookingFilterMarkupV195(range={from:'',to:''}){
+  const {from,to}=range||{};
+  const active=!!(from||to);
+  return `<div class="customer-booking-filter" role="group" aria-label="Filter bookings by date">
+    ${CUI.icon('appointments',{size:16})}
+    <label class="sr-only" for="customerBookingFrom">From date</label>
+    <input id="customerBookingFrom" type="date" value="${esc(from||'')}" max="2999-12-31">
+    <span aria-hidden="true">–</span>
+    <label class="sr-only" for="customerBookingTo">To date</label>
+    <input id="customerBookingTo" type="date" value="${esc(to||'')}" max="2999-12-31">
+    ${active?`<button class="btn ghost sm" id="customerBookingRangeClear" type="button">Clear</button>`:''}
+  </div>`;
 }
 function customerBookingBusinessLogoV195(group={}){
   const url=customerMediaUrlV95(group?.business_logo),name=String(group?.business_name||'Business');
@@ -3310,16 +3337,8 @@ function customerBookingBusinessLogoV195(group={}){
     ?`<img class="customer-booking-logo" src="${esc(url)}" alt="" loading="lazy" width="40" height="40">`
     :`<span class="customer-booking-logo customer-booking-logo--fallback" aria-hidden="true">${esc((name[0]||'B').toUpperCase())}</span>`;
 }
-function customerBookingFilterMarkupV195(windowKey='all'){
-  return `<div class="customer-booking-filter">
-    <label class="sr-only" for="customerBookingWindow">Filter by time</label>
-    ${CUI.icon('appointments',{size:16})}
-    <select id="customerBookingWindow">${CUSTOMER_BOOKING_WINDOWS_V195.map(([key,label])=>
-      `<option value="${esc(key)}"${key===windowKey?' selected':''}>${esc(label)}</option>`).join('')}</select>
-  </div>`;
-}
-function customerBookingTabGroupsV178(groups=[],tab='bookings',windowKey='all'){
-  const inWindow=value=>customerBookingWithinWindowV195(value,windowKey,tab);
+function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to:''}){
+  const inWindow=value=>customerBookingWithinRangeV196(value,range);
   return groups.map(group=>({
     ...group,
     tabRequests:group.requests.filter(item=>customerBookingRequestTabV178(item)===tab
@@ -3336,10 +3355,14 @@ function customerBookingEmptyMarkupV183(tab='bookings',emptyCopy='',groups=[]){
   return `<section class="card"><h2>${esc(label)}</h2><p class="muted small" style="margin-top:6px">${esc(emptyCopy)}</p>
     ${bookable.length?`<div class="customer-booking-invite">${bookable.map(group=>`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${CUI.icon('bookings',{size:16})}<span>Book with ${esc(group.business_name)}</span></button>`).join('')}</div>`:''}</section>`;
 }
+/* v196 (owner: "remove the (1) from history — dont need to know how many transactions in
+   history"): a count is a prompt to act. Ongoing and Cancelled hold things a customer may still
+   need to do something about; History is a record, and numbering it only added noise. */
+const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set(['history']);
 function customerBookingTablistMarkupV178(currentTab='bookings',counts={}){
   return `<div class="customer-booking-tabs" role="tablist" aria-label="Booking status">${CUSTOMER_BOOKING_TABS_V178.map(([tab,label])=>{
-    const selected=tab===currentTab;
-    return `<button type="button" role="tab" id="customerBookingTab-${esc(tab)}" class="customer-booking-tab" data-booking-tab="${esc(tab)}" aria-selected="${selected}" aria-controls="customerBookingPanel" tabindex="${selected?'0':'-1'}">${esc(label)}${Number(counts[tab])>0?` <span class="customer-booking-tab-count">${Number(counts[tab])}</span>`:''}</button>`;
+    const selected=tab===currentTab,showCount=!CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196.has(tab);
+    return `<button type="button" role="tab" id="customerBookingTab-${esc(tab)}" class="customer-booking-tab" data-booking-tab="${esc(tab)}" aria-selected="${selected}" aria-controls="customerBookingPanel" tabindex="${selected?'0':'-1'}">${esc(label)}${showCount&&Number(counts[tab])>0?` <span class="customer-booking-tab-count">${Number(counts[tab])}</span>`:''}</button>`;
   }).join('')}</div>`;
 }
 async function renderCustomerBookings(){
@@ -3385,14 +3408,14 @@ async function renderCustomerBookings(){
   if(walletResult.error&&programmeResult.error&&requestResult.error){
     return renderCustomerWalletRetry('Your booking requests and appointments are temporarily unavailable.',null,()=>renderCustomerBookings(),walletResult.error);
   }
-  let currentBookingTab='bookings',currentBookingWindow='all';
+  let currentBookingTab='bookings',currentBookingRange={from:'',to:''};
   const paintBookings=()=>{
     if(!isCurrent()||!$('walletBody')?.isConnected)return;
     const allGroups=composeCustomerBookingGroups(programmes,requestPayload,results);
     const tabCounts={};
-    for(const [tab] of CUSTOMER_BOOKING_TABS_V178)tabCounts[tab]=customerBookingTabGroupsV178(allGroups,tab,currentBookingWindow)
+    for(const [tab] of CUSTOMER_BOOKING_TABS_V178)tabCounts[tab]=customerBookingTabGroupsV178(allGroups,tab,currentBookingRange)
       .reduce((sum,group)=>sum+group.tabRequests.length+group.tabAppointments.length,0);
-    const groups=customerBookingTabGroupsV178(allGroups,currentBookingTab,currentBookingWindow);
+    const groups=customerBookingTabGroupsV178(allGroups,currentBookingTab,currentBookingRange);
     const emptyCopy=(CUSTOMER_BOOKING_TABS_V178.find(([tab])=>tab===currentBookingTab)||[])[2]||'Nothing here yet.';
     const requestHeading=currentBookingTab==='bookings'?'Awaiting the business':currentBookingTab==='cancelled'?'Cancelled requests':'Earlier request updates';
     const appointmentHeading=currentBookingTab==='bookings'?'Appointments':currentBookingTab==='cancelled'?'Cancelled appointments':'Past appointments';
@@ -3408,7 +3431,7 @@ async function renderCustomerBookings(){
     const requestCount=requestItems.length;
     const activeRequestCount=requestItems.filter(isActiveCustomerBookingRequest).length;
     const hasMore=!!requestPayload?.next_cursor;
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingFilterMarkupV195(currentBookingWindow)}</header>
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingFilterMarkupV195(currentBookingRange)}</header>
     ${partialMessages.length?'<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div></div>':''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
@@ -3420,8 +3443,16 @@ async function renderCustomerBookings(){
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
-    const windowSelect=$('customerBookingWindow');
-    if(windowSelect)windowSelect.onchange=()=>{currentBookingWindow=windowSelect.value;paintBookings();$('customerBookingWindow')?.focus()};
+    const applyRange=(next,focusId)=>{
+      currentBookingRange=customerBookingNormaliseRangeV196(next);
+      paintBookings();
+      if(focusId)$(focusId)?.focus();
+    };
+    const fromInput=$('customerBookingFrom'),toInput=$('customerBookingTo');
+    if(fromInput)fromInput.onchange=()=>applyRange({from:fromInput.value,to:currentBookingRange.to},'customerBookingFrom');
+    if(toInput)toInput.onchange=()=>applyRange({from:currentBookingRange.from,to:toInput.value},'customerBookingTo');
+    const clearRange=$('customerBookingRangeClear');
+    if(clearRange)clearRange.onclick=()=>applyRange({from:'',to:''},'customerBookingFrom');
     const tabButtons=[...$('walletBody').querySelectorAll('[data-booking-tab]')];
     const selectTab=(tab,focus=false)=>{
       if(!isCurrent()||!CUSTOMER_BOOKING_TABS_V178.some(([name])=>name===tab))return;
@@ -4089,7 +4120,7 @@ function customerExpiringRewardsMarkupV195(cards=[]){
   if(!(Array.isArray(cards)&&cards.length))return '';
   return `<section class="card customer-expiring-glance" aria-labelledby="customerExpiringTitle">
     <div class="customer-expiring-head">
-      <h2 id="customerExpiringTitle">${CUI.icon('retention',{size:18})}<span>Expiring soon</span></h2>
+      <h2 id="customerExpiringTitle">${CUI.icon('retention',{size:18})}<span>Expiring rewards</span></h2>
       ${list.length?`<span class="pill new">${list.length} to use</span>`:'<span class="muted small">Nothing in 30 days</span>'}
     </div>
     ${list.length
@@ -4903,7 +4934,7 @@ function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],leg
    the counts they carried now live on those tabs. Home is the offers shelf. */
 /* v178: surface='programmes' is the "My Rewards" tab, which the owner stripped back to the
    reward-account grid alone — no offers shelf, no guidance banner. Home keeps both. */
-function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',note='',rerender=null}={}){
+function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',rerender=null}={}){
   const cards=Array.isArray(payload?.cards)?payload.cards:[],isHome=surface!=='programmes';
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
   if(!cards.length){
@@ -4918,7 +4949,7 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
     ${customerHomeOffersMarkupV167(offersState)}
     ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}`
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
-    ${customerProgrammeGridMarkupV96(cards)}${note}
+    ${customerProgrammeGridMarkupV96(cards)}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
   if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));

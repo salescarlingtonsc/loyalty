@@ -159,7 +159,11 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/p_cursor:\{limit:20\}/);
   assert.match(surfaces,/renderCustomerWalletRetry\('Your rewards are temporarily unavailable\.',null,\(\)=>renderCustomerProgrammes\(\),error\)/);
   assert.match(surfaces,/Your booking requests and appointments are temporarily unavailable/);
-  assert.match(surfaces,/Visit the business and scan its Peekaa QR/);
+  /* v196 (owner struck the card out): the "Joining a new rewards account" explainer is gone from
+     My Rewards — a page listing the customer's own reward accounts was explaining how to get one.
+     The QR-only rule still reaches the customer who has none, through the first-programme quest. */
+  assert.doesNotMatch(surfaces,/<b>Joining a new rewards account<\/b>/);
+  assert.match(app,/function renderCustomerFirstProgrammeQuest/);
   assert.match(surfaces,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
   assert.doesNotMatch(surfaces,/href="#\/claim"/);
   /* v194 (owner struck the subtitle out on the screenshot): the tabs are self-describing, so the

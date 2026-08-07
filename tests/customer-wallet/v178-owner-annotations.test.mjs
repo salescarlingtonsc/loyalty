@@ -59,7 +59,8 @@ test('Home keeps only the pending-redemption next-best-action variant',()=>{
 test('My Rewards has a back button and no offers shelf or guidance banner',()=>{
   const programmes=section('async function renderCustomerProgrammes','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
   assert.match(programmes,/renderCustomerShell\(\{active:'programmes',backTo:'#\/wallet'/);
-  assert.match(programmes,/renderActionableWalletHome\(data,\{surface:'programmes',note:scanGuide,rerender:\(\)=>renderCustomerProgrammes\(\)\}\)/);
+  // v196 removed the scan-guide note; the surface flag is what this test is about.
+  assert.match(programmes,/renderActionableWalletHome\(data,\{surface:'programmes',rerender:\(\)=>renderCustomerProgrammes\(\)\}\)/);
   assert.doesNotMatch(programmes,/customerHomeOffersMarkupV167|customer_get_home_offers_v167|customerHomeGuidanceV167/);
   assert.match(programmes,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
 
@@ -96,12 +97,12 @@ test('Bookings is a three-tab client-side filter of already-fetched records',()=
   assert.match(app,/function customerBookingTabGroupsV178/);
   assert.match(app,/data-repeat-booking data-business-slug/);
   const bookings=section('async function renderCustomerBookings(){','async function renderCustomerMessages(){');
-  assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingWindow\)/);
+  assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingRange\)/);
   assert.doesNotMatch(bookings,/sb\.rpc\('customer_get_booking_tab/,'tabs must not add new RPCs');
   /* v195 (owner: "put filter time here"): the time window is the same client-side filter over the
      same fetched records — it narrows what a tab shows, it never asks the server again. */
-  assert.match(app,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingWindow\)/);
-  assert.match(app,/function customerBookingWithinWindowV195/);
+  assert.match(app,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingRange\)/);
+  assert.match(app,/function customerBookingWithinRangeV196/);
   assert.doesNotMatch(bookings,/sb\.rpc\('customer_get_booking_requests',\{p_limit:50,p_cursor:null\}\)[\s\S]{0,200}windowKey/);
 });
 

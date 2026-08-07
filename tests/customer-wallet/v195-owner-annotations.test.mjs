@@ -33,7 +33,7 @@ test('Home leads with the points that are about to expire', () => {
     { business: { name: 'Kopi Tiam' }, loyalty: { unit: 'points' },
       expiry: { expiring_units: 60, expiring_within_7_days: 0, next_expiry_at: '2026-09-01T00:00:00+08:00' } }
   ]);
-  assert.match(html, /Expiring soon/);
+  assert.match(html, /Expiring rewards/);
   assert.match(html, /120 points/);
   assert.match(html, /Cubbly/);
   assert.match(html, /2 to use/);
@@ -174,43 +174,61 @@ test('redemption lives under the balance that pays for it, not in a card of its 
 
 /* ---------------------------------------------------------------- 6 · Bookings: filter and photo */
 
-test('bookings can be narrowed by time, in the direction the tab points', () => {
-  const within = new Function(`${section(appJs, 'const CUSTOMER_BOOKING_WINDOWS_V195', 'function customerBookingBusinessLogoV195')}
-    return customerBookingWithinWindowV195;`)();
-  const now = Date.parse('2026-08-08T12:00:00+08:00');
-  const inDays = (days) => new Date(now + days * 86400000).toISOString();
+test('bookings can be narrowed to a date range, in Singapore time', () => {
+  /* v196 (owner: "i need the date to date filter"): the fixed windows are gone — a customer
+     looking for the visit they made in March could not ask for March. */
+  const range = new Function(`${section(appJs, 'function customerBookingRangeBoundV195', 'function customerBookingNormaliseRangeV196')}
+    return customerBookingWithinRangeV196;`)();
+  const at = (day, hour = '10:00') => `2026-03-${day}T${hour}:00+08:00`;
 
-  assert.equal(within(inDays(3), '7', 'bookings', now), true);
-  assert.equal(within(inDays(20), '7', 'bookings', now), false);
-  assert.equal(within(inDays(20), '30', 'bookings', now), true);
-  // History looks backwards from the same "within N days"
-  assert.equal(within(inDays(-3), '7', 'history', now), true);
-  assert.equal(within(inDays(-20), '7', 'history', now), false);
-  assert.equal(within(inDays(-20), '30', 'cancelled', now), true);
-  // Any time keeps everything
-  assert.equal(within(inDays(900), 'all', 'bookings', now), true);
+  assert.equal(range(at('15'), { from: '2026-03-01', to: '2026-03-31' }), true);
+  assert.equal(range(at('15'), { from: '2026-04-01', to: '2026-04-30' }), false);
+  // either bound on its own
+  assert.equal(range(at('15'), { from: '2026-03-16', to: '' }), false);
+  assert.equal(range(at('15'), { from: '2026-03-15', to: '' }), true);
+  assert.equal(range(at('15'), { from: '', to: '2026-03-14' }), false);
+  assert.equal(range(at('15'), { from: '', to: '2026-03-15' }), true);
+  // both bounds are inclusive across the whole SGT day — 11:59pm on the closing day is in
+  assert.equal(range(at('31', '23:59'), { from: '2026-03-01', to: '2026-03-31' }), true);
+  assert.equal(range(at('01', '00:00'), { from: '2026-03-01', to: '2026-03-31' }), true);
+  // no range at all keeps everything
+  assert.equal(range(at('15'), { from: '', to: '' }), true);
+  assert.equal(range(at('15'), {}), true);
+  // a malformed date is not a filter
+  assert.equal(range(at('15'), { from: 'last March', to: '' }), true);
+});
+
+test('an inverted range is swapped rather than shown as "no bookings"', () => {
+  const normalise = new Function(`${section(appJs, 'function customerBookingRangeBoundV195', 'function customerBookingFilterMarkupV195')}
+    return customerBookingNormaliseRangeV196;`)();
+  assert.deepEqual(normalise({ from: '2026-03-31', to: '2026-03-01' }), { from: '2026-03-01', to: '2026-03-31' });
+  assert.deepEqual(normalise({ from: '2026-03-01', to: '2026-03-31' }), { from: '2026-03-01', to: '2026-03-31' });
+  assert.deepEqual(normalise({ from: '2026-03-01', to: '' }), { from: '2026-03-01', to: '' });
+  assert.deepEqual(normalise({}), { from: '', to: '' });
 });
 
 test('a booking with no usable time is never silently hidden by the filter', () => {
-  const within = new Function(`${section(appJs, 'const CUSTOMER_BOOKING_WINDOWS_V195', 'function customerBookingBusinessLogoV195')}
-    return customerBookingWithinWindowV195;`)();
-  const now = Date.parse('2026-08-08T12:00:00+08:00');
+  const range = new Function(`${section(appJs, 'function customerBookingRangeBoundV195', 'function customerBookingNormaliseRangeV196')}
+    return customerBookingWithinRangeV196;`)();
   for (const value of ['', null, undefined, 'sometime next week']) {
-    assert.equal(within(value, '7', 'bookings', now), true);
+    assert.equal(range(value, { from: '2026-03-01', to: '2026-03-31' }), true);
   }
 });
 
-test('the time filter is client-side over records already fetched', () => {
+test('the date filter is client-side over records already fetched', () => {
   const bookings = section(appJs, 'async function renderCustomerBookings', 'async function renderCustomerMessages');
   assert.match(appJs, /function customerBookingFilterMarkupV195/);
-  assert.match(bookings, /customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingWindow\)/);
-  assert.match(bookings, /windowSelect\.onchange=\(\)=>\{currentBookingWindow=windowSelect\.value;paintBookings\(\)/);
-  assert.doesNotMatch(bookings, /p_window|p_within|p_from/, 'the window must not become a server argument');
-  assert.match(indexHtml, /\.customer-booking-filter select\{[^}]*min-height:44px/);
+  assert.match(bookings, /customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingRange\)/);
+  assert.match(bookings, /currentBookingRange=customerBookingNormaliseRangeV196\(next\)/);
+  assert.match(appJs, /<input id="customerBookingFrom" type="date"/);
+  assert.match(appJs, /<input id="customerBookingTo" type="date"/);
+  assert.match(appJs, /id="customerBookingRangeClear"/, 'a set range must be clearable in one tap');
+  assert.doesNotMatch(bookings, /p_window|p_within|p_from|p_to\b/, 'the range must not become a server argument');
+  assert.match(indexHtml, /\.customer-booking-filter input\[type="date"\]\{[^}]*min-height:44px/);
 });
 
 test('a booking is headed by the company’s own photo, with an honest fallback', () => {
-  const logo = section(appJs, 'function customerBookingBusinessLogoV195', 'function customerBookingFilterMarkupV195');
+  const logo = section(appJs, 'function customerBookingBusinessLogoV195', 'function customerBookingTabGroupsV178');
   assert.match(logo, /customerMediaUrlV95\(group\?\.business_logo\)/, 'the media allowlist still applies');
   assert.match(logo, /customer-booking-logo--fallback/);
   assert.match(appJs, /if\(!group\.business_logo\)group\.business_logo=String\(business\.logo_url\|\|''\)/);
@@ -267,4 +285,46 @@ test('the company row shows the address and phone, and opens the company profile
   assert.match(sheet, /if\(summary\.length\)rowLines\.textContent=summary\.join\(' · '\)/,
     'a business with no address or phone keeps the honest default instead of an empty line');
   assert.match(sheet, /showCustomerBusinessDetailV178\(business,\{inheritHistoryId:handOff\}\)/);
+});
+
+/* ---------------------------------------------------- 8 · v196 follow-ups on the same surfaces */
+
+test('the header controls sit on one shared rhythm', () => {
+  // owner: "qrcode and notification gap further than profile icon — please align it"
+  assert.doesNotMatch(indexHtml, /\.customer-head-scan\{[^}]*margin-right/,
+    'the scan button carried its own margin on top of the header gap');
+  assert.match(indexHtml, /\.wallet-head\{[^}]*gap:12px/);
+  assert.match(indexHtml, /#customerInboxBellSlot:empty\{display:none\}/,
+    'an empty bell slot must not leave a double gap where the bell would be');
+});
+
+test('the expiring card is named for what it holds', () => {
+  assert.match(appJs, /<span>Expiring rewards<\/span>/);
+  assert.doesNotMatch(appJs, /<span>Expiring soon<\/span>/);
+});
+
+test('My Rewards no longer explains how to get what the customer already has', () => {
+  // owner struck the whole "Joining a new rewards account" card out
+  assert.doesNotMatch(appJs, /<b>Joining a new rewards account<\/b>/, 'the card is gone (the commit note recording why is not the card)');
+  assert.doesNotMatch(appJs, /scanGuide/);
+  assert.doesNotMatch(indexHtml, /customer-programme-guide/, 'its CSS went with it');
+  // the rule it explained is unchanged, and the customer with NO accounts still gets it in full
+  const quest = section(appJs, 'function renderCustomerFirstProgrammeQuest', 'function customerProgrammeGridMarkupV96');
+  assert.match(quest, /ct\('qrOnlyHelp'\)/);
+  assert.match(appJs, /customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/,
+    'Scan to join stays in the heading row');
+});
+
+test('History is a record, so it carries no count', () => {
+  assert.match(appJs, /const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set\(\['history'\]\)/);
+  assert.match(appJs, /showCount=!CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196\.has\(tab\)/);
+  assert.match(appJs, /\$\{showCount&&Number\(counts\[tab\]\)>0\?/);
+  const tablist = new Function('esc', `${section(appJs, 'const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196', '\nasync function renderCustomerBookings')}
+    ${section(appJs, 'const CUSTOMER_BOOKING_TABS_V178=[', 'const CANCELLED_CUSTOMER_BOOKING_STATUSES_V178')}
+    return customerBookingTablistMarkupV178;`)((value) => String(value ?? ''));
+  const html = tablist('bookings', { bookings: 2, cancelled: 3, history: 9 });
+  assert.match(html, /Ongoing\s*<span class="customer-booking-tab-count">2/);
+  assert.match(html, /Cancelled\s*<span class="customer-booking-tab-count">3/);
+  assert.doesNotMatch(html, /History\s*<span class="customer-booking-tab-count">/);
+  assert.doesNotMatch(html, />9</);
 });

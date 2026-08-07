@@ -1290,8 +1290,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @keyframes customer-reward-pop{0%{transform:scale(.96);opacity:.65}70%{transform:scale(1.015)}100%{transform:scale(1);opacity:1}}
 .customer-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .customer-booking-filter{display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
-.customer-booking-filter select{min-height:44px;padding:0 4px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
-.customer-booking-filter select:focus{outline:none}
+.customer-booking-filter input[type="date"]{min-height:44px;min-width:0;padding:0 2px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
+.customer-booking-filter input[type="date"]:focus{outline:none}
+.customer-booking-filter>span[aria-hidden]{color:var(--muted)}
+@media(max-width:520px){.customer-booking-filter{flex-wrap:wrap;border-radius:16px;padding:6px 10px}}
 .customer-booking-filter:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
 .customer-booking-logo{flex:none;width:40px;height:40px;border-radius:12px;object-fit:cover;background:var(--tint)}
 .customer-booking-logo--fallback{display:flex;align-items:center;justify-content:center;color:var(--coral);font-weight:700}
@@ -1455,8 +1457,6 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .customer-programme-compact-head{padding:12px}
   .promotion-preview{position:static}
 }
-.customer-programme-guide{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--hair);border-radius:13px;background:#fff}
-.customer-programme-guide .cui-icon{flex:0 0 auto;color:var(--coral)}
 .customer-booking-business{padding:18px}
 .customer-booking-business .wallet-appt:last-child{border-bottom:0}
 /* v178: Bookings | Cancelled | History pills. Same shape language as .customer-primary-nav. */
@@ -1546,7 +1546,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .wallet-delta.plus{color:var(--green)}
 .wallet-delta.minus{color:var(--red)}
 .wallet-history{margin:9px 0 0 14px;padding-left:14px;border-left:2px solid var(--hair)}
-.customer-head-scan{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:8px;margin-right:8px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink2);cursor:pointer}
+#customerInboxBellSlot:empty{display:none}
+.customer-head-scan{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink2);cursor:pointer}
 .customer-head-scan:hover{color:var(--brand);border-color:var(--brand)}
 .customer-inbox-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);cursor:pointer}
 .customer-inbox-bell:focus-visible,.customer-inbox-item button:focus-visible{outline:3px solid rgba(255,105,97,.45);outline-offset:2px}
@@ -1609,7 +1610,7 @@ html[data-customer-theme="dark"] .customer-surface.portal{--coral:#FF8A7E!import
      outrank base rules that carry a descendant combinator or a state pseudo-class. */
 html[data-customer-theme="dark"] .customer-surface.customer-surface :is(input,select,textarea,.btn.ghost,.customer-primary-nav,.customer-home-quick a,
     .customer-home-offer,.customer-perk-card,.customer-offer-card,.customer-reward-card,
-    .customer-programme-compact-head,.customer-programme-guide,.wallet-firm,.wallet-reward,
+    .customer-programme-compact-head,.wallet-firm,.wallet-reward,
     .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.customer-booking-tabs,.checkrow,.fb-chip,
     .customer-avatar,.customer-programme-switcher a,.customer-workspace-switch .menu){
     background:var(--card);color:var(--ink);border-color:var(--line)
@@ -1712,7 +1713,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"customer":"/app-customer.js?b=e5c9cac4a23a","business":"/app-business.js?b=093103f4db2d","i18n":"/app-i18n.js?b=232400221146"}
+{"customer":"/app-customer.js?b=f534d4713503","business":"/app-business.js?b=093103f4db2d","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
