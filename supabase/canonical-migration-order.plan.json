@@ -1468,6 +1468,12 @@
       "version": "20260807235800",
       "name": "nestly_v229_points_mode_choice",
       "sourcePath": "db/migrations/20260808_nestly_v229_points_mode_choice.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235900",
+      "name": "nestly_v230_points_mode_in_customer_portal",
+      "sourcePath": "db/migrations/20260808_nestly_v230_points_mode_in_customer_portal.sql"
     }
   ]
 }

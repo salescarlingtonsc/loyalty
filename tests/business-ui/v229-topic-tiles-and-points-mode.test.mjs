@@ -57,9 +57,15 @@ test('V229 a firm chooses ONE use for points, and the server holds the door', ()
   assert.match(migration, /set points_mode='redeem'\nwhere points_mode is null\n  and exists\(select 1 from public\.loyalty_programs/);
 });
 
-test('V229 the loyalty editor states the mode instead of silently offering both', () => {
-  assert.match(app, /Tier membership is off<\/b><p class="small"[^<]*>This business redeems points for rewards\./);
-  assert.match(app, /Redemption is off<\/b><p class="small"[^<]*>Points count toward tier membership, so customers cannot claim these rewards\./);
+test('V229/V230 the loyalty editor shows ONE model, not both with banners', () => {
+  /* V230 superseded the V229 banners: instead of showing both sections and flagging one as off,
+     the editor renders only the chosen model's section, per the owner's "what is this Your
+     rewards" and "tier should not be optional" reports. */
+  assert.doesNotMatch(app, /Tier membership is off<\/b><p class="small"/);
+  assert.match(app, /loyaltySelectionV230==='tiers'/);
+  assert.match(app, /<b>Tiers — your loyalty model<\/b>/);
+  assert.match(app, /Point rewards are off in this model\. Rewards you saved earlier are kept/);
+  assert.match(app, /Tiers are off in this model — choose Tiered membership above/);
 });
 
 test('V229 categories carry the owner\'s names', () => {

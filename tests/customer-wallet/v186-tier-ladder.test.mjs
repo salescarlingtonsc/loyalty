@@ -148,5 +148,7 @@ test('the workspace warns when tiers are configured but nobody can see them', ()
   assert.match(app, /Customers cannot see these tiers/);
   assert.match(app, /\$\{tiers\.length&&!\(p&&p\.active\)\?/,
     'the warning fires exactly when tiers exist and the programme is not live');
-  assert.match(app, /until you publish it\./);
+  /* V230: the owner asked the paused state to name the fix, not just the fact — the warning
+     now ends with the exact action ("Set Status to Active, then Review & publish / Save"). */
+  assert.match(app, /Set Status to Active, then \$\{draftVersionId\?'Review & publish':'Save'\} — that is the whole fix\./);
 });

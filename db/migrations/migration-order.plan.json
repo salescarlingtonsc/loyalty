@@ -1467,6 +1467,12 @@
       "path": "db/migrations/20260808_nestly_v229_points_mode_choice.sql",
       "semanticVersion": "v229",
       "proposedDeployVersion": "20260807235800"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v230_points_mode_in_customer_portal.sql",
+      "semanticVersion": "v230",
+      "proposedDeployVersion": "20260807235900"
     }
   ]
 }
