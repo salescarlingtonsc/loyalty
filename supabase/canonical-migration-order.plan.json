@@ -1402,6 +1402,12 @@
       "version": "20260807120000",
       "name": "nestly_v200a_subscription_revenue_schedule",
       "sourcePath": "db/migrations/20260807_nestly_v200a_subscription_revenue_schedule.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807130000",
+      "name": "nestly_v201_receipt_storage_policies",
+      "sourcePath": "db/migrations/20260807_nestly_v201_receipt_storage_policies.sql"
     }
   ]
 }

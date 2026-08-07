@@ -1401,6 +1401,12 @@
       "path": "db/migrations/20260807_nestly_v200a_subscription_revenue_schedule.sql",
       "semanticVersion": "v200a",
       "proposedDeployVersion": "20260807120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v201_receipt_storage_policies.sql",
+      "semanticVersion": "v201",
+      "proposedDeployVersion": "20260807130000"
     }
   ]
 }

@@ -792,6 +792,29 @@
       'Qualification and discovery':'资格评估与需求探索','Record commercial detail':'记录商业详情',
       'Record departure':'记录离职','Record qualification':'记录资格评估',
       '{count} not recorded':'{count} 项未填写',
+      'Receipts to post':'待入账收据',
+      'Photograph or upload a receipt and it is read for you. Nothing reaches the books until you confirm the figures.':'拍照或上传收据，系统会为您读取。在您确认金额之前，不会记入账簿。',
+      'Add a receipt':'添加收据',
+      'Photo or PDF, up to 20 MB. A PDF is stored as evidence but has to be keyed in.':'照片或 PDF，最大 20 MB。PDF 会作为凭证保存，但需手动输入。',
+      'Receipts awaiting review':'待审核收据',
+      'No receipts waiting':'没有待处理的收据',
+      'Uploaded receipts appear here with their amounts read out, ready for you to confirm.':'上传的收据会显示在这里并读出金额，供您确认。',
+      'Read as':'读取为',
+      '{percent}% legible':'清晰度 {percent}%',
+      'Could not be read — key it in.':'无法读取，请手动输入。',
+      'Review & post':'核对并入账',
+      'Receipts must be 20 MB or smaller.':'收据不得超过 20 MB。',
+      'Review receipt and post':'核对收据并入账',
+      'Post to books':'记入账簿',
+      'Check every figure against the receipt before posting. Posted expenses cannot be edited — only reversed.':'入账前请逐项核对收据金额。已入账的支出无法修改，只能冲销。',
+      'Receipt posted to the books.':'收据已记入账簿。',
+      'Discard receipt':'丢弃收据',
+      'Receipt discarded.':'收据已丢弃。',
+      'Uploading and reading the receipt…':'正在上传并读取收据…',
+      'That receipt was already captured.':'该收据已被记录。',
+      'Receipt uploaded and being read.':'收据已上传，正在读取。',
+      'The receipt could not be uploaded.':'收据上传失败。',
+      'Discard':'丢弃',
       'AI report':'AI 报告',
       'Activate approved workspace':'启用已批准的工作区',
       'Activate workspace':'启用工作区',
@@ -1016,6 +1039,29 @@
       'Qualification and discovery':'Kelayakan dan penemuan','Record commercial detail':'Rekod butiran komersial',
       'Record departure':'Rekod pemergian','Record qualification':'Rekod kelayakan',
       '{count} not recorded':'{count} belum direkodkan',
+      'Receipts to post':'Resit untuk dipos',
+      'Photograph or upload a receipt and it is read for you. Nothing reaches the books until you confirm the figures.':'Ambil gambar atau muat naik resit dan ia akan dibaca untuk anda. Tiada apa-apa masuk ke akaun sehingga anda mengesahkan angkanya.',
+      'Add a receipt':'Tambah resit',
+      'Photo or PDF, up to 20 MB. A PDF is stored as evidence but has to be keyed in.':'Foto atau PDF, sehingga 20 MB. PDF disimpan sebagai bukti tetapi perlu dimasukkan secara manual.',
+      'Receipts awaiting review':'Resit menunggu semakan',
+      'No receipts waiting':'Tiada resit menunggu',
+      'Uploaded receipts appear here with their amounts read out, ready for you to confirm.':'Resit yang dimuat naik akan dipaparkan di sini dengan jumlahnya dibaca, sedia untuk anda sahkan.',
+      'Read as':'Dibaca sebagai',
+      '{percent}% legible':'{percent}% boleh dibaca',
+      'Could not be read — key it in.':'Tidak dapat dibaca — masukkan secara manual.',
+      'Review & post':'Semak & pos',
+      'Receipts must be 20 MB or smaller.':'Resit mestilah 20 MB atau lebih kecil.',
+      'Review receipt and post':'Semak resit dan pos',
+      'Post to books':'Pos ke akaun',
+      'Check every figure against the receipt before posting. Posted expenses cannot be edited — only reversed.':'Semak setiap angka dengan resit sebelum pos. Perbelanjaan yang telah dipos tidak boleh diedit — hanya diterbalikkan.',
+      'Receipt posted to the books.':'Resit telah dipos ke akaun.',
+      'Discard receipt':'Buang resit',
+      'Receipt discarded.':'Resit telah dibuang.',
+      'Uploading and reading the receipt…':'Memuat naik dan membaca resit…',
+      'That receipt was already captured.':'Resit itu telah pun direkodkan.',
+      'Receipt uploaded and being read.':'Resit dimuat naik dan sedang dibaca.',
+      'The receipt could not be uploaded.':'Resit tidak dapat dimuat naik.',
+      'Discard':'Buang',
       'AI report':'Laporan AI',
       'Activate approved workspace':'Aktifkan ruang kerja yang diluluskan',
       'Activate workspace':'Aktifkan ruang kerja',
@@ -7843,10 +7889,12 @@
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Cash P&L','Loading provider cash and operating expenses…','reports');
     try{
-      const [payload,books]=await Promise.all([
+      const [payload,books,receiptPayload]=await Promise.all([
         rpc(sb,'platform_get_finance_v146',{p_from:range.from,p_to:range.to,p_limit:5000}),
-        rpc(sb,'platform_get_accounting_books_v147',{p_from:range.from,p_to:range.to,p_limit:5000})
+        rpc(sb,'platform_get_accounting_books_v147',{p_from:range.from,p_to:range.to,p_limit:5000}),
+        rpc(sb,'platform_list_receipts_v199',{p_status:null,p_limit:50}).catch(()=>({items:[]}))
       ]).then(results=>results.map(asObject));
+      const receipts=asArray(receiptPayload.items).filter(receipt=>receipt.status!=='posted');
       const summary=asObject(payload.summary),invoices=asArray(payload.invoices),adjustments=asArray(payload.adjustments),expenses=asArray(payload.expenses),complete=asObject(payload.complete),booksComplete=asObject(books.complete),completeAll=![...Object.values(complete),...Object.values(booksComplete)].some(value=>value===false);
       const booksSummary=asObject(books.summary),policy=asObject(books.policy),trialBalance=asArray(books.trial_balance),journals=asArray(books.journals),documents=asArray(books.documents);
       main.innerHTML=`${CUI.pageHeader({title:'Cash P&L',subtitle:'Cash-basis platform view. Stripe-paid invoices and cash-affecting adjustments are automatic; Super Admin operating expenses are append-only and reversed, never edited.',iconName:'reports',actions:`<button type="button" class="btn ghost" id="platformFinanceExport"${completeAll?'':' disabled'}>${CUI.icon('download',{size:17})}<span>${escapeHtml(pt('Export CSV'))}</span></button><button type="button" class="btn" id="platformAddExpense">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('Add expense'))}</span></button>`})}
@@ -7861,6 +7909,10 @@
         ${completeAll?'':localizedRouteNoteHtml('Finance export incomplete','More than 5,000 records exist in at least one ledger. Narrow the date range before exporting.')}
         ${CUI.card({title:'Invoices and receipts',description:'Stripe supplies the invoice documents. A paid hosted invoice is the customer receipt when Stripe does not provide a separate charge receipt URL.',body:invoices.length?CUI.table({caption:'Platform invoices',headers:['Firm & invoice','Status','Amount','Recorded','Documents'],rows:financeInvoiceRows(invoices,CUI)}):CUI.emptyState({iconName:'reports',title:'No invoices in this period',body:'Paid and outstanding Stripe invoices will appear here after webhook processing.'})})}
         ${CUI.card({title:'Refunds and adjustments',description:'Every provider and reviewed adjustment remains visible. Credits, debits and write-offs are labelled non-cash and do not change net cash.',body:adjustments.length?CUI.table({caption:'Platform billing adjustments',headers:['Firm & invoice','Type','Cash effect','Reason','Recorded'],rows:financeAdjustmentRows(adjustments,CUI)}):CUI.emptyState({iconName:'reports',title:'No billing adjustments in this period',body:'Refunds, chargebacks and reviewed adjustments will appear here.'})})}
+        ${CUI.card({title:'Receipts to post',description:'Photograph or upload a receipt and it is read for you. Nothing reaches the books until you confirm the figures.',body:`
+          <div class="cui-field"><label for="platformReceiptFile">${escapeHtml(pt('Add a receipt'))}</label><input id="platformReceiptFile" type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" capture="environment"><p class="muted small">${escapeHtml(pt('Photo or PDF, up to 20 MB. A PDF is stored as evidence but has to be keyed in.'))}</p></div>
+          <div data-receipt-progress aria-live="polite"></div>
+          ${receipts.length?CUI.table({caption:'Receipts awaiting review',headers:['File','Status','Read as','Action'],rows:receiptRows(receipts,CUI)}):CUI.emptyState({iconName:'reports',title:'No receipts waiting',body:'Uploaded receipts appear here with their amounts read out, ready for you to confirm.'})}`})}
         ${CUI.card({title:'Operating expense ledger',description:'Entries are immutable. Use Reverse to correct a mistake and preserve the audit trail.',body:expenses.length?CUI.table({caption:'Platform expenses',headers:['Date','Category','Description','Cash effect','Action'],rows:financeExpenseRows(expenses,CUI)}):CUI.emptyState({iconName:'reports',title:'No operating expenses in this period',body:'Record a real platform expense to include it in net cash.'})})}
         ${CUI.card({title:'Accounting books',description:'Double-entry books post automatically from authoritative billing and expense events. Corrections create linked reversals; posted history is never edited.',body:`
           <div class="platform-actions" style="margin-bottom:14px"><button type="button" class="btn ghost" id="platformAccountingPolicy">${escapeHtml(pt(policy.id?'New policy version':'Configure accounting identity'))}</button>${policy.id?`<button type="button" class="btn" id="platformCreateInvoice">${escapeHtml(pt('Create financial invoice'))}</button>`:''}<button type="button" class="btn ghost" id="platformBooksExport"${completeAll?'':' disabled'}>${escapeHtml(pt('Export accounting books'))}</button><button type="button" class="btn ghost" id="platformPeriodLock">${escapeHtml(pt(books.period_locked?'Unlock period':'Lock period'))}</button></div>
@@ -7876,6 +7928,25 @@
       if(policy.id)main.querySelector('#platformCreateInvoice').onclick=()=>accountingInvoiceModal(context,range,policy);
       main.querySelector('#platformPeriodLock').onclick=()=>accountingPeriodModal(Boolean(books.period_locked),context,range);
       if(completeAll){main.querySelector('#platformFinanceExport').onclick=()=>downloadCsv(`peekaa-platform-finance-${range.from}-${range.to}.csv`,platformFinanceCsvRows(payload));main.querySelector('#platformBooksExport').onclick=()=>downloadCsv(`peekaa-accounting-books-${range.from}-${range.to}.csv`,platformBooksCsvRows(books))}
+      const receiptInput=main.querySelector('#platformReceiptFile'),receiptProgress=main.querySelector('[data-receipt-progress]');
+      if(receiptInput)receiptInput.onchange=async event=>{
+        const file=event.currentTarget.files?.[0];
+        if(!file)return;
+        receiptInput.disabled=true;
+        receiptProgress.innerHTML=`<p class="muted small">${escapeHtml(pt('Uploading and reading the receipt…'))}</p>`;
+        try{
+          const registered=await uploadReceipt(file,context);
+          CUI.announce(registered.duplicate
+            ?pt('That receipt was already captured.')
+            :pt('Receipt uploaded and being read.'));
+          await renderPlatformFinance(context,range);
+        }catch(error){
+          receiptInput.disabled=false;
+          receiptProgress.innerHTML=`<p class="platform-route-note">${escapeHtml(platformErrorMessage(error,pt('The receipt could not be uploaded.')))}</p>`;
+        }
+      };
+      main.querySelectorAll('[data-post-receipt]').forEach(button=>button.onclick=()=>receiptPostModal(receipts.find(receipt=>String(receipt.id)===button.dataset.postReceipt),context,range));
+      main.querySelectorAll('[data-discard-receipt]').forEach(button=>button.onclick=()=>receiptDiscardModal(button.dataset.discardReceipt,context,range));
       main.querySelectorAll('[data-reverse-expense]').forEach(button=>button.onclick=()=>platformExpenseReversalModal(button.dataset.reverseExpense,context,range));
       main.querySelectorAll('[data-print-document]').forEach(button=>button.onclick=()=>printFinancialDocument(documents.find(document=>String(document.id)===button.dataset.printDocument),CUI));
       main.querySelectorAll('[data-record-receipt]').forEach(button=>button.onclick=()=>accountingReceiptModal(documents.find(document=>String(document.id)===button.dataset.recordReceipt),context,range));
@@ -7906,6 +7977,89 @@
     </div>`,onSubmit:async(form,controls)=>{
       await rpc(sb,'platform_record_operating_expense_v147',{p_expense_date:form.get('expense_date'),p_category:form.get('category'),p_description:form.get('description'),p_amount_cents:moneyInputToCents(form.get('amount')),p_counterparty_name:form.get('counterparty_name'),p_counterparty_registration_number:form.get('counterparty_registration_number')||null,p_payment_reference:form.get('payment_reference'),p_evidence_reference:form.get('evidence_reference'),p_idempotency_key:attemptKey});
       controls.close();await renderPlatformFinance(context,range);CUI.announce('Operating expense recorded.');
+    }});
+  }
+  // Receipt capture. The photo is the evidence, so it is hashed before upload:
+  // the same receipt photographed twice is recognised as one document rather
+  // than becoming a second expense.
+  async function receiptSha256(file) {
+    const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
+    return Array.from(new Uint8Array(digest)).map(byte=>byte.toString(16).padStart(2,'0')).join('');
+  }
+  function receiptStoragePath(hash,file) {
+    const name=String(file.name||'receipt').toLowerCase().replace(/[^a-z0-9.]+/g,'-').slice(-40);
+    return `receipts/${hash.slice(0,2)}/${hash}-${name}`;
+  }
+  async function uploadReceipt(file,context) {
+    const {sb}=context;
+    if(file.size>20971520)throw new Error(pt('Receipts must be 20 MB or smaller.'));
+    const hash=await receiptSha256(file),path=receiptStoragePath(hash,file);
+    const upload=await sb.storage.from('accounting-private')
+      .upload(path,file,{contentType:file.type,upsert:true});
+    if(upload?.error)throw upload.error;
+    const registered=asObject(await rpc(sb,'platform_register_receipt_v199',{
+      p_storage_path:path,p_content_sha256:hash,p_mime_type:file.type,
+      p_byte_size:file.size,p_original_filename:file.name}));
+    // Reading it is a separate, best-effort step: a worker outage must not lose
+    // the receipt, which is already safely stored and registered by this point.
+    if(!registered.duplicate && sb.functions?.invoke){
+      try{await sb.functions.invoke('accounting-receipt-ocr',{body:{}});}catch{}
+    }
+    return registered;
+  }
+  function receiptRows(receipts,CUI) {
+    return receipts.map(receipt=>{
+      const extracted=asObject(receipt.extracted),status=String(receipt.status||'');
+      const vendor=extracted.vendor_name||'—';
+      const amount=Number.isFinite(Number(extracted.total_cents))?currency(extracted.total_cents,'SGD'):'—';
+      const confidence=Number(extracted.confidence);
+      const readAs=status==='extracted'
+        ? `${escapeHtml(vendor)} · ${escapeHtml(amount)}${Number.isFinite(confidence)?` <span class="muted small">${escapeHtml(pt('{percent}% legible',{percent:Math.round(confidence*100)}))}</span>`:''}`
+        : status==='extraction_failed'
+          ? `<span class="muted small">${escapeHtml(receipt.extraction_error||pt('Could not be read — key it in.'))}</span>`
+          : `<span class="muted small">${escapeHtml(platformStatus(status))}</span>`;
+      const action=status==='extracted'||status==='extraction_failed'||status==='uploaded'
+        ? `<button type="button" class="btn" data-post-receipt="${escapeHtml(receipt.id)}">${escapeHtml(pt('Review & post'))}</button>
+           <button type="button" class="btn ghost" data-discard-receipt="${escapeHtml(receipt.id)}">${escapeHtml(pt('Discard'))}</button>`
+        : `<span class="muted small">${escapeHtml(platformStatus(status))}</span>`;
+      return [escapeHtml(String(receipt.original_filename||receipt.storage_path)),
+        escapeHtml(platformStatus(status)),readAs,action];
+    });
+  }
+  // Everything posted is the figure the operator confirmed. The model's reading
+  // only pre-fills the form; it never posts on its own.
+  function receiptPostModal(receipt,context,range) {
+    const {CUI,sb}=context,attemptKey=idempotencyKey(),extracted=asObject(receipt.extracted);
+    const suggestedAmount=Number.isFinite(Number(extracted.total_cents))
+      ?(Number(extracted.total_cents)/100).toFixed(2):'';
+    const categories=['software','marketing','professional_services','banking','operations','other'];
+    const suggestedCategory=categories.includes(String(extracted.category))?String(extracted.category):'other';
+    modal({title:'Review receipt and post',submitLabel:'Post to books',CUI,body:`
+      <p class="platform-route-note">${escapeHtml(pt('Check every figure against the receipt before posting. Posted expenses cannot be edited — only reversed.'))}</p>
+      <div class="platform-form-grid">
+      ${CUI.field({id:'receiptDate',label:'Expense date',type:'date',required:true,value:extracted.document_date||range.to,attributes:'name="expense_date"'})}
+      ${CUI.field({id:'receiptCategory',label:'Category',control:'select',required:true,options:categories.map(value=>({value,label:platformStatus(value)})),value:suggestedCategory,attributes:'name="category"'})}
+      ${CUI.field({id:'receiptAmount',label:'Amount (SGD)',required:true,value:suggestedAmount,attributes:'name="amount" inputmode="decimal"'})}
+      ${CUI.field({id:'receiptCounterparty',label:'Supplier / payee',required:true,value:extracted.vendor_name||'',attributes:'name="counterparty_name" minlength="2" maxlength="200"'})}
+      ${CUI.field({id:'receiptSupplierUen',label:'Supplier UEN',value:extracted.vendor_registration_number||'',attributes:'name="counterparty_registration_number" maxlength="40"'})}
+      ${CUI.field({id:'receiptPaymentReference',label:'Payment reference',required:true,value:extracted.payment_reference||'',attributes:'name="payment_reference" minlength="3" maxlength="200"'})}
+      <div class="wide">${CUI.field({id:'receiptDescription',label:'Description',control:'textarea',required:true,value:extracted.description||'',attributes:'name="description" minlength="3" maxlength="240" rows="3"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      await rpc(sb,'platform_post_receipt_expense_v199',{
+        p_receipt:receipt.id,p_expense_date:form.get('expense_date'),p_category:form.get('category'),
+        p_description:form.get('description'),p_amount_cents:moneyInputToCents(form.get('amount')),
+        p_counterparty_name:form.get('counterparty_name'),p_payment_reference:form.get('payment_reference'),
+        p_counterparty_registration_number:form.get('counterparty_registration_number')||null,
+        p_idempotency_key:attemptKey});
+      controls.close();await renderPlatformFinance(context,range);
+      CUI.announce(pt('Receipt posted to the books.'));
+    }});
+  }
+  function receiptDiscardModal(receiptId,context,range) {
+    const {CUI,sb}=context;
+    modal({title:'Discard receipt',submitLabel:'Discard',CUI,body:CUI.field({id:'receiptDiscardReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="3" maxlength="240" rows="3"'}),onSubmit:async(form,controls)=>{
+      await rpc(sb,'platform_discard_receipt_v199',{p_receipt:receiptId,p_reason:form.get('reason')});
+      controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Receipt discarded.'));
     }});
   }
   function platformExpenseReversalModal(expenseId,context,range) {
