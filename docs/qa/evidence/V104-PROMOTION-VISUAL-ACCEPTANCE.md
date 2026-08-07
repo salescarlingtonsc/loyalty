@@ -95,6 +95,31 @@ The fixture test also requires byte-for-byte regeneration from the current
 production CSS/functions, white promotion headline contrast, mobile one-column
 layout, wrap guards, 44px CTA measurement support and the production dialog.
 
+## v192 re-capture (2026-08-07)
+
+The owner reported that the offer list "occupies more than a screen". The card's
+360px floor was removed and the artwork cap lowered — `object-fit:contain` is
+unchanged, so an uploaded EDM is still never cropped and nothing is painted over
+it; only the displayed size changed. Full size remains one tap away in the offer
+sheet.
+
+`v104-promotions-production-render-metrics.json` was re-captured from the current
+production render at all three viewports. Card height, the number this change was
+about:
+
+| viewport | before | after |
+| --- | --- | --- |
+| desktop 1440 | 852px | **625px** |
+| mobile 390 | 763 / 898px | **452 / 587px** |
+| mobile 412 | 700 / 1000px | **385 / 688px** |
+
+⚠️ The three PNGs in this folder still show the pre-v192 card and are stale. The
+metrics JSON — the artefact the acceptance test actually asserts — is current.
+Re-capturing the images needs the Playwright script
+(`tests/browser/verify-v104-promotions-visual.mjs`), which is not installed in
+this environment; the metrics above were collected by driving the same fixture at
+the same three viewports and reading the same `window.v104AcceptanceMetrics()`.
+
 ## Still pending
 
 - authenticated owner image upload, draft, publish and unpublish against the

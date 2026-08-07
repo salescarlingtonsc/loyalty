@@ -64,7 +64,7 @@ test('each promotion CTA has one clear, working outcome',()=>{
 test('desktop and mobile promotion cards prioritize marketing without overflow or auto-rotation',()=>{
   assert.match(app,/\.customer-promotions-grid\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(app,/@media\(max-width:760px\)\{[\s\S]*\.customer-promotions-grid,\.promotion-editor-grid\{grid-template-columns:1fr\}/);
-  assert.match(app,/\.customer-promotion-card\{[^}]*min-height:360px/s);
+  assert.match(app,/\.customer-promotion-card\{[^}]*border-radius:18px/s);
   assert.match(app,/\.customer-promotion-card-copy\{[^}]*min-width:0/s);
   assert.match(app,/\.customer-promotion-card-copy h3\{[^}]*color:#fff/s,
     'promotion headings must override the global dark heading colour on image cards');

@@ -63,7 +63,11 @@ test('uploaded promotion artwork is never cropped and never painted over', () =>
   assert.match(app, /\.customer-offer-detail-media img\{[^}]*object-fit:contain/);
   assert.match(app, /\.customer-home-offer-media img\{[^}]*object-fit:contain/);
   assert.doesNotMatch(app, /customer-(promotion-card|offer-detail|home-offer)-media img\{[^}]*object-fit:cover/);
-  assert.match(app, /\.customer-promotion-card-media--fallback\{[^}]*aspect-ratio:16\/9/);
+  /* v192: the list card was taller than a phone screen, so the artwork cap and the no-photo ratio
+     both shrank. The invariant is unchanged — contain never crops and nothing is drawn over the
+     image — only the size did. The offer SHEET below keeps the full-size 16/9 presentation. */
+  assert.match(app, /\.customer-promotion-card-media--fallback\{[^}]*aspect-ratio:21\/9/);
+  assert.match(app, /\.customer-promotion-card-media img\{[^}]*max-height:clamp\(140px,34vw,220px\);object-fit:contain/);
   assert.match(app, /\.customer-offer-detail-media--fallback\{[^}]*aspect-ratio:16\/9/);
 });
 

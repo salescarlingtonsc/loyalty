@@ -53,7 +53,7 @@ test('promotion cards surface the offer facts hook and never render a broken med
   assert.match(promotion,/data-promotion-id="\$\{esc\(item\?\.id\|\|''\)\}"/);
   assert.match(promotion,/customerPromotionCtaV104\(item,business,bookingEnabled\)/);
   assert.match(promotion,/data-promotion-status/);
-  assert.match(app,/\.customer-promotion-card-media--fallback\{[^}]*aspect-ratio:16\/9/s);
+  assert.match(app,/\.customer-promotion-card-media--fallback\{[^}]*aspect-ratio:21\/9/s);
   assert.match(app,/\.customer-promotion-card-media img\{[^}]*object-fit:contain/s);
 });
 
