@@ -18,7 +18,9 @@ const migration = readFileSync(join(root, 'db', 'migrations', '20260808_nestly_v
 test('V229 the overview is six topic tiles, and drilling in is the only way to the rows', () => {
   const defs = app.slice(app.indexOf('const growTopicDefsV229=['), app.indexOf('const growActiveTopicV229='));
   const keys = [...defs.matchAll(/\{key:'([a-z]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(keys, ['points', 'tiers', 'lifestyle', 'promotions', 'referrals', 'recurring']);
+  /* V235: a Stamp card tile joins the two points tiles, so all THREE loyalty models are
+     represented on the overview and exactly one of them can read Active. */
+  assert.deepEqual(keys, ['points', 'tiers', 'stamps', 'lifestyle', 'promotions', 'referrals', 'recurring']);
   assert.match(app, /growTilesModeV229\?`<div class="grow-topic-tiles-v229">/);
   assert.match(shell, /\.grow-topic-tiles-v229\{display:grid/);
   // Tiles only exist on the default list view; Ongoing / To set up stay flat lists.
@@ -35,7 +37,10 @@ test('V229 reward milestones live inside Point system, never on the tile overvie
   // ...and nowhere else in the file's render paths.
   assert.equal((app.match(/rewardJourney\.milestones\.map/g) || []).length, 1);
   // In tiles mode no topic is on, so no category rows exist at all.
-  assert.match(app, /const topicOnV229=key=>growActiveTopicV229\?growActiveTopicV229\.key===key:!growTilesModeV229;/);
+  /* V235: Stamp card is a third VIEW of the point engine, so it drills into the points
+     section rather than duplicating it — the mapping is what keeps the tile from dead-ending. */
+  assert.match(app, /const growTopicSectionV235=growActiveTopicV229\?\.key==='stamps'\?'points':\(growActiveTopicV229\?\.key\|\|null\);/);
+  assert.match(app, /const topicOnV229=key=>growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229;/);
 });
 
 test('V229 a firm chooses ONE use for points, and the server holds the door', () => {
@@ -44,7 +49,12 @@ test('V229 a firm chooses ONE use for points, and the server holds the door', ()
   assert.match(app, /One model at a time keeps the customer story clear/);
   assert.match(app, /data-points-mode-v229="redeem"/);
   assert.match(app, /data-points-mode-v229="tiers"/);
-  assert.match(app, /Points are used for: \$\{currentLabel\}/);
+  /* V235: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as two half
+     truths. All three models are now named with exactly one Live mark, and the change itself
+     happens in one place — the editor's segmented toggle. */
+  assert.match(app, /const liveLoyaltyModelV235=snapshot\.loyalty\?\.loyalty_model==='stamps'\?'stamps'/);
+  assert.match(app, /key===liveLoyaltyModelV235\?'<span aria-hidden="true">●<\/span> Live: ':''/);
+  assert.match(app, /const loyaltyModelTileStatusV235=key=>/);
   // Switching states the concrete consequence and asks first.
   assert.match(app, /Customers will not be able to claim point rewards until you switch back\./);
   assert.match(app, /sb\.from\('businesses'\)\.update\(\{points_mode:next\}\)/);

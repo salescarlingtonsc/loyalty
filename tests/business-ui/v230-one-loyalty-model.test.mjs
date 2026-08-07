@@ -26,7 +26,8 @@ test('V230 one three-way model select, in the owner\'s words', () => {
   // The old three-model taxonomy is gone from the select; simple/catalog became a sub-style.
   assert.doesNotMatch(app, /Simple points — fixed redeem into credit/);
   assert.doesNotMatch(app, /Points \+ reward catalog \+ tiers/);
-  assert.match(app, /loyaltySelectionV230==='redeem'\?`<label>Redemption style<\/label>/);
+  /* V235 tied every editor label to its control with for=/id=. */
+  assert.match(app, /loyaltySelectionV230==='redeem'\?`<label for="lmStyle">Redemption style<\/label>/);
   // Selection previews on change; Save is the decision point, and it writes BOTH stores.
   assert.match(app, /Loyalty model preview updated — Save to apply\./);
   assert.match(app, /const targetModeV230=loyaltySelectionV230==='tiers'\?'tiers':'redeem';/);

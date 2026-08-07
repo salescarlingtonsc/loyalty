@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="1c250ec0331362aabdf110c509132004d9e416b15650fb8c02225772b881c9ca"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="b51aeb74f3ad80ef892cd7ca7de777361f244204a1ac00d012db2c4f4b70568e"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -177,6 +177,29 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .tier-benefit-pick:has(input:checked){border-color:var(--coral);background:#FFF4F1}
 .tier-editor-advanced>summary{cursor:pointer;font-weight:650;font-size:13.5px;color:var(--muted);padding:6px 0}
 .tier-editor-advanced>summary:hover{color:var(--coral)}
+/* V235 loyalty editor: one status strip, one primary action pair, one segmented model
+   choice. Mobile-first — the toggle wraps at 390px instead of scrolling the page sideways. */
+.loyalty-strip-v235{background:#FBFAF8;border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;font-size:13px;color:var(--ink2)}
+.loyalty-strip-v235 b{color:var(--ink)}
+.loyalty-actions-v235{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px}
+.loyalty-actions-v235>span{flex-basis:100%}
+.loyalty-seg-v235{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.loyalty-seg-btn-v235{flex:1 1 150px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:56px;padding:10px 12px;border:1px solid var(--control-border);border-radius:12px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;font-size:13.5px}
+.loyalty-seg-btn-v235:hover:not([disabled]){border-color:var(--coral);background:#FFFBF9}
+.loyalty-seg-btn-v235.is-on{border-color:var(--coral);background:var(--tint);box-shadow:inset 0 0 0 1px var(--coral)}
+.loyalty-seg-btn-v235[disabled]{opacity:.55;cursor:not-allowed}
+.loyalty-seg-live-v235{font-size:11px}
+.loyalty-seg-state-v235{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.loyalty-facts-v235{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:14px}
+.loyalty-facts-v235>div{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#FBFAF8}
+.loyalty-preview-v235{margin-top:18px;padding:13px 14px;border:1px dashed var(--line);border-radius:14px;background:#FBFAF8}
+.loyalty-flag-v235{font-size:12px;color:var(--amber);background:#FFF7EC;border-radius:var(--r-sm);padding:7px 10px}
+.loyalty-advanced-v235>summary,.loyalty-optional-v235>summary{cursor:pointer;font-weight:650;font-size:13.5px;color:var(--muted);padding:8px 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-height:44px}
+.loyalty-advanced-v235>summary:hover,.loyalty-optional-v235>summary:hover{color:var(--coral)}
+.loyalty-optional-v235>summary b{color:var(--ink);font-size:14px}
+.loyalty-live-models-v235{display:flex;flex-wrap:wrap;gap:6px}
+.tier-benefit-row-v235{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+.tier-benefit-row-v235 input{flex:1 1 180px;margin:0}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
@@ -1667,7 +1690,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 1c250ec0331362aabdf110c509132004d9e416b15650fb8c02225772b881c9ca</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · b51aeb74f3ad80ef892cd7ca7de777361f244204a1ac00d012db2c4f4b70568e</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -4023,7 +4046,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'1c250ec0331362aabdf110c509132004d9e416b15650fb8c02225772b881c9ca',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'b51aeb74f3ad80ef892cd7ca7de777361f244204a1ac00d012db2c4f4b70568e',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

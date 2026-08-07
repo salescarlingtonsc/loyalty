@@ -208,6 +208,29 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .tier-benefit-pick:has(input:checked){border-color:var(--coral);background:#FFF4F1}
 .tier-editor-advanced>summary{cursor:pointer;font-weight:650;font-size:13.5px;color:var(--muted);padding:6px 0}
 .tier-editor-advanced>summary:hover{color:var(--coral)}
+/* V235 loyalty editor: one status strip, one primary action pair, one segmented model
+   choice. Mobile-first — the toggle wraps at 390px instead of scrolling the page sideways. */
+.loyalty-strip-v235{background:#FBFAF8;border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;font-size:13px;color:var(--ink2)}
+.loyalty-strip-v235 b{color:var(--ink)}
+.loyalty-actions-v235{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px}
+.loyalty-actions-v235>span{flex-basis:100%}
+.loyalty-seg-v235{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.loyalty-seg-btn-v235{flex:1 1 150px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:56px;padding:10px 12px;border:1px solid var(--control-border);border-radius:12px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;font-size:13.5px}
+.loyalty-seg-btn-v235:hover:not([disabled]){border-color:var(--coral);background:#FFFBF9}
+.loyalty-seg-btn-v235.is-on{border-color:var(--coral);background:var(--tint);box-shadow:inset 0 0 0 1px var(--coral)}
+.loyalty-seg-btn-v235[disabled]{opacity:.55;cursor:not-allowed}
+.loyalty-seg-live-v235{font-size:11px}
+.loyalty-seg-state-v235{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.loyalty-facts-v235{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:14px}
+.loyalty-facts-v235>div{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#FBFAF8}
+.loyalty-preview-v235{margin-top:18px;padding:13px 14px;border:1px dashed var(--line);border-radius:14px;background:#FBFAF8}
+.loyalty-flag-v235{font-size:12px;color:var(--amber);background:#FFF7EC;border-radius:var(--r-sm);padding:7px 10px}
+.loyalty-advanced-v235>summary,.loyalty-optional-v235>summary{cursor:pointer;font-weight:650;font-size:13.5px;color:var(--muted);padding:8px 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-height:44px}
+.loyalty-advanced-v235>summary:hover,.loyalty-optional-v235>summary:hover{color:var(--coral)}
+.loyalty-optional-v235>summary b{color:var(--ink);font-size:14px}
+.loyalty-live-models-v235{display:flex;flex-wrap:wrap;gap:6px}
+.tier-benefit-row-v235{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+.tier-benefit-row-v235 input{flex:1 1 180px;margin:0}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
@@ -1742,7 +1765,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=553cfce26f44","business":"/app-business.js?b=31cefadb9b3c","i18n":"/app-i18n.js?b=232400221146"}
+{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=553cfce26f44","business":"/app-business.js?b=f826fa6fda0c","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

@@ -89,6 +89,15 @@
   margin-top:9px;font-size:clamp(1.55rem,3vw,2.2rem);font-weight:750;
   letter-spacing:-.04em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere
 }
+/* Most KPI values are a number, where the display size is the point and
+   `anywhere` is what stops a long unbroken token overflowing the tile. A few
+   are short PHRASES ("5 days overdue"). At display size a word like "overdue"
+   is wider than the tile, so it gets split mid-word however it is wrapped —
+   the fix is a size the phrase actually fits at, plus breaking on spaces
+   first. Opt-in, so numeric tiles keep their weight. */
+.platform-kpi-value.platform-kpi-phrase{
+  font-size:clamp(1.15rem,1.9vw,1.5rem);overflow-wrap:break-word
+}
 .platform-section-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.7fr);gap:16px}
 .platform-context-list{display:grid;gap:0}
 .platform-context-list div{
@@ -120,12 +129,24 @@
 .platform-toolbar .btn{flex:0 0 auto}
 .platform-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .platform-status-note{margin-bottom:16px}
+/* align-items:stretch, not start: a lane with two cards must still be a
+   full-height drop target. With start, short lanes collapsed to the height of
+   their cards and everything below them rejected the drop. */
 .platform-kanban{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-  gap:12px;align-items:start;padding:2px 2px 18px
+  gap:12px;align-items:stretch;padding:2px 2px 18px
 }
 .platform-kanban-column{
-  min-width:0;padding:10px;border:1px solid var(--line);border-radius:15px;background:#EFEBE5
+  min-width:0;padding:10px;border:1px solid var(--line);border-radius:15px;background:#EFEBE5;
+  display:flex;flex-direction:column
+}
+/* The card list fills whatever the column has left, so the whole column below
+   the header is droppable — including an empty lane. */
+/* align-content:start keeps the cards their natural height and packed at the
+   top. Without it the stretched list is a grid whose implicit rows grow, so a
+   lane holding one card rendered it as a full-column slab. */
+.platform-kanban-column>.platform-card-list{
+  flex:1 1 auto;min-height:72px;align-content:start
 }
 .platform-kanban-head{
   display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
@@ -154,7 +175,8 @@
 }
 .platform-prospect-card-compact .platform-card-badges{margin-top:7px}
 .platform-kanban-hint{margin:-6px 2px 10px}
-.platform-card-list.is-drop-target{
+.platform-card-list.is-drop-target,
+.platform-kanban-column.is-drop-target{
   outline:2px dashed rgba(194,65,53,.55);outline-offset:3px;border-radius:12px;background:rgba(194,65,53,.05)
 }
 .platform-empty-fields{margin-top:8px}

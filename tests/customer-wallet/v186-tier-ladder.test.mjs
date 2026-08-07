@@ -146,7 +146,9 @@ test('a failed or paused tier lookup says which it is instead of rendering nothi
 
 test('the workspace warns when tiers are configured but nobody can see them', () => {
   assert.match(app, /Customers cannot see these tiers/);
-  assert.match(app, /\$\{tiers\.length&&!\(p&&p\.active\)\?/,
+  /* V235: the same condition, read through the Status value the owner is actually looking at
+     (stored active, or their unsaved choice), so the warning tracks the control not the row. */
+  assert.match(app, /\$\{tiers\.length&&!loyaltyActiveV235\?/,
     'the warning fires exactly when tiers exist and the programme is not live');
   /* V230: the owner asked the paused state to name the fix, not just the fact — the warning
      now ends with the exact action ("Set Status to Active, then Review & publish / Save"). */

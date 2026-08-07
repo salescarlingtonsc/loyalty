@@ -53,7 +53,9 @@ test('tier benefits are tick boxes writing into the existing perk_note field', (
   assert.match(app, /data-tier-benefit=/);
   // The checkboxes must be an input method over the existing store, not a second data model.
   const i = app.indexOf("document.querySelectorAll('[data-tier-benefit]').forEach(box=>box.onchange");
-  const src = app.slice(i, i + 700);
+  /* V235 added mutual exclusion for the "% off" presets inside the same handler, so the
+     window has to cover the whole block for the untick branch to be in it. */
+  const src = app.slice(i, i + 1600);
   assert.ok(src.includes("$('trPerk')"), 'ticking must write into perk_note, the source of truth');
   assert.ok(src.includes('splice(at,1)'), 'unticking must remove exactly that line');
   assert.match(app, /function syncTierBenefitPicksV182/);
