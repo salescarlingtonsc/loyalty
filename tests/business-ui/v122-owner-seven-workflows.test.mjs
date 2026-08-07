@@ -79,7 +79,9 @@ test('product cost produces plain-language margin and safe reward budget guidanc
     rewardCostCents:1200,profitAfterRewardCents:3200,profitableAfterReward:true
   });
   const inventory=section('async function inventoryPage(){','/* ---------- packages ---------- */');
-  assert.match(inventory,/Product cost/);
+  /* V221 renamed the field to the owner's own words ("costs you"). The intent here — the page
+     asks for cost and turns it into margin guidance — is unchanged and asserted below. */
+  assert.match(inventory,/<label for="pc2">Costs you/);
   assert.match(inventory,/Gross profit/);
   assert.match(inventory,/cost_cents/);
   const grow=section('async function growPage(','/* ---------- Bring-back playbooks');

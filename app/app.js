@@ -18868,23 +18868,31 @@ async function waitlistPage(){
 async function inventoryPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('inventory');
-  M().innerHTML=`<div class="topbar"><div><h1>Inventory</h1><p class="muted small">Stock in batches with expiry — retail sales auto-deduct earliest-expiring first (FEFO).</p></div>
+  /* V221 (owner: "i want products (not inventory tracking) - products is like selling
+     1. chicken rice for $5 and cost $2"). The page already held exactly that — name, sell
+     price, cost, gross profit, edit — but it was dressed as a warehouse: titled Inventory,
+     subtitled with batches, expiry and FEFO, and leading with "Receive stock". A hawker
+     selling chicken rice does not have batches, and does not need them: insufficient stock is
+     tolerated by design (v8: "deduct what exists, never below zero, never raise"), so a
+     product with no stock row still sells. Stock keeping is therefore optional and is moved
+     behind a fold; the price list is the page. */
+  M().innerHTML=`<div class="topbar"><div><h1>Products</h1><p class="muted small">What you sell, what you charge and what it costs you. Stock keeping is optional.</p></div>
     <div class="row">${canWrite?importBtn('inventory'):''}</div></div>
-    ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only inventory access</b><p class="muted small" style="margin-top:5px">You can review stock on hand. Ask for Inventory edit access to import, add, or receive stock.</p></div>`}
+    ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only product access</b><p class="muted small" style="margin-top:5px">You can review products and prices. Ask for Products edit access to add or change them.</p></div>`}
     <div class="split">
     ${canWrite?`<div class="card"><b>Add product</b>
       <label>Name</label><input id="pn2"><label>SKU (optional)</label><input id="ps2">
-      <div class="split"><div><label>Retail price (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01"></div>
-      <div><label>Product cost (${S.biz.currency||'SGD'})</label><input id="pc2" type="number" min="0" step="0.01" aria-describedby="productProfitPreview"></div></div>
+      <div class="split"><div><label for="pp2">Sell for (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01" placeholder="5.00"></div>
+      <div><label for="pc2">Costs you (${S.biz.currency||'SGD'})</label><input id="pc2" type="number" min="0" step="0.01" placeholder="2.00" aria-describedby="productProfitPreview"></div></div>
       <div class="permission-banner" id="productProfitPreview" style="margin-top:12px"><div><b>Add price and cost</b><p class="muted small" style="margin-top:4px">Peekaa will show gross profit and a safe reward-cost starting point. Nothing is published automatically.</p></div></div>
       <div style="margin-top:14px"><button class="btn" id="padd2">Add product</button></div>
-      <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
-      <b>Receive stock</b>
+      <details class="till-sale-package-options" style="margin-top:20px"><summary>Count stock too (optional)</summary>
+      <p class="muted small" style="margin:0 0 8px">Only for goods you count — a batch with a quantity and an optional expiry date. Selling never needs this: a product with no stock recorded still sells normally.</p>
       <label>Product</label><select id="bp2"></select>
       <div class="split"><div><label>Quantity</label><input id="bq2" type="number" min="1" value="10"></div>
       <div><label>Expiry (optional)</label><input id="be2" type="date"></div></div>
-      <div style="margin-top:14px"><button class="btn ghost" id="badd2">Receive batch</button></div></div>`:''}
-    <div class="card"><b>Stock on hand</b><div id="ilist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+      <div style="margin-top:14px"><button class="btn ghost" id="badd2">Receive batch</button></div></details></div>`:''}
+    <div class="card"><b>Your products</b><div id="ilist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
   /* V191 (owner: "how to edit and delete pricing or edit information etc"). Products could only
      be created — a mistyped price or name was permanent, which matters more now that a whole
      café menu lives here. Editing never rewrites history: every sale carries its own snapshot.
@@ -18929,13 +18937,13 @@ async function inventoryPage(){
       sb.from('product_stock').select('*').eq('business_id',S.biz.id)]);
     if(!isCurrent())return;
     if(productsResult.error||stockResult.error){
-      $('ilist').innerHTML=`<div class="err">Inventory could not be loaded. <button class="btn ghost sm" id="inventoryRetry">Retry</button></div>`;
+      $('ilist').innerHTML=`<div class="err">Products could not be loaded. <button class="btn ghost sm" id="inventoryRetry">Retry</button></div>`;
       $('inventoryRetry').onclick=loadInv;return;
     }
     const pr=productsResult.data,st=stockResult.data;
     const SM=Object.fromEntries((st||[]).map(x=>[x.product_id,x.stock]));
     if(canWrite)$('bp2').innerHTML=(pr||[]).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">— add a product first —</option>';
-    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Stock on hand"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Cost</th><th>Gross profit</th><th>Stock</th><th></th></tr></thead><tbody>
+    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Cost</th><th>Gross profit</th><th>Stock</th><th></th></tr></thead><tbody>
       ${pr.map(p=>{const s=SM[p.id]||0,profit=p.cost_cents==null?null:productProfitabilityV122({priceCents:p.retail_price_cents,costCents:p.cost_cents});return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
       <td data-label="Price">${money(p.retail_price_cents)}</td><td data-label="Cost">${p.cost_cents==null?'Not set':money(p.cost_cents)}</td><td data-label="Gross profit">${profit?`${money(profit.grossProfitCents)} · ${profit.marginPct}%`:'Add cost'}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td>
       <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Disable':'Enable'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
@@ -18946,7 +18954,7 @@ async function inventoryPage(){
           <div><label for="prodEditCost">Cost (optional)</label><input id="prodEditCost" type="number" min="0" step="0.01" value="${p.cost_cents==null?'':(p.cost_cents/100).toFixed(2)}"></div>
         </div>
         <div class="row" style="margin-top:12px"><button class="btn sm" data-prod-save="${p.id}">Save changes</button><button class="btn ghost sm" data-prod-cancel="1">Cancel</button><span class="muted small" id="prodEditStatus" role="status" aria-live="polite"></span></div></td></tr>`:''}`}).join('')}</tbody></table></div>`
-      :`<div class="empty"><div class="big">📦</div>No products yet.</div>`;
+      :`<div class="empty"><div class="big">📦</div>No products yet. Add what you sell — for example chicken rice at ${money(500)} that costs you ${money(200)}.</div>`;
     bindProductEditors();
   }
   const paintProductProfit=()=>{
