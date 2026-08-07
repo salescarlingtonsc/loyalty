@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="18e7dfd2d4d8e60e2aa96d198e5674dd58141c0a42c9c141bd9ce8dd36cf6d78"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="4a17d22a743dbb89689a2671600e585d30ef266a51f8e5016abb5974e0b0b9fc"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1666,7 +1666,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 18e7dfd2d4d8e60e2aa96d198e5674dd58141c0a42c9c141bd9ce8dd36cf6d78</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 4a17d22a743dbb89689a2671600e585d30ef266a51f8e5016abb5974e0b0b9fc</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2388,9 +2388,12 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
       status:!canRewards?['Not included','off']
         :pointsModeV229==='redeem'?['Off','off']
-        :(loyaltyTiersV229&&loyaltyTiersV229.length?[pointsModeV229==='tiers'?'Live':'Configured',pointsModeV229==='tiers'?'on':'off']:['Not set up','off']),
+        :(loyaltyTiersV229&&loyaltyTiersV229.length
+          ?(pointsModeV229==='tiers'?(loyaltyLive?['Live','on']:['Not live yet','off']):['Configured','off'])
+          :['Not set up','off']),
       summary:pointsModeV229==='redeem'?'Points are redeemed for rewards instead'
         :loyaltyTiersV229===null?'Tier details could not be loaded'
+        :(pointsModeV229==='tiers'&&loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Create the ladder customers climb'},
     {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
@@ -3067,7 +3070,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'18e7dfd2d4d8e60e2aa96d198e5674dd58141c0a42c9c141bd9ce8dd36cf6d78',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'4a17d22a743dbb89689a2671600e585d30ef266a51f8e5016abb5974e0b0b9fc',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

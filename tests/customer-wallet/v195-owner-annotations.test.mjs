@@ -408,7 +408,7 @@ test('the same reward line is not printed twice', () => {
 });
 
 test('the mode comes from the server, so the surface and the redemption gate cannot disagree', () => {
-  const migration = readFileSync(new URL('db/migrations/20260808_nestly_v230_customer_sees_the_chosen_points_mode.sql', root), 'utf8');
+  const migration = readFileSync(new URL('db/migrations/20260808_nestly_v231_capabilities_follow_the_points_mode.sql', root), 'utf8');
   assert.match(migration, /coalesce\(v_points_mode,'redeem'\) <> 'tiers'/, 'rewards off in tiers mode');
   assert.match(migration, /'points_mode', v_points_mode/);
   assert.match(migration, /coalesce\(v_points_mode,'tiers'\) = 'tiers'/);

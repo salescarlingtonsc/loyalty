@@ -2640,6 +2640,13 @@ function customerTierMilestonesMarkupV194(tier={}){
 }
 function customerTierPanelMarkupV194(tier={}){
   const current=tier.current,next=tier.next;
+  /* V230 (owner: "only 1 can be live at any go ... reflected in the customer portal"). When the
+     firm redeems points for rewards, the tier ladder is not the story — showing it alongside
+     "spend your points" was exactly the double narrative the owner ruled out. The reader tells
+     us the firm's choice; an unchosen firm keeps today's behaviour. */
+  if(String(tier.points_mode||'')==='redeem'){
+    return '';
+  }
   if(tier.unavailable==='not_running'){
     return `<p class="muted small">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p>`;
   }
@@ -3329,6 +3336,14 @@ async function renderCustomerWallet(businessSlug=null){
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?'Rewards are not available for this account.':'Rewards could not be loaded.',loadRewards,error);
+    /* V230: this firm uses points for tier membership. There is nothing to redeem — the server
+       refuses intents too — so the section says what points DO here instead of listing rewards
+       that cannot be claimed. */
+    if(String(data?.points_mode||'')==='tiers'){
+      host.setAttribute('aria-busy','false');
+      host.innerHTML=`<div class="card customer-home-offers-state"><b>Your points build your tier</b><p class="muted small" style="margin-top:6px">Every point earned here counts toward your membership tier and its benefits — there is nothing to redeem. Your tier and what it unlocks are shown above.</p></div>`;
+      return;
+    }
     const classicAction=!actionsResult.error&&actionsResult.data?.redemption?.classic
       ?actionsResult.data.redemption.classic:null;
     const actionRewards=actionsResult.error?[]:[

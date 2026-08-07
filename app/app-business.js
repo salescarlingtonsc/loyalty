@@ -95,6 +95,9 @@ let pendingCustomerInactivity=null;
    would highlight an unrelated row on the next visit. */
 let pendingNotificationFocusV206='';
 let pendingTillRedemptionScan=false;
+/* V230: the loyalty editor's pending model selection (redeem/tiers) before Save writes it.
+   Reset on every fresh entry so a preview never leaks across visits. */
+let loyaltyModeDraftV230=null;
 /* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
    birthday / bring-back / referral editors. Module-level because those editors live in
    different page functions from the Programmes overview that sets it. */
@@ -6008,6 +6011,7 @@ function openProtectedGrowPublishReview(draftVersionId){
 }
 
 async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null,stableRefresh=false,editorIntent=null){
+  if(!stableRefresh)loyaltyModeDraftV230=null;
   const routeMain=M();
   const isLoyaltyCurrent=()=>routeMain.isConnected&&M()===routeMain;
   if(!stableRefresh)routeMain.innerHTML=CUI.loadingState({title:'Loyalty',iconName:'loyalty'});
@@ -6079,6 +6083,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const publishedBirthdayProgram=publishedBirthdayPrograms[0]||null;
   const rewards=rw||[],tiers=tr||[];
   const model=modelOverride||p?.loyalty_model||'classic';
+  /* V230 (owner: "can just change to Points Redemption / Tiered Membership / stamp card (only 1
+     can be live at any go)"). One three-way choice. Underneath, 'redeem' and 'tiers' share the
+     points engine (loyalty_model classic/points_tiers) and differ by businesses.points_mode —
+     which the server already enforces — while 'stamps' is its own model. */
+  const loyaltyModeV230=loyaltyModeDraftV230||S.biz.points_mode||'redeem';
+  const loyaltySelectionV230=model==='stamps'?'stamps':(loyaltyModeV230==='tiers'?'tiers':'redeem');
   const unit=model==='stamps'?'stamps':'points';
   const groupEligibility=(rows,key)=>rows.reduce((a,x)=>{
     (a[x.reward_id]??=[]).push(x[key]);
@@ -6174,7 +6184,6 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     return r.min_tier_threshold==null?'':`${r.min_tier_threshold}+ ${unit}`;
   };
   const rewardRows=(label)=>`
-    ${S.biz.points_mode==='tiers'?`<div class="imp-note" style="margin-top:18px"><b>Redemption is off</b><p class="small" style="margin-top:5px">Points count toward tier membership, so customers cannot claim these rewards. Switch in Programmes → Point system.</p></div>`:''}
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
     ${rewards.length?rewards.map(r=>{const state=rewardBoundary(r);return `<div class="reward-item">
@@ -6189,9 +6198,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
   const tierRows=()=>`
-    ${S.biz.points_mode==='redeem'?`<div class="imp-note" style="margin-top:18px"><b>Tier membership is off</b><p class="small" style="margin-top:5px">This business redeems points for rewards. Tiers edited here stay saved and are not the story customers see. Switch in Programmes → Point system.</p></div>`:''}
-    <b style="display:block;margin-top:18px">Tiers (optional)</b>
-    ${tiers.length&&!(p&&p.active)?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but this programme is not live. Nobody sees their tier, its benefits or how far they are from the next one until you publish it.</p></div>`:''}
+    <b style="display:block;margin-top:18px">${loyaltySelectionV230==='tiers'?'Your tiers':'Tiers (optional)'}</b>
+    ${tiers.length&&!(p&&p.active)?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but the programme Status above is Paused. Set Status to Active, then ${draftVersionId?'Review & publish':'Save'} — that is the whole fix.</p></div>`:''}
     <label>Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
       <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
       <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
@@ -6256,13 +6264,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     </section>
     <div class="split"><div class="card" id="loyaltyProgramEditor"><b>Program settings</b>
       <label>Status</label><select id="la"${loyaltyControlDisabled}><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${!p?.active?'selected':''}>Paused</option></select>
-      <label>Loyalty model</label><select id="lm"${loyaltyControlDisabled}>
-        <option value="classic" ${model==='classic'?'selected':''}>Simple points — fixed redeem into credit</option>
-        <option value="points_tiers" ${model==='points_tiers'?'selected':''}>Points + reward catalog + tiers</option>
-        <option value="stamps" ${model==='stamps'?'selected':''}>Stamp card — $ per stamp, milestone rewards</option></select>
+      <label>Loyalty model — only one is live at a time</label><select id="lm"${loyaltyControlDisabled}>
+        <option value="redeem" ${loyaltySelectionV230==='redeem'?'selected':''}>Points redemption — earn points, redeem rewards</option>
+        <option value="tiers" ${loyaltySelectionV230==='tiers'?'selected':''}>Tiered membership — points build a tier and its benefits</option>
+        <option value="stamps" ${loyaltySelectionV230==='stamps'?'selected':''}>Stamp card — collect stamps, milestone rewards</option></select>
+      ${loyaltySelectionV230==='redeem'?`<label>Redemption style</label><select id="lmStyle"${loyaltyControlDisabled}>
+        <option value="points_tiers" ${model!=='classic'?'selected':''}>Reward catalogue — customers pick from rewards you define</option>
+        <option value="classic" ${model==='classic'?'selected':''}>Fixed redeem — points become store credit automatically</option></select>`:''}
       ${model==='stamps'
         ?`<label>Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
-          <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>`
+          <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>
+          <p class="muted small" style="margin-top:4px">Stack several milestones below — e.g. 3 stamps = free drink, 8 stamps = $5 credit or a "10% off" benefit. Each is its own reward with its own stamp cost.</p>`
         :`<label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>`}
       ${model==='classic'
         ?`<label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
@@ -6286,7 +6298,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
             <div id="growRecBody"></div></div>`:''}`
         :model==='stamps'
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('stampsEligibleEarning')}</p>${rewardRows('Your milestones')}`
-        :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
+        :loyaltySelectionV230==='tiers'
+        ?`<b>Tiers — your loyalty model</b><p class="muted small" style="margin-top:6px">Customers climb these tiers, and each tier carries its own benefits. Points build the tier — they are not redeemed.</p>
+          <p class="muted small" style="margin-top:8px">Point rewards are off in this model. Rewards you saved earlier are kept and come back if you switch to Points redemption.</p>
+          ${tierRows()}`
+        :`<b>Reward catalogue</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define.</p>${rewardRows('Your rewards')}
+          <p class="muted small" style="margin-top:14px">Tiers are off in this model — choose Tiered membership above to run them instead. Saved tiers are kept.</p>`}
     </div></div>${birthdayEditor}`;
   applyGrowLoyaltyEditorIsolationV139(routeMain,editorIntent);
   const growDraftBarPublish=$('growDraftBarPublishV170');
@@ -6541,7 +6558,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     refreshLoyaltyPanel(data.model,data.draft_config_version_id,data,'Recommended Grow draft ready.',false,editorIntent);
   };
   const loyaltyModelInput=$('lm');
-  if(loyaltyModelInput)loyaltyModelInput.onchange=()=>refreshLoyaltyPanel(loyaltyModelInput.value,draftVersionId,recommendation,'Earning model preview updated.',false,editorIntent);
+  if(loyaltyModelInput)loyaltyModelInput.onchange=()=>{
+    /* V230: the selection is the owner's three-way choice; map it to the stored pieces.
+       Nothing is written here — Save is the decision point. */
+    const sel=loyaltyModelInput.value;
+    loyaltyModeDraftV230=sel==='tiers'?'tiers':'redeem';
+    const nextModel=sel==='stamps'?'stamps':(sel==='tiers'?'points_tiers':(model==='classic'?'classic':'points_tiers'));
+    refreshLoyaltyPanel(nextModel,draftVersionId,recommendation,'Loyalty model preview updated — Save to apply.',false,editorIntent);
+  };
+  const loyaltyStyleInput=$('lmStyle');
+  if(loyaltyStyleInput)loyaltyStyleInput.onchange=()=>refreshLoyaltyPanel(loyaltyStyleInput.value,draftVersionId,recommendation,'Redemption style preview updated — Save to apply.',false,editorIntent);
   if($('lx')&&$('lxd')&&$('lxdField'))bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
   document.querySelectorAll('[data-bo-expiry]').forEach(modeInput=>{
     const idx=modeInput.dataset.boExpiry;
@@ -6584,6 +6610,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   if(loyaltySave)loyaltySave.onclick=async()=>{
     const expiryMode=$('lx').value,expiryDays=expiryDaysForMode(expiryMode,$('lxd'));
     if(Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');$('lxd').focus();return}
+    /* V230: the three-way selection decides BOTH stores. loyalty_model goes into the draft as
+       before; points_mode is the instant business switch the server enforces, so switching away
+       from a chosen model asks first and states what it stops. */
+    const targetModeV230=loyaltySelectionV230==='tiers'?'tiers':'redeem';
+    if(S.biz.points_mode&&targetModeV230!==S.biz.points_mode&&!confirm(targetModeV230==='tiers'
+      ?'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.'
+      :'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.'))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
       expiry_mode:expiryMode};
@@ -6606,6 +6639,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
     if(!isLoyaltyCurrent())return;
     if(saveError){$('lsave').disabled=false;return fail(saveError)}
+    /* V230: the mode is an instant business switch (the server gate reads it live), unlike the
+       numbers, which wait for publish. Writing it here keeps one Save meaning one decision. */
+    if(targetModeV230!==(S.biz.points_mode||null)){
+      const {error:modeError}=await sb.from('businesses').update({points_mode:targetModeV230}).eq('id',S.biz.id);
+      if(!isLoyaltyCurrent())return;
+      if(modeError){$('lsave').disabled=false;return fail(modeError)}
+      S.biz.points_mode=targetModeV230;
+      loyaltyModeDraftV230=null;
+      toast(targetModeV230==='tiers'?'Points now build tier membership':'Points are now redeemed for rewards');
+    }
     if(draftVersionId){
       toast('Grow draft saved — customers are still using the published programme');
       if(editorIntent){nav('#/grow');return}
@@ -8041,9 +8084,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
       status:!canRewards?['Not included','off']
         :pointsModeV229==='redeem'?['Off','off']
-        :(loyaltyTiersV229&&loyaltyTiersV229.length?[pointsModeV229==='tiers'?'Live':'Configured',pointsModeV229==='tiers'?'on':'off']:['Not set up','off']),
+        :(loyaltyTiersV229&&loyaltyTiersV229.length
+          ?(pointsModeV229==='tiers'?(loyaltyLive?['Live','on']:['Not live yet','off']):['Configured','off'])
+          :['Not set up','off']),
       summary:pointsModeV229==='redeem'?'Points are redeemed for rewards instead'
         :loyaltyTiersV229===null?'Tier details could not be loaded'
+        :(pointsModeV229==='tiers'&&loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Create the ladder customers climb'},
     {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',

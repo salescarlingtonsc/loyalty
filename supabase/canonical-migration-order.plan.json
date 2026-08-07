@@ -1472,8 +1472,14 @@
     {
       "kind": "pending",
       "version": "20260807235900",
-      "name": "nestly_v230_customer_sees_the_chosen_points_mode",
-      "sourcePath": "db/migrations/20260808_nestly_v230_customer_sees_the_chosen_points_mode.sql"
+      "name": "nestly_v230_points_mode_in_customer_portal",
+      "sourcePath": "db/migrations/20260808_nestly_v230_points_mode_in_customer_portal.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807235910",
+      "name": "nestly_v231_capabilities_follow_the_points_mode",
+      "sourcePath": "db/migrations/20260808_nestly_v231_capabilities_follow_the_points_mode.sql"
     }
   ]
 }

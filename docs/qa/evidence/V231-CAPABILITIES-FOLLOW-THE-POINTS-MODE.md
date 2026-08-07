@@ -1,4 +1,11 @@
-# V230 — the customer surface reflects the points mode the firm chose (2026-08-08)
+# V231 — customer capabilities follow the chosen points mode (2026-08-08)
+
+> **Numbering:** written and applied concurrently with another session's v230, which reached
+> `main` first and answered the same owner instruction from the other direction (the tier and
+> reward READS carry `points_mode`). This is filed as **v231**; the production ledger records it
+> under the name it was applied with, `nestly_v230_customer_sees_the_chosen_points_mode`. The two
+> are complementary — v230 makes the reads mode-aware, v231 makes the capability that decides
+> whether a redemption surface is mounted at all agree with the v229 gate.
 
 Owner, looking at Cubbly's programme page:
 
@@ -50,12 +57,12 @@ through the reward-progress markup.
 
 ## Evidence
 
-`v230-points-mode-panels.png` — all three shapes rendered from the **production functions and
+`v231-points-mode-panels.png` — all three shapes rendered from the **production functions and
 production CSS**, captured through the Chrome DevTools Protocol against installed Chrome.
 
 ## Verification
 
-The rollback suite (`db/tests/v230_customer_sees_the_chosen_points_mode.sql`) ran against
+The rollback suite (`db/tests/v231_capabilities_follow_the_points_mode.sql`) ran against
 production inside a transaction that was rolled back, driving the **real tenants** rather than a
 synthetic one — a business conjured inside a transaction reports no effective modules at all
 (entitlements are resolved by the platform policy) and every capability reads false, which would

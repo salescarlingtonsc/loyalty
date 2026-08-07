@@ -1,4 +1,15 @@
--- Nestly v230 — the customer surface reflects the points mode the firm actually chose.
+-- Nestly v231 — customer CAPABILITIES follow the chosen points mode.
+--
+-- Numbering note, recorded rather than tidied away: this was written and APPLIED to production
+-- concurrently with another session's v230, which reached main first and answered the same owner
+-- instruction through customer_get_effective_tier_v143 and customer_get_reward_catalog. It is
+-- filed here as v231. In the production migration ledger it is recorded under the name it was
+-- applied with, nestly_v230_customer_sees_the_chosen_points_mode; the SQL is identical.
+--
+-- The two are complementary, not duplicates: v230 makes the tier and reward READS mode-aware,
+-- this makes the CAPABILITY that decides whether a rewards section is mounted at all agree with
+-- the v229 redemption gate. Without it, capabilities still answered rewards=true for a tiers-mode
+-- firm, so the wallet mounted a redemption surface the server refuses.
 --
 -- Owner, looking at Cubbly's programme page: "instead of showing different points to redeem
 -- rewards - it should show the relevant selected model. in this case selected tier - it should
