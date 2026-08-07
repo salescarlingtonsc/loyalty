@@ -363,7 +363,10 @@ test('customer profile proves owner-wide or every assigned staff branch without 
   assert.match(client, /Sales, visits and appointments cover every branch assigned to this staff account/);
   assert.match(client, /Points, rewards and spendable credit are business-wide customer balances/);
   assert.match(client, /Peekaa does not mix hidden branch sales into the visible totals/);
-  assert.match(client, /Business-wide balance, earning and next unlock/);
+  /* V226: the owner struck this subtitle out. What it guards — that an employee sees the scope
+     of the figures stated as business-wide — is asserted on the label that remains. */
+  assert.match(client, /wholeBusinessLabels\?'':'Business-wide'/);
+  assert.match(client, /'Business-wide points'/);
   assert.match(client, /id="c360ScopeRetry"/);
   assert.match(client, /if\(\$\('c360ScopeRetry'\)\)\$\('c360ScopeRetry'\)\.onclick=\(\)=>clientDetail\(id\)/);
   assert.doesNotMatch(client, /profileScopeLoadError\?'<button[^']*c360ScopeRetry/,

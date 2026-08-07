@@ -334,7 +334,11 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
   const clientDetail = app.match(/async function clientDetail\(id\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(clientDetail, /const canWriteLoyaltyConfigured=canWriteModule\('loyalty'\)&&hasRoleCapability\('create_sales'\)/i);
   assert.match(clientDetail, /const canWriteLoyalty=canWriteLoyaltyConfigured&&loyaltyFactsAvailable/i);
-  assert.match(clientDetail, /canWriteLoyalty&&redemptionEnabled\?`<p class="muted small"[\s\S]*?Open Record sale scanner/i,
+  /* V226: the owner crossed this block out as "too confusing" and asked for redeemable
+     rewards to lead. The scanner is still the only way a loyalty writer completes a
+     reward — that is the contract this test protects — it is just shown when there IS
+     something ready to scan for. */
+  assert.match(clientDetail, /canWriteLoyalty&&redemptionEnabled&&readyRewards\.length\?`<p class="muted small"[\s\S]*?Open Record sale scanner/i,
     'loyalty writers may only be directed to the branch-scoped scanner');
   assert.doesNotMatch(clientDetail, /id="redeem"|rewardGo|sb\.rpc\('redeem_(?:points|reward)/i,
     'customer detail must not expose direct classic or catalog redemption');

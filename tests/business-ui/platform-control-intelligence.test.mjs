@@ -60,7 +60,11 @@ test('Quick Earn is catalogue-first and an explicit firm setting can fall back t
 
 test('customer profile cannot bypass the branch-scoped QR redemption workflow',()=>{
   const detail=section('async function clientDetail(id){','async function tillPage(){');
-  assert.match(detail,/To complete a customer reward, scan their pending QR in Record sale\. Points change only after confirmation\./);
+  /* V226: the owner crossed this block out as "too confusing" and asked for redeemable
+     rewards to lead. The scanner is still the only way a loyalty writer completes a
+     reward — that is the contract this test protects — it is just shown when there IS
+     something ready to scan for. */
+  assert.match(detail,/Scan the customer's pending QR in Record sale to complete one\. Points change only after confirmation\./);
   assert.match(detail,/Open Record sale scanner/);
   assert.doesNotMatch(detail,/sb\.rpc\('redeem_points'/);
   assert.doesNotMatch(detail,/sb\.rpc\('redeem_reward(?:_at_context)?'/);

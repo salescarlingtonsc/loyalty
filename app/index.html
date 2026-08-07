@@ -931,7 +931,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
 .staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
-.staff-row-open{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;flex:1 1 320px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+/* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
+   The row was a flex wrap, so a field landed at a different x-position on every line and could
+   not be read down a column. One shared template drives the header and every row, so the two
+   cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
+:root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.staff-col-v226{min-width:0;overflow-wrap:anywhere}
+@media (max-width:900px){
+  .staff-row-open{grid-template-columns:1fr}
+  .staff-col-head-v226{display:none}
+  .staff-col-v226::before{content:attr(data-staff-col) ": ";color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+}
 .staff-row-open:hover{background:var(--tint)}
 .staff-row-open>b{overflow-wrap:anywhere}
 .staff-profile-panel .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
@@ -1674,7 +1686,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"customer":"/app-customer.js?b=a025fdb647bd","business":"/app-business.js?b=5ddc858a36fc","i18n":"/app-i18n.js?b=232400221146"}
+{"customer":"/app-customer.js?b=a025fdb647bd","business":"/app-business.js?b=9954f35e6c75","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

@@ -3334,13 +3334,27 @@ async function clientDetail(id){
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
       ?`${projectedNextReward.name||'Reward'} is ready now`
       :`${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more ${unit} for ${projectedNextReward.name||'a reward'}`;
-    rewardsMarkup=`<p class="eyebrow" style="margin-top:8px">How rewards work</p>
-      <p class="small" style="margin-top:6px"><b>Balance:</b> ${pts} ${unit}</p>
-      <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
-      <p class="small" style="margin-top:5px"><b>Next reward:</b> ${esc(nextCopy)}</p>
-      ${projectedRewards.length?`<div style="margin-top:10px">${projectedRewards.map(reward=>`<div class="row" style="margin-top:7px;flex-wrap:wrap"><span>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${reward.available_now?'ok':'off'}">${!redemptionEnabled?'Unavailable':reward.available_now?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`).join('')}</div>`:''}
-      ${canWriteLoyalty&&redemptionEnabled?`<p class="muted small" style="margin-top:12px">To complete a customer reward, scan their pending QR in Record sale. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:!redemptionEnabled?'<span class="pill off" style="margin-top:10px">Redemption unavailable</span>':'<span class="pill off" style="margin-top:10px">Rewards are read only for this role</span>'}
-      ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+    /* V226 (owner crossed the whole block out: "too confusing", and wrote "show Redeemable
+       Rewards for customer"). It led with an explanation of the SCHEME — how rewards work,
+       balance, earn rate, next milestone — and buried what the person at the counter actually
+       needs: which rewards this customer can take right now. That is the answer to the only
+       question being asked while they are standing there. The scheme facts are kept, because
+       staff do occasionally need them, but folded away underneath. */
+    const readyRewards=redemptionEnabled?projectedRewards.filter(reward=>reward.available_now):[];
+    const pendingRewards=redemptionEnabled?projectedRewards.filter(reward=>!reward.available_now):[];
+    const rewardRow=(reward,ready)=>`<div class="row c360-reward-row-v226"><span data-merchant-content>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${ready?'ok':'off'}">${!redemptionEnabled?'Unavailable':ready?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`;
+    rewardsMarkup=`${readyRewards.length
+      ?`<p class="eyebrow" style="margin-top:8px">Ready to redeem now · ${readyRewards.length}</p>
+        <div style="margin-top:8px">${readyRewards.map(reward=>rewardRow(reward,true)).join('')}</div>`
+      :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
+        <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
+      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<p class="muted small" style="margin-top:12px">Scan the customer's pending QR in Record sale to complete one. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
+      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}
+      <details class="c360-reward-adjust" style="margin-top:10px"><summary>Balance and earning</summary>
+        <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
+        <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
+        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+      </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
@@ -3399,7 +3413,7 @@ async function clientDetail(id){
     ${profileKpis?`<div class="kpis">${profileKpis}</div>`:''}
     <div class="split" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards</b><span>${wholeBusinessLabels?'Balance, earning and next unlock':'Business-wide balance, earning and next unlock'}</span></div></header>
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards for customer</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${rewardsMarkup}</div>
       </section>`:''}
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
@@ -15127,11 +15141,17 @@ async function settingsPage(){
       return `<div class="team-member-card">
         <div class="row staff-row-line">
           <button type="button" class="staff-row-open" data-merchant-content onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
-            <b data-merchant-content>${esc(s.full_name||'Member')}</b>
-            <span class="muted small" data-merchant-content>${esc(s.email||'No email')}</span>
-            <span class="muted small" data-merchant-content>${esc(s.phone||'No phone')}</span>
-            <span class="pill ${s.role==='owner'?'ok':'off'}">${esc(ROLE_LABELS[s.role]||s.role)}</span>
-            ${commissionSummary}
+            <!-- V226 (owner drew the columns by hand: Name | phone | email | Position |
+                 Commission, captioned "I want clear segmentation"). The row was a flex wrap, so
+                 the same field landed at a different x-position on every line and nothing could
+                 be compared down a column. It is a grid now, with one header per group so each
+                 column is named once. Position is the job title, falling back to the team role
+                 when nobody has typed one. -->
+            <span class="staff-col-v226" data-staff-col="Name"><b data-merchant-content>${esc(s.full_name||'Member')}</b></span>
+            <span class="staff-col-v226" data-staff-col="Phone"><span class="muted small" data-merchant-content>${esc(s.phone||'—')}</span></span>
+            <span class="staff-col-v226" data-staff-col="Email"><span class="muted small" data-merchant-content>${esc(s.email||'—')}</span></span>
+            <span class="staff-col-v226" data-staff-col="Position"><span class="pill ${s.role==='owner'?'ok':'off'}" data-merchant-content>${esc(s.title||ROLE_LABELS[s.role]||s.role)}</span></span>
+            <span class="staff-col-v226" data-staff-col="Commission">${commissionSummary}</span>
           </button>
           ${accessPill}${modPill}<span class="spacer"></span>
           ${s.role!=='owner'?`${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
@@ -15152,6 +15172,7 @@ async function settingsPage(){
               <h3>${esc(group.title)} <span class="staff-group-count-v209">${members.length}</span></h3>
               <p class="muted small">${esc(group.sub)}</p>
             </div>
+            <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Position</span><span>Commission</span></div>
             ${members.map(staffRowV209).join('')}
           </section>`;
         }).join('')
