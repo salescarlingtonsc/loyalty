@@ -157,3 +157,31 @@ test('the shared controls each module needs from every tab stay untagged', () =>
   // Stored value: the live / not-live banner changes what every other tab MEANS
   assert.doesNotMatch(appJs, /permission-banner[^>]*data-subtab/);
 });
+
+/* ------------------------------------------------- V203: the headline removal left a live crash */
+
+/* Removing the V200 headline deleted the `headline` const but left four references to it in the
+   dashboard's invalidate and loading paths. Those paths only run on a re-render, so my machine
+   never hit them — but every other firm's dashboard died on load with
+   "Can't find variable: headline" (Safari) on build 0bfc0d86ee5b.
+   `node --check` cannot catch this: an undeclared identifier is a RUNTIME ReferenceError, not a
+   syntax error. So this asserts the specific shape rather than pretending to be a linter. */
+test('the dashboard renderer references no identifier it does not declare', () => {
+  const start = appJs.indexOf('async function dashboard(');
+  assert.ok(start > 0, 'the dashboard renderer must exist');
+  const next = appJs.indexOf('\nasync function ', start + 10);
+  const body = appJs.slice(start, next > 0 ? next : appJs.length);
+  // every name the V200 removal deleted must be gone from this scope, declaration AND use
+  for (const removed of ['headline', 'dashboardHeadlineHtmlV170', 'dashboardComparisonSentenceV170']) {
+    const bare = new RegExp(`(?<![\\w.$])${removed}(?![\\w$])`, 'g');
+    assert.equal((body.match(bare) || []).length, 0,
+      `the dashboard renderer still references ${removed}, which no longer exists`);
+  }
+});
+
+test('the identifiers that survived the removal are still declared where they are used', () => {
+  // dashboardRangeLabelV170 is still used by the tile hints, so it must still be defined
+  assert.match(appJs, /function dashboardRangeLabelV170\(from,to\)/);
+  assert.ok((appJs.match(/(?<![\w.$])dashboardRangeLabelV170(?![\w$])/g) || []).length >= 2,
+    'a helper that is defined but never used would mean the removal went too far');
+});

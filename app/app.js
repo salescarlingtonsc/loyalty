@@ -8362,8 +8362,7 @@ async function dashboard(){
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     const showLoadError=(message,retryId)=>{
       if(!status)return;
-      kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');headline?.setAttribute('aria-busy','false');loyalty?.setAttribute('aria-busy','false');
-      if(headline)headline.innerHTML='';
+      kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');loyalty?.setAttribute('aria-busy','false');
       if(loyalty)loyalty.innerHTML='';
       status.innerHTML=`<div class="err" role="alert">${esc(message)} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
       status.querySelector('#'+retryId).onclick=load;
@@ -8376,7 +8375,7 @@ async function dashboard(){
     if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'v150-kpi'})).join('');
     if(insights)insights.innerHTML=`<section class="merchant-insights"><div class="merchant-insights-head"><div><h2>Merchant insights</h2><p class="muted small">Loading recommendations…</p></div></div><div class="merchant-insights-grid">${Array.from({length:3},()=>CUI.skeletonCard({lines:4})).join('')}</div></section>`;
     if(charts)charts.innerHTML=['Busiest days','Revenue over time','Age groups','Recorded gender'].map(title=>CUI.chartSkeleton({title})).join('');
-    kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');insights?.setAttribute('aria-busy','true');headline?.setAttribute('aria-busy','true');loyalty?.setAttribute('aria-busy','true');
+    kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');insights?.setAttribute('aria-busy','true');loyalty?.setAttribute('aria-busy','true');
     const previousRange=previousEquivalentRangeV153(from,to);
     let scopeBranches=[];
     try{({branches:scopeBranches}=await visibleBranchesForCurrentUser())}
@@ -8403,7 +8402,6 @@ async function dashboard(){
     const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
     if(d.availability?.sales===false){
       status.innerHTML='';
-      if(headline)headline.innerHTML='';
       if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'info',title:'Performance unavailable',body:'Sales access is not complete for this branch scope. Choose an authorized branch.'})}</div>`;
       if(loyalty)loyalty.innerHTML='';
       if(insights)insights.innerHTML='';
