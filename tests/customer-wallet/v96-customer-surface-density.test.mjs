@@ -15,13 +15,15 @@ test('customer Home removes the redundant Messages summary while retaining the h
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const fallbackHome=wallet.slice(wallet.indexOf("if(!businessSlug){"),wallet.indexOf("const args={p_business_slug:businessSlug}"));
   const shell=section('function renderCustomerShell','function focusCustomerRoute');
-  const quickLinks=section('function customerHomeQuickLinksV183','/* v178: surface=');
+
   assert.doesNotMatch(fallbackHome,/href="#\/customer\/messages"[\s\S]{0,100}<b>Messages<\/b>/);
-  /* v183: Home's two-way jump-off moved into customerHomeQuickLinksV183 — the destinations are
-     unchanged, the markup is shared by both Home paths instead of duplicated. */
-  assert.match(fallbackHome,/customerHomeQuickLinksV183\(cards\.length,bookingSummary\)/);
-  assert.match(quickLinks,/href="#\/customer\/programmes"/);
-  assert.match(quickLinks,/href="#\/customer\/bookings"/);
+  /* v194 (owner struck both cards off the Home screenshot): the two quick-link cards duplicated
+     the bottom navigation, which is on every customer screen. The destinations did not go away —
+     they are the nav tabs, which now also carry counts. */
+  assert.doesNotMatch(app,/customerHomeQuickLinksV183/);
+  assert.match(app,/href:'#\/customer\/programmes'/);
+  assert.match(app,/href:'#\/customer\/bookings'/);
+  assert.match(app,/applyCustomerNavCountsV194\(\{programmes:cards\.length,bookings:bookingsAvailable\?bookingCount:0\}\)/);
   assert.match(shell,/id="customerInboxBellSlot"/);
   assert.match(shell,/href="#\/customer\/messages"/);
   assert.match(shell,/CUI\.icon\('bell'/);
@@ -60,7 +62,8 @@ test('fallback Home and legacy Programmes route reuse the compact selector inste
   /* v183 (owner struck the My Rewards block off Home): the compact selector is reached from
      Home's jump-off now; only the My Rewards route renders the grid itself. */
   assert.doesNotMatch(fallbackHome,/customerProgrammeGridMarkupV96\(cards\)/);
-  assert.match(fallbackHome,/customerHomeQuickLinksV183\(cards\.length,bookingSummary\)/);
+  // v194: the jump-off is the permanent navigation, asserted above.
+  assert.doesNotMatch(fallbackHome,/customerHomeQuickLinksV183/);
   assert.doesNotMatch(fallbackHome,/class="wallet-firms"|class="wallet-firm"/);
   assert.doesNotMatch(fallbackHome,/data-slug=/);
 });

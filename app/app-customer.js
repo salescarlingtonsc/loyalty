@@ -976,17 +976,46 @@ function ct(key,vars={}){
   for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
   return value;
 }
+/* v194: the nav is painted before the wallet data arrives, so the counts are remembered and
+   re-applied in place once they resolve. A stale count is never shown as fresh — see
+   applyCustomerNavCountsV194, which repaints the badges the moment the real numbers land. */
+let customerNavCountsV194={programmes:0,bookings:0};
+function applyCustomerNavCountsV194(counts={}){
+  customerNavCountsV194={...customerNavCountsV194,...counts};
+  const nav=document.querySelector('.customer-primary-nav');
+  if(!nav)return customerNavCountsV194;
+  nav.outerHTML=customerPrimaryNavigation(
+    nav.querySelector('[aria-current="page"]')?.getAttribute('href')==='#/customer/programmes'?'programmes'
+      :nav.querySelector('[aria-current="page"]')?.getAttribute('href')==='#/customer/bookings'?'bookings'
+      :nav.querySelector('[aria-current="page"]')?.getAttribute('href')==='#/wallet'?'home':'',
+    customerNavCountsV194);
+  const scan=$('customerNavScan');
+  if(scan)scan.onclick=openCustomerJoinScanner;
+  return customerNavCountsV194;
+}
 const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',copy:'home'},
   {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'programmes'},
   {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'},
   {key:'scan',icon:'scan',copy:'scanQr'}
 ]);
-function customerPrimaryNavigation(active){
+/* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
+   two tabs that hold countable things now carry that count. A zero is not rendered — a badge
+   reading 0 is noise, and the tab already says what it holds. */
+function customerPrimaryNavigation(active,counts={}){
+  const badge=key=>{
+    const value=Math.max(0,Number(counts?.[key])||0);
+    return value?`<span class="customer-nav-count" aria-hidden="true">${value>99?'99+':value}</span>`:'';
+  };
+  const label=(item)=>{
+    const value=Math.max(0,Number(counts?.[item.key])||0);
+    const text=ct(item.copy);
+    return value?`${text}, ${value}`:text;
+  };
   return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
     ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
       ?`<button type="button" id="customerNavScan">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span></button>`
-      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''}>${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span></a>`).join('')}
+      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
   </nav>`;
 }
 function customerJoinTokenFromQr(value,currentUrl=location.href){
@@ -1112,7 +1141,7 @@ function wireCustomerAccountMenu(){
 }
 /* v178: backTo generalises the business-page circle back button so the "My Rewards" tab can
    carry one too (owner: "There is no back button"). businessSlug keeps its own destination. */
-function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null}={}){
+function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null,navCounts=null}={}){
   setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const inboxAvailable=messagesAvailable===null?customerInboxEnabledV178===true:messagesAvailable===true,
@@ -1128,7 +1157,7 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
       <button id="customerPushMenuControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button>
       <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button>
     </div></details>
-    </header>${customerPrimaryNavigation(active)}
+    </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
     <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
     ${legalLinks()}</div></div>`;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -1356,7 +1385,9 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
 /* v178 (owner sketch "Bookings | Cancelled | History"): the same already-fetched records are
    split client-side into three tabs. No new RPC, no extra round trip. */
 const CUSTOMER_BOOKING_TABS_V178=[
-  ['bookings','Bookings','No bookings yet. Active requests and upcoming appointments appear here.'],
+  /* v194 (owner renamed it on the screenshot): "Bookings" inside a page called Bookings said
+     nothing. "Ongoing" is what the tab actually holds. */
+  ['bookings','Ongoing','No bookings yet. Active requests and upcoming appointments appear here.'],
   ['cancelled','Cancelled','No cancelled bookings.'],
   ['history','History','No past bookings yet.']
 ];
@@ -1366,10 +1397,17 @@ function customerBookingRequestTabV178(request){
   if(isActiveCustomerBookingRequest(request))return 'bookings';
   return CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(String(request?.status||'').toLowerCase())?'cancelled':'history';
 }
-function customerBookingAppointmentTabV178(appointment){
+function customerBookingAppointmentTabV178(appointment,now=Date.now()){
   const status=String(appointment?.status||'').toLowerCase();
   if(CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(status))return 'cancelled';
-  return RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178.has(status)?'history':'bookings';
+  if(RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178.has(status))return 'history';
+  /* v194 (owner: "done should go history"): a business does not always mark an appointment
+     completed, so a visit that has already happened kept sitting under Ongoing. Time decides when
+     status has not: once the slot has passed, it is history. A missing or unparsable time stays
+     Ongoing — that is the safer default for something that might still be coming. */
+  const startsAt=Date.parse(appointment?.starts_at||'');
+  if(Number.isFinite(startsAt)&&startsAt<=now)return 'history';
+  return 'bookings';
 }
 /* v183 (owner annotation, "0 requests · 0 appointments — no booking yet, should not show
    Cubbly"): a business with nothing booked is not a booking. Only records list here; the
@@ -1456,7 +1494,7 @@ async function renderCustomerBookings(){
     const requestCount=requestItems.length;
     const activeRequestCount=requestItems.filter(isActiveCustomerBookingRequest).length;
     const hasMore=!!requestPayload?.next_cursor;
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1><p class="muted">Active requests and appointments, cancellations and past visits stay in separate tabs, grouped by business.</p></div></header>
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div></header>
     ${partialMessages.length?'<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div></div>':''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
@@ -2077,7 +2115,10 @@ function customerHomeOfferMarkupV167(item,seen){
   const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
     versionId=String(item?.version_id||''),isNew=versionId&&!seen.has(versionId),
     endsSoon=customerOfferUrgencyV167(item),validity=customerPromotionValidityV104(item),
-    countdown=customerOfferCountdownV183(item),logo=customerMediaUrlV95(business.logo_url);
+    countdown=customerOfferCountdownV183(item),logo=customerMediaUrlV95(business.logo_url),
+    /* v194 (owner: "put company category"): a customer with several businesses needs to know what
+       KIND of business an offer is from, not only its name. */
+    category=String(business.industry||'').trim();
   const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
   const businessInitial=(String(business.name||'B').trim()[0]||'B').toUpperCase();
   return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
@@ -2085,7 +2126,7 @@ function customerHomeOfferMarkupV167(item,seen){
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
     <p class="customer-home-offer-business">${logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
-      :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`}<span class="muted small">${esc(business.name||'Your business')}</span></p>
+      :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`}<span class="muted small">${esc(business.name||'Your business')}${category?` · ${esc(category)}`:''}</span></p>
     ${countdown?`<p class="customer-home-offer-countdown">${esc(countdown)}</p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
@@ -2221,6 +2262,18 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
       if(offersHost)offersHost.innerHTML='<p class="muted small">Current offers couldn’t load.</p>';
     });
 }
+/* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
+   for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
+   read as a control with no purpose. The tagline is dropped when it echoes the title — compared on
+   letters and digits, so "50% off first prata" is recognised inside "National Day: 50% off first
+   prata" — and the terms are shown as plain small text rather than a mystery disclosure. */
+function customerOfferTaglineV194(name,tagline){
+  const clean=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  const title=clean(name),line=clean(tagline);
+  if(!line)return '';
+  if(!title)return String(tagline).trim();
+  return title.includes(line)||line.includes(title)?'':String(tagline).trim();
+}
 function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
   const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
     facts=String(item?.metadata?.offer_facts||'').trim(),
@@ -2228,6 +2281,7 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
     availability=String(item?.availability_label||'').trim(),
     terms=String(item?.terms||'').trim(),
     cta=item?.metadata?.cta||{},slug=encodeURIComponent(business.slug||''),
+    taglineV194=customerOfferTaglineV194(item?.name,item?.tagline),
     initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase(),
     ctaLabel=String(cta.label||'').trim();
   const overlay=document.createElement('div');
@@ -2238,14 +2292,14 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
     ${facts?`<p class="customer-offer-detail-facts">${esc(facts)}</p>`:''}
-    ${item?.tagline?`<p class="muted" style="margin-top:6px">${esc(item.tagline)}</p>`:''}
+    ${taglineV194?`<p class="muted" style="margin-top:6px">${esc(taglineV194)}</p>`:''}
     ${item?.description?`<p class="muted small" style="margin-top:8px">${esc(item.description)}</p>`:''}
     <div class="customer-offer-detail-meta">
       ${validity?`<p class="small"><b>${esc(validity)}</b></p>`:''}
       ${availability?`<p class="muted small">${esc(availability)}</p>`:''}
       <div data-offer-contact></div>
     </div>
-    ${terms?`<details style="margin-top:10px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
+    ${terms?`<p class="muted small customer-offer-detail-terms" style="margin-top:10px">${esc(terms)}</p>`:''}
     ${business.id?customerCompanyDetailRowV178(business):''}
     <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
       ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`:''}
@@ -2435,46 +2489,48 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
    tier is (exact remaining in the business's own basis — visits, spend or points), what the
    next tier unlocks (two-item teaser), then my current benefits. Renders nothing when the
    business has no tiers, and never shows raw percentages without the human sentence. */
-function customerTierCardMarkupV174(tier={}){
+/* v194 (owner annotations, 2026-08-07): the programme card was one long column — a tier block
+   with two lines of prose above a permanently expanded ladder, and the balance stranded in the
+   header. It is now two tabs, Tier and Reward points, which is what the owner sketched. The tier
+   panel drops "Gold unlocks…" and "Your benefits now" (both struck out as "too many wordings"),
+   names the rung plainly — "You're now at Basic" — marks every rung ON the progress bar, and
+   folds the full ladder behind a disclosure that opens on tap. */
+function customerTierMilestonesMarkupV194(tier={}){
+  const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+  if(rungs.length<2)return '';
+  const top=Math.max(...rungs.map(rung=>Math.max(0,Number(rung.threshold)||0)));
+  if(!(top>0))return '';
+  return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map(rung=>{
+    const at=Math.max(0,Math.min(100,(Math.max(0,Number(rung.threshold)||0)/top)*100));
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i></i><b>${esc(rung.label)}</b></span>`;
+  }).join('')}</div>`;
+}
+function customerTierPanelMarkupV194(tier={}){
   const current=tier.current,next=tier.next;
-  /* v189: never render silence where a tier belongs. "not_running" is the business's own state —
-     the programme is paused or was never published — and saying so beats a blank space that the
-     customer reads as "I have no tier". A fault says it is a fault, and offers a reload. */
   if(tier.unavailable==='not_running'){
-    return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier"><h2 style="margin:0">Tiers</h2>
-      <p class="muted small" style="margin-top:6px">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p></section>`;
+    return `<p class="muted small">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p>`;
   }
   if(tier.unavailable==='error'){
-    return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier"><h2 style="margin:0">Tiers</h2>
-      <p class="muted small" style="margin-top:6px">Your tier could not be checked just now. Nothing has changed — reload to try again.</p></section>`;
+    return `<p class="muted small">Your tier could not be checked just now. Nothing has changed — reload to try again.</p>`;
   }
-  if(!current&&!next)return '';
+  if(!current&&!next)return '<p class="muted small">This business has not set up tiers yet.</p>';
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
   const progress=Math.max(0,Math.min(100,Number(tier.progress_percent||0)));
   const remainingText=(()=>{
     if(!next)return '';
     const remaining=Math.max(0,Number(next.threshold||0)-metric);
-    if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${esc(next.label)}`;
-    if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${esc(next.label)}`;
+    if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${next.label}`;
+    if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${next.label}`;
     const visits=Math.ceil(remaining);
-    return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${esc(next.label)}`;
+    return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${next.label}`;
   })();
-  const nextBenefits=Array.isArray(next?.benefits)?next.benefits.filter(value=>String(value||'').trim()).slice(0,2):[];
-  const currentBenefits=Array.isArray(current?.benefits)?current.benefits.filter(value=>String(value||'').trim()):[];
-  /* v189 (owner: "the required points to reach next stage — old account cannot view"). A member
-     already at the top has no NEXT stage, so the progress line had nothing to say and the card
-     went quiet exactly where the requirement belongs. State the bar they cleared instead. */
   const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
-  return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier">
-    <div class="row" style="align-items:baseline;gap:10px"><h2 style="margin:0">${esc(current?.label||'Getting started')}</h2>${next?'':current?'<span class="pill ok">Top tier</span>':''}</div>
-    ${currentRequirement?`<p class="muted small" style="margin-top:6px">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
-    ${next?`<div style="background:var(--line);border-radius:100px;height:8px;margin-top:12px;overflow:hidden"><div style="background:var(--grad);height:100%;width:${progress}%"></div></div>
-    <p class="muted small" style="margin-top:8px">${remainingText}</p>
-    ${nextBenefits.length?`<p class="small" style="margin-top:6px"><b>${esc(next.label)}</b> unlocks: ${nextBenefits.map(esc).join(' · ')}</p>`:''}`:''}
-    ${currentBenefits.length?`<p class="small" style="margin-top:${next?'12':'10'}px"><b>Your benefits now</b></p><ul class="rec-why" style="margin-top:6px">${currentBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:''}
-    ${customerTierLadderMarkupV186(tier)}
-  </section>`;
+  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>
+    ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
+    <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
+      :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
+    ${customerTierLadderMarkupV186(tier)}`;
 }
 /* v186 (owner: "i want to see different tiers and its benefits… mask other tiers, still can see
    the benefits but very obvious that is not their tier"). A ladder you cannot see is not a
@@ -2489,8 +2545,8 @@ function customerTierLadderMarkupV186(tier={}){
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
   const requirement=threshold=>customerTierRequirementTextV189(threshold,basis);
-  return `<div class="customer-tier-ladder" style="margin-top:16px">
-    <p class="small"><b>All tiers</b></p>
+  return `<details class="customer-tier-ladder">
+    <summary><span>All tiers and what they unlock</span><span class="muted small">${rungs.length} tiers</span></summary>
     <ol class="customer-tier-rungs" aria-label="Every tier and what it unlocks">${rungs.map(rung=>{
       const isCurrent=rung.current===true;
       const achieved=rung.achieved===true&&!isCurrent;
@@ -2508,7 +2564,7 @@ function customerTierLadderMarkupV186(tier={}){
           :'<p class="muted small" style="margin-top:6px">Benefits not published yet.</p>'}
       </li>`;
     }).join('')}</ol>
-  </div>`;
+  </details>`;
 }
 /* What a rung costs, in the business's own basis. Shared by the tier card header and the ladder
    so the two can never word the same threshold differently. */
@@ -2525,6 +2581,57 @@ function customerTierRemainingTextV186(remaining,basis){
   const visits=Math.ceil(remaining);
   return `${visits.toLocaleString('en-SG')} visit${visits===1?'':'s'} to go`;
 }
+/* v194: Tier and Reward points as two tabs, the shape the owner drew over the old stacked block.
+   The balance moves in here from the header, where it sat beside a name it had nothing to do with. */
+function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},reward=null}){
+  const unitLabel=ct(presentation.unit);
+  const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
+  const rewardName=String(reward?.name||'').trim();
+  const remaining=Math.max(0,Number(reward?.remaining_units)||0);
+  const rewardLine=!rewardName?'Rewards from this business appear below as you earn.'
+    :reward?.available_now===true?`${rewardName} is ready to redeem.`
+    :`${customerPointTotalV103(remaining)} ${unitLabel} to ${rewardName}.`;
+  return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
+    <div class="customer-programme-tablist" role="tablist" aria-label="Tier and reward points">
+      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">Tier</button>
+      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">Reward points</button>
+    </div>
+    <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
+      <div data-programme-panel="tier">${customerTierPanelMarkupV194(tier)}</div>
+      <div data-programme-panel="points" hidden>
+        <p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
+        <p class="muted small" style="margin-top:6px">${esc(rewardLine)}</p>
+        ${customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward})}
+      </div>
+    </div>
+  </section>`;
+}
+function wireCustomerProgrammeTabsV194(host=document){
+  const tabs=[...host.querySelectorAll('[data-programme-tab]')];
+  if(!tabs.length)return;
+  const select=(name,focus=false)=>{
+    tabs.forEach(tab=>{
+      const on=tab.dataset.programmeTab===name;
+      tab.setAttribute('aria-selected',String(on));
+      tab.tabIndex=on?0:-1;
+      if(on&&focus)tab.focus();
+    });
+    host.querySelectorAll('[data-programme-panel]').forEach(panel=>{
+      panel.hidden=panel.dataset.programmePanel!==name;
+    });
+    const panel=host.querySelector('#customerProgrammePanel');
+    if(panel)panel.setAttribute('aria-labelledby',`customerProgrammeTab-${name}`);
+  };
+  tabs.forEach((tab,index)=>{
+    tab.onclick=()=>select(tab.dataset.programmeTab);
+    tab.onkeydown=event=>{
+      const step=event.key==='ArrowRight'?1:event.key==='ArrowLeft'?-1:0;
+      if(!step)return;
+      event.preventDefault();
+      select(tabs[(index+step+tabs.length)%tabs.length].dataset.programmeTab,true);
+    };
+  });
+}
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready'}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
@@ -2535,17 +2642,22 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
   const unitLabel=ct(presentation.unit);
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
   const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,6);
+  /* v194 (owner: "show company details, phone number, address" beside the business name): the
+     header is now the way in to the company sheet, and the booking action moved up here — "make
+     it smaller and put upstair" — out of the full-width card that sat below the offers. */
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <header class="customer-programme-compact-head" style="--merchant-accent:${esc(contrastSafeBrandColor(presentation.heroColor))}">
-      <div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
-      <div class="customer-programme-compact-copy"><h1>${esc(business.name||presentation.name)}</h1>
-        <p class="muted small">${esc(presentation.name)}${hasTier&&currentTierLabel?` · ${esc(currentTierLabel)}`:''}</p></div>
-      <div class="customer-programme-compact-balance"><b>${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</b><span>${esc(unitLabel)}</span></div>
+      <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${esc(business.name||presentation.name)}">
+        <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
+        <span class="customer-programme-compact-copy"><b>${esc(business.name||presentation.name)}</b>
+          <span class="muted small">${esc(presentation.name)}${hasTier&&currentTierLabel?` · ${esc(currentTierLabel)}`:''}</span>
+          <span class="muted small customer-programme-identity-hint">Address, phone and offers ›</span></span>
+      </button>
+      ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
     ${customerPointsExplainerMarkupV167(business)}
-    ${customerTierCardMarkupV174(tier)}
+    ${customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward})}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
-    ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><button class="btn" type="button" data-repeat-booking data-business-slug="${esc(business.slug)}">Book again</button></div></section>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
@@ -2691,11 +2803,9 @@ function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=
 function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
   return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
 }
-/* v183: Home's jump-off to the two surfaces that hold everything else. It replaces the
-   collapsed "Guidance & bookings" disclosure — one fewer tap, and it names what is inside. */
-function customerHomeQuickLinksV183(linkedCount=0,bookingSummary='Open your bookings'){
-  return `<div class="customer-home-quick"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>${esc(ct('yourProgrammes'))}</b><p class="muted small">${esc(customerLinkedRewardsLabelV156(linkedCount))}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${esc(bookingSummary)}</p></div></a></div>`;
-}
+/* v194 (owner struck both cards out on Home): the two quick links repeated the primary nav
+   directly above them — My Rewards and Bookings are already one tap away in the tab bar, and
+   the counts they carried now live on those tabs. Home is the offers shelf. */
 /* v178: surface='programmes' is the "My Rewards" tab, which the owner stripped back to the
    reward-account grid alone — no offers shelf, no guidance banner. Home keeps both. */
 function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',note='',rerender=null}={}){
@@ -2710,8 +2820,7 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
      grid is the My Rewards tab's job. Home is now offers first, then a two-way jump-off. */
   $('walletBody').innerHTML=`${isHome?`${customerHomeOffersMarkupV167(offersState)}
-    ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}
-    ${customerHomeQuickLinksV183(cards.length)}`
+    ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}`
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}${note}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
@@ -2760,6 +2869,15 @@ async function renderCustomerWallet(businessSlug=null){
         offersState:offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]},
         pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null
       });
+      /* v194: My Rewards counts the REWARD ACCOUNTS this customer holds; Bookings counts what is
+         still live — a request awaiting the business plus an upcoming appointment. Both come from
+         data already fetched above, so neither badge costs a round trip. */
+      applyCustomerNavCountsV194({
+        programmes:Array.isArray(data?.cards)?data.cards.length:0,
+        bookings:customerHomeOverview.activeRequestCount
+          +customerHomeOverview.walletCards.reduce((total,card)=>
+            total+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0)
+      });
       const inboxSlot=$('customerInboxBellSlot');
       if(inboxSlot&&customerFeatures.customer_in_app_inbox===true){
         const unread=customerHomeOverview.messageCount;
@@ -2797,15 +2915,14 @@ async function renderCustomerWallet(businessSlug=null){
     const activeRequestCount=bookingRequestResult.error?0:(Array.isArray(bookingRequestResult.data?.items)?bookingRequestResult.data.items.filter(isActiveCustomerBookingRequest).length:0);
     const bookingCount=appointmentCount+activeRequestCount;
     const bookingsAvailable=!bookingRequestResult.error||cards.length>0;
-    const bookingsTruncated=!bookingRequestResult.error&&(bookingRequestResult.data?.truncated===true||!!bookingRequestResult.data?.next_cursor);
-    const bookingSummary=bookingsAvailable
-      ?bookingCount?`${bookingCount}${bookingsTruncated?'+':''} active or upcoming`:'No active or upcoming bookings'
-      :'Booking summary is temporarily unavailable.';
     const offersState=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
     $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
       ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
-      ${customerHomeQuickLinksV183(cards.length,bookingSummary)}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}`;
+    /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
+       lands here through the legacy read must not see empty tabs where the other path shows
+       counts. A booking read that failed contributes 0, never a guess. */
+    applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
     focusCustomerRoute();
@@ -2891,6 +3008,10 @@ async function renderCustomerWallet(businessSlug=null){
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
   wireCustomerRepeatBookingV167($('walletBody'));
+  wireCustomerProgrammeTabsV194($('walletBody'));
+  /* v194: the header identity opens the same company sheet the offer sheet uses. */
+  $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
+    showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
   document.querySelectorAll('[data-promotion-counter]').forEach(button=>button.onclick=()=>{
     const card=button.closest('[data-promotion-id]'),status=card?.querySelector('[data-promotion-status]');
     if(status)status.textContent='Show this offer to the team at the counter.';

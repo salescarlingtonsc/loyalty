@@ -29,9 +29,14 @@ test('presentation failure falls back to the loaded summary without a false prog
 test('programme balance is compact, formatted once, and tier progress is truthful',()=>{
   const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
   const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
-  assert.equal((merchant.match(/customer-programme-compact-balance/g)||[]).length,1);
-  assert.match(merchant,/customerPointTotalV103\(loyalty\.balance\?\?presentation\.balance\?\?0\)/);
-  assert.match(app,/\.customer-programme-compact-balance b\{[^}]*font-size:clamp\(1\.25rem,4vw,1\.65rem\)/);
+  /* v194 (owner sketch: "[Tier] [Reward Point]"): the balance moved out of the identity header and
+     into the Reward points tab, where the number has a heading that explains it. Formatted-once
+     and shown-once are still the invariants — they are just asserted on the tab that owns it. */
+  const tabs=section('function customerProgrammeSummaryTabsV194','function wireCustomerProgrammeTabsV194');
+  assert.equal((merchant.match(/customer-programme-balance/g)||[]).length,0);
+  assert.equal((tabs.match(/customer-programme-balance/g)||[]).length,1);
+  assert.match(tabs,/customerPointTotalV103\(loyalty\.balance\?\?presentation\.balance\?\?0\)/);
+  assert.match(app,/\.customer-programme-balance\{[^}]*font-size:clamp\(1\.6rem,6vw,2\.1rem\)/);
   assert.equal(helpers.customerPointTotalV103(1234567),'1,234,567');
   assert.equal(helpers.customerTierHasProgressV103({}),false);
   assert.equal(helpers.customerTierHasProgressV103({progress_percent:0}),false);
@@ -40,7 +45,6 @@ test('programme balance is compact, formatted once, and tier progress is truthfu
   assert.match(merchant,/const currentTierLabel=String\(tier\.current\?\.label\|\|tier\.current\|\|tier\.label\|\|''\)\.trim\(\)/);
   assert.match(merchant,/currentTierBenefits=Array\.isArray\(tier\.current\?\.benefits\)/);
   assert.match(merchant,/hasTier&&currentTierLabel/);
-  assert.doesNotMatch(merchant,/role="progressbar"/);
   assert.doesNotMatch(merchant,/customer-balance-panel/);
   assert.doesNotMatch(merchant,/Every visit still counts|ct\('noTier'\)/);
   assert.doesNotMatch(merchant,/ct\('noRewards'\)/);

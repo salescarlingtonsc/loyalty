@@ -94,7 +94,7 @@ test('customer secondary routes are namespaced and cannot intercept merchant Boo
 });
 
 test('customer navigation keeps destinations focused while notifications and profile live in the header',()=>{
-  const nav=section('const CUSTOMER_PRIMARY_NAV=Object.freeze([',']);\nfunction customerPrimaryNavigation');
+  const nav=section('const CUSTOMER_PRIMARY_NAV=Object.freeze([','function customerPrimaryNavigation(');
   assert.equal((nav.match(/\{key:/g)||[]).length,4);
   for(const [key,href,copy] of [
     ['home','#/wallet','home'],
@@ -105,7 +105,7 @@ test('customer navigation keeps destinations focused while notifications and pro
   }
   assert.match(nav,/key:'scan',icon:'scan',copy:'scanQr'/);
   assert.doesNotMatch(nav,/key:'messages'|key:'profile'/);
-  const navMarkup=section('function customerPrimaryNavigation(active)','function renderCustomerShell');
+  const navMarkup=section('function customerPrimaryNavigation(active','function renderCustomerShell');
   assert.match(navMarkup,/<nav class="customer-primary-nav" aria-label="\$\{esc\(BRAND\.customerLabel\)\}">/);
   assert.match(navMarkup,/aria-current="page"/);
   assert.match(navMarkup,/CUI\.icon\(item\.icon/);
@@ -156,7 +156,9 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/Visit the business and scan its Peekaa QR/);
   assert.match(surfaces,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
   assert.doesNotMatch(surfaces,/href="#\/claim"/);
-  assert.match(surfaces,/Active requests and appointments, cancellations and past visits stay in separate tabs/);
+  /* v194 (owner struck the subtitle out on the screenshot): the tabs are self-describing, so the
+     sentence that repeated them is gone. The tablist itself is what must survive, asserted below. */
+  assert.doesNotMatch(surfaces,/Active requests and appointments, cancellations and past visits stay in separate tabs/);
   // v178 (owner sketch): Bookings | Cancelled | History, filtered client-side.
   assert.match(surfaces,/role="tablist" aria-label="Booking status"/);
   assert.match(surfaces,/renderCustomerShell\(\{active:'programmes',backTo:'#\/wallet'/);

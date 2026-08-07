@@ -101,13 +101,14 @@ test('published tier benefits cross from owner drafts into the verified customer
   ]);
   assert.match(source,/customer_get_effective_tier_v143/);
   assert.match(source,/presentation\.tier=effectiveTierResult\.error\s*\n?\s*\?\{unavailable:/);
-  /* V174: the flat "Current tier benefits" section became the customerTierCardMarkupV174
-     card (progress + exact remaining + next-tier teaser + current benefits). The invariant
-     this test protects — published tier benefits reaching the verified wallet — now renders
-     under "Your benefits now" inside that card. */
-  assert.match(source,/customerTierCardMarkupV174\(tier\)/);
-  assert.match(source,/Your benefits now/);
-  assert.match(source,/currentBenefits\.map\(benefit=>`<li>\$\{esc\(benefit\)\}<\/li>`\)/);
+  /* V174 turned the flat "Current tier benefits" section into a card; V194 split that card into
+     the Tier tab (customerTierPanelMarkupV194) and folded the per-tier benefits into the ladder,
+     where the owner asked for every tier's benefits, not just the customer's own. The invariant
+     this test protects is unchanged: published tier benefits reach the verified wallet. */
+  assert.match(source,/customerTierPanelMarkupV194\(tier\)/);
+  assert.match(source,/customerTierLadderMarkupV186\(tier\)/);
+  assert.match(source,/const benefits=\(Array\.isArray\(rung\.benefits\)\?rung\.benefits:\[\]\)/);
+  assert.match(source,/benefits\.map\(benefit=>`<li>\$\{esc\(benefit\)\}<\/li>`\)/);
   assert.match(migration,/create or replace function public\.customer_get_effective_tier_v143/);
   assert.match(migration,/verified customer link required/);
   assert.match(migration,/regexp_split_to_table\(coalesce\(v_current\.perk_note/);

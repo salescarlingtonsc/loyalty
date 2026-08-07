@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="1ce10a6d34006d5e02d85b95edc78f0ad2464c1c108483d9e5e599cf883d4f26">
+<meta name="v104-production-source-sha256" content="7866c8415801ae7e1305755cc509d7222ae3bd59a533cae66303d10266e97b3a">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1329,9 +1329,39 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-perk-card img,.customer-offer-card img,.customer-reward-card img{width:calc(100% + 32px);height:132px;margin:-16px -16px 14px;object-fit:cover;background:var(--bg)}
 .customer-section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}.customer-section-title h2{font-size:1.35rem}
 .customer-programme-compact-head{display:flex;align-items:center;gap:12px;min-width:0;padding:14px 16px;border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:var(--shadow);margin-bottom:16px}
+/* v194 identity + booking in the programme header, and Tier / Reward points as tabs. */
+.customer-programme-identity{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:0;border:0;background:none;text-align:left;color:inherit}
+.customer-programme-identity .customer-programme-compact-copy{display:block}
+.customer-programme-identity b{display:block;font-size:clamp(1.15rem,3.6vw,1.5rem);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.customer-programme-identity-hint{color:var(--coral)!important;font-weight:600}
+.customer-programme-book{flex:0 0 auto}
+.customer-programme-tabs{margin-bottom:14px;padding:0}
+.customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
+.customer-programme-tab{min-height:44px;border-radius:11px;background:transparent;color:var(--ink2);font-weight:650;letter-spacing:-.01em}
+.customer-programme-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
+#customerProgrammePanel{padding:16px 18px 18px}
+.customer-programme-balance{font-size:clamp(1.6rem,6vw,2.1rem);line-height:1;letter-spacing:-.03em}
+.customer-programme-balance span{font-size:.85rem;font-weight:600;letter-spacing:0}
+.customer-tier-now{font-size:1.02rem}
+.customer-tier-bar{position:relative;margin:14px 0 30px}
+.customer-tier-bar-track{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
+.customer-tier-bar-track span{display:block;height:100%;border-radius:inherit;background:var(--grad)}
+.customer-tier-milestones{position:absolute;inset:0;pointer-events:none}
+.customer-tier-milestone{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px}
+.customer-tier-milestone i{display:block;width:9px;height:9px;border-radius:999px;background:var(--card);border:2px solid var(--line)}
+.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap}
+.customer-tier-milestone.is-achieved i{background:var(--coral);border-color:var(--coral)}
+.customer-tier-milestone.is-current i{background:var(--coral);border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-tier-milestone.is-current b{color:var(--coral)}
+.customer-tier-remaining{margin-top:2px}
+.customer-tier-ladder{margin-top:14px;border-top:1px solid var(--hair);padding-top:12px}
+.customer-tier-ladder>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;cursor:pointer;font-weight:650;list-style-position:inside}
+.customer-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:700;line-height:1}
+.customer-primary-nav a[aria-current="page"] .customer-nav-count{background:var(--coral)}
+@media(max-width:560px){.customer-programme-identity-hint{display:none}.customer-tier-milestone b{font-size:9.5px}}
 .customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
 .customer-programme-compact-copy{min-width:0;flex:1}.customer-programme-compact-copy h1{font-size:clamp(1.25rem,4vw,1.7rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-programme-compact-copy p{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.customer-programme-compact-balance{text-align:right;flex:0 1 auto;min-width:0}.customer-programme-compact-balance b{display:block;font-size:clamp(1.25rem,4vw,1.65rem);line-height:1}.customer-programme-compact-balance span{display:block;margin-top:4px;color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}
+
 .customer-promotions-section{margin-top:6px}.customer-promotions-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.customer-promotions-head h2{font-size:clamp(1.45rem,4vw,2rem)}.customer-promotions-head p{margin-top:4px}
 .customer-promotions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .customer-home-offers{margin:0 0 16px;min-width:0}.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
@@ -1356,7 +1386,6 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .customer-promotions-grid,.promotion-editor-grid{grid-template-columns:1fr}
   .customer-promotion-card{min-height:320px}
   .customer-programme-compact-head{padding:12px}
-  .customer-programme-compact-balance b{font-size:1.2rem}
   .promotion-preview{position:static}
 }
 .customer-programme-guide{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--hair);border-radius:13px;background:#fff}
@@ -1585,7 +1614,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 1ce10a6d34006d5e02d85b95edc78f0ad2464c1c108483d9e5e599cf883d4f26</p>
+  <p class="v104-provenance">Local production-render harness · source 7866c8415801ae7e1305755cc509d7222ae3bd59a533cae66303d10266e97b3a</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -1597,7 +1626,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="1ce10a6d34006d5e02d85b95edc78f0ad2464c1c108483d9e5e599cf883d4f26";
+const PRODUCTION_SOURCE_SHA256="7866c8415801ae7e1305755cc509d7222ae3bd59a533cae66303d10266e97b3a";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -1771,46 +1800,48 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
    tier is (exact remaining in the business's own basis — visits, spend or points), what the
    next tier unlocks (two-item teaser), then my current benefits. Renders nothing when the
    business has no tiers, and never shows raw percentages without the human sentence. */
-function customerTierCardMarkupV174(tier={}){
+/* v194 (owner annotations, 2026-08-07): the programme card was one long column — a tier block
+   with two lines of prose above a permanently expanded ladder, and the balance stranded in the
+   header. It is now two tabs, Tier and Reward points, which is what the owner sketched. The tier
+   panel drops "Gold unlocks…" and "Your benefits now" (both struck out as "too many wordings"),
+   names the rung plainly — "You're now at Basic" — marks every rung ON the progress bar, and
+   folds the full ladder behind a disclosure that opens on tap. */
+function customerTierMilestonesMarkupV194(tier={}){
+  const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+  if(rungs.length<2)return '';
+  const top=Math.max(...rungs.map(rung=>Math.max(0,Number(rung.threshold)||0)));
+  if(!(top>0))return '';
+  return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map(rung=>{
+    const at=Math.max(0,Math.min(100,(Math.max(0,Number(rung.threshold)||0)/top)*100));
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i></i><b>${esc(rung.label)}</b></span>`;
+  }).join('')}</div>`;
+}
+function customerTierPanelMarkupV194(tier={}){
   const current=tier.current,next=tier.next;
-  /* v189: never render silence where a tier belongs. "not_running" is the business's own state —
-     the programme is paused or was never published — and saying so beats a blank space that the
-     customer reads as "I have no tier". A fault says it is a fault, and offers a reload. */
   if(tier.unavailable==='not_running'){
-    return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier"><h2 style="margin:0">Tiers</h2>
-      <p class="muted small" style="margin-top:6px">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p></section>`;
+    return `<p class="muted small">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p>`;
   }
   if(tier.unavailable==='error'){
-    return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier"><h2 style="margin:0">Tiers</h2>
-      <p class="muted small" style="margin-top:6px">Your tier could not be checked just now. Nothing has changed — reload to try again.</p></section>`;
+    return `<p class="muted small">Your tier could not be checked just now. Nothing has changed — reload to try again.</p>`;
   }
-  if(!current&&!next)return '';
+  if(!current&&!next)return '<p class="muted small">This business has not set up tiers yet.</p>';
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
   const progress=Math.max(0,Math.min(100,Number(tier.progress_percent||0)));
   const remainingText=(()=>{
     if(!next)return '';
     const remaining=Math.max(0,Number(next.threshold||0)-metric);
-    if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${esc(next.label)}`;
-    if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${esc(next.label)}`;
+    if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${next.label}`;
+    if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${next.label}`;
     const visits=Math.ceil(remaining);
-    return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${esc(next.label)}`;
+    return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${next.label}`;
   })();
-  const nextBenefits=Array.isArray(next?.benefits)?next.benefits.filter(value=>String(value||'').trim()).slice(0,2):[];
-  const currentBenefits=Array.isArray(current?.benefits)?current.benefits.filter(value=>String(value||'').trim()):[];
-  /* v189 (owner: "the required points to reach next stage — old account cannot view"). A member
-     already at the top has no NEXT stage, so the progress line had nothing to say and the card
-     went quiet exactly where the requirement belongs. State the bar they cleared instead. */
   const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
-  return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier">
-    <div class="row" style="align-items:baseline;gap:10px"><h2 style="margin:0">${esc(current?.label||'Getting started')}</h2>${next?'':current?'<span class="pill ok">Top tier</span>':''}</div>
-    ${currentRequirement?`<p class="muted small" style="margin-top:6px">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
-    ${next?`<div style="background:var(--line);border-radius:100px;height:8px;margin-top:12px;overflow:hidden"><div style="background:var(--grad);height:100%;width:${progress}%"></div></div>
-    <p class="muted small" style="margin-top:8px">${remainingText}</p>
-    ${nextBenefits.length?`<p class="small" style="margin-top:6px"><b>${esc(next.label)}</b> unlocks: ${nextBenefits.map(esc).join(' · ')}</p>`:''}`:''}
-    ${currentBenefits.length?`<p class="small" style="margin-top:${next?'12':'10'}px"><b>Your benefits now</b></p><ul class="rec-why" style="margin-top:6px">${currentBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:''}
-    ${customerTierLadderMarkupV186(tier)}
-  </section>`;
+  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>
+    ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
+    <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
+      :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
+    ${customerTierLadderMarkupV186(tier)}`;
 }
 /* v186 (owner: "i want to see different tiers and its benefits… mask other tiers, still can see
    the benefits but very obvious that is not their tier"). A ladder you cannot see is not a
@@ -1825,8 +1856,8 @@ function customerTierLadderMarkupV186(tier={}){
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
   const requirement=threshold=>customerTierRequirementTextV189(threshold,basis);
-  return `<div class="customer-tier-ladder" style="margin-top:16px">
-    <p class="small"><b>All tiers</b></p>
+  return `<details class="customer-tier-ladder">
+    <summary><span>All tiers and what they unlock</span><span class="muted small">${rungs.length} tiers</span></summary>
     <ol class="customer-tier-rungs" aria-label="Every tier and what it unlocks">${rungs.map(rung=>{
       const isCurrent=rung.current===true;
       const achieved=rung.achieved===true&&!isCurrent;
@@ -1844,7 +1875,7 @@ function customerTierLadderMarkupV186(tier={}){
           :'<p class="muted small" style="margin-top:6px">Benefits not published yet.</p>'}
       </li>`;
     }).join('')}</ol>
-  </div>`;
+  </details>`;
 }
 /* What a rung costs, in the business's own basis. Shared by the tier card header and the ladder
    so the two can never word the same threshold differently. */
@@ -1860,6 +1891,57 @@ function customerTierRemainingTextV186(remaining,basis){
   if(basis==='points_earned')return `${Math.ceil(remaining).toLocaleString('en-SG')} points to go`;
   const visits=Math.ceil(remaining);
   return `${visits.toLocaleString('en-SG')} visit${visits===1?'':'s'} to go`;
+}
+/* v194: Tier and Reward points as two tabs, the shape the owner drew over the old stacked block.
+   The balance moves in here from the header, where it sat beside a name it had nothing to do with. */
+function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},reward=null}){
+  const unitLabel=ct(presentation.unit);
+  const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
+  const rewardName=String(reward?.name||'').trim();
+  const remaining=Math.max(0,Number(reward?.remaining_units)||0);
+  const rewardLine=!rewardName?'Rewards from this business appear below as you earn.'
+    :reward?.available_now===true?`${rewardName} is ready to redeem.`
+    :`${customerPointTotalV103(remaining)} ${unitLabel} to ${rewardName}.`;
+  return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
+    <div class="customer-programme-tablist" role="tablist" aria-label="Tier and reward points">
+      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">Tier</button>
+      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">Reward points</button>
+    </div>
+    <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
+      <div data-programme-panel="tier">${customerTierPanelMarkupV194(tier)}</div>
+      <div data-programme-panel="points" hidden>
+        <p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
+        <p class="muted small" style="margin-top:6px">${esc(rewardLine)}</p>
+        ${customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward})}
+      </div>
+    </div>
+  </section>`;
+}
+function wireCustomerProgrammeTabsV194(host=document){
+  const tabs=[...host.querySelectorAll('[data-programme-tab]')];
+  if(!tabs.length)return;
+  const select=(name,focus=false)=>{
+    tabs.forEach(tab=>{
+      const on=tab.dataset.programmeTab===name;
+      tab.setAttribute('aria-selected',String(on));
+      tab.tabIndex=on?0:-1;
+      if(on&&focus)tab.focus();
+    });
+    host.querySelectorAll('[data-programme-panel]').forEach(panel=>{
+      panel.hidden=panel.dataset.programmePanel!==name;
+    });
+    const panel=host.querySelector('#customerProgrammePanel');
+    if(panel)panel.setAttribute('aria-labelledby',`customerProgrammeTab-${name}`);
+  };
+  tabs.forEach((tab,index)=>{
+    tab.onclick=()=>select(tab.dataset.programmeTab);
+    tab.onkeydown=event=>{
+      const step=event.key==='ArrowRight'?1:event.key==='ArrowLeft'?-1:0;
+      if(!step)return;
+      event.preventDefault();
+      select(tabs[(index+step+tabs.length)%tabs.length].dataset.programmeTab,true);
+    };
+  });
 }
 const business={name:'Glow Atelier',slug:'glow-atelier'};
 $('promotionCards').innerHTML=FIXTURE_OFFERS.map(offer=>customerPromotionCardV104(offer,business,true)).join('');

@@ -104,7 +104,10 @@ test('responsive and tap-target guards are in place across the customer surface'
   assert.doesNotMatch(app,/\.customer-primary-nav a span,\.customer-primary-nav button span\{min-width:0;overflow-wrap:anywhere\}/);
   assert.match(app,/\.customer-surface summary\.small,\.customer-surface summary\.muted\{min-height:44px;display:flex;align-items:center\}/);
   assert.match(app,/\.wallet-line>div:first-child,\.wallet-appt>div:first-child\{min-width:0;overflow-wrap:anywhere\}/);
-  assert.match(app,/\.customer-programme-compact-balance\{text-align:right;flex:0 1 auto;min-width:0\}/);
+  /* v194 moved the balance into the Reward points tab and made the identity itself the tappable
+     row; the overflow guard this line protects now belongs to that row. */
+  assert.match(app,/\.customer-programme-identity\{[^}]*flex:1;min-width:0/);
+  assert.match(app,/\.customer-programme-identity b\{[^}]*white-space:nowrap;overflow:hidden;text-overflow:ellipsis\}/);
   assert.match(app,/\.customer-programme-card-copy p\{line-height:1\.35;overflow-wrap:anywhere\}/);
   assert.match(app,/\.customer-merchant-hero h1\{[^}]*overflow-wrap:anywhere;word-break:break-word\}/);
   assert.match(app,/\.customer-first-quest h1\{[^}]*overflow-wrap:anywhere;word-break:break-word\}/);

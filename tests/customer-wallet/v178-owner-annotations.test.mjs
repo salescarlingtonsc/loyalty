@@ -27,7 +27,10 @@ test('Home drops the crossed-out page-head title block and keeps Scan to join in
   /* v183: the owner then struck the My Rewards block off Home entirely — heading and grid live
      on the My Rewards tab only, so Home carries the jump-off instead. */
   assert.doesNotMatch(legacyHome,/customerMyRewardsHeadingV156/);
-  assert.match(legacyHome,/customerHomeQuickLinksV183\(cards\.length,bookingSummary\)/);
+  /* v194: the owner then struck the jump-off cards too — the same two destinations are tabs on
+     every customer screen, and they now carry counts. */
+  assert.doesNotMatch(legacyHome,/customerHomeQuickLinksV183/);
+  assert.match(legacyHome,/applyCustomerNavCountsV194\(\{programmes:cards\.length/);
   const programmesTab=section('async function renderCustomerProgrammes(){','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
   assert.match(programmesTab,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
   assert.match(programmesTab,/\$\('customerHomeScan'\)\.onclick=openCustomerJoinScanner/,
@@ -71,7 +74,9 @@ test('My Rewards has a back button and no offers shelf or guidance banner',()=>{
 });
 
 test('Bookings is a three-tab client-side filter of already-fetched records',()=>{
-  assert.match(app,/const CUSTOMER_BOOKING_TABS_V178=\[\s*\['bookings','Bookings'/);
+  // v194: the owner renamed the first tab on the screenshot — "Bookings" inside a page called
+  // Bookings named nothing. The three-tab shape this test protects is unchanged.
+  assert.match(app,/const CUSTOMER_BOOKING_TABS_V178=\[[\s\S]{0,240}?\['bookings','Ongoing'/);
   assert.match(app,/\['cancelled','Cancelled','No cancelled bookings\.'\]/);
   assert.match(app,/\['history','History'/);
   assert.match(app,/role="tablist" aria-label="Booking status"/);
