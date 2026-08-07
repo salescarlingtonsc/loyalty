@@ -43,6 +43,7 @@ export function stampDocument(document, chunks) {
   if (!CORE_TAG.test(document)) throw new Error(`${DOCUMENT} does not contain the /app-core.js script tag`);
   if (!MANIFEST_BLOCK.test(document)) throw new Error(`${DOCUMENT} does not contain the #appSurfaceChunks manifest`);
   const manifest = JSON.stringify({
+    auth: urls.auth,
     customer: urls.customer,
     business: urls.business,
     i18n: urls.i18n

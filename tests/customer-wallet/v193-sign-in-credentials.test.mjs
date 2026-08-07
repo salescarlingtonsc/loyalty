@@ -53,8 +53,11 @@ test('a successful sign-in offers the credential to the browser’s own manager'
 /* --------------------------------------- an interactive challenge must say it is waiting for YOU */
 
 test('a Cloudflare checkbox stops pretending the app is still loading', () => {
-  assert.match(turnstile, /'before-interactive-callback':\(\)=>\{if\(destroyed\)return;message\(security\('interactive'\)\)\}/);
-  assert.match(turnstile, /'after-interactive-callback':\(\)=>\{if\(destroyed\)return;message\(security\('loading'\)\)\}/);
+  // V206: the generation guard (`live()`) replaced the raw `destroyed` check on every callback,
+  // and the interactive handoff now also drives the stall watchdog — disarmed the moment the
+  // checkbox appears, re-armed once the user is back to a silent "loading" wait.
+  assert.match(turnstile, /'before-interactive-callback':\(\)=>\{if\(!live\(\)\)return;stopStall\(\);message\(security\('interactive'\)\)\}/);
+  assert.match(turnstile, /'after-interactive-callback':\(\)=>\{if\(!live\(\)\)return;armStall\(mine\);message\(security\('loading'\)\)\}/);
   for (const locale of ['en', "'zh-CN'", 'ms']) {
     assert.ok(appJs.includes('interactive:'), `${locale} needs the interactive copy`);
   }

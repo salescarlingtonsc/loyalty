@@ -22,9 +22,11 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pwa.css">
-<link rel="stylesheet" href="/revenue-truth.css">
-<link rel="stylesheet" href="/growth-offers.css">
-<link rel="stylesheet" href="/sector-economics.css">
+<!-- V200: revenue-truth.css, growth-offers.css and sector-economics.css used to load here on every
+     first paint, for every visitor. They style workspace and customer-offer surfaces that only
+     exist once a surface chunk has been fetched, so they now arrive with that chunk
+     (loadSurfaceAssetsV200 in app/app.js). Nothing above this line is optional: pwa.css is the
+     app frame itself. -->
 <script src="/native-bridge.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/customer-push.js" defer></script>
@@ -1693,31 +1695,43 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <script src="/runtime-config.js?v=2"></script>
 <script src="/runtime-config-loader.js?v=2"></script>
 <script src="/customer-ui.js?v=20260808-v195-tier-icons"></script>
-<script src="/grow-recommender.js" defer></script>
-<script src="/platform-crm-utils.js" defer></script>
 <!-- v184: the platform console is ~210KB of JS+CSS that only a Peekaa admin can ever use, and it
-     was being downloaded by every customer opening a booking page. app.js fetches these two on
+     was being downloaded by every customer opening a booking page. app.js fetches these on
      demand when a #/platform route is requested (loadPlatformConsoleAssetsV184). This element is
-     still the ONE place to bump the console's cache-busting version. -->
+     still the ONE place to bump the console's cache-busting version. V200 added crm: the CRM
+     helper module has exactly one consumer, platform-console.js, so it belongs on the same
+     on-demand path rather than in every first paint. -->
 <script type="application/json" id="platformConsoleAssets">
-{"js":"/platform-console.js?v=20260807-v197-persistent-qr","css":"/platform-console.css?v=20260807-v197-persistent-qr"}
+{"js":"/platform-console.js?v=20260807-v197-persistent-qr","css":"/platform-console.css?v=20260807-v197-persistent-qr","crm":"/platform-crm-utils.js?v=20260807-v197-persistent-qr"}
 </script>
-<script src="/v95-media-sync.js?v=20260728-atomic-media" defer></script>
-<script src="/revenue-truth.js" defer></script>
-<script src="/growth-offers.js" defer></script>
-<script src="/sector-economics.js" defer></script>
+<!-- V200: grow-recommender.js, v95-media-sync.js, revenue-truth.js, growth-offers.js and
+     sector-economics.js were deferred script tags here, so every visitor downloaded, parsed and
+     executed all five before a booking page could paint — yet every consumer of their globals sits
+     inside a function in a surface chunk (verified: no load-time reference anywhere). They now load
+     with the surface that uses them, via the #appSurfaceAssets manifest below. Nothing left in the
+     initial load is optional: the native bridge, PWA, push and brand/runtime config all run at
+     load time, and customer-ui.js is read while the core boots. -->
+<script type="application/json" id="appSurfaceAssets">
+{"auth":{"js":[],"css":[]},"customer":{"js":["/growth-offers.js?v=20260807-v200"],"css":["/growth-offers.css?v=20260807-v200"]},"business":{"js":["/grow-recommender.js?v=20260807-v200","/v95-media-sync.js?v=20260728-atomic-media","/revenue-truth.js?v=20260807-v200","/growth-offers.js?v=20260807-v200","/sector-economics.js?v=20260807-v200"],"css":["/revenue-truth.css?v=20260807-v200","/growth-offers.css?v=20260807-v200","/sector-economics.css?v=20260807-v200"]}}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
-<!-- v185: app/app.js is split by surface at build time. The core loads here; the customer or
+<!-- v185: app/app.js is split by surface at build time. The core loads here; the auth, customer or
      workspace chunk is fetched by the router once it knows which one this route needs, and the
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"customer":"/app-customer.js?b=e5c9cac4a23a","business":"/app-business.js?b=093103f4db2d","i18n":"/app-i18n.js?b=232400221146"}
+{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=e5c9cac4a23a","business":"/app-business.js?b=5afb492068ac","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
    the router still decides and injects — so a wrong guess costs a wasted fetch, never a wrong
-   render or an out-of-order execution. Mirrors appSurfaceForRouteV185 in app/app.js. */
+   render or an out-of-order execution. Mirrors appSurfaceForRouteV185 in app/app.js.
+
+   V200: this script cannot see the session, and the merchant branch now depends on it — signed out
+   is the ~17KB auth chunk, signed in is the 1.2MB workspace. Guessing "business" would hand a
+   signed-out visitor exactly the download the auth chunk exists to avoid, so the merchant side
+   preloads auth: it is needed either way (the workspace chunk declares it as a prerequisite), and
+   at 17KB a signed-in visitor loses nothing by fetching it. The customer branch is unchanged. */
 (function(){try{
   var hash=location.hash.split('?')[0];
   if(hash.indexOf('#/platform')===0)return;
@@ -1726,10 +1740,10 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     return hash===prefix.replace(/\/$/,'')||hash.indexOf(prefix)===0;
   })||hash===''||hash==='#/';
   var link=document.createElement('link');
-  link.rel='preload';link.as='script';link.href=manifest[customer?'customer':'business'];
+  link.rel='preload';link.as='script';link.href=manifest[customer?'customer':'auth'];
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=ea14723aa5e2" defer></script>
+<script src="/app-core.js?b=c2d4e8b0f669" defer></script>
 </body>
 </html>
