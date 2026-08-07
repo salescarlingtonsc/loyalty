@@ -76,6 +76,13 @@ const KNOWN_SEARCH_PATH_SUPERSETS = [
   'nestly_v89_customer_qr_redemption_platform_access :: app.v89_redemption_token :: extensions',
   'nestly_v89_customer_qr_redemption_platform_access :: public.business_create_customer_join_qr_v89 :: extensions',
   'nestly_v89_customer_qr_redemption_platform_access :: public.customer_create_redemption_intent_v89 :: extensions',
+  // v197 makes the printed join QR permanent by deriving its token instead of
+  // storing one. The three functions below need `extensions` for exactly the
+  // reason the v89 join-QR functions above already do: extensions.hmac and
+  // extensions.gen_random_bytes. Nothing else resolves unqualified from it.
+  'nestly_v197_persistent_join_qr :: app.v197_join_token :: extensions',
+  'nestly_v197_persistent_join_qr :: public.business_create_customer_join_qr_v89 :: extensions',
+  'nestly_v197_persistent_join_qr :: public.business_ensure_customer_join_qr_v91 :: extensions',
 ];
 
 // Pinned inventory of pending definer functions whose search_path is a strict canonical SUBSET —

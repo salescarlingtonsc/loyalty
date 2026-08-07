@@ -74,7 +74,7 @@ $v197_secret$;
 
 create or replace function app.v197_join_qr_secret()
 returns text language plpgsql security definer stable
-set search_path to 'pg_catalog','public','app','vault','pg_temp' as $$
+set search_path to 'pg_catalog','public','app','pg_temp' as $$
 declare v_secret text;
 begin
   select decrypted_secret into v_secret
