@@ -1371,6 +1371,12 @@
       "path": "db/migrations/20260807_nestly_v204_bundle_priced_by_the_server.sql",
       "semanticVersion": "v204",
       "proposedDeployVersion": "20260807070000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v198_join_qr_print_lock.sql",
+      "semanticVersion": "v198",
+      "proposedDeployVersion": "20260807080000"
     }
   ]
 }
