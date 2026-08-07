@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 
 const root = new URL('../../', import.meta.url);
 const read = (file) => readFile(new URL(file, root), 'utf8');
@@ -327,4 +328,92 @@ test('History is a record, so it carries no count', () => {
   assert.match(html, /Cancelled\s*<span class="customer-booking-tab-count">3/);
   assert.doesNotMatch(html, /History\s*<span class="customer-booking-tab-count">/);
   assert.doesNotMatch(html, />9</);
+});
+
+/* ------------------------------------- 9 · v230: the panel is built from the firm's chosen mode */
+
+const modeApi = new Function('esc', 'ct', 'CUI', 'customerPointTotalV103',
+  'customerTierPanelMarkupV194', 'customerRewardProgressMarkupV167', `
+  ${section(appJs, 'function customerProgrammeModeV230', 'function customerProgrammeSummaryTabsV194')}
+  ${section(appJs, 'function customerProgrammeSummaryTabsV194', 'function wireCustomerProgrammeTabsV194')}
+  return {mode:customerProgrammeModeV230,render:customerProgrammeSummaryTabsV194};`)(
+  (value) => String(value ?? ''), (value) => String(value ?? 'points'), { icon: () => '' },
+  (value) => String(value), () => '<div data-tier-ladder></div>',
+  // production returns '' when there is no next reward — the stub must too, or the fallback
+  // line this test is about could never be reached.
+  (card) => card?.next_eligible_reward ? '<div data-reward-progress></div>' : '');
+
+test('the chosen mode decides the panel, and an unchosen firm keeps both', () => {
+  assert.equal(modeApi.mode({ points_mode: 'tiers', tiers: true, rewards: false }), 'tiers');
+  assert.equal(modeApi.mode({ points_mode: 'redeem', tiers: false, rewards: true }), 'redeem');
+  assert.equal(modeApi.mode({ points_mode: null, tiers: true, rewards: true }), 'both');
+  // the server's own choice wins over what the other flags happen to say
+  assert.equal(modeApi.mode({ points_mode: 'tiers', tiers: false, rewards: true }), 'tiers');
+  assert.equal(modeApi.mode({ points_mode: 'redeem', tiers: true, rewards: true }), 'redeem');
+  // nothing known at all still renders something a customer can read
+  assert.equal(modeApi.mode({}), 'redeem');
+  assert.equal(modeApi.mode({ points_mode: null, tiers: true, rewards: false }), 'tiers');
+});
+
+test('a tiers firm shows tiers and benefits, and never a redemption it cannot honour', () => {
+  const html = modeApi.render({
+    tier: { basis: 'points_earned' }, loyalty: { balance: 300 }, presentation: { unit: 'points' },
+    reward: { name: 'Free facial add-on', remaining_units: 200 },
+    rewardsHost: false, capabilities: { points_mode: 'tiers', tiers: true, rewards: false }
+  });
+  assert.match(html, /data-tier-ladder/, 'the tier ladder and its benefits are the panel');
+  assert.match(html, /300<\/b> <span class="muted">points earned/);
+  assert.match(html, /count toward membership here — they are not spent/);
+  assert.doesNotMatch(html, /walletRewards/, 'no reward host: the v229 gate would refuse redemption');
+  assert.doesNotMatch(html, /data-programme-tab/, 'one mode, one panel — no tab to a dead end');
+});
+
+test('a redeem firm shows what its points buy, and no ladder it does not run', () => {
+  const html = modeApi.render({
+    tier: { basis: 'visits' }, loyalty: { balance: 300 }, presentation: { unit: 'points' },
+    reward: { name: 'Free facial add-on', remaining_units: 200 },
+    rewardsHost: true, capabilities: { points_mode: 'redeem', tiers: false, rewards: true }
+  });
+  assert.match(html, /id="walletRewards"/);
+  assert.match(html, /data-reward-progress/);
+  assert.doesNotMatch(html, /data-tier-ladder/);
+  assert.doesNotMatch(html, /data-programme-tab/);
+});
+
+test('a firm that has not chosen keeps the two tabs it had before v230', () => {
+  const html = modeApi.render({
+    tier: {}, loyalty: { balance: 300 }, presentation: { unit: 'points' }, reward: null,
+    rewardsHost: true, capabilities: { points_mode: null, tiers: true, rewards: true }
+  });
+  assert.match(html, /data-programme-tab="tier"/);
+  assert.match(html, /data-programme-tab="points"/);
+  assert.match(html, /data-tier-ladder/);
+  assert.match(html, /id="walletRewards"/);
+});
+
+test('the same reward line is not printed twice', () => {
+  const html = modeApi.render({
+    tier: {}, loyalty: { balance: 300 }, presentation: { unit: 'points' },
+    reward: { name: 'A thank-you on your next visits', available_now: true },
+    rewardsHost: false, capabilities: { points_mode: 'redeem' }
+  });
+  assert.equal((html.match(/data-reward-progress/g) || []).length, 1,
+    'the panel duplicated the "is ready to redeem" line the progress markup already prints');
+  // the fallback only appears when there is no reward at all
+  const empty = modeApi.render({
+    tier: {}, loyalty: { balance: 0 }, presentation: { unit: 'points' }, reward: null,
+    rewardsHost: false, capabilities: { points_mode: 'redeem' }
+  });
+  assert.match(empty, /Rewards from this business appear below as you earn/);
+});
+
+test('the mode comes from the server, so the surface and the redemption gate cannot disagree', () => {
+  const migration = readFileSync(new URL('db/migrations/20260808_nestly_v230_customer_sees_the_chosen_points_mode.sql', root), 'utf8');
+  assert.match(migration, /coalesce\(v_points_mode,'redeem'\) <> 'tiers'/, 'rewards off in tiers mode');
+  assert.match(migration, /'points_mode', v_points_mode/);
+  assert.match(migration, /coalesce\(v_points_mode,'tiers'\) = 'tiers'/);
+  assert.match(migration, /revoke all on function public\.customer_portal_capabilities\(text\) from public, anon;/);
+  assert.match(appJs, /rewardsHost:capabilities\.rewards===true,programmeCapabilities:capabilities/);
+  assert.match(appJs, /capabilities:programmeCapabilities/);
+  assert.doesNotMatch(appJs, /points_mode==='tiers'\?[^\n]*S\.biz/, 'the customer must not read a workspace value');
 });

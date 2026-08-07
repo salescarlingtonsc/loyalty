@@ -32,10 +32,13 @@ test('programme balance is compact, formatted once, and tier progress is truthfu
   /* v194 (owner sketch: "[Tier] [Reward Point]"): the balance moved out of the identity header and
      into the Reward points tab, where the number has a heading that explains it. Formatted-once
      and shown-once are still the invariants — they are just asserted on the tab that owns it. */
-  const tabs=section('function customerProgrammeSummaryTabsV194','function wireCustomerProgrammeTabsV194');
+  /* v230 split that tab into the two shapes a firm can choose (points to spend, or points that
+     count toward a tier). Each prints the balance ONCE, in its own words, and both go through the
+     same formatter — which is what "formatted once, shown once" has always meant here. */
+  const panels=section('function customerProgrammePointsPanelV230','function customerProgrammeSummaryTabsV194');
   assert.equal((merchant.match(/customer-programme-balance/g)||[]).length,0);
-  assert.equal((tabs.match(/customer-programme-balance/g)||[]).length,1);
-  assert.match(tabs,/customerPointTotalV103\(loyalty\.balance\?\?presentation\.balance\?\?0\)/);
+  assert.equal((panels.match(/customer-programme-balance/g)||[]).length,2);
+  assert.equal((panels.match(/customerPointTotalV103\(loyalty\.balance\?\?presentation\.balance\?\?0\)/g)||[]).length,2);
   assert.match(app,/\.customer-programme-balance\{[^}]*font-size:clamp\(1\.6rem,6vw,2\.1rem\)/);
   assert.equal(helpers.customerPointTotalV103(1234567),'1,234,567');
   assert.equal(helpers.customerTierHasProgressV103({}),false);

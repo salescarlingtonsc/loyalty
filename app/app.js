@@ -4808,14 +4808,56 @@ function customerTierRemainingTextV186(remaining,basis){
 }
 /* v194: Tier and Reward points as two tabs, the shape the owner drew over the old stacked block.
    The balance moves in here from the header, where it sat beside a name it had nothing to do with. */
-function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},reward=null,rewardsHost=false}){
+/* v230 (owner, looking at Cubbly: "instead of showing different points to redeem rewards - it
+   should show the relevant selected model. in this case selected tier - it should reflect the
+   different tiers and its benefits"): v229 makes a firm choose ONE use for points, and refuses
+   redemption server-side when that choice is tiers. Cubbly had chosen tiers, and the customer was
+   still being shown a point-priced catalogue with "Show QR at counter" buttons the server would
+   reject. The panel is now built from the choice:
+     tiers  — one panel: where you stand, what your tier gives you, and every tier above it.
+     redeem — one panel: your balance and what it buys. No tier ladder for a firm not running one.
+     unset  — both, as before, because nothing has been put away yet.
+   The capability comes from the server (customer_portal_capabilities), so the surface and the
+   redemption gate can never disagree about which one this firm runs. */
+function customerProgrammeModeV230({points_mode=null,tiers=false,rewards=false}={}){
+  if(points_mode==='tiers')return 'tiers';
+  if(points_mode==='redeem')return 'redeem';
+  return tiers&&rewards?'both':tiers?'tiers':'redeem';
+}
+function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false}){
   const unitLabel=ct(presentation.unit);
   const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
-  const rewardName=String(reward?.name||'').trim();
-  const remaining=Math.max(0,Number(reward?.remaining_units)||0);
-  const rewardLine=!rewardName?'Rewards from this business appear below as you earn.'
-    :reward?.available_now===true?`${rewardName} is ready to redeem.`
-    :`${customerPointTotalV103(remaining)} ${unitLabel} to ${rewardName}.`;
+  const progress=customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward});
+  return `<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
+    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}
+    ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}`;
+}
+/* In tiers mode the balance is not a wallet — it is the distance travelled — so it is stated as
+   what it counts toward rather than as something to spend. */
+function customerProgrammeTierPanelV230({tier={},loyalty={},presentation={}}){
+  const unitLabel=ct(presentation.unit);
+  const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
+  const basis=String(tier.basis||'visits');
+  const counted=basis==='points_earned'
+    ?`<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)} earned</span></p>
+       <p class="muted small" style="margin-top:6px">Your ${esc(unitLabel)} count toward membership here — they are not spent.</p>`
+    :'';
+  return `${counted}${customerTierPanelMarkupV194(tier)}`;
+}
+function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},reward=null,rewardsHost=false,capabilities={}}){
+  const mode=customerProgrammeModeV230(capabilities);
+  if(mode==='tiers'){
+    return `<section class="card customer-programme-tabs customer-programme-single" aria-label="Your tier">
+      <h2 class="customer-programme-single-head">${CUI.icon('star',{size:17})}<span>Tier</span></h2>
+      ${customerProgrammeTierPanelV230({tier,loyalty,presentation})}
+    </section>`;
+  }
+  if(mode==='redeem'){
+    return `<section class="card customer-programme-tabs customer-programme-single" aria-label="Reward points">
+      <h2 class="customer-programme-single-head">${CUI.icon('redeem',{size:17})}<span>Reward points</span></h2>
+      ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
+    </section>`;
+  }
   return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
     <div class="customer-programme-tablist" role="tablist" aria-label="Tier and reward points">
       <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('star',{size:17})}<span>Tier</span></button>
@@ -4824,14 +4866,7 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
     <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
       <div data-programme-panel="tier">${customerTierPanelMarkupV194(tier)}</div>
       <div data-programme-panel="points" hidden>
-        <p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
-        <p class="muted small" style="margin-top:6px">${esc(rewardLine)}</p>
-        ${customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward})}
-        ${/* v195: the owner crossed the standalone "Rewards" card out — it repeated this balance and
-             re-explained a three-step process below the offers. What it also held was the only way
-             to REDEEM, so the reward list moves in here, under the points that pay for it, instead
-             of being deleted. Same host id, so the existing async loader fills it unchanged. */''}
-        ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}
+        ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
       </div>
     </div>
   </section>`;
@@ -4862,7 +4897,7 @@ function wireCustomerProgrammeTabsV194(host=document){
     };
   });
 }
-function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready',rewardsHost=false}){
+function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready',rewardsHost=false,programmeCapabilities={}}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
   const hasTier=customerTierHasProgressV103(tier);
@@ -4885,7 +4920,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
     ${customerPointsExplainerMarkupV167(business)}
-    ${customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost})}
+    ${customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
@@ -5245,7 +5280,7 @@ async function renderCustomerWallet(businessSlug=null){
   const showMembershipMetric=capabilities.membership===true&&membership.active===true;
   const showSecondaryMetrics=!actionableCard&&(showCreditMetric||showPackageMetric||showMembershipMetric);
   const hasWalletSection=true;
-  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true})}
+  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities})}
     ${showSecondaryMetrics?`<div class="wallet-metrics">
       ${showCreditMetric?`<div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents)/100).toFixed(2)}</b></div>`:''}
       ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
