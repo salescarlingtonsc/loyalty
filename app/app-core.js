@@ -689,7 +689,14 @@ function appSurfaceForRouteV185(hash,{signedIn=false}={}){
   const route=String(hash||'').split('?')[0];
   if(route.startsWith('#/platform'))return null;
   if(CUSTOMER_ROUTE_PREFIXES_V185.some(prefix=>route===prefix.replace(/\/$/,'')||route.startsWith(prefix)))return 'customer';
-  if(route==='#/'||route==='')return signedIn?'business':'customer';
+  /* V199: "#/" is a CUSTOMER entry point in every case, signed in or not — route() sends it to
+     renderCustomerRegistration unconditionally, which then forwards a customer with a profile on
+     to #/wallet. Staff reach the workspace through #/business. The old signedIn?'business' branch
+     described a route that never existed, so every signed-in visitor to the bare root loaded the
+     workspace chunk, threw ReferenceError: renderCustomerRegistration, and fell back to
+     downloading EVERY surface — the self-heal worked, so it only ever showed up as wasted
+     bandwidth on the most-hit route. */
+  if(route==='#/'||route==='')return 'customer';
   return 'business';
 }
 /* v184: the Peekaa admin console is ~210KB of JS + CSS that only a platform admin can use. It
@@ -1122,6 +1129,38 @@ function normalizeSingaporeCustomerPhone(value){
   const local=digits.startsWith('65')&&digits.length===10?digits.slice(2):digits;
   return /^[89][0-9]{7}$/.test(local)?`+65${local}`:null;
 }
+/* v190 appearance. The customer surface used to go dark whenever the DEVICE was in dark mode, so
+   the same person saw a beige workspace and a black wallet on one phone. Beige — the business
+   palette — is now the default for everyone, and dark is a choice made in Profile → Appearance.
+   'device' remains available for people who genuinely want it to follow their phone. */
+const CUSTOMER_THEME_KEY_V190='peekaa.customer.theme';
+const CUSTOMER_THEMES_V190=['light','dark','device'];
+function customerThemePreferenceV190(){
+  try{
+    const stored=localStorage.getItem(CUSTOMER_THEME_KEY_V190);
+    return CUSTOMER_THEMES_V190.includes(stored)?stored:'light';
+  }catch{return 'light'}
+}
+function customerThemeIsDarkV190(preference=customerThemePreferenceV190()){
+  if(preference==='dark')return true;
+  if(preference!=='device')return false;
+  try{return globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches===true}catch{return false}
+}
+function applyCustomerThemeV190(preference=customerThemePreferenceV190()){
+  const root=globalThis.document?.documentElement;
+  if(!root)return preference;
+  const dark=customerThemeIsDarkV190(preference);
+  if(dark)root.setAttribute('data-customer-theme','dark');
+  else root.removeAttribute('data-customer-theme');
+  /* Keep the browser chrome with the surface rather than with the device. */
+  const meta=globalThis.document?.querySelector('meta[name="theme-color"]:not([media])');
+  if(meta)meta.setAttribute('content',dark?'#0F1115':'#F4F2EE');
+  return preference;
+}
+/* A device-following customer must track a change made while the app is open. */
+try{globalThis.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change',()=>{
+  if(customerThemePreferenceV190()==='device')applyCustomerThemeV190('device');
+})}catch{}
 const CUSTOMER_LOCALES=Object.freeze(['en']);
 let customerLocale='en';
 function customerMediaUrlV95(value){
@@ -2382,6 +2421,30 @@ function normalizeSingaporeCustomerSearch(value){
   let digits=String(value||'').replace(/\D/g,'');
   if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);
   return digits.length===8?digits:null;
+}
+/* V200 (owner: "in all the modules i need you to simplify the sub modules ... just tab the sub
+   modules and can view easily instead of long scrolling"). ONE mechanism for every module,
+   matching the Bookings pill strip the owner pointed at.
+
+   A page opts in declaratively: tag a top-level section with data-subtab="Group". Anything
+   UNTAGGED stays pinned above the strip, which is what keeps a module's title, date filters and
+   primary action reachable from every tab instead of hiding inside whichever one happens to be
+   open. Tabs appear in the order their group is first seen, so the strip is the page's own
+   reading order rather than a second list to keep in sync — add a section, it lands in the right
+   tab with no wiring.
+
+   The chosen tab is remembered per module, because an owner who lives in one sub-module should
+   not re-select it on every visit. It is remembered in sessionStorage, not localStorage: a tab is
+   a "where was I just now", and restoring last week's choice would hide the section they came
+   for. Fewer than two groups means no strip at all — a one-section page keeps scrolling. */
+function revealSectionTabV200(node){
+  const panel=node?.closest?.('[data-subtab-panel]');
+  if(!panel||!panel.hidden)return false;
+  const tab=panel.getRootNode()?.getElementById?.(panel.getAttribute('aria-labelledby'))
+    ||document.getElementById(panel.getAttribute('aria-labelledby'));
+  if(!tab)return false;
+  tab.click();
+  return true;
 }
 function promotionDateTextV104(value){
   if(!value)return '';

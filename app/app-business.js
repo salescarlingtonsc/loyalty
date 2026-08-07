@@ -2076,16 +2076,10 @@ function dashboardRangeLabelV170(from,to){
   if(from!==to)return `${from} – ${to}`;
   return from===sgDateInputValue()?'today':`on ${from}`;
 }
-function dashboardComparisonSentenceV170(change,previousFrom,previousTo){
-  if(change===null||!Number.isFinite(change))return 'No earlier period to compare yet.';
-  const previousWindow=`${previousFrom} – ${previousTo}`;
-  if(change===0)return `Level with ${previousWindow}.`;
-  return `${change>0?'Up':'Down'} ${Math.abs(change)}% vs ${previousWindow}.`;
-}
-function dashboardHeadlineHtmlV170({revenueCents,visits,from,to,change,previousFrom,previousTo}){
-  const visitCount=Number(visits)||0;
-  return `<p class="dashboard-headline-line"><b>${esc(money(revenueCents||0))}</b> taken across <b>${esc(visitCount.toLocaleString('en-SG'))} ${visitCount===1?'visit':'visits'}</b> ${esc(dashboardRangeLabelV170(from,to))}</p><p class="dashboard-headline-compare">${esc(dashboardComparisonSentenceV170(change,previousFrom,previousTo))}</p>`;
-}
+/* V200 (owner: "remove this redundant line"). The V170 headline restated the Revenue and Visits
+   tiles that sit directly beneath it, and its comparison sentence restated the per-tile delta
+   chips. Two readings of the same two numbers, one above the other. The tiles carry the figure,
+   the range and the delta, so the headline was pure duplication and is gone. */
 function dashboardDeltaChipV170(change,previousFrom,previousTo){
   if(change===null||change===undefined||!Number.isFinite(change))return '';
   const word=change>0?'up':change<0?'down':'level';
@@ -2197,7 +2191,7 @@ async function dashboard(){
     </section>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
-      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="dashboard-headline" id="dashboardHeadline" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
+      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
     <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
   wireLocalCollapseV154('dashboardPerformanceToggle','dashboardPerformanceBody','peekaa.v164.dashboard.performance.open');
@@ -2239,9 +2233,8 @@ async function dashboard(){
   }
   const invalidatePerformance=()=>{
     requestGate.invalidate();killCharts();
-    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),headline=dashboardRoot.querySelector('#dashboardHeadline'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     if(status)status.innerHTML='';
-    if(headline)headline.innerHTML='';
     if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'reports',title:'Date range changed',body:'Apply the new range to refresh these figures.'})}</div>`;
     if(loyalty)loyalty.innerHTML='';
     if(insights)insights.innerHTML='';
@@ -2261,7 +2254,7 @@ async function dashboard(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
     const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value;
-    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),headline=dashboardRoot.querySelector('#dashboardHeadline'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     const showLoadError=(message,retryId)=>{
       if(!status)return;
       kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');headline?.setAttribute('aria-busy','false');loyalty?.setAttribute('aria-busy','false');
@@ -2274,7 +2267,6 @@ async function dashboard(){
     if(!from||!to||from>to){showLoadError('Choose a valid dashboard date range.','dashboardReportRetry');return}
     killCharts();
     status.innerHTML='';
-    if(headline)headline.innerHTML='<p class="dashboard-headline-line muted">Working out this period…</p>';
     if(loyalty)loyalty.innerHTML='';
     if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'v150-kpi'})).join('');
     if(insights)insights.innerHTML=`<section class="merchant-insights"><div class="merchant-insights-head"><div><h2>Merchant insights</h2><p class="muted small">Loading recommendations…</p></div></div><div class="merchant-insights-grid">${Array.from({length:3},()=>CUI.skeletonCard({lines:4})).join('')}</div></section>`;
@@ -2321,10 +2313,6 @@ async function dashboard(){
     const revenueChange=percentageChangeV153(d.revenue_cents,previousSummary?.revenue_cents);
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
     const newCustomersChange=customerMetricsAvailable&&previousSummary?.availability?.clients!==false?percentageChangeV153(d.new_customers,previousSummary?.new_customers):null;
-    if(headline){
-      headline.innerHTML=dashboardHeadlineHtmlV170({revenueCents:d.revenue_cents,visits:d.visits,from,to,change:revenueChange,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo});
-      headline.setAttribute('aria-busy','false');
-    }
     const metrics=[
       {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`,delta:visitsChange},
       {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`,delta:revenueChange},
@@ -2555,10 +2543,14 @@ async function clientsPage(){
     <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="min-width:min(100%,280px)"><label>Reporting scope</label><div id="clientReportingScopeWrap"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></div></div><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
-    <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
-    <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
+    <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
+    <div class="card" id="fbQueueCard" data-subtab="Visit feedback"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
       <div class="fb-chips" id="fbChips" role="group" aria-label="Filter feedback by status"></div>
       <div id="fbQueue">${CUI.tableSkeleton({rows:3,columns:4})}</div></div></section>`;
+  /* V200: the feedback queue is its own job, not the bottom of the customer list. Everything the
+     two share — the inactive shortcuts, reporting scope, and the Add-customer form, which opens
+     from the actions bar — stays pinned above the strip so it works from either tab. */
+  sectionTabsV200($('customersView'),{key:'customers',label:'Customer sections'});
   const customersView=$('customersView');
   const isCustomersCurrent=()=>routeMain.isConnected&&M()===routeMain&&customersView.isConnected&&$('customersView')===customersView;
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
@@ -5226,6 +5218,80 @@ function bookingDecisionNotice(result,decision){
   if(outcome==='applied')return {ok:true,text:`${verb} applied. Current status: ${actual}.`};
   if(outcome==='replayed'||result?.replayed===true)return {ok:true,text:`${verb} was already applied. Current status: ${actual}.`};
   return {ok:false,text:`${verb} could not be applied (${outcome.replaceAll('_',' ')}). Current status: ${actual}.`};
+}
+function sectionTabsV200(root,{key='',label='Sections'}={}){
+  if(!root||root.dataset.sectionTabsV200==='1')return null;
+  const tagged=Array.from(root.children).filter(node=>node.dataset&&node.dataset.subtab);
+  const groups=[];
+  tagged.forEach(node=>{
+    const name=String(node.dataset.subtab||'').trim();
+    if(!name)return;
+    let group=groups.find(item=>item.name===name);
+    if(!group){group={name,nodes:[]};groups.push(group)}
+    group.nodes.push(node);
+  });
+  if(groups.length<2)return null;
+  root.dataset.sectionTabsV200='1';
+  const slug=text=>String(text).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'group';
+  const idBase=`subtab-${slug(key||label)}`;
+  const strip=document.createElement('div');
+  strip.className='v150-segment section-subtabs-v200';
+  strip.setAttribute('role','tablist');
+  strip.setAttribute('aria-label',label);
+  const panels=groups.map((group,index)=>{
+    const panel=document.createElement('div');
+    panel.id=`${idBase}-panel-${index}`;
+    panel.setAttribute('role','tabpanel');
+    panel.setAttribute('aria-labelledby',`${idBase}-tab-${index}`);
+    panel.setAttribute('data-subtab-panel',group.name);
+    panel.hidden=true;
+    return panel;
+  });
+  groups.forEach((group,index)=>{
+    const tab=document.createElement('button');
+    tab.type='button';
+    tab.id=`${idBase}-tab-${index}`;
+    tab.setAttribute('role','tab');
+    tab.setAttribute('aria-controls',panels[index].id);
+    tab.textContent=group.name;
+    strip.appendChild(tab);
+  });
+  /* Insert where the first tagged section sits, so the pinned header keeps its position. */
+  groups[0].nodes[0].before(strip);
+  strip.after(...panels);
+  groups.forEach((group,index)=>group.nodes.forEach(node=>panels[index].appendChild(node)));
+  const storageKey=key?`nestly:subtab:${key}`:'';
+  const tabs=Array.from(strip.children);
+  const setTab=(index,{focus=false,remember=true}={})=>{
+    tabs.forEach((tab,position)=>{
+      const active=position===index;
+      tab.setAttribute('aria-selected',String(active));
+      tab.setAttribute('aria-pressed',String(active));
+      /* Only the selected tab stays in the tab order — a tablist is one stop, then arrow keys. */
+      tab.tabIndex=active?0:-1;
+      panels[position].hidden=!active;
+    });
+    if(focus)tabs[index].focus();
+    if(remember&&storageKey){try{sessionStorage.setItem(storageKey,groups[index].name)}catch(error){}}
+  };
+  tabs.forEach((tab,index)=>{
+    tab.onclick=()=>setTab(index);
+    tab.onkeydown=event=>{
+      const step={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[event.key];
+      if(step){event.preventDefault();setTab((index+step+tabs.length)%tabs.length,{focus:true});return}
+      if(event.key==='Home'){event.preventDefault();setTab(0,{focus:true})}
+      if(event.key==='End'){event.preventDefault();setTab(tabs.length-1,{focus:true})}
+    };
+  });
+  let initial=0;
+  if(storageKey){
+    try{
+      const remembered=groups.findIndex(group=>group.name===sessionStorage.getItem(storageKey));
+      if(remembered>=0)initial=remembered;
+    }catch(error){}
+  }
+  setTab(initial,{remember:false});
+  return {strip,panels,setTab};
 }
 function enhanceBookingsTabsV195(root){
   if(!root||root.dataset.bookingsTabsV195==='1')return;
@@ -10098,7 +10164,7 @@ async function storedValuePage(){
        </div>
        <p class="muted small" style="margin-top:6px">Only unbuilt and shadow testing can be chosen here. Live and ready-for-cutover do not exist in this phase — the server refuses them.</p>`
     : `<p class="muted small" style="margin-top:12px">This state cannot be changed from here.</p>`;
-  const authorityCard=`<section class="card"><div class="cui-card-head"><h2>Authority</h2><p>The source of truth for stored value, shown exactly as the server reports it.</p></div>
+  const authorityCard=`<section class="card" data-subtab="Authority"><div class="cui-card-head"><h2>Authority</h2><p>The source of truth for stored value, shown exactly as the server reports it.</p></div>
     <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Current state:</b> ${svAuthorityChip(state)}${shadowTesting?'<span class="pill new">shadow testing</span>':''}</div>
     <p class="muted small" style="margin-top:6px">${esc(SV_AUTHORITY_WORDS[state]||'Unknown state — treated as not usable.')}</p>
     ${authControlHtml}</section>`;
@@ -10125,7 +10191,7 @@ async function storedValuePage(){
          <div>Differences found: <b>${Number(snap.discrepancy_count||0)}</b></div>
        </div>`
     : `<p class="muted small" style="margin-top:8px">Reconciliation has not been run for this business yet.</p>`;
-  const reconCard=`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Reconciliation</h2><p>Stored value is checked against your gift-card records (read-only). Differences are shown here, never hidden, and are never auto-corrected.</p></div>
+  const reconCard=`<section class="card" data-subtab="Reconciliation"><div class="cui-card-head"><h2>Reconciliation</h2><p>Stored value is checked against your gift-card records (read-only). Differences are shown here, never hidden, and are never auto-corrected.</p></div>
     <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Latest status:</b> ${svReconStatusChip(snap&&snap.status,hasRun)}</div>
     ${snapHtml}
     ${discrepHtml}
@@ -10145,7 +10211,7 @@ async function storedValuePage(){
     : `<p class="muted small" style="margin-top:10px">No active pauses.</p>`;
   const pauseScopeOpts=[['all','Everything'],['earn','Top-ups & grants'],['redeem','Spending']]
     .map(([v,l])=>`<option value="${v}">${esc(l)}${activeScopes.has(v)?' — already paused':''}</option>`).join('');
-  const pauseCard=`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Pause &amp; safety</h2><p>Emergency stop for stored value. History is always kept — a pause only stops new operations. Lifting a pause is a separate, confirmed action.</p></div>
+  const pauseCard=`<section class="card" data-subtab="Pause &amp; safety"><div class="cui-card-head"><h2>Pause &amp; safety</h2><p>Emergency stop for stored value. History is always kept — a pause only stops new operations. Lifting a pause is a separate, confirmed action.</p></div>
     ${pauseListHtml}
     <div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap;align-items:center">
       <label for="svPauseScope" class="muted small">Pause</label>
@@ -10173,7 +10239,7 @@ async function storedValuePage(){
   const cutBtnHtml=(cutRes.error||cutLive)
     ? ''
     : `<div class="row" style="margin-top:14px"><button class="btn sm danger" id="svCutoverBtn" type="button"${cutReady?'':' disabled aria-disabled="true" title="The server has not confirmed this business is ready"'}>Go live with stored value</button></div>`;
-  const cutCard=`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Cutover</h2><p>${cutLive?'Stored value is live for this business.':'One-time, one-way. Everything below comes straight from the server.'}</p></div>
+  const cutCard=`<section class="card" data-subtab="Cutover"><div class="cui-card-head"><h2>Cutover</h2><p>${cutLive?'Stored value is live for this business.':'One-time, one-way. Everything below comes straight from the server.'}</p></div>
     <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Ready:</b> ${cutReady?'<span class="pill on">yes</span>':'<span class="pill no">no</span>'}</div>
     ${cutBodyHtml}
     ${cutBtnHtml}</section>`;
@@ -10193,7 +10259,7 @@ async function storedValuePage(){
       : state==='live'
         ? 'Live. A top-up collects payment and issues spendable stored value to the customer.'
         : 'Stored value is '+state+' for this business. Top-ups are not available.';
-  const topupCard=`<section class="card" id="svTopupCard" style="margin-top:16px"><div class="cui-card-head"><h2>Top-ups</h2><p>Sell a prepaid stored-value plan to a customer. Every figure — price, bonus, expiry, limits — comes straight from the server; this screen never calculates value.</p></div>
+  const topupCard=`<section class="card" id="svTopupCard" data-subtab="Top-ups"><div class="cui-card-head"><h2>Top-ups</h2><p>Sell a prepaid stored-value plan to a customer. Every figure — price, bonus, expiry, limits — comes straight from the server; this screen never calculates value.</p></div>
     <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Selling state:</b> ${svAuthorityChip(state)}${topupTestOnly?'<span class="pill new">test only</span>':''}</div>
     <p class="muted small" style="margin-top:6px">${esc(topupNote)}</p>
     ${topupSellable&&!svBranches.length?'<p class="muted small">No active branch is configured, so a top-up cannot be recorded.</p>':''}
@@ -10214,6 +10280,9 @@ async function storedValuePage(){
     ${reconCard}
     ${pauseCard}
     ${cutCard}`;
+  /* V200: five independent owner controls that were one long scroll. The live/not-live banner
+     above them stays pinned — it is the one thing that changes what every other tab MEANS. */
+  sectionTabsV200(routeMain,{key:'storedvalue',label:'Stored value controls'});
 
   // ----- wire the owner controls (only reached when the reads succeeded → fail-closed holds) -----
   const authBtn=$('svAuthChange'),authSel=$('svAuthTarget');
@@ -10613,11 +10682,14 @@ async function giftcardsPage(){
       <input id="giftCardEnabled" type="checkbox" style="width:auto;margin-top:3px" ${giftCardsEnabled?'checked':''}>
       <span><b>Offer gift cards</b><small class="muted" style="display:block;margin-top:3px">When off, new gift-card issuance is hidden from Record sale. Existing balances and history remain safe.</small></span>
     </label></div>`:canConfigure&&!preferencesAvailable?`<div class="permission-banner" style="margin-bottom:16px"><b>Gift-card issuance setting unavailable</b><p class="muted small" style="margin-top:4px">Issuance is paused. Existing cards can still be redeemed with the required authority.</p><button class="btn ghost sm" id="giftPreferencesRetry" style="margin-top:8px">Try again</button></div>`:!giftCardsEnabled?`<div class="permission-banner" style="margin-bottom:16px"><b>New gift-card issuance is off</b><p class="muted small" style="margin-top:4px">An owner can enable it here when the business is ready. Existing card redemption remains available.</p></div>`:''}
-    <div class="split">
-    <div class="card">${giftCardWorkspace}</div>
-    <div class="card"><div class="cui-card-head"><h2>Cards on the books</h2></div><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>
-    <div class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Suggested amounts</h2><p>Worked out from your own service and product prices — an estimate, not a rule.</p></div>
+    <div class="card" data-subtab="Issue &amp; redeem">${giftCardWorkspace}</div>
+    <div class="card" data-subtab="Cards on the books"><div class="cui-card-head"><h2>Cards on the books</h2></div><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>
+    <div class="card" data-subtab="Issue &amp; redeem"><div class="cui-card-head"><h2>Suggested amounts</h2><p>Worked out from your own service and product prices — an estimate, not a rule.</p></div>
       <div id="growGiftHint"></div></div>`;
+  /* V200: two jobs on one screen — moving value (issue, redeem, and the denominations that help
+     you price a card) and reviewing the cards already out there. The branch picker and the
+     "Offer gift cards" switch stay pinned: both change what issuing means. */
+  sectionTabsV200(routeMain,{key:'giftcards',label:'Gift card sections'});
   /* Denomination suggestion: display-only. Sellers still type any amount they want above. */
   const loadGiftHint=async()=>{
     const hint=$('growGiftHint');

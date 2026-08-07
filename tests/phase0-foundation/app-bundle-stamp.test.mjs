@@ -131,7 +131,21 @@ test('the preloader in index.html mirrors the router rule it races', () => {
   assert.equal(inline, prefixes, 'the inline preloader and appSurfaceForRouteV185 must agree');
   assert.match(indexHtml, /link\.rel='preload';link\.as='script'/, 'it preloads — it must never execute');
   assert.match(indexHtml, /if\(hash\.indexOf\('#\/platform'\)===0\)return/);
-  assert.match(indexHtml, /\/\^sb-\.\+-auth-token\$\//, 'a signed-in visitor at "#/" needs the workspace');
+});
+
+/* V199. This assertion used to read "a signed-in visitor at '#/' needs the workspace" and pinned
+   the preloader's auth-token sniff. It was pinning a route that does not exist: route() dispatches
+   "#/" to renderCustomerRegistration with no signed-in check at all, and that renderer forwards a
+   customer who already has a profile on to #/wallet. Staff reach the workspace via #/business.
+   The mismatch cost every signed-in visitor to the bare root a ReferenceError and a fallback
+   download of EVERY surface, which the self-heal hid as mere slowness. */
+test('"#/" resolves to the customer surface for everyone, matching the route it feeds', () => {
+  assert.match(source, /if\(route==='#\/'\|\|route===''\)return 'customer';/);
+  assert.match(indexHtml, /\}\)\|\|hash===''\|\|hash==='#\/';/);
+  assert.doesNotMatch(indexHtml, /\/\^sb-\.\+-auth-token\$\//,
+    'the preloader must not branch on sign-in state for a route that never varies by it');
+  // the router rule this mirrors: "#/" dispatches to the customer renderer unconditionally
+  assert.match(source, /if\(h==='#\/'\|\|h==='#\/customer'\|\|h==='#\/customer\/register'\|\|h\.startsWith\('#\/customer\?'\)\) return renderCustomerRegistration\(isRouteCurrent\)/);
 });
 
 test('only the core is loaded eagerly', () => {

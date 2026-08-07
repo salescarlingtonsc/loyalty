@@ -28,7 +28,13 @@ test('customer programme makes up to six promotions primary and keeps identity/p
 
 test('customer consumes the server-limited linked-business promotion projection',()=>{
   assert.match(wallet,/customer_get_promotions_v155/);
-  assert.match(wallet,/p_business:businessId,p_branch:selectedBranchId\|\|null,p_locale:'en'/);
+  /* V201 (owner: "customer view only have 1 company instead of multiple branch"). This used to
+     pin p_branch:selectedBranchId||null. selectedBranchId is WORKSPACE state, so a staff member
+     who is also a customer carried their branch scope into their own customer view and silently
+     lost the other outlets' offers. The customer sees the firm; a promotion restricted to one
+     outlet says so in its own terms. The v178 sheet path already read firm-wide — this is the
+     wallet catching up, not a new rule. */
+  assert.match(wallet,/p_business:businessId,p_branch:null,p_locale:'en'/);
   assert.match(wallet,/Array\.isArray\(promotionsResult\.data\?\.items\)\?promotionsResult\.data\.items:\[\]/);
   assert.match(wallet,/const programmeOffersStatus=promotionsResult\.error\?'error':'ready'/);
   assert.match(wallet,/promotionsResult\.error\s*\?\[\]/);
