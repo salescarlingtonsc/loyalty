@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="091590fb18b43c9d9587ca17aa539233f8e0190f5c333d056aaf312b22e93066"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="93e2123d8750f16be71dde2992c73bbaab1a4b6f9d9b555a437ac59e4e309fc0"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -203,6 +203,21 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .tier-dialog-dirty-v237:empty{min-height:0}
 .btn.tier-save-dirty-v237{box-shadow:0 0 0 3px var(--tint)}
 .tier-benefit-row-v235 input{flex:1 1 180px;margin:0}
+/* V238: one discount control — a drag bar and a typed percentage, two views of one value.
+   The row keeps a 44px touch target and the range gets a visible focus ring, because a bare
+   range input has almost no default focus affordance. */
+.tier-benefit-row-v235 input[readonly]{background:var(--tint);color:var(--muted);cursor:default}
+.tier-benefit-derived-v238{flex:1 1 100%;margin:0}
+.tier-discount-v238{margin-top:12px}
+.tier-discount-row-v238{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:44px}
+.tier-discount-row-v238 input[type=range]{flex:1 1 180px;min-width:140px;height:44px;margin:0;padding:0;border:0;background:transparent;accent-color:var(--coral)}
+.tier-discount-row-v238 input[type=range]:focus-visible{outline:2px solid var(--coral);outline-offset:3px;border-radius:var(--r-sm)}
+.tier-discount-num-v238{display:flex;align-items:center;gap:6px;flex:0 0 auto;font-weight:650;color:var(--ink)}
+.tier-discount-num-v238 input{width:88px;min-height:44px;margin:0;text-align:right}
+@media(max-width:390px){
+  .tier-discount-row-v238 input[type=range]{flex:1 1 100%}
+  .tier-discount-num-v238{flex:1 1 100%;justify-content:flex-end}
+}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
@@ -1692,7 +1707,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 091590fb18b43c9d9587ca17aa539233f8e0190f5c333d056aaf312b22e93066</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 93e2123d8750f16be71dde2992c73bbaab1a4b6f9d9b555a437ac59e4e309fc0</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3113,7 +3128,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'091590fb18b43c9d9587ca17aa539233f8e0190f5c333d056aaf312b22e93066',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'93e2123d8750f16be71dde2992c73bbaab1a4b6f9d9b555a437ac59e4e309fc0',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

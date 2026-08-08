@@ -42,7 +42,9 @@ test('an exact reward or Add route leaves only the requested reward form',()=>{
 
 test('isolated draft saves and Done return to the single Grow overview',()=>{
   assert.match(loyalty,/const finishGrowEditorV139=\(\)=>editorIntent\?nav\('#\/grow'\):nav\('#\/loyalty'\)/);
-  assert.match(loyalty,/\$\('rwClose'\)\.onclick=finishGrowEditorV139/);
+  // V238 put the editor in a dialog: Done closes the dialog when open, and still leaves the
+  // editor when it is not. Same intent — Done never strands the owner inside an editor.
+  assert.match(loyalty,/\$\('rwClose'\)\.onclick=\(\)=>document\.getElementById\('rewardDialogV238'\)\?closeRewardDialogV238\(true\):finishGrowEditorV139\(\)/);
   assert.match(loyalty,/finishGrowEditorV139\(\);/);
   assert.match(loyalty,/Birthday benefit draft saved[\s\S]{0,240}?nav\('#\/grow'\)/);
 });

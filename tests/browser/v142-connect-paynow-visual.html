@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="14ed7f00037bfd6e9f0abbe546e1099007e5d5773bd02443823d5da9a8c200c4"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="afbd563ab97b79c4fb79578a701a93c94f48a9a241f7c74002219b1069ff9948"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -203,6 +203,21 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .tier-dialog-dirty-v237:empty{min-height:0}
 .btn.tier-save-dirty-v237{box-shadow:0 0 0 3px var(--tint)}
 .tier-benefit-row-v235 input{flex:1 1 180px;margin:0}
+/* V238: one discount control — a drag bar and a typed percentage, two views of one value.
+   The row keeps a 44px touch target and the range gets a visible focus ring, because a bare
+   range input has almost no default focus affordance. */
+.tier-benefit-row-v235 input[readonly]{background:var(--tint);color:var(--muted);cursor:default}
+.tier-benefit-derived-v238{flex:1 1 100%;margin:0}
+.tier-discount-v238{margin-top:12px}
+.tier-discount-row-v238{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:44px}
+.tier-discount-row-v238 input[type=range]{flex:1 1 180px;min-width:140px;height:44px;margin:0;padding:0;border:0;background:transparent;accent-color:var(--coral)}
+.tier-discount-row-v238 input[type=range]:focus-visible{outline:2px solid var(--coral);outline-offset:3px;border-radius:var(--r-sm)}
+.tier-discount-num-v238{display:flex;align-items:center;gap:6px;flex:0 0 auto;font-weight:650;color:var(--ink)}
+.tier-discount-num-v238 input{width:88px;min-height:44px;margin:0;text-align:right}
+@media(max-width:390px){
+  .tier-discount-row-v238 input[type=range]{flex:1 1 100%}
+  .tier-discount-num-v238{flex:1 1 100%;justify-content:flex-end}
+}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
@@ -1693,7 +1708,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 14ed7f00037bfd6e9f0abbe546e1099007e5d5773bd02443823d5da9a8c200c4</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · afbd563ab97b79c4fb79578a701a93c94f48a9a241f7c74002219b1069ff9948</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -3576,7 +3591,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'14ed7f00037bfd6e9f0abbe546e1099007e5d5773bd02443823d5da9a8c200c4',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'afbd563ab97b79c4fb79578a701a93c94f48a9a241f7c74002219b1069ff9948',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="8d7c4dc17e6a7a19dcedaf46ca07f9a1a7864582e1921724327d1fd93be85839"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="d8f76ffad6730021e0f66a1ac0e7a631fd46a507b2c54a53c05c421877a39120"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -202,6 +202,21 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .tier-dialog-dirty-v237:empty{min-height:0}
 .btn.tier-save-dirty-v237{box-shadow:0 0 0 3px var(--tint)}
 .tier-benefit-row-v235 input{flex:1 1 180px;margin:0}
+/* V238: one discount control — a drag bar and a typed percentage, two views of one value.
+   The row keeps a 44px touch target and the range gets a visible focus ring, because a bare
+   range input has almost no default focus affordance. */
+.tier-benefit-row-v235 input[readonly]{background:var(--tint);color:var(--muted);cursor:default}
+.tier-benefit-derived-v238{flex:1 1 100%;margin:0}
+.tier-discount-v238{margin-top:12px}
+.tier-discount-row-v238{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:44px}
+.tier-discount-row-v238 input[type=range]{flex:1 1 180px;min-width:140px;height:44px;margin:0;padding:0;border:0;background:transparent;accent-color:var(--coral)}
+.tier-discount-row-v238 input[type=range]:focus-visible{outline:2px solid var(--coral);outline-offset:3px;border-radius:var(--r-sm)}
+.tier-discount-num-v238{display:flex;align-items:center;gap:6px;flex:0 0 auto;font-weight:650;color:var(--ink)}
+.tier-discount-num-v238 input{width:88px;min-height:44px;margin:0;text-align:right}
+@media(max-width:390px){
+  .tier-discount-row-v238 input[type=range]{flex:1 1 100%}
+  .tier-discount-num-v238{flex:1 1 100%;justify-content:flex-end}
+}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}

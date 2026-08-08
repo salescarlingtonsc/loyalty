@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="cfbadafedb6ad2d08ab3af2fab9d6ac04db3897c8ca991b12aba49cc0f576dec"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="dee087e2a0eb0efc90e62f2dfa16e08b08cb534e494c16c45b0905f227c5f0e7"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -204,6 +204,21 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .tier-dialog-dirty-v237:empty{min-height:0}
 .btn.tier-save-dirty-v237{box-shadow:0 0 0 3px var(--tint)}
 .tier-benefit-row-v235 input{flex:1 1 180px;margin:0}
+/* V238: one discount control — a drag bar and a typed percentage, two views of one value.
+   The row keeps a 44px touch target and the range gets a visible focus ring, because a bare
+   range input has almost no default focus affordance. */
+.tier-benefit-row-v235 input[readonly]{background:var(--tint);color:var(--muted);cursor:default}
+.tier-benefit-derived-v238{flex:1 1 100%;margin:0}
+.tier-discount-v238{margin-top:12px}
+.tier-discount-row-v238{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:44px}
+.tier-discount-row-v238 input[type=range]{flex:1 1 180px;min-width:140px;height:44px;margin:0;padding:0;border:0;background:transparent;accent-color:var(--coral)}
+.tier-discount-row-v238 input[type=range]:focus-visible{outline:2px solid var(--coral);outline-offset:3px;border-radius:var(--r-sm)}
+.tier-discount-num-v238{display:flex;align-items:center;gap:6px;flex:0 0 auto;font-weight:650;color:var(--ink)}
+.tier-discount-num-v238 input{width:88px;min-height:44px;margin:0;text-align:right}
+@media(max-width:390px){
+  .tier-discount-row-v238 input[type=range]{flex:1 1 100%}
+  .tier-discount-num-v238{flex:1 1 100%;justify-content:flex-end}
+}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
@@ -2512,6 +2527,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'cfbadafedb6ad2d08ab3af2fab9d6ac04db3897c8ca991b12aba49cc0f576dec',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'dee087e2a0eb0efc90e62f2dfa16e08b08cb534e494c16c45b0905f227c5f0e7',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

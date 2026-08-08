@@ -88,7 +88,9 @@ test('every editable Grow submodule offers a stable return to the one overview',
 test('reward completion returns to the Grow overview instead of leaving the owner in an editor',()=>{
   assert.match(app,/id="rwClose" type="button">Done<\/button>/);
   assert.match(app,/const finishGrowEditorV139=\(\)=>editorIntent\?nav\('#\/grow'\):nav\('#\/loyalty'\)/);
-  assert.match(app,/\$\('rwClose'\)\.onclick=finishGrowEditorV139/);
+  // V238 put the editor in a dialog: Done closes the dialog when open, and still leaves the
+  // editor when it is not. Same intent — Done never strands the owner inside an editor.
+  assert.match(app,/\$\('rwClose'\)\.onclick=\(\)=>document\.getElementById\('rewardDialogV238'\)\?closeRewardDialogV238\(true\):finishGrowEditorV139\(\)/);
   assert.match(app,/toast\('Draft reward saved'\);\s*finishGrowEditorV139\(\)/);
 });
 

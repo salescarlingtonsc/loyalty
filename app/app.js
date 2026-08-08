@@ -8982,13 +8982,26 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null){
 /* V182: the benefits SMEs actually offer, in customer-facing words. */
 const TIER_BENEFIT_PRESETS_V182=Object.freeze([
   {label:'Birthday treat every year',text:'Birthday treat every year'},
-  {label:'5% off every visit',text:'5% off every visit'},
-  {label:'10% off every visit',text:'10% off every visit'},
   {label:'Priority booking',text:'Priority booking'},
   {label:'First access to new services',text:'First access to new services'},
   {label:'Free add-on with every visit',text:'Free add-on with every visit'},
   {label:'A welcome gift when they reach this tier',text:'A welcome gift when you reach this tier'}
 ]);
+/* V238: two tier benefit lines are DERIVED, not typed — the owner reported a Diamond tier
+   reading "50% more points on every spend" beside a 1.25x multiplier, because the recommended-
+   tiers helper wrote the sentence once and nothing ever revisited it. The multiplier owns the
+   bonus line and the discount slider owns the discount line; perk_note stays the same newline-
+   joined field, so storage, publish and the customer card are untouched. */
+const BONUS_POINTS_LINE_RE_V238=/^\d+(\.\d+)?% more points on every spend$/i;
+const DISCOUNT_LINE_RE_V238=/^\d+(\.\d+)?% off every visit$/i;
+function bonusPointsLineV238(multiplier){
+  const pct=Math.round((Number(multiplier)-1)*100);
+  return Number.isFinite(pct)&&pct>0?`${pct}% more points on every spend`:'';
+}
+function discountLineV238(pct){
+  const rounded=Math.round(Number(pct));
+  return Number.isFinite(rounded)&&rounded>0?`${rounded}% off every visit`:'';
+}
 /* The threshold means different things per firm, so the help text must follow tier_basis
    rather than hardcode "points" — a spend-based ladder saying "points" is simply wrong. */
 function tierBasisHelpV182(program){
@@ -13156,6 +13169,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   /* Two "% off" lines are not merged or deleted — the owner's data is the owner's. It is
      flagged where it will be read, because the customer is shown both. */
   const tierDuplicateDiscountV235=(tier)=>tierBenefitLines(tier).filter(line=>/^\d+% off/.test(line)).length>1;
+  /* V238 (owner: "there should not be points redemption for tiered membership - why can use
+     points for free moisturizer?"). In tiers mode points build a tier and are never spent, so a
+     benefit line carrying a points price is a contradiction left over from an earlier mode. The
+     line is the owner's data: it is flagged where it is read, never rewritten or deleted. */
+  const tierPointPricedBenefitV238=(line)=>loyaltySelectionV230==='tiers'&&/\(\d+ points\)$/i.test(String(line||''));
   const tierRows=()=>`
     <b style="display:block;margin-top:18px">${loyaltySelectionV230==='tiers'?'Your tiers':'Tiers (optional)'}</b>
     ${tiers.length&&!loyaltyActiveV235?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but the programme Status above is Paused. Set Status to Active, then ${draftVersionId?'Review & publish':'Save'} — that is the whole fix.</p></div>`:''}
@@ -13167,7 +13185,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     <p class="muted small" style="margin-top:6px">Tiers are based on lifetime ${esc(tierBasisWordV235)} — spending points never drops anyone down.</p>
     ${tiers.length?tiers.map(t=>{const state=tierBoundary(t),benefits=tierBenefitLines(t);return `<div class="reward-item" style="margin-top:8px"><div class="meta"><div>
       <b>${esc(t.name)}</b><p class="muted small" style="margin-top:4px">${esc(tierRequirementLineV235(t))}${Number(t.points_multiplier)>1?` · earns ${t.points_multiplier}× ${unit}`:''}</p>
-      ${benefits.length?`<ul class="rec-why" style="margin-top:8px">${benefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:6px">No benefits added yet.</p>'}
+      ${benefits.length?`<ul class="rec-why" style="margin-top:8px">${benefits.map(benefit=>`<li>${esc(benefit)}${tierPointPricedBenefitV238(benefit)?'<p class="loyalty-flag-v235" style="margin-top:6px">This benefit still charges points, which a tiered programme never spends. Edit the tier to reword it.</p>':''}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:6px">No benefits added yet.</p>'}
       ${tierDuplicateDiscountV235(t)?'<p class="loyalty-flag-v235" style="margin-top:8px">Two discounts are listed — customers see both. Keep the one you mean.</p>':''}
       ${t.effective_from||t.expires_at?`<p class="muted small" style="margin-top:6px">${t.effective_from?`Starts ${esc(walletDate(t.effective_from,true))}`:'Starts now'}${t.expires_at?` · Ends ${esc(walletDate(t.expires_at,true))}`:''}</p>`:''}</div><span class="spacer"></span><span class="pill ${state.tone}">${state.label}</span>
       ${canManageLoyalty?`<button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit tier</button>
@@ -13189,7 +13207,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <div class="tier-benefit-picks" id="trBenefitPicks">
         ${TIER_BENEFIT_PRESETS_V182.map((preset,index)=>`<label class="tier-benefit-pick"><input type="checkbox" data-tier-benefit="${esc(preset.text)}" id="trBenefitPick${index}"><span>${esc(preset.label)}</span></label>`).join('')}
       </div>
-      ${rewards.filter(reward=>reward.active!==false).length?`<div class="row" style="margin-top:10px;flex-wrap:wrap;align-items:center"><span class="muted small">Or add one of your rewards:</span>${(()=>{const live=rewards.filter(reward=>reward.active!==false);
+      <div class="tier-discount-v238">
+        <label for="trDiscountRangeV238">Discount on every visit</label>
+        <div class="tier-discount-row-v238">
+          <input type="range" id="trDiscountRangeV238" min="0" max="100" step="1" value="0" aria-describedby="trDiscountHelpV238">
+          <span class="tier-discount-num-v238"><input type="number" id="trDiscountPctV238" min="0" max="100" step="1" value="0" aria-label="Discount percent on every visit"><span aria-hidden="true">%</span></span>
+        </div>
+        <p class="muted small" id="trDiscountHelpV238" style="margin-top:5px">Drag or type. 0 means no discount. One discount per tier — customers only ever see this one.</p>
+      </div>
+      ${loyaltySelectionV230!=='tiers'&&rewards.filter(reward=>reward.active!==false).length?`<div class="row" style="margin-top:10px;flex-wrap:wrap;align-items:center"><span class="muted small">Or add one of your rewards:</span>${(()=>{const live=rewards.filter(reward=>reward.active!==false);
         /* V237: two rewards can carry the same customer name, so the picker showed two
            identical chips. Name collisions fall back to the internal name to tell them apart —
            the benefit line written into perk_note is unchanged. */
@@ -13759,7 +13785,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <div class="row" style="margin-top:16px"><button class="btn" id="rwSave">${reward?'Save changes':'Create reward'}</button><span class="spacer"></span>${reward?'<button class="btn danger sm" id="rwArchive" type="button">Archive</button>':''}</div>
     </div>`;
     if(isExactRewardIntentV139)pruneRewardSiblingsV139(routeMain);
-    $('rwClose').onclick=finishGrowEditorV139;
+    /* V238: Done closes the dialog when the editor is inside one; outside a dialog it keeps its
+       original behaviour of leaving the editor. openRewardDialogV238 rebinds it after this
+       render so the opener also regains focus. */
+    $('rwClose').onclick=()=>document.getElementById('rewardDialogV238')?closeRewardDialogV238(true):finishGrowEditorV139();
     const kind=$('rwKind'),creditWrap=$('rwCreditWrap');
     const syncKind=()=>{creditWrap.style.display=kind.value==='credit'?'block':'none';if(kind.value!=='credit')$('rwCredit').value='0'};
     kind.onchange=syncKind;syncKind();
@@ -13781,6 +13810,38 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(model!=='stamps'){$('rwEstimate').addEventListener('input',syncPointsFromBudget);$('rwPointCost').addEventListener('input',syncPointsFromBudget);syncPointsFromBudget()}
     $('rwSave').onclick=()=>saveReward(false);
     const archive=$('rwArchive');if(archive)archive.onclick=()=>saveReward(true);
+  }
+  /* V238 (owner: "i cannot edit the reward"). #rwEditor sits BELOW the whole reward list, so
+     pressing Edit rendered a form far off screen and read as a dead button. Same move as V236:
+     the ONE editor node is moved into a dialog and moved back on close — there is no second
+     copy of the reward form, so every handler bound by openRewardEditor travels with it. */
+  function openRewardDialogV238(title,opener){
+    const editor=$('rwEditor');
+    if(!editor||document.getElementById('rewardDialogV238'))return;
+    if(!document.getElementById('rewardDialogHomeV238')){
+      const home=document.createElement('span');
+      home.id='rewardDialogHomeV238';home.hidden=true;editor.before(home);
+    }
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="rewardDialogV238" role="dialog" aria-modal="true" aria-labelledby="rewardDialogTitleV238" tabindex="-1"><div class="modal-card" style="max-width:680px;max-height:min(85vh,780px);overflow:auto">
+      <div class="row" style="justify-content:space-between;align-items:center;gap:10px"><h2 id="rewardDialogTitleV238" style="margin:0">${esc(title||'Edit reward')}</h2><button class="btn ghost sm" type="button" id="rewardDialogCloseV238">Close</button></div>
+      <div id="rewardDialogSlotV238" style="margin-top:12px"></div>
+    </div></div>`);
+    const dialog=document.getElementById('rewardDialogV238');
+    dialog.querySelector('#rewardDialogSlotV238').append(editor);
+    const close=()=>{closeRewardDialogV238(true);opener?.focus?.()};
+    dialog.querySelector('#rewardDialogCloseV238').onclick=close;
+    dialog.onclick=e=>{if(e.target===dialog)close()};
+    dialog.onkeydown=e=>{if(e.key==='Escape')close()};
+    const done=$('rwClose');if(done)done.onclick=close;
+    $('rwCustomerName')?.focus({preventScroll:true});
+  }
+  function closeRewardDialogV238(restore){
+    const dialog=document.getElementById('rewardDialogV238');if(!dialog)return;
+    const editor=dialog.querySelector('#rwEditor');
+    const home=document.getElementById('rewardDialogHomeV238');
+    /* Restoring empties the editor: an inline form under the list is the bug this fixed. */
+    if(editor&&home&&restore){home.after(editor);editor.innerHTML=''}
+    dialog.remove();
   }
   async function saveReward(archive){
     const customerName=$('rwCustomerName').value.trim();
@@ -13825,6 +13886,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
     if(!isLoyaltyCurrent())return;
     if(saveError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(saveError)}
+    closeRewardDialogV238(false);
     if(!draftVersionId){
       toast('Reward draft saved — review it before anything changes for customers');
       openProtectedGrowPublishReview(versionId);return;
@@ -13833,15 +13895,24 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     finishGrowEditorV139();
   }
   const ra=$('rwAdd');
-  if(ra) ra.onclick=()=>openRewardEditor(null);
-  document.querySelectorAll('.rwEdit').forEach(b=>b.onclick=()=>openRewardEditor(
-    rewards.find(reward=>rewardId(reward)===b.dataset.rewardId)));
+  if(ra) ra.onclick=()=>{openRewardEditor(null);openRewardDialogV238('New reward',ra)};
+  document.querySelectorAll('.rwEdit').forEach(b=>b.onclick=()=>{
+    const reward=rewards.find(item=>rewardId(item)===b.dataset.rewardId);
+    openRewardEditor(reward);
+    openRewardDialogV238(reward?`Edit reward — ${rewardLabel(reward)}`:'Edit reward',b);
+  });
   let editingTier=null;
   let tierBaselineV237=null,tierDirtyV237=false;
   const fillTier=(tier)=>{editingTier=tier;$('trName').value=tier?.name||'';
     $('trTh').value=tier?.threshold??'';$('trMul').value=tier?.points_multiplier??'';
     $('trPerk').value=tierBenefitLines(tier).join('\n');
     $('trFrom').value=boundaryInputValue(tier?.effective_from);$('trUntil').value=boundaryInputValue(tier?.expires_at);
+    /* V238: the stored bonus-points sentence is corrected against the stored multiplier, and the
+       discount controls are read back out of perk_note. Both run BEFORE resetTierBaselineV237,
+       so merely opening a tier whose line disagreed with its multiplier is not reported as
+       unsaved work — the corrected line IS the baseline. */
+    syncTierBonusPointsLineV238();
+    syncTierDiscountControlsFromPerkV238();
     /* V182: reflect the tier being edited back into the tick boxes, so opening an existing tier
        shows what it already gives instead of an empty set of boxes beside a full textarea.
        A benefit that is not one of the presets simply stays as a line in the textarea. */
@@ -13893,8 +13964,49 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   /* V235: perk_note is still ONE newline-joined field. These are structured rows over it, so a
      benefit is an editable line with its own Remove instead of a free-text block. */
   const discountBenefitV235=(text)=>/^\d+% off/.test(String(text||''));
+  /* V238: one perk_note line, replaced in place. Returning false on a no-op keeps a plain
+     re-render from being mistaken for an owner edit. */
+  function tierPerkReplaceLineV238(pattern,line){
+    const textarea=$('trPerk');if(!textarea)return false;
+    const lines=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+    const at=lines.findIndex(value=>pattern.test(value));
+    if(line){if(at>=0)lines[at]=line;else lines.push(line)}
+    else if(at>=0)lines.splice(at,1);
+    const next=lines.join('\n');
+    if(next===textarea.value)return false;
+    textarea.value=next;return true;
+  }
+  function syncTierBonusPointsLineV238(){
+    return tierPerkReplaceLineV238(BONUS_POINTS_LINE_RE_V238,bonusPointsLineV238($('trMul')?.value));
+  }
+  function setTierDiscountControlsV238(pct){
+    const rounded=Math.round(Number(pct));
+    const clamped=Number.isFinite(rounded)?Math.min(100,Math.max(0,rounded)):0;
+    const range=$('trDiscountRangeV238'),number=$('trDiscountPctV238');
+    if(range)range.value=String(clamped);
+    if(number)number.value=String(clamped);
+    return clamped;
+  }
+  function syncTierDiscountControlsFromPerkV238(){
+    const lines=String($('trPerk')?.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+    const match=lines.find(line=>DISCOUNT_LINE_RE_V238.test(line));
+    return setTierDiscountControlsV238(match?parseFloat(match):0);
+  }
+  function applyTierDiscountV238(raw){
+    const pct=setTierDiscountControlsV238(raw);
+    tierPerkReplaceLineV238(DISCOUNT_LINE_RE_V238,discountLineV238(pct));
+    tierBenefitRowsRenderV235();syncTierBenefitPicksV182();markTierDirtyV237();
+  }
+  /* A derived row is shown, but not typed into — the control above owns the wording. */
+  function tierDerivedBenefitHintV238(value){
+    const line=String(value||'');
+    if(BONUS_POINTS_LINE_RE_V238.test(line))return 'Set by Points earning speed above';
+    if(DISCOUNT_LINE_RE_V238.test(line))return 'Set by the discount slider above';
+    return '';
+  }
   function tierBenefitRowMarkupV235(index,value){
-    return `<label class="sr-only" for="trBenefit${index}V235">Benefit ${index+1}</label><input id="trBenefit${index}V235" data-tier-benefit-row-v235="${index}" value="${esc(value||'')}" placeholder="e.g. Free add-on with every visit"><button type="button" class="btn ghost sm" data-tier-benefit-remove-v235="${index}" aria-label="Remove this benefit">Remove</button>`;
+    const derived=tierDerivedBenefitHintV238(value);
+    return `<label class="sr-only" for="trBenefit${index}V235">Benefit ${index+1}</label><input id="trBenefit${index}V235" data-tier-benefit-row-v235="${index}" value="${esc(value||'')}"${derived?` readonly aria-describedby="trBenefitHint${index}V238"`:''} placeholder="e.g. Free add-on with every visit"><button type="button" class="btn ghost sm" data-tier-benefit-remove-v235="${index}" aria-label="Remove this benefit">Remove</button>${derived?`<p class="muted small tier-benefit-derived-v238" id="trBenefitHint${index}V238">${esc(derived)}</p>`:''}`;
   }
   function tierBenefitRowsCommitV235(){
     const host=$('trBenefitRowsV235'),textarea=$('trPerk');
@@ -13930,7 +14042,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   }
   function tierBenefitRowBindV235(row){
     row.querySelector('[data-tier-benefit-row-v235]').oninput=tierBenefitRowsCommitV235;
-    row.querySelector('[data-tier-benefit-remove-v235]').onclick=()=>{row.remove();tierBenefitRowsCommitV235()};
+    row.querySelector('[data-tier-benefit-remove-v235]').onclick=()=>{
+      /* V238: removing a derived line must reset its owning control, or the next keystroke on
+         that control would simply write the line back. */
+      const value=row.querySelector('[data-tier-benefit-row-v235]')?.value||'';
+      if(BONUS_POINTS_LINE_RE_V238.test(value)&&$('trMul'))$('trMul').value='1';
+      if(DISCOUNT_LINE_RE_V238.test(value))setTierDiscountControlsV238(0);
+      row.remove();tierBenefitRowsCommitV235()};
   }
   function tierBenefitRowsRenderV235(){
     const host=$('trBenefitRowsV235'),textarea=$('trPerk');
@@ -13986,6 +14104,24 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   ['trName','trTh','trMul','trFrom','trUntil'].forEach(id=>{
     const field=$(id);if(field)field.addEventListener('input',markTierDirtyV237);
   });
+  /* V238: the multiplier is the single author of the bonus-points sentence. */
+  const trMulFieldV238=$('trMul');
+  if(trMulFieldV238){
+    const applyMultiplierV238=()=>{
+      syncTierBonusPointsLineV238();
+      tierBenefitRowsRenderV235();syncTierBenefitPicksV182();markTierDirtyV237();
+    };
+    trMulFieldV238.addEventListener('input',applyMultiplierV238);
+    trMulFieldV238.addEventListener('change',applyMultiplierV238);
+  }
+  /* One discount control, two views of it. Because the pair owns exactly one line, a tier can
+     no longer be given two discounts from this form at all. */
+  ['trDiscountRangeV238','trDiscountPctV238'].forEach(id=>{
+    const field=$(id);if(!field)return;
+    const applyV238=()=>applyTierDiscountV238(field.value);
+    field.addEventListener('input',applyV238);
+    field.addEventListener('change',applyV238);
+  });
   const trBenefitAddV235=$('trBenefitAddV235');
   if(trBenefitAddV235)trBenefitAddV235.onclick=()=>{
     const host=$('trBenefitRowsV235');if(!host)return;
@@ -14018,6 +14154,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     tierBenefitRowsRenderV235();markTierDirtyV237();
   });
   document.querySelectorAll('.trBenefitReward').forEach(button=>button.onclick=()=>{
+    /* V238: defence in depth — tiers mode renders no chips, and never accepts one either. */
+    if(loyaltySelectionV230==='tiers')return;
     const textarea=$('trPerk'),benefit=button.dataset.benefit||'';
     const existing=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
     if(benefit&&!existing.includes(benefit))textarea.value=[...existing,benefit].join('\n');
