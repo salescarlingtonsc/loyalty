@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="828c0fdd579a61753fe5973c95622a42bf719c2a4d7dde1e95df2610f7d94cc3"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ff5629751a519c11ff9576363c89eebc8241aa1f92b6a8e619b563f21a992ed2"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -949,15 +949,26 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    is a good result and must not render as an alarm. */
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
-.staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
+.staff-row-line{display:flex;flex-direction:column;align-items:stretch;gap:6px}
 /* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
    The row was a flex wrap, so a field landed at a different x-position on every line and could
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
 :root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
-.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
+/* V260 (owner: Owner & managers vs Roster only tables had different column widths, and the
+   App-access/module pills collided with POSITION/COMMISSION text). Root cause: .staff-row-open
+   used to flex-grow to fill whatever space its sibling pills+buttons left over, and that
+   leftover varied per row (an owner row has one status line; a roster row has two pills plus
+   three buttons) — so the SAME grid template rendered at a different pixel width per row,
+   drifting the columns and squeezing the last cells into the pills next to them. Giving the
+   name/phone/email/position/commission grid its own full-width row, with the pills and action
+   buttons on a second row underneath, makes .staff-row-open always render at the row's full
+   width — identical to the header's — regardless of how many badges or buttons a given
+   teammate has, and removes the possibility of the two ever touching. */
+.staff-row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px}
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
@@ -1092,6 +1103,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .report-decision-card .task-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--coral);position:relative;z-index:1}
 .report-decision-card b{margin-top:13px;font-size:16px;position:relative;z-index:1}.report-decision-card>span:not(.task-icon):not(.report-card-visual){margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4;position:relative;z-index:1}
 .report-card-visual{display:flex;gap:5px;margin-top:auto;padding-top:14px;position:relative;z-index:1}.report-card-visual i{display:block;width:24px;height:8px;border-radius:999px;background:rgba(202,62,50,.22)}.report-card-visual i:nth-child(2){width:34px;background:rgba(202,62,50,.38)}.report-card-visual i:nth-child(3){width:18px;background:rgba(202,62,50,.16)}
+/* V260: three "…answer" collapsibles folded into their matching decision card — the card
+   itself is now a <details>, its clickable face a <summary> laid out exactly like the old
+   button face (icon/title/body/dots), with the marker triangle suppressed and the answer
+   body appearing below once expanded. */
+details.report-decision-card{overflow:visible}
+details.report-decision-card>summary{display:flex;flex-direction:column;align-items:flex-start;width:100%;cursor:pointer;list-style:none}
+details.report-decision-card>summary::-webkit-details-marker{display:none}
+details.report-decision-card>summary::marker{content:''}
+details.report-decision-card[open]{align-items:stretch;grid-column:1/-1}
+details.report-decision-card[open]>summary{margin-bottom:14px}
+details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .schedule-suggestion{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
 .schedule-suggestion h3{font-size:14px}.schedule-suggestion-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 .calendar-week-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;max-height:70vh}

@@ -13681,12 +13681,23 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       sellingCents:Number(item.price_cents||0),costCents:null}))
   ];
   const rewardCatalogueByKey=new Map(rewardCatalogueSources.map(item=>[`${item.type}|${item.id}`,item]));
-  const pointCostSamples=(rw||[]).filter(reward=>Number(reward.cost_points)>0&&Number(reward.estimated_cost_cents)>0);
-  const estimatedPointCostCents=pointCostSamples.length
-    ?pointCostSamples.reduce((sum,reward)=>sum+Number(reward.estimated_cost_cents),0)
-      /pointCostSamples.reduce((sum,reward)=>sum+Number(reward.cost_points),0)
-    :Number(p?.redeem_points)>0&&Number(p?.reward_credit_cents)>0
-      ?Number(p.reward_credit_cents)/Number(p.redeem_points):1;
+  /* V262 (owner: "cost per point is not something that firm can easily change during setting
+     up of certain rewards. it must be at 'point system'"). Cost per point is a programme-wide
+     economic constant, so there is exactly ONE of it and it belongs to the programme, not to a
+     reward. redeem_points and reward_credit_cents already express that same quantity — what one
+     point costs the business in credit — so the ratio is surfaced as the single source of truth
+     rather than storing a second number that could disagree with it. Rewards already saved are
+     only a fallback for a programme that has never set the pair, and a programme with neither
+     falls back to one cent so the reward maths can never divide by zero or print NaN. */
+  const pointCostSamplesV262=(rw||[]).filter(reward=>Number(reward.cost_points)>0&&Number(reward.estimated_cost_cents)>0);
+  const pointCostBasisPointsV262=Number(p?.redeem_points)>0?Math.round(Number(p.redeem_points)):800;
+  const programmePointCostCentsV262=Number(p?.redeem_points)>0&&Number(p?.reward_credit_cents)>0
+    ?Number(p.reward_credit_cents)/Number(p.redeem_points)
+    :pointCostSamplesV262.length
+      ?pointCostSamplesV262.reduce((sum,reward)=>sum+Number(reward.estimated_cost_cents),0)
+        /pointCostSamplesV262.reduce((sum,reward)=>sum+Number(reward.cost_points),0)
+      :1;
+  const pointCostLabelV262=(cents)=>`${S.biz.currency||'SGD'} ${(Number(cents)/100).toFixed(3)}`;
   const tierBenefitLines=tier=>String(tier?.perk_note||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
   const boundaryInputValue=(value)=>{
     if(!value)return '';
@@ -13944,9 +13955,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>
           <p class="muted small" style="margin-top:4px">Stack several milestones below — e.g. 3 stamps = free drink, 8 stamps = $5 credit or a "10% off" benefit. Each is its own reward with its own stamp cost.</p>`
         :`<label for="le">Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>`}
+      ${model==='stamps'||model==='classic'?'':`<label for="lpc">Cost per point (${S.biz.currency||'SGD'})</label><input id="lpc" type="number" min="0.001" step="0.001" value="${(programmePointCostCentsV262/100).toFixed(3)}"${loyaltyControlDisabled}>
+        <p class="muted small" style="margin-top:4px">What one point costs your business. Every reward uses this to work out its point price.</p>`}
       ${model==='classic'
         ?`<label for="lr">Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
           <label for="lc">Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}"${loyaltyControlDisabled}>
+          <p class="muted small" id="lpcDerivedV262" data-point-cost-cents="${programmePointCostCentsV262}" style="margin-top:4px">Cost per point: ${esc(pointCostLabelV262(programmePointCostCentsV262))}. Every reward uses this to work out its point price.</p>
           <div class="gb-meter is-blank" id="gbMeter"></div>`:''}
       <details class="loyalty-advanced-v235" id="loyaltyAdvancedV235" style="margin-top:18px"><summary>Advanced settings</summary>
       <label for="lx">${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx" aria-controls="lxdField"${loyaltyControlDisabled}>
@@ -14270,6 +14284,29 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   });
   const loyaltyStyleInput=$('lmStyle');
   if(loyaltyStyleInput)loyaltyStyleInput.onchange=()=>refreshLoyaltyPanel(loyaltyStyleInput.value,draftVersionId,recommendation,'Redemption style preview updated — Save to apply.',false,editorIntent);
+  /* V262: in the fixed-redeem model the two numbers above ARE the cost per point, so it is
+     shown derived instead of typed — a third editable field could only contradict them. */
+  const pointCostDerivedV262=$('lpcDerivedV262');
+  if(pointCostDerivedV262&&$('lr')&&$('lc')){
+    const syncPointCostDerivedV262=()=>{
+      const points=parseFloat($('lr').value),credit=parseFloat($('lc').value);
+      const cents=points>0&&credit>0?(credit*100)/points:programmePointCostCentsV262;
+      pointCostDerivedV262.dataset.pointCostCents=String(cents);
+      pointCostDerivedV262.textContent=`Cost per point: ${pointCostLabelV262(cents)}. Every reward uses this to work out its point price.`;
+    };
+    $('lr').addEventListener('input',syncPointCostDerivedV262);
+    $('lc').addEventListener('input',syncPointCostDerivedV262);
+    syncPointCostDerivedV262();
+  }
+  /* V262: every surface that needs cost per point asks THIS, so the reward editor and the
+     Point system can never be looking at two different numbers — including before a Save. */
+  const currentPointCostCentsV262=()=>{
+    const typed=$('lpc');
+    if(typed){const typedCents=parseFloat(typed.value)*100;if(typedCents>0)return typedCents}
+    const derived=$('lpcDerivedV262');
+    if(derived){const derivedCents=Number(derived.dataset.pointCostCents);if(derivedCents>0)return derivedCents}
+    return programmePointCostCentsV262>0?programmePointCostCentsV262:1;
+  };
   if($('lx')&&$('lxd')&&$('lxdField'))bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
   document.querySelectorAll('[data-bo-expiry]').forEach(modeInput=>{
     const idx=modeInput.dataset.boExpiry;
@@ -14333,6 +14370,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     else row.earn_points_per_dollar=parseFloat($('le').value||'1');
     if(model==='classic'){row.redeem_points=parseInt($('lr').value||'800');
       row.reward_credit_cents=Math.round(parseFloat($('lc').value||'20')*100)}
+    /* V262: outside fixed redeem the owner types the cost per point directly, and it is stored
+       as the SAME redeem_points ÷ reward_credit_cents ratio the fixed-redeem model edits by
+       hand. One stored quantity, so the Point system and every reward always agree, and no new
+       column (and no unapplied migration) stands between the owner and their own number. */
+    if(model!=='classic'&&$('lpc')){
+      const pointCostV262=parseFloat($('lpc').value);
+      if(!(pointCostV262>0)){toast('Enter a cost per point greater than zero');$('lpc').focus();return}
+      row.redeem_points=pointCostBasisPointsV262;
+      row.reward_credit_cents=Math.round(pointCostV262*100*pointCostBasisPointsV262);
+    }
     if(model==='points_tiers'&&$('ltb')){
       row.tier_basis=$('ltb').value; /* V258: saved unchanged — no basis is coerced any more. */
     }
@@ -14398,7 +14445,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
         <div><label>${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4"></div>
         <div><label>Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
-        ${model==='stamps'?'':`<div><label>Estimated company cost per point (${S.biz.currency||'SGD'})</label><input id="rwPointCost" type="number" min="0.001" step="0.001" value="${(estimatedPointCostCents/100).toFixed(3)}"></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
+        ${model==='stamps'?'':`<div><label>Cost per point</label><output id="rwPointCostV262" style="display:block;margin-top:4px;font-weight:600">${esc(pointCostLabelV262(currentPointCostCentsV262()))}</output><p class="muted small help">Set once for the whole programme. <button class="btn ghost sm" id="rwPointCostEditV262" type="button">Change in Point system</button></p></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
         <div><label>Fulfilment</label><select id="rwKind"><option value="manual_item" ${rewardKind(r)==='manual_item'?'selected':''}>Manual item or benefit</option><option value="credit" ${rewardKind(r)==='credit'?'selected':''}>Store credit</option></select></div>
         <div id="rwCreditWrap"><label>Store credit value (${S.biz.currency||'SGD'})</label><input id="rwCredit" type="number" min="0" step="0.01" value="${((r.credit_cents||0)/100).toFixed(2)}" placeholder="e.g. 3.00"></div>
         <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
@@ -14434,10 +14481,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     kind.onchange=syncKind;syncKind();
     const syncPointsFromBudget=()=>{
       if(model==='stamps')return;
-      const budget=parseFloat($('rwEstimate').value),pointCost=parseFloat($('rwPointCost').value);
-      if(!(budget>0)||!(pointCost>0)){$('rwPointsMath').textContent='Enter the company cost and cost per point to calculate the required whole points.';return}
-      const points=Math.max(1,Math.ceil(budget/pointCost));$('rwCost').value=String(points);
-      $('rwPointsMath').innerHTML=`<b>${points} points</b><br><span class="small">${esc(money(Math.round(budget*100)))} ÷ ${esc(money(Math.round(pointCost*100)))} per point, rounded up.</span>`;
+      const budget=parseFloat($('rwEstimate').value),pointCostCents=currentPointCostCentsV262();
+      const pointCostOut=$('rwPointCostV262');
+      if(pointCostOut)pointCostOut.textContent=pointCostLabelV262(pointCostCents);
+      if(!(budget>0)||!(pointCostCents>0)){$('rwPointsMath').textContent='Enter the company cost budget to calculate the required whole points.';return}
+      const points=Math.max(1,Math.ceil((budget*100)/pointCostCents));$('rwCost').value=String(points);
+      $('rwPointsMath').innerHTML=`<b>${points} points</b><br><span class="small">${esc(money(Math.round(budget*100)))} ÷ ${esc(pointCostLabelV262(pointCostCents))} per point, rounded up.</span>`;
     };
     const syncCatalogueSource=()=>{
       const item=rewardCatalogueByKey.get($('rwCatalogueSource').value);
@@ -14447,7 +14496,20 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       if(item.costCents!=null)$('rwEstimate').value=(item.costCents/100).toFixed(2);syncPointsFromBudget();
     };
     $('rwCatalogueSource').onchange=syncCatalogueSource;
-    if(model!=='stamps'){$('rwEstimate').addEventListener('input',syncPointsFromBudget);$('rwPointCost').addEventListener('input',syncPointsFromBudget);syncPointsFromBudget()}
+    if(model!=='stamps'){
+      $('rwEstimate').addEventListener('input',syncPointsFromBudget);
+      /* V262: the pointer has to be true. When the Point system control is on the page the
+         button goes to it; when this editor was opened alone (V139 prunes the siblings) there
+         is nothing to jump to, so it names the place in words instead of faking navigation. */
+      $('rwPointCostEditV262').onclick=()=>{
+        if(document.getElementById('rewardDialogV238'))closeRewardDialogV238(true);
+        const target=$('lpc')||$('lr');
+        if(!target)return toast('Cost per point is set in Loyalty → Point system');
+        target.scrollIntoView({block:'center',behavior:'smooth'});
+        target.focus();
+      };
+      syncPointsFromBudget();
+    }
     $('rwSave').onclick=()=>saveReward(false);
     const archive=$('rwArchive');if(archive)archive.onclick=()=>saveReward(true);
   }
@@ -17858,7 +17920,8 @@ function growPublishFieldRowsV170(live,draft){
      draft can carry stale values with zero customer effect. Listing them made an inert change
      read as "Points needed to redeem 1500 → 150", which looks like a serious downgrade and
      stops an owner from publishing a correct draft. Stamp fields are likewise classic/stamps-
-     irrelevant outside the stamps model. */
+     irrelevant outside the stamps model. V262 narrows that ruling: the PAIR stays hidden, but
+     the ratio it now also carries (cost per point) is listed on its own row below. */
   const model=String(draft?.loyalty_model||live?.loyalty_model||'');
   const usesClassicRedemption=model==='classic';
   const usesStamps=model==='stamps';
@@ -17868,6 +17931,15 @@ function growPublishFieldRowsV170(live,draft){
     {label:'Points earned per $1 spent',read:p=>num(p?.earn_points_per_dollar),show:plain,when:!usesStamps},
     {label:'Points needed to redeem',read:p=>num(p?.redeem_points),show:plain,when:usesClassicRedemption},
     {label:'Credit minted on redemption',read:p=>num(p?.reward_credit_cents),show:v=>v==null?'not set':studioMoney(v),when:usesClassicRedemption},
+    /* V262: outside fixed redeem the same pair is no longer inert — it now carries the one
+       programme-wide cost per point that prices every reward, so publishing it is a real
+       change for the business and has to be shown as the quantity the owner actually typed. */
+    {label:'Cost per point',read:p=>{
+      const points=num(p?.redeem_points),cents=num(p?.reward_credit_cents);
+      return points>0&&cents>0?Math.round((cents/points)*1000)/1000:null;
+      /* Three decimals, not studioMoney: a point costs a fraction of a cent and rounding it to
+         two would print two different costs as the same number on a publish gate. */
+    },show:v=>v==null?'not set':(v/100).toFixed(3),when:!usesClassicRedemption&&!usesStamps},
     {label:'Stamps needed for a reward',read:p=>num(p?.stamp_target),show:plain,when:usesStamps},
     {label:'Spend per stamp',read:p=>num(p?.stamp_per_cents),show:v=>v==null?'not set':studioMoney(v),when:usesStamps},
     {label:'Tier level is earned by',read:p=>text(p?.tier_basis),show:v=>v==null?'not set':(GROW_PUBLISH_TIER_BASIS_LABEL_V175[v]||v),when:model==='points_tiers'},

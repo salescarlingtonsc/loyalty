@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="72a6cc269cf8dc5697f3046b388ef9a842d274d461ff73bfe6fa026342419d6f"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="a6ccd50b3df4115d25fd35d84b161bee869fc8abbd871b778a36427833acbcec"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -950,15 +950,26 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    is a good result and must not render as an alarm. */
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
-.staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
+.staff-row-line{display:flex;flex-direction:column;align-items:stretch;gap:6px}
 /* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
    The row was a flex wrap, so a field landed at a different x-position on every line and could
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
 :root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
-.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
+/* V260 (owner: Owner & managers vs Roster only tables had different column widths, and the
+   App-access/module pills collided with POSITION/COMMISSION text). Root cause: .staff-row-open
+   used to flex-grow to fill whatever space its sibling pills+buttons left over, and that
+   leftover varied per row (an owner row has one status line; a roster row has two pills plus
+   three buttons) — so the SAME grid template rendered at a different pixel width per row,
+   drifting the columns and squeezing the last cells into the pills next to them. Giving the
+   name/phone/email/position/commission grid its own full-width row, with the pills and action
+   buttons on a second row underneath, makes .staff-row-open always render at the row's full
+   width — identical to the header's — regardless of how many badges or buttons a given
+   teammate has, and removes the possibility of the two ever touching. */
+.staff-row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px}
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
@@ -1093,6 +1104,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .report-decision-card .task-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--coral);position:relative;z-index:1}
 .report-decision-card b{margin-top:13px;font-size:16px;position:relative;z-index:1}.report-decision-card>span:not(.task-icon):not(.report-card-visual){margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4;position:relative;z-index:1}
 .report-card-visual{display:flex;gap:5px;margin-top:auto;padding-top:14px;position:relative;z-index:1}.report-card-visual i{display:block;width:24px;height:8px;border-radius:999px;background:rgba(202,62,50,.22)}.report-card-visual i:nth-child(2){width:34px;background:rgba(202,62,50,.38)}.report-card-visual i:nth-child(3){width:18px;background:rgba(202,62,50,.16)}
+/* V260: three "…answer" collapsibles folded into their matching decision card — the card
+   itself is now a <details>, its clickable face a <summary> laid out exactly like the old
+   button face (icon/title/body/dots), with the marker triangle suppressed and the answer
+   body appearing below once expanded. */
+details.report-decision-card{overflow:visible}
+details.report-decision-card>summary{display:flex;flex-direction:column;align-items:flex-start;width:100%;cursor:pointer;list-style:none}
+details.report-decision-card>summary::-webkit-details-marker{display:none}
+details.report-decision-card>summary::marker{content:''}
+details.report-decision-card[open]{align-items:stretch;grid-column:1/-1}
+details.report-decision-card[open]>summary{margin-bottom:14px}
+details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .schedule-suggestion{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
 .schedule-suggestion h3{font-size:14px}.schedule-suggestion-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 .calendar-week-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;max-height:70vh}
@@ -1792,7 +1814,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 72a6cc269cf8dc5697f3046b388ef9a842d274d461ff73bfe6fa026342419d6f</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · a6ccd50b3df4115d25fd35d84b161bee869fc8abbd871b778a36427833acbcec</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3015,9 +3037,25 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
+  }else if(prog){
+    /* V259: a programme that EXISTS but is paused is not the same thing as one that was never
+       built. Saying "not set up yet" about a paused programme is what sent the owner looking for
+       a bug in the earn engine. */
+    rewardsMarkup='<p class="muted small" style="margin-top:7px">This programme is paused, so nothing can be redeemed right now. The owner can resume it from Grow.</p>';
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
   }
+  /* V259 (owner: "points not fixed yet - does not sync with actual points"). Nothing is wrong
+     with the earn engine. staff_get_customer_actionable_loyalty_v145 reports 0 ACTIONABLE points
+     while a programme is paused (`case when program.enabled ... else 0 end`), and the customer
+     wallet's customer_get_wallet does exactly the same on `coalesce(lp.active,false)` — so both
+     surfaces agree, and both show 0. What neither said is WHY. points_ledger still holds every
+     point ever earned, and the history dialog below shows them. This one muted line is the
+     difference between "paused" and "your points vanished". */
+  const programmePausedV259=loyaltyFactsAvailable&&!!prog&&prog.active!==true;
+  const pointsPausedNoteV259=programmePausedV259
+    ?'<p class="muted small customer360-points-paused-v259" style="margin-top:7px;line-height:1.4">Programme paused — sales are not earning points right now. Points already earned stay in the history.</p>'
+    :'';
   const pointsUnit=prog?.unit==='stamps'?'stamps':'points';
   const nextExpiryLabel=nextExp
     ?`${nextExp.remaining} ${pointsUnit} expire ${new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(nextExp.expires_at))}`
@@ -3027,7 +3065,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   /* V249: two KPI cards, not four. Visits and Lifetime spend are chips on the identity line
      above; Points carries its expiry note and the two moved collapsibles. */
   const profileKpis=[
-    loyaltyFactsAvailable?`<div class="card kpi customer360-points-card-v249"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v">${pts}</div>${pointsExpiryMarkup}${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}</div>`:'',
+    loyaltyFactsAvailable?`<div class="card kpi customer360-points-card-v249"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v"><button type="button" id="c360PointsHistoryV259" class="customer360-points-open-v259" aria-haspopup="dialog" aria-label="View points history" style="background:none;border:0;padding:0;margin:0;font:inherit;font-variant-numeric:tabular-nums;color:inherit;letter-spacing:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:5px">${pts}</button></div>${pointsPausedNoteV259}${pointsExpiryMarkup}${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}</div>`:'',
     loyaltyFactsAvailable?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Spendable credit':'Business-wide spendable credit'}</div><div class="v">${money(cred)}</div></div>`:''
   ].filter(Boolean).join('');
   const referralMarkup=canReadReferrals?`<p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
@@ -3089,6 +3127,103 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   routeMain.querySelector('.cui-page-title h1')?.setAttribute('data-merchant-content','');
   /* Header quick actions. Every handler routes to an existing surface — no new write path is
      introduced here. */
+  /* V259 (owner: "not clickable to see where the points came from"). The POINTS number now opens
+     the customer's own points ledger — newest first, with what happened, what it came from, the
+     signed amount and a running balance.
+
+     Source: public.points_ledger itself, scoped to this business AND this customer. It is read
+     under the table's existing `points_select` RLS policy (app.has_perm(business_id,'view_sales')),
+     the same policy the reports page already reads it with, and the button only exists inside a
+     card that canReadLoyalty has already gated. No new RPC, no new privilege, no second copy of
+     the balance — the KPI number still comes from staff_get_customer_actionable_loyalty_v145.
+
+     The dialog is opened from the PAGE, never from another dialog, so it needs no V248
+     handOffHistory / inheritHistoryId hand-off: it owns its single history entry outright. */
+  let pointsHistoryResultV259=null;
+  async function loadPointsHistoryV259(){
+    if(pointsHistoryResultV259)return pointsHistoryResultV259;
+    const {data,error}=await fetchAllRowsResult(()=>sb.from('points_ledger')
+      .select('id,created_at,entry_type,points,sale_id,reference',{count:'exact'})
+      .eq('business_id',S.biz.id).eq('client_id',id)
+      .order('created_at',{ascending:true}).order('id'));
+    if(error)return {error};
+    pointsHistoryResultV259={rows:data||[]};
+    return pointsHistoryResultV259;
+  }
+  function pointsHistoryRowHtmlV259(entry,balance){
+    const sale=entry.sale_id?saleById[entry.sale_id]:null;
+    const amount=Number(entry.points)||0;
+    const type=String(entry.entry_type||'');
+    const what=type==='earn'?'Earned from a sale'
+      :type==='redeem'?'Redeemed for a reward'
+      :type==='expire'?'Points expired'
+      :type==='adjust'?'Manual adjustment'
+      :'Points movement';
+    /* The SOURCE is never invented. A sale already loaded on this page prints its own amount and
+       date; a sale this role cannot see says so rather than pretending; anything else prints the
+       reason the ledger row itself recorded. */
+    const source=sale?`Sale · ${money(Number(sale.amount_cents)||0)} · ${esc(String(sale.occurred_at||'').slice(0,10))}`
+      :entry.sale_id?'Sale · not visible to this role'
+      :esc(String(entry.reference||'').trim()||'No source recorded');
+    return `<tr>
+      <td data-label="When">${esc(sgt(entry.created_at)||'—')}</td>
+      <td data-label="What happened">${esc(what)}</td>
+      <td data-label="Source">${source}</td>
+      <td data-label="Points" style="text-align:right;font-variant-numeric:tabular-nums">${amount>0?'+':''}${amount}</td>
+      <td data-label="Balance" style="text-align:right;font-variant-numeric:tabular-nums">${balance}</td>
+    </tr>`;
+  }
+  async function renderPointsHistoryBodyV259(){
+    const body=$('c360PointsHistoryBodyV259');
+    if(!body)return;
+    body.innerHTML=CUI.loadingState({title:'Loading points history',iconName:'loyalty'});
+    const result=await loadPointsHistoryV259();
+    if(!body.isConnected)return;
+    if(result.error){
+      body.innerHTML=CUI.errorState({
+        title:'Points history unavailable',
+        message:result.error.message||'The points ledger could not be read.',
+        retryId:'c360PointsHistoryRetryV259'
+      });
+      const retry=$('c360PointsHistoryRetryV259');
+      if(retry)retry.onclick=()=>{pointsHistoryResultV259=null;renderPointsHistoryBodyV259()};
+      return;
+    }
+    const rows=result.rows;
+    if(!rows.length){
+      body.innerHTML=CUI.emptyState({
+        iconName:'loyalty',
+        title:'No points movements yet',
+        body:'Nothing has been earned, redeemed, expired or adjusted for this customer.'
+      });
+      return;
+    }
+    let running=0;
+    const withBalance=rows.map(entry=>{running+=Number(entry.points)||0;return {entry,balance:running}});
+    body.innerHTML=`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Points history">
+      <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th style="text-align:right">Points</th><th style="text-align:right">Balance</th></tr></thead>
+      <tbody>${withBalance.slice().reverse().map(row=>pointsHistoryRowHtmlV259(row.entry,row.balance)).join('')}</tbody></table></div>
+      <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}. ${programmePausedV259
+        ?'The card behind this dialog shows 0 because the programme is paused — these points were not removed.'
+        :'Every recorded movement is listed; the ledger is append-only and is never edited in place.'}</p>`;
+    CUI.enhance(body);
+  }
+  function openPointsHistoryV259(){
+    if(document.getElementById('c360PointsHistoryDialogV259'))return;
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="c360PointsHistoryDialogV259" role="dialog" aria-modal="true" aria-labelledby="c360PointsHistoryTitleV259" tabindex="-1"><div class="modal-card" style="max-width:720px;max-height:min(85vh,760px);overflow:auto">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px"><div><p class="eyebrow">Points history</p><h2 id="c360PointsHistoryTitleV259" style="margin-top:4px">${esc(c.full_name)}</h2></div><button class="btn ghost sm" type="button" id="c360PointsHistoryCloseV259">Close</button></div>
+      ${pointsPausedNoteV259}
+      <div id="c360PointsHistoryBodyV259" style="margin-top:12px"></div>
+    </div></div>`);
+    const dialog=$('c360PointsHistoryDialogV259');
+    let deactivate=null;
+    const close=()=>{const release=deactivate;deactivate=null;release?.({restoreFocus:true})};
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#c360PointsHistoryCloseV259'});
+    $('c360PointsHistoryCloseV259').onclick=close;
+    dialog.onclick=event=>{if(event.target===dialog)close()};
+    renderPointsHistoryBodyV259();
+  }
+  if($('c360PointsHistoryV259'))$('c360PointsHistoryV259').onclick=()=>openPointsHistoryV259();
   if($('c360QuickEarn'))$('c360QuickEarn').onclick=goQuickEarn;
   if($('c360FeedbackRetry'))$('c360FeedbackRetry').onclick=()=>clientDetail(id);
   if($('c360BirthdayRetry'))$('c360BirthdayRetry').onclick=()=>clientDetail(id);
@@ -3310,35 +3445,29 @@ function renderHistPage(history,n){
   const returningGate=createLatestRequestGate(isCurrent);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const canSeeReturningAnswer=canReadModule('clients')&&hasRoleCapability('view_finance');
+  /* V260: the owner struck out the three "…answer" collapsibles that sat below the scope
+     card and drew arrows moving each one INTO its matching decision card (Money answer ->
+     Sales & revenue, Busy-time answer -> Appointments & busy times, Returning-customer
+     answer -> Customer retention). Rather than keep a button that reveals a details section
+     elsewhere on the page, each decision card IS now the <details>/<summary> collapsible:
+     detailsId/bodyId below are exactly the ids the existing runMoney/runBusy/runReturning
+     and the answerLoaders toggle-listener (further down this function) already target, so
+     no other logic had to move — only where the markup lives. */
   const decisions=[
-    {id:'moneyAnswer',tone:'sales',icon:'reports',title:'Sales & revenue',body:'Revenue, reversals, liabilities and exports.'},
-    canReadModule('appointments')&&{id:'busyAnswer',tone:'appointments',icon:'appointments',title:'Appointments & busy times',body:'Booked hours, outcomes and scheduled capacity.'},
-    canSeeReturningAnswer&&{id:'returningAnswer',tone:'retention',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.'},
+    {detailsId:'moneyDetails',bodyId:'rbody',tone:'sales',icon:'reports',title:'Sales & revenue',body:'Revenue, reversals, liabilities and exports.',emptyBody:'Select this card, then run the report for this period.'},
+    canReadModule('appointments')&&{detailsId:'busyDetails',bodyId:'busyBody',tone:'appointments',icon:'appointments',title:'Appointments & busy times',body:'Booked hours, outcomes and scheduled capacity.',emptyBody:'Select this card, then run the report for this period.'},
+    canSeeReturningAnswer&&{detailsId:'returningDetails',bodyId:'returningBody',tone:'retention',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.',emptyBody:'Select this card, then run the report for this period.'},
     canReadModule('staffperf')&&{href:'#/staffperf',tone:'team',icon:'staff',title:'Team performance',body:'Staff activity and performance.'}
   ].filter(Boolean);
   M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div>
-    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<button type="button" class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.id}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></button>`).join('')}</div>
+    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<details class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.detailsId}"><summary><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></summary>
+      <div class="grid reports-grid" id="${item.bodyId}"><div class="card">${CUI.emptyState({iconName:item.icon,title:'Choose a report category',body:item.emptyBody})}</div></div></details>`).join('')}</div>
     <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
       <span id="branchWrap"></span><button class="btn sm" id="rgo">Run report</button>
-      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div></div>
-    <details class="card" id="moneyDetails"><summary style="cursor:pointer;font-weight:750">Money answer</summary>
-      <div class="grid reports-grid" id="rbody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a report category',body:'Select Sales & revenue, then run the report for this period.'})}</div></div></details>
-    ${canReadModule('appointments')?`<details class="card" id="busyDetails"><summary style="cursor:pointer;font-weight:750">Busy-time answer</summary>
-      <div class="grid reports-grid" id="busyBody"><div class="card">${CUI.emptyState({iconName:'appointments',title:'Choose a report category',body:'Select Appointments & busy times, then run the report for this period.'})}</div></div></details>`:''}
-    ${canSeeReturningAnswer?`<details class="card" id="returningDetails"><summary style="cursor:pointer;font-weight:750">Returning-customer answer</summary>
-      <div class="grid reports-grid" id="returningBody"><div class="card">${CUI.emptyState({iconName:'customers',title:'Choose a report category',body:'Select Customer retention, then run the report for this period.'})}</div></div></details>`:''}`;
-  const scriptedAnswerToggles=new WeakSet();
-  const revealAnswer=id=>{
-    const details=$(id);if(!details)return;
-    if(!details.open){scriptedAnswerToggles.add(details);details.open=true}
-    details.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-  };
+      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div></div>`;
   const runAnswer=runner=>runner().catch(error=>{if(isCurrent())fail(error)});
-  $('moneyAnswer').onclick=()=>{revealAnswer('moneyDetails');runAnswer(runMoney)};
-  if($('busyAnswer'))$('busyAnswer').onclick=()=>{revealAnswer('busyDetails');runAnswer(runBusy)};
-  if($('returningAnswer'))$('returningAnswer').onclick=()=>{revealAnswer('returningDetails');runAnswer(runReturning)};
   let lastScope=null;
   const answerRange=()=>{
     const from=$('rf').value,to=$('rt2').value;
@@ -3600,12 +3729,11 @@ function renderHistPage(history,n){
     ['returningDetails',runReturning]
   ].filter(([id])=>Boolean($(id)));
   for(const [id,runner] of answerLoaders){
+    /* V260: each decision card is now the <details> element itself (see the report-decision-grid
+       markup above) — there is no separate button that opens it AND calls the runner, so a plain
+       native toggle listener is the only trigger and cannot double-fire on one click. */
     $(id).addEventListener('toggle',event=>{
-      /* Setting details.open dispatches a trusted toggle event in browsers. Suppress that
-         one event because the question-card handler already invoked the runner; otherwise
-         one user action performs the same remote report twice. */
-      if(scriptedAnswerToggles.delete(event.currentTarget))return;
-      if(event.isTrusted&&event.currentTarget.open)runAnswer(runner);
+      if(event.currentTarget.open)runAnswer(runner);
     });
   }
   const runOpenAnswers=()=>Promise.all(answerLoaders
@@ -3649,7 +3777,7 @@ function renderHistPage(history,n){
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
   M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div>
-    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><span id="branchWrap"></span><button class="btn sm" id="drGo">Generate</button>
+    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
   $('drPrint').onclick=()=>window.print();
@@ -3767,7 +3895,13 @@ function renderHistPage(history,n){
       backgroundColor:kindValues.map(value=>value<0?'#C83F35':coral),borderRadius:8}]},
       options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
   }
-  refreshBranchFilter(()=>{invalidate();load()},isCurrent);
+  /* V260: the per-page branch picker (and its "waiting for payment" notice) was struck
+     out — the top bar already carries the single branch scope for the whole app, and
+     `scope.branchId` above already reads it straight from selectedBranchId. Changing the
+     top-bar branch triggers a full route() re-render (see hydrateProfileBranchSelectorV158),
+     which re-enters this page and reloads with the new scope, so no local re-fetch trigger
+     is needed here. */
+  invalidate();load();
 }
   async function expensesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -4155,7 +4289,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'72a6cc269cf8dc5697f3046b388ef9a842d274d461ff73bfe6fa026342419d6f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'a6ccd50b3df4115d25fd35d84b161bee869fc8abbd871b778a36427833acbcec',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

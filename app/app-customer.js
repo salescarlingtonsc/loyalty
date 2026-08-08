@@ -2399,10 +2399,12 @@ function customerTierPanelMarkupV194(tier={}){
   })();
   const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
   /* V240: when a firm runs both, the customer holds two independent things — a tier they climb
-     and points they spend. Saying so once here stops "will redeeming cost me my tier?". */
-  const bothNoteV240=String(tier.points_mode||'')==='both'
-    ?`<p class="muted small" style="margin-top:6px">Visits move you up. Points stay yours to spend.</p>`:'';
-  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV240}
+     and points they spend. Saying so once here stops "will redeeming cost me my tier?".
+     V258: the sentence now reads the firm's actual basis. 'points_earned' counts LIFETIME
+     points earned, which redemption never reduces, so the reassurance is still true there. */
+  const bothNoteV258=String(tier.points_mode||'')==='both'
+    ?`<p class="muted small" style="margin-top:6px">${basis==='points_earned'?'Points you earn move you up — spending them never lowers your tier.':basis==='spend'?'What you spend moves you up. Points stay yours to spend.':'Visits move you up. Points stay yours to spend.'}</p>`:'';
+  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV258}
     ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
     <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
       :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
