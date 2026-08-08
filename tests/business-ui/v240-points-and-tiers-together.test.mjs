@@ -83,7 +83,11 @@ test('V240 reward chips return in both, and stay hidden in pure tiers', () => {
 test('V240 the wallet shows the ladder and the rewards together', () => {
   // The ladder hides ONLY in redeem; the rewards list is replaced ONLY in tiers.
   assert.match(app, /if\(String\(tier\.points_mode\|\|''\)==='redeem'\)\{\s*\n\s*return '';/);
-  assert.match(app, /if\(String\(data\?\.points_mode\|\|''\)==='tiers'\)\{/);
+  /* V241: the catalog became an object {rewards, points_mode} because appending the mode to
+     the rewards ARRAY made data.points_mode unreadable — the wallet now reads a shape-tolerant
+     walletPointsModeV241 and the gate fires on it. */
+  assert.match(app, /if\(walletPointsModeV241==='tiers'\)\{/);
+  assert.match(app, /Array\.isArray\(data\?\.rewards\)\?data\.rewards:\[\]/);
   // And a customer in 'both' is told the two are independent.
   assert.match(app, /bothNoteV240=String\(tier\.points_mode\|\|''\)==='both'/);
   assert.match(app, /Visits move you up\. Points stay yours to spend\./);
@@ -96,4 +100,16 @@ test('V240 the overview can show two live models at once', () => {
   // The stamp card is still exclusive with the points engine — 'both' never marks it live.
   assert.doesNotMatch(app, /liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'\?\[[^\]]*'stamps'/);
   assert.match(app, /data-points-mode-v229="both"/, 'the first-run chooser offers it too');
+});
+
+test('V241 the catalog payload is an object and the wallet tolerates both shapes', () => {
+  /* Found verifying the owner's $10 scenario: jsonb array || object APPENDS, so the V230 mode
+     marker was an extra array element the client could never read as data.points_mode. */
+  const wallet = app.slice(app.indexOf('const loadRewards=async()=>'), app.indexOf('const redemptionEnabled='));
+  assert.match(wallet, /walletCatalogV241=\(Array\.isArray\(data\)\?data:\(Array\.isArray\(data\?\.rewards\)\?data\.rewards:\[\]\)\)/);
+  // Phantom entries (objects with no name) can never render as rewards again.
+  assert.match(wallet, /filter\(item=>item&&typeof item==='object'&&\(item\.customer_name\|\|item\.name\)\)/);
+  // The old array shape still yields a mode during the deploy window.
+  assert.match(wallet, /'points_mode' in item&&!\('cost_points' in item\)/);
+  assert.match(wallet, /const catalog=walletCatalogV241;/);
 });

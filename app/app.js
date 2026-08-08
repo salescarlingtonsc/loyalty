@@ -5440,10 +5440,19 @@ async function renderCustomerWallet(businessSlug=null){
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?'Rewards are not available for this account.':'Rewards could not be loaded.',loadRewards,error);
+    /* V241: the catalog is an OBJECT {rewards, points_mode}. The V230 shape appended the mode
+       to the rewards ARRAY, where data.points_mode does not exist — so the mode never arrived
+       and the stray element could render as a phantom reward. Both shapes are accepted here so
+       a cached bundle and the new server (or vice versa) cannot strand the wallet. */
+    const walletCatalogV241=(Array.isArray(data)?data:(Array.isArray(data?.rewards)?data.rewards:[]))
+      .filter(item=>item&&typeof item==='object'&&(item.customer_name||item.name));
+    const walletPointsModeV241=String((Array.isArray(data)
+      ?(data.find(item=>item&&typeof item==='object'&&'points_mode' in item&&!('cost_points' in item))||{}).points_mode
+      :data?.points_mode)||'');
     /* V230: this firm uses points for tier membership. There is nothing to redeem — the server
        refuses intents too — so the section says what points DO here instead of listing rewards
        that cannot be claimed. */
-    if(String(data?.points_mode||'')==='tiers'){
+    if(walletPointsModeV241==='tiers'){
       host.setAttribute('aria-busy','false');
       host.innerHTML=`<div class="card customer-home-offers-state"><b>Your points build your tier</b><p class="muted small" style="margin-top:6px">Every point earned here counts toward your membership tier and its benefits — there is nothing to redeem. Your tier and what it unlocks are shown above.</p></div>`;
       return;
@@ -5454,7 +5463,7 @@ async function renderCustomerWallet(businessSlug=null){
       ...(classicAction?[classicAction]:[]),
       ...(Array.isArray(actionsResult.data?.rewards)?actionsResult.data.rewards:[])
     ];
-    const catalog=Array.isArray(data)?data:[];
+    const catalog=walletCatalogV241;
     const rewards=actionRewards.length?actionRewards.map(actionReward=>{
       if(actionReward.redemption_kind==='classic_points'){
         return {...actionReward,customer_name:actionReward.name||'Redeem points',

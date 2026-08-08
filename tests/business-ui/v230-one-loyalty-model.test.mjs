@@ -72,6 +72,10 @@ test('V230 the customer portal tells one story from the same switch', () => {
   assert.match(migration, /''points_mode'',\(select points_mode from public\.businesses where id=p_business\)/);
   // Client: redeem mode hides the tier ladder; tiers mode replaces the rewards list.
   assert.match(app, /if\(String\(tier\.points_mode\|\|''\)==='redeem'\)\{\s*return '';/);
-  assert.match(app, /if\(String\(data\?\.points_mode\|\|''\)==='tiers'\)\{/);
+  /* V241: the catalog became an object {rewards, points_mode} because appending the mode to
+     the rewards ARRAY made data.points_mode unreadable — the wallet now reads a shape-tolerant
+     walletPointsModeV241 and the gate fires on it. */
+  assert.match(app, /if\(walletPointsModeV241==='tiers'\)\{/);
+  assert.match(app, /Array\.isArray\(data\?\.rewards\)\?data\.rewards:\[\]/);
   assert.match(app, /Your points build your tier<\/b>/);
 });
