@@ -95,10 +95,12 @@ test('customer secondary routes are namespaced and cannot intercept merchant Boo
 
 test('customer navigation keeps destinations focused while notifications and profile live in the header',()=>{
   const nav=section('const CUSTOMER_PRIMARY_NAV=Object.freeze([','function customerPrimaryNavigation(');
-  /* v244 (owner's Grab-style reference): five slots — Home · Rewards · Scan · Explore · Bookings,
-     Scan as the raised centre action. It is a BUTTON, not a route, so it still cannot intercept
-     merchant navigation, and it stays wired through the same id on every page. */
+  /* v244 (owner's Grab-style reference): Scan is the raised centre action — a BUTTON, not a
+     route, so it still cannot intercept merchant navigation, and it stays wired through the same
+     id on every page. v248 hid Explore behind CUSTOMER_EXPLORE_LIVE_V248, so the customer sees
+     four slots today and five when it is switched on; the entry itself is still declared here. */
   assert.equal((nav.match(/\{key:/g)||[]).length,5);
+  assert.match(nav,/\.\.\.\(CUSTOMER_EXPLORE_LIVE_V248\?\[\{key:'explore'/);
   for(const [key,href,copy] of [
     ['home','#/wallet','home'],
     ['programmes','#/customer/programmes','rewardsTab'],
@@ -117,7 +119,8 @@ test('customer navigation keeps destinations focused while notifications and pro
   assert.match(navMarkup,/CUI\.icon\(item\.icon/);
   assert.match(navMarkup,/<span>\$\{esc\(ct\(item\.copy\)\)\}<\/span>/);
 
-  assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr 1fr/s);
+  assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr;/s,
+    'four slots while Explore is hidden');
   assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button:not\(\.customer-nav-scan\)\{[^}]*min-height:48px/s);
   assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-primary-nav\{position:fixed[^}]*bottom:/);
 });

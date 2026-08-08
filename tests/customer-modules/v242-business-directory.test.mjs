@@ -41,7 +41,10 @@ const api = new Function('esc', 'ct', 'CUI', 'customerMediaUrlV95', 'customerPoi
   (key) => String(key), { icon: () => '' }, () => '', (value) => String(value));
 
 test('Explore is a real destination with a server-side search', () => {
-  assert.match(appJs, /if\(h==='#\/customer\/explore'\)return renderCustomerExplore\(\);/);
+  /* v248: the owner hid Explore from customers for now. The route resolves to this finished
+     search the moment CUSTOMER_EXPLORE_LIVE_V248 flips — it is gated, not removed, which is why
+     every assertion below still runs against the real code. */
+  assert.match(appJs, /if\(h==='#\/customer\/explore'\)return CUSTOMER_EXPLORE_LIVE_V248\?renderCustomerExplore\(\)/);
   assert.match(appJs, /\{key:'explore',href:'#\/customer\/explore',icon:'search',copy:'explore'\}/);
   assert.match(pageSource, /customerRpc\('customer_explore_businesses_v244',\{\s*\n?\s*p_query:query\|\|null/);
   assert.match(pageSource, /debounce=setTimeout\(/, 'typing must not fire a request per keystroke');
@@ -199,4 +202,36 @@ test('a branch coordinate carries the address it came from, so it can be re-chec
 
 test('a firm with several outlets is as far away as its NEAREST outlet', () => {
   assert.match(nearMigration, /order by\s*\n\s*case when v_lat is null then null\s*\n\s*else app\.v247_distance_km\(v_lat, v_lng, br\.latitude, br\.longitude\) end\s*\n\s*nulls last,/);
+});
+
+/* ----------------------------------------------- v248 · Explore is not offered to customers */
+
+test('Explore is hidden entirely — no tab, and the route refuses', () => {
+  // owner: "just hide the explore button entire (so will not shown to customers)"
+  assert.match(appJs, /const CUSTOMER_EXPLORE_LIVE_V248=false;/);
+  const nav = section('const CUSTOMER_PRIMARY_NAV=Object.freeze([', 'function customerPrimaryNavigation(');
+  assert.match(nav, /\.\.\.\(CUSTOMER_EXPLORE_LIVE_V248\?\[\{key:'explore'/,
+    'the tab is conditional on the flag, not deleted');
+  assert.match(appJs, /if\(h==='#\/customer\/explore'\)return CUSTOMER_EXPLORE_LIVE_V248\?renderCustomerExplore\(\):nav\('#\/wallet'\);/,
+    'a hand-typed URL must not reach a page with no way back into it');
+  assert.doesNotMatch(appJs, /ComingSoon/, 'the coming-soon surface the owner replaced is gone, not orphaned');
+  assert.doesNotMatch(appCss, /customer-coming-soon|peekaaLookAroundV248/, 'its CSS went with it');
+  assert.match(appCss, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr;/,
+    'four slots while Explore is hidden: Home, Rewards, Scan, Bookings');
+});
+
+test('the flag is declared before the navigation reads it', () => {
+  /* A const used above its declaration is a temporal-dead-zone crash at load — the exact failure
+     mode that took the Appointments page down in v217, and one that node --check cannot see. */
+  const declaration = appJs.indexOf('const CUSTOMER_EXPLORE_LIVE_V248=false;');
+  const navUse = appJs.indexOf("...(CUSTOMER_EXPLORE_LIVE_V248?[{key:'explore'");
+  assert.ok(declaration > 0 && navUse > declaration,
+    'CUSTOMER_EXPLORE_LIVE_V248 must be initialised before CUSTOMER_PRIMARY_NAV evaluates it');
+});
+
+test('the finished search is gated, not deleted', () => {
+  assert.match(appJs, /async function renderCustomerExplore\(\)\{/);
+  assert.match(appJs, /customer_explore_businesses_v244/);
+  assert.match(appJs, /function customerExploreResultsMarkupV244/);
+  assert.match(appJs, /function customerExploreDistanceTextV247/);
 });

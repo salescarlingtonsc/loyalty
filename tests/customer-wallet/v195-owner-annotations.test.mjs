@@ -111,11 +111,13 @@ test('the "N linked reward accounts" subtitle is gone, along with its helper', (
 
 /* ------------------------------------------------------------ 3 · Scan QR is an action, not a tab */
 
-test('the scanner is the raised centre of a five-slot nav (v244 Grab-style revamp)', () => {
+test('the scanner is the raised centre of the nav (v244 Grab-style revamp)', () => {
   /* v195 moved Scan to the header; the owner's v244 reference put it back in the nav as the
-     signature centre control, with Explore joining as a real destination. Same action, same id. */
+     signature centre control. v248 then hid Explore from customers, so four slots show today —
+     Scan is still the centre of what they see. */
   const nav = section(appJs, 'const CUSTOMER_PRIMARY_NAV=Object.freeze([', 'function customerPrimaryNavigation(');
   assert.equal((nav.match(/\{key:/g) || []).length, 5);
+  assert.match(appJs, /const CUSTOMER_EXPLORE_LIVE_V248=false;/);
   assert.match(nav, /\{key:'scan',icon:'scan',copy:'scanQr'\}/);
   assert.match(nav, /\{key:'explore',href:'#\/customer\/explore',icon:'search',copy:'explore'\}/);
   assert.ok(nav.indexOf("key:'programmes'") < nav.indexOf("key:'scan'"), 'Scan sits in the centre');
@@ -123,7 +125,7 @@ test('the scanner is the raised centre of a five-slot nav (v244 Grab-style revam
   assert.match(appJs, /id="customerNavScan" class="customer-nav-scan"/);
   assert.match(appJs, /if\(\$\('customerNavScan'\)\)\$\('customerNavScan'\)\.onclick=openCustomerJoinScanner/);
   assert.doesNotMatch(appJs, /customer-head-scan/, 'the header no longer duplicates the scanner');
-  assert.match(indexHtml, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr 1fr/);
+  assert.match(indexHtml, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr;/);
   assert.match(indexHtml, /\.customer-nav-scan-fab\{[^}]*border-radius:999px;background:var\(--grad\)/);
 });
 

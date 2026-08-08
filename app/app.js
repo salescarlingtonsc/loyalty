@@ -1942,7 +1942,7 @@ async function route(){
     if(h==='#/join')return renderCustomerQrJoin();
     if(h==='#/customer/programmes')return renderCustomerProgrammes();
     if(h==='#/customer/bookings')return renderCustomerBookings();
-    if(h==='#/customer/explore')return renderCustomerExplore();
+    if(h==='#/customer/explore')return CUSTOMER_EXPLORE_LIVE_V248?renderCustomerExplore():nav('#/wallet');
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
@@ -2984,6 +2984,12 @@ function applyCustomerNavCountsV194(counts={}){
    destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
    claimed a quarter of the navigation and read like a fourth page. It is now the header control
    next to notifications, on every customer screen, and the nav holds only real destinations. */
+/* v248 (owner: "just hide the explore button entire (so will not shown to customers)"): Explore
+   is not offered at all for now — no tab, and the route refuses rather than rendering a page a
+   customer has no way to reach. The search below is finished, shipped and tested (v245 catalogue
+   search, v247 nearest-first); this ONE constant is the whole switch, so nothing is deleted,
+   nothing is half-wired, and turning it on restores the tab and the route together. */
+const CUSTOMER_EXPLORE_LIVE_V248=false;
 /* v244 (owner, Grab-style reference screenshot): five slots — Home · Rewards · Scan · Explore ·
    Bookings — with Scan as the raised centre control. Scan returned to the nav from the header
    because the reference makes it the app's signature action, not a corner utility; it is still
@@ -2993,7 +2999,7 @@ const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',copy:'home'},
   {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'rewardsTab'},
   {key:'scan',icon:'scan',copy:'scanQr'},
-  {key:'explore',href:'#/customer/explore',icon:'search',copy:'explore'},
+  ...(CUSTOMER_EXPLORE_LIVE_V248?[{key:'explore',href:'#/customer/explore',icon:'search',copy:'explore'}]:[]),
   {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
 ]);
 /* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
