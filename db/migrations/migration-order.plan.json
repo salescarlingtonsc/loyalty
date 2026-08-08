@@ -1551,6 +1551,12 @@
       "path": "db/migrations/20260808_nestly_v245_customer_explore_search.sql",
       "semanticVersion": "v245",
       "proposedDeployVersion": "20260808210000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v246_personas_direct_resolver.sql",
+      "semanticVersion": "v246",
+      "proposedDeployVersion": "20260808220000"
     }
   ]
 }

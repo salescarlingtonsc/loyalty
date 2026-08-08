@@ -1546,6 +1546,12 @@
       "version": "20260808210000",
       "name": "nestly_v245_customer_explore_search",
       "sourcePath": "db/migrations/20260808_nestly_v245_customer_explore_search.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260808220000",
+      "name": "nestly_v246_personas_direct_resolver",
+      "sourcePath": "db/migrations/20260808_nestly_v246_personas_direct_resolver.sql"
     }
   ]
 }
