@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="a6edabd694d6fa8dfe1b78bec4b4cc08824de85b7b76562d5fba10acf9dbca2d"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="e624be3d5eda4247607ffc306e89249b6fcd297139b57802230d5625995af806"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1791,7 +1791,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · a6edabd694d6fa8dfe1b78bec4b4cc08824de85b7b76562d5fba10acf9dbca2d</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e624be3d5eda4247607ffc306e89249b6fcd297139b57802230d5625995af806</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2011,8 +2011,8 @@ function pruneRewardSiblingsV139(root){
   const displayReward=(r)=>r.fulfillment_kind==='credit'?money(r.credit_cents||0)
     :r.fulfillment_kind==='discount_pct'?`${r.discount_percent||0}% off`:esc(r.manual_item||'manual item');
   const versionTools=isOwner?`<div class="card" style="margin-bottom:16px">
-    <div class="row"><div><b>${draftVersionId?'Draft configuration':'Published configuration'}</b>
-      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':currentVersion?'Create a draft before changing retention behavior.':'Publish your loyalty foundation first; retention rules share the same versioned configuration.'}</div></div><span class="spacer"></span>
+    <div class="row"><div><b>${draftVersionId?'Draft — not visible to customers':'Published configuration'}</b>
+      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':currentVersion?'Create a draft before changing retention behavior.':'Publish your loyalty foundation first; retention rules are part of the same programme.'}</div></div><span class="spacer"></span>
       ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Review &amp; publish</button>`
         :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
           :'<a class="btn" href="#/loyalty">Set up loyalty first</a>'}</div>
@@ -2020,7 +2020,7 @@ function pruneRewardSiblingsV139(root){
       <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Versioned return-visit rules with immutable reward behavior and grant history.',iconName:'retention',actions:growBackActionHtmlV138(),canWrite:isOwner,moduleLabel:'Retention configuration'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Return-visit rules customers actually experience, with reward behavior and grant history intact.',iconName:'retention',actions:growBackActionHtmlV138(),canWrite:isOwner,moduleLabel:'Retention configuration'})}
     ${draftVersionId?'':'<section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
     ${versionTools}
     ${exactProgramMissing?`<div class="notice warn" id="retentionExactProgramMissing" role="alert" tabindex="-1" style="margin-bottom:16px"><b>This Bring-back rule is not present in the editable draft.</b><p class="small" style="margin-top:5px">Return to the programme overview and refresh before changing another rule.</p></div>`:''}
@@ -3267,7 +3267,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'a6edabd694d6fa8dfe1b78bec4b4cc08824de85b7b76562d5fba10acf9dbca2d',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'e624be3d5eda4247607ffc306e89249b6fcd297139b57802230d5625995af806',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

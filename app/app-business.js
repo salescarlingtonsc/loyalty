@@ -1689,7 +1689,7 @@ function openReversalDialog(kind,item,onDone){
   const packageNote=kind==='sale'&&item.is_package_session
     ?'<div class="imp-note"><b>Package session use only.</b> This undoes one recorded package session use. No payment refund occurs.</div>':'';
   const loyaltyNote=kind==='redemption'
-    ?`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original points entry, every FEFO batch drain, configuration version, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal.</div>`:'';
+    ?`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original points entry, every FEFO batch drain, the programme rules in effect at the time, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal.</div>`:'';
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="reversalModal" role="dialog" aria-modal="true" aria-labelledby="revTitle" tabindex="-1"><div class="modal-card" style="max-width:560px">
     <div class="row"><div><h2 id="revTitle">${kind==='sale'?'Reverse sale':'Reverse redemption'}</h2><p class="muted small">${kind==='sale'?`Sale ${esc(item.id)} · ${money(Number(item.amount_cents||0))}`:`${esc(item.reward_name||'Reward')} · ${Number(item.points_spent||0)} points`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="revClose">Close</button></div>
     ${packageNote}${loyaltyNote}
@@ -7426,8 +7426,8 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
   const displayReward=(r)=>r.fulfillment_kind==='credit'?money(r.credit_cents||0)
     :r.fulfillment_kind==='discount_pct'?`${r.discount_percent||0}% off`:esc(r.manual_item||'manual item');
   const versionTools=isOwner?`<div class="card" style="margin-bottom:16px">
-    <div class="row"><div><b>${draftVersionId?'Draft configuration':'Published configuration'}</b>
-      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':currentVersion?'Create a draft before changing retention behavior.':'Publish your loyalty foundation first; retention rules share the same versioned configuration.'}</div></div><span class="spacer"></span>
+    <div class="row"><div><b>${draftVersionId?'Draft — not visible to customers':'Published configuration'}</b>
+      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':currentVersion?'Create a draft before changing retention behavior.':'Publish your loyalty foundation first; retention rules are part of the same programme.'}</div></div><span class="spacer"></span>
       ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Review &amp; publish</button>`
         :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
           :'<a class="btn" href="#/loyalty">Set up loyalty first</a>'}</div>
@@ -7435,7 +7435,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Versioned return-visit rules with immutable reward behavior and grant history.',iconName:'retention',actions:growBackActionHtmlV138(),canWrite:isOwner,moduleLabel:'Retention configuration'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Return-visit rules customers actually experience, with reward behavior and grant history intact.',iconName:'retention',actions:growBackActionHtmlV138(),canWrite:isOwner,moduleLabel:'Retention configuration'})}
     ${draftVersionId?'':'<section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
     ${versionTools}
     ${exactProgramMissing?`<div class="notice warn" id="retentionExactProgramMissing" role="alert" tabindex="-1" style="margin-bottom:16px"><b>This Bring-back rule is not present in the editable draft.</b><p class="small" style="margin-top:5px">Return to the programme overview and refresh before changing another rule.</p></div>`:''}
@@ -10181,7 +10181,7 @@ function studioEmergencyPauseActorLabel(actor){
 function studioSetRuleActive(item,active,onDone){
   if(!item||!item.rule_id)return toast('This rule cannot be changed from here.');
   const verb=active?'Resume':'Pause';
-  if(!confirm(`${verb} "${item.name||'this rule'}"? This publishes a NEW configuration version and takes effect at the counter immediately.`))return;
+  if(!confirm(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
   sb.rpc('set_studio_rule_active',{p_business:S.biz.id,p_rule_id:item.rule_id,p_active:active}).then(({error})=>{
     if(error){
       if(error.code==='42501')return toast('Only the owner can pause or resume a rule.');
@@ -10588,7 +10588,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
   };
   routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio — authoring draft',subtitle:`Draft v${draft.version_no}. Author and check rules — the publish preview shows what will run before anything goes live.`,iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
     <div class="card" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:10px">
-      <div><b>Draft configuration</b><div class="muted small">Every save checks the draft hash. Publishing can turn rules on immediately — you will see a preview of exactly what begins running, what stays shadow-only, and what stays off before you confirm.</div></div>
+      <div><b>Draft — not visible to customers</b><div class="muted small">Every save checks the draft hash. Publishing can turn rules on immediately — you will see a preview of exactly what begins running, what stays shadow-only, and what stays off before you confirm.</div></div>
       <span class="spacer"></span>
       <a class="btn ghost" href="#/studio">Leave draft</a>
       <button class="btn" id="studioPublish">Publish draft</button></div>
