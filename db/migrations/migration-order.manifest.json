@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 262,
-  "executableCount": 248,
+  "itemCount": 265,
+  "executableCount": 251,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -380,12 +380,15 @@
     },
     {
       "sourceDeployVersion": "20260809",
-      "count": 4,
+      "count": 7,
       "paths": [
         "db/migrations/20260809_nestly_v248_customer_directory_reports_loyalty_availability.sql",
         "db/migrations/20260809_nestly_v255_marketing_send_records_and_taxonomy.sql",
         "db/migrations/20260809_nestly_v255a_client_interaction_batch.sql",
-        "db/migrations/20260809_nestly_v255b_platform_marketing_reads.sql"
+        "db/migrations/20260809_nestly_v255b_platform_marketing_reads.sql",
+        "db/migrations/20260809_nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable.sql",
+        "db/migrations/20260809_nestly_v257_bundle_finalise_rehash.sql",
+        "db/migrations/20260809_nestly_v258_recommended_draft_inherits_live_status.sql"
       ]
     }
   ],
@@ -2485,6 +2488,30 @@
       "semanticVersion": "v255b",
       "proposedDeployVersion": "20260809000300",
       "sha256": "04e51c161a439ac96c2f1cef1e2bbe144035b095f4d6baf823f711e1a6e52d39"
+    },
+    {
+      "order": 263,
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable.sql",
+      "semanticVersion": "v256",
+      "proposedDeployVersion": "20260809000400",
+      "sha256": "8ed850da0755da023e11f36ddaaff012ff72e888c19af39028e994aaf1ad7dac"
+    },
+    {
+      "order": 264,
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v257_bundle_finalise_rehash.sql",
+      "semanticVersion": "v257",
+      "proposedDeployVersion": "20260809000500",
+      "sha256": "cda98488d625eeedd96b258b4cf2a430cd9f3db755310c6f07c07c1f0c3991a5"
+    },
+    {
+      "order": 265,
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v258_recommended_draft_inherits_live_status.sql",
+      "semanticVersion": "v258",
+      "proposedDeployVersion": "20260809000600",
+      "sha256": "c7e18749bf7ab015366d9996d837812588f14e22127ed82d087cb61d12abdbf4"
     }
   ]
 }

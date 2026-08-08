@@ -1587,6 +1587,24 @@
       "path": "db/migrations/20260809_nestly_v255b_platform_marketing_reads.sql",
       "semanticVersion": "v255b",
       "proposedDeployVersion": "20260809000300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable.sql",
+      "semanticVersion": "v256",
+      "proposedDeployVersion": "20260809000400"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v257_bundle_finalise_rehash.sql",
+      "semanticVersion": "v257",
+      "proposedDeployVersion": "20260809000500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v258_recommended_draft_inherits_live_status.sql",
+      "semanticVersion": "v258",
+      "proposedDeployVersion": "20260809000600"
     }
   ]
 }

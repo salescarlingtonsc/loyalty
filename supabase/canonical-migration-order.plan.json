@@ -1582,6 +1582,24 @@
       "version": "20260809000300",
       "name": "nestly_v255b_platform_marketing_reads",
       "sourcePath": "db/migrations/20260809_nestly_v255b_platform_marketing_reads.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260809000400",
+      "name": "nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable",
+      "sourcePath": "db/migrations/20260809_nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260809000500",
+      "name": "nestly_v257_bundle_finalise_rehash",
+      "sourcePath": "db/migrations/20260809_nestly_v257_bundle_finalise_rehash.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260809000600",
+      "name": "nestly_v258_recommended_draft_inherits_live_status",
+      "sourcePath": "db/migrations/20260809_nestly_v258_recommended_draft_inherits_live_status.sql"
     }
   ]
 }

@@ -29,9 +29,11 @@ test('existing draft is a direct one-action continuation with zero recommendatio
   // The standalone launcher was retired with the Programmes simplification. The invariant it
   // carried — an existing draft continues directly and never re-runs the recommendation writer —
   // now lives on the programme rows, which only open the popup when there is no draft.
-  assert.match(grow,/if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/);
-  const rowHandler=grow.slice(grow.indexOf('if(!growDraftVersionId){openRewardsAutoSetup(action);return}'),
-    grow.indexOf('if(!growDraftVersionId){openRewardsAutoSetup(action);return}')+400);
+  /* V258: the guard moved into openGrowEditorV258, which returns on the existing draft before
+     reaching any draft-creation call at all. */
+  assert.match(grow,/const openGrowEditorV258=async\(action\)=>\{\s*\n\s*if\(growDraftVersionId\)return mountGrowSurface/);
+  const rowHandler=grow.slice(grow.indexOf('const openGrowEditorV258=async(action)=>{'),
+    grow.indexOf('const openGrowEditorV258=async(action)=>{')+900);
   assert.doesNotMatch(rowHandler,/generate_retention_recommendation/,
     'the resume path must not reach the recommendation writer');
 });

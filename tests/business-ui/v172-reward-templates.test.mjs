@@ -36,8 +36,9 @@ test('choosing a template reuses the existing add-reward path, no new writers', 
   assert.ok(start > 0);
   const wiring = app.slice(start, app.indexOf('const growRewardsRetry', start));
   assert.match(wiring, /focusTarget:'rwAdd',activateTarget:true/, 'must open the existing reward editor');
-  assert.match(wiring, /if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/, 'cold start must use auto-setup like + Add reward');
-  assert.match(wiring, /mountGrowSurface\(action\.surface/, 'draft path must mount the existing surface');
+  // V258: the template picker delegates to the same shared gate as "+ Add reward"; the cold
+  // start still reaches openRewardsAutoSetup inside it, and the draft path still mounts.
+  assert.match(wiring, /openGrowEditorV258\(action\)\.catch\(fail\)/, 'must use the one shared editor gate');
   assert.doesNotMatch(wiring, /\.insert\(|\.update\(|\.upsert\(/, 'templates must not write server state');
   assert.doesNotMatch(wiring.replace(/from\('services'\)\.select\('price_cents'\)/, ''), /sb\.rpc\(/, 'only the read-only price query is allowed');
 });

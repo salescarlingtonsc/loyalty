@@ -50,7 +50,8 @@ test('V158 exposes staff management from branch settings without duplicating the
 test('V158 keeps next-phase and inventory controls hidden while sale selection remains compact', () => {
   assert.match(services, /const showServiceProductDeductionV157=false/);
   assert.match(services, /if\(showServiceProductDeductionV157\)\{/);
-  assert.match(recordSale, /<details class="till-sale-package-options"><summary>Sell package<\/summary>/);
+  /* V257: the drawer now remembers whether it is open across a redraw (adding a package used to collapse it), so the pin allows the id + open attribute. */
+  assert.match(recordSale, /<details class="till-sale-package-options" id="tillSellPackageV257"\$\{tillSellPackageOpenV257\?' open':''\}><summary>Sell package<\/summary>/);
   assert.match(recordSale, /String\(line\.ref\)===String\(id\)/);
   assert.doesNotMatch(recordSale, /line\.ref_id/);
   assert.match(recordSale, /class="till-choice-qty"/);

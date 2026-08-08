@@ -53,7 +53,8 @@ test('first-time setup is idempotent, guarded, draft-only and recommendation-led
     'confirmation has one recommendation draft writer');
   // The guard moved from the retired launcher onto the programme-row handlers: the popup only
   // opens when there is NO draft, so resuming still bypasses the creation RPC entirely.
-  assert.match(grow,/if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/,
+  // V258: expressed by openGrowEditorV258, which returns on the existing draft first.
+  assert.match(grow,/if\(growDraftVersionId\)return mountGrowSurface\(action\.surface,\{draftOverride:growDraftVersionId,\.\.\.action\}\);/,
     'resuming an existing draft bypasses the creation popup and RPC');
   assert.doesNotMatch(setup,/publish_loyalty_config|location\.reload|route\(\)/);
   assert.match(setup,/rewardAutoSetupRequestKey\?\?=crypto\.randomUUID\(\)/);

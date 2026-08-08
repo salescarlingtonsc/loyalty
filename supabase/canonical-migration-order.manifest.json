@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 218,
-  "itemCount": 263,
+  "pendingCount": 221,
+  "itemCount": 266,
   "items": [
     {
       "order": 1,
@@ -2637,6 +2637,36 @@
       "path": "supabase/migrations/20260809000300_nestly_v255b_platform_marketing_reads.sql",
       "octetLength": 24058,
       "sha256": "04e51c161a439ac96c2f1cef1e2bbe144035b095f4d6baf823f711e1a6e52d39",
+      "provenance": "local-source"
+    },
+    {
+      "order": 264,
+      "kind": "pending",
+      "version": "20260809000400",
+      "name": "nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable",
+      "path": "supabase/migrations/20260809000400_nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable.sql",
+      "octetLength": 2846,
+      "sha256": "8ed850da0755da023e11f36ddaaff012ff72e888c19af39028e994aaf1ad7dac",
+      "provenance": "local-source"
+    },
+    {
+      "order": 265,
+      "kind": "pending",
+      "version": "20260809000500",
+      "name": "nestly_v257_bundle_finalise_rehash",
+      "path": "supabase/migrations/20260809000500_nestly_v257_bundle_finalise_rehash.sql",
+      "octetLength": 9902,
+      "sha256": "cda98488d625eeedd96b258b4cf2a430cd9f3db755310c6f07c07c1f0c3991a5",
+      "provenance": "local-source"
+    },
+    {
+      "order": 266,
+      "kind": "pending",
+      "version": "20260809000600",
+      "name": "nestly_v258_recommended_draft_inherits_live_status",
+      "path": "supabase/migrations/20260809000600_nestly_v258_recommended_draft_inherits_live_status.sql",
+      "octetLength": 11568,
+      "sha256": "c7e18749bf7ab015366d9996d837812588f14e22127ed82d087cb61d12abdbf4",
       "provenance": "local-source"
     }
   ]

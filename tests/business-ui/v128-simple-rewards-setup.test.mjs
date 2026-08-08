@@ -25,8 +25,11 @@ test('Grow presents one automatic setup start followed immediately by the comple
   // The standalone growAutoSetup launcher was removed when Programmes was simplified to one
   // list; openRewardsAutoSetup is now the draft-creation GATE reached from the programme
   // rows and the template picker. Assert that entry point rather than the retired button.
-  assert.match(grow,/openRewardsAutoSetup\(action\);return/);
-  assert.match(grow,/if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/);
+  /* V258 (owner item 7): the gate is now openGrowEditorV258. It still routes to
+     openRewardsAutoSetup — but only for a business with no published programme, where the
+     recommendation is the point. An existing programme gets its draft created implicitly. */
+  assert.match(grow,/const openGrowEditorV258=async\(action\)=>\{/);
+  assert.match(grow,/if\(!canSetupGrow\|\|!growProgrammeExistsV258\)return openRewardsAutoSetup\(action\);/);
   assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'),
     'the complete published overview must precede secondary settings');
   assert.match(grow,/<details class="grow-secondary" id="growSecondarySettings">[\s\S]*?<ol class="grow-flow"/);
@@ -56,7 +59,9 @@ test('opening and cancelling do not write while confirm creates one idempotent r
   assert.doesNotMatch(popup,/publish_(?:config|loyalty)|studio_publish|publishProgram/);
   // Same guard, now on the programme rows: openRewardsAutoSetup is only reached when no draft
   // exists, so an existing draft is opened rather than regenerated.
-  assert.match(grow,/if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/,
+  // V258: same guarantee, expressed by the shared gate — an existing draft short-circuits
+  // before any draft-creation call, so it is opened rather than regenerated.
+  assert.match(grow,/if\(growDraftVersionId\)return mountGrowSurface\(action\.surface,\{draftOverride:growDraftVersionId,\.\.\.action\}\);/,
     'an existing draft must open directly instead of being replaced');
 });
 

@@ -38,7 +38,8 @@ test('V157 keeps Record sale focused by collapsing package sales and showing ite
   assert.match(recordSale, /class="till-choice-image"/);
   assert.match(recordSale, /class="till-choice-qty"/);
   assert.match(recordSale, /aria-label="\$\{qty\} selected"/);
-  assert.match(recordSale, /<details class="till-sale-package-options"><summary>Sell package<\/summary>/);
+  /* V257: the drawer now remembers whether it is open across a redraw (adding a package used to collapse it), so the pin allows the id + open attribute. */
+  assert.match(recordSale, /<details class="till-sale-package-options" id="tillSellPackageV257"\$\{tillSellPackageOpenV257\?' open':''\}><summary>Sell package<\/summary>/);
   /* V211: this used to assert `const ownedPackages=''` — it pinned the STUB that emptied the
      owned-package list. That stub is why an owner could not spend a session a customer had
      already paid for, and it stood in direct contradiction to the v102 test, which requires the

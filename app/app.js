@@ -5106,10 +5106,12 @@ function customerTierPanelMarkupV194(tier={}){
   })();
   const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
   /* V240: when a firm runs both, the customer holds two independent things — a tier they climb
-     and points they spend. Saying so once here stops "will redeeming cost me my tier?". */
-  const bothNoteV240=String(tier.points_mode||'')==='both'
-    ?`<p class="muted small" style="margin-top:6px">Visits move you up. Points stay yours to spend.</p>`:'';
-  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV240}
+     and points they spend. Saying so once here stops "will redeeming cost me my tier?".
+     V258: the sentence now reads the firm's actual basis. 'points_earned' counts LIFETIME
+     points earned, which redemption never reduces, so the reassurance is still true there. */
+  const bothNoteV258=String(tier.points_mode||'')==='both'
+    ?`<p class="muted small" style="margin-top:6px">${basis==='points_earned'?'Points you earn move you up — spending them never lowers your tier.':basis==='spend'?'What you spend moves you up. Points stay yours to spend.':'Visits move you up. Points stay yours to spend.'}</p>`:'';
+  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV258}
     ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
     <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
       :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
@@ -11032,6 +11034,7 @@ async function tillPage(){
                            // custom carries a mandatory staff `reason`; giftcard/package/membership = each its own server-idempotent RPC per line.
   let catalog=null;       // catalogue + customer package/voucher entitlements, loaded together
   let catalogLoading=false, catalogError=null;
+  let tillSellPackageOpenV257=false; // V257: the "Sell package" drawer survives a panel redraw
   const packageUseAttemptsV102=new Map(); // client-package + branch -> stable key until confirmed success
   let saleCommitted=false, saleResult=null; // once the cart sale succeeds it is LOCKED; a retry never
                                              // re-runs it, only the failed gift/package/membership calls.
@@ -11046,6 +11049,12 @@ async function tillPage(){
   let evalTimer=null;      // debounce handle for re-evaluate on a sale-line change
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
+  /* V257: how many times THIS cart has been re-evaluated because the finalise came back stale.
+     The recovery was written for a one-off drift ("the price moved while you were ringing it up"),
+     and it re-offered the identical confirm button after every stale. When the stale cause is
+     permanent, that redraws the same screen forever — which is exactly what "Price updated —
+     please confirm the new total" and a Confirm button that does nothing looked like. */
+  let staleReevaluationsV257=0;
   let payError=null;       // {kind:'retry'|'conflict'} — finalise failure (LOCKS the cart so the same idempotency key is reused)
   let paynowAttempt=null;  // V142 provider-backed attempt; while present the cart and amount stay locked
   let paynowPollTimer=null;
@@ -11074,7 +11083,7 @@ async function tillPage(){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
     if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
-    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
+    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
@@ -11436,7 +11445,11 @@ async function tillPage(){
   function addPlanLine(type,plan){
     if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type,ref:plan.id,label:plan.name,unit_cents:plan.unit_cents,qty:1,key:crypto.randomUUID()});
-    CUI.announce(workspaceTemplateTextV97('itemAdded',{item:plan.name}));draw(); // extras do not affect the kernel total
+    CUI.announce(workspaceTemplateTextV97('itemAdded',{item:plan.name}));
+    /* V257: a screen-reader announcement was the ONLY feedback, and the redraw closed the drawer
+       it was added from, so a sighted owner saw nothing at all. Say it out loud. */
+    toast(workspaceTemplateTextV97('itemAdded',{item:plan.name}));
+    draw(); // extras do not affect the kernel total
   }
   async function useCustomerPackage(clientPackageId){
     if(busy||cartLocked())return;
@@ -11496,6 +11509,11 @@ async function tillPage(){
   function cartSaleLines(){return cart.filter(isCartSaleLine)}   // service/product/custom -> evaluate + record_cart_sale
   function extraLines(){return cart.filter(l=>!isCartSaleLine(l))} // package/membership -> own RPC
   function extrasTotalCents(){return extraLines().reduce((s,l)=>s+l.unit_cents*l.qty,0)} // NOT part of the kernel/evaluation total
+  /* V257: how many of this plan are on the bill. Packages/memberships are EXTRA lines — one line
+     per sale, each with its own stable idempotency key — so this counts lines, not qty. */
+  function selectedPlanCountV257(type,id){
+    return extraLines().reduce((sum,line)=>sum+((line.type===type&&String(line.ref)===String(id))?1:0),0);
+  }
   function extraLineBadge(l,succeeded,failed){
     if(l.type==='package')return succeeded
       ?`Sold · ${Number(l._packageResult?.pointsEarned||0)} points earned · ${Number(l._packageResult?.pointsTotal||0)} total`
@@ -11546,7 +11564,7 @@ async function tillPage(){
   // Reset the evaluation for the current cart and schedule a fresh (debounced) evaluate. A sale-line
   // change is a deliberate cart-change, so it also clears the stable finalise key (§2).
   function onSaleLinesChanged(){
-    evalResult=null;evalError=null;staleConfirm=false;payError=null;clearExpiry();
+    evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;clearExpiry();
     clearWriteAttempt(FINALISE_SLOT);
     const lines=buildEvalLines();
     evalState=lines.length?'evaluating':'idle';
@@ -11648,8 +11666,13 @@ async function tillPage(){
       return `<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Refresh price</button>`;
     if(evalState==='error')
       return evalError&&evalError.kind==='generic'?`<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Try again</button>`:'';
-    if(evalState==='ready'&&evalResult)
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(svTender?svTender.remaining_due_cents:evalResult.total_cents)}</button>`;
+    if(evalState==='ready'&&evalResult){
+      /* V257: this one button finalises the cart AND sells every extra, so it names the whole
+         amount collected — not just the kernel total, which is what made the till look like it
+         was asking for two payments. */
+      const dueV257=(svTender?svTender.remaining_due_cents:evalResult.total_cents)+extrasTotalCents();
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(dueV257)}</button>`;
+    }
     return '';
   }
 
@@ -11711,12 +11734,28 @@ async function tillPage(){
               <span class="pill ok">${Number(item.remaining)} left</span></button>`).join('')}</div>`
           :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
-          ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
+          ?`<details class="till-sale-package-options" id="tillSellPackageV257"${tillSellPackageOpenV257?' open':''}><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>{
+            /* V257 (owner: "sell package ... no order count, closes the tab and shows nothing").
+               Two defects, both here: a package line got no count, and adding one re-rendered the
+               whole panel, which collapsed this <details> and hid the only evidence that anything
+               had happened. The open state is now remembered across the redraw, and each plan
+               shows how many are on this bill. addPlanLine ALWAYS pushes a new line (each carries
+               its own idempotency key), so the count is a line count, not a qty. */
+            const qty=selectedPlanCountV257('package',p.id);
+            return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-plan="package" data-id="${p.id}"><span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+          }).join('')}</div></details>`
           :'';
         /* v187: bundles sit right under the services they are made of — that is where a
            counter hand looks for "the package deal" — and each says what is inside it. */
         const bundleBtns=(catalog.bundles&&catalog.bundles.length)
-          ?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${catalog.bundles.map(bundle=>`<button type="button" class="choice-button" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span></button>`).join('')}</div>
+          ?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${catalog.bundles.map(bundle=>{
+            /* V257 (owner: a service tile shows a red count when it is in the cart, the bundle
+               tile showed nothing while the cart line read "Rainbow special ×2"). A bundle IS a
+               cart sale line of its own type, so it counts its own lines — never the services it
+               expands into on the server — and reuses the service tile's badge, not a second one. */
+            const qty=selectedCatalogQty('bundle',bundle.id);
+            return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+          }).join('')}</div>
             <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`
           :'';
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
@@ -11773,14 +11812,30 @@ async function tillPage(){
       const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})}>${CUI.icon('close',{size:16})}</button>`;
       return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
     }).join('')}</ul>`:'';
-    // extras (package / membership) — charged as their OWN records, NOT part of the
-    // kernel total; shown as "Also processing" so the panel TOTAL matches the evaluation exactly.
-    const extrasHtml=extras.length?`<div style="margin-top:14px"><b class="small">Also processing (charged separately)</b>
+    /* extras (package / membership) — charged as their OWN records, NOT part of the kernel total,
+       so the panel TOTAL keeps matching the evaluation exactly.
+       V257 (owner: "why is the session charged separately? cannot together?"). The split is
+       deliberate and stays: sell_package_v102 writes a sales row of kind='package' that carries
+       its own prepaid entitlement and is judged by that kind's own revenue/visit/points policy,
+       while the cart finalises as kind='quick_sale' with sale_items. Merging them would file a
+       prepaid package as today's takings. What was wrong was the WORDS: "charged separately"
+       reads as "ask the customer to pay twice". It is one payment, two receipts — and the panel
+       now says the single amount to collect. */
+    const extrasHtml=extras.length?`<div style="margin-top:14px"><b class="small">Also on this bill · kept as its own receipt</b>
       <ul class="ck-extras">${extras.map(l=>{
         const succeeded=l._status==='issued'||l._status==='done';const failed=l._status==='failed';
         const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})} style="margin-left:8px">${CUI.icon('close',{size:15})}</button>`;
         return `<li><span>${esc(l.label)}<span class="ck-extra-note">${extraLineBadge(l,succeeded,failed)}</span></span><span style="display:inline-flex;align-items:center;gap:6px">${money(l.unit_cents*l.qty)}${rm}</span></li>`;
       }).join('')}</ul></div>`:'';
+    // V257: the one number the customer actually hands over, across both records.
+    const collectBaseV257=(hasSale&&evalResult&&evalState!=='error')
+      ?(svTender?svTender.remaining_due_cents:evalResult.total_cents):null;
+    const combinedTotalV257=(extras.length&&collectBaseV257!=null)
+      ?`<div class="ck-panel" style="margin-top:10px" aria-label="Total to collect">
+        <div class="ck-total"><span>Total to collect</span><span>${money(collectBaseV257+extrasTotalCents())}</span></div>
+        <p class="muted small" style="margin:6px 0 0">Take this once. Today's items and the package are kept as two records so prepaid sessions never count as today's takings — the customer pays one amount.</p>
+      </div>`
+      :'';
     const emptyHtml=cart.length?'':`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Cart is empty. Tap a service or add an item to begin.</p></div>`;
     const panelHtml=checkoutPanelHtml();
     // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
@@ -11820,6 +11875,7 @@ async function tillPage(){
         ${saleLinesHtml}
         ${panelHtml}
         ${extrasHtml}
+        ${combinedTotalV257}
         ${emptyHtml}
         <div id="tcErr"></div>
         ${tenderHtml}
@@ -11856,6 +11912,8 @@ async function tillPage(){
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
     });
+    const sellPackageDrawerV257=$('tillSellPackageV257');
+    if(sellPackageDrawerV257)sellPackageDrawerV257.ontoggle=()=>{tillSellPackageOpenV257=sellPackageDrawerV257.open};
     document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
@@ -11907,7 +11965,7 @@ async function tillPage(){
   function cartErr(msg){const e=$('tcErr');if(e)e.innerHTML=`<div class="err">${esc(msg)}</div>`;else toast(msg)}
   // Deliberate fresh start after a same-key/different-request conflict (§2): mint a NEW finalise key
   // (clear the slot) and re-evaluate the current cart.
-  function startNewCheckout(){payError=null;saleCommitted=false;staleConfirm=false;clearWriteAttempt(FINALISE_SLOT);onSaleLinesChanged();}
+  function startNewCheckout(){payError=null;saleCommitted=false;staleConfirm=false;staleReevaluationsV257=0;clearWriteAttempt(FINALISE_SLOT);onSaleLinesChanged();}
   // "Other item" modal — amount + a MANDATORY short reason (3..200). The reason is required by the
   // kernel for custom (unpriced) lines; the amount is sent as amount_cents and re-validated server-side.
   function openCustomModal(){
@@ -12147,6 +12205,14 @@ async function tillPage(){
       payError=null;evalError={kind:'zero',message:"Fully discounted carts aren't supported yet — remove a discount or add an item."};evalState='error';draw();return;}
     if((code==='P0001'&&/stale_evaluation/.test(msg))||(code==='22023'&&/\bstale\b/i.test(msg))){ // re-evaluate ONCE, then confirm
       payError=null;staleConfirm=false;
+      staleReevaluationsV257+=1;
+      /* V257: ONCE means once. A second stale on the same cart is not drift a re-price can settle
+         — the server is refusing this cart every time — so stop re-offering the same confirm and
+         say so. Nothing was charged (every stale aborts the whole finalise transaction), and the
+         cart unlocks so staff can change the items and get a queue moving. */
+      if(staleReevaluationsV257>1){
+        evalError={kind:'generic',message:'This price could not be locked, so nothing was charged. Take the bundle out of the cart, add its services on their own, and take payment again — and tell an owner this bundle cannot be sold yet.'};
+        evalState='error';evalResult=null;clearExpiry();draw();return;}
       const ok=await runEvaluate();
       if(!isTillCurrent())return;
       if(ok===true&&evalState==='ready')staleConfirm=true; // fresh price is shown; wait for an explicit confirm
@@ -12235,8 +12301,13 @@ async function tillPage(){
         :`${esc(x.label)} ${failed?'(not enrolled)':'· enrolled'}`;
       return `<li><span>${name}</span><span>${failed?'—':money(x.amount)}</span></li>`;
     }).join('');
-    const extrasBlock=d.extras.length?`<div style="margin-top:12px;text-align:left"><b class="small">Also charged (separate records)</b>
-      <ul class="till-receipt-lines">${extraRows}</ul></div>`:'';
+    /* V257: the receipt names one collected amount over both records — the sale and every extra
+       that actually completed. A failed extra was never collected, so it is excluded. */
+    const collectedV257=(d.hasSale?Number(d.total||0):0)
+      +d.extras.filter(x=>x.status!=='failed').reduce((sum,x)=>sum+Number(x.amount||0),0);
+    const extrasBlock=d.extras.length?`<div style="margin-top:12px;text-align:left"><b class="small">Also charged · own record</b>
+      <ul class="till-receipt-lines">${extraRows}</ul>
+      <div class="ck-panel" style="margin-top:8px"><div class="ck-total"><span>Total collected</span><span>${money(collectedV257)}</span></div></div></div>`:'';
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
@@ -13478,7 +13549,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const loyaltyModelCopyV235={
     redeem:{name:'Points redemption',line:'Customers earn points on every visit and spend them on rewards you choose.'},
     tiers:{name:'Tiered membership',line:'Customers earn points on every visit and unlock better benefits as they move up.'},
-    both:{name:'Points + tiers',line:'Customers spend points on rewards, and separately climb tiers by visits — the two never affect each other.'},
+    both:{name:'Points + tiers',line:'Customers spend points on rewards, and separately climb tiers — the two never affect each other.'},
     stamps:{name:'Stamp card',line:'Customers collect a stamp each time they spend, and claim a reward at each milestone.'}};
   const unit=model==='stamps'?'stamps':'points';
   const groupEligibility=(rows,key)=>rows.reduce((a,x)=>{
@@ -13590,14 +13661,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
   /* V235: the requirement line speaks the firm's own basis, and a zero threshold is the
      starting tier rather than "from 0". */
-  /* V240: the server refuses points_mode='both' beside tier_basis='points_earned' (sqlstate
-     23514) — points cannot be spendable AND be the tier's yardstick. The control therefore
-     never offers the state, and a stored points ladder reads as visits the moment the owner
-     previews 'both', so what they see is what Save can actually write. */
-  const tierBasisAllowsPointsV240=loyaltySelectionV230!=='both';
-  const tierBasisValueV240=(()=>{const stored=p?.tier_basis||'visits';
-    return !tierBasisAllowsPointsV240&&stored==='points_earned'?'visits':stored})();
-  const tierBasisWordV235=({visits:'visits',spend:'spent',points_earned:'points'})[tierBasisValueV240];
+  /* V258 (owner item 8): V240 hid "Lifetime points earned" whenever the combined mode was
+     selected, because a database trigger refused that pairing (23514). V256 dropped the
+     trigger. The owner's ruling: a tier is measured by LIFETIME points earned — the sum of
+     points_ledger entry_type='earn', which redemption never reduces — so a spendable balance
+     and a lifetime ladder do not contradict each other. Every basis is now selectable in every
+     mode, and the stored basis is shown and saved unchanged. */
+  const tierBasisValueV258=p?.tier_basis||'visits';
+  const tierBasisWordV235=({visits:'visits',spend:'spent',points_earned:'points'})[tierBasisValueV258];
   const tierRequirementLineV235=(tier)=>{
     const threshold=Number(tier?.threshold)||0;
     if(!threshold)return 'Starting tier';
@@ -13618,11 +13689,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const tierRows=()=>`
     <b style="display:block;margin-top:18px">${loyaltySelectionV230==='redeem'?'Tiers (optional)':'Your tiers'}</b>
     ${tiers.length&&!loyaltyActiveV235?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but the programme Status above is Paused. Set Status to Active, then ${draftVersionId?'Review & publish':'Save'} — that is the whole fix.</p></div>`:''}
-    <label for="ltb">Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}${tierBasisAllowsPointsV240?'':' aria-describedby="ltbHelpV240"'}>
-      <option value="visits" ${tierBasisValueV240==='visits'?'selected':''}>Number of visits (recommended)</option>
-      <option value="spend" ${tierBasisValueV240==='spend'?'selected':''}>Lifetime spend ($)</option>
-      ${tierBasisAllowsPointsV240?`<option value="points_earned" ${tierBasisValueV240==='points_earned'?'selected':''}>Lifetime points earned</option>`:''}</select>
-    ${tierBasisAllowsPointsV240?'':'<p class="muted small" id="ltbHelpV240" style="margin-top:6px">Tiers count visits so points stay free to spend.</p>'}
+    <label for="ltb">Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}${tierBasisValueV258==='points_earned'?' aria-describedby="ltbHelpV258"':''}>
+      <option value="visits" ${tierBasisValueV258==='visits'?'selected':''}>Number of visits (recommended)</option>
+      <option value="spend" ${tierBasisValueV258==='spend'?'selected':''}>Lifetime spend ($)</option>
+      <option value="points_earned" ${tierBasisValueV258==='points_earned'?'selected':''}>Lifetime points earned</option></select>
+    ${tierBasisValueV258==='points_earned'?'<p class="muted small" id="ltbHelpV258" style="margin-top:6px">Tiers count lifetime points earned — spending points never lowers a tier.</p>':''}
     ${loyaltySelectionV230==='tiers'?`<p class="muted small" style="margin-top:10px"><b>How customers move up.</b> Earn ${p?.earn_points_per_dollar??1} points per $1. Points accumulate for life and unlock higher tiers at each threshold.</p>`:''}
     <p class="muted small" style="margin-top:6px">Tiers are based on lifetime ${esc(tierBasisWordV235)} — spending points never drops anyone down.</p>
     ${tiers.length?tiers.map(t=>{const state=tierBoundary(t),benefits=tierBenefitLines(t);return `<div class="reward-item" style="margin-top:8px"><div class="meta"><div>
@@ -13790,7 +13861,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <p class="muted small" style="margin-top:8px">Point rewards are off in this model. Rewards you saved earlier are kept and come back if you switch to Points redemption.</p>
           ${tierRows()}${customerPreviewV235}`
         :loyaltySelectionV230==='both'
-        ?`<b>Reward catalogue and tiers</b><p class="muted small" style="margin-top:6px">Both run together: points buy rewards, visits build tiers. Spending points never moves anyone down a tier.</p>${rewardRows('Your rewards')}${tierRows()}${customerPreviewV235}`
+        ?`<b>Reward catalogue and tiers</b><p class="muted small" style="margin-top:6px">Both run together: points buy rewards, and tiers count lifetime ${esc(tierBasisWordV235)}. Spending points never moves anyone down a tier.</p>${rewardRows('Your rewards')}${tierRows()}${customerPreviewV235}`
         :`<b>Reward catalogue</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define.</p>${rewardRows('Your rewards')}${customerPreviewV235}
           <p class="muted small" style="margin-top:14px">Tiers are off in this model — choose Tiered membership above to run them instead. Saved tiers are kept.</p>`}
     </div></div>${birthdayEditor}`;
@@ -14135,15 +14206,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     /* V230: the three-way selection decides BOTH stores. loyalty_model goes into the draft as
        before; points_mode is the instant business switch the server enforces, so switching away
        from a chosen model asks first and states what it stops. */
-    /* V240: 'both' joins the two. The server refuses points_mode='both' beside
-       tier_basis='points_earned' (23514), so the basis written below is forced off points
-       first — the draft save lands before the mode switch, which is the order the trigger
-       requires. */
+    /* V258: 'both' joins the two, and since V256 dropped the pairing trigger the tier basis
+       is written exactly as the owner chose it — including 'points_earned', which measures
+       lifetime points earned and is therefore untouched by redemption. The draft save still
+       lands before the mode switch so one Save remains one decision. */
     const targetModeV230=loyaltySelectionV230==='tiers'?'tiers':loyaltySelectionV230==='both'?'both':'redeem';
     const modeSwitchAskV240={
       tiers:'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.',
       redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
-      both:'Run points and tiers together? Tiers will count visits instead of points, so points stay free to spend.'};
+      both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis you chose above.'};
     if(S.biz.points_mode&&targetModeV230!==S.biz.points_mode&&!confirm(modeSwitchAskV240[targetModeV230]))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
@@ -14154,8 +14225,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(model==='classic'){row.redeem_points=parseInt($('lr').value||'800');
       row.reward_credit_cents=Math.round(parseFloat($('lc').value||'20')*100)}
     if(model==='points_tiers'&&$('ltb')){
-      const basisV240=$('ltb').value;
-      row.tier_basis=targetModeV230==='both'&&basisV240==='points_earned'?'visits':basisV240;
+      row.tier_basis=$('ltb').value; /* V258: saved unchanged — no basis is coerced any more. */
     }
     $('lsave').disabled=true;
     let versionId=draftVersionId;
@@ -14178,16 +14248,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       if(!isLoyaltyCurrent())return;
       if(modeError){
         $('lsave').disabled=false;
-        /* The one state the server refuses outright. Keep loyaltyModeDraftV230 so the owner's
-           choice survives, and say the server's own sentence rather than a generic failure. */
-        if(modeError.code==='23514'||/measure its tiers in points/i.test(modeError.message||''))
-          return toast('Set "Tier level is earned by" to visits or spend first — points cannot both be spent and decide the tier.');
+        /* V258: the 23514 "measure its tiers in points" branch is gone — V256 dropped the
+           trigger that raised it, so the branch was unreachable and could only mislead.
+           loyaltyModeDraftV230 still survives a genuine failure. */
         return fail(modeError);
       }
       S.biz.points_mode=targetModeV230;
       loyaltyModeDraftV230=null;
       toast(targetModeV230==='tiers'?'Points now build tier membership'
-        :targetModeV230==='both'?'Points buy rewards and visits build tiers'
+        :targetModeV230==='both'?'Points buy rewards, and tiers run alongside them'
         :'Points are now redeemed for rewards');
     }
     if(draftVersionId){
@@ -16504,23 +16573,44 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     const askV240={
       tiers:'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.',
       redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
-      both:'Run points and tiers together? Tiers will count visits instead of points, so points stay free to spend.'};
+      both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis set in the editor.'};
     if(S.biz.points_mode&&!confirm(askV240[next]))return;
     button.disabled=true;
     const {error}=await sb.from('businesses').update({points_mode:next}).eq('id',S.biz.id);
     if(error){
       button.disabled=false;
-      /* V240: the server refuses 'both' beside a points-measured ladder. Say the fix. */
-      if(error.code==='23514'||/measure its tiers in points/i.test(error.message||''))
-        return toast('Set the tier to count visits or spend first — points cannot both be spent and decide the tier.');
+      /* V258: V256 dropped the trigger that raised 23514 here, so the special-case branch was
+         unreachable and was removed. */
       return fail(error);
     }
     S.biz.points_mode=next;
     toast(next==='tiers'?'Points now build tier membership'
-      :next==='both'?'Points buy rewards and visits build tiers'
+      :next==='both'?'Points buy rewards, and tiers run alongside them'
       :'Points are now redeemed for rewards');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
+  /* V258 (owner item 7: "why does edit require draft then edit? it causes additional steps and
+     more bugs"). The versioning is kept — every edit still lands on a draft version and
+     customers keep seeing the published programme until Review & publish. What is dropped is
+     the CEREMONY: an owner whose programme already exists no longer has to read a
+     recommended-starting-point dialog and click "Create draft" before the editor will open.
+     The draft is created implicitly on entry to the editor, from the live version, exactly as
+     the dialog's Confirm did. The dialog is kept for the one path it is actually about — a
+     business with no published loyalty configuration, where there is a recommendation to
+     review and no live version to clone. */
+  const growProgrammeExistsV258=Boolean(snapshot.currentVersion&&snapshot.loyalty);
+  const openGrowEditorV258=async(action)=>{
+    if(growDraftVersionId)return mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+    if(!canSetupGrow||!growProgrammeExistsV258)return openRewardsAutoSetup(action);
+    const {data,error}=await sb.rpc('create_loyalty_config_draft',{
+      p_business:S.biz.id,p_based_on:snapshot.currentVersion,p_source:'owner_editor'});
+    if(!isGrowCurrent())return;
+    /* Fail soft: if the implicit draft cannot be created, the owner still gets the explicit
+       dialog rather than a dead button. */
+    if(error||!data?.version_id)return openRewardsAutoSetup(action);
+    growDraftVersionId=data.version_id;
+    return mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+  };
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));
@@ -16545,9 +16635,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         })();
         return;
       }
-      openRewardsAutoSetup(action);return
     }
-    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+    openGrowEditorV258(action).catch(fail);
   });
   /* V172 template picker: choosing a template stores the prefill and routes through the SAME
      add-reward path as "+ Add reward" (auto-setup when no draft exists, otherwise straight to
@@ -16579,8 +16668,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         if(!template)return;
         pendingRewardTemplateV172={name:template.name,desc:template.desc,estimateCents:template.budget};
         const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
-        if(!growDraftVersionId){openRewardsAutoSetup(action);return}
-        mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+        openGrowEditorV258(action).catch(fail);
       });
     };
   }
@@ -16615,11 +16703,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter a valid proposed reward cost first');
     pendingRewardEstimateCents=Math.round(Number(raw)*100);
     const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
-    if(!growDraftVersionId){
-      openRewardsAutoSetup(action);
-      return;
-    }
-    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+    openGrowEditorV258(action).catch(fail);
   });
   /* A deep link is a deliberate request to open an engine. The normal #/loyalty and
      #/retention destinations stop at this overview, so ordinary Grow use stays coherent.
@@ -17698,10 +17782,33 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     $('growPublishBack').onclick=()=>sessionStorage.removeItem(`nestly:grow-publish-review:${draftVersionId}`);return;
   }
   routeMain.innerHTML=`${CUI.pageHeader({title:'Publish Grow draft',subtitle:'Confirm the selected draft after reviewing each changed programme in its editor.',iconName:'loyalty',canWrite:true,moduleLabel:'Grow publishing'})}
-    <section class="card" id="growPublishDiffCard"><h2>What changes for customers</h2><p class="muted small" style="margin-top:6px">Draft v${Number(draft?.version_no||0)} compared with the programme customers earn on today.</p><div id="growPublishDiffBody" role="status" aria-live="polite" style="margin-top:12px"><p class="muted small">Loading what changes for customers…</p></div></section>
+    <section class="card" id="growPublishDiffCard"><h2>What changes for customers</h2><p class="muted small" style="margin-top:6px">Draft v${Number(draft?.version_no||0)} compared with the programme customers earn on today.</p><div id="growPublishDiffBody" role="status" aria-live="polite" style="margin-top:12px"><p class="muted small">Loading what changes for customers…</p></div><div id="growPublishPauseV258" style="margin-top:12px"></div></section>
     <section class="card"><h2>Draft v${Number(draft?.version_no||0)}</h2><p class="muted small" style="margin-top:6px">This page is the final publication gate. It summarises the programme numbers above and checks advanced-action safety below; it does not summarise reward, birthday or bring-back field values. Review those values in their programme editors first.</p><div id="growPublishStatus" role="status" aria-live="polite" style="margin-top:12px"></div><div class="row" style="margin-top:16px"><button class="btn" id="growPublishReview">Confirm &amp; publish</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></section>`;
   const reviewKey=`nestly:grow-publish-review:${draftVersionId}`;
   const back=$('growPublishBack');if(back)back.onclick=()=>sessionStorage.removeItem(reviewKey);
+  /* V258 (owner item 6, "published points system, but still shows paused"). Publishing is NOT
+     losing the status: publish_loyalty_config copies the draft's own `active` onto
+     loyalty_programs while setting configuration_status='published', so a draft whose Status is
+     Paused publishes a paused programme — exactly the state the owner reported. The draft got
+     there without the owner choosing it: generate_retention_recommendation saves 'active',false
+     over the clone of a live Active programme. The server fix is filed as a migration; here the
+     review screen stops being silent — it says the programme will publish paused, before the
+     confirmation, and offers the switch. */
+  let draftProgrammeActiveV258=null;
+  const renderPublishPauseWarningV258=()=>{
+    const host=$('growPublishPauseV258');if(!host)return;
+    if(draftProgrammeActiveV258!==false){host.innerHTML='';return}
+    host.innerHTML=`<div class="imp-note" role="alert"><b>This will publish PAUSED — customers earn nothing.</b><p class="small" style="margin-top:5px">This draft's programme Status is Paused. Publishing it leaves customers unable to earn points or claim rewards until you set it Active.</p><button class="btn sm" id="growPublishActivateV258" type="button" style="margin-top:10px">Set Status to Active</button></div>`;
+    const activate=$('growPublishActivateV258');
+    if(activate)activate.onclick=async()=>{
+      activate.disabled=true;activate.textContent='Setting Active…';
+      const {error}=await sb.rpc('save_loyalty_config_draft',{p_version:draftVersionId,p_config:{active:true},p_expected_snapshot_hash:null});
+      if(!isCurrent())return;
+      if(error){activate.disabled=false;activate.textContent='Set Status to Active';return fail(error)}
+      toast('Draft Status set to Active — still nothing published');
+      loadPublishComparison();
+    };
+  };
   /* Fail-soft on purpose: a failed comparison read shows its own retry and never touches the
      publish button, so the existing safety check and confirm flow keep working without it. */
   const loadPublishComparison=async()=>{
@@ -17721,13 +17828,17 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
       const retry=$('growPublishDiffRetry');if(retry)retry.onclick=loadPublishComparison;
       return;
     }
+    draftProgrammeActiveV258=draftResult.data?.program?.active??null;
+    renderPublishPauseWarningV258();
     const rows=growPublishFieldRowsV170((liveResult.data||[])[0]||null,draftResult.data?.program||null);
     target.innerHTML=`${rows.length
       ?`<div class="studio-impact-rule">${rows.map(row=>`<div class="studio-impact-eff"><span>${esc(row.label)}</span><span><s>${esc(row.before)}</s> → <b>${esc(row.after)}</b></span></div>`).join('')}</div>`
       :'<p class="muted small">No changes to earning or programme numbers in this draft.</p>'}
       <p class="muted small" style="margin-top:10px">Reward and birthday changes are listed in their editors.</p>`;
   };
-  loadPublishComparison();
+  /* The confirmation auto-opens below; it must not race the read that decides whether the
+     paused warning belongs in it. */
+  const comparisonReadyV258=loadPublishComparison();
   const effectLabel=effect=>(STUDIO_EFFECT_LABEL[effect.effect_type]&&STUDIO_EFFECT_LABEL[effect.effect_type].label)||effect.effect_type||'Action';
   const openPublishFlow=async()=>{
     const button=$('growPublishReview'),status=$('growPublishStatus');
@@ -17747,7 +17858,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
        control cannot be duplicated by id or left wired to nothing. */
     const publishDiffHtml=String($('growPublishDiffBody')?.innerHTML||'')
       .replace(/<button[\s\S]*?<\/button>/gi,'');
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div>${publishDiffHtml?`<section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml}</div></section>`:''}<div class="imp-note"><b>Server-confirmed advanced-action safety</b><p class="muted small" style="margin-top:4px">${live} running action${live===1?'':'s'} · ${shadow} shadow-only · ${unbuilt} unavailable. This check does not display ordinary reward, earning, birthday or bring-back field changes.</p></div><div style="margin-top:10px">${ruleBlocks}</div><div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">Safety check complete. The programme numbers changing are listed above. Type PUBLISH to make them live for customers.</div><label for="growPubType" class="sr-only">Type PUBLISH to confirm</label><input id="growPubType" autocomplete="off" placeholder="PUBLISH" style="margin-top:8px"><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div>${publishDiffHtml?`<section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml}</div></section>`:''}<div class="imp-note"><b>Server-confirmed advanced-action safety</b><p class="muted small" style="margin-top:4px">${live} running action${live===1?'':'s'} · ${shadow} shadow-only · ${unbuilt} unavailable. This check does not display ordinary reward, earning, birthday or bring-back field changes.</p></div><div style="margin-top:10px">${ruleBlocks}</div>${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}<div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">Safety check complete. The programme numbers changing are listed above. Type PUBLISH to make them live for customers.</div><label for="growPubType" class="sr-only">Type PUBLISH to confirm</label><input id="growPubType" autocomplete="off" placeholder="PUBLISH" style="margin-top:8px"><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
     let deactivate;const close=()=>{if(deactivate)deactivate();else $('growPubModal')?.remove()};
     deactivate=CUI.activateDialog($('growPubModal'),{onClose:close,initialFocus:'#growPubType'});
     $('growPubClose').onclick=$('growPubCancel').onclick=close;
@@ -17763,7 +17874,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     };
   };
   $('growPublishReview').onclick=openPublishFlow;
-  queueMicrotask(()=>{if(isCurrent())openPublishFlow()});
+  queueMicrotask(async()=>{await comparisonReadyV258;if(isCurrent())openPublishFlow()});
 }
 
 async function studioPage(draftVersionId=null){
