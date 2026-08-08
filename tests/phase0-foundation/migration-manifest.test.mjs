@@ -143,6 +143,10 @@ test('an additional same-prefix migration updates collision reporting determinis
     kind: 'executable',
     path: migrationPath,
     semanticVersion: 'v48',
+    // Far-future on purpose. This fixture only needs to sort LAST so the
+    // generator's monotonic check passes; pinning it near the real plan's tail
+    // meant every genuinely new migration overtook it and failed this test for
+    // reasons that had nothing to do with collision reporting.
     proposedDeployVersion: '20991231000000'
   });
   await writeFile(path.join(root, migrationPath), 'select 42;\n');
