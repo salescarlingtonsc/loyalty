@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="7b5f3eaa86a60b2925110ec785f06948b0bf849e7a7edd6a799db669870d76ba"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="642e5292c97bb19c4a189802fd2e402bc681e8f7a10fab24aa6390d36235a791"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1690,7 +1690,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 7b5f3eaa86a60b2925110ec785f06948b0bf849e7a7edd6a799db669870d76ba</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 642e5292c97bb19c4a189802fd2e402bc681e8f7a10fab24aa6390d36235a791</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -6678,6 +6678,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!isLoyaltyCurrent())return;
     if(error)return fail(error);
     draftSnapshotHash=data?.snapshot_hash||draftSnapshotHash;
+    closeTierDialogV236(false);
     if(!draftVersionId){
       toast('Tier draft saved — continue editing before you review and publish');
       nav(`#/loyalty/${versionId}`);return data;
@@ -6722,6 +6723,40 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     host.hidden=false;
     const toggle=$('trFormToggleV235');if(toggle)toggle.setAttribute('aria-expanded','true');
     if(focusFirst)$('trName')?.focus({preventScroll:true});
+  }
+  /* V236 (owner: "when i press edit tier - it should pop up a box - not me scrolling down").
+     The ONE tier form node is moved into a dialog and moved back on close, so every wired
+     handler and the perk_note source of truth stay untouched — this is a viewport change,
+     not a second editor. */
+  function openTierDialogV236(title,opener){
+    const form=$('trFormV235');
+    if(!form||document.getElementById('tierDialogV236'))return;
+    if(!document.getElementById('tierDialogHomeV236')){
+      const home=document.createElement('span');
+      home.id='tierDialogHomeV236';home.hidden=true;form.before(home);
+    }
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tierDialogV236" role="dialog" aria-modal="true" aria-labelledby="tierDialogTitleV236" tabindex="-1"><div class="modal-card" style="max-width:640px;max-height:min(85vh,760px);overflow:auto">
+      <div class="row" style="justify-content:space-between;align-items:center;gap:10px"><h2 id="tierDialogTitleV236" style="margin:0">${esc(title||'Edit tier')}</h2><button class="btn ghost sm" type="button" id="tierDialogCloseV236">Close</button></div>
+      <div id="tierDialogSlotV236" style="margin-top:12px"></div>
+    </div></div>`);
+    const dialog=document.getElementById('tierDialogV236');
+    dialog.querySelector('#tierDialogSlotV236').append(form);
+    form.hidden=false;
+    const close=()=>{closeTierDialogV236(true);opener?.focus?.()};
+    dialog.querySelector('#tierDialogCloseV236').onclick=close;
+    dialog.onclick=e=>{if(e.target===dialog)close()};
+    dialog.onkeydown=e=>{if(e.key==='Escape')close()};
+    $('trName')?.focus({preventScroll:true});
+  }
+  function closeTierDialogV236(restore){
+    const dialog=document.getElementById('tierDialogV236');if(!dialog)return;
+    const form=dialog.querySelector('#trFormV235');
+    const home=document.getElementById('tierDialogHomeV236');
+    if(form&&home&&restore){
+      home.after(form);form.hidden=true;
+      const toggle=$('trFormToggleV235');if(toggle)toggle.setAttribute('aria-expanded','false');
+    }
+    dialog.remove();
   }
   const trBenefitAddV235=$('trBenefitAddV235');
   if(trBenefitAddV235)trBenefitAddV235.onclick=()=>{
@@ -6801,8 +6836,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     else{ta.disabled=false;ta.textContent=editingTier?'Save tier':'Add tier'}
   };
   document.querySelectorAll('.trEdit').forEach(b=>b.onclick=()=>{
-    fillTier(tiers.find(t=>(t.tier_id||t.id)===b.dataset.id));
-    revealTierFormV235(true);
+    const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
+    fillTier(tier);
+    openTierDialogV236(tier?.name?`Edit tier — ${tier.name}`:'Edit tier',b);
   });
   document.querySelectorAll('.trDel').forEach(b=>b.onclick=async()=>{
     const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
@@ -12556,6 +12592,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'7b5f3eaa86a60b2925110ec785f06948b0bf849e7a7edd6a799db669870d76ba',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'642e5292c97bb19c4a189802fd2e402bc681e8f7a10fab24aa6390d36235a791',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -65,7 +65,9 @@ test('(c) the add-tier fields are hidden behind a reveal button', () => {
   assert.match(loyalty, /if\(focusFirst\)\$\('trName'\)\?\.focus\(\{preventScroll:true\}\)/);
   assert.match(loyalty, /trFormToggleV235\.onclick=\(\)=>\{fillTier\(null\);revealTierFormV235\(true\)\}/);
   // Editing an existing tier opens the same form rather than leaving it hidden.
-  assert.match(loyalty, /fillTier\(tiers\.find\(t=>\(t\.tier_id\|\|t\.id\)===b\.dataset\.id\)\);\s*\n\s*revealTierFormV235\(true\);/);
+  /* V236: Edit tier now opens a dialog at the card instead of revealing the form at the
+     bottom of the page — see tests/business-ui/v236-tier-edit-dialog.test.mjs. */
+  assert.match(loyalty, /openTierDialogV236\(tier\?\.name\?`Edit tier — \$\{tier\.name\}`:'Edit tier',b\)/);
 });
 
 test('(d) the table-seating question is sector-gated, and booking rules survive', () => {

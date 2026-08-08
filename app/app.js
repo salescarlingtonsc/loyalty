@@ -13864,6 +13864,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!isLoyaltyCurrent())return;
     if(error)return fail(error);
     draftSnapshotHash=data?.snapshot_hash||draftSnapshotHash;
+    closeTierDialogV236(false);
     if(!draftVersionId){
       toast('Tier draft saved — continue editing before you review and publish');
       nav(`#/loyalty/${versionId}`);return data;
@@ -13908,6 +13909,40 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     host.hidden=false;
     const toggle=$('trFormToggleV235');if(toggle)toggle.setAttribute('aria-expanded','true');
     if(focusFirst)$('trName')?.focus({preventScroll:true});
+  }
+  /* V236 (owner: "when i press edit tier - it should pop up a box - not me scrolling down").
+     The ONE tier form node is moved into a dialog and moved back on close, so every wired
+     handler and the perk_note source of truth stay untouched — this is a viewport change,
+     not a second editor. */
+  function openTierDialogV236(title,opener){
+    const form=$('trFormV235');
+    if(!form||document.getElementById('tierDialogV236'))return;
+    if(!document.getElementById('tierDialogHomeV236')){
+      const home=document.createElement('span');
+      home.id='tierDialogHomeV236';home.hidden=true;form.before(home);
+    }
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tierDialogV236" role="dialog" aria-modal="true" aria-labelledby="tierDialogTitleV236" tabindex="-1"><div class="modal-card" style="max-width:640px;max-height:min(85vh,760px);overflow:auto">
+      <div class="row" style="justify-content:space-between;align-items:center;gap:10px"><h2 id="tierDialogTitleV236" style="margin:0">${esc(title||'Edit tier')}</h2><button class="btn ghost sm" type="button" id="tierDialogCloseV236">Close</button></div>
+      <div id="tierDialogSlotV236" style="margin-top:12px"></div>
+    </div></div>`);
+    const dialog=document.getElementById('tierDialogV236');
+    dialog.querySelector('#tierDialogSlotV236').append(form);
+    form.hidden=false;
+    const close=()=>{closeTierDialogV236(true);opener?.focus?.()};
+    dialog.querySelector('#tierDialogCloseV236').onclick=close;
+    dialog.onclick=e=>{if(e.target===dialog)close()};
+    dialog.onkeydown=e=>{if(e.key==='Escape')close()};
+    $('trName')?.focus({preventScroll:true});
+  }
+  function closeTierDialogV236(restore){
+    const dialog=document.getElementById('tierDialogV236');if(!dialog)return;
+    const form=dialog.querySelector('#trFormV235');
+    const home=document.getElementById('tierDialogHomeV236');
+    if(form&&home&&restore){
+      home.after(form);form.hidden=true;
+      const toggle=$('trFormToggleV235');if(toggle)toggle.setAttribute('aria-expanded','false');
+    }
+    dialog.remove();
   }
   const trBenefitAddV235=$('trBenefitAddV235');
   if(trBenefitAddV235)trBenefitAddV235.onclick=()=>{
@@ -13987,8 +14022,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     else{ta.disabled=false;ta.textContent=editingTier?'Save tier':'Add tier'}
   };
   document.querySelectorAll('.trEdit').forEach(b=>b.onclick=()=>{
-    fillTier(tiers.find(t=>(t.tier_id||t.id)===b.dataset.id));
-    revealTierFormV235(true);
+    const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
+    fillTier(tier);
+    openTierDialogV236(tier?.name?`Edit tier — ${tier.name}`:'Edit tier',b);
   });
   document.querySelectorAll('.trDel').forEach(b=>b.onclick=async()=>{
     const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
