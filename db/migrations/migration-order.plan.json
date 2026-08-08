@@ -1605,6 +1605,12 @@
       "path": "db/migrations/20260809_nestly_v258_recommended_draft_inherits_live_status.sql",
       "semanticVersion": "v258",
       "proposedDeployVersion": "20260809000600"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v263_customer_communication_preferences.sql",
+      "semanticVersion": "v263",
+      "proposedDeployVersion": "20260809000700"
     }
   ]
 }

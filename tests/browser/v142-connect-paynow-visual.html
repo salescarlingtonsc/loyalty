@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="af24707d47ca6fe1075eb62ae01843f74a47b05807676469e08ab7ee28fabb63"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="be715fde32ef97e3b3376b17d1038836463e3092c8fb70dcddfd6f6026f3ede7"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -950,15 +950,26 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    is a good result and must not render as an alarm. */
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
-.staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
+.staff-row-line{display:flex;flex-direction:column;align-items:stretch;gap:6px}
 /* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
    The row was a flex wrap, so a field landed at a different x-position on every line and could
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
 :root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
-.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
+/* V260 (owner: Owner & managers vs Roster only tables had different column widths, and the
+   App-access/module pills collided with POSITION/COMMISSION text). Root cause: .staff-row-open
+   used to flex-grow to fill whatever space its sibling pills+buttons left over, and that
+   leftover varied per row (an owner row has one status line; a roster row has two pills plus
+   three buttons) — so the SAME grid template rendered at a different pixel width per row,
+   drifting the columns and squeezing the last cells into the pills next to them. Giving the
+   name/phone/email/position/commission grid its own full-width row, with the pills and action
+   buttons on a second row underneath, makes .staff-row-open always render at the row's full
+   width — identical to the header's — regardless of how many badges or buttons a given
+   teammate has, and removes the possibility of the two ever touching. */
+.staff-row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px}
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
@@ -1093,6 +1104,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .report-decision-card .task-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--coral);position:relative;z-index:1}
 .report-decision-card b{margin-top:13px;font-size:16px;position:relative;z-index:1}.report-decision-card>span:not(.task-icon):not(.report-card-visual){margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4;position:relative;z-index:1}
 .report-card-visual{display:flex;gap:5px;margin-top:auto;padding-top:14px;position:relative;z-index:1}.report-card-visual i{display:block;width:24px;height:8px;border-radius:999px;background:rgba(202,62,50,.22)}.report-card-visual i:nth-child(2){width:34px;background:rgba(202,62,50,.38)}.report-card-visual i:nth-child(3){width:18px;background:rgba(202,62,50,.16)}
+/* V260: three "…answer" collapsibles folded into their matching decision card — the card
+   itself is now a <details>, its clickable face a <summary> laid out exactly like the old
+   button face (icon/title/body/dots), with the marker triangle suppressed and the answer
+   body appearing below once expanded. */
+details.report-decision-card{overflow:visible}
+details.report-decision-card>summary{display:flex;flex-direction:column;align-items:flex-start;width:100%;cursor:pointer;list-style:none}
+details.report-decision-card>summary::-webkit-details-marker{display:none}
+details.report-decision-card>summary::marker{content:''}
+details.report-decision-card[open]{align-items:stretch;grid-column:1/-1}
+details.report-decision-card[open]>summary{margin-bottom:14px}
+details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .schedule-suggestion{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
 .schedule-suggestion h3{font-size:14px}.schedule-suggestion-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 .calendar-week-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;max-height:70vh}
@@ -1792,7 +1814,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · af24707d47ca6fe1075eb62ae01843f74a47b05807676469e08ab7ee28fabb63</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · be715fde32ef97e3b3376b17d1038836463e3092c8fb70dcddfd6f6026f3ede7</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2387,6 +2409,7 @@ async function tillPage(){
                            // custom carries a mandatory staff `reason`; giftcard/package/membership = each its own server-idempotent RPC per line.
   let catalog=null;       // catalogue + customer package/voucher entitlements, loaded together
   let catalogLoading=false, catalogError=null;
+  let tillSellPackageOpenV257=false; // V257: the "Sell package" drawer survives a panel redraw
   const packageUseAttemptsV102=new Map(); // client-package + branch -> stable key until confirmed success
   let saleCommitted=false, saleResult=null; // once the cart sale succeeds it is LOCKED; a retry never
                                              // re-runs it, only the failed gift/package/membership calls.
@@ -2401,6 +2424,12 @@ async function tillPage(){
   let evalTimer=null;      // debounce handle for re-evaluate on a sale-line change
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
+  /* V257: how many times THIS cart has been re-evaluated because the finalise came back stale.
+     The recovery was written for a one-off drift ("the price moved while you were ringing it up"),
+     and it re-offered the identical confirm button after every stale. When the stale cause is
+     permanent, that redraws the same screen forever — which is exactly what "Price updated —
+     please confirm the new total" and a Confirm button that does nothing looked like. */
+  let staleReevaluationsV257=0;
   let payError=null;       // {kind:'retry'|'conflict'} — finalise failure (LOCKS the cart so the same idempotency key is reused)
   let paynowAttempt=null;  // V142 provider-backed attempt; while present the cart and amount stay locked
   let paynowPollTimer=null;
@@ -2429,7 +2458,7 @@ async function tillPage(){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
     if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
-    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
+    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
@@ -2791,7 +2820,11 @@ async function tillPage(){
   function addPlanLine(type,plan){
     if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type,ref:plan.id,label:plan.name,unit_cents:plan.unit_cents,qty:1,key:crypto.randomUUID()});
-    CUI.announce(workspaceTemplateTextV97('itemAdded',{item:plan.name}));draw(); // extras do not affect the kernel total
+    CUI.announce(workspaceTemplateTextV97('itemAdded',{item:plan.name}));
+    /* V257: a screen-reader announcement was the ONLY feedback, and the redraw closed the drawer
+       it was added from, so a sighted owner saw nothing at all. Say it out loud. */
+    toast(workspaceTemplateTextV97('itemAdded',{item:plan.name}));
+    draw(); // extras do not affect the kernel total
   }
   async function useCustomerPackage(clientPackageId){
     if(busy||cartLocked())return;
@@ -2851,6 +2884,11 @@ async function tillPage(){
   function cartSaleLines(){return cart.filter(isCartSaleLine)}   // service/product/custom -> evaluate + record_cart_sale
   function extraLines(){return cart.filter(l=>!isCartSaleLine(l))} // package/membership -> own RPC
   function extrasTotalCents(){return extraLines().reduce((s,l)=>s+l.unit_cents*l.qty,0)} // NOT part of the kernel/evaluation total
+  /* V257: how many of this plan are on the bill. Packages/memberships are EXTRA lines — one line
+     per sale, each with its own stable idempotency key — so this counts lines, not qty. */
+  function selectedPlanCountV257(type,id){
+    return extraLines().reduce((sum,line)=>sum+((line.type===type&&String(line.ref)===String(id))?1:0),0);
+  }
   function extraLineBadge(l,succeeded,failed){
     if(l.type==='package')return succeeded
       ?`Sold · ${Number(l._packageResult?.pointsEarned||0)} points earned · ${Number(l._packageResult?.pointsTotal||0)} total`
@@ -2901,7 +2939,7 @@ async function tillPage(){
   // Reset the evaluation for the current cart and schedule a fresh (debounced) evaluate. A sale-line
   // change is a deliberate cart-change, so it also clears the stable finalise key (§2).
   function onSaleLinesChanged(){
-    evalResult=null;evalError=null;staleConfirm=false;payError=null;clearExpiry();
+    evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;clearExpiry();
     clearWriteAttempt(FINALISE_SLOT);
     const lines=buildEvalLines();
     evalState=lines.length?'evaluating':'idle';
@@ -3003,8 +3041,13 @@ async function tillPage(){
       return `<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Refresh price</button>`;
     if(evalState==='error')
       return evalError&&evalError.kind==='generic'?`<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Try again</button>`:'';
-    if(evalState==='ready'&&evalResult)
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(svTender?svTender.remaining_due_cents:evalResult.total_cents)}</button>`;
+    if(evalState==='ready'&&evalResult){
+      /* V257: this one button finalises the cart AND sells every extra, so it names the whole
+         amount collected — not just the kernel total, which is what made the till look like it
+         was asking for two payments. */
+      const dueV257=(svTender?svTender.remaining_due_cents:evalResult.total_cents)+extrasTotalCents();
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(dueV257)}</button>`;
+    }
     return '';
   }
 
@@ -3066,12 +3109,28 @@ async function tillPage(){
               <span class="pill ok">${Number(item.remaining)} left</span></button>`).join('')}</div>`
           :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
-          ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
+          ?`<details class="till-sale-package-options" id="tillSellPackageV257"${tillSellPackageOpenV257?' open':''}><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>{
+            /* V257 (owner: "sell package ... no order count, closes the tab and shows nothing").
+               Two defects, both here: a package line got no count, and adding one re-rendered the
+               whole panel, which collapsed this <details> and hid the only evidence that anything
+               had happened. The open state is now remembered across the redraw, and each plan
+               shows how many are on this bill. addPlanLine ALWAYS pushes a new line (each carries
+               its own idempotency key), so the count is a line count, not a qty. */
+            const qty=selectedPlanCountV257('package',p.id);
+            return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-plan="package" data-id="${p.id}"><span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+          }).join('')}</div></details>`
           :'';
         /* v187: bundles sit right under the services they are made of — that is where a
            counter hand looks for "the package deal" — and each says what is inside it. */
         const bundleBtns=(catalog.bundles&&catalog.bundles.length)
-          ?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${catalog.bundles.map(bundle=>`<button type="button" class="choice-button" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span></button>`).join('')}</div>
+          ?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${catalog.bundles.map(bundle=>{
+            /* V257 (owner: a service tile shows a red count when it is in the cart, the bundle
+               tile showed nothing while the cart line read "Rainbow special ×2"). A bundle IS a
+               cart sale line of its own type, so it counts its own lines — never the services it
+               expands into on the server — and reuses the service tile's badge, not a second one. */
+            const qty=selectedCatalogQty('bundle',bundle.id);
+            return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+          }).join('')}</div>
             <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`
           :'';
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
@@ -3128,14 +3187,30 @@ async function tillPage(){
       const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})}>${CUI.icon('close',{size:16})}</button>`;
       return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
     }).join('')}</ul>`:'';
-    // extras (package / membership) — charged as their OWN records, NOT part of the
-    // kernel total; shown as "Also processing" so the panel TOTAL matches the evaluation exactly.
-    const extrasHtml=extras.length?`<div style="margin-top:14px"><b class="small">Also processing (charged separately)</b>
+    /* extras (package / membership) — charged as their OWN records, NOT part of the kernel total,
+       so the panel TOTAL keeps matching the evaluation exactly.
+       V257 (owner: "why is the session charged separately? cannot together?"). The split is
+       deliberate and stays: sell_package_v102 writes a sales row of kind='package' that carries
+       its own prepaid entitlement and is judged by that kind's own revenue/visit/points policy,
+       while the cart finalises as kind='quick_sale' with sale_items. Merging them would file a
+       prepaid package as today's takings. What was wrong was the WORDS: "charged separately"
+       reads as "ask the customer to pay twice". It is one payment, two receipts — and the panel
+       now says the single amount to collect. */
+    const extrasHtml=extras.length?`<div style="margin-top:14px"><b class="small">Also on this bill · kept as its own receipt</b>
       <ul class="ck-extras">${extras.map(l=>{
         const succeeded=l._status==='issued'||l._status==='done';const failed=l._status==='failed';
         const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})} style="margin-left:8px">${CUI.icon('close',{size:15})}</button>`;
         return `<li><span>${esc(l.label)}<span class="ck-extra-note">${extraLineBadge(l,succeeded,failed)}</span></span><span style="display:inline-flex;align-items:center;gap:6px">${money(l.unit_cents*l.qty)}${rm}</span></li>`;
       }).join('')}</ul></div>`:'';
+    // V257: the one number the customer actually hands over, across both records.
+    const collectBaseV257=(hasSale&&evalResult&&evalState!=='error')
+      ?(svTender?svTender.remaining_due_cents:evalResult.total_cents):null;
+    const combinedTotalV257=(extras.length&&collectBaseV257!=null)
+      ?`<div class="ck-panel" style="margin-top:10px" aria-label="Total to collect">
+        <div class="ck-total"><span>Total to collect</span><span>${money(collectBaseV257+extrasTotalCents())}</span></div>
+        <p class="muted small" style="margin:6px 0 0">Take this once. Today's items and the package are kept as two records so prepaid sessions never count as today's takings — the customer pays one amount.</p>
+      </div>`
+      :'';
     const emptyHtml=cart.length?'':`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Cart is empty. Tap a service or add an item to begin.</p></div>`;
     const panelHtml=checkoutPanelHtml();
     // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
@@ -3175,6 +3250,7 @@ async function tillPage(){
         ${saleLinesHtml}
         ${panelHtml}
         ${extrasHtml}
+        ${combinedTotalV257}
         ${emptyHtml}
         <div id="tcErr"></div>
         ${tenderHtml}
@@ -3211,6 +3287,8 @@ async function tillPage(){
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
     });
+    const sellPackageDrawerV257=$('tillSellPackageV257');
+    if(sellPackageDrawerV257)sellPackageDrawerV257.ontoggle=()=>{tillSellPackageOpenV257=sellPackageDrawerV257.open};
     document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
@@ -3262,7 +3340,7 @@ async function tillPage(){
   function cartErr(msg){const e=$('tcErr');if(e)e.innerHTML=`<div class="err">${esc(msg)}</div>`;else toast(msg)}
   // Deliberate fresh start after a same-key/different-request conflict (§2): mint a NEW finalise key
   // (clear the slot) and re-evaluate the current cart.
-  function startNewCheckout(){payError=null;saleCommitted=false;staleConfirm=false;clearWriteAttempt(FINALISE_SLOT);onSaleLinesChanged();}
+  function startNewCheckout(){payError=null;saleCommitted=false;staleConfirm=false;staleReevaluationsV257=0;clearWriteAttempt(FINALISE_SLOT);onSaleLinesChanged();}
   // "Other item" modal — amount + a MANDATORY short reason (3..200). The reason is required by the
   // kernel for custom (unpriced) lines; the amount is sent as amount_cents and re-validated server-side.
   function openCustomModal(){
@@ -3502,6 +3580,14 @@ async function tillPage(){
       payError=null;evalError={kind:'zero',message:"Fully discounted carts aren't supported yet — remove a discount or add an item."};evalState='error';draw();return;}
     if((code==='P0001'&&/stale_evaluation/.test(msg))||(code==='22023'&&/\bstale\b/i.test(msg))){ // re-evaluate ONCE, then confirm
       payError=null;staleConfirm=false;
+      staleReevaluationsV257+=1;
+      /* V257: ONCE means once. A second stale on the same cart is not drift a re-price can settle
+         — the server is refusing this cart every time — so stop re-offering the same confirm and
+         say so. Nothing was charged (every stale aborts the whole finalise transaction), and the
+         cart unlocks so staff can change the items and get a queue moving. */
+      if(staleReevaluationsV257>1){
+        evalError={kind:'generic',message:'This price could not be locked, so nothing was charged. Take the bundle out of the cart, add its services on their own, and take payment again — and tell an owner this bundle cannot be sold yet.'};
+        evalState='error';evalResult=null;clearExpiry();draw();return;}
       const ok=await runEvaluate();
       if(!isTillCurrent())return;
       if(ok===true&&evalState==='ready')staleConfirm=true; // fresh price is shown; wait for an explicit confirm
@@ -3590,8 +3676,13 @@ async function tillPage(){
         :`${esc(x.label)} ${failed?'(not enrolled)':'· enrolled'}`;
       return `<li><span>${name}</span><span>${failed?'—':money(x.amount)}</span></li>`;
     }).join('');
-    const extrasBlock=d.extras.length?`<div style="margin-top:12px;text-align:left"><b class="small">Also charged (separate records)</b>
-      <ul class="till-receipt-lines">${extraRows}</ul></div>`:'';
+    /* V257: the receipt names one collected amount over both records — the sale and every extra
+       that actually completed. A failed extra was never collected, so it is excluded. */
+    const collectedV257=(d.hasSale?Number(d.total||0):0)
+      +d.extras.filter(x=>x.status!=='failed').reduce((sum,x)=>sum+Number(x.amount||0),0);
+    const extrasBlock=d.extras.length?`<div style="margin-top:12px;text-align:left"><b class="small">Also charged · own record</b>
+      <ul class="till-receipt-lines">${extraRows}</ul>
+      <div class="ck-panel" style="margin-top:8px"><div class="ck-total"><span>Total collected</span><span>${money(collectedV257)}</span></div></div></div>`:'';
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
@@ -3676,7 +3767,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'af24707d47ca6fe1075eb62ae01843f74a47b05807676469e08ab7ee28fabb63',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'be715fde32ef97e3b3376b17d1038836463e3092c8fb70dcddfd6f6026f3ede7',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

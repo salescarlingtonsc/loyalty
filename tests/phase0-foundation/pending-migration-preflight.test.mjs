@@ -138,7 +138,8 @@ const sqlTestBySemanticVersion = new Map([
   ['v148', 'db/tests/v148_owner_launch_closure.sql'],
   ['v256', 'db/tests/v256_tier_may_measure_lifetime_points.sql'],
   ['v257', 'db/tests/v257_bundle_finalise_rehash.sql'],
-  ['v258', 'db/tests/v258_recommended_draft_inherits_live_status.sql']
+  ['v258', 'db/tests/v258_recommended_draft_inherits_live_status.sql'],
+  ['v263', 'db/tests/v263_customer_communication_preferences.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
@@ -735,7 +736,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 221); // V258
+  assert.equal(pending.length, 222); // V263
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

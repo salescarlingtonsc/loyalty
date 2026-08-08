@@ -9,7 +9,8 @@
 --   2  REGRESSION for audit finding 1.5 — a run against zero opted-in
 --      recipients leaves NO watermark, so the same promotion still alerts once
 --      somebody opts in (the old code burned the watermark first and could
---      never recover);
+--      never recover). Since v263 the zero-recipient state is created
+--      explicitly rather than by absence, because absence now means consent;
 --   3  campaign_send_records_v255 rejects UPDATE and DELETE;
 --   4  a send record survives deletion of the promotion it points at;
 --   5  the denial matrix — anon, an authenticated session with no uid, a firm
@@ -95,6 +96,26 @@ begin
   ) values (v_biz,'offer',v_promo_a,'en','V255 fixture promotion');
 
   -- 2. NO opted-in recipient yet. The old code burned the watermark here.
+  --
+  -- V263 CHANGED HOW THIS STATE IS REACHED, not what it proves. Until v263 an
+  -- ABSENT preference row meant "do not send", so doing nothing here produced a
+  -- zero-recipient run. The owner's ruling ("default is all on") inverted that:
+  -- absence is now consent, so every verified link of this tenant would receive
+  -- and this step would burn the very watermark it exists to catch. The
+  -- zero-recipient condition is therefore now stated explicitly — every verified
+  -- link is withdrawn first — which is a more honest fixture anyway: it no longer
+  -- depends on a default to express "nobody wants this".
+  insert into public.customer_notification_preferences(
+    business_id,identity_id,auth_user_id,link_id,client_id,channel,topic,
+    opted_in,consent_at
+  )
+  select link.business_id,link.identity_id,link.auth_user_id,link.id,link.client_id,
+         'in_app','promotion_alerts',false,now()
+    from public.customer_links link
+   where link.business_id=v_biz and link.state='verified'
+  on conflict (business_id,link_id,channel,topic) do update
+    set opted_in=false,consent_at=excluded.consent_at;
+
   v_n:=app.enqueue_promotion_alert_v122(v_promo_a,'v122_promotion_new');
   if v_n<>0 then
     raise exception 'v255: a run with zero opted-in recipients must enqueue 0, got %',v_n;
@@ -113,7 +134,10 @@ begin
     (v_biz,v_in.identity_id,v_in.auth_user_id,v_in.id,v_in.client_id,
       'in_app','promotion_alerts',true,now()),
     (v_biz,v_out.identity_id,v_out.auth_user_id,v_out.id,v_out.client_id,
-      'in_app','promotion_alerts',false,now());
+      'in_app','promotion_alerts',false,now())
+  -- Upsert, because step 2 above now withdraws every verified link first.
+  on conflict (business_id,link_id,channel,topic) do update
+    set opted_in=excluded.opted_in,consent_at=excluded.consent_at;
 
   v_n:=app.enqueue_promotion_alert_v122(v_promo_a,'v122_promotion_new');
   if v_n<>1 then

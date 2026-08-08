@@ -99,7 +99,7 @@ test('checked-in canonical plan preserves 45 trusted catalog versions then 215 u
   assert.equal(result.status, 0, result.stderr);
 });
 
-test('materializer creates one byte-preserving 266-file chain and deterministic manifests', async (t) => {
+test('materializer creates one byte-preserving 267-file chain and deterministic manifests', async (t) => {
   const { root, plan } = await fixture(t);
   await addRecoveryEvidence(root, plan);
   const materialized = run(root, '--materialize');
@@ -109,14 +109,14 @@ test('materializer creates one byte-preserving 266-file chain and deterministic 
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 221); // V258
-  assert.equal(manifest.itemCount, 266); // V258
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 266); // V258
+  assert.equal(manifest.pendingCount, 222); // V263
+  assert.equal(manifest.itemCount, 267); // V263
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 267); // V263
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v258_recommended_draft_inherits_live_status' // V258
+    'nestly_v263_customer_communication_preferences' // V263
   );
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);

@@ -2081,6 +2081,7 @@ async function route(){
     if(h==='#/customer/explore')return CUSTOMER_EXPLORE_LIVE_V248?renderCustomerExplore():nav('#/wallet');
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
+    if(h==='#/customer/communications')return renderCustomerCommunicationsV263();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
       const customerCapabilities=await loadCustomerFeatureCapabilities();
       if(!isRouteCurrent())return;
@@ -4002,6 +4003,7 @@ async function renderCustomerProfile(){
       <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save marketing choice</span></button>`
       :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p>'}
     </section>
+    <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Communications</h2><p class="muted small">Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>Open communications</span></a></div></section>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
@@ -4009,7 +4011,7 @@ async function renderCustomerProfile(){
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Update password</span></button>
     </section>
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
-    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">Only service updates such as bookings, points, rewards, quests, and birthday benefits. Businesses cannot send promotional push notifications from this control.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
+    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">This switch controls whether this device can show notifications at all. Which ones you actually receive is set in <a href="#/customer/communications">Communications</a> — offers, rewards and points, and Peekaa updates each have their own channels there.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
     ${accountDeletionCardHtml()}`;
   bindPasswordVisibility($('walletBody'));
   /* v190: applied immediately on change — the person is looking at the surface they just picked,
@@ -6270,6 +6272,96 @@ async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>
     if(setError){input.checked=!input.checked;return toast('Notification settings could not be saved. Please try again.')}
     toast('Notification preference saved');
   });
+}
+
+/* V263 - the customer Communications screen.
+   Owner ruling 2026-08-09, with Grab's Communications screen as the supplied reference: purpose
+   categories, one row per channel, "default is all on". The labels live here and the effective
+   values come from the server in one call, so the client never reproduces the default rule - that
+   is exactly how a screen and its send-path gate drift apart.
+   Transactional messages (receipts, booking confirmations, security notices) are deliberately
+   absent: they have no category server-side and cannot be switched off from anywhere. */
+const CUSTOMER_COMMUNICATION_CATEGORIES_V263=[
+  ['business_offers','Offers from businesses you follow','Promotions and deals from the businesses whose programmes you have joined.'],
+  ['rewards_and_points','Your rewards and points','Points you earn, rewards unlocked, and value that is about to expire.'],
+  ['peekaa_updates','Peekaa updates','News and new features from Peekaa itself.']
+];
+const CUSTOMER_COMMUNICATION_CHANNELS_V263=[
+  ['in_app','In-app message'],['push','Push notification'],['email','Email'],
+  ['sms','SMS'],['whatsapp','WhatsApp'],['call','Call']
+];
+async function renderCustomerCommunicationsV263(){
+  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
+  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
+  const shell=body=>renderCustomerShell({
+    active:'profile',staffWorkspaces:context.staffWorkspaces,
+    messagesAvailable:context.features.customer_in_app_inbox===true,
+    backTo:'#/customer/profile',body
+  });
+  shell(CUI.loadingState({title:'Communications',body:'Loading your communication choices…',variant:'form'}));
+  focusCustomerRoute();
+  const {data,error}=await sb.rpc('customer_get_communication_preferences_v263');
+  if(!isCurrent())return;
+  if(error){
+    shell(CUI.errorState({title:'Communications',message:'Your communication choices could not be loaded. Nothing has been changed.',retryId:'customerCommsRetry'}));
+    const retry=$('customerCommsRetry');if(retry)retry.onclick=()=>renderCustomerCommunicationsV263();
+    focusCustomerRoute();return;
+  }
+  const serverCategories=Array.isArray(data?.categories)?data.categories:[];
+  const known=new Map(CUSTOMER_COMMUNICATION_CATEGORIES_V263.map(([key,label,help])=>[key,{label,help}]));
+  const rows=serverCategories.filter(entry=>known.has(entry?.category));
+  if(!rows.length){
+    shell(`<header class="customer-page-head"><div><h1>Communications</h1></div></header>${CUI.emptyState({iconName:'bell',title:'No communication choices yet',body:'There is nothing to set here for your account right now.'})}`);
+    focusCustomerRoute();return;
+  }
+  const allEnabled=data?.all_enabled===true;
+  shell(`<header class="customer-page-head"><div><h1>Communications</h1><p class="muted">Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.</p></div></header>
+    <section class="card"><label class="row" for="customerCommsAll" style="align-items:flex-start;color:var(--ink);font-weight:600"><input id="customerCommsAll" type="checkbox" ${allEnabled?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:2px"> <span>Send me all marketing messages<span class="muted small" style="display:block;font-weight:400;margin-top:3px">One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.</span></span></label>
+      <p class="muted small" id="customerCommsStatus" role="status" aria-live="polite" style="margin-top:10px"></p></section>
+    ${rows.map(entry=>{
+      const meta=known.get(entry.category);
+      const channels=Array.isArray(entry.channels)?entry.channels:[];
+      return `<section class="card" style="margin-top:14px"><h2>${esc(meta.label)}</h2><p class="muted small" style="margin-top:5px">${esc(meta.help)}</p>
+      ${channels.map(channel=>{
+        const label=(CUSTOMER_COMMUNICATION_CHANNELS_V263.find(([key])=>key===channel?.channel)||[null,channel?.channel])[1];
+        return `<label class="row" for="customerComms-${esc(entry.category)}-${esc(channel.channel)}" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="customerComms-${esc(entry.category)}-${esc(channel.channel)}" class="customerCommsToggle" type="checkbox" style="width:auto" data-category="${esc(entry.category)}" data-channel="${esc(channel.channel)}" ${channel.enabled===true?'checked':''}>${esc(label||channel.channel)}</label>`;
+      }).join('')}</section>`;
+    }).join('')}`);
+  focusCustomerRoute();
+  const status=$('customerCommsStatus');
+  const say=message=>{if(status)status.textContent=message;if(message)CUI.announce(message)};
+  const master=$('customerCommsAll');
+  const syncMaster=()=>{
+    if(!master)return;
+    master.checked=[...document.querySelectorAll('.customerCommsToggle')].every(input=>input.checked);
+  };
+  /* Optimistic, but never dishonest: a failed write puts the switch back where it was and says so,
+     so the screen can never claim a preference the server did not store. */
+  document.querySelectorAll('.customerCommsToggle').forEach(input=>input.onchange=async()=>{
+    const wanted=input.checked;
+    input.disabled=true;say('Saving…');
+    const {error:setError}=await sb.rpc('customer_set_communication_preference_v263',{
+      p_category:input.dataset.category,p_channel:input.dataset.channel,p_enabled:wanted
+    });
+    if(!isCurrent()||!input.isConnected)return;
+    input.disabled=false;
+    if(setError){input.checked=!wanted;syncMaster();say('That choice could not be saved, so it has been put back. Please try again.');return}
+    syncMaster();say('Saved.');
+  });
+  if(master)master.onchange=async()=>{
+    const wanted=master.checked;
+    const before=[...document.querySelectorAll('.customerCommsToggle')].map(input=>[input,input.checked]);
+    master.disabled=true;before.forEach(([input])=>{input.disabled=true;input.checked=wanted});
+    say('Saving…');
+    const {error:setError}=await sb.rpc('customer_set_all_communications_v263',{p_enabled:wanted});
+    if(!isCurrent()||!master.isConnected)return;
+    master.disabled=false;before.forEach(([input])=>{input.disabled=false});
+    if(setError){
+      master.checked=!wanted;before.forEach(([input,was])=>{input.checked=was});
+      say('That change could not be saved, so your choices have been put back. Please try again.');return;
+    }
+    say(wanted?'All marketing messages are on.':'All marketing messages are off. Receipts, bookings and security messages still send.');
+  };
 }
 
 function renderPersonaResolutionUnavailable(){

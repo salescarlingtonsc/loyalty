@@ -1172,6 +1172,7 @@ async function route(){
     if(h==='#/customer/explore')return CUSTOMER_EXPLORE_LIVE_V248?renderCustomerExplore():nav('#/wallet');
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
+    if(h==='#/customer/communications')return renderCustomerCommunicationsV263();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
       const customerCapabilities=await loadCustomerFeatureCapabilities();
       if(!isRouteCurrent())return;

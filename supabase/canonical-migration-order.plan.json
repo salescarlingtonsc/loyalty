@@ -1600,6 +1600,12 @@
       "version": "20260809000600",
       "name": "nestly_v258_recommended_draft_inherits_live_status",
       "sourcePath": "db/migrations/20260809_nestly_v258_recommended_draft_inherits_live_status.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260809000700",
+      "name": "nestly_v263_customer_communication_preferences",
+      "sourcePath": "db/migrations/20260809_nestly_v263_customer_communication_preferences.sql"
     }
   ]
 }
