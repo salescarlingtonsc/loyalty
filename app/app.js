@@ -19443,6 +19443,13 @@ async function appointmentsPage(){
   }
   calendarMinuteTimer=setInterval(()=>{
     if(!isCurrent()){clearInterval(calendarMinuteTimer);calendarMinuteTimer=null;return}
+    /* v235: skip the tick while the tab is hidden. updateCurrentTimeLine() is not always cheap —
+       once "now" moves outside the rendered range it falls through to loadCalendar(), and since a
+       reload does not necessarily bring the range back over "now", that repeats EVERY minute for
+       as long as the view stays open. A shop tablet parked on Appointments overnight was therefore
+       re-querying the calendar 60x an hour with nobody looking at it. The line is repainted on the
+       next tick after the tab is shown again, so nothing is stale by more than a minute. */
+    if(globalThis.document?.visibilityState==='hidden')return;
     updateCurrentTimeLine();
   },60000);
   const staffQ=q=>staffFilter&&staffFilter!=='all'?q.eq('staff_id',staffFilter):q;
