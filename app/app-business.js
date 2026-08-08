@@ -98,6 +98,11 @@ let pendingTillRedemptionScan=false;
 /* V230: the loyalty editor's pending model selection (redeem/tiers) before Save writes it.
    Reset on every fresh entry so a preview never leaks across visits. */
 let loyaltyModeDraftV230=null;
+/* V235: the programme Status the owner has chosen but not yet saved. It has to outlive a
+   re-render because switching the loyalty model re-renders the editor from the server, which
+   used to silently revert an unsaved Active back to the stored Paused — and the next Save
+   wrote that reverted value. Cleared on a fresh entry, exactly like the mode draft. */
+let loyaltyStatusDraftV235=null;
 /* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
    birthday / bring-back / referral editors. Module-level because those editors live in
    different page functions from the Programmes overview that sets it. */
@@ -5495,6 +5500,12 @@ async function bookingsPage(){
      workspace actually has a waitlist — it now travels with Bookings, but a business can still
      have Bookings without the Waitlist module. */
   const waitlistLinkedV223=(S.myModules||S.biz.enabled_modules||[]).includes('waitlist');
+  /* V235 (owner: "how can a spa have table seating at all"). V223 hid the seating CONTROLS
+     behind the flag but still asked every sector the question, so an appointment business was
+     offered a switch it can never truthfully turn on. The question now belongs to seated
+     sectors only (INDUSTRIES keys), while the booking rules below it render for everyone. */
+  const seatingSectorV235=['fnb','other'].includes(String(S.biz.industry||'').toLowerCase());
+  const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
   routeMain.innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
@@ -5515,10 +5526,10 @@ async function bookingsPage(){
              salon/spa/massage/fitness sector is granted the full module list, so all of them
              were shown table management they can never use. The seating controls now appear
              only for a business that says it seats guests. -->
-        <label style="display:flex;align-items:center;gap:8px;margin:0 0 6px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        ${seatingSectorV235?`<label style="display:flex;align-items:center;gap:8px;margin:0 0 6px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
           <input type="checkbox" id="setTakesTablesV223" style="width:auto" ${S.biz.takes_table_reservations?'checked':''}> We seat guests at tables</label>
-        <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>
-        ${S.biz.takes_table_reservations?`<div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
+        <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>`:''}
+        ${seatsGuestsV235?`<div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
         <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
         <div class="row"><input id="tblName" placeholder="e.g. Small (2-seater)">
           <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
@@ -5530,7 +5541,7 @@ async function bookingsPage(){
         <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
         <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
         <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
-        ${S.biz.takes_table_reservations?`<label>When you're full</label><select id="setOverflow">
+        ${seatsGuestsV235?`<label>When you're full</label><select id="setOverflow">
           <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
           <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
@@ -5987,7 +5998,7 @@ function applyGrowLoyaltyEditorIsolationV139(root,editorIntent){
     birthday:new Set(['birthdayEditorCard'])
   };
   const keep=keepByKind[editorIntent.kind]||new Set();
-  ['loyaltyCustomerRedemption','loyaltyProgramEditor','loyaltyRewardEditor','birthdayEditorCard']
+  ['loyaltyCustomerRedemption','loyaltyOverviewV235','loyaltyProgramEditor','loyaltyRewardEditor','birthdayEditorCard']
     .forEach(id=>{const element=root.querySelector(`#${id}`);if(element&&!keep.has(id))element.remove()});
   const split=root.querySelector('.split');
   if(split){
@@ -6012,6 +6023,7 @@ function openProtectedGrowPublishReview(draftVersionId){
 
 async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null,stableRefresh=false,editorIntent=null){
   if(!stableRefresh)loyaltyModeDraftV230=null;
+  if(!stableRefresh)loyaltyStatusDraftV235=null;
   const routeMain=M();
   const isLoyaltyCurrent=()=>routeMain.isConnected&&M()===routeMain;
   if(!stableRefresh)routeMain.innerHTML=CUI.loadingState({title:'Loyalty',iconName:'loyalty'});
@@ -6089,6 +6101,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      which the server already enforces — while 'stamps' is its own model. */
   const loyaltyModeV230=loyaltyModeDraftV230||S.biz.points_mode||'redeem';
   const loyaltySelectionV230=model==='stamps'?'stamps':(loyaltyModeV230==='tiers'?'tiers':'redeem');
+  /* V235: Status is read from the pending draft first, the stored programme second. Every
+     render of the Status control and everything that judges "is this running" goes through
+     this one value, so a preview re-render can no longer change what Save will write. */
+  const loyaltyActiveV235=loyaltyStatusDraftV235===null?Boolean(p?.active):loyaltyStatusDraftV235;
+  /* The saved model, ignoring any preview — this is what customers are on right now. */
+  const liveLoyaltySelectionV235=(p?.loyalty_model||'classic')==='stamps'?'stamps'
+    :((S.biz.points_mode||'redeem')==='tiers'?'tiers':'redeem');
+  const loyaltyModelCopyV235={
+    redeem:{name:'Points redemption',line:'Customers earn points on every visit and spend them on rewards you choose.'},
+    tiers:{name:'Tiered membership',line:'Customers earn points on every visit and unlock better benefits as they move up.'},
+    stamps:{name:'Stamp card',line:'Customers collect a stamp each time they spend, and claim a reward at each milestone.'}};
   const unit=model==='stamps'?'stamps':'points';
   const groupEligibility=(rows,key)=>rows.reduce((a,x)=>{
     (a[x.reward_id]??=[]).push(x[key]);
@@ -6197,22 +6220,38 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}</div>
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
+  /* V235: the requirement line speaks the firm's own basis, and a zero threshold is the
+     starting tier rather than "from 0". */
+  const tierBasisWordV235=({visits:'visits',spend:'spent',points_earned:'points'})[p?.tier_basis||'visits'];
+  const tierRequirementLineV235=(tier)=>{
+    const threshold=Number(tier?.threshold)||0;
+    if(!threshold)return 'Starting tier';
+    if((p?.tier_basis||'visits')==='spend')return `Unlock at ${money(threshold*100)} spent`;
+    return `Unlock at ${threshold.toLocaleString('en-SG')} ${tierBasisWordV235}`;
+  };
+  /* Two "% off" lines are not merged or deleted — the owner's data is the owner's. It is
+     flagged where it will be read, because the customer is shown both. */
+  const tierDuplicateDiscountV235=(tier)=>tierBenefitLines(tier).filter(line=>/^\d+% off/.test(line)).length>1;
   const tierRows=()=>`
     <b style="display:block;margin-top:18px">${loyaltySelectionV230==='tiers'?'Your tiers':'Tiers (optional)'}</b>
-    ${tiers.length&&!(p&&p.active)?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but the programme Status above is Paused. Set Status to Active, then ${draftVersionId?'Review & publish':'Save'} — that is the whole fix.</p></div>`:''}
-    <label>Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
+    ${tiers.length&&!loyaltyActiveV235?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but the programme Status above is Paused. Set Status to Active, then ${draftVersionId?'Review & publish':'Save'} — that is the whole fix.</p></div>`:''}
+    <label for="ltb">Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
       <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
       <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
       <option value="points_earned" ${p?.tier_basis==='points_earned'?'selected':''}>Lifetime points earned</option></select>
-    ${tiers.length?tiers.map(t=>{const state=tierBoundary(t);return `<div class="reward-item" style="margin-top:8px"><div class="meta"><div>
-      <b>${esc(t.name)}</b><p class="muted small" style="margin-top:4px">from ${t.threshold} · ${t.points_multiplier}× ${unit}</p>
-      ${tierBenefitLines(t).length?`<ul class="rec-why" style="margin-top:8px">${tierBenefitLines(t).map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:6px">No benefits added yet.</p>'}
+    ${loyaltySelectionV230==='tiers'?`<p class="muted small" style="margin-top:10px"><b>How customers move up.</b> Earn ${p?.earn_points_per_dollar??1} points per $1. Points accumulate for life and unlock higher tiers at each threshold.</p>`:''}
+    <p class="muted small" style="margin-top:6px">Tiers are based on lifetime ${esc(tierBasisWordV235)} — spending points never drops anyone down.</p>
+    ${tiers.length?tiers.map(t=>{const state=tierBoundary(t),benefits=tierBenefitLines(t);return `<div class="reward-item" style="margin-top:8px"><div class="meta"><div>
+      <b>${esc(t.name)}</b><p class="muted small" style="margin-top:4px">${esc(tierRequirementLineV235(t))}${Number(t.points_multiplier)>1?` · earns ${t.points_multiplier}× ${unit}`:''}</p>
+      ${benefits.length?`<ul class="rec-why" style="margin-top:8px">${benefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:6px">No benefits added yet.</p>'}
+      ${tierDuplicateDiscountV235(t)?'<p class="loyalty-flag-v235" style="margin-top:8px">Two discounts are listed — customers see both. Keep the one you mean.</p>':''}
       ${t.effective_from||t.expires_at?`<p class="muted small" style="margin-top:6px">${t.effective_from?`Starts ${esc(walletDate(t.effective_from,true))}`:'Starts now'}${t.expires_at?` · Ends ${esc(walletDate(t.expires_at,true))}`:''}</p>`:''}</div><span class="spacer"></span><span class="pill ${state.tone}">${state.label}</span>
-      ${canManageLoyalty?`<button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit</button>
+      ${canManageLoyalty?`<button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit tier</button>
       <button class="btn ghost sm trDel" aria-label="Pause tier" data-id="${t.tier_id||t.id}">✕</button>`:''}</div></div>`}).join('')
       :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
     ${canManageLoyalty&&!tiers.length?'<button class="btn ghost sm" id="trDefaults" type="button" style="margin-top:10px">Add recommended tiers · Gold, Platinum &amp; Diamond</button><p class="muted small" id="trDefaultsStatus" role="status" aria-live="polite" style="margin-top:6px">Creates three editable tier drafts. Nothing is published.</p>':''}
-    ${canManageLoyalty?`<div class="tier-editor" style="margin-top:12px">
+    ${canManageLoyalty?`<button class="btn ghost sm" id="trFormToggleV235" type="button" aria-expanded="false" aria-controls="trFormV235" style="margin-top:12px">+ Add tier</button>
+    <div class="tier-editor" id="trFormV235" hidden style="margin-top:12px">
       <p class="tier-editor-step"><b>1. Name it and set who reaches it</b></p>
       <div class="field-grid">
         <div><label for="trName">Tier name</label><input id="trName" placeholder="e.g. Gold">
@@ -6227,12 +6266,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ${TIER_BENEFIT_PRESETS_V182.map((preset,index)=>`<label class="tier-benefit-pick"><input type="checkbox" data-tier-benefit="${esc(preset.text)}" id="trBenefitPick${index}"><span>${esc(preset.label)}</span></label>`).join('')}
       </div>
       ${rewards.filter(reward=>reward.active!==false).length?`<div class="row" style="margin-top:10px;flex-wrap:wrap;align-items:center"><span class="muted small">Or add one of your rewards:</span>${rewards.filter(reward=>reward.active!==false).map(reward=>`<button type="button" class="btn ghost sm trBenefitReward" data-benefit="${esc(`${rewardLabel(reward)} (${reward.cost_points} ${unit})`)}">${esc(rewardLabel(reward))} · ${reward.cost_points}</button>`).join('')}</div>`:''}
-      <details class="tier-editor-advanced" style="margin-top:12px">
-        <summary>Write the benefits myself</summary>
-        <label class="sr-only" for="trPerk">Tier benefits, one per line</label>
-        <textarea id="trPerk" rows="3" placeholder="One customer benefit per line" style="margin-top:8px"></textarea>
-        <p class="muted small" style="margin-top:5px">Ticking a box above adds a line here. Edit or add your own freely.</p>
-      </details>
+      <div class="tier-benefit-rows-v235" id="trBenefitRowsV235" style="margin-top:12px"></div>
+      <button class="btn ghost sm" id="trBenefitAddV235" type="button" style="margin-top:8px">+ Add benefit</button>
+      <p class="muted small" style="margin-top:6px">Each line is one benefit the customer reads. Ticking a box above adds a line here.</p>
+      <div hidden><label class="sr-only" for="trPerk">Tier benefits, one per line</label><textarea id="trPerk" rows="3"></textarea></div>
       <details class="tier-editor-advanced" style="margin-top:10px">
         <summary>Run this tier only between certain dates</summary>
         <p class="muted small" style="margin-top:8px">Leave both empty and the tier runs from the moment you publish, with no end date.</p>
@@ -6250,45 +6287,96 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     ?`<div class="wallet-line" style="margin-top:12px"><div><b>${esc(publishedBirthdayProgram.customer_label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.fulfillment_kind==='discount_pct'?`${publishedBirthdayProgram.discount_percent}% off`:publishedBirthdayProgram.manual_item||'Manual benefit')} · ${publishedBirthdayProgram.active?'Live for eligible customers':'Published but paused'} · window ${Number(publishedBirthdayProgram.window_days_before||0)} day(s) before to ${Number(publishedBirthdayProgram.window_days_after||0)} day(s) after</p>${publishedBirthdayProgram.customer_description?`<p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.customer_description)}</p>`:''}</div><span class="spacer"></span><span class="pill ${publishedBirthdayProgram.active?'on':'off'}">Published</span></div>`
     :'<p class="muted small" style="margin-top:10px">No birthday benefit is published. Starting a draft makes no offer until you complete, explicitly enable, and publish it.</p>';
   const birthdayEditor=canManageLoyalty
-    ?!draftVersionId?`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><b>Birthday benefit</b><p class="muted small" style="margin-top:6px">Customer participation is separately opt-in and birthday details are never shared with your team.</p>${publishedBirthdaySummary}<button class="btn ghost sm" id="birthdayStartDraft" style="margin-top:12px">${publishedBirthdayProgram?'Create change draft':'Configure birthday benefit'}</button></div>`
-    :`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><div class="row"><div><b>Birthday benefit</b><p class="muted small" style="margin-top:5px">One programme per configuration version. A new programme starts blank and paused; no customer promise exists until you complete, explicitly enable, and publish it.</p></div><span class="spacer"></span><span class="pill">Draft</span></div>
-      <div class="field-grid" style="margin-top:10px"><div class="full"><label for="birthdayLabel">Customer-facing label</label><input id="birthdayLabel" value="${esc(birthdayProgram?.customer_label||'')}"></div><div class="full"><label for="birthdayDescription">Customer description</label><textarea id="birthdayDescription" rows="2">${esc(birthdayProgram?.customer_description||'')}</textarea></div><div class="full"><label for="birthdayTerms">Terms</label><textarea id="birthdayTerms" rows="2" required aria-describedby="birthdayTermsHelp">${esc(birthdayProgram?.customer_terms||'')}</textarea><div class="row" style="margin-top:6px;align-items:center;gap:8px"><button type="button" class="btn ghost sm" id="birthdayTermsSuggest">Use suggested wording</button><span class="muted small" id="birthdayTermsHelp">Required. Writes plain terms from the benefit you chose — edit freely.</span></div></div><div><label for="birthdayKind">Benefit type</label><select id="birthdayKind"><option value="" ${birthdayProgram?.fulfillment_kind?'':'selected'}>Choose a benefit type</option><option value="discount_pct" ${birthdayProgram?.fulfillment_kind==='discount_pct'?'selected':''}>Percentage discount</option><option value="free_item" ${birthdayProgram?.fulfillment_kind==='free_item'?'selected':''}>Free item / manual benefit</option></select></div><div id="birthdayDiscountField"><label for="birthdayDiscount">Discount percentage</label><input id="birthdayDiscount" type="number" min="0.01" max="100" step="0.01" value="${birthdayProgram?.discount_percent??''}"></div><div id="birthdayItemField"><label for="birthdayItem">Free item / benefit</label><input id="birthdayItem" value="${esc(birthdayProgram?.manual_item||'')}"></div><div class="full"><p style="margin-bottom:6px"><b>When can they use it?</b></p><label class="row bday-mode-row" style="color:var(--ink);font-weight:500"><input type="radio" name="birthdayWindowMode" value="month" style="width:auto" ${(birthdayProgram?.window_mode||'month')==='month'?'checked':''}> <span>Their whole birthday month <span class="muted small">— simplest, and what most customers expect</span></span></label><label class="row bday-mode-row" style="color:var(--ink);font-weight:500"><input type="radio" name="birthdayWindowMode" value="days" style="width:auto" ${(birthdayProgram?.window_mode||'month')==='days'?'checked':''}> <span>A window around the exact date</span></label></div><div id="birthdayDaysFields" class="full"><div class="field-grid"><div><label for="birthdayBefore">Days before birthday</label><input id="birthdayBefore" type="number" min="0" max="182" value="${birthdayProgram?.window_days_before??0}"></div><div><label for="birthdayAfter">Days after birthday</label><input id="birthdayAfter" type="number" min="0" max="182" value="${birthdayProgram?.window_days_after??0}"></div></div><p class="muted small" style="margin-top:6px">0 and 0 means the birthday itself only.</p></div></div><label class="row" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="birthdayActive" type="checkbox" style="width:auto" ${birthdayProgram?.active===true?'checked':''}> I explicitly enable this benefit for eligible customers after publication</label><div class="row" style="margin-top:14px"><button class="btn sm" id="birthdaySaveDraft">Save birthday benefit draft</button><p id="birthdayDraftStatus" class="muted small" role="status" aria-live="polite"></p></div></div>`
+    ?!draftVersionId?`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><details class="loyalty-optional-v235" ${publishedBirthdayProgram?'open':''}><summary><b>Birthday reward</b><span class="muted small">give customers a reason to visit in their birthday month.</span></summary><p class="muted small" style="margin-top:6px">Customer participation is separately opt-in and birthday details are never shared with your team.</p>${publishedBirthdaySummary}<button class="btn ghost sm" id="birthdayStartDraft" style="margin-top:12px">${publishedBirthdayProgram?'Edit':'Set up'}</button></details></div>`
+    :`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><details class="loyalty-optional-v235" ${birthdayProgram?'open':''}><summary><b>Birthday reward</b><span class="muted small">give customers a reason to visit in their birthday month.</span><span class="pill">Draft</span></summary>
+      <p class="muted small" style="margin-top:6px">A new benefit starts blank and paused; no customer promise exists until you complete, explicitly enable, and publish it.</p>
+      <div class="field-grid" style="margin-top:10px"><div class="full"><label for="birthdayLabel">Customer-facing label</label><input id="birthdayLabel" value="${esc(birthdayProgram?.customer_label||'')}"></div><div class="full"><label for="birthdayDescription">Customer description</label><textarea id="birthdayDescription" rows="2">${esc(birthdayProgram?.customer_description||'')}</textarea></div><div class="full"><label for="birthdayTerms">Terms</label><textarea id="birthdayTerms" rows="2" required aria-describedby="birthdayTermsHelp">${esc(birthdayProgram?.customer_terms||'')}</textarea><div class="row" style="margin-top:6px;align-items:center;gap:8px"><button type="button" class="btn ghost sm" id="birthdayTermsSuggest">Use suggested wording</button><span class="muted small" id="birthdayTermsHelp">Required. Writes plain terms from the benefit you chose — edit freely.</span></div></div><div><label for="birthdayKind">Benefit type</label><select id="birthdayKind"><option value="" ${birthdayProgram?.fulfillment_kind?'':'selected'}>Choose a benefit type</option><option value="discount_pct" ${birthdayProgram?.fulfillment_kind==='discount_pct'?'selected':''}>Percentage discount</option><option value="free_item" ${birthdayProgram?.fulfillment_kind==='free_item'?'selected':''}>Free item / manual benefit</option></select></div><div id="birthdayDiscountField"><label for="birthdayDiscount">Discount percentage</label><input id="birthdayDiscount" type="number" min="0.01" max="100" step="0.01" value="${birthdayProgram?.discount_percent??''}"></div><div id="birthdayItemField"><label for="birthdayItem">Free item / benefit</label><input id="birthdayItem" value="${esc(birthdayProgram?.manual_item||'')}"></div><div class="full"><p style="margin-bottom:6px"><b>When can they use it?</b></p><label class="row bday-mode-row" style="color:var(--ink);font-weight:500"><input type="radio" name="birthdayWindowMode" value="month" style="width:auto" ${(birthdayProgram?.window_mode||'month')==='month'?'checked':''}> <span>Their whole birthday month <span class="muted small">— simplest, and what most customers expect</span></span></label><label class="row bday-mode-row" style="color:var(--ink);font-weight:500"><input type="radio" name="birthdayWindowMode" value="days" style="width:auto" ${(birthdayProgram?.window_mode||'month')==='days'?'checked':''}> <span>A window around the exact date</span></label></div><div id="birthdayDaysFields" class="full"><div class="field-grid"><div><label for="birthdayBefore">Days before birthday</label><input id="birthdayBefore" type="number" min="0" max="182" value="${birthdayProgram?.window_days_before??0}"></div><div><label for="birthdayAfter">Days after birthday</label><input id="birthdayAfter" type="number" min="0" max="182" value="${birthdayProgram?.window_days_after??0}"></div></div><p class="muted small" style="margin-top:6px">0 and 0 means the birthday itself only.</p></div></div><label class="row" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="birthdayActive" type="checkbox" style="width:auto" ${birthdayProgram?.active===true?'checked':''}> I explicitly enable this benefit for eligible customers after publication</label><div class="row" style="margin-top:14px"><button class="btn ghost sm" id="birthdaySaveDraft">Save birthday reward</button><p id="birthdayDraftStatus" class="muted small" role="status" aria-live="polite"></p></div></details></div>`
     :'';
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:`${growBackActionHtmlV138()}${loyaltyActions}`,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
-    ${draftVersionId?`<div class="imp-note" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span>You have unpublished changes — customers still see the old programme.</span><span class="spacer"></span><button class="btn sm" id="growDraftBarPublishV170" type="button">Review &amp; publish</button></div></div>`:''}
-    ${p?.configuration_status==='draft'?`<div class="imp-note" style="margin-bottom:16px"><b>Draft recommendation</b><br>${recommendation?esc(recommendation.rationale):'Nothing is earning or redeeming yet.'} Review every number below, then publish only when it fits your business.</div>`:''}
+  /* V235 (owner: "too many red boxes, too many Save buttons, and I still cannot tell what is
+     live"). One status pill in the header, ONE strip under it, and one primary action pair at
+     the top of the editor. A draft is a neutral state, not a warning; red is kept for something
+     that actually blocks. */
+  const loyaltyStatusV235=draftVersionId?{label:'Draft',tone:'new'}
+    :!p?{label:'Draft',tone:'new'}
+    :loyaltyActiveV235?{label:'Live',tone:'on'}:{label:'Paused',tone:'off'};
+  const loyaltyStatusPillV235=`<span class="pill ${loyaltyStatusV235.tone}" id="loyaltyStatusPillV235"><span aria-hidden="true">●</span> ${esc(loyaltyStatusV235.label)}</span>`;
+  const loyaltyStripV235=(()=>{
+    if(p&&!loyaltyActiveV235)return `<div class="loyalty-strip-v235" id="loyaltyStripV235" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b><span aria-hidden="true">●</span> Paused</b> — customers are not earning right now.${draftVersionId?' Your unsaved and unpublished changes are safe.':''}</span><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="loyaltyResumeV235" type="button">Resume programme</button>':''}</div></div>`;
+    if(draftVersionId)return `<div class="loyalty-strip-v235" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b><span aria-hidden="true">●</span> Draft — not visible to customers.</b> ${recommendation?esc(recommendation.rationale)+' Review every number below, then publish only when it fits your business. ':''}Customers will see your latest published programme.</span><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="growDraftBarPublishV170" type="button">Review &amp; publish</button>':''}</div></div>`;
+    return '';
+  })();
+  const loyaltyEarnFactV235=model==='stamps'
+    ?`${money(p?.stamp_per_cents??500)} spent = 1 stamp`
+    :`${p?.earn_points_per_dollar??1} points per $1 spent`;
+  const tierBasisFactV235=({visits:'Number of visits',spend:'Lifetime spend',points_earned:'Lifetime points'})[p?.tier_basis||'visits'];
+  const stampTargetV235=(()=>{
+    const costs=rewards.filter(r=>r.active!==false).map(r=>Number(r.cost_points)).filter(n=>n>0);
+    return costs.length?`${Math.min(...costs)} stamps`:'Not set yet';
+  })();
+  const loyaltyFactsV235=loyaltySelectionV230==='tiers'
+    ?[['How customers earn',loyaltyEarnFactV235],['Tier level from',tierBasisFactV235],['Tiers',`${tiers.length}`]]
+    :loyaltySelectionV230==='stamps'
+    ?[['How customers earn',loyaltyEarnFactV235],['First reward at',stampTargetV235],['Milestones',`${rewards.length}`]]
+    :[['How customers earn',loyaltyEarnFactV235],['Redeem from',model==='classic'?`${p?.redeem_points??800} points`:'Each reward sets its own cost'],['Rewards',`${rewards.length}`]];
+  /* The segmented toggle IS the model control; #lm stays as its hidden state, so the preview
+     path, the grow deep-link focus target and the save semantics are all unchanged. */
+  const loyaltySegmentedV235=`<div class="loyalty-seg-v235" role="group" aria-label="Loyalty model — only one is live at a time">
+    ${['redeem','tiers','stamps'].map(key=>`<button type="button" class="loyalty-seg-btn-v235${loyaltySelectionV230===key?' is-on':''}" data-loyalty-model-v235="${key}" aria-pressed="${loyaltySelectionV230===key?'true':'false'}"${loyaltyControlDisabled}><b>${esc(loyaltyModelCopyV235[key].name)}</b>${liveLoyaltySelectionV235===key?'<span class="pill on loyalty-seg-live-v235">Live</span>':''}</button>`).join('')}
+  </div>
+  <p class="muted small" id="loyaltyModelNoteV235" style="margin-top:8px">${esc(loyaltyModelCopyV235[loyaltySelectionV230].line)}${loyaltySelectionV230===liveLoyaltySelectionV235?'':' Not live yet — Save changes to apply it.'}</p>`;
+  const topTierV235=tiers.length?tiers.slice().sort((a,b)=>(Number(b.threshold)||0)-(Number(a.threshold)||0))[0]:null;
+  const previewRewardsV235=rewards.filter(r=>r.active!==false).slice(0,3);
+  const customerPreviewV235=loyaltySelectionV230==='tiers'
+    ?`<div class="loyalty-preview-v235"><b>What your customers see</b>${topTierV235?`<p class="muted small" style="margin-top:5px">Top tier today</p>
+      <b style="display:block;margin-top:6px">${esc(topTierV235.name)}</b><p class="muted small" style="margin-top:4px">${esc(tierRequirementLineV235(topTierV235))}</p>
+      ${tierBenefitLines(topTierV235).length?`<ul class="rec-why" style="margin-top:8px">${tierBenefitLines(topTierV235).map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:6px">Add benefits so this tier is worth reaching.</p>'}`
+      :'<p class="muted small" style="margin-top:5px">Add a tier and customers will see it here.</p>'}</div>`
+    :`<div class="loyalty-preview-v235"><b>What your customers see</b>${previewRewardsV235.length?`<ul class="rec-why" style="margin-top:8px">${previewRewardsV235.map(reward=>`<li>${esc(rewardLabel(reward))} — ${reward.cost_points} ${unit}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:5px">Add a reward and customers will see it here.</p>'}</div>`;
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:'Build a programme that keeps customers coming back.',iconName:'loyalty',actions:`${growBackActionHtmlV138()}${loyaltyStatusPillV235}${loyaltyActions}`,canWrite:canManageLoyalty,moduleLabel:'Loyalty'})}
+    ${loyaltyStripV235}
     <section class="card" id="loyaltyCustomerRedemption" style="margin-bottom:16px" aria-busy="true">
       <div class="row"><div><b>Customer app redemption</b><p class="muted small" style="margin-top:5px">Customers prepare a pending reward QR. Points change only after your team scans and confirms it in Record sale.</p></div><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="saveLoyaltyCustomerRedemption" type="button" disabled>Save</button>':'<span class="pill off">Owner only</span>'}</div>
       <label class="checkrow" for="loyaltyCustomerRedemptionEnabled"><input id="loyaltyCustomerRedemptionEnabled" type="checkbox" disabled><span><b>Enable customer redemption QR</b><br><span class="muted small">Available to loyalty firms even when online bookings are not part of their modules.</span></span></label>
       <p id="loyaltyCustomerRedemptionStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading redemption setting…</p>
     </section>
-    <div class="split"><div class="card" id="loyaltyProgramEditor"><b>Program settings</b>
-      <label>Status</label><select id="la"${loyaltyControlDisabled}><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${!p?.active?'selected':''}>Paused</option></select>
-      <label>Loyalty model — only one is live at a time</label><select id="lm"${loyaltyControlDisabled}>
+    <section class="card loyalty-overview-v235" id="loyaltyOverviewV235" style="margin-bottom:16px">
+      <b>${esc(loyaltyModelCopyV235[loyaltySelectionV230].name)}</b>
+      <p class="muted small" style="margin-top:5px">${esc(loyaltyModelCopyV235[loyaltySelectionV230].line)}</p>
+      <div class="loyalty-facts-v235">${loyaltyFactsV235.map(([label,value])=>`<div><span class="muted small">${esc(label)}</span><b>${esc(value)}</b></div>`).join('')}</div>
+    </section>
+    <div class="split"><div class="card" id="loyaltyProgramEditor">
+      ${canManageLoyalty?`<div class="loyalty-actions-v235">
+        <button class="btn" id="lsave">Save changes</button>
+        <button class="btn ghost" id="loyaltyReviewPublish" type="button"${draftVersionId?'':' disabled title="Save changes first"'}>Review &amp; publish</button>
+        <span class="muted small" id="loyaltySaveStateV235" role="status" aria-live="polite">${esc(draftVersionId?'Draft — not visible to customers':loyaltyStatusV235.label)}</span>
+      </div>`:''}
+      <b>Loyalty model — only one is live at a time</b>
+      ${loyaltySegmentedV235}
+      <select id="lm" class="loyalty-seg-state-v235" aria-hidden="true" tabindex="-1"${loyaltyControlDisabled}>
         <option value="redeem" ${loyaltySelectionV230==='redeem'?'selected':''}>Points redemption — earn points, redeem rewards</option>
         <option value="tiers" ${loyaltySelectionV230==='tiers'?'selected':''}>Tiered membership — points build a tier and its benefits</option>
         <option value="stamps" ${loyaltySelectionV230==='stamps'?'selected':''}>Stamp card — collect stamps, milestone rewards</option></select>
-      ${loyaltySelectionV230==='redeem'?`<label>Redemption style</label><select id="lmStyle"${loyaltyControlDisabled}>
+      <label for="la">Status</label><select id="la"${loyaltyControlDisabled}><option value="true" ${loyaltyActiveV235?'selected':''}>Active</option><option value="false" ${!loyaltyActiveV235?'selected':''}>Paused</option></select>
+      ${loyaltySelectionV230==='redeem'?`<label for="lmStyle">Redemption style</label><select id="lmStyle"${loyaltyControlDisabled}>
         <option value="points_tiers" ${model!=='classic'?'selected':''}>Reward catalogue — customers pick from rewards you define</option>
         <option value="classic" ${model==='classic'?'selected':''}>Fixed redeem — points become store credit automatically</option></select>`:''}
       ${model==='stamps'
-        ?`<label>Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
+        ?`<label for="lsp">Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
           <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>
           <p class="muted small" style="margin-top:4px">Stack several milestones below — e.g. 3 stamps = free drink, 8 stamps = $5 credit or a "10% off" benefit. Each is its own reward with its own stamp cost.</p>`
-        :`<label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>`}
+        :`<label for="le">Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>`}
       ${model==='classic'
-        ?`<label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
-          <label>Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}"${loyaltyControlDisabled}>
+        ?`<label for="lr">Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
+          <label for="lc">Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}"${loyaltyControlDisabled}>
           <div class="gb-meter is-blank" id="gbMeter"></div>`:''}
-      <label>${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx" aria-controls="lxdField"${loyaltyControlDisabled}>
+      <details class="loyalty-advanced-v235" id="loyaltyAdvancedV235" style="margin-top:18px"><summary>Advanced settings</summary>
+      <label for="lx">${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx" aria-controls="lxdField"${loyaltyControlDisabled}>
         <option value="none" ${firmExpiryMode==='none'?'selected':''}>Never expire</option>
         <option value="inactivity" ${p?.expiry_mode==='inactivity'?'selected':''}>Expire after inactivity (clock resets on every earn)</option>
         <option value="fixed" ${p?.expiry_mode==='fixed'?'selected':''}>Fixed shelf life from earn (oldest expire first)</option></select>
       <div class="expiry-days-field" id="lxdField" ${firmExpiryNeedsDays?'':'hidden'}><label for="lxd">Expiry window (days)</label><input id="lxd" data-expiry-fallback="${firmExpiryDays}" type="number" min="1" step="1" value="${firmExpiryDays}" ${firmExpiryNeedsDays?'required':'disabled'}${loyaltyControlDisabled}></div>
       ${branchOverrideRows()}
-      ${canManageLoyalty?`<div class="row" style="margin-top:16px;flex-wrap:wrap">
-        <button class="btn" id="lsave">${draftVersionId?'Save draft':'Save program'}</button>
-        ${draftVersionId?'<button class="btn ghost" id="loyaltyReviewPublish" type="button">Review &amp; publish</button>':''}</div>`:''}</div>
+      </details></div>
     <div class="card" id="loyaltyRewardEditor">
       ${model==='classic'
         ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">${workspaceTemplateHtmlV97('classicEligibleEarning',{points:p?.redeem_points??800,credit:money(p?.reward_credit_cents??2000)})}</p>
@@ -6301,8 +6389,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         :loyaltySelectionV230==='tiers'
         ?`<b>Tiers — your loyalty model</b><p class="muted small" style="margin-top:6px">Customers climb these tiers, and each tier carries its own benefits. Points build the tier — they are not redeemed.</p>
           <p class="muted small" style="margin-top:8px">Point rewards are off in this model. Rewards you saved earlier are kept and come back if you switch to Points redemption.</p>
-          ${tierRows()}`
-        :`<b>Reward catalogue</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define.</p>${rewardRows('Your rewards')}
+          ${tierRows()}${customerPreviewV235}`
+        :`<b>Reward catalogue</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define.</p>${rewardRows('Your rewards')}${customerPreviewV235}
           <p class="muted small" style="margin-top:14px">Tiers are off in this model — choose Tiered membership above to run them instead. Saved tiers are kept.</p>`}
     </div></div>${birthdayEditor}`;
   applyGrowLoyaltyEditorIsolationV139(routeMain,editorIntent);
@@ -6557,15 +6645,48 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     toast('Recommended draft created — review every number before publishing');
     refreshLoyaltyPanel(data.model,data.draft_config_version_id,data,'Recommended Grow draft ready.',false,editorIntent);
   };
+  const loyaltyStatusInputV235=$('la');
+  if(loyaltyStatusInputV235)loyaltyStatusInputV235.onchange=()=>{
+    loyaltyStatusDraftV235=loyaltyStatusInputV235.value==='true';
+  };
+  const loyaltyResumeV235=$('loyaltyResumeV235');
+  if(loyaltyResumeV235)loyaltyResumeV235.onclick=()=>{
+    /* Resuming is a decision, not a write: it sets the control and says what is still needed. */
+    const status=$('la');if(!status)return;
+    status.value='true';loyaltyStatusDraftV235=true;
+    status.focus({preventScroll:true});
+    const state=$('loyaltySaveStateV235');if(state)state.textContent='Unsaved changes';
+    toast(draftVersionId?'Status set to Active — Save changes, then Review & publish':'Status set to Active — Save changes to apply it');
+  };
+  const loyaltySaveStateV235=$('loyaltySaveStateV235');
+  if(loyaltySaveStateV235){
+    const markDirtyV235=()=>{loyaltySaveStateV235.textContent='Unsaved changes'};
+    const editorCard=$('loyaltyProgramEditor');
+    if(editorCard){editorCard.addEventListener('input',markDirtyV235);editorCard.addEventListener('change',markDirtyV235)}
+  }
   const loyaltyModelInput=$('lm');
   if(loyaltyModelInput)loyaltyModelInput.onchange=()=>{
     /* V230: the selection is the owner's three-way choice; map it to the stored pieces.
        Nothing is written here — Save is the decision point. */
     const sel=loyaltyModelInput.value;
+    /* V235 ROOT CAUSE FIX. This preview re-renders with preserveFields=false, so an unsaved
+       Status was thrown away and the Status control came back on the STORED value — after
+       which Save wrote that reverted value. Capturing it here means a model switch can never
+       write a different `active` than the one the owner is looking at. */
+    const statusInput=$('la');
+    if(statusInput)loyaltyStatusDraftV235=statusInput.value==='true';
     loyaltyModeDraftV230=sel==='tiers'?'tiers':'redeem';
     const nextModel=sel==='stamps'?'stamps':(sel==='tiers'?'points_tiers':(model==='classic'?'classic':'points_tiers'));
     refreshLoyaltyPanel(nextModel,draftVersionId,recommendation,'Loyalty model preview updated — Save to apply.',false,editorIntent);
   };
+  /* The segmented buttons are the visible control; #lm remains the single source of truth so
+     the preview path, the deep-link focus target and Save all keep working unchanged. */
+  document.querySelectorAll('[data-loyalty-model-v235]').forEach(button=>button.onclick=()=>{
+    const select=$('lm');if(!select||button.disabled)return;
+    if(select.value===button.dataset.loyaltyModelV235)return;
+    select.value=button.dataset.loyaltyModelV235;
+    select.dispatchEvent(new Event('change'));
+  });
   const loyaltyStyleInput=$('lmStyle');
   if(loyaltyStyleInput)loyaltyStyleInput.onchange=()=>refreshLoyaltyPanel(loyaltyStyleInput.value,draftVersionId,recommendation,'Redemption style preview updated — Save to apply.',false,editorIntent);
   if($('lx')&&$('lxd')&&$('lxdField'))bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
@@ -6639,6 +6760,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
     if(!isLoyaltyCurrent())return;
     if(saveError){$('lsave').disabled=false;return fail(saveError)}
+    loyaltyStatusDraftV235=null;
     /* V230: the mode is an instant business switch (the server gate reads it live), unlike the
        numbers, which wait for publish. Writing it here keeps one Save meaning one decision. */
     if(targetModeV230!==(S.biz.points_mode||null)){
@@ -6792,6 +6914,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
        shows what it already gives instead of an empty set of boxes beside a full textarea.
        A benefit that is not one of the presets simply stays as a line in the textarea. */
     syncTierBenefitPicksV182();
+    tierBenefitRowsRenderV235();
     /* Open the schedule section only when this tier actually uses one — otherwise a rarely-used
        control would be the first thing an owner sees. */
     const schedule=$('trFrom')?.closest('details');
@@ -6832,19 +6955,72 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      truth (perk_note), so nothing about storage, publish or the customer card changes — the
      checkboxes are an input method, not a new data model. Unticking removes exactly that line
      and leaves anything hand-written untouched. */
+  /* V235: perk_note is still ONE newline-joined field. These are structured rows over it, so a
+     benefit is an editable line with its own Remove instead of a free-text block. */
+  const discountBenefitV235=(text)=>/^\d+% off/.test(String(text||''));
+  function tierBenefitRowMarkupV235(index,value){
+    return `<label class="sr-only" for="trBenefit${index}V235">Benefit ${index+1}</label><input id="trBenefit${index}V235" data-tier-benefit-row-v235="${index}" value="${esc(value||'')}" placeholder="e.g. Free add-on with every visit"><button type="button" class="btn ghost sm" data-tier-benefit-remove-v235="${index}" aria-label="Remove this benefit">Remove</button>`;
+  }
+  function tierBenefitRowsCommitV235(){
+    const host=$('trBenefitRowsV235'),textarea=$('trPerk');
+    if(!host||!textarea)return;
+    textarea.value=[...host.querySelectorAll('[data-tier-benefit-row-v235]')]
+      .map(input=>input.value.trim()).filter(Boolean).join('\n');
+    syncTierBenefitPicksV182();
+  }
+  function tierBenefitRowBindV235(row){
+    row.querySelector('[data-tier-benefit-row-v235]').oninput=tierBenefitRowsCommitV235;
+    row.querySelector('[data-tier-benefit-remove-v235]').onclick=()=>{row.remove();tierBenefitRowsCommitV235()};
+  }
+  function tierBenefitRowsRenderV235(){
+    const host=$('trBenefitRowsV235'),textarea=$('trPerk');
+    if(!host||!textarea)return;
+    const lines=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+    host.innerHTML=lines.map((line,index)=>`<div class="tier-benefit-row-v235">${tierBenefitRowMarkupV235(index,line)}</div>`).join('');
+    host.querySelectorAll('.tier-benefit-row-v235').forEach(tierBenefitRowBindV235);
+  }
+  function revealTierFormV235(focusFirst){
+    const host=$('trFormV235');if(!host)return;
+    host.hidden=false;
+    const toggle=$('trFormToggleV235');if(toggle)toggle.setAttribute('aria-expanded','true');
+    if(focusFirst)$('trName')?.focus({preventScroll:true});
+  }
+  const trBenefitAddV235=$('trBenefitAddV235');
+  if(trBenefitAddV235)trBenefitAddV235.onclick=()=>{
+    const host=$('trBenefitRowsV235');if(!host)return;
+    const row=document.createElement('div');
+    row.className='tier-benefit-row-v235';
+    row.innerHTML=tierBenefitRowMarkupV235(host.querySelectorAll('[data-tier-benefit-row-v235]').length,'');
+    host.append(row);tierBenefitRowBindV235(row);
+    row.querySelector('input').focus({preventScroll:true});
+  };
+  const trFormToggleV235=$('trFormToggleV235');
+  if(trFormToggleV235)trFormToggleV235.onclick=()=>{fillTier(null);revealTierFormV235(true)};
+  tierBenefitRowsRenderV235();
   document.querySelectorAll('[data-tier-benefit]').forEach(box=>box.onchange=()=>{
     const textarea=$('trPerk');if(!textarea)return;
     const benefit=box.dataset.tierBenefit||'';
     const lines=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
-    if(box.checked){ if(!lines.includes(benefit))lines.push(benefit); }
+    if(box.checked){
+      /* V235: two "% off" lines both reach the customer, so the percentage presets are one
+         choice — ticking one clears the others rather than stacking a second discount. */
+      if(discountBenefitV235(benefit))document.querySelectorAll('[data-tier-benefit]').forEach(other=>{
+        const otherBenefit=other.dataset.tierBenefit||'';
+        if(other===box||!discountBenefitV235(otherBenefit))return;
+        other.checked=false;
+        const at=lines.indexOf(otherBenefit);if(at>=0)lines.splice(at,1);
+      });
+      if(!lines.includes(benefit))lines.push(benefit);
+    }
     else { const at=lines.indexOf(benefit); if(at>=0)lines.splice(at,1); }
     textarea.value=lines.join('\n');
+    tierBenefitRowsRenderV235();
   });
   document.querySelectorAll('.trBenefitReward').forEach(button=>button.onclick=()=>{
     const textarea=$('trPerk'),benefit=button.dataset.benefit||'';
     const existing=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
     if(benefit&&!existing.includes(benefit))textarea.value=[...existing,benefit].join('\n');
-    textarea.focus();
+    syncTierBenefitPicksV182();tierBenefitRowsRenderV235();revealTierFormV235(false);
   });
   const defaults=$('trDefaults');
   if(defaults)defaults.onclick=async()=>{
@@ -6886,8 +7062,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(saved)delete ta.dataset.pendingTierId;
     else{ta.disabled=false;ta.textContent=editingTier?'Save tier':'Add tier'}
   };
-  document.querySelectorAll('.trEdit').forEach(b=>b.onclick=()=>fillTier(
-    tiers.find(t=>(t.tier_id||t.id)===b.dataset.id)));
+  document.querySelectorAll('.trEdit').forEach(b=>b.onclick=()=>{
+    fillTier(tiers.find(t=>(t.tier_id||t.id)===b.dataset.id));
+    revealTierFormV235(true);
+  });
   document.querySelectorAll('.trDel').forEach(b=>b.onclick=async()=>{
     const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
     if(tier)await saveTier({id:tier.tier_id||tier.id,name:tier.name,threshold:tier.threshold,
@@ -7996,6 +8174,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const membershipConfigured=snapshot.memberships.length>0;
   const referralConfigured=Boolean(snapshot.referral);
   const loyaltyLive=Boolean(snapshot.loyalty?.active&&snapshot.currentVersion);
+  /* V235 (owner: "which loyalty model is live right now?"). One derivation, three tiles, one
+     Active marker. It reads the same two stores the editor writes — loyalty_model carries the
+     stamp engine, points_mode splits the points engine into redemption vs tier membership —
+     so the overview can never disagree with the editor about what customers are on. */
+  const liveLoyaltyModelV235=snapshot.loyalty?.loyalty_model==='stamps'?'stamps'
+    :(pointsModeV229==='tiers'?'tiers':'redeem');
+  const loyaltyModelNamesV235={redeem:'Points redemption',tiers:'Tiered membership',stamps:'Stamp card'};
+  const loyaltyModelTileStatusV235=key=>!canRewards?['Not included','off']
+    :key!==liveLoyaltyModelV235?['Off','off']
+    :loyaltyLive?['Active','on']:['Active · paused','off'];
+  const otherModelLiveV235=()=>`${loyaltyModelNamesV235[liveLoyaltyModelV235]} is the live model`;
   const bringBackLive=bringBackCount>0;
   const referralLive=snapshot.referral?.enabled===true;
   const giftCardsLive=snapshot.giftcards?.enabled===true;
@@ -8077,21 +8266,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
   const lifestyleLiveV229=(welcomeOfferStatusV215?.active?1:0)+(rewardJourney.birthday?.active?1:0)+bringBackLiveV229;
   const growTopicDefsV229=[
-    {key:'points',icon:'till',title:'Point system',blurb:'Earning, and what points are for.',
-      status:!canRewards?['Not included','off']:loyaltyLive?['Live','on']:(rewardJourney.earning?['Paused','off']:['Not set up','off']),
-      summary:pointsModeV229==='tiers'?'Points build tier membership'
-        :rewardCount?`${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`:'Set the earning rate and rewards'},
+    {key:'points',icon:'till',title:'Points redemption',blurb:'Earning, and the rewards points are spent on.',
+      status:loyaltyModelTileStatusV235('redeem'),
+      summary:liveLoyaltyModelV235!=='redeem'?otherModelLiveV235()
+        :rewardCount?`Live model · ${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`
+        :'Live model · set the earning rate and rewards'},
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
-      status:!canRewards?['Not included','off']
-        :pointsModeV229==='redeem'?['Off','off']
-        :(loyaltyTiersV229&&loyaltyTiersV229.length
-          ?(pointsModeV229==='tiers'?(loyaltyLive?['Live','on']:['Not live yet','off']):['Configured','off'])
-          :['Not set up','off']),
-      summary:pointsModeV229==='redeem'?'Points are redeemed for rewards instead'
+      status:loyaltyModelTileStatusV235('tiers'),
+      summary:liveLoyaltyModelV235!=='tiers'?otherModelLiveV235()
         :loyaltyTiersV229===null?'Tier details could not be loaded'
-        :(pointsModeV229==='tiers'&&loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
-        :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
-        :'Create the ladder customers climb'},
+        :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
+        :loyaltyTiersV229.length?`Live model · ${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
+        :'Live model · create the ladder customers climb'},
+    {key:'stamps',icon:'check',title:'Stamp card',blurb:'Collect a stamp per spend, claim at each milestone.',
+      status:loyaltyModelTileStatusV235('stamps'),
+      summary:liveLoyaltyModelV235!=='stamps'?otherModelLiveV235()
+        :rewardCount?`Live model · ${rewardCount} milestone${rewardCount===1?'':'s'}`
+        :'Live model · set the spend per stamp and its milestones'},
     {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
       status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
       summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
@@ -8108,7 +8299,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   ];
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
   const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
-  const topicOnV229=key=>growActiveTopicV229?growActiveTopicV229.key===key:!growTilesModeV229;
+  /* V235: the Stamp card tile is a third VIEW of the point engine, not a third section — it
+     drills into the same rows, so nothing is duplicated and no tile is a dead end. */
+  const growTopicSectionV235=growActiveTopicV229?.key==='stamps'?'points':(growActiveTopicV229?.key||null);
+  const topicOnV229=key=>growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229;
   const growTilesHtmlV229=growTopicDefsV229.map(topic=>`<button type="button" class="grow-topic-tile-v229" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">View →</span></button>`).join('');
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
   const growPointsModeChooserV229=(()=>{
@@ -8120,10 +8314,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         <button type="button" class="points-mode-card-v229" data-points-mode-v229="redeem" ${locked?'disabled':''}><b>Redeem rewards</b><span class="muted small">Points are spent on discounts, vouchers and free items.</span></button>
         <button type="button" class="points-mode-card-v229" data-points-mode-v229="tiers" ${locked?'disabled':''}><b>Tier membership</b><span class="muted small">Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits.</span></button>
       </div></div>`;
-    const currentLabel=pointsModeV229==='tiers'?'Tier membership':'Redeem rewards';
-    const nextMode=pointsModeV229==='tiers'?'redeem':'tiers';
-    const nextLabel=pointsModeV229==='tiers'?'redeeming rewards':'tier membership';
-    return `<div class="points-mode-chosen-v229"><span class="pill on">Points are used for: ${currentLabel}</span>${locked?'':`<button type="button" class="btn ghost sm" data-points-mode-v229="${nextMode}">Switch to ${esc(nextLabel)}</button>`}</div>`;
+    /* V235 (owner: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as
+       two half-truths). All three models are named, exactly one carries the Live mark, and the
+       change itself happens in one place — the editor's segmented toggle. */
+    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>`<span class="pill ${key===liveLoyaltyModelV235?'on':'off'}">${key===liveLoyaltyModelV235?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`).join('')}</span>${locked?'':editorAction('rewards','Change model','lm')}</div>`;
   })();
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
@@ -8167,8 +8361,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       `:''}
       ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
         <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>
+        ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
-          :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0} · lifetime, so redeeming never drops a tier</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
+          :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
           :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
         ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}

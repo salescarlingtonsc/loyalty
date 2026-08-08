@@ -25,10 +25,13 @@ test('existing loyalty configurations remain published', async () => {
 
 test('the owner sees draft state and explicitly publishes it', async () => {
   const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  assert.match(app, /Draft recommendation/);
-  assert.match(app, /Nothing is earning or redeeming yet/);
+  /* V235 merged the separate "Draft recommendation" and "unpublished changes" banners into ONE
+     neutral strip, and the editor now carries a single primary action pair. The invariant is
+     unchanged: the owner is told the draft is not live, and publishing is a separate step. */
+  assert.match(app, /Draft — not visible to customers/);
+  assert.match(app, /Customers will see your latest published programme\./);
   assert.match(app, /configuration_status:'published'/);
-  assert.match(app, /Save draft/);
+  assert.match(app, /<button class="btn" id="lsave">Save changes<\/button>/);
   assert.match(app, /Review &amp; publish/);
   assert.match(app, /preview_publish_impact/);
   assert.match(app, /publishConfirmationSensitive/);
