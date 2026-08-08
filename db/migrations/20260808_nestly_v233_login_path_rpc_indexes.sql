@@ -137,6 +137,13 @@ comment on index public.staff_user_active_idx is
 -- ============================================================================
 -- PART 2 — FUNCTIONS.  Transactional; run as one unit.
 --
+-- APPLIED to production 2026-08-08 as migration `nestly_v233_login_path_rpc_perf`
+-- after owner approval. Post-apply verification: all five body_md5 changed;
+-- prosecdef / provolatile / search_path / proacl byte-identical; the anon wallet
+-- path still raises 28000; 4 real staff and 3 real wallet customers returned their
+-- expected payloads. Steady state after: get_my_modules 18.6ms (was 155-230ms),
+-- customer_get_actionable_wallet 55.4ms (was 377ms).
+--
 -- LATENT COUPLING, recorded by the v233 differential verification. The override
 -- lookups below read platform_module_overrides_v94 through SCALAR SUBQUERIES,
 -- whereas the bodies they replace used plpgsql `select ... into`. The two agree
