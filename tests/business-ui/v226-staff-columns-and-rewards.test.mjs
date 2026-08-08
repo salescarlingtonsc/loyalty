@@ -52,6 +52,8 @@ test('V226 Customer 360 leads with what this customer can redeem now', () => {
   assert.match(block, /canWriteLoyalty&&redemptionEnabled&&readyRewards\.length\?`<a class="btn sm" href="#\/till"/);
   assert.doesNotMatch(block, /Scan the customer's pending QR/);
   // Header renamed as annotated.
-  assert.match(app, /<b>Rewards for customer<\/b>/);
+  /* V254: owner confirmed the annotation on the Mumu screenshot — the card is named
+     "Available Customer Programmes". Same card, same gates; the label matches what it lists. */
+  assert.match(app, /<b>Available Customer Programmes<\/b>/);
   assert.doesNotMatch(app, /Balance, earning and next unlock/);
 });

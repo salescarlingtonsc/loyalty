@@ -3286,7 +3286,7 @@ async function clientDetail(id){
       :`<p class="muted small" role="note" style="margin:0 0 16px">Sales and reward figures are hidden because this role does not have access to those modules.</p>`}
     <div class="split" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards for customer</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${rewardsMarkup}</div>
       </section>`:''}
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
