@@ -315,7 +315,12 @@ test('manage booking applies an IP-only bucket before any attacker-selected toke
   const tokenHash = manageFn.indexOf('sha256Hex(String(body.token))');
   const tokenLimit = manageFn.indexOf("enforceRateLimit(req, 'manage-booking-token'");
   assert.ok(ipLimit >= 0 && tokenHash > ipLimit && tokenLimit > tokenHash);
-  assert.match(manageFn, /'manage-booking-ip', 20, 600\)/);
+  /* v234 raised the coarse per-IP ceiling 20 -> 60 for shared carrier NAT: SG mobile carriers put
+     many subscribers behind one IPv4, so unrelated customers rescheduling their own bookings were
+     throttling each other. The PER-TOKEN bucket is the real control on this Turnstile-less path
+     (an attacker needs a valid derived management token), so it stays pinned at 10/10min. Both are
+     asserted so a later "NAT fix" cannot quietly loosen the token bucket too. */
+  assert.match(manageFn, /'manage-booking-ip', 60, 600\)/);
   assert.match(manageFn, /'manage-booking-token', 10, 600, tokenHash\)/);
 });
 

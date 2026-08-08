@@ -59,7 +59,10 @@ Deno.serve(async (req) => {
     }
 
     const body = await readJson(req);
-    const abuseLimit = await enforceRateLimit(req, 'business-application-abuse', 30, 3600);
+    /* v234 CGNAT headroom — see the note in public-join. Keyed on cf-connecting-ip, and SG mobile
+       carriers share CGNAT IPv4 across many subscribers, so one IP is many self-serve owners
+       signing up independently. Pre-Turnstile, so this stays the tighter of the two. */
+    const abuseLimit = await enforceRateLimit(req, 'business-application-abuse', 80, 3600);
     if (!abuseLimit.allowed) {
       return json(req, 429, {
         error: 'Please wait before trying again.',
@@ -71,7 +74,11 @@ Deno.serve(async (req) => {
       || !await verifyTurnstile(req, body.turnstile_token, 'business_application')
     ) return publicError(req);
 
-    const writeLimit = await enforceRateLimit(req, 'business-application-submit', 5, 3600);
+    /* Post-Turnstile: every request counted here already solved a captcha. The old 5-per-hour was
+       calibrated for "one owner signs up once" and broke the moment two owners shared a carrier
+       egress IP. Submissions are also idempotency-keyed downstream, so an honest retry does not
+       burn budget on a duplicate application. */
+    const writeLimit = await enforceRateLimit(req, 'business-application-submit', 20, 3600);
     if (!writeLimit.allowed) {
       return json(req, 429, {
         error: 'Please wait before submitting another application.',

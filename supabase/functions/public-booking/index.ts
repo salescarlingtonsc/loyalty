@@ -38,7 +38,9 @@ Deno.serve(async (req) => {
         return json(req, 200, data);
       }
 
-      const limit = await enforceRateLimit(req, 'booking-page', 60, 60);
+      /* v234: read-only page fetch; raised to match booking-availability's 120/60 so a shared
+         carrier IP cannot brown-out the booking page for everyone behind it. */
+      const limit = await enforceRateLimit(req, 'booking-page', 120, 60);
       if (!limit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: limit.retry_after });
       const { data, error } = await adminClient().rpc('internal_public_booking_page', { p_slug: slug });
       if (error || !data) return publicError(req, 404);
@@ -46,7 +48,10 @@ Deno.serve(async (req) => {
     }
 
     const body = await readJson(req);
-    const abuseLimit = await enforceRateLimit(req, 'booking-submit-abuse', 80, 600);
+    /* v234 CGNAT headroom — see the note in public-join. Customers book from their own phones on
+       shared carrier IPv4, so per-IP ceilings must not assume one IP is one person. Pre-Turnstile,
+       so this stays the tighter of the two. */
+    const abuseLimit = await enforceRateLimit(req, 'booking-submit-abuse', 150, 600);
     if (!abuseLimit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: abuseLimit.retry_after });
     if (!validBookingPayload(body) || !await verifyTurnstile(req, body.turnstile_token, 'public_booking')) return publicError(req);
     let authenticatedUserId = null;
@@ -55,7 +60,9 @@ Deno.serve(async (req) => {
     } catch {
       return publicError(req, 401);
     }
-    const writeLimit = await enforceRateLimit(req, 'booking-submit', 10, 600);
+    /* Post-Turnstile, and a duplicate submission is already collapsed by the submission_id
+       fingerprint below, so the ceiling bounds distinct human-verified bookings per IP. */
+    const writeLimit = await enforceRateLimit(req, 'booking-submit', 30, 600);
     if (!writeLimit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: writeLimit.retry_after });
 
     const manageToken = await deriveBookingManagementToken(body.slug, body.submission_id);

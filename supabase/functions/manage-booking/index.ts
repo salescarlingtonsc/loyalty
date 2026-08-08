@@ -9,7 +9,12 @@ Deno.serve(async (req) => {
   try {
     const body = await readJson(req);
     if (!validManagePayload(body)) return publicError(req);
-    const ipLimit = await enforceRateLimit(req, 'manage-booking-ip', 20, 600);
+    /* v234 CGNAT headroom — see the note in public-join. This path has no Turnstile, so the real
+       abuse control is the PER-TOKEN limit below (an attacker needs a valid derived management
+       token, which is not guessable); that one is deliberately left at 10/10min. Only the coarse
+       per-IP ceiling is raised, because on shared carrier IPv4 it was throttling unrelated
+       customers rescheduling their own bookings. */
+    const ipLimit = await enforceRateLimit(req, 'manage-booking-ip', 60, 600);
     if (!ipLimit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: ipLimit.retry_after });
     const tokenHash = await sha256Hex(String(body.token));
     const limit = await enforceRateLimit(req, 'manage-booking-token', 10, 600, tokenHash);
