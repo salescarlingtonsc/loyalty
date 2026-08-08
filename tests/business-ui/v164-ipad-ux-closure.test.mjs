@@ -24,7 +24,9 @@ test('V164 sidebar terminology is merchant-facing', () => {
 test('V164 Dashboard adds schedule glance and in-card KPI action labels', () => {
   assert.match(appHtml, /dashboard-schedule-glance/);
   assert.match(appHtml, /Today schedule/);
-  assert.match(appHtml, /View bookings/);
+  // V252 (owner screenshot): the View bookings button was struck out — it only reached the same
+  // appointments surface the Open calendar link already reaches. Open calendar is the survivor.
+  assert.doesNotMatch(appHtml, /View bookings/);
   assert.match(appHtml, /Open calendar/);
   assert.match(appHtml, /buttonLabel:'View visits'/);
   assert.match(appHtml, /buttonLabel:'View revenue'/);

@@ -9134,13 +9134,29 @@ function dashboardLoyaltyRowV170(cards){
      schedule and an empty schedule mean opposite things to someone deciding whether to go in.
    - Capped at 6 chips with an explicit "+N more" so nothing is silently truncated. */
 const DASHBOARD_SCHEDULE_CHIP_LIMIT_V180=6;
-async function loadDashboardScheduleGlanceV180(root,branchId=null){
+/* V252: the strip is no longer fixed to today \u2014 the owner asked to view any date. The day
+   is still a SINGAPORE calendar date (sgDateInputValue / sgDateBoundary), never a browser-local
+   one, so the window fetched is the same day the tabs and the picker name. Because a day can
+   now be changed faster than a read returns, each read takes an epoch: a slower earlier day
+   must never paint over the day the owner is looking at. */
+let dashboardScheduleEpochV252=0;
+const dashboardScheduleDayLabelV252=day=>new Intl.DateTimeFormat('en-SG',{
+  day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'
+}).format(new Date(sgDateBoundary(day)));
+async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null){
   const host=root?.querySelector('#dashboardScheduleToday');
   const summary=root?.querySelector('#dashboardScheduleSummary');
   if(!host)return;
   if(!canReadModule('appointments')){host.innerHTML='';return}
-  host.innerHTML='<p class="muted small">Loading today\u2019s schedule\u2026</p>';
-  const from=sgDateBoundary(sgDateInputValue()),to=sgDateBoundary(sgDateInputValue(),1);
+  const day=dateV252||sgDateInputValue();
+  const isTodayV252=day===sgDateInputValue();
+  const dayLabelV252=dashboardScheduleDayLabelV252(day);
+  const epochV252=++dashboardScheduleEpochV252;
+  const isCurrentScheduleV252=()=>root.isConnected&&epochV252===dashboardScheduleEpochV252;
+  host.innerHTML=isTodayV252
+    ?'<p class="muted small">Loading today\u2019s schedule\u2026</p>'
+    :`<p class="muted small">Loading the schedule for ${esc(dayLabelV252)}\u2026</p>`;
+  const from=sgDateBoundary(day),to=sgDateBoundary(day,1);
   let query=sb.from('appointments')
     .select('id,starts_at,status,clients(full_name),services!appointments_service_id_fkey(name)')
     .eq('business_id',S.biz.id).gte('starts_at',from).lt('starts_at',to)
@@ -9149,21 +9165,23 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null){
      rather than read here — reaching for it directly threw a ReferenceError. */
   if(branchId)query=query.eq('branch_id',branchId);
   const {data,error}=await query;
-  if(!root.isConnected)return;
+  if(!isCurrentScheduleV252())return;
   if(error){
-    host.innerHTML='<p class="muted small" role="status">Today\u2019s schedule could not be loaded. <button type="button" class="btn ghost sm" id="dashboardScheduleRetry">Try again</button></p>';
+    host.innerHTML=`<p class="muted small" role="status">${isTodayV252?'Today\u2019s schedule':`The schedule for ${esc(dayLabelV252)}`} could not be loaded. <button type="button" class="btn ghost sm" id="dashboardScheduleRetry">Try again</button></p>`;
     const retry=host.querySelector('#dashboardScheduleRetry');
-    if(retry)retry.onclick=()=>loadDashboardScheduleGlanceV180(root,branchId);
+    if(retry)retry.onclick=()=>loadDashboardScheduleGlanceV180(root,branchId,day);
     return;
   }
   const rows=(data||[]).filter(row=>String(row.status||'').toLowerCase()!=='cancelled');
   if(summary){
     summary.textContent=rows.length
-      ?`${rows.length} ${rows.length===1?'booking':'bookings'} today.`
-      :'Nothing booked for today.';
+      ?(isTodayV252?`${rows.length} ${rows.length===1?'booking':'bookings'} today.`:`${rows.length} ${rows.length===1?'booking':'bookings'} on ${dayLabelV252}.`)
+      :(isTodayV252?'Nothing booked for today.':`Nothing booked on ${dayLabelV252}.`);
   }
   if(!rows.length){
-    host.innerHTML='<p class="muted small">Nothing booked for today — a free day, or a day to fill.</p>';
+    host.innerHTML=isTodayV252
+      ?'<p class="muted small">Nothing booked for today — a free day, or a day to fill.</p>'
+      :`<p class="muted small">Nothing booked on ${esc(dayLabelV252)} — a free day, or a day to fill.</p>`;
     return;
   }
   const shown=rows.slice(0,DASHBOARD_SCHEDULE_CHIP_LIMIT_V180);
@@ -9225,12 +9243,23 @@ async function dashboard(){
       <div class="dashboard-schedule-top">
         <div class="dashboard-schedule-copy">
           ${CUI.icon('appointments',{size:24})}
-          <div><p class="eyebrow">Today schedule</p><h2>Bookings and appointments</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
+          <div><h2 class="eyebrow">Today schedule</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
         </div>
         <div class="dashboard-schedule-actions">
-          <a class="btn secondary" href="#/appointments?view=list&preset=today">View bookings</a>
           <a class="btn secondary" href="#/appointments">Open calendar</a>
         </div>
+      </div>
+      <!-- V252 (owner screenshot): the subtitle line and the second appointments button are
+           struck out — that button only reached the same surface the Open calendar link already
+           reaches. The two tabs and the date input are the owner’s "can view by date too":
+           every day is reachable, and the strip is no longer permanently pinned to today. -->
+      <div class="dashboard-schedule-controls-v252">
+        <div class="dashboard-schedule-tabs-v252" role="group" aria-label="Schedule day">
+          <button type="button" class="qbtn act" data-schedule-day-v252="0" aria-pressed="true">Today</button>
+          <button type="button" class="qbtn" data-schedule-day-v252="1" aria-pressed="false">Tomorrow</button>
+        </div>
+        <label class="sr-only" for="dashboardScheduleDate">Schedule date</label>
+        <input type="date" id="dashboardScheduleDate" value="${today}">
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
@@ -9289,12 +9318,33 @@ async function dashboard(){
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
     dashboardRoot.querySelector('#df').value=shiftSgDateInput(sgDateInputValue(),-(Number(b.dataset.d)-1));dashboardRoot.querySelector('#dt').value=sgDateInputValue();load();
   });
-  dashboardRoot.querySelectorAll('input[type="date"]').forEach(input=>input.oninput=()=>{
+  /* V252: scoped to the Performance range pair. Unscoped, the new schedule date picker also
+     cleared the 1d/7d/30d/90d selection and invalidated the KPI panel on every day change. */
+  dashboardRoot.querySelectorAll('.dashboard-range input[type="date"]').forEach(input=>input.oninput=()=>{
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>button.classList.remove('act'));
     invalidatePerformance();
   });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
+  /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
+     being shown. Both routes call the same applier, so the tab pressed-state, the input value
+     and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
+     west of Singapore must not see yesterday’s schedule under a "Today" tab. */
+  const scheduleDateInputV252=dashboardRoot.querySelector('#dashboardScheduleDate');
+  const scheduleTabsV252=[...dashboardRoot.querySelectorAll('[data-schedule-day-v252]')];
+  const scheduleTabDateV252=tab=>shiftSgDateInput(sgDateInputValue(),Number(tab.dataset.scheduleDayV252)||0);
+  const applyScheduleDayV252=date=>{
+    scheduleTabsV252.forEach(tab=>{
+      const on=scheduleTabDateV252(tab)===date;
+      tab.classList.toggle('act',on);tab.setAttribute('aria-pressed',on?'true':'false');
+    });
+    if(scheduleDateInputV252&&scheduleDateInputV252.value!==date)scheduleDateInputV252.value=date;
+    loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,date);
+  };
+  scheduleTabsV252.forEach(tab=>{tab.onclick=()=>applyScheduleDayV252(scheduleTabDateV252(tab))});
+  if(scheduleDateInputV252)scheduleDateInputV252.onchange=()=>{
+    if(scheduleDateInputV252.value)applyScheduleDayV252(scheduleDateInputV252.value);
+  };
   async function load(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
@@ -10095,7 +10145,11 @@ async function clientDetail(id){
     return {...immutableRelation,...(saleWorkflow[s.id]||{}),t:s.occurred_at,kind:'sale',id:s.id,saleKind:s.kind,
       amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null};
   });
+  /* V252: the STAFF column is read from the appointment's own staff_id through the same roster
+     map the sale rows already use \u2014 the name is never recovered from a display sentence.
+     An appointment with no assigned team member keeps a null here and prints an em dash. */
   const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status,
+    staff:staffName[a.staff_id]||null,
     upcoming:(a.starts_at||'')>nowIso&&a.status!=='cancelled'&&a.status!=='completed'}));
   const histRedemptions=(redemptionRows||[]).map(redemption=>({
     ...redemption,...(redemptionWorkflow[redemption.id]||{}),t:redemption.redeemed_at,kind:'redemption'
@@ -10466,66 +10520,92 @@ async function clientDetail(id){
   if($('c360ExpiryRetry'))$('c360ExpiryRetry').onclick=()=>clientDetail(id);
   bindReversalButtons(()=>clientDetail(id));
 }
-/* Renders the first n entries of the unified Customer 360 timeline. Each entry keeps its own
-   shape (sales carry reversal provenance; appointments split past/upcoming; grants, membership
-   and package rows add their own facets) — these come from different tables, not a union query.
-   Rendered as a pictogram-first list (low-literacy-first, CLAUDE.md) while preserving the reversal
-   buttons' data-reverse-kind/data-reverse-id hooks so bindReversalButtons keeps working. */
+/* Renders the first n entries of the unified Customer 360 timeline.
+   V252 (owner): the stacked pictogram list is now a TABLE — DATE / TYPE / ITEM / AMOUNT / STAFF.
+   Every cell is read from a STRUCTURED field the builder in clientDetail() already emits
+   (kind, saleKind, staff, service, plan, amount_cents, reward_name); no cell is recovered by
+   parsing a rendered sentence. Rows that carry no money print an em dash, never a 0.00 that
+   would read as a real zero-value transaction. Nothing the list carried is dropped: the status
+   pills, reversal relation, refusal reason, package-session provenance and campaign-pending
+   wording all survive as muted notes inside the ITEM cell, and the per-row Reverse button keeps
+   its data-reverse-kind/data-reverse-id hooks so bindReversalButtons still works unchanged.
+   The wrap scrolls horizontally on a narrow phone rather than breaking the page. */
 function renderHistPage(history,n){
   const rows=history.slice(0,n);
   if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
-  const when=t=>`<div class="c360-tl-when">${esc(sgt(t)||'')}</div>`;
-  const item=(tone,iconName,titleHtml,detailHtml,sideHtml)=>`<li class="c360-tl-item">
-    <span class="c360-tl-ic ${tone}" aria-hidden="true">${CUI.icon(iconName,{size:17})}</span>
-    <div class="c360-tl-main"><div class="t">${titleHtml}</div>${detailHtml?`<div class="d">${detailHtml}</div>`:''}</div>
-    <div class="c360-tl-side">${sideHtml||''}</div></li>`;
-  return `<ul class="c360-timeline">${rows.map(h=>{
+  const DASH_V252='—';
+  const cellsV252=h=>{
     if(h.kind==='sale'){
       const isRev=!!h.is_reversal;
       const relation=isRev?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(h.original_sale_id||'')}</span></span>`
         :h.reversal_sale_id?`<span class="pill off"><span data-workspace-i18n>reversed →</span> <span data-merchant-content>${esc(h.reversal_sale_id)}</span></span>`:'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      const detail=`${esc((h.saleKind||'sale').replace('_',' '))}${h.staff?' · '+esc(h.staff):''}${h.note?' — '+esc(h.note):''}`
-        +`${h.is_package_session?'<br><span class="muted small">Package session · reversal restores one session with no payment refund</span>':''}`
-        +`${action?'<br>'+action:''}`;
-      const amt=Number((h.amount??h.amount_cents)??0);
-      const side=`<div class="c360-tl-amt">${money(amt)}</div>${h.reversal_sale_id?`<div class="c360-tl-when">Net ${money(Number(h.net_amount_cents||0))}</div>`:''}${when(h.t)}`;
-      return item(isRev?'reversal':'sale',isRev?'retention':'sales',`${isRev?'Reversal':'Sale'} ${relation}`,detail,side);
+      const amount=Number((h.amount??h.amount_cents)??0);
+      return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
+        type:isRev?'Reversal':'Sale',
+        item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
+        notes:[relation,
+          h.note?esc(h.note):'',
+          h.is_package_session?'Package session · reversal restores one session with no payment refund':'',
+          h.reversal_sale_id?`Net ${money(Number(h.net_amount_cents||0))}`:'',
+          action],
+        amount:money(amount),staff:h.staff?esc(h.staff):''};
     }
     if(h.kind==='redemption'){
       const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      const detail=`${esc(h.reward_name||'Loyalty reward')} · ${Number(h.points_spent||0)} points${h.credit_cents?` → ${money(Number(h.credit_cents))} credit`:''}${action?`<br>${action}`:''}`;
-      return item('reward','redeem',`Reward redeemed ${relation}`,detail,when(h.t));
+      return {tone:'reward',icon:'redeem',type:'Reward',
+        item:`<span data-merchant-content>${esc(h.reward_name||'Loyalty reward')}</span>`,
+        notes:[relation,`${Number(h.points_spent||0)} points spent`,action],
+        amount:h.credit_cents?money(Number(h.credit_cents)):'',staff:''};
     }
     if(h.kind==='grant'){
       const campaign=campaignEntitlementDisplayV99(h);
       if(campaign.pending){
-        const detail=`${esc(h.program||'Retention program')} · ${esc(campaign.title)} · <span data-workspace-i18n>Merchant fulfilment pending</span><br><span data-workspace-i18n>No wallet value was posted.</span>`;
-        return item('reward','loyalty','<span data-workspace-i18n>Campaign reward pending</span>',detail,when(h.t));
+        return {tone:'reward',icon:'loyalty',type:'Retention',
+          item:`<span data-workspace-i18n>Campaign reward pending</span> · <span data-merchant-content>${esc(campaign.title)}</span>`,
+          notes:[`<span data-merchant-content>${esc(h.program||'Retention program')}</span> · <span data-workspace-i18n>Merchant fulfilment pending</span> · <span data-workspace-i18n>No wallet value was posted.</span>`],
+          amount:'',staff:''};
       }
       const value=h.fulfillment_kind==='credit'?money(Number(h.reward_value||0))
         :h.fulfillment_kind==='discount_pct'?`${h.reward_value}% off`:esc(h.reward_item||'free item');
-      const detail=`${esc(h.program||'Retention program')} · ${esc(h.reward_label||'Reward')} · ${value}`;
-      const side=`${h.fulfillment_kind==='credit'?`<div class="c360-tl-amt">${money(Number(h.reward_value||0))}</div>`:''}${when(h.t)}`;
-      return item('reward','loyalty','Retention reward earned',detail,side);
+      return {tone:'reward',icon:'loyalty',type:'Retention',
+        item:`<span data-merchant-content>${esc(h.reward_label||'Reward')}</span>`,
+        notes:[`<span data-merchant-content>${esc(h.program||'Retention program')}</span> · ${value}`],
+        amount:h.fulfillment_kind==='credit'?money(Number(h.reward_value||0)):'',staff:''};
     }
     if(h.kind==='membership'){
-      const status=`<span class="pill ${h.status==='active'?'on':h.status==='cancelled'?'no':'off'}">${esc((h.status||'').replace(/_/g,' '))}</span>`;
-      const detail=`${esc(h.plan||'Membership')}${h.cadence?' · '+esc(h.cadence):''}${h.renews?' · renews '+esc(String(h.renews).slice(0,10)):''}`;
-      return item('membership','memberships',`Membership ${status}`,detail,when(h.t));
+      return {tone:'membership',icon:'memberships',type:'Membership',
+        item:`<span data-merchant-content>${esc(h.plan||'Membership')}</span>`,
+        notes:[`<span class="pill ${h.status==='active'?'on':h.status==='cancelled'?'no':'off'}">${esc((h.status||'').replace(/_/g,' '))}</span>`
+          +`${h.cadence?' '+esc(h.cadence):''}${h.renews?' · renews '+esc(String(h.renews).slice(0,10)):''}`],
+        amount:'',staff:''};
     }
     if(h.kind==='package'){
-      const status=`<span class="pill ${h.status==='active'?'on':'off'}">${esc((h.status||'').replace(/_/g,' '))}</span>`;
-      const detail=`${esc(h.plan||'Package')} · ${Number(h.remaining||0)}/${h.sessions||'?'} sessions left`;
-      return item('package','packages',`Package ${status}`,detail,when(h.t));
+      return {tone:'package',icon:'packages',type:'Package',
+        item:`<span data-merchant-content>${esc(h.plan||'Package')}</span>`,
+        notes:[`<span class="pill ${h.status==='active'?'on':'off'}">${esc((h.status||'').replace(/_/g,' '))}</span>`
+          +` ${Number(h.remaining||0)}/${h.sessions||'?'} sessions left`],
+        amount:'',staff:''};
     }
-    const status=`<span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span>`;
-    const title=`Appointment${h.upcoming?' <span class="c360-upcoming">· upcoming</span>':''}`;
-    return item('appt','appointments',title,`${esc(h.service||'general visit')} · ${status}`,when(h.t));
-  }).join('')}</ul>`;
+    return {tone:'appt',icon:'appointments',type:'Appointment',
+      item:`<span data-merchant-content>${esc(h.service||'general visit')}</span>${h.upcoming?' <span class="c360-upcoming">· upcoming</span>':''}`,
+      notes:[`<span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span>`],
+      amount:'',staff:h.staff?esc(h.staff):''};
+  };
+  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Amount</th><th>Staff</th></tr></thead><tbody>${rows.map(h=>{
+    const cell=cellsV252(h);
+    const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
+    return `<tr>
+      <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
+      <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
+      <td data-label="Item">${cell.item}${notes}</td>
+      <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
+      <td data-label="Staff">${cell.staff||DASH_V252}</td>
+    </tr>`;
+  }).join('')}</tbody></table></div>`;
 }
 
 /* ---------- quick earn (8-digit phone lookup + amount — the counter flow) ----------
@@ -10839,7 +10919,7 @@ async function tillPage(){
   }
 
   function drawStep1(){
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:`${canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''}${canReadModule('sales')?CUI.action({id:'tViewSalesHistoryV253',label:'View sales history',iconName:'sales',variant:'secondary'}):''}`})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
@@ -10863,6 +10943,7 @@ async function tillPage(){
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>resetToStart()
     });
+    if(canReadModule('sales')&&$('tViewSalesHistoryV253'))$('tViewSalesHistoryV253').onclick=()=>nav('#/sales');
     if($('tWalkin'))$('tWalkin').onclick=startWalkinSale;
     document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
       const k=b.dataset.k;

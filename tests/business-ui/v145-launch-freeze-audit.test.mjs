@@ -37,7 +37,9 @@ test('dashboard uses Singapore dates and labels every mixed metric scope', () =>
   assert.match(dashboard, /requestGate\.begin\(\)/);
   assert.match(dashboard, /await renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\);[\s\S]*if\(isDashboardCurrent\(\)\)await load\(\)/,
     'the dashboard must load once after its reporting scope is initialized');
-  assert.match(dashboard, /querySelectorAll\('input\[type="date"\]'\)\.forEach/);
+  // V252: the handler is now scoped to `.dashboard-range`. Unscoped, it also captured the new
+  // Today-schedule date picker and invalidated the Performance panel on every schedule day change.
+  assert.match(dashboard, /querySelectorAll\('\.dashboard-range input\[type="date"\]'\)\.forEach/);
   assert.doesNotMatch(dashboard, /Record a sale[\s\S]*Add appointment[\s\S]*Find a customer[\s\S]*Set up rewards/,
     'the removed dashboard task-card row must not return');
   assert.doesNotMatch(dashboard, /Services and goods sold|dashboardSaleMixV141|sale_items/,

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="42797a2d7caf4cb2d33efab6f1f417c279098cc9bb39ffc25ea50eaeea5f7ba1">
+<meta name="v105-production-component-sha256" content="f6e1dacce0ae366ceb20cc4499f3b22be40577a3a537b82dce455a845885c3ce">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -240,6 +240,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
 .dashboard-schedule-chip.more a{color:var(--coral);font-weight:700;display:inline-flex;align-items:center;min-height:34px}
 .dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
+/* V252: the removed subtitle promoted the eyebrow to the card heading, and the new day tabs
+   plus date picker sit between the heading row and the chips. */
+.dashboard-schedule-controls-v252{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 10px}
+.dashboard-schedule-tabs-v252{display:flex;gap:6px}
+.dashboard-schedule-controls-v252 input[type="date"]{max-width:190px}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
@@ -1171,6 +1176,15 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .c360-tl-side{text-align:right;white-space:nowrap}
 .c360-tl-amt{font-weight:680;font-variant-numeric:tabular-nums;font-size:13.5px}
 .c360-tl-when{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;margin-top:3px}
+/* V252: Activity history is a table. The pictogram tile and the timestamp style are reused from
+   the list it replaces so the row still reads at a glance; notes stack under the ITEM cell. */
+.c360-activity-table-v252 td{vertical-align:top}
+.c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
+.c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
+.c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+.c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
+.c360-act-note-v252 .btn{margin-top:3px}
+.c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
@@ -2497,7 +2511,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 42797a2d7caf</span>
+<span class="v105-provenance">v105 production-component harness · f6e1dacce0ae</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2622,7 +2636,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'42797a2d7caf4cb2d33efab6f1f417c279098cc9bb39ffc25ea50eaeea5f7ba1',
+  sourceHash:'f6e1dacce0ae366ceb20cc4499f3b22be40577a3a537b82dce455a845885c3ce',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

@@ -277,7 +277,9 @@ test('Quick Earn scanner follows front-desk and manager loyalty-write assignment
   assert.equal(canScan(frontDeskReadOnly),false);
   assert.equal(canScan(managerLoyaltyOff),false);
   assert.equal(canScan({...frontDeskRw,clientsReadable:false}),false);
-  assert.match(app,/actions:canScanRedemption\(\)\?CUI\.action\(\{id:'tScanRedemption'/);
+  /* V253: a View-sales-history action joined the header, so the actions slot became a template
+     literal. The loyalty-write gate on the scanner is unchanged and still what this pins. */
+  assert.match(app,/actions:`\$\{canScanRedemption\(\)\?CUI\.action\(\{id:'tScanRedemption'/);
   assert.match(app,/if\(canScanRedemption\(\)\)\$\(\'tScanRedemption\'\)\.onclick/);
   assert.match(app,/Redemption scanning requires Loyalty write access/);
 });

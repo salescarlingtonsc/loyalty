@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="467d6e9e937b23b92f28da8b0f8987aff9934241fc9069336e4615b460e98e44"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="ff17eb827fef6c45d6d3cd6bccdc1d4b00efea249655f7de4c1d72fb00b914b1"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -235,6 +235,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
 .dashboard-schedule-chip.more a{color:var(--coral);font-weight:700;display:inline-flex;align-items:center;min-height:34px}
 .dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
+/* V252: the removed subtitle promoted the eyebrow to the card heading, and the new day tabs
+   plus date picker sit between the heading row and the chips. */
+.dashboard-schedule-controls-v252{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 10px}
+.dashboard-schedule-tabs-v252{display:flex;gap:6px}
+.dashboard-schedule-controls-v252 input[type="date"]{max-width:190px}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
@@ -1166,6 +1171,15 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .c360-tl-side{text-align:right;white-space:nowrap}
 .c360-tl-amt{font-weight:680;font-variant-numeric:tabular-nums;font-size:13.5px}
 .c360-tl-when{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;margin-top:3px}
+/* V252: Activity history is a table. The pictogram tile and the timestamp style are reused from
+   the list it replaces so the row still reads at a glance; notes stack under the ITEM cell. */
+.c360-activity-table-v252 td{vertical-align:top}
+.c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
+.c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
+.c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+.c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
+.c360-act-note-v252 .btn{margin-top:3px}
+.c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
@@ -2358,12 +2372,23 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       <div class="dashboard-schedule-top">
         <div class="dashboard-schedule-copy">
           ${CUI.icon('appointments',{size:24})}
-          <div><p class="eyebrow">Today schedule</p><h2>Bookings and appointments</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
+          <div><h2 class="eyebrow">Today schedule</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
         </div>
         <div class="dashboard-schedule-actions">
-          <a class="btn secondary" href="#/appointments?view=list&preset=today">View bookings</a>
           <a class="btn secondary" href="#/appointments">Open calendar</a>
         </div>
+      </div>
+      <!-- V252 (owner screenshot): the subtitle line and the second appointments button are
+           struck out — that button only reached the same surface the Open calendar link already
+           reaches. The two tabs and the date input are the owner’s "can view by date too":
+           every day is reachable, and the strip is no longer permanently pinned to today. -->
+      <div class="dashboard-schedule-controls-v252">
+        <div class="dashboard-schedule-tabs-v252" role="group" aria-label="Schedule day">
+          <button type="button" class="qbtn act" data-schedule-day-v252="0" aria-pressed="true">Today</button>
+          <button type="button" class="qbtn" data-schedule-day-v252="1" aria-pressed="false">Tomorrow</button>
+        </div>
+        <label class="sr-only" for="dashboardScheduleDate">Schedule date</label>
+        <input type="date" id="dashboardScheduleDate" value="${today}">
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
@@ -2422,12 +2447,33 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
     dashboardRoot.querySelector('#df').value=shiftSgDateInput(sgDateInputValue(),-(Number(b.dataset.d)-1));dashboardRoot.querySelector('#dt').value=sgDateInputValue();load();
   });
-  dashboardRoot.querySelectorAll('input[type="date"]').forEach(input=>input.oninput=()=>{
+  /* V252: scoped to the Performance range pair. Unscoped, the new schedule date picker also
+     cleared the 1d/7d/30d/90d selection and invalidated the KPI panel on every day change. */
+  dashboardRoot.querySelectorAll('.dashboard-range input[type="date"]').forEach(input=>input.oninput=()=>{
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>button.classList.remove('act'));
     invalidatePerformance();
   });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
+  /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
+     being shown. Both routes call the same applier, so the tab pressed-state, the input value
+     and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
+     west of Singapore must not see yesterday’s schedule under a "Today" tab. */
+  const scheduleDateInputV252=dashboardRoot.querySelector('#dashboardScheduleDate');
+  const scheduleTabsV252=[...dashboardRoot.querySelectorAll('[data-schedule-day-v252]')];
+  const scheduleTabDateV252=tab=>shiftSgDateInput(sgDateInputValue(),Number(tab.dataset.scheduleDayV252)||0);
+  const applyScheduleDayV252=date=>{
+    scheduleTabsV252.forEach(tab=>{
+      const on=scheduleTabDateV252(tab)===date;
+      tab.classList.toggle('act',on);tab.setAttribute('aria-pressed',on?'true':'false');
+    });
+    if(scheduleDateInputV252&&scheduleDateInputV252.value!==date)scheduleDateInputV252.value=date;
+    loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,date);
+  };
+  scheduleTabsV252.forEach(tab=>{tab.onclick=()=>applyScheduleDayV252(scheduleTabDateV252(tab))});
+  if(scheduleDateInputV252)scheduleDateInputV252.onchange=()=>{
+    if(scheduleDateInputV252.value)applyScheduleDayV252(scheduleDateInputV252.value);
+  };
   async function load(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
@@ -2597,6 +2643,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'467d6e9e937b23b92f28da8b0f8987aff9934241fc9069336e4615b460e98e44',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'ff17eb827fef6c45d6d3cd6bccdc1d4b00efea249655f7de4c1d72fb00b914b1',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
