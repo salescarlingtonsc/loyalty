@@ -16297,36 +16297,26 @@ function pbWaNumber(phone){
   if(!d)return '(no phone on file)';
   return '+'+(d.length===8?('65'+d):d);
 }
-/* Fresh read of every client + qualifying-visit sale for the business. Audience eligibility
-   changes after each sale or reversal, so a session cache would make the wizard stale.
-   netVisits and lastVisit reuse the Customer 360 valid-original definition. */
-async function pbLoadAudience(){
-  const {error:scopeError}=await sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:null,p_module:'retention'});
-  if(scopeError)throw scopeError;
-  const [clients,sales]=await Promise.all([
-    fetchAllRows(()=>sb.from('clients').select('id,full_name,phone').eq('business_id',S.biz.id)),
-    fetchAllRows(()=>sb.from('sales').select('id,client_id,occurred_at,counts_as_visit,reversal_of').eq('business_id',S.biz.id).eq('counts_as_visit',true))
-  ]);
-  const byClient=new Map();
-  const validVisits=validVisitSales(sales);
-  for(const s of validVisits){
-    const e=byClient.get(s.client_id)||{net:0,lastIso:''};
-    e.net+=1;
-    if((s.occurred_at||'')>e.lastIso)e.lastIso=s.occurred_at;
-    byClient.set(s.client_id,e);
-  }
-  return {clients,byClient};
-}
-function pbComputeCandidates(audience,lapsedDays,minVisits,asOf=new Date()){
-  const out=[];
-  for(const c of audience.clients){
-    const e=audience.byClient.get(c.id)||{net:0,lastIso:''};
-    const lastDays=e.lastIso?completeSgCalendarDaysSince(e.lastIso,asOf):null;
-    if(e.net>=minVisits&&lastDays!=null&&lastDays>=lapsedDays)
-      out.push({id:c.id,full_name:c.full_name,phone:c.phone,netVisits:e.net,lastVisitDays:lastDays});
-  }
-  out.sort((a,b)=>b.lastVisitDays-a.lastVisitDays); // most overdue first
-  return out;
+/* v244: the audience is computed by the DATABASE, not the browser. The old pbLoadAudience
+   downloaded EVERY client row and EVERY visit-marked sale (fetchAllRows, sequential, unbounded)
+   and reduced them in JS — a cliff for any business with a large history: one big tenant pulled
+   its entire visit history into a phone browser to answer "3+ visits, none in 45 days".
+   retention_lapsed_candidates_v244 runs the identical reduction server-side (validVisitSales'
+   reversal semantics, SG calendar-day lapse, the same require_module_scope_v145 retention gate)
+   and returns only the matching candidates, most overdue first. It stays a fresh read on every
+   call — eligibility changes after each sale or reversal, so no session cache, same as before.
+   `truncated` is the one new behaviour: past 20000 matches the server reports the audience as
+   truncated, and the UI must refuse to freeze it (a silently clipped audience would not be the
+   audience the owner configured). */
+async function pbLoadCandidatesV244(lapsedDays,minVisits){
+  const {data,error}=await sb.rpc('retention_lapsed_candidates_v244',
+    {p_business:S.biz.id,p_lapsed_days:lapsedDays,p_min_visits:minVisits});
+  if(error)throw error;
+  return {
+    candidates:Array.isArray(data?.candidates)?data.candidates:[],
+    total:Number(data?.total)||0,
+    truncated:data?.truncated===true
+  };
 }
 async function pbActivateCampaign(campaignId,clientIds){
   // Deterministic key: idempotent replay on retry, and the SQL advisory lock is per-campaign,
@@ -16536,8 +16526,8 @@ async function pbActivateDraft(c,ctx){
   if(e1)return fail(e1);
   const crit=row?.audience_criteria||{};
   if(crit.segment!=='lapsed')return toast('Open this draft in the wizard to start it');
-  const audience=await pbLoadAudience();
-  const cands=pbComputeCandidates(audience,crit.lapsed_days||45,crit.min_visits||3);
+  const {candidates:cands,truncated}=await pbLoadCandidatesV244(crit.lapsed_days||45,crit.min_visits||3);
+  if(truncated)return toast('Too many customers match this playbook to freeze safely — start a fresh one with a narrower rule');
   if(!cands.length)return toast('No customers currently match this playbook — cancel it or start a fresh one');
   if(!confirm(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
   const {error}=await pbActivateCampaign(c.campaign_id,cands.map(x=>x.id));
@@ -16555,8 +16545,13 @@ async function pbIssueOffers(c,ctx){
     .select('client_id,assignment').eq('campaign_id',c.campaign_id).eq('business_id',S.biz.id).eq('assignment','treatment');
   if(error)return fail(error);
   if(!members||!members.length)return toast('No treatment customers to reach');
-  const audience=await pbLoadAudience();
-  const byId=new Map(audience.clients.map(x=>[x.id,x]));
+  /* v244: fetch names/phones for the treatment members only, instead of loading the whole
+     business audience to use it as a lookup table. Same clients-table read path and RLS the
+     old code used — just bounded to the frozen treatment list. */
+  let contactRows;
+  try{contactRows=await fetchRowsByIds('clients','id,full_name,phone',members.map(m=>m.client_id))}
+  catch(e){return fail(e)}
+  const byId=new Map(contactRows.map(x=>[x.id,x]));
   const targets=members.map(m=>{const info=byId.get(m.client_id)||{};return {client_id:m.client_id,full_name:info.full_name,phone:info.phone};});
   pbOpenIssueModal(c,targets,ctx);
 }
@@ -16728,26 +16723,26 @@ function openPlaybookWizard(ctx){
   const close=()=>{deactivate?deactivate():modal.remove()};
   deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#pbWizClose'});
   $('pbWizClose').onclick=close;
-  const state={step:0,lapsedDays:45,minVisits:3,candidates:[],audience:null,versions:[],version:null,holdout:10,capDollars:'',windowDays:30,upsideDollars:'',name:'',createdCampaignId:null,busy:false};
+  const state={step:0,lapsedDays:45,minVisits:3,candidates:[],truncated:false,candidatesLoading:false,candidateFetchSeq:0,versions:[],version:null,holdout:10,capDollars:'',windowDays:30,upsideDollars:'',name:'',createdCampaignId:null,busy:false};
 
   (async()=>{
-    let audience,versions=[];
+    let matched,versions=[];
     try{
       const versionsReq=ctx.currentVersion
         ?sb.from('retention_program_versions').select('id,name,fulfillment_kind,credit_cents,discount_percent,manual_item')
           .eq('business_id',S.biz.id).eq('config_version_id',ctx.currentVersion).eq('active',true).order('sort')
         :Promise.resolve({data:[],error:null});
-      const [aud,{data:vs,error:vErr}]=await Promise.all([pbLoadAudience(),versionsReq]);
+      const [cand,{data:vs,error:vErr}]=await Promise.all([
+        pbLoadCandidatesV244(state.lapsedDays,state.minVisits),versionsReq]);
       if(vErr)throw vErr;
-      audience=aud;versions=vs||[];
+      matched=cand;versions=vs||[];
     }catch(e){
       if(!modal.isConnected)return;
       $('pbWizBody').innerHTML=`<div class="err" role="alert">Could not prepare the playbook. ${esc(e.message||String(e))}</div>`;
       return;
     }
     if(!modal.isConnected)return;
-    state.audience=audience;state.versions=versions;
-    state.candidates=pbComputeCandidates(audience,state.lapsedDays,state.minVisits);
+    state.candidates=matched.candidates;state.truncated=matched.truncated;state.versions=versions;
     if(versions.length)state.version=versions[0];
     state.name=`Bring back lapsed regulars · ${sgDateInputValue()}`;
     renderStep();
@@ -16759,10 +16754,12 @@ function openPlaybookWizard(ctx){
     $('pbWizSteps').innerHTML=PB_STEPS.map((s,i)=>`<li style="flex:1;text-align:center;font-size:11px;font-weight:600;padding:6px 4px;border-radius:8px;background:${i===state.step?'var(--tint)':'transparent'};color:${i===state.step?'var(--coral)':i<state.step?'var(--green)':'var(--muted)'}"><span data-merchant-content>${i+1}.</span> <span data-workspace-i18n>${esc(s)}</span></li>`).join('');
   }
   function whoPreview(){
+    if(state.candidatesLoading)return `<div class="card" style="background:var(--tint);border:none"><p class="muted small" role="status">Counting matching customers…</p></div>`;
     const n=state.candidates.length;
     const names=state.candidates.slice(0,8).map(c=>esc(c.full_name||'Customer')).join(', ');
     return `<div class="card" style="background:var(--tint);border:none">
       <div style="font-size:1.5rem;font-weight:700">${n} customer${n===1?'':'s'} match</div>
+      ${state.truncated?`<div class="err" role="alert" style="margin-top:6px">Too many customers match to freeze safely. Narrow the rule — raise the days or the visit count.</div>`:''}
       <p class="muted small" style="margin-top:6px">${n?`${names}${n>8?` and ${n-8} more`:''}`:'No customers match yet — widen the days or lower the visit count.'}</p>
       <p class="muted small" style="margin-top:6px">Regulars with ${state.minVisits}+ past visits and none in over ${state.lapsedDays} days — the same rule a customer profile uses to flag someone as overdue.</p>
     </div>`;
@@ -16827,14 +16824,38 @@ function openPlaybookWizard(ctx){
   }
   function wireStep(){
     if(state.step===0){
+      /* v244: the match count now comes from the server, so slider changes re-query instead of
+         re-filtering a local copy. Debounced, and generation-guarded so a slow older response
+         can never overwrite a newer filter's result. */
+      let updTimer=null;
+      const refreshCandidates=async()=>{
+        const mine=++state.candidateFetchSeq;
+        state.candidatesLoading=true;
+        const preview=$('pbWhoPreview');if(preview)preview.innerHTML=whoPreview();
+        const nx=$('pbNext');if(nx)nx.disabled=true;
+        try{
+          const matched=await pbLoadCandidatesV244(state.lapsedDays,state.minVisits);
+          if(!modal.isConnected||mine!==state.candidateFetchSeq)return;
+          state.candidates=matched.candidates;state.truncated=matched.truncated;
+        }catch(e){
+          if(!modal.isConnected||mine!==state.candidateFetchSeq)return;
+          state.candidates=[];state.truncated=false;
+          state.candidatesLoading=false;
+          const host=$('pbWhoPreview');
+          if(host)host.innerHTML=`<div class="err" role="alert">Could not count matching customers. ${esc(e.message||String(e))}</div>`;
+          return;
+        }
+        state.candidatesLoading=false;
+        const host=$('pbWhoPreview');if(host)host.innerHTML=whoPreview();
+        const next=$('pbNext');if(next)next.disabled=!state.candidates.length||state.truncated;
+      };
       const upd=()=>{
         state.lapsedDays=Math.max(1,Math.min(365,parseInt($('pbLapsed').value||'0')||45));
         state.minVisits=Math.max(1,Math.min(99,parseInt($('pbMinV').value||'0')||3));
-        state.candidates=pbComputeCandidates(state.audience,state.lapsedDays,state.minVisits);
-        $('pbWhoPreview').innerHTML=whoPreview();
-        const nx=$('pbNext');if(nx)nx.disabled=!state.candidates.length;
+        clearTimeout(updTimer);updTimer=setTimeout(refreshCandidates,350);
       };
       $('pbLapsed').oninput=upd;$('pbMinV').oninput=upd;$('pbWhoPreview').innerHTML=whoPreview();
+      const nx=$('pbNext');if(nx)nx.disabled=!state.candidates.length||state.truncated;
     }else if(state.step===1&&state.versions.length){
       $('pbVersion').onchange=()=>{state.version=state.versions.find(v=>v.id===$('pbVersion').value)||state.versions[0];$('pbRewardInfo').innerHTML=rewardInfo()};
       $('pbUpside').oninput=()=>{state.upsideDollars=$('pbUpside').value};
@@ -16852,7 +16873,7 @@ function openPlaybookWizard(ctx){
     const back=state.step>0?`<button class="btn ghost sm" id="pbBack">Back</button>`:'';
     let right;
     if(state.step<3){
-      const blocked=(state.step===0&&!state.candidates.length)||(state.step===1&&!state.versions.length);
+      const blocked=(state.step===0&&(!state.candidates.length||state.truncated||state.candidatesLoading))||(state.step===1&&!state.versions.length);
       right=`<button class="btn" id="pbNext" ${blocked?'disabled':''}>Next</button>`;
     }else{
       right=`<button class="btn" id="pbLaunch">${CUI.icon('check',{size:16})}<span>${state.createdCampaignId?'Retry start':'Create & start'}</span></button>`;
@@ -16873,6 +16894,9 @@ function openPlaybookWizard(ctx){
     if(state.busy)return;
     if(!state.version)return toast('Pick a reward first');
     if(!state.candidates.length)return toast('No customers match the audience');
+    /* Never freeze a clipped audience: the holdout split must run over the audience the owner
+       actually configured, not the first 20000 of it. */
+    if(state.truncated)return toast('Too many customers match to freeze safely — narrow the rule first');
     state.busy=true;
     const b=$('pbLaunch');if(b){b.disabled=true;b.querySelector('span').textContent='Starting…'}
     const out=$('pbLaunchOutcome');

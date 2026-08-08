@@ -89,14 +89,15 @@ test('customer inactivity uses complete Singapore calendar days at midnight boun
     'crossing Singapore midnight advances one complete calendar day even when only two seconds elapsed');
   assert.equal(daysSince('2026-08-02T00:00:00.000Z',new Date('2026-08-02T15:59:59.000Z')),0);
 
-  const pbStart=app.indexOf('function pbComputeCandidates(');
-  const pbEnd=app.indexOf('async function pbActivateCampaign',pbStart);
-  const compute=new Function('completeSgCalendarDaysSince',`${app.slice(pbStart,pbEnd)};return pbComputeCandidates`)(daysSince);
-  const candidate={id:'customer-1',full_name:'Boundary customer',phone:'81234567'};
-  const audience={clients:[candidate],byClient:new Map([[candidate.id,{net:3,lastIso:justBeforeSgMidnight}]])};
-  assert.equal(compute(audience,1,3,justAfterSgMidnight).length,1,
-    'the bring-back threshold matches the canonical at-least calendar-day rule');
-  assert.equal(compute(audience,2,3,justAfterSgMidnight).length,0);
+  /* v244: the bring-back candidate reduction moved into the database
+     (retention_lapsed_candidates_v244) — the browser no longer computes it. The Singapore
+     calendar-day rule is pinned in the migration SQL instead of in extractable JS. */
+  const v244=fs.readFileSync(new URL('../../db/migrations/20260808_nestly_v244_retention_audience_server_side.sql',import.meta.url),'utf8');
+  assert.match(v244,/at time zone 'Asia\/Singapore'\)::date/,
+    'the server-side audience must use Singapore calendar dates, not raw timestamps');
+  assert.match(v244,/greatest\(0, v_today - \(pc\.last_visit_at at time zone 'Asia\/Singapore'\)::date\)/,
+    'lapse days are complete SG calendar days, clamped non-negative — completeSgCalendarDaysSince parity');
+  assert.match(v244,/>= v_lapsed/,'the at-least threshold survives the port');
 });
 
 test('customer reward expiry countdown follows Singapore calendar dates, not rounded elapsed time', () => {
@@ -158,10 +159,19 @@ test('valid visit helper removes reversal rows and their original visits everywh
   assert.match(client, /const validVisits=validVisitSales\(allSl\|\|\[\]\)/);
   assert.match(client, /const netVisits=validVisits\.length/);
   assert.match(client, /const lastVisitIso=validVisits/);
-  const audience = section('async function pbLoadAudience()', 'function pbComputeCandidates');
-  assert.match(audience, /require_module_scope_v145[\s\S]*p_module:'retention'/);
-  assert.match(audience, /const validVisits=validVisitSales\(sales\)/);
-  assert.doesNotMatch(audience, /s\.reversal_of\?-1:1/);
+  /* v244: the audience reduction lives in retention_lapsed_candidates_v244. The reversal
+     semantics (a reversal row is never a visit; a reversed original is discounted) and the
+     retention scope gate must survive in the SQL, and the client must call the RPC rather
+     than paging the whole business through fetchAllRows. */
+  const v244sql=fs.readFileSync(new URL('../../db/migrations/20260808_nestly_v244_retention_audience_server_side.sql',import.meta.url),'utf8');
+  assert.match(v244sql,/counts_as_visit = true/);
+  assert.match(v244sql,/reversal_of is null/);
+  assert.match(v244sql,/not exists \(\s*select 1 from visit_rows r where r\.reversal_of = v\.id\s*\)/);
+  assert.match(v244sql,/require_module_scope_v145\(p_business, null, 'retention'\)/);
+  const loader = section('async function pbLoadCandidatesV244(', 'async function pbActivateCampaign');
+  assert.match(loader, /sb\.rpc\('retention_lapsed_candidates_v244'/);
+  assert.doesNotMatch(loader, /fetchAllRows/,
+    'the bring-back audience must never again page every client and sale into the browser');
   assert.doesNotMatch(app, /pbAudienceCache/, 'bring-back audience must be re-read after sales or reversals');
 });
 

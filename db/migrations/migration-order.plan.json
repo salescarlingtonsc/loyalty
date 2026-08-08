@@ -1539,6 +1539,12 @@
       "path": "db/migrations/20260808_nestly_v244_crm_ai_report_flag_matches_v176.sql",
       "semanticVersion": "v244",
       "proposedDeployVersion": "20260808160000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v244_retention_audience_server_side.sql",
+      "semanticVersion": "v244",
+      "proposedDeployVersion": "20260808200000"
     }
   ]
 }
