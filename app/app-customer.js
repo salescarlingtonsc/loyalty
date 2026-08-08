@@ -884,6 +884,17 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
       if(!isRouteCurrent())return;
       return renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');
     }
+    /* V246 (owner: "why pressing back will log me out of the app? i thought there is local
+       cache?"). The session was never lost. Back lands on '#/', the customer entry, and a
+       signed-in BUSINESS user has no customer profile — so this surface fell through to the
+       customer sign-in screen, which reads exactly like being logged out. A user whose only
+       persona is staff goes home to their workspace instead. A user with a customer profile
+       is untouched, and a user with neither still sees sign-in, which is then true. */
+    if(profile?.profile===null||profile?.profile===undefined){
+      const personasResultV246=await sb.rpc('get_my_personas');
+      if(!isRouteCurrent())return;
+      if((personasResultV246.data?.staff||[]).length){nav('#/dashboard');return;}
+    }
     if(profile?.profile!==null&&profile?.profile!==undefined){
       if(customerRegistrationDestinationPriority(pendingCustomerJoinToken,pendingCustomerBusinessSlug)==='join'){
         if(!isRouteCurrent())return;

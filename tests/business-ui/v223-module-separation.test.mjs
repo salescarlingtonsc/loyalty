@@ -64,7 +64,9 @@ test('V223 customer app actions live with the other customer settings, not in Bo
 test('V223 Waitlist travels with Bookings, in the nav and at the route', () => {
   const nav = app.slice(app.indexOf('const navModuleVisible='), app.indexOf('const visGroups='));
   assert.match(nav, /\|\|\(m==='waitlist'&&enabled\.includes\('waitlist'\)&&enabled\.includes\('bookings'\)\)/);
-  assert.match(nav, /\|\|\(m!=='waitlist'&&enabled\.includes\(m\)\)/);
+  /* V246: appointments joined waitlist as a specially-gated module — hidden for the fnb
+     sector. The waitlist-rides-on-bookings rule this test protects is unchanged. */
+  assert.match(nav, /\|\|\(m!=='waitlist'&&m!=='appointments'&&enabled\.includes\(m\)\)/);
   // Hiding a link is not a guard — the typed hash is refused too.
   assert.match(app, /if\(pageKey==='waitlist'&&!canReadModule\('bookings'\)\)\{/);
   assert.match(app, /Waitlist works with Bookings\. Turn on Bookings first\./);

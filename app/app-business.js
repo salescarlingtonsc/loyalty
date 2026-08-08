@@ -939,12 +939,21 @@ function navHtml(page,idPrefix='nav'){
      sign-up QR, the customer-app switches and the programme presentation, which is the same
      authority the Settings tabs it absorbed already required. It is not in enabled_modules
      (it is a surface, not a sector entitlement), so it is offered like Branches is. */
+    /* V246 (owner: "why cafe/F&B have appointment module? appointment is for a staff to serve
+     the customer for a service. cafe is about bookings / table bookings and reservation -
+     with a waitlist"). The sector decides the serving model: an F&B floor seats parties at
+     tables (Bookings + Waitlist); a service sector books a person's time (Appointments).
+     Nav-level only, deliberately: the route stays reachable, so an F&B tenant with historical
+     appointments, a deep link or a Customer 360 hand-off is never stranded — the irrelevant
+     module just stops being advertised. */
+  const sectorHidesAppointmentsV246=String(S.biz?.industry||'')==='fnb';
   const navModuleVisible=m=>m==='dashboard'
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
     ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
-    ||(m!=='waitlist'&&enabled.includes(m));
+    ||(m!=='waitlist'&&m!=='appointments'&&enabled.includes(m))
+    ||(m==='appointments'&&!sectorHidesAppointmentsV246&&enabled.includes(m));
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.flat){
