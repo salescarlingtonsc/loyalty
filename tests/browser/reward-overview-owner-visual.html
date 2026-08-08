@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="527c7bdc0f072bbd6474c2eb6f3b7a3db60bfb983bbc726f4e049df7b46db30f"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="091590fb18b43c9d9587ca17aa539233f8e0190f5c333d056aaf312b22e93066"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -199,6 +199,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .loyalty-optional-v235>summary b{color:var(--ink);font-size:14px}
 .loyalty-live-models-v235{display:flex;flex-wrap:wrap;gap:6px}
 .tier-benefit-row-v235{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+.tier-dialog-dirty-v237{margin:8px 0 0;min-height:1.2em;font-size:.85rem;font-weight:650;color:var(--amber)}
+.tier-dialog-dirty-v237:empty{min-height:0}
+.btn.tier-save-dirty-v237{box-shadow:0 0 0 3px var(--tint)}
 .tier-benefit-row-v235 input{flex:1 1 180px;margin:0}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
@@ -1689,7 +1692,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 527c7bdc0f072bbd6474c2eb6f3b7a3db60bfb983bbc726f4e049df7b46db30f</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 091590fb18b43c9d9587ca17aa539233f8e0190f5c333d056aaf312b22e93066</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3110,7 +3113,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'527c7bdc0f072bbd6474c2eb6f3b7a3db60bfb983bbc726f4e049df7b46db30f',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'091590fb18b43c9d9587ca17aa539233f8e0190f5c333d056aaf312b22e93066',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

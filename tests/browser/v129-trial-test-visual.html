@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="642e5292c97bb19c4a189802fd2e402bc681e8f7a10fab24aa6390d36235a791"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="90984d338a1d23cac062b7955f85e2f36291780521060794882fa9cf30c073f6"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -199,6 +199,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .loyalty-optional-v235>summary b{color:var(--ink);font-size:14px}
 .loyalty-live-models-v235{display:flex;flex-wrap:wrap;gap:6px}
 .tier-benefit-row-v235{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+.tier-dialog-dirty-v237{margin:8px 0 0;min-height:1.2em;font-size:.85rem;font-weight:650;color:var(--amber)}
+.tier-dialog-dirty-v237:empty{min-height:0}
+.btn.tier-save-dirty-v237{box-shadow:0 0 0 3px var(--tint)}
 .tier-benefit-row-v235 input{flex:1 1 180px;margin:0}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
@@ -1690,7 +1693,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 642e5292c97bb19c4a189802fd2e402bc681e8f7a10fab24aa6390d36235a791</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 90984d338a1d23cac062b7955f85e2f36291780521060794882fa9cf30c073f6</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -6003,7 +6006,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <div class="tier-benefit-picks" id="trBenefitPicks">
         ${TIER_BENEFIT_PRESETS_V182.map((preset,index)=>`<label class="tier-benefit-pick"><input type="checkbox" data-tier-benefit="${esc(preset.text)}" id="trBenefitPick${index}"><span>${esc(preset.label)}</span></label>`).join('')}
       </div>
-      ${rewards.filter(reward=>reward.active!==false).length?`<div class="row" style="margin-top:10px;flex-wrap:wrap;align-items:center"><span class="muted small">Or add one of your rewards:</span>${rewards.filter(reward=>reward.active!==false).map(reward=>`<button type="button" class="btn ghost sm trBenefitReward" data-benefit="${esc(`${rewardLabel(reward)} (${reward.cost_points} ${unit})`)}">${esc(rewardLabel(reward))} · ${reward.cost_points}</button>`).join('')}</div>`:''}
+      ${rewards.filter(reward=>reward.active!==false).length?`<div class="row" style="margin-top:10px;flex-wrap:wrap;align-items:center"><span class="muted small">Or add one of your rewards:</span>${(()=>{const live=rewards.filter(reward=>reward.active!==false);
+        /* V237: two rewards can carry the same customer name, so the picker showed two
+           identical chips. Name collisions fall back to the internal name to tell them apart —
+           the benefit line written into perk_note is unchanged. */
+        const seen=live.reduce((count,reward)=>({...count,[rewardLabel(reward)]:(count[rewardLabel(reward)]||0)+1}),{});
+        return live.map(reward=>{const label=rewardLabel(reward);
+          const distinct=seen[label]>1&&reward.internal_name?`${label} (${reward.internal_name})`:label;
+          return `<button type="button" class="btn ghost sm trBenefitReward" data-benefit="${esc(`${label} (${reward.cost_points} ${unit})`)}">${esc(distinct)} · ${reward.cost_points}</button>`}).join('')})()}</div>`:''}
       <div class="tier-benefit-rows-v235" id="trBenefitRowsV235" style="margin-top:12px"></div>
       <button class="btn ghost sm" id="trBenefitAddV235" type="button" style="margin-top:8px">+ Add benefit</button>
       <p class="muted small" style="margin-top:6px">Each line is one benefit the customer reads. Ticking a box above adds a line here.</p>
@@ -6644,6 +6654,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   document.querySelectorAll('.rwEdit').forEach(b=>b.onclick=()=>openRewardEditor(
     rewards.find(reward=>rewardId(reward)===b.dataset.rewardId)));
   let editingTier=null;
+  let tierBaselineV237=null,tierDirtyV237=false;
   const fillTier=(tier)=>{editingTier=tier;$('trName').value=tier?.name||'';
     $('trTh').value=tier?.threshold??'';$('trMul').value=tier?.points_multiplier??'';
     $('trPerk').value=tierBenefitLines(tier).join('\n');
@@ -6657,7 +6668,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
        control would be the first thing an owner sees. */
     const schedule=$('trFrom')?.closest('details');
     if(schedule)schedule.open=!!(tier?.effective_from||tier?.expires_at);
-    $('trAdd').textContent=tier?'Save tier':'Add tier'};
+    $('trAdd').textContent=tier?'Save tier':'Add tier';
+    resetTierBaselineV237()};
   function syncTierBenefitPicksV182(){
     const textarea=$('trPerk');if(!textarea)return;
     const lines=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
@@ -6678,6 +6690,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!isLoyaltyCurrent())return;
     if(error)return fail(error);
     draftSnapshotHash=data?.snapshot_hash||draftSnapshotHash;
+    setTierDirtyStateV237(false);
     closeTierDialogV236(false);
     if(!draftVersionId){
       toast('Tier draft saved — continue editing before you review and publish');
@@ -6706,6 +6719,31 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     textarea.value=[...host.querySelectorAll('[data-tier-benefit-row-v235]')]
       .map(input=>input.value.trim()).filter(Boolean).join('\n');
     syncTierBenefitPicksV182();
+    markTierDirtyV237();
+  }
+  /* V237 (owner: "why is this static? i already remove 50% benefit - but it still shows").
+     Remove/Add/edit only change the form; the tier is stored when Save tier is pressed. That
+     was invisible, so closing the dialog silently threw the edit away and reopening showed the
+     old benefit again. The form now states when it holds unsaved work and refuses to close
+     quietly on it. */
+  function tierFormSignatureV237(){
+    return [$('trName')?.value||'',$('trTh')?.value||'',$('trMul')?.value||'',
+      $('trPerk')?.value||'',$('trFrom')?.value||'',$('trUntil')?.value||''].join('\u0001');
+  }
+  function markTierDirtyV237(){
+    if(tierBaselineV237===null)return;
+    setTierDirtyStateV237(tierFormSignatureV237()!==tierBaselineV237);
+  }
+  function setTierDirtyStateV237(dirty){
+    tierDirtyV237=dirty;
+    const note=document.getElementById('tierDialogDirtyV237');
+    if(note)note.textContent=dirty?'Unsaved changes — press Save tier to keep them.':'';
+    const save=$('trAdd');
+    if(save)save.classList.toggle('tier-save-dirty-v237',dirty);
+  }
+  function resetTierBaselineV237(){
+    tierBaselineV237=tierFormSignatureV237();
+    setTierDirtyStateV237(false);
   }
   function tierBenefitRowBindV235(row){
     row.querySelector('[data-tier-benefit-row-v235]').oninput=tierBenefitRowsCommitV235;
@@ -6737,12 +6775,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     }
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tierDialogV236" role="dialog" aria-modal="true" aria-labelledby="tierDialogTitleV236" tabindex="-1"><div class="modal-card" style="max-width:640px;max-height:min(85vh,760px);overflow:auto">
       <div class="row" style="justify-content:space-between;align-items:center;gap:10px"><h2 id="tierDialogTitleV236" style="margin:0">${esc(title||'Edit tier')}</h2><button class="btn ghost sm" type="button" id="tierDialogCloseV236">Close</button></div>
+      <p class="tier-dialog-dirty-v237" id="tierDialogDirtyV237" role="status" aria-live="polite"></p>
       <div id="tierDialogSlotV236" style="margin-top:12px"></div>
     </div></div>`);
     const dialog=document.getElementById('tierDialogV236');
     dialog.querySelector('#tierDialogSlotV236').append(form);
     form.hidden=false;
-    const close=()=>{closeTierDialogV236(true);opener?.focus?.()};
+    setTierDirtyStateV237(tierDirtyV237);
+    const close=()=>{
+      if(tierDirtyV237&&!confirm('Discard your unsaved changes to this tier?'))return;
+      closeTierDialogV236(true);opener?.focus?.()};
     dialog.querySelector('#tierDialogCloseV236').onclick=close;
     dialog.onclick=e=>{if(e.target===dialog)close()};
     dialog.onkeydown=e=>{if(e.key==='Escape')close()};
@@ -6758,6 +6800,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     }
     dialog.remove();
   }
+  ['trName','trTh','trMul','trFrom','trUntil'].forEach(id=>{
+    const field=$(id);if(field)field.addEventListener('input',markTierDirtyV237);
+  });
   const trBenefitAddV235=$('trBenefitAddV235');
   if(trBenefitAddV235)trBenefitAddV235.onclick=()=>{
     const host=$('trBenefitRowsV235');if(!host)return;
@@ -6787,13 +6832,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     }
     else { const at=lines.indexOf(benefit); if(at>=0)lines.splice(at,1); }
     textarea.value=lines.join('\n');
-    tierBenefitRowsRenderV235();
+    tierBenefitRowsRenderV235();markTierDirtyV237();
   });
   document.querySelectorAll('.trBenefitReward').forEach(button=>button.onclick=()=>{
     const textarea=$('trPerk'),benefit=button.dataset.benefit||'';
     const existing=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
     if(benefit&&!existing.includes(benefit))textarea.value=[...existing,benefit].join('\n');
-    syncTierBenefitPicksV182();tierBenefitRowsRenderV235();revealTierFormV235(false);
+    syncTierBenefitPicksV182();tierBenefitRowsRenderV235();markTierDirtyV237();revealTierFormV235(false);
   });
   const defaults=$('trDefaults');
   if(defaults)defaults.onclick=async()=>{
@@ -12592,6 +12637,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'642e5292c97bb19c4a189802fd2e402bc681e8f7a10fab24aa6390d36235a791',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'90984d338a1d23cac062b7955f85e2f36291780521060794882fa9cf30c073f6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
