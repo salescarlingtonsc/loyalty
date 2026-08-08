@@ -1704,12 +1704,28 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
    after it. The empty query is the whole ecosystem, joined businesses first, which is the v242
    directory the owner already approved; it lives here now, behind its own tab, instead of at the
    bottom of Home. */
+/* v247 (owner: "add the geocoding + nearest first sorting"): a distance is only ever printed when
+   the SERVER computed one from a real geocoded branch. A business with no location shows nothing
+   here rather than a guess, and it still appears in the list — being unlocated is the owner's
+   admin gap, not a reason to hide a business the customer may already belong to. */
+function customerExploreDistanceTextV247(km){
+  /* Number(null) and Number('') are both 0, which would print "50 m" for a business whose
+     location is simply UNKNOWN — the exact fabrication this function exists to prevent. Only a
+     real number counts as a distance. */
+  if(typeof km!=='number'&&typeof km!=='string')return '';
+  if(typeof km==='string'&&!km.trim())return '';
+  const value=Number(km);
+  if(!Number.isFinite(value)||value<0)return '';
+  if(value<1)return `${Math.max(50,Math.round(value*1000/50)*50)} m`;
+  return `${value<10?value.toFixed(1):Math.round(value)} km`;
+}
 function customerExploreRowMarkupV244(row){
   const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
     joined=row?.joined===true,slug=String(row?.slug||''),
     logo=customerMediaUrlV95(row?.logo_url),
     address=String(row?.address||'').trim(),
     match=String(row?.match_note||'').trim(),
+    distance=customerExploreDistanceTextV247(row?.distance_km),
     points=Math.max(0,Number(row?.points_balance||0)),
     initial=(name[0]||'B').toUpperCase();
   const media=logo
@@ -1719,7 +1735,7 @@ function customerExploreRowMarkupV244(row){
       <h3 data-merchant-content>${esc(name)}</h3>
       ${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}
       ${match?`<p class="small customer-explore-match">Has: ${esc(match)}</p>`:''}
-      ${address?`<p class="muted small customer-explore-address" data-merchant-content>${esc(address)}</p>`:''}
+      ${address||distance?`<p class="muted small customer-explore-address">${distance?`<span class="customer-explore-distance">${esc(distance)}</span>`:''}${address?`<span data-merchant-content>${esc(address)}</span>`:''}</p>`:''}
     </div>`;
   const side=joined
     ?`<div class="customer-explore-side"><span class="pill ok">Member</span><b>${esc(customerPointTotalV103(points))}</b><span class="muted small">points</span></div>`
@@ -1741,7 +1757,13 @@ function customerExploreResultsMarkupV244(state){
   if(!rows.length)return state.query
     ?`<div class="card customer-explore-state"><p class="muted small">Nothing matches “${esc(state.query)}”. Try a food, a service, or a shop name.</p></div>`
     :'<div class="card customer-explore-state"><p class="muted small">No businesses to show yet.</p></div>';
-  return `<div class="customer-explore-list">${rows.map(customerExploreRowMarkupV244).join('')}</div>
+  /* When the customer shared a position, say so — and say plainly how many businesses could not be
+     ranked, because a list that silently mixes "2 km away" with "somewhere unknown" is misleading. */
+  const unlocated=state.near?rows.filter(row=>row?.located!==true).length:0;
+  const order=state.near
+    ?`<p class="muted small customer-explore-order">${CUI.icon('bookings',{size:14})} Nearest first${unlocated?` · ${unlocated} ${unlocated===1?'business has':'businesses have'} no address yet, shown last`:''}</p>`
+    :'';
+  return `${order}<div class="customer-explore-list">${rows.map(customerExploreRowMarkupV244).join('')}</div>
     <p class="muted small customer-explore-note">Points and rewards are separate for every business.</p>`;
 }
 async function renderCustomerExplore(){
@@ -1751,18 +1773,54 @@ async function renderCustomerExplore(){
     body:`<header class="customer-page-head"><div><h1>Explore</h1><p class="muted small">Every business on Peekaa — find one by what it sells.</p></div></header>
     <div class="customer-explore-search"><label class="sr-only" for="customerExploreQuery">Search businesses</label>
       ${CUI.icon('search',{size:18})}<input id="customerExploreQuery" type="search" autocomplete="off" enterkeyhint="search" placeholder="Try “chicken rice”, “facial”, “dessert”…"></div>
+    <div class="customer-explore-tools"><button class="btn ghost sm" id="customerExploreNear" type="button" aria-pressed="false">${CUI.icon('bookings',{size:16})}<span>Near me</span></button>
+      <p class="muted small" id="customerExploreNearNote" role="status"></p></div>
     <div id="customerExploreResults" role="region" aria-live="polite" aria-label="Search results">${customerExploreResultsMarkupV244({status:'loading'})}</div>`});
-  const input=$('customerExploreQuery'),results=$('customerExploreResults');
-  let searchEpoch=0,debounce=0;
+  const input=$('customerExploreQuery'),results=$('customerExploreResults'),
+    nearButton=$('customerExploreNear'),nearNote=$('customerExploreNearNote');
+  /* The customer's position is held for this render only and travels no further than the RPC
+     argument — nothing stores it, and turning Near me off forgets it immediately. */
+  let searchEpoch=0,debounce=0,position=null;
   const run=async(query)=>{
     const epoch=++searchEpoch;
     results.innerHTML=customerExploreResultsMarkupV244({status:'loading'});
-    const {data,error}=await customerRpc('customer_explore_businesses_v244',{p_query:query||null});
+    const {data,error}=await customerRpc('customer_explore_businesses_v244',{
+      p_query:query||null,p_lat:position?.lat??null,p_lng:position?.lng??null
+    });
     /* Replies can land out of order — a stale reply must never overwrite a newer query's list. */
     if(!isCurrent()||epoch!==searchEpoch||!results.isConnected)return;
-    results.innerHTML=customerExploreResultsMarkupV244(error?{status:'error'}:{status:'ready',rows:Array.isArray(data)?data:[],query});
+    results.innerHTML=customerExploreResultsMarkupV244(error
+      ?{status:'error'}
+      :{status:'ready',rows:Array.isArray(data)?data:[],query,near:!!position});
     const retry=$('customerExploreRetry');
     if(retry)retry.onclick=()=>run(input.value.trim());
+  };
+  const setNear=(next,note='')=>{
+    position=next;
+    nearButton.setAttribute('aria-pressed',String(!!next));
+    nearButton.classList.toggle('is-on',!!next);
+    nearNote.textContent=note;
+  };
+  nearButton.onclick=()=>{
+    if(position){setNear(null,'');run(input.value.trim());return}
+    if(!navigator.geolocation){
+      setNear(null,'This browser cannot share your location. Search by name instead.');
+      return;
+    }
+    nearButton.disabled=true;nearNote.textContent='Finding you…';
+    navigator.geolocation.getCurrentPosition(reading=>{
+      nearButton.disabled=false;
+      if(!isCurrent())return;
+      setNear({lat:reading.coords.latitude,lng:reading.coords.longitude},'');
+      run(input.value.trim());
+    },error=>{
+      nearButton.disabled=false;
+      if(!isCurrent())return;
+      /* Denial is a decision, not a failure: say what happened, keep the list the customer has. */
+      setNear(null,error?.code===1
+        ?'Location is off for this site. Turn it on in your browser to sort by distance.'
+        :'Your location could not be read just now. The list is still here, sorted by name.');
+    },{enableHighAccuracy:false,timeout:8000,maximumAge:60000});
   };
   input.addEventListener('input',()=>{
     clearTimeout(debounce);

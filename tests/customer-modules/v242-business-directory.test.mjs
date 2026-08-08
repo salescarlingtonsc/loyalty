@@ -31,7 +31,7 @@ function section(start, end) {
   return appJs.slice(from, to);
 }
 
-const exploreSource = section('function customerExploreRowMarkupV244', 'async function renderCustomerExplore');
+const exploreSource = section('function customerExploreDistanceTextV247', 'async function renderCustomerExplore');
 const pageSource = section('async function renderCustomerExplore', 'const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
 
 const api = new Function('esc', 'ct', 'CUI', 'customerMediaUrlV95', 'customerPointTotalV103', `
@@ -43,7 +43,7 @@ const api = new Function('esc', 'ct', 'CUI', 'customerMediaUrlV95', 'customerPoi
 test('Explore is a real destination with a server-side search', () => {
   assert.match(appJs, /if\(h==='#\/customer\/explore'\)return renderCustomerExplore\(\);/);
   assert.match(appJs, /\{key:'explore',href:'#\/customer\/explore',icon:'search',copy:'explore'\}/);
-  assert.match(pageSource, /customerRpc\('customer_explore_businesses_v244',\{p_query:query\|\|null\}\)/);
+  assert.match(pageSource, /customerRpc\('customer_explore_businesses_v244',\{\s*\n?\s*p_query:query\|\|null/);
   assert.match(pageSource, /debounce=setTimeout\(/, 'typing must not fire a request per keystroke');
   assert.match(pageSource, /epoch!==searchEpoch/, 'a stale reply must never overwrite a newer query');
   assert.doesNotMatch(appJs, /customerBusinessDirectoryHostV242|mountCustomerBusinessDirectoryV242/,
@@ -123,4 +123,80 @@ test('the Explore surface reuses the customer card system at 390px', () => {
   assert.match(appCss, /\.customer-explore-row\{[^}]*display:flex/);
   assert.match(appCss, /\.customer-explore-copy h3\{[^}]*overflow-wrap:anywhere/);
   assert.match(appCss, /\.customer-explore-logo--fallback\{[^}]*display:flex/);
+});
+
+/* ------------------------------------------- v247 · nearest first, once a branch is located */
+
+const nearMigration = readFileSync(resolve(repoRoot, 'db/migrations/20260808_nestly_v247_explore_nearest_first.sql'), 'utf8');
+const distance = new Function(`${section('function customerExploreDistanceTextV247', 'function customerExploreRowMarkupV244')}
+  return customerExploreDistanceTextV247;`)();
+/* exploreSource now starts at the distance helper so the row renderer can call it; the merchant
+   markup assertions below still read the same rendered output. */
+
+test('a distance is only printed when the server computed one', () => {
+  assert.equal(distance(2.4), '2.4 km');
+  assert.equal(distance(18.37), '18 km', 'past 10 km, a decimal is false precision');
+  assert.equal(distance(0.42), '400 m');
+  assert.equal(distance(0.02), '50 m', 'closer than the GPS is accurate reads as a floor, not 20 m');
+  assert.equal(distance(0), '50 m');
+  // an unlocated business must render nothing at all — never "0 km", never "unknown km"
+  for (const value of [null, undefined, '', 'near', NaN, -3]) assert.equal(distance(value), '');
+});
+
+test('an unlocated business is shown without a distance, not hidden', () => {
+  const located = api.row({ business_id: 'n1', name: 'Cubbly', slug: 's', joined: true, points_balance: 0, distance_km: 1.2, located: true, address: '313 Orchard Road' });
+  const unlocated = api.row({ business_id: 'n2', name: 'AhXiang', slug: 'a', joined: false, distance_km: null, located: false });
+  assert.match(located, /1\.2 km/);
+  assert.doesNotMatch(unlocated, /km|m<\/span>/);
+  assert.match(unlocated, /AhXiang/, 'a business with no address still appears');
+});
+
+test('the list says when it is ordered by distance, and how many could not be ranked', () => {
+  const html = api.results({ status: 'ready', near: true, rows: [
+    { business_id: 'n1', name: 'Cubbly', slug: 's', joined: true, distance_km: 1.2, located: true },
+    { business_id: 'n2', name: 'AhXiang', slug: 'a', joined: false, located: false },
+    { business_id: 'n3', name: 'Kopi', slug: 'k', joined: false, located: false }
+  ] });
+  assert.match(html, /Nearest first/);
+  assert.match(html, /2 businesses have no address yet, shown last/);
+  const one = api.results({ status: 'ready', near: true, rows: [
+    { business_id: 'n1', name: 'Cubbly', slug: 's', joined: true, distance_km: 1.2, located: true },
+    { business_id: 'n2', name: 'AhXiang', slug: 'a', joined: false, located: false }
+  ] });
+  assert.match(one, /1 business has no address yet/);
+  // no position shared → no claim about ordering
+  assert.doesNotMatch(api.results({ status: 'ready', rows: [{ business_id: 'n1', name: 'C', slug: 's', joined: false }] }), /Nearest first/);
+});
+
+test('the customer position is an argument only — asked for, used, never kept', () => {
+  assert.match(pageSource, /navigator\.geolocation\.getCurrentPosition/);
+  assert.match(pageSource, /p_lat:position\?\.lat\?\?null,p_lng:position\?\.lng\?\?null/);
+  assert.doesNotMatch(pageSource, /localStorage|sessionStorage|indexedDB/,
+    'a location must not outlive the screen that asked for it');
+  // turning it off forgets it immediately
+  assert.match(pageSource, /if\(position\)\{setNear\(null,''\);run\(input\.value\.trim\(\)\);return\}/);
+  // refusal is a decision, not an error
+  assert.match(pageSource, /Location is off for this site/);
+  assert.match(pageSource, /This browser cannot share your location/);
+  assert.match(pageSource, /sorted by name/);
+  assert.match(nearMigration, /never stored/);
+});
+
+test('the server orders by distance and keeps unlocated businesses last', () => {
+  assert.match(nearMigration, /coalesce\(\(entry->>'distance_km'\)::numeric, 999999\)/);
+  assert.match(nearMigration, /'distance_km', app\.v247_distance_km\(v_lat, v_lng, branch\.latitude, branch\.longitude\)/);
+  assert.match(nearMigration, /if p_lat between -90 and 90 and p_lng between -180 and 180 then/,
+    'a half-supplied or impossible position is ignored, never clamped');
+  assert.match(nearMigration, /revoke all on function public\.customer_explore_businesses_v244\(text,numeric,numeric\) from public, anon;/);
+});
+
+test('a branch coordinate carries the address it came from, so it can be re-checked', () => {
+  assert.match(nearMigration, /add column if not exists geocoded_address text/);
+  assert.match(nearMigration, /add column if not exists geocode_source text/);
+  assert.match(nearMigration, /latitude between -90 and 90 and longitude between -180 and 180/);
+  assert.match(nearMigration, /\(latitude is null and longitude is null\)/, 'a coordinate pair is all-or-nothing');
+});
+
+test('a firm with several outlets is as far away as its NEAREST outlet', () => {
+  assert.match(nearMigration, /order by\s*\n\s*case when v_lat is null then null\s*\n\s*else app\.v247_distance_km\(v_lat, v_lng, br\.latitude, br\.longitude\) end\s*\n\s*nulls last,/);
 });
