@@ -36,7 +36,9 @@ test('programmes nav is two destinations, and old hashes still resolve', () => {
 test('#/grow lands on the full list, not a filtered view', () => {
   assert.ok(/includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/.test(app),
     'default programme view must be the full list');
-  assert.ok(app.includes("'To set up':'List'"), 'list heading missing');
+  /* V245: the owner asked "Pending setup — where is it?", so the view names now match the
+     nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
+  assert.ok(app.includes("'Pending setup':'List'"), 'list heading missing');
 });
 
 test('staff row carries every detail on one line and opens an editable profile', () => {

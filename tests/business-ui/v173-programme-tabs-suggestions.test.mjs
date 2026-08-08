@@ -29,8 +29,10 @@ test('each programme view says plainly what it shows', () => {
   /* V224: the owner struck out the blurb under this heading as redundant — the heading
      already says which view you are in, and the kicker above says Programmes. The three
      view names are what carry the meaning, so those are what is asserted. */
-  assert.match(app, /'To set up':'List'/);
-  assert.match(app, /programmeView==='ongoing'\?'Running'/);
+  /* V245: the owner asked "Pending setup — where is it?", so the view names now match the
+     nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
+  assert.match(app, /'Pending setup':'List'/);
+  assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes'/);
   assert.doesNotMatch(app, /Running for your customers right now\./);
 });
 

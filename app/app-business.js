@@ -889,9 +889,14 @@ function growNavItemHtml(items,activeKey){
      "available" destination was a second door to the same room, which is what made this
      module feel like it had overlapping roles. Both hashes still resolve (see growPage), so
      existing links and the quiet advanced settings link keep working. */
+  /* V245 (owner: "Pending setup (3) — where is it?"). V180 removed the "available" row as a
+     duplicate door; the owner has since asked for pending programmes as a place they can go
+     to set things up, so the row is back — now named to match the group in the list and the
+     heading on the page, so all three say the same word. */
   const links=[
     ['#/grow','Programmes list'],
-    ['#/grow/ongoing','Ongoing programmes']
+    ['#/grow/ongoing','Ongoing programmes'],
+    ['#/grow/available','Pending setup']
   ];
   return links.map(([href,label])=>{
     const isAct=onGrowSurface&&(currentHash===href||(href==='#/grow'&&!currentHash.startsWith('#/grow/')));
@@ -8622,7 +8627,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growTilesHtmlV229:''}
@@ -12296,7 +12301,14 @@ async function appointmentsPage(){
       [...editForm.elements].forEach(control=>{control.disabled=pending});
     };
     toggle.onclick=()=>{const open=editForm.hidden;editForm.hidden=!open;toggle.setAttribute('aria-expanded',String(open));if(open)$('appointmentEditDate').focus()};
-    if(startEditing){editForm.hidden=false;toggle.setAttribute('aria-expanded','true');requestAnimationFrame(()=>$('appointmentEditDate')?.focus())}
+    /* V245 (owner: "when i click in jeffrey tan meng lee - i need to have pop up to amend and
+       change details. or change staff if needed to"). The amend form — date, time, duration,
+       assigned staff and note — was already here, but folded behind a second click, so opening
+       an appointment read as view-only. A booked appointment now opens with it expanded; the
+       toggle stays for collapsing it. Focus is only forced when the caller asked to edit, so
+       merely opening a card does not yank the screen to a date field. */
+    editForm.hidden=false;toggle.setAttribute('aria-expanded','true');
+    if(startEditing)requestAnimationFrame(()=>$('appointmentEditDate')?.focus());
     $('appointmentRescheduleCancel').onclick=()=>{editForm.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus()};
     const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
     ['appointmentEditDate','appointmentEditTime','appointmentEditDuration','appointmentEditStaff','appointmentEditNote'].forEach(id=>{

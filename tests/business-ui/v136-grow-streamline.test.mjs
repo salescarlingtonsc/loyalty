@@ -23,7 +23,9 @@ test('Grow starts with one task and one complete single-column programme overvie
   // fixed title, so assert the element and its tab-driven content rather than the old string.
   /* V229 added the drilled-topic title in front of the tab-driven one; the tab-driven content
      this line protects is still the fallback and is asserted as such. */
-  assert.match(grow,/id="rewardJourneyTitle">\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\):\(programmeView==='ongoing'\?'Running'/);
+  /* V245: the owner asked "Pending setup — where is it?", so the view names now match the
+     nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
+  assert.match(grow,/id="rewardJourneyTitle">\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\):\(programmeView==='ongoing'\?'Ongoing programmes'/);
   assert.match(grow,/class="grow-programme-list"/);
   assert.match(app,/\.grow-programme-list\{display:grid;grid-template-columns:1fr/);
   assert.doesNotMatch(grow,/class="rewards-overview-grid"/,
