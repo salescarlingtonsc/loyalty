@@ -8238,15 +8238,17 @@
         ${unmapped.map(item=>prospectCompactCardHtml(item,CUI,{canWrite})).join('')}
       </section>`:''}</div>`;
   }
-  // The AI report action is offered only for a firm that has become a business,
-  // because that is exactly the condition platform_request_ai_firm_report_v176
-  // enforces. Showing it anywhere else would be a button that always fails.
+  // The AI report action is offered only where v176 will actually accept it: a
+  // firm that has become a live business, and is neither a demo nor a synthetic
+  // one — platform_request_ai_firm_report_v176 refuses those outright with
+  // ai_firm_reports_exclude_demo_firms. The server decides all of that and
+  // reports it as can_request_ai_report; this renderer only obeys the flag.
   function crmAiReportListHtml(items,CUI) {
     const ready=asArray(items).filter(item=>item.can_request_ai_report&&item.converted_business_id);
     if(!ready.length)return localizedEmptyHtml('No firm here has become a live business yet, so there is nothing to report on.');
     return CUI.table({caption:'AI reports',headers:['Firm','Action'],rows:ready.map(item=>[
       `<b>${escapeHtml(prospectCompany(item))}</b>`,
-      `<button type="button" class="btn ghost sm" data-crm-ai-report="${escapeHtml(item.converted_business_id)}">${escapeHtml(pt('Generate AI report'))}</button>`
+      `<button type="button" class="btn ghost sm" data-crm-ai-report="${escapeHtml(item.converted_business_id)}" data-crm-ai-report-name="${escapeHtml(prospectCompany(item))}">${escapeHtml(pt('Generate AI report'))}</button>`
     ])});
   }
   async function renderCrm(context,filters=null) {
@@ -8295,19 +8297,17 @@
           if(item)openProspectDetail(item,{...context,prospectCloseHash:crmHash(active)});
         };
       });
-      main.querySelectorAll('[data-crm-ai-report]').forEach(button=>button.onclick=async()=>{
-        button.disabled=true;
-        try{
-          await rpc(sb,'platform_request_ai_firm_report_v176',{
-            p_business:button.dataset.crmAiReport,p_period_kind:'month',p_period_start:null});
-          /* The queue is drained by a scheduled run; nudging the function just
-             starts it sooner. A failed nudge is not a failed request. */
-          try{await sb.functions.invoke('ai-firm-reports',{body:{}})}catch{/* queued anyway */}
-          CUI.announce(pt('AI report requested. It appears on the firm once it is written.'));
-        }catch(error){
-          CUI.announce(platformErrorMessage(error,'The AI report could not be requested.'));
-          button.disabled=false;
-        }
+      /* Reuse the Firms drawer's request modal rather than posting a request
+         from here. v176 requires a period_kind of monthly|quarterly|yearly AND
+         a non-null period_start that is both aligned to the period and already
+         CLOSED — none of which a one-shot button can decide for the operator.
+         The modal already supplies a valid default and states the demo-firm
+         exclusion. */
+      main.querySelectorAll('[data-crm-ai-report]').forEach(button=>button.onclick=()=>{
+        aiReportGenerateModal(
+          {business_id:button.dataset.crmAiReport, name:button.dataset.crmAiReportName||''},
+          context,
+          async()=>{await renderCrm(context,active)});
       });
       CUI.focusRoute(main);
     }catch(error){

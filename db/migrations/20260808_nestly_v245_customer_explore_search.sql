@@ -1,4 +1,8 @@
--- Nestly v244 — Explore: search the Peekaa ecosystem the way you'd search Google.
+-- Nestly v245 — Explore: search the Peekaa ecosystem the way you'd search Google.
+--
+-- Numbering: filed as v245 because a concurrent session claimed v244 twice on main while this
+-- was in flight. The FUNCTION keeps the name it was applied to production with,
+-- customer_explore_businesses_v244 — the client already calls it, and a rename would be churn.
 --
 -- Owner (nav revamp, Grab-style reference): "explore = search for nearby peekaa businessess
 -- (can type example food near me, chicken rice, dessert shop etc) - then will pop up relevant

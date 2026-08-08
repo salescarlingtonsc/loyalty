@@ -2781,6 +2781,10 @@
     {
       "id": "browser.rpc:app/app.js:create_staff_reference_code_v217",
       "reason": "V217 staff reference code. Mints a pending staff_invites row bound to one EXISTING roster teammate so that person can claim their own record instead of a duplicate being created \u2014 accept_invite already handles the claim. It writes no value: no ledger, no points, no credit, no stored value, no sale, and no seat is billed until the owner separately approves the resulting access_state='pending' login. Owner/manager only, the teammate must have no login and must not be the owner, and re-issuing revokes the previous code so only one is ever live."
+    },
+    {
+      "id": "browser.rpc:app/app.js:retention_lapsed_candidates_v244",
+      "reason": "v244 read-only audience projection: aggregates counts_as_visit sales (validVisitSales reversal semantics) into lapsed-regular candidates entirely in SELECTs behind require_module_scope_v145(retention); no DML, no ledger or value write. Replaces the browser paging every client+sale via fetchAllRows."
     }
   ]
 }

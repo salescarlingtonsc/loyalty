@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const appJs = readFileSync(resolve(repoRoot, 'app/app.js'), 'utf8');
 const appCss = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
-const migration = readFileSync(resolve(repoRoot, 'db/migrations/20260808_nestly_v244_customer_explore_search.sql'), 'utf8');
+const migration = readFileSync(resolve(repoRoot, 'db/migrations/20260808_nestly_v245_customer_explore_search.sql'), 'utf8');
 
 function section(start, end) {
   const from = appJs.indexOf(start);
