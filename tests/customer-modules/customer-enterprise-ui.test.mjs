@@ -205,17 +205,22 @@ test('mobile Retention actions wrap and role-aware workspace navigation stays th
 
 test('Settings forms are explicitly labelled and reflow without 390px page overflow',()=>{
   const settings=section('async function settingsPage()','/* ---------- billing (read-only) ---------- */');
+  /* V243: the customer-facing half of Settings became its own top-level module. The forms are the
+     SAME markup, lifted whole rather than copied, so the labelling contract is asserted where the
+     markup now lives instead of being dropped. */
+  const customerInterface=section('function customerInterfaceSectionsHtmlV243(','function wireCustomerInterfaceV243(');
   const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
 
   assert.match(settings,/<div class="settings-page">/);
-  for(const [id,label] of [
-    ['bn','Name'],['bi','Industry'],['bc','Brand colour (used on your portal)'],
-    ['bp','Booking policy (shown on your portal)'],['ir','Invite role'],
-    ['ie','Invite email (optional)'],['csvf','Customer CSV file'],
-    ['cfLabel','Field name'],['cfType','Answer type'],
-    ['cfClass','Data classification'],['cfOptions','Choices (list type only)'],
-  ])assert.match(settings,new RegExp(`<label[^>]*for="${id}"[^>]*>${label.replace(/[()]/g,'\\$&')}<\\/label>`));
-  assert.match(settings,/id="csvf"[^>]*aria-describedby="csvHelp"/);
+  assert.match(customerInterface,/<div class="customer-interface-sections-v243">/);
+  for(const [source,id,label] of [
+    [settings,'bn','Name'],[settings,'bi','Industry'],[settings,'bc','Brand colour (used on your portal)'],
+    [settings,'bp','Booking policy (shown on your portal)'],[settings,'ir','Invite role'],
+    [settings,'ie','Invite email (optional)'],[customerInterface,'csvf','Customer CSV file'],
+    [customerInterface,'cfLabel','Field name'],[customerInterface,'cfType','Answer type'],
+    [customerInterface,'cfClass','Data classification'],[customerInterface,'cfOptions','Choices (list type only)'],
+  ])assert.match(source,new RegExp(`<label[^>]*for="${id}"[^>]*>${label.replace(/[()]/g,'\\$&')}<\\/label>`));
+  assert.match(customerInterface,/id="csvf"[^>]*aria-describedby="csvHelp"/);
   assert.match(app,/\.settings-page,\.settings-page \.split,\.settings-page \.card\{[^}]*min-width:0[^}]*max-width:100%/s);
   assert.match(mobile,/\.settings-page \.row\{[^}]*flex-wrap:wrap[^}]*width:100%/s);
   assert.match(mobile,/\.settings-page \.row>input,\.settings-page \.row>select\{[^}]*width:100%[^}]*max-width:100%!important/s);

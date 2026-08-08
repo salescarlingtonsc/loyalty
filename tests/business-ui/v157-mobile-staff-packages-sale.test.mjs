@@ -15,7 +15,8 @@ function section(start, end) {
 const recordSale = section('function drawCartComposer(){', 'async function servicesPage()');
 const services = section('async function servicesPage()', 'async function referralsPage()');
 const packages = section('async function packagesPage()', '/* ---------- branches (owner-only) ----------');
-const settings = section('async function settingsPage()', '  /* CSV import */');
+/* V243: end marker follows the CSV-import block out of settingsPage. Same region, same intent. */
+const settings = section('async function settingsPage()', '  /* ---------- billing (read-only) ---------- */');
 
 test('V157 hides next-phase customer payment controls from owner settings', () => {
   assert.doesNotMatch(settings, /data-settab="payments"/);

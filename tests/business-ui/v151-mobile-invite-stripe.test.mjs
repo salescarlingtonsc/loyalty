@@ -19,7 +19,9 @@ const signup = section('const STAFF_INVITE_STORAGE_V151', 'function businessAppl
 const auth = section('function renderAuth(mode=', 'function validNewPassword(');
 const onboard = section('function renderOnboard(){', '/* ============================================================================');
 const dashboard = section('async function dashboard()', 'async function clientsPage()');
-const settings = section('async function settingsPage()', '  /* CSV import */');
+/* V243: the CSV-import block moved to the Customer Interface module, so this slice ends at the
+   next marker still inside settingsPage. Same region, same intent. */
+const settings = section('async function settingsPage()', '  /* ---------- billing (read-only) ---------- */');
 const v151Migration = readFileSync(new URL('../../supabase/migrations/20260803210000_nestly_v151_mobile_staff_invites.sql', import.meta.url), 'utf8');
 
 test('V151 mobile shell hides desktop controls and provides deliberate mobile controls', () => {

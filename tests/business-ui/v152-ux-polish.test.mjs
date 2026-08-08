@@ -26,7 +26,10 @@ const staffPerf = section('async function staffPerfPage', '/* ---------- daily r
 const dailyReport = section('async function dailyReportPage()', '/* ---------- expenses ---------- */');
 const expenses = section('async function expensesPage()', '/* ---------- P&L ---------- */');
 const pnl = section('async function pnlPage()', 'async function settingsPage()');
-const settings = section('async function settingsPage()', '  /* CSV import */');
+/* V243: end marker follows the CSV-import block out of settingsPage. Same region, same intent. */
+const settings = section('async function settingsPage()', '  /* ---------- billing (read-only) ---------- */');
+/* V243: the customer sign-up panel and its skeleton moved to the Customer Interface module. */
+const customerInterface = section('function customerInterfaceSectionsHtmlV243(', 'function wireCustomerInterfaceV243(');
 
 test('V152 shared UI primitives include skeletons, guarded busy buttons and accessible empty states', () => {
   assert.match(cui, /function skeletonLine/);
@@ -64,7 +67,7 @@ test('V152 key business pages use skeleton loading instead of generic spinners',
   assert.match(pnl, /CUI\.chartSkeleton\(\{title:'Expenses by category'\}\)/);
   assert.match(packages, /CUI\.tableSkeleton\(\{rows:4,columns:5\}\)/);
   assert.match(branches, /CUI\.skeletonGrid\(\{cards:3,lines:3\}\)/);
-  assert.match(settings, /CUI\.skeletonCard\(\{lines:5\}\)/);
+  assert.match(customerInterface, /CUI\.skeletonCard\(\{lines:5\}\)/);
 });
 
 test('V152 empty states explain what happened and what to do next', () => {

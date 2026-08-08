@@ -499,6 +499,13 @@ const NAVGROUPS=[
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
   {key:'grow',icon:'star',label:'Programmes',items:['loyalty','retention','referrals','memberships','giftcards']},
+  /* V243 (owner, arrow from the Settings tabs to the LEFT NAV): "shift these into a new module
+     (Customer Interface) - where everything that is required to edit in customer app must be
+     inside this module." Customer-facing configuration was three tabs deep inside Settings, an
+     operations screen; it is now a top-level destination beside Programmes, which is the other
+     thing the customer actually experiences. Flat, like Home and Customers, because it is one
+     surface rather than a family of modules. */
+  {key:'customerui',icon:'customers',flat:'Customer Interface',items:['customer-interface']},
   /* V206 (owner: "allow firms to reverse the transactions if needed to easily at ease").
      Reversing already worked — every row of this list carries Reverse and Correct amount — so
      the gap was that "Sales" does not say so. Renamed rather than moved: I did move it next to
@@ -1713,7 +1720,12 @@ function loadAppChunkV185(name){
    signed-out visitor and the workspace for signed-in staff — so the caller passes the session it
    already resolved. Anything unrecognised loads the workspace, which is the historical default,
    and a wrong guess is self-healing (see the ReferenceError branch in route). */
-const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer','#/wallet','#/claim','#/join'];
+/* V243: '#/customer' was a bare prefix, so ANY future workspace route beginning with those
+   nine characters — the new '#/customer-interface' is the first — was classified as a customer
+   route and downloaded the customer chunk instead of the workspace one. '#/customer/' plus the
+   matcher's own exact-equality branch covers '#/customer', '#/customer?…' and '#/customer/…'
+   exactly as before, and nothing else. The inline preloader in index.html mirrors this list. */
+const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join'];
 function appSurfaceForRouteV185(hash,{signedIn=false}={}){
   const route=String(hash||'').split('?')[0];
   if(route.startsWith('#/platform'))return null;
@@ -2076,6 +2088,14 @@ async function route(){
     }
     if(pageKey==='branches'&&S.myRole!=='owner'){
       toast('Only the owner can manage branches.');
+      return nav('#/dashboard');
+    }
+    /* V243: same guard as Settings, for the same reason — this page IS the Settings tabs that
+       used to be owner-gated, so hiding the rail link is not the boundary. It has no MODULES
+       key (it is a surface like Program Studio, not a sector entitlement), so the module guard
+       below never sees it and this explicit check is what fails closed for a typed hash. */
+    if(pageKey==='customer-interface'&&S.myRole!=='owner'){
+      toast('Only the owner can open Customer Interface.');
       return nav('#/dashboard');
     }
     if(pageKey==='setup'&&S.myRole!=='owner'){
@@ -7377,9 +7397,14 @@ function navHtml(page,idPrefix='nav'){
   /* V223. Owner: "waitlist is tagged to bookings (so disable / enable together)". A waitlist
      holds the people a booking could not seat, so it has no meaning without the booking page
      that produces them — showing one without the other is a dead end. */
+  /* V243: Customer Interface is owner-only on exactly the terms Settings is — it carries the
+     sign-up QR, the customer-app switches and the programme presentation, which is the same
+     authority the Settings tabs it absorbed already required. It is not in enabled_modules
+     (it is a surface, not a sector entitlement), so it is offered like Branches is. */
   const navModuleVisible=m=>m==='dashboard'
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
+    ||(m==='customer-interface'&&S.myRole==='owner')
     ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
     ||(m!=='waitlist'&&enabled.includes(m));
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
@@ -8584,7 +8609,8 @@ function renderShell(page){
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
-    setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage};
+    setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
+    'customer-interface':customerInterfacePageV243};
   const pageFn=P[page[0]]||dashboard;
   const pageResult=pageFn(...page.slice(1));
   Promise.resolve(pageResult).catch(error=>{
@@ -22480,10 +22506,11 @@ async function settingsPage(){
   if(requestedSettingsTab==='data')requestedSettingsTab='fields';
   if(['workspace','programme','modules','catalogue','team','fields'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
-  const [{data:moduleRules,error:moduleRulesError},{data:fieldDefs,error:fieldDefsError}]=await Promise.all([
-    sb.from('module_registry').select('module_key,requires_modules').order('sort_order'),
-    sb.from('client_field_definitions').select('*').eq('business_id',S.biz.id).order('created_at')]);
-  if(moduleRulesError||fieldDefsError) return fail(moduleRulesError||fieldDefsError);
+  /* V243: the customer field definitions moved out with the Customer interface panel — this page
+     no longer renders them, so it no longer reads them. */
+  const {data:moduleRules,error:moduleRulesError}=await sb.from('module_registry')
+    .select('module_key,requires_modules').order('sort_order');
+  if(moduleRulesError) return fail(moduleRulesError);
   const moduleRuleByKey=Object.fromEntries((moduleRules||[]).map(r=>[r.module_key,r]));
   const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
     .map(k=>MODULES[k]?.[1]||k).join(', ');
@@ -22500,7 +22527,11 @@ async function settingsPage(){
            interface onto one spot, captioned "Put new tab here · Customer Interface"): it now
            sits BESIDE the other customer-facing tabs instead of last, after the operations ones.
            Everything the customer meets is reachable without crossing Modules, Checkout and
-           Team to get there. -->
+           Team to get there.
+           V243: both customer-facing tabs now live in the Customer Interface module in the main
+           menu. The LABELS stay here on purpose — an owner who learned where these live must not
+           find the tab simply gone — but each panel is a one-line pointer, never a second copy of
+           the form. -->
       <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer interface</button>
       <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
@@ -22525,7 +22556,7 @@ async function settingsPage(){
       <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}">${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}</a></p>
       <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, brand colour, booking policy and public review link.</span></div></div></section>
     ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-programme" role="tabpanel" aria-labelledby="settab-programme" tabindex="-1" hidden>
-      <div class="card" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
+      ${settingsMovedToCustomerInterfaceCardV243('Customer programme')}
     </section>`:''}
     <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1" hidden><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
       <p class="muted small" style="margin:6px 0 10px">Your sector sets a sensible default — a cafe starts with products only, a massage shop with services only, a salon with both. Change it here if your shop is different.</p>
@@ -22555,35 +22586,7 @@ async function settingsPage(){
     </div>
 </section>
     <section class="settings-panel" id="setpanel-fields" role="tabpanel" aria-labelledby="settab-fields" tabindex="-1" hidden>
-    <div class="split"><div class="card"><b>Import customers (CSV)</b>
-      <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, birth_date (YYYY-MM-DD).</p>
-      <label for="csvf">Customer CSV file</label>
-      <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
-      <div id="csvprev" style="margin-top:12px"></div></div>
-      <div class="card" id="signupWrap">${CUI.skeletonCard({lines:5})}</div></div>
-    <!-- V223 (owner: "customer app settings should not be in bookings - it should be in
-         operation set up"). These switches govern what a customer may do in their own app —
-         booking, redemption QR, appointment changes. Only one of the three is about bookings,
-         so living on the Bookings page made the other two unfindable and made Bookings a
-         settings screen. This tab is where the rest of the customer-facing configuration
-         already lives (sign-up QR, customer fields, import). -->
-    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
-      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
-      <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
-      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
-      <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
-    <div class="card" style="margin-top:16px"><b>Customer fields</b>
-      <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
-      <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" data-merchant-content style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
-      <details><summary>Add a customer field</summary>
-        <div class="field-grid"><div><label for="cfLabel">Field name</label><input id="cfLabel" placeholder="e.g. Preferred therapist"></div>
-        <div><label for="cfType">Answer type</label><select id="cfType"><option value="text">Short text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / no</option><option value="select">Choose from a list</option></select></div>
-        <div><label for="cfClass">Data classification</label><select id="cfClass"><option value="operational">Operational</option><option value="personal">Personal</option><option value="sensitive">Sensitive — owner only</option></select></div>
-        <div><label for="cfOptions">Choices (list type only)</label><input id="cfOptions" placeholder="e.g. Alice, Ben, No preference"></div></div>
-        <button class="btn sm" id="cfAdd" style="margin-top:12px">Add field</button>
-      </details></div>
-    <div class="card" style="margin-top:16px"><b>Tenant isolation</b>
-      <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on ${esc(BRAND.productName)} has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>
+    ${settingsMovedToCustomerInterfaceCardV243('Customer interface')}
     </section></div>`;
   M().querySelector('.settings-page')?.setAttribute('data-workspace-i18n','');
   /* Tabbed sections (ARIA tablist): every field stays in the DOM at once — only the active
@@ -22732,28 +22735,6 @@ async function settingsPage(){
     Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber});
     toast('Saved');route();
   };
-  $('cfAdd').onclick=async()=>{
-    const label=$('cfLabel').value.trim(),valueType=$('cfType').value;
-    if(label.length<2)return toast('Give the field a clear name');
-    const fieldKey=label.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,64);
-    if(fieldKey.length<2)return toast('Use a field name with at least two letters');
-    let options=[];
-    if(valueType==='select'){
-      options=$('cfOptions').value.split(',').map(x=>x.trim()).filter(Boolean);
-      if(options.length<2){
-        return toast('List fields need at least two choices');
-      }
-    }
-    const {error}=await sb.rpc('create_client_field_definition',{p_business:S.biz.id,
-      p_field_key:fieldKey,p_label:label,p_value_type:valueType,p_classification:$('cfClass').value,
-      p_options:options.map((optionLabel,i)=>({option_key:`option_${i+1}`,option_label:optionLabel}))});
-    if(error)return fail(error);
-    toast('Customer field added');settingsPage();
-  };
-  document.querySelectorAll('.cfRetire').forEach(b=>b.onclick=async()=>{
-    const {error}=await sb.from('client_field_definitions').update({active:false}).eq('id',b.dataset.id).eq('business_id',S.biz.id);
-    if(error)return fail(error);toast('Field retired; existing answers remain in history');settingsPage();
-  });
   /* team + per-staff module permissions (v74) */
   let openModId=null;   // staff.id whose "Modules" panel is expanded, or null
   let openProfileId=null; // V180: staff.id whose editable profile is expanded, or null
@@ -23191,45 +23172,6 @@ async function settingsPage(){
   await loadTemplates();
   loadTeam();
   loadStaffRotaV228();
-  /* CSV import */
-  $('csvf').onchange=async(ev)=>{
-    const file=ev.target.files[0];if(!file)return;
-    const text=await file.text();
-    const rows=[];let cur=[''],q=false,ri=0;
-    for(const ch of text){
-      if(q){ if(ch==='"'){q=false} else cur[cur.length-1]+=ch; }
-      else if(ch==='"'){q=true}
-      else if(ch===','){cur.push('')}
-      else if(ch==='\n'||ch==='\r'){ if(cur.length>1||cur[0]!==''){rows.push(cur);cur=[''];} }
-      else cur[cur.length-1]+=ch;
-    }
-    if(cur.length>1||cur[0]!=='')rows.push(cur);
-    if(rows.length<2) return toast('CSV needs a header row + data');
-    const hdr=rows[0].map(h=>h.trim().toLowerCase());
-    const col=n=>hdr.findIndex(h=>h.includes(n));
-    const iN=col('name'),iP=col('phone'),iE=col('email'),iB=col('birth');
-    if(iN<0) return toast('No "name" column found');
-    const recs=rows.slice(1).filter(r=>r[iN]&&r[iN].trim().length>1).map(r=>({
-      idempotency_key:crypto.randomUUID(),full_name:r[iN].trim(),
-      phone:iP>=0?(r[iP]||null):null,email:iE>=0?(r[iE]||null):null,
-      birth_date:iB>=0&&/^\d{4}-\d{2}-\d{2}$/.test(r[iB]||'')?r[iB]:null}));
-    const firstCustomers=[recs[0]?.full_name,recs[1]?.full_name].filter(Boolean).join(', ')||'—';
-    $('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersReady',{ready:recs.length,rows:rows.length-1})}<br>
-      ${workspaceTemplateHtmlV97('firstCustomers',{customers:firstCustomers})}</p>
-      <button class="btn sm" id="csvgo" style="margin-top:8px">${workspaceTemplateHtmlV97('importCustomers',{count:recs.length})}</button>`;
-    $('csvgo').onclick=async()=>{
-      $('csvgo').disabled=true;let done=0;
-      for(const rec of recs){
-        const {error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
-          p_idempotency_key:rec.idempotency_key,p_full_name:rec.full_name,p_phone:rec.phone,
-          p_email:rec.email,p_birth_date:rec.birth_date,p_gender:null,
-          p_marketing_consent:false,p_referrer_code:null,p_source:'settings CSV import'});
-        if(error){toast(workspaceTemplateTextV97('importPartial',{count:done,error:error.message}));return}
-        done+=1;
-      }
-      toast(workspaceTemplateTextV97('customersImported',{count:done}));$('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersImportPreview',{count:done})}</p>`;
-    };
-  };
   /* ---------- billing (read-only) ---------- */
   /* V124 adds guarded checkout commands; billing truth remains provider-backed. */
   /* V184 (owner: "we can have default for the sectors but able to off or on if needed to").
@@ -23258,8 +23200,6 @@ async function settingsPage(){
     setTimeout(()=>location.reload(),alsoOff.length?2200:600);
   };
   loadBillingConfig();
-  loadSignupConfig();
-  loadCustomerCapabilitiesV223();
 }
 /* ---------- V142 merchant-owned customer payments ---------- */
 async function loadMerchantPaymentsV142(){
@@ -23601,6 +23541,190 @@ async function loadCommissionConfig(){
   });
 }
 
+/* ---------- Customer Interface (V243) ----------
+   Owner (screenshot: the three customer-facing Settings tabs circled, arrow pointing at the LEFT
+   NAV): "shift these into a new module (Customer Interface) - where everything that is required to
+   edit in customer app must be inside this module", and "i also need a preview of how peekaa
+   customer app looks like".
+
+   Nothing here is new markup. The Customer interface panel and the Customer programme editor host
+   were LIFTED out of settingsPage — same ids, same loaders (loadSignupConfig,
+   loadCustomerCapabilitiesV223, loadCustomerProgrammePresentationEditorV95), same RPCs — so there
+   is one implementation of each form, not a fork. Settings keeps both tab labels and shows a
+   pointer instead of a second copy, because a tab that silently disappears reads as a lost
+   feature.
+
+   Workspace & brand stayed in Settings: it is ONE interleaved form (name, industry, brand colour,
+   booking policy, legal name, UEN, review link) behind a single Save, so the customer-visible
+   parts cannot be lifted without forking the form. It is linked from here instead. */
+function settingsMovedToCustomerInterfaceCardV243(label){
+  return `<div class="card"><b>${esc(label)}</b>
+      <p class="muted small" style="margin:6px 0 12px">Moved to Customer Interface in the main menu.</p>
+      <a class="btn sm" href="#/customer-interface">Open Customer Interface</a></div>`;
+}
+/* The public page a customer meets before joining. Relative to this document, so it is the same
+   origin on every deploy (production, preview, or a native WebView) without a hard-coded host. */
+function customerInterfacePreviewUrlV243(){
+  return `${location.pathname}#/b/${encodeURIComponent(String(S.biz?.slug||''))}`;
+}
+/* Lazy by construction: the iframe ships with NO src, so a visit that never opens the card costs
+   nothing. wireCustomerInterfacePreviewV243 fills it in on the first open and leaves it filled. */
+function customerInterfacePreviewCardHtmlV243(){
+  const previewUrl=customerInterfacePreviewUrlV243();
+  return `<details class="card customer-preview-v243" id="customerAppPreviewV243" style="margin-top:16px">
+      <summary class="customer-preview-summary-v243"><b>Preview the customer app</b><span class="muted small">Opens your public page in a phone frame</span></summary>
+      <p class="muted small" style="margin:10px 0 12px">This is your public page — what a customer sees before joining. After joining, they also see your points, tiers and rewards in their wallet.</p>
+      <p class="small"><a class="btn ghost sm" id="customerAppPreviewOpenV243" href="${esc(previewUrl)}" target="_blank" rel="noopener noreferrer">Open full size</a></p>
+      <div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243">
+        <iframe id="customerAppPreviewFrameV243" data-preview-src="${esc(previewUrl)}" title="Customer app preview" loading="lazy" referrerpolicy="no-referrer"></iframe>
+      </div></div>
+      <p class="muted small" id="customerAppPreviewBlockedV243" style="margin-top:10px" hidden>The preview could not be shown inside this page. Use “Open full size” — your public page itself is unaffected.</p>
+    </details>`;
+}
+function wireCustomerInterfacePreviewV243(){
+  const card=$('customerAppPreviewV243'),frame=$('customerAppPreviewFrameV243');
+  if(!card||!frame)return;
+  card.ontoggle=()=>{
+    if(!card.open||frame.getAttribute('src'))return;
+    frame.setAttribute('src',frame.dataset.previewSrc||'');
+    /* The frame is same-origin, so we can tell "still loading" from "never rendered" by looking
+       for the app's own root element. A blank rectangle with no explanation is the one outcome
+       this card must not produce — a response header or a browser policy that refuses framing
+       leaves exactly that, and the full-size link works regardless. */
+    setTimeout(()=>{
+      if(!frame.isConnected)return;
+      let painted=false;
+      try{painted=!!frame.contentDocument?.getElementById('root')}catch{painted=true}
+      const blocked=$('customerAppPreviewBlockedV243');
+      if(blocked)blocked.hidden=painted;
+    },5000);
+  };
+}
+function customerInterfaceSectionsHtmlV243(fieldDefs){
+  return `<div class="customer-interface-sections-v243">
+    <div class="split"><div class="card"><b>Import customers (CSV)</b>
+      <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, birth_date (YYYY-MM-DD).</p>
+      <label for="csvf">Customer CSV file</label>
+      <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
+      <div id="csvprev" style="margin-top:12px"></div></div>
+      <div class="card" id="signupWrap">${CUI.skeletonCard({lines:5})}</div></div>
+    <!-- V223 (owner: "customer app settings should not be in bookings - it should be in
+         operation set up"). These switches govern what a customer may do in their own app —
+         booking, redemption QR, appointment changes. Only one of the three is about bookings,
+         so living on the Bookings page made the other two unfindable and made Bookings a
+         settings screen. This tab is where the rest of the customer-facing configuration
+         already lives (sign-up QR, customer fields, import). -->
+    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
+      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
+      <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
+      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
+      <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
+    <div class="card" style="margin-top:16px"><b>Customer fields</b>
+      <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
+      <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" data-merchant-content style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
+      <details><summary>Add a customer field</summary>
+        <div class="field-grid"><div><label for="cfLabel">Field name</label><input id="cfLabel" placeholder="e.g. Preferred therapist"></div>
+        <div><label for="cfType">Answer type</label><select id="cfType"><option value="text">Short text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / no</option><option value="select">Choose from a list</option></select></div>
+        <div><label for="cfClass">Data classification</label><select id="cfClass"><option value="operational">Operational</option><option value="personal">Personal</option><option value="sensitive">Sensitive — owner only</option></select></div>
+        <div><label for="cfOptions">Choices (list type only)</label><input id="cfOptions" placeholder="e.g. Alice, Ben, No preference"></div></div>
+        <button class="btn sm" id="cfAdd" style="margin-top:12px">Add field</button>
+      </details></div>
+    <div class="card" style="margin-top:16px"><b>Tenant isolation</b>
+      <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on ${esc(BRAND.productName)} has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>
+
+    </div>`;
+}
+/* Every handler the moved markup needs, in one place, so the page that renders it is also the page
+   that wires it. `rerender` is what add/retire used to reach settingsPage for. */
+function wireCustomerInterfaceV243(rerender){
+  /* CSV import (moved with its panel by V243) */
+  $('csvf').onchange=async(ev)=>{
+    const file=ev.target.files[0];if(!file)return;
+    const text=await file.text();
+    const rows=[];let cur=[''],q=false,ri=0;
+    for(const ch of text){
+      if(q){ if(ch==='"'){q=false} else cur[cur.length-1]+=ch; }
+      else if(ch==='"'){q=true}
+      else if(ch===','){cur.push('')}
+      else if(ch==='\n'||ch==='\r'){ if(cur.length>1||cur[0]!==''){rows.push(cur);cur=[''];} }
+      else cur[cur.length-1]+=ch;
+    }
+    if(cur.length>1||cur[0]!=='')rows.push(cur);
+    if(rows.length<2) return toast('CSV needs a header row + data');
+    const hdr=rows[0].map(h=>h.trim().toLowerCase());
+    const col=n=>hdr.findIndex(h=>h.includes(n));
+    const iN=col('name'),iP=col('phone'),iE=col('email'),iB=col('birth');
+    if(iN<0) return toast('No "name" column found');
+    const recs=rows.slice(1).filter(r=>r[iN]&&r[iN].trim().length>1).map(r=>({
+      idempotency_key:crypto.randomUUID(),full_name:r[iN].trim(),
+      phone:iP>=0?(r[iP]||null):null,email:iE>=0?(r[iE]||null):null,
+      birth_date:iB>=0&&/^\d{4}-\d{2}-\d{2}$/.test(r[iB]||'')?r[iB]:null}));
+    const firstCustomers=[recs[0]?.full_name,recs[1]?.full_name].filter(Boolean).join(', ')||'—';
+    $('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersReady',{ready:recs.length,rows:rows.length-1})}<br>
+      ${workspaceTemplateHtmlV97('firstCustomers',{customers:firstCustomers})}</p>
+      <button class="btn sm" id="csvgo" style="margin-top:8px">${workspaceTemplateHtmlV97('importCustomers',{count:recs.length})}</button>`;
+    $('csvgo').onclick=async()=>{
+      $('csvgo').disabled=true;let done=0;
+      for(const rec of recs){
+        const {error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
+          p_idempotency_key:rec.idempotency_key,p_full_name:rec.full_name,p_phone:rec.phone,
+          p_email:rec.email,p_birth_date:rec.birth_date,p_gender:null,
+          p_marketing_consent:false,p_referrer_code:null,p_source:'settings CSV import'});
+        if(error){toast(workspaceTemplateTextV97('importPartial',{count:done,error:error.message}));return}
+        done+=1;
+      }
+      toast(workspaceTemplateTextV97('customersImported',{count:done}));$('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersImportPreview',{count:done})}</p>`;
+    };
+  };
+  $('cfAdd').onclick=async()=>{
+    const label=$('cfLabel').value.trim(),valueType=$('cfType').value;
+    if(label.length<2)return toast('Give the field a clear name');
+    const fieldKey=label.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,64);
+    if(fieldKey.length<2)return toast('Use a field name with at least two letters');
+    let options=[];
+    if(valueType==='select'){
+      options=$('cfOptions').value.split(',').map(x=>x.trim()).filter(Boolean);
+      if(options.length<2){
+        return toast('List fields need at least two choices');
+      }
+    }
+    const {error}=await sb.rpc('create_client_field_definition',{p_business:S.biz.id,
+      p_field_key:fieldKey,p_label:label,p_value_type:valueType,p_classification:$('cfClass').value,
+      p_options:options.map((optionLabel,i)=>({option_key:`option_${i+1}`,option_label:optionLabel}))});
+    if(error)return fail(error);
+    toast('Customer field added');rerender();
+  };
+  document.querySelectorAll('.cfRetire').forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.from('client_field_definitions').update({active:false}).eq('id',b.dataset.id).eq('business_id',S.biz.id);
+    if(error)return fail(error);toast('Field retired; existing answers remain in history');rerender();
+  });
+  loadSignupConfig();
+  loadCustomerCapabilitiesV223();
+}
+async function customerInterfacePageV243(){
+  /* Owner-only, exactly like the Settings tabs this absorbed. route()'s guard is the boundary;
+     this mirrors the same S.myRole test settingsPage uses for its own owner-only panels, so a
+     non-owner reaching this surface any other way gets a read-only card rather than an editor.
+     Deliberately NOT canWriteModule('settings') — 'settings' is never in enabled_modules, so
+     that helper is false even for an owner (it is the same reason settingsPage never asks it). */
+  const canEditCustomerInterface=S.myRole==='owner';
+  const {data:fieldDefs,error:fieldDefsError}=canEditCustomerInterface
+    ?await sb.from('client_field_definitions').select('*').eq('business_id',S.biz.id).order('created_at')
+    :{data:[],error:null};
+  if(fieldDefsError) return fail(fieldDefsError);
+  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>Customer Interface</h1><p class="muted small">Everything a customer sees and uses</p></div></div>
+    ${customerInterfacePreviewCardHtmlV243()}
+    <div class="card" style="margin-top:16px"><b>Brand</b>
+      <p class="muted small" style="margin:6px 0 12px">Logo and colour customers see. Edit in Settings → Workspace &amp; brand.</p>
+      <a class="btn ghost sm" href="#/settings?tab=workspace">Open Workspace &amp; brand</a></div>
+    ${canEditCustomerInterface?`<div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
+    ${customerInterfaceSectionsHtmlV243(fieldDefs)}`:'<div class="card" style="margin-top:16px"><p class="muted small">Only the owner can change what customers see.</p></div>'}
+  </div>`;
+  wireCustomerInterfacePreviewV243();
+  if(!canEditCustomerInterface)return;
+  loadCustomerProgrammePresentationEditorV95();
+  wireCustomerInterfaceV243(customerInterfacePageV243);
+}
 /* ---------- phone country-code picker (portal booking form only) ----------
    Singapore first/default since Frenly is SG-first; a handful of the other common corridors
    for this customer base. */

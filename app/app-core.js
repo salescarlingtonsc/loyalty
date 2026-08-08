@@ -836,7 +836,12 @@ function loadAppChunkV185(name){
    signed-out visitor and the workspace for signed-in staff — so the caller passes the session it
    already resolved. Anything unrecognised loads the workspace, which is the historical default,
    and a wrong guess is self-healing (see the ReferenceError branch in route). */
-const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer','#/wallet','#/claim','#/join'];
+/* V243: '#/customer' was a bare prefix, so ANY future workspace route beginning with those
+   nine characters — the new '#/customer-interface' is the first — was classified as a customer
+   route and downloaded the customer chunk instead of the workspace one. '#/customer/' plus the
+   matcher's own exact-equality branch covers '#/customer', '#/customer?…' and '#/customer/…'
+   exactly as before, and nothing else. The inline preloader in index.html mirrors this list. */
+const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join'];
 function appSurfaceForRouteV185(hash,{signedIn=false}={}){
   const route=String(hash||'').split('?')[0];
   if(route.startsWith('#/platform'))return null;
@@ -1192,6 +1197,14 @@ async function route(){
     }
     if(pageKey==='branches'&&S.myRole!=='owner'){
       toast('Only the owner can manage branches.');
+      return nav('#/dashboard');
+    }
+    /* V243: same guard as Settings, for the same reason — this page IS the Settings tabs that
+       used to be owner-gated, so hiding the rail link is not the boundary. It has no MODULES
+       key (it is a surface like Program Studio, not a sector entitlement), so the module guard
+       below never sees it and this explicit check is what fails closed for a typed hash. */
+    if(pageKey==='customer-interface'&&S.myRole!=='owner'){
+      toast('Only the owner can open Customer Interface.');
       return nav('#/dashboard');
     }
     if(pageKey==='setup'&&S.myRole!=='owner'){
