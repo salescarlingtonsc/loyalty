@@ -985,6 +985,12 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
+/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious. */
+.grow-topic-group-v244{margin-top:20px}
+.grow-topic-group-head-v244 h3{font-size:1.02rem;font-weight:750}
+.grow-topic-group-head-v244 p{margin-top:3px}
+.grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
+.grow-topic-tile-pending-v244{border-style:dashed}
 .grow-topic-tile-v229{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
 .grow-topic-tile-v229:hover{background:var(--tint);border-color:var(--coral)}
 .grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em}
@@ -1814,7 +1820,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=692b5e756715","business":"/app-business.js?b=42abcaa575e0","i18n":"/app-i18n.js?b=232400221146"}
+{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=692b5e756715","business":"/app-business.js?b=1d4e37626086","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

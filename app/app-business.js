@@ -8574,7 +8574,30 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      drills into the same rows, so nothing is duplicated and no tile is a dead end. */
   const growTopicSectionV235=growActiveTopicV229?.key==='stamps'?'points':(growActiveTopicV229?.key||null);
   const topicOnV229=key=>growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229;
-  const growTilesHtmlV229=growTopicDefsV229.map(topic=>`<button type="button" class="grow-topic-tile-v229" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">View →</span></button>`).join('');
+  /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
+     for those (non) ongoing program - so business can easily set up"). Same tile, split into
+     what is reaching customers now and what still needs the owner. 'on' is the one tone that
+     means live; everything else is work outstanding, and its call to action says which kind of
+     work — finishing a draft is not the same job as starting from nothing. */
+  const growTopicOngoingV244=topic=>topic.status[1]==='on';
+  const growTopicActionV244=topic=>{
+    if(growTopicOngoingV244(topic))return 'View →';
+    const label=String(topic.status[0]||'');
+    if(label==='Draft')return 'Finish setup →';
+    if(label==='Paused')return 'Resume →';
+    if(label==='Not included')return 'See plan →';
+    if(label==='Off')return 'Switch to this →';
+    return 'Set up →';
+  };
+  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
+  const growOngoingTopicsV244=growTopicDefsV229.filter(growTopicOngoingV244);
+  const growPendingTopicsV244=growTopicDefsV229.filter(topic=>!growTopicOngoingV244(topic));
+  const growTileSectionV244=(title,note,topics,empty)=>`<div class="grow-topic-group-v244">
+    <div class="grow-topic-group-head-v244"><h3>${esc(title)}${topics.length?` <span class="muted small">(${topics.length})</span>`:''}</h3><p class="muted small">${esc(note)}</p></div>
+    ${topics.length?`<div class="grow-topic-tiles-v229">${topics.map(growTileHtmlV244).join('')}</div>`
+      :`<p class="muted small grow-topic-group-empty-v244">${esc(empty)}</p>`}</div>`;
+  const growTilesHtmlV229=`${growTileSectionV244('Ongoing programmes','Running now — customers can see and use these.',growOngoingTopicsV244,'Nothing is reaching customers yet. Set one up below.')}
+    ${growTileSectionV244('Pending setup','Not running yet. Open one to set it up.',growPendingTopicsV244,'Every programme is running.')}`;
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
   const growPointsModeChooserV229=(()=>{
     if(!canRewards)return '';
@@ -8602,7 +8625,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
-      ${growTilesModeV229?`<div class="grow-topic-tiles-v229">${growTilesHtmlV229}</div>`:''}
+      ${growTilesModeV229?growTilesHtmlV229:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
            rewards, Add another reward and Start from a template onto the Point system row).

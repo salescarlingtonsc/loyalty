@@ -21,7 +21,11 @@ test('V229 the overview is six topic tiles, and drilling in is the only way to t
   /* V235: a Stamp card tile joins the two points tiles, so all THREE loyalty models are
      represented on the overview and exactly one of them can read Active. */
   assert.deepEqual(keys, ['points', 'tiers', 'stamps', 'lifestyle', 'promotions', 'referrals', 'recurring']);
-  assert.match(app, /growTilesModeV229\?`<div class="grow-topic-tiles-v229">/);
+  /* V244: the grid moved inside each of the two groups (Ongoing / Pending setup), so the
+     render site emits the grouped markup rather than one bare grid. The tiles-mode gate — the
+     thing this line actually protects — is unchanged. */
+  assert.match(app, /\$\{growTilesModeV229\?growTilesHtmlV229:''\}/);
+  assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
   assert.match(shell, /\.grow-topic-tiles-v229\{display:grid/);
   // Tiles only exist on the default list view; Ongoing / To set up stay flat lists.
   assert.match(app, /const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;/);
