@@ -598,14 +598,14 @@
     {
       "id": "db.fn:public.activate_retention_campaign/4",
       "surface": "db_function",
-      "latest_file": "20260722150000_frenly_v50_retention_measurement.sql",
-      "rows_written": "retention_campaign_members:INSERT",
+      "latest_file": "20260809000100_nestly_v255_marketing_send_records_and_taxonomy.sql",
+      "rows_written": "retention_campaign_members:INSERT, campaign_send_records_v255:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "activate_retention_campaign(...)",
       "callers": "browser activate_retention_campaign",
       "idempotency": "advisory + op-ledger",
       "locking": "advisory",
-      "loyalty": "retention_campaign_members INSERT (AUDIENCE selection \u2014 not value)",
+      "loyalty": "retention_campaign_members INSERT (AUDIENCE selection \u2014 not value); v255 adds an immutable campaign_send_records_v255 row per treatment member in the same statement, channel=none because activation freezes an audience and delivers nothing.",
       "reporting": "audience snapshot",
       "kernel": "SAFE \u2014 audience materialisation, not value."
     },
@@ -1803,8 +1803,12 @@
       "reason": "V122 narrow owner-and-Loyalty-write scoped configuration writer used because Inventory remains globally disabled. It uses tenant/product checks plus optimistic concurrency and changes only one active product's non-economic unit-cost input; it cannot create a sale, payment, reward, entitlement, loyalty movement, or stored-value record."
     },
     {
-      "id": "browser.rpc:app/app.js:record_product_interaction_v100",
-      "reason": "browser RPC 'record_product_interaction_v100' appends only allowlisted, privacy-minimized interaction evidence with tenant, module, and branch authorization plus request-hash idempotency. Its response explicitly says accepted_interaction_only and business_outcome_asserted=false; completed joins, bookings, sales, redemptions, invoices, exposures, and campaign returns come from canonical server-side rows. It writes no sale, payment, points, reward, entitlement, stored value, or other customer-value table."
+      "id": "browser.rpc:app/app.js:record_product_interactions_batch_v255",
+      "reason": "v255 replaced the per-event browser RPC 'record_product_interaction_v100' with a batched wrapper; the single-event function still exists and is still the only ingest path, but the browser now reaches it through this loop. Every privacy, allowlist, tenant, module, branch and request-hash idempotency rule is unchanged because they all still live in record_product_interaction_v100, which this function calls once per event. Its response still says accepted_interaction_only and business_outcome_asserted=false. It writes no sale, payment, points, reward, entitlement, stored value, or other customer-value table."
+    },
+    {
+      "id": "browser.rpc:app/app.js:customer_record_account_open_v175",
+      "reason": "v175 customer daily-active evidence, wired to the wallet channel by v255 (it had no caller at all before, so only the booking channel had ever fired). It requires a verified customer_links row for the business, records at most one deduped (business, subject, channel, Singapore day) row in customer_account_open_days_v175 behind a 400-day retention purge, and returns no tenant data. It writes no sale, payment, points, reward, entitlement, stored value, or other customer-value table."
     },
     {
       "id": "browser.rpc:app/app.js:accept_invite",

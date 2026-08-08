@@ -4,6 +4,7 @@ import {
   type PushLease,
   customerPushDeadlineElapsed,
   customerPushEventType,
+  customerPushEventTypeOrNull,
   customerPushTtlSeconds,
   pushAdminClient,
   pushDispatchAuthorized,
@@ -92,6 +93,12 @@ Deno.serve(async (req) => {
     } else if (customerPushDeadlineElapsed(lease.deadline_at, sendBoundaryAt)) {
       disposition = 'failed';
       code = 'deadline_elapsed';
+    } else if (customerPushEventTypeOrNull(lease) === null) {
+      // Fails CLOSED. An unmappable event type can never succeed on a later
+      // attempt, so it is recorded as a permanent failure with a named code
+      // rather than left to burn five retries and stall (audit finding 1.9).
+      disposition = 'failed';
+      code = 'unsupported_push_event';
     } else try {
       const ttl = customerPushTtlSeconds(lease.deadline_at, sendBoundaryAt);
       const payload = JSON.stringify({

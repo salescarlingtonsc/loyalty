@@ -224,7 +224,11 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v203_company_directory', 'db/tests/v203_company_directory.sql'],
   ['nestly_v225_company_detail', 'db/tests/v225_company_detail.sql'],
   ['nestly_v226_crm_consultant_scope', 'db/tests/v226_crm_consultant_scope.sql'],
-  ['nestly_v244_crm_ai_report_flag_matches_v176', 'db/tests/v244_crm_ai_report_flag.sql']
+  ['nestly_v244_crm_ai_report_flag_matches_v176', 'db/tests/v244_crm_ai_report_flag.sql'],
+  // V256 — one suite covers all three v255 migrations; they are one change.
+  ['nestly_v255_marketing_send_records_and_taxonomy', 'db/tests/v255_marketing_send_records_and_reads.sql'],
+  ['nestly_v255a_client_interaction_batch', 'db/tests/v255_marketing_send_records_and_reads.sql'],
+  ['nestly_v255b_platform_marketing_reads', 'db/tests/v255_marketing_send_records_and_reads.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -728,7 +732,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 215);
+  assert.equal(pending.length, 218); // V256
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

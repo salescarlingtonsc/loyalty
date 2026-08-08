@@ -2681,6 +2681,81 @@
       'Workspace mirror team roster':'Senarai pasukan cerminan ruang kerja'
     })
   });
+  // v255 marketing usage copy.
+  const PLATFORM_COPY_V255=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Marketing usage':'营销使用情况','Marketing':'营销',
+      'Back to marketing usage':'返回营销使用情况',
+      'Campaign history':'活动历史',
+      'Campaign history for the selected range.':'所选时间范围内的活动历史。',
+      'Campaign summary':'活动摘要',
+      'Marketing usage summary':'营销使用情况摘要',
+      'Not tracked':'未追踪',
+      '{count} in-app · {label} push':'{count} 应用内 · {label} 推送',
+      'Campaign reach and push delivery across every firm, month by month.':'按月呈现每家企业的活动触达与推送送达情况。',
+      'Every campaign sent to this firm in the selected range.':'所选时间范围内发送给该企业的每项活动。',
+      'Every firm and month in the selected range.':'所选时间范围内的每家企业与每个月份。',
+      'Explore demand':'探索需求',
+      'Marketing monthly trend':'营销月度趋势',
+      'Marketing usage by firm':'按企业划分的营销使用情况',
+      'Marketing usage unavailable':'营销使用情况不可用',
+      'Monthly trend':'月度趋势',
+      'No campaigns in this range':'该时间范围内没有活动',
+      'No marketing usage in this range':'该时间范围内没有营销使用记录',
+      'No search activity in this range':'该时间范围内没有搜索活动',
+      'Platform-wide totals by month.':'按月统计的平台总计。',
+      'Search shapes will appear here once customers use Explore.':'顾客使用“探索”后，搜索形态将显示在此处。',
+      'What customers search for, shaped to protect identity.':'顾客的搜索内容，已作脱敏处理以保护身份。',
+      'Widen the date range to see campaign and push activity.':'扩大日期范围以查看活动与推送情况。',
+      'Widen the date range to see campaign history.':'扩大日期范围以查看活动历史。',
+      'Loading marketing engagement across every firm…':'正在加载各企业的营销互动数据…',
+      'Loading campaign history…':'正在加载活动历史…',
+      'Businesses':'企业数','Push sent':'推送发送量','Month':'月份',
+      'Search shape':'搜索形态','Searches':'搜索次数','Campaign':'活动',
+      'First sent':'首次发送','Recipients':'接收人数','Sent':'已发送',
+      'Delivered':'已送达','Opens':'打开次数','Push failed':'推送失败',
+      'Rare search shapes are hidden':'罕见的搜索形态已隐藏',
+      'Shapes with too few searches are suppressed to protect customer privacy.':'为保护顾客隐私，搜索次数过少的形态已被隐藏。',
+      'More months exist':'还有更多月份','Narrow the range to see the rest.':'缩小范围以查看其余内容。',
+      'More campaigns exist':'还有更多活动','Promotion':'促销'
+    }),
+    ms:Object.freeze({
+      'Marketing usage':'Penggunaan pemasaran','Marketing':'Pemasaran',
+      'Back to marketing usage':'Kembali ke penggunaan pemasaran',
+      'Campaign history':'Sejarah kempen',
+      'Campaign history for the selected range.':'Sejarah kempen bagi julat tarikh dipilih.',
+      'Campaign summary':'Ringkasan kempen',
+      'Marketing usage summary':'Ringkasan penggunaan pemasaran',
+      'Not tracked':'Tidak dijejaki',
+      '{count} in-app · {label} push':'{count} dalam aplikasi · {label} tolak',
+      'Campaign reach and push delivery across every firm, month by month.':'Capaian kempen dan penghantaran tolak bagi setiap firma, bulan demi bulan.',
+      'Every campaign sent to this firm in the selected range.':'Setiap kempen yang dihantar kepada firma ini dalam julat tarikh dipilih.',
+      'Every firm and month in the selected range.':'Setiap firma dan bulan dalam julat tarikh dipilih.',
+      'Explore demand':'Permintaan Terokai',
+      'Marketing monthly trend':'Trend bulanan pemasaran',
+      'Marketing usage by firm':'Penggunaan pemasaran mengikut firma',
+      'Marketing usage unavailable':'Penggunaan pemasaran tidak tersedia',
+      'Monthly trend':'Trend bulanan',
+      'No campaigns in this range':'Tiada kempen dalam julat ini',
+      'No marketing usage in this range':'Tiada penggunaan pemasaran dalam julat ini',
+      'No search activity in this range':'Tiada aktiviti carian dalam julat ini',
+      'Platform-wide totals by month.':'Jumlah keseluruhan platform mengikut bulan.',
+      'Search shapes will appear here once customers use Explore.':'Bentuk carian akan dipaparkan di sini apabila pelanggan menggunakan Terokai.',
+      'What customers search for, shaped to protect identity.':'Apa yang pelanggan cari, dibentuk untuk melindungi identiti.',
+      'Widen the date range to see campaign and push activity.':'Luaskan julat tarikh untuk melihat aktiviti kempen dan tolak.',
+      'Widen the date range to see campaign history.':'Luaskan julat tarikh untuk melihat sejarah kempen.',
+      'Loading marketing engagement across every firm…':'Memuatkan penglibatan pemasaran bagi setiap firma…',
+      'Loading campaign history…':'Memuatkan sejarah kempen…',
+      'Businesses':'Firma','Push sent':'Tolak dihantar','Month':'Bulan',
+      'Search shape':'Bentuk carian','Searches':'Carian','Campaign':'Kempen',
+      'First sent':'Pertama dihantar','Recipients':'Penerima','Sent':'Dihantar',
+      'Delivered':'Disampaikan','Opens':'Dibuka','Push failed':'Tolak gagal',
+      'Rare search shapes are hidden':'Bentuk carian jarang disembunyikan',
+      'Shapes with too few searches are suppressed to protect customer privacy.':'Bentuk dengan carian terlalu sedikit disembunyikan untuk melindungi privasi pelanggan.',
+      'More months exist':'Lebih banyak bulan wujud','Narrow the range to see the rest.':'Sempitkan julat untuk melihat selebihnya.',
+      'More campaigns exist':'Lebih banyak kempen wujud','Promotion':'Promosi'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -2694,6 +2769,7 @@
       ??PLATFORM_COPY_RENDERERS[platformLocale]?.[key]
       ??PLATFORM_COPY_V105[platformLocale]?.[key]
       ??PLATFORM_COPY_V177[platformLocale]?.[key]
+      ??PLATFORM_COPY_V255[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -2786,6 +2862,7 @@
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
     {key:'companies',label:'Companies',shortLabel:'Companies',hash:'#/platform/companies',icon:'branch',superAdminOnly:true},
     {key:'reports',label:'Reports',shortLabel:'Reports',hash:'#/platform/reports',icon:'reports'},
+    {key:'marketing',label:'Marketing usage',shortLabel:'Marketing',hash:'#/platform/marketing',icon:'retention',superAdminOnly:true},
     {key:'billing',label:'Billing',shortLabel:'Billing',hash:'#/platform/billing',icon:'reports'},
     {key:'subscription-operations',moduleKey:'billing',label:'Subscription operations',shortLabel:'Subscriptions',hash:'#/platform/subscription-operations',icon:'reports'},
     {key:'pnl',label:'Cash P&L',shortLabel:'P&L',hash:'#/platform/pnl',icon:'reports',superAdminOnly:true},
@@ -2996,7 +3073,7 @@
        CRM appears as a named child. */
     Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm'])}),
     Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms','companies'])}),
-    Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports'])}),
+    Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports','marketing'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
     Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','access'])})
@@ -8578,6 +8655,141 @@
       CUI.focusRoute(main);
     }
   }
+  function marketingMonthRange(now=new Date()) {
+    const partsOf=date=>Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date).filter(part=>part.type!=='literal').map(part=>[part.type,part.value]));
+    const toParts=partsOf(now);
+    const to=`${toParts.year}-${toParts.month}-${toParts.day}`;
+    const fromDate=new Date(`${to}T00:00:00+08:00`);
+    fromDate.setUTCMonth(fromDate.getUTCMonth()-11);
+    const fromParts=partsOf(fromDate);
+    const from=`${fromParts.year}-${fromParts.month}-01`;
+    return{from,to};
+  }
+  function marketingNotTrackedLabel(value) {
+    return value===null||value===undefined?pt('Not tracked'):String(value);
+  }
+  function marketingUsageRows(rows,CUI) {
+    return asArray(rows).map(entry=>[
+      `<button type="button" class="btn ghost sm" data-marketing-business="${escapeHtml(entry.business_id)}">${escapeHtml(entry.business_name||'—')}</button>`,
+      escapeHtml(String(entry.month||'—')),
+      escapeHtml(String(entry.customers??0)),
+      escapeHtml(String(entry.campaigns??0)),
+      escapeHtml(String(entry.push_sent??0))
+    ]);
+  }
+  function marketingTrendRowsV256(rows) {
+    return asArray(rows).map(entry=>[
+      escapeHtml(String(entry.month||'—')),
+      escapeHtml(String(entry.businesses??0)),
+      escapeHtml(String(entry.customers??0)),
+      escapeHtml(String(entry.campaigns??0)),
+      escapeHtml(String(entry.push_sent??0))
+    ]);
+  }
+  function marketingDemandRowsV256(rows) {
+    return asArray(rows).map(entry=>[
+      escapeHtml(String(entry.query_shape||'—')),
+      escapeHtml(String(entry.searches??0)),
+      escapeHtml(String(entry.customers??0))
+    ]);
+  }
+  function marketingCampaignRows(items,CUI) {
+    return asArray(items).map(item=>{
+      const inAppOpens=Number(item.in_app_opens||0);
+      const sent=Number(item.in_app_sent||0)+Number(item.push_sent||0);
+      return[
+        escapeHtml(item.campaign_label||'—'),
+        escapeHtml(platformStatus(item.campaign_kind||'')),
+        escapeHtml(item.first_sent_at?dateTime(item.first_sent_at):'—'),
+        escapeHtml(String(item.recipients??0)),
+        escapeHtml(String(sent)),
+        escapeHtml(marketingNotTrackedLabel(item.push_delivered)),
+        escapeHtml(String(item.push_failed??0)),
+        escapeHtml(pt('{count} in-app · {label} push',{count:inAppOpens,label:marketingNotTrackedLabel(item.push_opens)}))
+      ];
+    });
+  }
+  async function renderMarketingCampaignDetailV256(businessId,businessName,context,range) {
+    const {main,CUI,sb}=context;
+    main.innerHTML=loading(CUI,'Marketing usage','Loading campaign history…','retention');
+    try{
+      const payload=asObject(await rpc(sb,'platform_campaign_detail_v255',{
+        p_business:businessId,p_from:range.from,p_to:range.to,p_limit:100,p_offset:0
+      }));
+      const summary=asObject(payload.summary),items=asArray(payload.items);
+      main.innerHTML=`<div class="platform-actions"><button type="button" class="btn ghost sm" id="marketingBackV256">${CUI.icon('back',{size:16})}<span>${escapeHtml(pt('Back to marketing usage'))}</span></button></div>
+        <h1 style="font-size:1.6rem">${escapeHtml(businessName||pt('Campaign history'))}</h1>
+        <p class="muted small">${escapeHtml(pt('Campaign history for the selected range.'))}</p>
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Campaign summary'))}">${[
+          ['Campaigns',Number(summary.campaigns||0),'retention'],
+          ['Recipients',Number(summary.recipients||0),'customers'],
+          ['Push sent',Number(summary.push_sent||0),'reports'],
+          ['Push failed',Number(summary.push_failed||0),'branch']
+        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>
+        ${items.length
+          ? CUI.card({title:'Campaign history',description:'Every campaign sent to this firm in the selected range.',body:CUI.table({caption:'Campaign history',headers:['Campaign','Type','First sent','Recipients','Sent','Delivered','Failed','Opens'],rows:marketingCampaignRows(items,CUI)})})
+          : CUI.emptyState({iconName:'retention',title:'No campaigns in this range',body:'Widen the date range to see campaign history.'})}
+        ${payload.has_more?localizedRouteNoteHtml('More campaigns exist','Narrow the range to see the rest.'):''}`;
+      main.querySelector('#marketingBackV256').onclick=()=>renderMarketingUsage(context,range);
+      CUI.focusRoute(main);
+    }catch(error){
+      main.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Marketing usage')
+        :CUI.errorState({title:'Marketing usage unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'marketingCampaignRetryV256'});
+      const retry=main.querySelector('#marketingCampaignRetryV256');
+      if(retry)retry.onclick=()=>renderMarketingCampaignDetailV256(businessId,businessName,context,range);
+      CUI.focusRoute(main);
+    }
+  }
+  async function renderMarketingUsage(context,range=null) {
+    const {main,CUI,sb}=context;
+    const active=range||marketingMonthRange();
+    main.innerHTML=loading(CUI,'Marketing usage','Loading marketing engagement across every firm…','retention');
+    try{
+      const [engagement,demand]=(await Promise.all([
+        rpc(sb,'platform_engagement_monthly_v255',{p_from:active.from,p_to:active.to,p_businesses:null,p_limit:100}),
+        rpc(sb,'platform_explore_demand_v255',{p_from:active.from,p_to:active.to,p_limit:50})
+      ])).map(asObject);
+      const summary=asObject(engagement.summary),businesses=asArray(engagement.businesses),monthlyTrend=asArray(engagement.monthly_trend);
+      const demandItems=asArray(demand.items);
+      main.innerHTML=`${CUI.pageHeader({title:'Marketing usage',subtitle:'Campaign reach and push delivery across every firm, month by month.',iconName:'retention'})}
+        <section class="card"><form id="marketingRangeV256" class="platform-filter-grid"><label>${escapeHtml(pt('From'))}<input type="date" name="from" value="${escapeHtml(active.from)}" required></label><label>${escapeHtml(pt('To'))}<input type="date" name="to" value="${escapeHtml(active.to)}" required></label><button class="btn" type="submit">${escapeHtml(pt('Apply'))}</button></form></section>
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Marketing usage summary'))}">${[
+          ['Businesses',Number(summary.businesses||0),'branch'],
+          ['Customers',Number(summary.customers||0),'customers'],
+          ['Campaigns',Number(summary.campaigns||0),'retention'],
+          ['Push sent',Number(summary.push_sent||0),'reports']
+        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>
+        ${businesses.length
+          ? CUI.card({title:'Marketing usage by firm',description:'Every firm and month in the selected range.',body:CUI.table({caption:'Marketing usage',headers:['Business','Month','Customers','Campaigns','Push sent'],rows:marketingUsageRows(businesses,CUI)})})
+          : CUI.emptyState({iconName:'retention',title:'No marketing usage in this range',body:'Widen the date range to see campaign and push activity.'})}
+        ${monthlyTrend.length
+          ? CUI.card({title:'Monthly trend',description:'Platform-wide totals by month.',body:CUI.table({caption:'Marketing monthly trend',headers:['Month','Businesses','Customers','Campaigns','Push sent'],rows:marketingTrendRowsV256(monthlyTrend)})})
+          : ''}
+        ${CUI.card({title:'Explore demand',description:'What customers search for, shaped to protect identity.',body:demandItems.length
+            ? CUI.table({caption:'Explore demand',headers:['Search shape','Searches','Customers'],rows:marketingDemandRowsV256(demandItems)})
+            : CUI.emptyState({iconName:'reports',title:'No search activity in this range',body:'Search shapes will appear here once customers use Explore.'})})}
+        ${Number(demand.suppressed_buckets||0)>0?localizedRouteNoteHtml('Rare search shapes are hidden','Shapes with too few searches are suppressed to protect customer privacy.'):''}
+        ${engagement.has_more?localizedRouteNoteHtml('More months exist','Narrow the range to see the rest.'):''}`;
+      main.querySelector('#marketingRangeV256').onsubmit=event=>{
+        event.preventDefault();
+        const form=new FormData(event.currentTarget);
+        renderMarketingUsage(context,{from:String(form.get('from')),to:String(form.get('to'))});
+      };
+      main.querySelectorAll('[data-marketing-business]').forEach(button=>button.onclick=()=>{
+        const row=businesses.find(entry=>String(entry.business_id)===button.dataset.marketingBusiness);
+        renderMarketingCampaignDetailV256(button.dataset.marketingBusiness,row?.business_name||'',context,active);
+      });
+      CUI.focusRoute(main);
+    }catch(error){
+      main.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Marketing usage')
+        :CUI.errorState({title:'Marketing usage unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'marketingRetryV256'});
+      const retry=main.querySelector('#marketingRetryV256');
+      if(retry)retry.onclick=()=>renderMarketingUsage(context,active);
+      CUI.focusRoute(main);
+    }
+  }
   function platformExpenseModal(context,range) {
     const {CUI,sb}=context;const attemptKey=idempotencyKey();
     modal({title:'Add operating expense',submitLabel:'Record expense',CUI,body:`<div class="platform-form-grid">
@@ -10344,6 +10556,7 @@
     if(!task&&activeKey==='subscription-operations')task=renderSubscriptionOperations(context);
     if(!task&&activeKey==='customer-lifecycle')task=renderCustomerLifecycle(context);
     if(!task&&activeKey==='companies')task=renderCompanies(context);
+    if(!task&&activeKey==='marketing')task=renderMarketingUsage(context);
     if(!task&&activeKey==='crm')task=renderCrm(context);
     if(!task&&activeKey==='pnl')task=renderPlatformFinance(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
@@ -10374,7 +10587,8 @@
     importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingCatalogueRows,billingFirmRows,
     commissionRosterRows,commissionAccrualRows,automationRunRows,
     subscriptionDurationHtml,subscriptionOperationsTable,
-    companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel
+    companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
+    renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -10395,7 +10609,8 @@
       importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingCatalogueRows,billingFirmRows,
       commissionRosterRows,commissionAccrualRows,automationRunRows,
       subscriptionDurationHtml,subscriptionOperationsTable,
-      companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel
+      companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
+      renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

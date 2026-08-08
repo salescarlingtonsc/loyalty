@@ -599,13 +599,39 @@ let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:nul
 const PRODUCT_INTERACTION_EVENTS_V100=new Set([
   'merchant.workspace_viewed','merchant.grow_opened','merchant.grow_draft_started',
   'merchant.counter_action_opened','merchant.counter_action_started',
-  'merchant.redemption_scan_started','customer.programme_viewed'
+  'merchant.redemption_scan_started','customer.programme_viewed',
+  /* v255: the taxonomy rows behind these names are already in the database. This allowlist is
+     the second half of the same contract — a name absent here is never sent, and a name absent
+     there is refused with 22023. */
+  'merchant.surface_viewed','customer.session_started','customer.surface_viewed',
+  'customer.promotion_viewed','customer.promotion_opened','customer.reward_viewed',
+  'customer.notification_opened','customer.explore_searched'
 ]);
+/* Business discovery is genuinely tenant-free: the customer is looking for a business they have
+   no relationship with, so attaching one would be a fiction. Every OTHER customer event stays
+   business-scoped and is dropped without one. */
+const PRODUCT_INTERACTION_UNSCOPED_EVENTS_V256=new Set(['customer.explore_searched']);
 const PRODUCT_INTERACTION_CONTEXT_KEYS_V100=new Set([
-  'action_key','entry_point','locale','device_class','install_mode','surface_version','outcome'
+  'action_key','entry_point','locale','device_class','install_mode','surface_version','outcome',
+  'surface_key','promotion_id','query_shape'
 ]);
 const PRODUCT_INTERACTION_SESSION_KEY_V100='nestly.productAdoption.session.v100';
 let productInteractionSessionIdV100=null;
+const PRODUCT_INTERACTION_BATCH_SIZE_V256=10;
+const PRODUCT_INTERACTION_BATCH_MAX_V256=50;
+const PRODUCT_INTERACTION_BATCH_IDLE_MS_V256=5000;
+const PRODUCT_INTERACTION_QUEUE_CAP_V256=50;
+const PRODUCT_INTERACTION_SESSION_START_KEY_V256='nestly.productAdoption.sessionStarted.v255';
+let productInteractionQueueV256=[];
+let productInteractionFlushTimerV256=0;
+let productInteractionFlushInFlightV256=false;
+let productInteractionAccessTokenV256='';
+let productInteractionFlushBoundV256=false;
+let productInteractionSessionStartedV256=false;
+/* The promotion detail modal is opened from a card, not from the wallet renderer, so it has no
+   business id in hand. Held here for the life of the wallet render that set it. */
+let customerWalletBusinessIdV256='';
+const customerPromotionsSeenV256=new Set();
 const isUuidV100=value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||''));
 function productInteractionSessionV100(){
   if(isUuidV100(productInteractionSessionIdV100))return productInteractionSessionIdV100;
@@ -619,7 +645,13 @@ function productInteractionSessionV100(){
 }
 function resetProductInteractionSessionV100(){
   productInteractionSessionIdV100=null;
+  /* Anything still queued belongs to the session that just ended. The server attributes on
+     auth.uid(), so flushing it after a different sign-in would hand one person's taps to
+     another. Dropping is the only safe option, and telemetry is allowed to be lossy. */
+  productInteractionQueueV256=[];
+  productInteractionSessionStartedV256=false;
   try{sessionStorage.removeItem(PRODUCT_INTERACTION_SESSION_KEY_V100)}catch{}
+  try{sessionStorage.removeItem(PRODUCT_INTERACTION_SESSION_START_KEY_V256)}catch{}
 }
 function privacySafeProductContextV100(context={}){
   const safe={};
@@ -630,24 +662,128 @@ function privacySafeProductContextV100(context={}){
   }
   return safe;
 }
+/* v255 batching. Instrumenting route views, promotion views and search shapes turns one request
+   per tap into ten, which on a phone on 4G is a tax the customer pays for our analytics. Events
+   now accumulate and leave in one call: at 10 queued, after 5s of quiet, and on the page going
+   away. The queue is capped and drops the OLDEST on overflow, because unbounded telemetry in a
+   long-lived tab is a memory leak.
+
+   No sendBeacon: it cannot carry the Authorization header this RPC needs. On pagehide we do a
+   best-effort keepalive fetch and accept the loss when it does not land. */
+function productInteractionKeepaliveV256(events){
+  if(!productInteractionAccessTokenV256)return false;
+  try{
+    fetch(`${SB_URL}/rest/v1/rpc/record_product_interactions_batch_v255`,{
+      method:'POST',keepalive:true,
+      headers:{'content-type':'application/json','apikey':SB_KEY,
+        'authorization':`Bearer ${productInteractionAccessTokenV256}`},
+      body:JSON.stringify({p_events:events})
+    }).catch(()=>{});
+    return true;
+  }catch{return false}
+}
+function flushProductInteractionsV256(keepalive){
+  if(productInteractionFlushTimerV256){
+    clearTimeout(productInteractionFlushTimerV256);productInteractionFlushTimerV256=0;
+  }
+  if(!productInteractionQueueV256.length)return;
+  if(productInteractionFlushInFlightV256&&!keepalive)return;
+  const events=productInteractionQueueV256.splice(0,PRODUCT_INTERACTION_BATCH_MAX_V256);
+  try{
+    if(keepalive&&productInteractionKeepaliveV256(events))return;
+    productInteractionFlushInFlightV256=true;
+    const settleV256=()=>{
+      productInteractionFlushInFlightV256=false;
+      if(productInteractionQueueV256.length)flushProductInteractionsV256(false);
+    };
+    Promise.resolve(sb.rpc('record_product_interactions_batch_v255',{p_events:events}))
+      .then(settleV256,settleV256);
+  }catch{productInteractionFlushInFlightV256=false}
+}
+function bindProductInteractionFlushV256(){
+  if(productInteractionFlushBoundV256)return;
+  productInteractionFlushBoundV256=true;
+  try{
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='hidden')flushProductInteractionsV256(true);
+    });
+    window.addEventListener('pagehide',()=>flushProductInteractionsV256(true));
+    /* The keepalive path needs a bearer token synchronously, and getSession() is async — on
+       pagehide there is no time to await it. Bound lazily so a page that never records anything
+       never subscribes. */
+    sb.auth.onAuthStateChange((_event,session)=>{
+      productInteractionAccessTokenV256=session?.access_token||'';
+    });
+    Promise.resolve(sb.auth.getSession()).then(result=>{
+      productInteractionAccessTokenV256=result?.data?.session?.access_token||'';
+    },()=>{});
+  }catch{}
+}
+/* Records the SHAPE of a search, never the words. Token count, a coarse length bucket and
+   whether anything matched are enough to say "customers keep asking for something nobody
+   sells"; the typed text, joined to auth.uid(), would be re-identifying and PDPA-sensitive. */
+function exploreQueryShapeV256(query,matched){
+  const text=String(query||'').trim();
+  const tokens=text?text.split(/\s+/).filter(Boolean).length:0;
+  const length=text.length===0?'empty':text.length<=12?'short':text.length<=30?'medium':'long';
+  return `t${Math.min(tokens,6)}:${length}:${matched?'matched':'unmatched'}`;
+}
 /* Interaction telemetry is deliberately fail-open. It records only that an allowed surface
    was opened or started; completed and economic outcomes remain database-authored. A missing
    migration, denied scope, or network failure must never delay or alter the user's action. */
+/* V261: analytics is best-effort by contract — "a failed analytics request must NEVER break the
+   user's actual Peekaa action". Every emit site is written as an inline
+   `typeof recordProductInteractionV100==='function'&&…` guard: `typeof` is legal on an
+   UNDECLARED identifier, so the guard survives a surface being evaluated without the core chunk.
+   The v104 evidence fixture proved this is not hypothetical — an unguarded call threw a
+   ReferenceError that stopped a customer opening a promotion. */
 function recordProductInteractionV100(eventName,businessId,{branchId=null,context={}}={}){
-  if(!S.user?.id||!isUuidV100(businessId)||!PRODUCT_INTERACTION_EVENTS_V100.has(eventName))return;
-  let sessionId,idempotencyKey,occurredAt;
+  if(!S.user?.id||!PRODUCT_INTERACTION_EVENTS_V100.has(eventName))return;
+  const scopedV256=isUuidV100(businessId);
+  if(!scopedV256&&!PRODUCT_INTERACTION_UNSCOPED_EVENTS_V256.has(eventName))return;
+  let eventV256;
   try{
-    sessionId=productInteractionSessionV100();
-    idempotencyKey=`v100:${crypto.randomUUID()}`;
-    occurredAt=new Date().toISOString();
+    eventV256={
+      event_name:eventName,
+      business_id:scopedV256?businessId:null,
+      branch_id:isUuidV100(branchId)?branchId:null,
+      session_id:productInteractionSessionV100(),
+      idempotency_key:`v100:${crypto.randomUUID()}`,
+      occurred_at:new Date().toISOString(),
+      context:privacySafeProductContextV100(context)
+    };
   }catch{return}
   try{
-    Promise.resolve(sb.rpc('record_product_interaction_v100',{
-      p_event_name:eventName,p_business:businessId,p_branch:isUuidV100(branchId)?branchId:null,
-      p_session_id:sessionId,p_idempotency_key:idempotencyKey,p_occurred_at:occurredAt,
-      p_context:privacySafeProductContextV100(context)
-    })).catch(()=>{});
+    bindProductInteractionFlushV256();
+    productInteractionQueueV256.push(eventV256);
+    if(productInteractionQueueV256.length>PRODUCT_INTERACTION_QUEUE_CAP_V256){
+      productInteractionQueueV256.splice(
+        0,productInteractionQueueV256.length-PRODUCT_INTERACTION_QUEUE_CAP_V256
+      );
+    }
+    if(productInteractionQueueV256.length>=PRODUCT_INTERACTION_BATCH_SIZE_V256){
+      flushProductInteractionsV256(false);return;
+    }
+    if(productInteractionFlushTimerV256)clearTimeout(productInteractionFlushTimerV256);
+    productInteractionFlushTimerV256=setTimeout(
+      ()=>flushProductInteractionsV256(false),PRODUCT_INTERACTION_BATCH_IDLE_MS_V256
+    );
   }catch{}
+}
+/* One session-start per browser session, recorded the first time a business scope is known.
+   sessionStorage carries it across a reload of the same tab, so a refresh is not a new session. */
+function recordCustomerSessionStartV256(businessId,locale){
+  if(productInteractionSessionStartedV256)return;
+  try{
+    if(sessionStorage.getItem(PRODUCT_INTERACTION_SESSION_START_KEY_V256)==='1'){
+      productInteractionSessionStartedV256=true;return;
+    }
+  }catch{}
+  productInteractionSessionStartedV256=true;
+  try{sessionStorage.setItem(PRODUCT_INTERACTION_SESSION_START_KEY_V256,'1')}catch{}
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.session_started',businessId,{
+    context:{entry_point:'customer_app',locale,surface_version:'v255'}
+  });
 }
 let customerFeatureCapabilities=null;
 let customerPhoneOtpCapabilities=null;
@@ -978,7 +1114,7 @@ function openMerchantRedemptionScanner({
       <details style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="merchantScannerToken">Paste the QR content</label><input id="merchantScannerToken" type="text" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="merchantScannerConfirm" type="button" style="margin-top:10px">Confirm redemption</button></details>
     </div><p id="merchantScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
   document.body.appendChild(overlay);
-  recordProductInteractionV100('merchant.redemption_scan_started',businessId,{
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.redemption_scan_started',businessId,{
     branchId,
     context:{action_key:'customer_redemption',entry_point:'quick_earn',locale:workspaceLocale,surface_version:'v100'}
   });
@@ -3478,6 +3614,13 @@ async function renderCustomerExplore(){
     const {data,error}=await customerRpc('customer_explore_businesses_v244',{
       p_query:query||null,p_lat:position?.lat??null,p_lng:position?.lng??null
     });
+    /* v255 (audit class E — the highest-value signal the product was losing every day). The
+       SHAPE only: how many words, how long, and whether anything matched. Never the words.
+       Discovery is not business-scoped, so this is the one event recorded with no tenant. */
+    if(!error)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.explore_searched',null,{
+      context:{query_shape:exploreQueryShapeV256(query,Array.isArray(data)&&data.length>0),
+        surface_key:'explore',entry_point:'customer_explore',surface_version:'v255'}
+    });
     /* Replies can land out of order — a stale reply must never overwrite a newer query's list. */
     if(!isCurrent()||epoch!==searchEpoch||!results.isConnected)return;
     results.innerHTML=customerExploreResultsMarkupV244(error
@@ -4806,6 +4949,10 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
 function openCustomerPromotionDetailsV104(card){
   const template=card?.querySelector('template[data-promotion-details-template]');
   if(!template)return;
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.promotion_opened',customerWalletBusinessIdV256,{
+    context:{promotion_id:String(card?.dataset?.promotionId||''),surface_key:'promotion_detail',
+      entry_point:'customer_wallet',surface_version:'v255'}
+  });
   $('customerPromotionDetailsModal')?.remove();
   const title=card.querySelector('h3')?.textContent?.trim()||'Offer details';
   document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerPromotionDetailsModal" role="dialog" aria-modal="true" aria-labelledby="customerPromotionDetailsTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
@@ -4875,6 +5022,11 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
       p_business_slug:businessSlug,p_event_id:prompt.event_id,
       p_operation:operation,p_idempotency_key:operationKeys[operation]
     }).catch(()=>{});
+    if(operation==='read')typeof recordProductInteractionV100==='function'&&recordProductInteractionV100(
+      'customer.notification_opened',customerWalletBusinessIdV256,
+      {context:{surface_key:'promotion_prompt',entry_point:'customer_wallet',
+        outcome:'read',surface_version:'v255'}}
+    );
     afterClose?.();
   };
   deactivate=CUI.activateDialog(dialog,{onClose:()=>close('dismiss'),initialFocus:'[data-promotion-popup-view]'});
@@ -5447,9 +5599,22 @@ async function renderCustomerWallet(businessSlug=null){
   const businessId=customerBusinessIdV103({
     summaryBusiness:b,actionableCard,programmeCards,businessSlug
   });
-  if(businessId)recordProductInteractionV100('customer.programme_viewed',businessId,{
+  if(businessId)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.programme_viewed',businessId,{
       context:{entry_point:'customer_wallet',locale:customerLocale,surface_version:'v100'}
     });
+  if(businessId){
+    customerWalletBusinessIdV256=businessId;
+    recordCustomerSessionStartV256(businessId,customerLocale);
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.surface_viewed',businessId,{
+      context:{surface_key:'wallet',entry_point:'customer_wallet',
+        locale:customerLocale,surface_version:'v255'}
+    });
+    /* v255 (audit 3, "customer DAU"): customer_account_open_days_v175 was built for exactly
+       this and its wallet channel had no caller, so the only DAU signal the product had was
+       the booking path. One idempotent, deduped-per-day write. */
+    try{Promise.resolve(sb.rpc('customer_record_account_open_v175',{p_business:businessId}))
+      .catch(()=>{})}catch{}
+  }
   const unavailableBusinessId=()=>Promise.resolve({
     data:null,error:{code:'business_id_unavailable',message:'Business identifier is unavailable'}
   });
@@ -5482,6 +5647,18 @@ async function renderCustomerWallet(businessSlug=null){
   presentation.offers=promotionsResult.error
     ?[]
     :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,6);
+  /* v255 (audit finding: promotion views were class C — nothing recorded between "we published
+     it" and "someone redeemed"). Deduped per browser session so a wallet the customer reopens
+     five times is one view, not five. */
+  if(businessId)for(const offerV256 of presentation.offers){
+    const promotionIdV256=String(offerV256?.id||offerV256?.promotion_id||'');
+    if(!isUuidV100(promotionIdV256)||customerPromotionsSeenV256.has(promotionIdV256))continue;
+    customerPromotionsSeenV256.add(promotionIdV256);
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.promotion_viewed',businessId,{
+      context:{promotion_id:promotionIdV256,surface_key:'wallet',
+        entry_point:'customer_wallet',locale:customerLocale,surface_version:'v255'}
+    });
+  }
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
@@ -5648,6 +5825,12 @@ async function renderCustomerWallet(businessSlug=null){
       host.innerHTML=`<div class="card customer-home-offers-state"><b>Your points build your tier</b><p class="muted small" style="margin-top:6px">Every point earned here counts toward your membership tier and its benefits — there is nothing to redeem. Your tier and what it unlocks are shown above.</p></div>`;
       return;
     }
+    /* v255: reward VIEWS were class C — only redemption outcomes existed, so the funnel had no
+       middle. One event per wallet render of the reward section, not one per card. */
+    if(businessId)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.reward_viewed',businessId,{
+      context:{surface_key:'rewards',entry_point:'customer_wallet',
+        locale:customerLocale,surface_version:'v255'}
+    });
     const classicAction=!actionsResult.error&&actionsResult.data?.redemption?.classic
       ?actionsResult.data.redemption.classic:null;
     const actionRewards=actionsResult.error?[]:[
@@ -5989,6 +6172,12 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     const {error}=await request('customer_set_in_app_inbox_state',{
       p_business_slug:slug,p_event_id:item.event_id,p_operation:operation,p_idempotency_key:crypto.randomUUID()
     });
+    if(!error&&operation==='read')typeof recordProductInteractionV100==='function'&&recordProductInteractionV100(
+      'customer.notification_opened',
+      isUuidV100(item?.business?.id)?item.business.id:customerWalletBusinessIdV256,
+      {context:{surface_key:'inbox',entry_point:'customer_inbox',
+        outcome:'read',surface_version:'v255'}}
+    );
     if(!walletSectionStillCurrent(host,isCurrent))return;
     const status=$('customerInboxStatus');
     if(error){if(status)status.textContent='That inbox item could not be updated. Please try again.';return;}
@@ -8685,8 +8874,16 @@ function renderShell(page){
   wireProfile(page);
   localizeWorkspaceSubtreeV97();
   observeWorkspaceLocalizationV97();
-  if(page[0]==='dashboard')recordProductInteractionV100('merchant.workspace_viewed',S.biz.id,{
+  if(page[0]==='dashboard')typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.workspace_viewed',S.biz.id,{
     context:{entry_point:'workspace_home',locale:workspaceLocale,surface_version:'v100'}
+  });
+  /* v255: workspace_viewed only ever covered the home page, so 12 of the 15 modules were
+     invisible. surface_viewed generalizes it — the module key travels in surface_key, which is
+     a closed route name and not a raw URL. workspace_viewed stays for continuity of the series
+     already recorded against it. */
+  if(page[0])typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.surface_viewed',S.biz.id,{
+    context:{surface_key:String(page[0]),entry_point:'workspace_nav',
+      locale:workspaceLocale,surface_version:'v255'}
   });
   /* Loyalty and retention share one presentation surface (growPage, below) while staying two
      completely separate engines underneath — same RPCs, same routes, same module keys. The
@@ -10803,7 +11000,7 @@ async function tillPage(){
     return;
   }
   selectedBranchId=tillBranchId;
-  recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
     branchId:tillBranchId,
     context:{action_key:'quick_earn',entry_point:'workspace_route',locale:workspaceLocale,surface_version:'v100'}
   });
@@ -10956,7 +11153,7 @@ async function tillPage(){
   async function doFind(){
     if(busy) return;
     if(!phone){$('tErr').innerHTML='<div class="err">Enter a phone number</div>';return}
-    recordProductInteractionV100('merchant.counter_action_started',S.biz.id,{
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_started',S.biz.id,{
       branchId:tillBranchId,
       context:{action_key:'customer_lookup',entry_point:'quick_earn',locale:workspaceLocale,surface_version:'v100'}
     });
@@ -15518,7 +15715,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const canSetupGrow=isOwner&&canRewards&&canWriteModule('loyalty');
   const canSetupWinback=isOwner&&canWinback&&canWriteModule('retention');
   const canEditProductCosts=isOwner&&canRewards&&canWriteModule('loyalty');
-  recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
   outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
@@ -16247,7 +16444,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       busy=true;rewardAutoConfirm.disabled=true;rewardAutoConfirm.textContent='Creating draft…';
       status.textContent='Preparing one editable draft. Nothing is being published.';
       rewardAutoSetupRequestKey??=crypto.randomUUID();
-      recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
+      typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
         context:{action_key:'automatic_rewards_setup',entry_point:'grow_overview',locale:workspaceLocale,surface_version:'v128'}
       });
       try{

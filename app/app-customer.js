@@ -46,6 +46,25 @@ const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=(
   CUSTOMER_PHONE_OTP_RUNTIME_ENABLED
   && window.__FRENLY_CUSTOMER_WHATSAPP_OTP_ENABLED__===true
 );
+/* The promotion detail modal is opened from a card, not from the wallet renderer, so it has no
+   business id in hand. Held here for the life of the wallet render that set it. */
+let customerWalletBusinessIdV256='';
+const customerPromotionsSeenV256=new Set();
+/* One session-start per browser session, recorded the first time a business scope is known.
+   sessionStorage carries it across a reload of the same tab, so a refresh is not a new session. */
+function recordCustomerSessionStartV256(businessId,locale){
+  if(productInteractionSessionStartedV256)return;
+  try{
+    if(sessionStorage.getItem(PRODUCT_INTERACTION_SESSION_START_KEY_V256)==='1'){
+      productInteractionSessionStartedV256=true;return;
+    }
+  }catch{}
+  productInteractionSessionStartedV256=true;
+  try{sessionStorage.setItem(PRODUCT_INTERACTION_SESSION_START_KEY_V256,'1')}catch{}
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.session_started',businessId,{
+    context:{entry_point:'customer_app',locale,surface_version:'v255'}
+  });
+}
 function takePendingCustomerDestination(fallback=''){
   const destination=normalizeCustomerDestination(pendingCustomerDestination);
   return destination||fallback;
@@ -2223,6 +2242,10 @@ function customerBusinessIdV103({summaryBusiness={},actionableCard=null,programm
 function openCustomerPromotionDetailsV104(card){
   const template=card?.querySelector('template[data-promotion-details-template]');
   if(!template)return;
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.promotion_opened',customerWalletBusinessIdV256,{
+    context:{promotion_id:String(card?.dataset?.promotionId||''),surface_key:'promotion_detail',
+      entry_point:'customer_wallet',surface_version:'v255'}
+  });
   $('customerPromotionDetailsModal')?.remove();
   const title=card.querySelector('h3')?.textContent?.trim()||'Offer details';
   document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerPromotionDetailsModal" role="dialog" aria-modal="true" aria-labelledby="customerPromotionDetailsTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
@@ -2292,6 +2315,11 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
       p_business_slug:businessSlug,p_event_id:prompt.event_id,
       p_operation:operation,p_idempotency_key:operationKeys[operation]
     }).catch(()=>{});
+    if(operation==='read')typeof recordProductInteractionV100==='function'&&recordProductInteractionV100(
+      'customer.notification_opened',customerWalletBusinessIdV256,
+      {context:{surface_key:'promotion_prompt',entry_point:'customer_wallet',
+        outcome:'read',surface_version:'v255'}}
+    );
     afterClose?.();
   };
   deactivate=CUI.activateDialog(dialog,{onClose:()=>close('dismiss'),initialFocus:'[data-promotion-popup-view]'});
@@ -2864,9 +2892,22 @@ async function renderCustomerWallet(businessSlug=null){
   const businessId=customerBusinessIdV103({
     summaryBusiness:b,actionableCard,programmeCards,businessSlug
   });
-  if(businessId)recordProductInteractionV100('customer.programme_viewed',businessId,{
+  if(businessId)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.programme_viewed',businessId,{
       context:{entry_point:'customer_wallet',locale:customerLocale,surface_version:'v100'}
     });
+  if(businessId){
+    customerWalletBusinessIdV256=businessId;
+    recordCustomerSessionStartV256(businessId,customerLocale);
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.surface_viewed',businessId,{
+      context:{surface_key:'wallet',entry_point:'customer_wallet',
+        locale:customerLocale,surface_version:'v255'}
+    });
+    /* v255 (audit 3, "customer DAU"): customer_account_open_days_v175 was built for exactly
+       this and its wallet channel had no caller, so the only DAU signal the product had was
+       the booking path. One idempotent, deduped-per-day write. */
+    try{Promise.resolve(sb.rpc('customer_record_account_open_v175',{p_business:businessId}))
+      .catch(()=>{})}catch{}
+  }
   const unavailableBusinessId=()=>Promise.resolve({
     data:null,error:{code:'business_id_unavailable',message:'Business identifier is unavailable'}
   });
@@ -2899,6 +2940,18 @@ async function renderCustomerWallet(businessSlug=null){
   presentation.offers=promotionsResult.error
     ?[]
     :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,6);
+  /* v255 (audit finding: promotion views were class C — nothing recorded between "we published
+     it" and "someone redeemed"). Deduped per browser session so a wallet the customer reopens
+     five times is one view, not five. */
+  if(businessId)for(const offerV256 of presentation.offers){
+    const promotionIdV256=String(offerV256?.id||offerV256?.promotion_id||'');
+    if(!isUuidV100(promotionIdV256)||customerPromotionsSeenV256.has(promotionIdV256))continue;
+    customerPromotionsSeenV256.add(promotionIdV256);
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.promotion_viewed',businessId,{
+      context:{promotion_id:promotionIdV256,surface_key:'wallet',
+        entry_point:'customer_wallet',locale:customerLocale,surface_version:'v255'}
+    });
+  }
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
@@ -3065,6 +3118,12 @@ async function renderCustomerWallet(businessSlug=null){
       host.innerHTML=`<div class="card customer-home-offers-state"><b>Your points build your tier</b><p class="muted small" style="margin-top:6px">Every point earned here counts toward your membership tier and its benefits — there is nothing to redeem. Your tier and what it unlocks are shown above.</p></div>`;
       return;
     }
+    /* v255: reward VIEWS were class C — only redemption outcomes existed, so the funnel had no
+       middle. One event per wallet render of the reward section, not one per card. */
+    if(businessId)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.reward_viewed',businessId,{
+      context:{surface_key:'rewards',entry_point:'customer_wallet',
+        locale:customerLocale,surface_version:'v255'}
+    });
     const classicAction=!actionsResult.error&&actionsResult.data?.redemption?.classic
       ?actionsResult.data.redemption.classic:null;
     const actionRewards=actionsResult.error?[]:[
@@ -3406,6 +3465,12 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     const {error}=await request('customer_set_in_app_inbox_state',{
       p_business_slug:slug,p_event_id:item.event_id,p_operation:operation,p_idempotency_key:crypto.randomUUID()
     });
+    if(!error&&operation==='read')typeof recordProductInteractionV100==='function'&&recordProductInteractionV100(
+      'customer.notification_opened',
+      isUuidV100(item?.business?.id)?item.business.id:customerWalletBusinessIdV256,
+      {context:{surface_key:'inbox',entry_point:'customer_inbox',
+        outcome:'read',surface_version:'v255'}}
+    );
     if(!walletSectionStillCurrent(host,isCurrent))return;
     const status=$('customerInboxStatus');
     if(error){if(status)status.textContent='That inbox item could not be updated. Please try again.';return;}

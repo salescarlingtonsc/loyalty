@@ -226,7 +226,7 @@ function openMerchantRedemptionScanner({
       <details style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="merchantScannerToken">Paste the QR content</label><input id="merchantScannerToken" type="text" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="merchantScannerConfirm" type="button" style="margin-top:10px">Confirm redemption</button></details>
     </div><p id="merchantScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
   document.body.appendChild(overlay);
-  recordProductInteractionV100('merchant.redemption_scan_started',businessId,{
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.redemption_scan_started',businessId,{
     branchId,
     context:{action_key:'customer_redemption',entry_point:'quick_earn',locale:workspaceLocale,surface_version:'v100'}
   });
@@ -1600,8 +1600,16 @@ function renderShell(page){
   wireProfile(page);
   localizeWorkspaceSubtreeV97();
   observeWorkspaceLocalizationV97();
-  if(page[0]==='dashboard')recordProductInteractionV100('merchant.workspace_viewed',S.biz.id,{
+  if(page[0]==='dashboard')typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.workspace_viewed',S.biz.id,{
     context:{entry_point:'workspace_home',locale:workspaceLocale,surface_version:'v100'}
+  });
+  /* v255: workspace_viewed only ever covered the home page, so 12 of the 15 modules were
+     invisible. surface_viewed generalizes it — the module key travels in surface_key, which is
+     a closed route name and not a raw URL. workspace_viewed stays for continuity of the series
+     already recorded against it. */
+  if(page[0])typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.surface_viewed',S.biz.id,{
+    context:{surface_key:String(page[0]),entry_point:'workspace_nav',
+      locale:workspaceLocale,surface_version:'v255'}
   });
   /* Loyalty and retention share one presentation surface (growPage, below) while staying two
      completely separate engines underneath — same RPCs, same routes, same module keys. The
@@ -3712,7 +3720,7 @@ async function tillPage(){
     return;
   }
   selectedBranchId=tillBranchId;
-  recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
     branchId:tillBranchId,
     context:{action_key:'quick_earn',entry_point:'workspace_route',locale:workspaceLocale,surface_version:'v100'}
   });
@@ -3865,7 +3873,7 @@ async function tillPage(){
   async function doFind(){
     if(busy) return;
     if(!phone){$('tErr').innerHTML='<div class="err">Enter a phone number</div>';return}
-    recordProductInteractionV100('merchant.counter_action_started',S.biz.id,{
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_started',S.biz.id,{
       branchId:tillBranchId,
       context:{action_key:'customer_lookup',entry_point:'quick_earn',locale:workspaceLocale,surface_version:'v100'}
     });
@@ -8397,7 +8405,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const canSetupGrow=isOwner&&canRewards&&canWriteModule('loyalty');
   const canSetupWinback=isOwner&&canWinback&&canWriteModule('retention');
   const canEditProductCosts=isOwner&&canRewards&&canWriteModule('loyalty');
-  recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
   outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
@@ -9126,7 +9134,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       busy=true;rewardAutoConfirm.disabled=true;rewardAutoConfirm.textContent='Creating draft…';
       status.textContent='Preparing one editable draft. Nothing is being published.';
       rewardAutoSetupRequestKey??=crypto.randomUUID();
-      recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
+      typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
         context:{action_key:'automatic_rewards_setup',entry_point:'grow_overview',locale:workspaceLocale,surface_version:'v128'}
       });
       try{

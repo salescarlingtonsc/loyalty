@@ -1564,6 +1564,24 @@
       "version": "20260808235000",
       "name": "nestly_v248_customer_directory_reports_loyalty_availability",
       "sourcePath": "db/migrations/20260809_nestly_v248_customer_directory_reports_loyalty_availability.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260809000100",
+      "name": "nestly_v255_marketing_send_records_and_taxonomy",
+      "sourcePath": "db/migrations/20260809_nestly_v255_marketing_send_records_and_taxonomy.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260809000200",
+      "name": "nestly_v255a_client_interaction_batch",
+      "sourcePath": "db/migrations/20260809_nestly_v255a_client_interaction_batch.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260809000300",
+      "name": "nestly_v255b_platform_marketing_reads",
+      "sourcePath": "db/migrations/20260809_nestly_v255b_platform_marketing_reads.sql"
     }
   ]
 }

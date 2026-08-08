@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 259,
-  "executableCount": 245,
+  "itemCount": 262,
+  "executableCount": 248,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -376,6 +376,16 @@
         "db/migrations/20260808_nestly_v245_customer_explore_search.sql",
         "db/migrations/20260808_nestly_v246_personas_direct_resolver.sql",
         "db/migrations/20260808_nestly_v247_explore_nearest_first.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260809",
+      "count": 4,
+      "paths": [
+        "db/migrations/20260809_nestly_v248_customer_directory_reports_loyalty_availability.sql",
+        "db/migrations/20260809_nestly_v255_marketing_send_records_and_taxonomy.sql",
+        "db/migrations/20260809_nestly_v255a_client_interaction_batch.sql",
+        "db/migrations/20260809_nestly_v255b_platform_marketing_reads.sql"
       ]
     }
   ],
@@ -2451,6 +2461,30 @@
       "semanticVersion": "v248",
       "proposedDeployVersion": "20260808235000",
       "sha256": "2183ef54d74e61cffb6203dfcf8f0e565cb7672fee7d0b711d4c4013bb4787e1"
+    },
+    {
+      "order": 260,
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v255_marketing_send_records_and_taxonomy.sql",
+      "semanticVersion": "v255",
+      "proposedDeployVersion": "20260809000100",
+      "sha256": "390d1dd6d884044a9acd939720030d4048a6dcc588e82055c188650928910f33"
+    },
+    {
+      "order": 261,
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v255a_client_interaction_batch.sql",
+      "semanticVersion": "v255a",
+      "proposedDeployVersion": "20260809000200",
+      "sha256": "8aa56751b6734c9d31b2fe52c71f83322d862b687bbf60ec0c8119fed66b5fbe"
+    },
+    {
+      "order": 262,
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v255b_platform_marketing_reads.sql",
+      "semanticVersion": "v255b",
+      "proposedDeployVersion": "20260809000300",
+      "sha256": "04e51c161a439ac96c2f1cef1e2bbe144035b095f4d6baf823f711e1a6e52d39"
     }
   ]
 }

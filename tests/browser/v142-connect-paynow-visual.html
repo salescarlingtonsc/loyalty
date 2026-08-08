@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="b7aaffddf1fb4b4950ba6ef36a911e30b219b626be607a1d6ea303c58803dada"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="af24707d47ca6fe1075eb62ae01843f74a47b05807676469e08ab7ee28fabb63"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1792,7 +1792,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · b7aaffddf1fb4b4950ba6ef36a911e30b219b626be607a1d6ea303c58803dada</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · af24707d47ca6fe1075eb62ae01843f74a47b05807676469e08ab7ee28fabb63</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2355,7 +2355,7 @@ async function tillPage(){
     return;
   }
   selectedBranchId=tillBranchId;
-  recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
     branchId:tillBranchId,
     context:{action_key:'quick_earn',entry_point:'workspace_route',locale:workspaceLocale,surface_version:'v100'}
   });
@@ -2508,7 +2508,7 @@ async function tillPage(){
   async function doFind(){
     if(busy) return;
     if(!phone){$('tErr').innerHTML='<div class="err">Enter a phone number</div>';return}
-    recordProductInteractionV100('merchant.counter_action_started',S.biz.id,{
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_started',S.biz.id,{
       branchId:tillBranchId,
       context:{action_key:'customer_lookup',entry_point:'quick_earn',locale:workspaceLocale,surface_version:'v100'}
     });
@@ -3676,7 +3676,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'b7aaffddf1fb4b4950ba6ef36a911e30b219b626be607a1d6ea303c58803dada',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'af24707d47ca6fe1075eb62ae01843f74a47b05807676469e08ab7ee28fabb63',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

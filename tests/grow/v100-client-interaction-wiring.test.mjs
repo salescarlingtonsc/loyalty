@@ -1,3 +1,7 @@
+/* V261: emit sites are now inline `typeof recordProductInteractionV100==='function'&&…`
+   guards, so a surface evaluated without the core chunk cannot throw and break the user's
+   action. Which events fire, where, and with what context — what these tests protect — is
+   unchanged. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -18,10 +22,16 @@ test('v100 interaction helper is UUID-scoped, privacy-minimized and fail-open',(
   ])assert.match(helper,new RegExp(`'${event.replaceAll('.','\\.')}'`));
   assert.match(helper,/sessionStorage\.getItem\(PRODUCT_INTERACTION_SESSION_KEY_V100\)/);
   assert.match(helper,/sessionStorage\.setItem\(PRODUCT_INTERACTION_SESSION_KEY_V100,productInteractionSessionIdV100\)/);
-  assert.match(helper,/idempotencyKey=`v100:\$\{crypto\.randomUUID\(\)\}`/);
-  assert.match(helper,/p_session_id:sessionId,p_idempotency_key:idempotencyKey/);
-  assert.match(helper,/Promise\.resolve\(sb\.rpc\('record_product_interaction_v100'/);
-  assert.match(helper,/\)\)\.catch\(\(\)=>\{\}\)/);
+  // V256: one RPC per event became one RPC per batch (v255). The idempotency key is still
+  // minted per event and still the server's only replay guard.
+  assert.match(helper,/idempotency_key:`v100:\$\{crypto\.randomUUID\(\)\}`/);
+  assert.match(helper,/session_id:productInteractionSessionV100\(\)/);
+  assert.match(helper,/sb\.rpc\('record_product_interactions_batch_v255',\{p_events:events\}/);
+  assert.match(helper,/\.catch\(\(\)=>\{\}\)/);
+  // V256: the flush must stay non-blocking and must never fall back to sendBeacon, which
+  // cannot carry the Authorization header the RPC needs.
+  assert.match(helper,/keepalive:true/);
+  assert.doesNotMatch(helper,/sendBeacon\s*\(/);
   assert.doesNotMatch(helper,/async function recordProductInteractionV100|await sb\.rpc/);
   for(const forbidden of ['phone','email','name','token','search','query','raw_route']){
     assert.doesNotMatch(
@@ -38,14 +48,14 @@ test('v100 telemetry records interaction starts and views without asserting outc
   const till=between('async function tillPage','async function salesPage');
   assert.match(till,/'merchant\.counter_action_opened'/);
   assert.match(till,/'merchant\.counter_action_started'/);
-  assert.doesNotMatch(till,/recordProductInteractionV100\('(?:sale|loyalty)\.(?:recorded|redeemed|completed)'/);
+  assert.doesNotMatch(till,/typeof recordProductInteractionV100==='function'&&recordProductInteractionV100\('(?:sale|loyalty)\.(?:recorded|redeemed|completed)'/);
 
   const scanner=between('function openMerchantRedemptionScanner','function showPendingRedemptionQr');
   assert.match(scanner,/'merchant\.redemption_scan_started'/);
   assert.doesNotMatch(scanner,/recordProductInteractionV100\([^)]*(?:completed|redeemed)/);
 
   const wallet=between('async function renderCustomerWallet','/* ---------- auth ---------- */');
-  assert.match(wallet,/if\(businessId\)recordProductInteractionV100\('customer\.programme_viewed',businessId/);
+  assert.match(wallet,/if\(businessId\)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100\('customer\.programme_viewed',businessId/);
   assert.doesNotMatch(wallet,/'customer\.programme_viewed',b\.id/);
 
   const grow=between('async function growPage','/* ---------- Bring-back playbooks');
@@ -55,13 +65,17 @@ test('v100 telemetry records interaction starts and views without asserting outc
 });
 
 test('v100 interaction contexts remain short allowlisted dimensions with no customer input',()=>{
-  const calls=[...app.matchAll(/recordProductInteractionV100\('(?:merchant|customer)\.[^']+'[\s\S]{0,420}?context:\{([\s\S]*?)\}\s*\}\);/g)];
-  assert.equal(calls.length,7);
+  const calls=[...app.matchAll(/recordProductInteractionV100\(\s*'(?:merchant|customer)\.[^']+'[\s\S]{0,420}?context:\{([\s\S]*?)\}\s*\}\s*\)/g)];
+  assert.equal(calls.length,16); // V256: 7 v100 call sites plus the 9 v255 emit points
   for(const [,context] of calls){
-    assert.doesNotMatch(context,/phone|email|name|token|search|query|raw_route/i);
+    // V256: query_shape is deliberately allowed and deliberately NOT the typed text — the
+    // shape helper is asserted separately in tests/business-ui/v255-interaction-batching.
+    assert.doesNotMatch(context,/phone|email|\bname\b|token|raw_route/i);
+    assert.doesNotMatch(context,/query\s*:|search\s*:|query_text|search_text/i);
     for(const key of context.matchAll(/([a-z_]+)\s*:/g)){
       assert.ok(
-        ['action_key','entry_point','locale','surface_version'].includes(key[1]),
+        ['action_key','entry_point','locale','surface_version','outcome',
+          'surface_key','promotion_id','query_shape'].includes(key[1]),
         `unexpected context key ${key[1]}`
       );
     }
