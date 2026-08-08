@@ -14,12 +14,15 @@ import { dirname, join } from 'node:path';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 
-test('V245 Pending setup is reachable from the nav, beside the other two', () => {
-  const links = app.slice(app.indexOf('const links=[\n    [\'#/grow\',\'Programmes list\']'));
-  const block = links.slice(0, links.indexOf('];') + 2);
-  assert.match(block, /\['#\/grow','Programmes list'\]/);
-  assert.match(block, /\['#\/grow\/ongoing','Ongoing programmes'\]/);
-  assert.match(block, /\['#\/grow\/available','Pending setup'\]/);
+/* V250 supersedes the nav half of V245: the owner struck out BOTH sub-rows, so Pending setup is
+   no longer reached from a menu row — it is a section the Programmes list opens with, and the
+   nav is one flat "Programmes" link onto that list. The destination it names is what still has
+   to be true, which the next test and the filter test below both pin. */
+test('V250 the Programmes nav is one flat link, with no sub-rows left', () => {
+  assert.match(app, /\{key:'grow',icon:'star',flat:'Programmes',href:'#\/grow'/);
+  assert.doesNotMatch(app, /'Programmes list'/);
+  assert.doesNotMatch(app, /\['#\/grow\/ongoing'/);
+  assert.doesNotMatch(app, /\['#\/grow\/available'/);
 });
 
 test('V245 nav row, page heading and tile group all say the same words', () => {

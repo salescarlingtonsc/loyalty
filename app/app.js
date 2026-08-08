@@ -498,7 +498,14 @@ const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
-  {key:'grow',icon:'star',label:'Programmes',items:['loyalty','retention','referrals','memberships','giftcards']},
+  /* V250 (owner nav sketch): Programmes is ONE flat link. Its three sub-rows — Programmes list,
+     Ongoing programmes, Pending setup — were a menu of the same page's own sections: the list
+     already opens with the V244 "Ongoing programmes" and "Pending setup" groups, so the rail
+     repeated three times what the page states once. `href` is required because this group's
+     destination is the #/grow SURFACE, not its first module key; every module key stays listed
+     so the business-enabled + per-staff access filter keeps gating each of them exactly as
+     before. Both filtered hashes still resolve in growPage — only the menu rows are gone. */
+  {key:'grow',icon:'star',flat:'Programmes',href:'#/grow',items:['loyalty','retention','referrals','memberships','giftcards']},
   /* V243 (owner, arrow from the Settings tabs to the LEFT NAV): "shift these into a new module
      (Customer Interface) - where everything that is required to edit in customer app must be
      inside this module." Customer-facing configuration was three tabs deep inside Settings, an
@@ -1505,8 +1512,7 @@ function waitlistTodaySummary(rows,dayStartMs){
   return {
     queue,
     added:today.length,
-    bookedToday:today.filter(row=>row.status==='booked').length,
-    removedToday:today.filter(row=>row.status==='removed').length
+    bookedToday:today.filter(row=>row.status==='booked').length
   };
 }
 async function fetchAllRows(makeQuery,pageSize=DATA_API_PAGE_SIZE){
@@ -7430,38 +7436,6 @@ function activeGroupKey(pageKey){
 function growBackActionHtmlV138(){
   return '<a class="btn ghost sm" href="#/grow" aria-label="Back to Grow overview">← Back to Grow overview</a>';
 }
-/* Loyalty + retention render as ONE sidebar link (owner directive 2026-07-23: keep both
-   engines separate underneath, merge the experience into a single "Grow" surface — see
-   growPage()). This only changes what the link looks like; NAVGROUPS.grow.items still lists
-   both real module keys so the access filter above (business-enabled + this staff member's
-   modules) keeps gating each of them exactly as before — a teammate with only one of the two
-   still only ever sees that one module key pass the filter, so hasRewards/hasWinback below
-   can never both be false while this renders. Links to whichever tab is already open if the
-   staff member is already on the Grow surface, else defaults to Everyday rewards. */
-function growNavItemHtml(items,activeKey){
-  if(!items.length)return '';
-  const onGrowSurface=['grow','loyalty','retention','studio','storedvalue','promotions','referrals','memberships','giftcards'].includes(activeKey);
-  const currentHash=(location.hash||'#/dashboard').split('?')[0];
-  /* V180 (owner instruction): four nav rows collapsed to two. "Available programmes" and
-     "More settings" were struck out because they duplicated what the list already shows —
-     the list carries every programme with its own Set up / Add / Edit action, so a separate
-     "available" destination was a second door to the same room, which is what made this
-     module feel like it had overlapping roles. Both hashes still resolve (see growPage), so
-     existing links and the quiet advanced settings link keep working. */
-  /* V245 (owner: "Pending setup (3) — where is it?"). V180 removed the "available" row as a
-     duplicate door; the owner has since asked for pending programmes as a place they can go
-     to set things up, so the row is back — now named to match the group in the list and the
-     heading on the page, so all three say the same word. */
-  const links=[
-    ['#/grow','Programmes list'],
-    ['#/grow/ongoing','Ongoing programmes'],
-    ['#/grow/available','Pending setup']
-  ];
-  return links.map(([href,label])=>{
-    const isAct=onGrowSurface&&(currentHash===href||(href==='#/grow'&&!currentHash.startsWith('#/grow/')));
-    return `<a href="${href}" class="${isAct?'act':''}"${isAct?' aria-current="page"':''}><span class="ic">${CUI.icon('loyalty',{size:18})}</span>${label}</a>`;
-  }).join('');
-}
 function waitlistBadgeHtml(){
   const count=Number(waitlistActiveCount)||0;
   return count>0?`<span class="nav-badge" data-waitlist-badge>${count}</span>`:'';
@@ -7516,17 +7490,21 @@ function navHtml(page,idPrefix='nav'){
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.flat){
-      const target=g.items[0],isAct=activeKey===target;
-      return `<a href="#/${target}" class="${isAct?'act':''}"${isAct?' aria-current="page"':''}><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.flat}</a>`;
+      /* V250: a flat group whose destination is a surface rather than a module key declares its
+         own href, and is then active for every route that resolves to the group — so Programmes
+         stays lit on #/grow, #/grow/ongoing, #/grow/available and every drilled topic view,
+         which a plain activeKey===items[0] comparison could never do. */
+      const target=g.items[0];
+      const href=g.href||`#/${target}`;
+      const isAct=g.href?activeGrp===g.key:activeKey===target;
+      return `<a href="${href}" class="${isAct?'act':''}"${isAct?' aria-current="page"':''}><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.flat}</a>`;
     }
     if(!(g.key in navOpen)) navOpen[g.key]=(g.key===activeGrp);
     const isOpen=navOpen[g.key]||g.key===activeGrp;
-    const restItems=g.key==='grow'?[]:g.items;
     return `<div class="navgroup">
       <button type="button" class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}" aria-expanded="${isOpen}" aria-controls="${idPrefix}-${g.key}"><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.label}<span class="chev" aria-hidden="true">${isOpen?'−':'+'}</span></button>
       <div class="navbody" id="${idPrefix}-${g.key}" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
-        ${g.key==='grow'?growNavItemHtml(g.items,activeKey):''}
-        ${restItems.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span><span class="nav-label">${MODULES[m][1]}</span>${m==='waitlist'?`<span data-waitlist-badge-slot>${waitlistBadgeHtml()}</span>`:''}</a>`).join('')}
+        ${g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span><span class="nav-label">${MODULES[m][1]}</span>${m==='waitlist'?`<span data-waitlist-badge-slot>${waitlistBadgeHtml()}</span>`:''}</a>`).join('')}
       </div></div>`;
   }).join('');
 }
@@ -9739,14 +9717,25 @@ async function clientsPage(){
       renderSelectedAudienceActionsV154(directory.customers,directory.loyaltyAvailable);
     }catch(error){if(isCustomersCurrent())host.querySelectorAll('[data-inactive-bucket] b').forEach(b=>b.textContent='—')}
   }
+  /* V248 — v155 dropped loyalty_available from the directory payload while the client still read
+     `=== true`, so an absent key blanked Points/Credit for every business. An explicit false is
+     still honoured (unconfirmed Loyalty scope must never be shown as zero); an ABSENT key falls
+     back to the evidence in the rows themselves — a numeric points field can only come from a
+     caller the server already served balances to. */
+  const customerDirectoryLoyaltyAvailableV248=data=>{
+    if(data?.loyalty_available===true)return true;
+    if(data?.loyalty_available===false)return false;
+    return (Array.isArray(data?.customers)?data.customers:[]).some(c=>typeof c?.points==='number');
+  };
   const allCustomerDirectoryRows=async()=>{
     const customers=[];let offset=0,total=null,loyaltyAvailable=null;
     while(total===null||offset<total){
       const {data,error}=await customerDirectoryPage(null,null,offset);
       if(error)throw error;
       const page=Array.isArray(data?.customers)?data.customers:[];
-      if(loyaltyAvailable===null)loyaltyAvailable=data?.loyalty_available===true;
-      else if(loyaltyAvailable!==(data?.loyalty_available===true))throw new Error('Customer balance authority changed during export. Try again.');
+      const pageAvailable=customerDirectoryLoyaltyAvailableV248(data);
+      if(loyaltyAvailable===null)loyaltyAvailable=pageAvailable;
+      else if(loyaltyAvailable!==pageAvailable)throw new Error('Customer balance authority changed during export. Try again.');
       total=Math.max(0,Number(data?.total)||0);customers.push(...page);
       if(!page.length)break;
       offset+=page.length;
@@ -9847,12 +9836,12 @@ async function clientsPage(){
     if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
     if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveBucket?'No customers in this inactive group':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveBucket?'Choose another inactivity group, Never visited, or All customers.':'Customers will appear here after joining your loyalty programme or making a purchase. You can also add a customer manually from the button above.'});return}
-    const loyaltyAvailable=result?.loyalty_available===true;
+    const loyaltyAvailable=customerDirectoryLoyaltyAvailableV248(result);
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     const sortGlyph='↕';
     $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points and spendable credit are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">Points ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="credit_desc">Credit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="consent_desc">Consent ${sortGlyph}</button></th></tr>
       ${cl.map(c=>`<tr>
-        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
+        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
         <td>${loyaltyAvailable?`${Number(c.points)||0} pts`:'Unavailable'}</td><td>${loyaltyAvailable?money(Number(c.balance_cents)||0):'Unavailable'}</td>
         <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
@@ -10166,91 +10155,36 @@ async function clientDetail(id){
   const canBookAppt=canWriteModule('appointments');
   const goQuickEarn=()=>{pendingTillPhone=localMobile;nav('#/till')};
   const goNewAppt=()=>{pendingApptClientId=id;nav('#/appointments')};
-  const focusCard=(cardId)=>{
-    const el=$(cardId);if(!el)return;
-    el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-    el.classList.add('c360-flash');setTimeout(()=>{el.classList.remove('c360-flash')},1400);
-    (el.querySelector('button:not([disabled]),select,a')||el).focus?.({preventScroll:true});
-  };
   /* Status badges — every one is derived from data already fetched above (no persona table read). */
   const badges=[];
+  /* V249: the owner moved Visits and Lifetime spend off the KPI row onto this identity line.
+     The visits chip is the SAME single chip that already sat here — it now always carries the
+     count — and one spend chip joins it. Never two visit chips. */
   if(canReadSales){
-    if(netVisits>=10)badges.push({cls:'vip',icon:'loyalty',label:`VIP · ${netVisits} visits`});
-    else if(netVisits>=3)badges.push({cls:'regular',icon:'check',label:`Regular · ${netVisits} visits`});
+    /* The old cards said "Visible visits"/"Visible sales total" to an employee whose branch
+       scope hides rows. The chips must not quietly drop that — isProfileAdmin is the same
+       predicate, and it is already declared far above, so there is no ordering hazard. */
+    const visitsLabelV249=`${netVisits} ${isProfileAdmin?'':'visible '}visit${netVisits===1?'':'s'}`;
+    if(netVisits>=10)badges.push({cls:'vip',icon:'loyalty',label:`VIP · ${visitsLabelV249}`});
+    else if(netVisits>=3)badges.push({cls:'regular',icon:'check',label:`Regular · ${visitsLabelV249}`});
     else if(netVisits<=0)badges.push({cls:'newc',icon:'add',label:'New customer'});
-    else badges.push({cls:'',icon:'customers',label:`${netVisits} visit${netVisits===1?'':'s'}`});
+    else badges.push({cls:'',icon:'customers',label:visitsLabelV249});
+    badges.push({cls:'',icon:'sales',label:`${money(lifetimeSpendCents)} ${isProfileAdmin?'lifetime':'visible sales'}`});
   }
   if(canReadMemberships&&activeMembership)badges.push({cls:'member',icon:'memberships',label:`Member${activeMembership.membership_plans?.name?' · '+activeMembership.membership_plans.name:''}`});
   if(canReadPackages&&activePackage)badges.push({cls:'package',icon:'packages',label:`Package · ${activePackage.remaining} left`});
   if(loyaltyFactsAvailable&&cred>0)badges.push({cls:'',icon:'giftcard',label:`${money(cred)} credit`});
   if(canReadLoyalty&&birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available')badges.push({cls:'newc',icon:'loyalty',label:'Birthday reward'});
   badges.push(c.marketing_consent?{cls:'regular',icon:'check',label:'PDPA consent'}:{cls:'consent-no',icon:'info',label:'No marketing consent'});
-  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:14})}${esc(b.label)}</span>`).join('')}</div>`;
-  /* Next-best-action: a deterministic priority cascade over the signals above. First matching rule
-     whose deep-link the current role can actually use becomes the ONE primary action; the remaining
-     actionable rules collapse into a "More options" menu. Every action lands on an existing surface. */
-  const expiryDate=nextExp?sgDateInputValue(new Date(nextExp.expires_at)):null;
-  const expDays=nextExp?completeSgCalendarDaysUntil(nextExp.expires_at):null;
-  const candidates=[];
-  if(canReadLoyalty&&birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available'){
-    candidates.push({actionKey:'birthday',iconName:'loyalty',title:'Birthday reward is ready',
-      reason:'Their birthday window is open now. Redeem the treat before it lapses — the team never sees the date.',
-      ctaLabel:'Go to birthday reward',run:canRedeemBirthday?()=>focusCard('c360-birthday'):null});
-  }
-  if(loyaltyFactsAvailable&&nextExp&&pts>0&&expDays!=null&&expDays<=30){
-    if(rewardReady){
-      candidates.push({actionKey:'loyalty',iconName:'redeem',title:'Points expire soon — redeem now',
-        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${expiryDate} (in ${expDays} day${expDays===1?'':'s'}). They already have enough for ${rewardReadyLabel} — redeem so nothing is lost.`,
-        ctaLabel:'Redeem reward',run:canWriteLoyalty?()=>focusCard('c360-loyalty'):null});
-    }else{
-      candidates.push({actionKey:'quickearn',iconName:'till',title:'Points expire soon',
-        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${expiryDate} (in ${expDays} day${expDays===1?'':'s'})${pointsToUnlock?`, ${pointsToUnlock} short of ${rewardReadyLabel}`:''}. Invite a visit so they build toward a reward before then.`,
-        ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
-    }
-  }
-  if(loyaltyFactsAvailable&&rewardReady){
-    candidates.push({actionKey:'loyalty',iconName:'redeem',title:'A reward is ready to redeem',
-      reason:`They have ${pts} point${pts===1?'':'s'} — enough for ${rewardReadyLabel}. Redeeming it is a reason to come back.`,
-      ctaLabel:'Redeem reward',run:canWriteLoyalty?()=>focusCard('c360-loyalty'):null});
-  }
-  if(canReadSales&&netVisits>=3&&lastVisitDays!=null&&lastVisitDays>45){
-    candidates.push({actionKey:canBookAppt?'appt':'quickearn',iconName:'appointments',title:'Regular customer is overdue',
-      reason:`${netVisits} visits on record, but none in ${lastVisitDays} days. Book them back in before you lose them.`,
-      ctaLabel:canBookAppt?'New appointment':'Record sale',run:canBookAppt?goNewAppt:(canQuickEarn?goQuickEarn:null)});
-  }
-  if(loyaltyFactsAvailable&&cred>0){
-    candidates.push({actionKey:'quickearn',iconName:'giftcard',title:'Store credit is waiting',
-      reason:`${money(cred)} in spendable credit is sitting unused. Remind them to spend it on the next visit.`,
-      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null});
-  }
-  if(canReadSales&&netVisits<=0){
-    candidates.push({actionKey:'quickearn',iconName:'till',title:'New customer — no visits yet',
-      reason:'Record an eligible first purchase; points are earned only when an active published loyalty programme applies.',
-      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
-  }
-  candidates.push(canReadSales
-    ?{actionKey:'quickearn',iconName:'check',title:'Everything looks healthy',
-      reason:`${lastVisitDays!=null?`Last visit ${lastVisitDays} day${lastVisitDays===1?'':'s'} ago.`:'No recent activity to flag.'} Record the next visit when they come in.`,
-      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null}
-    :{actionKey:'customer',iconName:'customers',title:'Customer details are available',
-      reason:'Sales and reward figures are hidden because this role does not have access to those modules.',
-      ctaLabel:'No additional action',run:null});
-  const primaryNba=candidates.find(x=>x.run)||candidates[0];
-  const nbaSeen=new Set([primaryNba.actionKey]);
-  const secondaryNba=candidates.filter(x=>x!==primaryNba&&x.run&&!nbaSeen.has(x.actionKey)&&nbaSeen.add(x.actionKey)).slice(0,4);
-  const nbaHtml=`<section class="c360-nba" aria-label="Recommended next action">
-    <div class="c360-nba-ic" aria-hidden="true">${CUI.icon('insight',{size:24})}</div>
-    <div class="c360-nba-body">
-      <p class="eyebrow">Peekaa's suggestion</p>
-      <h2>${esc(primaryNba.title)}</h2>
-      <p>${esc(primaryNba.reason)}</p>
-      <div class="c360-nba-actions">
-        ${primaryNba.run?`<button class="btn" id="c360Primary">${CUI.icon(primaryNba.iconName,{size:17})}<span>${esc(primaryNba.ctaLabel)}</span></button>`:'<span class="pill off">No action available for your role</span>'}
-        ${secondaryNba.length?`<div class="c360-more"><button type="button" class="btn ghost sm" id="c360MoreBtn" aria-expanded="false" aria-controls="c360MoreMenu">More options</button>
-          <div class="c360-more-menu" id="c360MoreMenu" hidden>${secondaryNba.map((s,i)=>`<button type="button" data-c360-secondary="${i}">${esc(s.ctaLabel)}<span class="sub">${esc(s.title)}</span></button>`).join('')}</div></div>`:''}
-      </div>
-    </div>
-  </section>`;
+  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:14})}${esc(b.label)}</span>`).join('')}</div>`
+    /* V249: the deleted banner was the only place that told staff earning is CONDITIONAL when a
+       customer has no visits yet. Peekaa must never imply points arrive automatically, so the
+       same reviewed sentence (translations already carry it verbatim) stays on the page. */
+    +(canReadSales&&netVisits<=0?`<p class="muted small" style="margin:-10px 0 16px">Record an eligible first purchase; points are earned only when an active published loyalty programme applies.</p>`:'');
+  /* V249: the owner struck out the whole next-best-action suggestion banner. Nothing it offered
+     was unique — its Redeem reward button only scrolled to the rewards card below (redemption
+     still happens there, via the branch-scoped Record sale scanner), and every secondary entry
+     was a duplicate of the Record sale / New appointment buttons already in the page header. */
   const detailSubtitle=[c.phone,c.email].filter(Boolean).join(' · ')||'No contact details';
   const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
   const headerActions=[
@@ -10278,6 +10212,10 @@ async function clientDetail(id){
       ${birthdayRedeemMarkup}${birthdayReverseMarkup}</div>`;
   }
   let rewardsMarkup='';
+  /* V249: the owner moved the expiry note and these two collapsibles INTO the Points KPI card.
+     They are built here because only this branch has the programme facts (unit, earn rate,
+     balance), then rendered once inside that card — the same single definition, never a copy. */
+  let pointsPanelDetailsV249='';
   if(!loyaltyFactsAvailable){
     rewardsMarkup='<p class="err small" style="margin-top:7px">Loyalty balances and reward availability are temporarily unavailable. Peekaa has not replaced them with zero.</p><button class="btn ghost sm" id="c360LoyaltyRetry" style="margin-top:10px">Reload profile</button>';
   }else if(prog&&prog.active){
@@ -10299,20 +10237,28 @@ async function clientDetail(id){
        staff do occasionally need them, but folded away underneath. */
     const readyRewards=redemptionEnabled?projectedRewards.filter(reward=>reward.available_now):[];
     const pendingRewards=redemptionEnabled?projectedRewards.filter(reward=>!reward.available_now):[];
-    const rewardRow=(reward,ready)=>`<div class="row c360-reward-row-v226"><span data-merchant-content>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${ready?'ok':'off'}">${!redemptionEnabled?'Unavailable':ready?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`;
+    /* V249: the owner wants the point COST on a claimable row, not a bare "Ready now" pill.
+       A row that is NOT claimable keeps its honest existing state (how far off, or Unavailable),
+       and a reward whose cost the server did not return falls back rather than inventing one. */
+    const rewardCostLabelV249=reward=>{const cost=Number(reward.cost_units);return Number.isFinite(cost)&&cost>0?`${cost} ${unit}`:'Ready now'};
+    const rewardRow=(reward,ready)=>`<div class="row c360-reward-row-v226"><span data-merchant-content>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${ready?'ok':'off'}">${!redemptionEnabled?'Unavailable':ready?esc(rewardCostLabelV249(reward)):`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`;
+    /* V249: heading renamed to the owner's own words, and the sentence about scanning the
+       pending QR is struck out — the button says what to do, so the scanner now sits directly
+       under the reward list where the owner drew it. The scanner is still the ONLY redemption
+       path, still gated on canWriteLoyalty && redemptionEnabled && something being ready. */
     rewardsMarkup=`${readyRewards.length
-      ?`<p class="eyebrow" style="margin-top:8px">Ready to redeem now · ${readyRewards.length}</p>
+      ?`<p class="eyebrow" style="margin-top:8px">Redeem now!</p>
         <div style="margin-top:8px">${readyRewards.map(reward=>rewardRow(reward,true)).join('')}</div>`
       :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
         <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
-      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<p class="muted small" style="margin-top:12px">Scan the customer's pending QR in Record sale to complete one. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
-      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}
-      <details class="c360-reward-adjust" style="margin-top:10px"><summary>Balance and earning</summary>
+      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<a class="btn sm" href="#/till" style="margin-top:12px">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
+      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
+    pointsPanelDetailsV249=`<details class="c360-reward-adjust"><summary>Balance and earning</summary>
         <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
         <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
-      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
+      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
   }
@@ -10322,10 +10268,10 @@ async function clientDetail(id){
     :'No actionable points are currently scheduled to expire.';
   const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:14})}<span>${esc(nextExpiryLabel)}</span></div>`;
   const wholeBusinessLabels=S.myRole==='owner'||S.myRole==='manager';
+  /* V249: two KPI cards, not four. Visits and Lifetime spend are chips on the identity line
+     above; Points carries its expiry note and the two moved collapsibles. */
   const profileKpis=[
-    canReadSales?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Visits':'Visible visits'}</div><div class="v">${netVisits}</div></div>`:'',
-    canReadSales?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Lifetime spend':'Visible sales total'}</div><div class="v">${money(lifetimeSpendCents)}</div></div>`:'',
-    loyaltyFactsAvailable?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v">${pts}</div>${pointsExpiryMarkup}</div>`:'',
+    loyaltyFactsAvailable?`<div class="card kpi customer360-points-card-v249"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v">${pts}</div>${pointsExpiryMarkup}${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}</div>`:'',
     loyaltyFactsAvailable?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Spendable credit':'Business-wide spendable credit'}</div><div class="v">${money(cred)}</div></div>`:''
   ].filter(Boolean).join('');
   const referralMarkup=canReadReferrals?`<p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
@@ -10338,10 +10284,7 @@ async function clientDetail(id){
       :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
     </div>`:'';
   const activitySources=[canReadSales&&'sales and visits',canReadAppointments&&'appointments',canReadLoyalty&&'reward redemptions',canReadRetention&&'retention rewards',canReadMemberships&&'memberships',canReadPackages&&'packages'].filter(Boolean);
-  const activityScopeCopy=wholeBusinessLabels
-    ?`${activitySources.join(', ')} available to this role — newest first.`
-    :'Sales and appointments cover assigned branches; loyalty and reward records are business-wide when available — newest first.';
-  const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b><p class="muted small" style="margin:4px 0 8px">${esc(activityScopeCopy)}</p>
+  const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b>
     <div id="histBody">${renderHistPage(history,histShown)}</div>
     ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
     </div>`:'';
@@ -10366,8 +10309,12 @@ async function clientDetail(id){
     ${staffProfileScopeNote}
     ${profileScopeNotice}
     ${correctionScopeNotice}
-    ${nbaHtml}
-    ${profileKpis?`<div class="kpis">${profileKpis}</div>`:''}
+    ${profileKpis
+      ?`<div class="kpis customer360-kpis-v249">${profileKpis}</div>`
+      /* V249: the deleted banner also carried the only explanation a role without sales or
+         loyalty access ever got for the empty figures. Absent numbers must be explained, never
+         shown as zero, so the same reviewed sentence replaces the KPI row for that role. */
+      :`<p class="muted small" role="note" style="margin:0 0 16px">Sales and reward figures are hidden because this role does not have access to those modules.</p>`}
     <div class="split" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
         <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards for customer</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
@@ -10384,9 +10331,8 @@ async function clientDetail(id){
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
     ${activityMarkup}`;
   routeMain.querySelector('.cui-page-title h1')?.setAttribute('data-merchant-content','');
-  /* Next-best-action + header quick actions. Every handler routes to an existing surface — no new
-     write path is introduced here. */
-  if($('c360Primary')&&primaryNba.run)$('c360Primary').onclick=primaryNba.run;
+  /* Header quick actions. Every handler routes to an existing surface — no new write path is
+     introduced here. */
   if($('c360QuickEarn'))$('c360QuickEarn').onclick=goQuickEarn;
   if($('c360FeedbackRetry'))$('c360FeedbackRetry').onclick=()=>clientDetail(id);
   if($('c360BirthdayRetry'))$('c360BirthdayRetry').onclick=()=>clientDetail(id);
@@ -10440,23 +10386,6 @@ async function clientDetail(id){
       }
       toast('Customer updated');editCard.hidden=true;clientDetail(id);
     };
-  }
-  const moreBtn=$('c360MoreBtn'),moreMenu=$('c360MoreMenu');
-  if(moreBtn&&moreMenu){
-    /* Outside-click listener is bound only while the menu is open and removed on close, so
-       repeated clientDetail re-renders never accumulate document-level listeners. */
-    const onOutside=(e)=>{if(!moreMenu.contains(e.target)&&e.target!==moreBtn)closeMenu()};
-    function closeMenu(){moreMenu.hidden=true;moreBtn.setAttribute('aria-expanded','false');document.removeEventListener('click',onOutside)}
-    moreBtn.onclick=(e)=>{
-      e.stopPropagation();
-      const open=moreMenu.hidden;
-      if(open){moreMenu.hidden=false;moreBtn.setAttribute('aria-expanded','true');moreMenu.querySelector('button')?.focus();setTimeout(()=>document.addEventListener('click',onOutside),0)}
-      else closeMenu();
-    };
-    moreMenu.querySelectorAll('[data-c360-secondary]').forEach(b=>b.onclick=()=>{
-      const action=secondaryNba[Number(b.dataset.c360Secondary)];closeMenu();action?.run?.();
-    });
-    moreMenu.addEventListener('keydown',(e)=>{if(e.key==='Escape'){closeMenu();moreBtn.focus()}});
   }
   document.querySelectorAll('.cfvSave').forEach(b=>b.onclick=async()=>{
     const el=$(`cfv-${b.dataset.id}`),type=b.dataset.type,raw=el.value;
@@ -15537,16 +15466,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
     ?rewardJourney.earning.label
     :`Paused — customers earn nothing and no reward below is claimable. Open Edit to turn it on. Configured as ${rewardJourney.earning?.label||'no earning rule'}`;
-  const milestoneOverviewCopy=(milestone,index)=>{
-    const cost=milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:'';
-    if(milestone.availableToCustomers)return `Reach ${milestone.threshold} ${milestone.unit}${index?` · ${milestone.additional} more after the previous reward`:''}${cost}`;
-    const state=milestone.availability==='programme_paused'?'Programme paused'
-      :milestone.availability==='not_started'?'Scheduled · not available yet'
-      :milestone.availability==='ended'?'Claim period ended'
-      :milestone.availability==='not_current_model'?'Not used by the current Simple points programme'
-      :'Programme not configured';
-    return `${state} · configured at ${milestone.threshold} ${milestone.unit}${cost}`;
-  };
   const rewardsOverviewIncomplete=Object.values(snapshot.overviewErrors||{}).some(Boolean);
   const growAsOfDate=Number.isFinite(Date.parse(snapshot.asOf||''))
     ?sgDateInputValue(new Date(snapshot.asOf)):sgDateInputValue();
@@ -15669,14 +15588,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     {key:'points',icon:'till',title:'Points redemption',blurb:'Earning, and the rewards points are spent on.',
       status:loyaltyModelTileStatusV235('redeem'),
       summary:!liveLoyaltyModelKeysV240.includes('redeem')?otherModelLiveV235()
-        :rewardCount?`Live model · ${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`
+        :rewardCount?`${rewardCount} redeemable reward${rewardCount===1?'':'s'}`
         :'Live model · set the earning rate and rewards'},
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
       status:loyaltyModelTileStatusV235('tiers'),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?otherModelLiveV235()
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
-        :loyaltyTiersV229.length?`Live model · ${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
+        :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Live model · create the ladder customers climb'},
     {key:'stamps',icon:'check',title:'Stamp card',blurb:'Collect a stamp per spend, claim at each milestone.',
       status:loyaltyModelTileStatusV235('stamps'),
@@ -15728,7 +15647,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const growTilesHtmlV229=`${growTileSectionV244('Ongoing programmes','Running now — customers can see and use these.',growOngoingTopicsV244,'Nothing is reaching customers yet. Set one up below.')}
     ${growTileSectionV244('Pending setup','Not running yet. Open one to set it up.',growPendingTopicsV244,'Every programme is running.')}`;
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
-  const growPointsModeChooserV229=(()=>{
+  /* V250 (owner crossed out the "● Live: Points redemption / ● Live: Tiered membership /
+     Stamp card" chip column on the Points redemption page). Which model is live is already the
+     answer to the tile the owner pressed to get here, so on that page the chips only restated
+     the heading; they still earn their place on the Tiered membership page, where the reader is
+     choosing between models. "Change model" is untouched — it is the only way to switch, so
+     removing it would have removed the capability rather than the clutter. */
+  const growPointsModeChooserV229=({showLiveModelsV250=true}={})=>{
     if(!canRewards)return '';
     const locked=!canSetupGrow;
     if(!pointsModeV229)return `<div class="points-mode-chooser-v229" role="group" aria-label="How customers use points">
@@ -15741,8 +15666,45 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     /* V235 (owner: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as
        two half-truths). All three models are named, exactly one carries the Live mark, and the
        change itself happens in one place — the editor's segmented toggle. */
-    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span>${locked?'':editorAction('rewards','Change model','lm')}</div>`;
-  })();
+    return `<div class="points-mode-chosen-v229">${showLiveModelsV250?`<span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span>`:''}${locked?'':editorAction('rewards','Change model','lm')}</div>`;
+  };
+  /* V250 (owner drew reward boxes over this list — "Free Facial / 5 points", "Free Moisturiser /
+     150 points", "Free xxx / xx points", plus a "+" — and crossed out the numbered rows, the
+     "Add another reward" row and the "Start from a template" row). A reward is the thing a
+     customer picks, so it reads as a card carrying its name and its price in points, not as a
+     line in a settings list. Every card keeps its own status pill: a paused, scheduled or ended
+     reward rendered identically to a live one is the single way this shape could lie to the
+     owner about what customers can actually claim. The cards carry the SAME
+     data-rewards-overview-edit contract the rows carried, so there is one edit path, not two,
+     and the dashed "+" card fires the identical 'add' action the struck row fired. Templates
+     were the only door into rewardTemplatesForSectorV172, so that flow survives as a secondary
+     link under the grid — the row went, the capability did not. */
+  const rewardCardStatusV250=milestone=>milestone.availableToCustomers?['Live','on']
+    :milestone.availability==='not_started'?['Scheduled','off']
+    :milestone.availability==='ended'?['Ended','off']:['Paused','off'];
+  const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId})=>{
+    const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>`;
+    return canSetupGrow
+      ?`<button type="button" class="reward-card-v250" data-programme-kind="redeemable" data-rewards-overview-edit="${esc(editKind)}"${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="reward-card-open-v250">Edit →</span></button>`
+      :`<article class="reward-card-v250" data-programme-kind="redeemable"${editKind==='catalogue'?' data-reward-milestone':''}${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="grow-programme-access">Read only</span></article>`;
+  };
+  const rewardCardsV250=[
+    ...(rewardJourney.classicReward?[{name:rewardJourney.classicReward.name,cost:rewardJourney.classicReward.threshold,unit:rewardJourney.classicReward.unit,
+      status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
+    ...rewardJourney.milestones.map(milestone=>{
+      const [status,tone]=rewardCardStatusV250(milestone);
+      return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id};
+    }),
+    ...rewardJourney.archivedRewards.map(reward=>({name:reward.name,cost:reward.threshold,unit:reward.unit,
+      status:'Paused',tone:'off',editKind:'catalogue',rewardId:reward.id}))
+  ];
+  const rewardCardGridV250=`<div class="reward-card-grid-v250" data-reward-card-grid-v250>
+      ${rewardCardsV250.map(rewardCardHtmlV250).join('')}
+      ${canSetupGrow?`<button type="button" class="reward-card-v250 reward-card-add-v250" data-programme-kind="redeemable" data-rewards-overview-edit="add"><span class="reward-card-plus-v250" aria-hidden="true">+</span><b class="reward-card-name-v250">Add reward</b></button>`:''}
+    </div>
+    ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}
+    ${canSetupGrow?`<p class="reward-card-templates-v250"><button type="button" class="btn ghost sm" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel">${CUI.icon('star',{size:16})}<span>Start from a template</span></button></p>
+    <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}`;
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -15763,28 +15725,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            points balance — the welcome offer for a first visit, a birthday benefit, a
            bring-back for someone who has drifted — are their own group. -->
       <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
-        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>`:''}
+        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229({showLiveModelsV250:false})}</div>`:''}
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
           <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
-        ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
-          <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
-        ${snapshot.overviewErrors?.rewards?'':rewardJourney.milestones.map((milestone,index)=>canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="catalogue" data-reward-id="${esc(milestone.id)}">
-          <span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div><span class="grow-programme-meta">${programmeStatus(milestone.availableToCustomers?'Live':milestone.availability==='not_started'?'Scheduled':milestone.availability==='ended'?'Ended':'Paused',milestone.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="redeemable" data-reward-milestone><span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div><span class="grow-programme-meta">${programmeStatus(milestone.availableToCustomers?'Live':milestone.availability==='not_started'?'Scheduled':milestone.availability==='ended'?'Ended':'Paused',milestone.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`).join('')}
-        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
-        ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
-        <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
-        ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
+        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardCardGridV250}
         `}
       </div></div>
       `:''}
       ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
-        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>
+        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
           :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
@@ -15870,7 +15823,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     let visibleCategories=0;
     outerMain.querySelectorAll('.programme-category').forEach(category=>{
       let visible=0;
-      category.querySelectorAll('.grow-programme-row').forEach(row=>{
+      category.querySelectorAll('.grow-programme-row,.reward-card-v250').forEach(row=>{
         /* V180: this used to match the badge TEXT for "live". Renaming the badge to "Ongoing"
            would have silently emptied the Running view — the filter would have found no row
            whose pill said "live" and hidden everything. The tone class is the actual status
@@ -19252,8 +19205,8 @@ async function appointmentsPage(){
         </span>
         <details class="appointment-more"><summary class="qbtn">More</summary><div class="appointment-more-menu"><button class="qbtn" id="apPrint">Print</button><button class="qbtn" id="apCsv">Download CSV</button></div></details></div>
         <div class="appointment-list-filters" id="appointmentListFilters" hidden>
-          <div><label for="appointmentListFrom">From</label><input type="date" id="appointmentListFrom" value="${todaySg}"></div>
-          <div><label for="appointmentListTo">To</label><input type="date" id="appointmentListTo" value="${shiftSgDateInput(todaySg,7)}"></div>
+          <div><label for="appointmentListFrom">From</label><input type="date" id="appointmentListFrom" class="appt-date-narrow-v251" value="${todaySg}"></div>
+          <div><label for="appointmentListTo">To</label><input type="date" id="appointmentListTo" class="appt-date-narrow-v251" value="${shiftSgDateInput(todaySg,7)}"></div>
           <div><label for="appointmentListStatus">Appointment status</label><select id="appointmentListStatus"><option value="">All statuses</option><option value="booked">Booked</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="no_show">No-show</option></select></div>
           <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="appointmentListApply">Apply filters</button><button type="button" class="btn ghost sm" id="appointmentListClear">Clear filters</button></div>
           <div class="row" style="grid-column:1/-1;gap:8px;flex-wrap:wrap"><button type="button" class="qbtn" data-appt-preset="today">Today</button><button type="button" class="qbtn" data-appt-preset="next7">Next 7 days</button><button type="button" class="qbtn" data-appt-preset="past7">Past 7 days</button><button type="button" class="qbtn" data-appt-preset="month">This month</button></div>
@@ -19670,8 +19623,8 @@ async function appointmentsPage(){
     loading.innerHTML=`<div class="modal-card"><div class="row"><div><h2 id="appointmentDetailLoadingTitle">Appointment details</h2><p class="muted small" style="margin-top:4px">Loading customer and service information…</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentLoadingClose" aria-label="Close appointment details">Close</button></div><div class="empty" role="status" style="margin-top:18px">Loading…</div></div>`;
     document.body.append(loading);
     let deactivateLoading=null;
-    const removeLoading=({restoreFocus=true}={})=>{
-      if(deactivateLoading){const deactivate=deactivateLoading;deactivateLoading=null;deactivate({restoreFocus})}
+    const removeLoading=({restoreFocus=true,handOffHistory=false}={})=>{
+      if(deactivateLoading){const deactivate=deactivateLoading;deactivateLoading=null;deactivate({restoreFocus,handOffHistory})}
       else loading.remove();
       if(closeAppointmentDialog===removeLoading)closeAppointmentDialog=null;
     };
@@ -19685,9 +19638,19 @@ async function appointmentsPage(){
       $('appointmentLoadingClose').onclick=close;$('appointmentDetailRetry').onclick=()=>openAppointmentDetails(summary,{startEditing});
       requestAnimationFrame(()=>$('appointmentDetailRetry')?.focus());return;
     }
-    removeLoading();renderAppointmentDetails(data,{startEditing});
+    /* V248 (owner: "Cannot click???" on a Day-view block). Tapping an appointment DID run the
+       handler — it opened this loading sheet, read the row, then opened the detail dialog, which
+       closed itself again on arrival, so the tap looked like it did nothing. CUI.activateDialog
+       pushes a history entry per dialog and unwinds it with history.back(), which is ASYNC: the
+       pop landed after the detail dialog had pushed its own entry, and the detail dialog's own
+       popstate listener read that pop as a Back press and closed it. Exactly the hazard the v183
+       comment in app/customer-ui.js describes; the customer sheets already hand the entry over,
+       this business-side loading→detail handoff never did. */
+    const appointmentDialogHandOffV248=CUI.currentDialogHistoryId?.()||0;
+    removeLoading({handOffHistory:appointmentDialogHandOffV248>0});
+    renderAppointmentDetails(data,{startEditing,inheritHistoryId:appointmentDialogHandOffV248});
   }
-  function renderAppointmentDetails(item,{startEditing=false}={}){
+  function renderAppointmentDetails(item,{startEditing=false,inheritHistoryId=0}={}){
     closeAppointmentDetails();statusGate.invalidate();
     const outcomeIsDue=appointmentOutcomeIsDue(item),duration=appointmentDuration(item),callNumber=safeCallNumber(item);
     const amendableBooked=item.status==='booked'&&canWrite;
@@ -19709,7 +19672,7 @@ async function appointmentsPage(){
       ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
     const close=()=>closeAppointmentDetails();
-    closeAppointmentDialog=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#appointmentDialogClose'});
+    closeAppointmentDialog=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#appointmentDialogClose',inheritHistoryId});
     $('appointmentDialogClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
     dialog.querySelectorAll('.statusAction').forEach(action=>action.onclick=async()=>{if(await setStatus(item.id,action.dataset.status))close()});
     if(!amendableBooked)return;
@@ -19767,9 +19730,13 @@ async function appointmentsPage(){
     const openFromButton=(button,id,{startEditing=false}={})=>{
       const item=calendarItems.find(a=>a.id===id);
       if(item)return openAppointmentDetails(item,{startEditing});
-      const branchId=button.dataset.appointmentBranch||branchId;
-      if(!branchId)return toast('That appointment could not be opened. Refresh the calendar and try again.');
-      return openAppointmentDetails({id,branch_id:branchId},{startEditing});
+      /* V248: this declared a local const named branchId and initialised it from branchId — a
+         const reading the binding it is declaring, so the moment V205's fallback was needed it
+         threw a TDZ ReferenceError instead of opening the dialog. V205 replaced a silent return
+         with a silent throw. Renamed so nothing shadows the enclosing branch id. */
+      const fallbackBranchV248=button.dataset.appointmentBranch||branchId;
+      if(!fallbackBranchV248)return toast('That appointment could not be opened. Refresh the calendar and try again.');
+      return openAppointmentDetails({id,branch_id:fallbackBranchV248},{startEditing});
     };
     routeMain.querySelectorAll('[data-appointment]').forEach(button=>button.onclick=()=>
       openFromButton(button,button.dataset.appointment));
@@ -19836,7 +19803,7 @@ async function appointmentsPage(){
   async function loadList(){
     const stillCurrent=calendarGate.begin();
     const APPOINTMENT_LIST_PAGE_SIZE=100;
-    let query=staffQ(sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)',{count:'exact'})
+    let query=staffQ(sb.from('appointments').select('id,branch_id,client_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)',{count:'exact'})
       .eq('business_id',S.biz.id).eq('branch_id',branchId));
     const from=$('appointmentListFrom')?.value,to=$('appointmentListTo')?.value,status=$('appointmentListStatus')?.value;
     if(from)query=query.gte('starts_at',sgDateBoundary(from));
@@ -19849,7 +19816,7 @@ async function appointmentsPage(){
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
     if(listPage>=pages&&listPage>0){listPage=pages-1;loadList();return}
     $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>Date & time</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
+      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${a.client_id?`<a class="customer-link" href="#/client/${a.client_id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:a.clients?.full_name||'—'})}>${esc(a.clients?.full_name||'—')}</a>`:esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
       :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`;
     wireAppointmentActions();
     if($('appointmentPrev'))$('appointmentPrev').onclick=()=>{if(listPage>0){listPage--;loadList()}};
@@ -20098,7 +20065,7 @@ async function waitlistPage(){
 
   routeMain.innerHTML=
     CUI.pageHeader({title:'Waitlist',subtitle:"Catch demand you can't seat now — win it back when a spot frees up.",iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
-    +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:4},()=>CUI.skeletonCard({lines:2,className:'v150-kpi'})).join('')}</div>`
+    +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:3},()=>CUI.skeletonCard({lines:2,className:'v150-kpi'})).join('')}</div>`
     +(canWrite?`<section class="card"><div class="cui-card-head"><h2>Add walk-in</h2><p>Fully booked? Add them here and seat them the moment a spot opens.</p></div>
         <div class="wl-add-grid">
           <div class="wl-fld" style="flex:1 1 180px"><label for="wn">Name</label><input id="wn" autocomplete="off"></div>
@@ -20250,14 +20217,13 @@ async function waitlistPage(){
       const rb=$('wlRetry');if(rb)rb.onclick=loadWl;
       return;
     }
-    const {queue,added,bookedToday,removedToday}=waitlistTodaySummary(rows,dayStartMs);
+    const {queue,added,bookedToday}=waitlistTodaySummary(rows,dayStartMs);
     setWaitlistBadgeCount(queue.length);
     currentRows=queue;
     if(kpis)kpis.innerHTML=`
       <div class="card kpi"><div class="l">Waiting now</div><div class="v">${queue.length}</div></div>
       <div class="card kpi"><div class="l">Added today</div><div class="v">${added}</div></div>
       <div class="card kpi"><div class="l">Resolved as booked today</div><div class="v">${bookedToday}</div><div class="muted small">Terminal booked rows added today; this does not prove physical seating.</div></div>
-      <div class="card kpi"><div class="l">Removed today</div><div class="v">${removedToday}</div></div>
       `;
     if(!queue.length){
       wlist.innerHTML=CUI.emptyState({iconName:'waitlist',title:'No waiting customers',

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2fa5a3c37552e1c9505504ab6e63d1eb4714bd26bfde691407147f7fe85c80ba"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="1224c0e79b033d6f90ebcc4435fd4dadd4159169878919dfe2b0a4a86942d58f"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -277,6 +277,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .appointment-list-filters>div>input,
 .appointment-list-filters>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
+/* V251 (owner: From/To date boxes in the appointments List filter bar are too wide). The grid
+   column can grow past 170px via 1fr; cap the input itself so it does not stretch to fill it. */
+.appt-date-narrow-v251{max-width:170px;width:100%}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
 /* V180: the filter labels used to sit at different heights. Cause was the global
@@ -974,6 +977,22 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .points-mode-card-v229:disabled{opacity:.6;cursor:default}
 .points-mode-chosen-v229{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
 .points-mode-row-v229{cursor:default;flex-wrap:wrap}
+/* V250 (owner drew reward boxes with a "+" over the numbered reward rows). Cards reuse the
+   existing pill and surface tokens — no new colours — and the grid is minmax(150px,1fr) so two
+   still sit side by side at 390px. The add card is the same box in a dashed outline. */
+.reward-card-grid-v250{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:14px}
+.reward-card-v250{appearance:none;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-width:0;min-height:118px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font:inherit}
+button.reward-card-v250{cursor:pointer;transition:background .16s ease,border-color .16s ease}
+button.reward-card-v250:hover{background:var(--tint);border-color:var(--coral)}
+button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outline-offset:2px}
+.reward-card-name-v250{font-size:.98rem;line-height:1.25;overflow-wrap:anywhere}
+.reward-card-cost-v250{font-size:.86rem;color:var(--muted);overflow-wrap:anywhere}
+.reward-card-open-v250{margin-top:auto;color:var(--coral);font-size:12px;font-weight:750}
+.reward-card-add-v250{border-style:dashed;align-items:center;justify-content:center;text-align:center;gap:4px}
+.reward-card-plus-v250{font-size:1.6rem;line-height:1;color:var(--coral);font-weight:750}
+.reward-card-v250[hidden]{display:none!important}
+.reward-card-empty-v250{padding:0 14px 14px}
+.reward-card-templates-v250{margin:0;padding:0 14px 14px}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1120,6 +1139,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-more-menu button{display:block;text-align:left;width:100%;background:none;border:0;border-radius:8px;padding:9px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;min-height:44px}
 .c360-more-menu button:hover,.c360-more-menu button:focus-visible{background:#FBF7F3}
 .c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
+.customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
+.customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
+.customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
+.customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
+.customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
+.customer360-points-panel-v249 input{max-width:100%}
+@media(max-width:560px){.customer360-kpis-v249{grid-template-columns:minmax(0,1fr)}}
 .c360-flash{animation:c360flash 1.3s var(--ease)}
 @keyframes c360flash{0%{box-shadow:0 0 0 0 rgba(194,65,53,.35)}100%{box-shadow:0 0 0 10px rgba(194,65,53,0)}}
 .c360-timeline{display:grid;gap:0;margin-top:8px;list-style:none;padding:0}
@@ -1752,7 +1778,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 2fa5a3c37552e1c9505504ab6e63d1eb4714bd26bfde691407147f7fe85c80ba</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 1224c0e79b033d6f90ebcc4435fd4dadd4159169878919dfe2b0a4a86942d58f</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2063,8 +2089,7 @@ function waitlistTodaySummary(rows,dayStartMs){
   return {
     queue,
     added:today.length,
-    bookedToday:today.filter(row=>row.status==='booked').length,
-    removedToday:today.filter(row=>row.status==='removed').length
+    bookedToday:today.filter(row=>row.status==='booked').length
   };
 }
 async function fetchAllRows(makeQuery,pageSize=DATA_API_PAGE_SIZE){
@@ -2836,91 +2861,36 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const canBookAppt=canWriteModule('appointments');
   const goQuickEarn=()=>{pendingTillPhone=localMobile;nav('#/till')};
   const goNewAppt=()=>{pendingApptClientId=id;nav('#/appointments')};
-  const focusCard=(cardId)=>{
-    const el=$(cardId);if(!el)return;
-    el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-    el.classList.add('c360-flash');setTimeout(()=>{el.classList.remove('c360-flash')},1400);
-    (el.querySelector('button:not([disabled]),select,a')||el).focus?.({preventScroll:true});
-  };
   /* Status badges — every one is derived from data already fetched above (no persona table read). */
   const badges=[];
+  /* V249: the owner moved Visits and Lifetime spend off the KPI row onto this identity line.
+     The visits chip is the SAME single chip that already sat here — it now always carries the
+     count — and one spend chip joins it. Never two visit chips. */
   if(canReadSales){
-    if(netVisits>=10)badges.push({cls:'vip',icon:'loyalty',label:`VIP · ${netVisits} visits`});
-    else if(netVisits>=3)badges.push({cls:'regular',icon:'check',label:`Regular · ${netVisits} visits`});
+    /* The old cards said "Visible visits"/"Visible sales total" to an employee whose branch
+       scope hides rows. The chips must not quietly drop that — isProfileAdmin is the same
+       predicate, and it is already declared far above, so there is no ordering hazard. */
+    const visitsLabelV249=`${netVisits} ${isProfileAdmin?'':'visible '}visit${netVisits===1?'':'s'}`;
+    if(netVisits>=10)badges.push({cls:'vip',icon:'loyalty',label:`VIP · ${visitsLabelV249}`});
+    else if(netVisits>=3)badges.push({cls:'regular',icon:'check',label:`Regular · ${visitsLabelV249}`});
     else if(netVisits<=0)badges.push({cls:'newc',icon:'add',label:'New customer'});
-    else badges.push({cls:'',icon:'customers',label:`${netVisits} visit${netVisits===1?'':'s'}`});
+    else badges.push({cls:'',icon:'customers',label:visitsLabelV249});
+    badges.push({cls:'',icon:'sales',label:`${money(lifetimeSpendCents)} ${isProfileAdmin?'lifetime':'visible sales'}`});
   }
   if(canReadMemberships&&activeMembership)badges.push({cls:'member',icon:'memberships',label:`Member${activeMembership.membership_plans?.name?' · '+activeMembership.membership_plans.name:''}`});
   if(canReadPackages&&activePackage)badges.push({cls:'package',icon:'packages',label:`Package · ${activePackage.remaining} left`});
   if(loyaltyFactsAvailable&&cred>0)badges.push({cls:'',icon:'giftcard',label:`${money(cred)} credit`});
   if(canReadLoyalty&&birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available')badges.push({cls:'newc',icon:'loyalty',label:'Birthday reward'});
   badges.push(c.marketing_consent?{cls:'regular',icon:'check',label:'PDPA consent'}:{cls:'consent-no',icon:'info',label:'No marketing consent'});
-  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:14})}${esc(b.label)}</span>`).join('')}</div>`;
-  /* Next-best-action: a deterministic priority cascade over the signals above. First matching rule
-     whose deep-link the current role can actually use becomes the ONE primary action; the remaining
-     actionable rules collapse into a "More options" menu. Every action lands on an existing surface. */
-  const expiryDate=nextExp?sgDateInputValue(new Date(nextExp.expires_at)):null;
-  const expDays=nextExp?completeSgCalendarDaysUntil(nextExp.expires_at):null;
-  const candidates=[];
-  if(canReadLoyalty&&birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available'){
-    candidates.push({actionKey:'birthday',iconName:'loyalty',title:'Birthday reward is ready',
-      reason:'Their birthday window is open now. Redeem the treat before it lapses — the team never sees the date.',
-      ctaLabel:'Go to birthday reward',run:canRedeemBirthday?()=>focusCard('c360-birthday'):null});
-  }
-  if(loyaltyFactsAvailable&&nextExp&&pts>0&&expDays!=null&&expDays<=30){
-    if(rewardReady){
-      candidates.push({actionKey:'loyalty',iconName:'redeem',title:'Points expire soon — redeem now',
-        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${expiryDate} (in ${expDays} day${expDays===1?'':'s'}). They already have enough for ${rewardReadyLabel} — redeem so nothing is lost.`,
-        ctaLabel:'Redeem reward',run:canWriteLoyalty?()=>focusCard('c360-loyalty'):null});
-    }else{
-      candidates.push({actionKey:'quickearn',iconName:'till',title:'Points expire soon',
-        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${expiryDate} (in ${expDays} day${expDays===1?'':'s'})${pointsToUnlock?`, ${pointsToUnlock} short of ${rewardReadyLabel}`:''}. Invite a visit so they build toward a reward before then.`,
-        ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
-    }
-  }
-  if(loyaltyFactsAvailable&&rewardReady){
-    candidates.push({actionKey:'loyalty',iconName:'redeem',title:'A reward is ready to redeem',
-      reason:`They have ${pts} point${pts===1?'':'s'} — enough for ${rewardReadyLabel}. Redeeming it is a reason to come back.`,
-      ctaLabel:'Redeem reward',run:canWriteLoyalty?()=>focusCard('c360-loyalty'):null});
-  }
-  if(canReadSales&&netVisits>=3&&lastVisitDays!=null&&lastVisitDays>45){
-    candidates.push({actionKey:canBookAppt?'appt':'quickearn',iconName:'appointments',title:'Regular customer is overdue',
-      reason:`${netVisits} visits on record, but none in ${lastVisitDays} days. Book them back in before you lose them.`,
-      ctaLabel:canBookAppt?'New appointment':'Record sale',run:canBookAppt?goNewAppt:(canQuickEarn?goQuickEarn:null)});
-  }
-  if(loyaltyFactsAvailable&&cred>0){
-    candidates.push({actionKey:'quickearn',iconName:'giftcard',title:'Store credit is waiting',
-      reason:`${money(cred)} in spendable credit is sitting unused. Remind them to spend it on the next visit.`,
-      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null});
-  }
-  if(canReadSales&&netVisits<=0){
-    candidates.push({actionKey:'quickearn',iconName:'till',title:'New customer — no visits yet',
-      reason:'Record an eligible first purchase; points are earned only when an active published loyalty programme applies.',
-      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
-  }
-  candidates.push(canReadSales
-    ?{actionKey:'quickearn',iconName:'check',title:'Everything looks healthy',
-      reason:`${lastVisitDays!=null?`Last visit ${lastVisitDays} day${lastVisitDays===1?'':'s'} ago.`:'No recent activity to flag.'} Record the next visit when they come in.`,
-      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null}
-    :{actionKey:'customer',iconName:'customers',title:'Customer details are available',
-      reason:'Sales and reward figures are hidden because this role does not have access to those modules.',
-      ctaLabel:'No additional action',run:null});
-  const primaryNba=candidates.find(x=>x.run)||candidates[0];
-  const nbaSeen=new Set([primaryNba.actionKey]);
-  const secondaryNba=candidates.filter(x=>x!==primaryNba&&x.run&&!nbaSeen.has(x.actionKey)&&nbaSeen.add(x.actionKey)).slice(0,4);
-  const nbaHtml=`<section class="c360-nba" aria-label="Recommended next action">
-    <div class="c360-nba-ic" aria-hidden="true">${CUI.icon('insight',{size:24})}</div>
-    <div class="c360-nba-body">
-      <p class="eyebrow">Peekaa's suggestion</p>
-      <h2>${esc(primaryNba.title)}</h2>
-      <p>${esc(primaryNba.reason)}</p>
-      <div class="c360-nba-actions">
-        ${primaryNba.run?`<button class="btn" id="c360Primary">${CUI.icon(primaryNba.iconName,{size:17})}<span>${esc(primaryNba.ctaLabel)}</span></button>`:'<span class="pill off">No action available for your role</span>'}
-        ${secondaryNba.length?`<div class="c360-more"><button type="button" class="btn ghost sm" id="c360MoreBtn" aria-expanded="false" aria-controls="c360MoreMenu">More options</button>
-          <div class="c360-more-menu" id="c360MoreMenu" hidden>${secondaryNba.map((s,i)=>`<button type="button" data-c360-secondary="${i}">${esc(s.ctaLabel)}<span class="sub">${esc(s.title)}</span></button>`).join('')}</div></div>`:''}
-      </div>
-    </div>
-  </section>`;
+  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:14})}${esc(b.label)}</span>`).join('')}</div>`
+    /* V249: the deleted banner was the only place that told staff earning is CONDITIONAL when a
+       customer has no visits yet. Peekaa must never imply points arrive automatically, so the
+       same reviewed sentence (translations already carry it verbatim) stays on the page. */
+    +(canReadSales&&netVisits<=0?`<p class="muted small" style="margin:-10px 0 16px">Record an eligible first purchase; points are earned only when an active published loyalty programme applies.</p>`:'');
+  /* V249: the owner struck out the whole next-best-action suggestion banner. Nothing it offered
+     was unique — its Redeem reward button only scrolled to the rewards card below (redemption
+     still happens there, via the branch-scoped Record sale scanner), and every secondary entry
+     was a duplicate of the Record sale / New appointment buttons already in the page header. */
   const detailSubtitle=[c.phone,c.email].filter(Boolean).join(' · ')||'No contact details';
   const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
   const headerActions=[
@@ -2948,6 +2918,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       ${birthdayRedeemMarkup}${birthdayReverseMarkup}</div>`;
   }
   let rewardsMarkup='';
+  /* V249: the owner moved the expiry note and these two collapsibles INTO the Points KPI card.
+     They are built here because only this branch has the programme facts (unit, earn rate,
+     balance), then rendered once inside that card — the same single definition, never a copy. */
+  let pointsPanelDetailsV249='';
   if(!loyaltyFactsAvailable){
     rewardsMarkup='<p class="err small" style="margin-top:7px">Loyalty balances and reward availability are temporarily unavailable. Peekaa has not replaced them with zero.</p><button class="btn ghost sm" id="c360LoyaltyRetry" style="margin-top:10px">Reload profile</button>';
   }else if(prog&&prog.active){
@@ -2969,20 +2943,28 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        staff do occasionally need them, but folded away underneath. */
     const readyRewards=redemptionEnabled?projectedRewards.filter(reward=>reward.available_now):[];
     const pendingRewards=redemptionEnabled?projectedRewards.filter(reward=>!reward.available_now):[];
-    const rewardRow=(reward,ready)=>`<div class="row c360-reward-row-v226"><span data-merchant-content>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${ready?'ok':'off'}">${!redemptionEnabled?'Unavailable':ready?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`;
+    /* V249: the owner wants the point COST on a claimable row, not a bare "Ready now" pill.
+       A row that is NOT claimable keeps its honest existing state (how far off, or Unavailable),
+       and a reward whose cost the server did not return falls back rather than inventing one. */
+    const rewardCostLabelV249=reward=>{const cost=Number(reward.cost_units);return Number.isFinite(cost)&&cost>0?`${cost} ${unit}`:'Ready now'};
+    const rewardRow=(reward,ready)=>`<div class="row c360-reward-row-v226"><span data-merchant-content>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${ready?'ok':'off'}">${!redemptionEnabled?'Unavailable':ready?esc(rewardCostLabelV249(reward)):`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`;
+    /* V249: heading renamed to the owner's own words, and the sentence about scanning the
+       pending QR is struck out — the button says what to do, so the scanner now sits directly
+       under the reward list where the owner drew it. The scanner is still the ONLY redemption
+       path, still gated on canWriteLoyalty && redemptionEnabled && something being ready. */
     rewardsMarkup=`${readyRewards.length
-      ?`<p class="eyebrow" style="margin-top:8px">Ready to redeem now · ${readyRewards.length}</p>
+      ?`<p class="eyebrow" style="margin-top:8px">Redeem now!</p>
         <div style="margin-top:8px">${readyRewards.map(reward=>rewardRow(reward,true)).join('')}</div>`
       :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
         <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
-      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<p class="muted small" style="margin-top:12px">Scan the customer's pending QR in Record sale to complete one. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
-      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}
-      <details class="c360-reward-adjust" style="margin-top:10px"><summary>Balance and earning</summary>
+      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<a class="btn sm" href="#/till" style="margin-top:12px">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
+      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
+    pointsPanelDetailsV249=`<details class="c360-reward-adjust"><summary>Balance and earning</summary>
         <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
         <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
-      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
+      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
   }
@@ -2992,10 +2974,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     :'No actionable points are currently scheduled to expire.';
   const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:14})}<span>${esc(nextExpiryLabel)}</span></div>`;
   const wholeBusinessLabels=S.myRole==='owner'||S.myRole==='manager';
+  /* V249: two KPI cards, not four. Visits and Lifetime spend are chips on the identity line
+     above; Points carries its expiry note and the two moved collapsibles. */
   const profileKpis=[
-    canReadSales?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Visits':'Visible visits'}</div><div class="v">${netVisits}</div></div>`:'',
-    canReadSales?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Lifetime spend':'Visible sales total'}</div><div class="v">${money(lifetimeSpendCents)}</div></div>`:'',
-    loyaltyFactsAvailable?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v">${pts}</div>${pointsExpiryMarkup}</div>`:'',
+    loyaltyFactsAvailable?`<div class="card kpi customer360-points-card-v249"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v">${pts}</div>${pointsExpiryMarkup}${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}</div>`:'',
     loyaltyFactsAvailable?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Spendable credit':'Business-wide spendable credit'}</div><div class="v">${money(cred)}</div></div>`:''
   ].filter(Boolean).join('');
   const referralMarkup=canReadReferrals?`<p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
@@ -3008,10 +2990,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
     </div>`:'';
   const activitySources=[canReadSales&&'sales and visits',canReadAppointments&&'appointments',canReadLoyalty&&'reward redemptions',canReadRetention&&'retention rewards',canReadMemberships&&'memberships',canReadPackages&&'packages'].filter(Boolean);
-  const activityScopeCopy=wholeBusinessLabels
-    ?`${activitySources.join(', ')} available to this role — newest first.`
-    :'Sales and appointments cover assigned branches; loyalty and reward records are business-wide when available — newest first.';
-  const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b><p class="muted small" style="margin:4px 0 8px">${esc(activityScopeCopy)}</p>
+  const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b>
     <div id="histBody">${renderHistPage(history,histShown)}</div>
     ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
     </div>`:'';
@@ -3036,8 +3015,12 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     ${staffProfileScopeNote}
     ${profileScopeNotice}
     ${correctionScopeNotice}
-    ${nbaHtml}
-    ${profileKpis?`<div class="kpis">${profileKpis}</div>`:''}
+    ${profileKpis
+      ?`<div class="kpis customer360-kpis-v249">${profileKpis}</div>`
+      /* V249: the deleted banner also carried the only explanation a role without sales or
+         loyalty access ever got for the empty figures. Absent numbers must be explained, never
+         shown as zero, so the same reviewed sentence replaces the KPI row for that role. */
+      :`<p class="muted small" role="note" style="margin:0 0 16px">Sales and reward figures are hidden because this role does not have access to those modules.</p>`}
     <div class="split" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
         <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards for customer</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
@@ -3054,9 +3037,8 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
     ${activityMarkup}`;
   routeMain.querySelector('.cui-page-title h1')?.setAttribute('data-merchant-content','');
-  /* Next-best-action + header quick actions. Every handler routes to an existing surface — no new
-     write path is introduced here. */
-  if($('c360Primary')&&primaryNba.run)$('c360Primary').onclick=primaryNba.run;
+  /* Header quick actions. Every handler routes to an existing surface — no new write path is
+     introduced here. */
   if($('c360QuickEarn'))$('c360QuickEarn').onclick=goQuickEarn;
   if($('c360FeedbackRetry'))$('c360FeedbackRetry').onclick=()=>clientDetail(id);
   if($('c360BirthdayRetry'))$('c360BirthdayRetry').onclick=()=>clientDetail(id);
@@ -3110,23 +3092,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       }
       toast('Customer updated');editCard.hidden=true;clientDetail(id);
     };
-  }
-  const moreBtn=$('c360MoreBtn'),moreMenu=$('c360MoreMenu');
-  if(moreBtn&&moreMenu){
-    /* Outside-click listener is bound only while the menu is open and removed on close, so
-       repeated clientDetail re-renders never accumulate document-level listeners. */
-    const onOutside=(e)=>{if(!moreMenu.contains(e.target)&&e.target!==moreBtn)closeMenu()};
-    function closeMenu(){moreMenu.hidden=true;moreBtn.setAttribute('aria-expanded','false');document.removeEventListener('click',onOutside)}
-    moreBtn.onclick=(e)=>{
-      e.stopPropagation();
-      const open=moreMenu.hidden;
-      if(open){moreMenu.hidden=false;moreBtn.setAttribute('aria-expanded','true');moreMenu.querySelector('button')?.focus();setTimeout(()=>document.addEventListener('click',onOutside),0)}
-      else closeMenu();
-    };
-    moreMenu.querySelectorAll('[data-c360-secondary]').forEach(b=>b.onclick=()=>{
-      const action=secondaryNba[Number(b.dataset.c360Secondary)];closeMenu();action?.run?.();
-    });
-    moreMenu.addEventListener('keydown',(e)=>{if(e.key==='Escape'){closeMenu();moreBtn.focus()}});
   }
   document.querySelectorAll('.cfvSave').forEach(b=>b.onclick=async()=>{
     const el=$(`cfv-${b.dataset.id}`),type=b.dataset.type,raw=el.value;
@@ -4108,7 +4073,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'2fa5a3c37552e1c9505504ab6e63d1eb4714bd26bfde691407147f7fe85c80ba',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'1224c0e79b033d6f90ebcc4435fd4dadd4159169878919dfe2b0a4a86942d58f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

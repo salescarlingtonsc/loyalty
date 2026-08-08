@@ -35,11 +35,16 @@ test('V229 the overview is six topic tiles, and drilling in is the only way to t
 });
 
 test('V229 reward milestones live inside Point system, never on the tile overview', () => {
-  // The milestone rows render only inside the points wrapper...
+  /* V250 turned the milestone ROWS into the reward card grid the owner drew, so the mapping
+     moved one step earlier into rewardCardsV250 and the points wrapper renders that grid. The
+     containment this test protects — milestones belong to Point system and appear nowhere else
+     — is unchanged, and is now checked at both ends. */
   const points = app.slice(app.indexOf("${topicOnV229('points')?`"), app.indexOf("${growActiveTopicV229?.key==='tiers'?"));
-  assert.match(points, /rewardJourney\.milestones\.map/);
-  // ...and nowhere else in the file's render paths.
+  assert.match(points, /rewardCardGridV250/);
+  assert.equal((app.match(/rewardCardGridV250\b/g) || []).length, 2);
   assert.equal((app.match(/rewardJourney\.milestones\.map/g) || []).length, 1);
+  const cards = app.slice(app.indexOf('const rewardCardsV250=['), app.indexOf('const rewardCardGridV250='));
+  assert.match(cards, /rewardJourney\.milestones\.map/);
   // In tiles mode no topic is on, so no category rows exist at all.
   /* V235: Stamp card is a third VIEW of the point engine, so it drills into the points
      section rather than duplicating it — the mapping is what keeps the tile from dead-ending. */

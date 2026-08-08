@@ -1563,6 +1563,12 @@
       "path": "db/migrations/20260808_nestly_v247_explore_nearest_first.sql",
       "semanticVersion": "v247",
       "proposedDeployVersion": "20260808230000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260809_nestly_v248_customer_directory_reports_loyalty_availability.sql",
+      "semanticVersion": "v248",
+      "proposedDeployVersion": "20260808235000"
     }
   ]
 }

@@ -11,7 +11,9 @@ const customerUi = readFileSync(resolve(repoRoot, 'app/customer-ui.js'), 'utf8')
 test('V164 sidebar terminology is merchant-facing', () => {
   assert.match(customerUi, /star:'m12 3 2\.8 5\.67/);
   assert.match(appHtml, /reports:\['reports','Business Insights'\]/);
-  assert.match(appHtml, /\{key:'grow',icon:'star',label:'Programmes'/);
+  /* V250: the owner made Programmes ONE flat nav link, so the group declares `flat` where it
+     declared `label`. The merchant-facing WORD this test guards is unchanged. */
+  assert.match(appHtml, /\{key:'grow',icon:'star',flat:'Programmes',href:'#\/grow'/);
   /* V170 owner decision: Daily report (today's takings) was fully built and routed but
      absent from every nav group, so owners could not reach it. It now leads the money group. */
   /* V180 owner instruction: Expenses moved ahead of Business Insights (money in, money out,

@@ -191,6 +191,7 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v202_branch_add_and_billing', 'db/tests/v202_branch_add_and_billing.sql'],
   ['nestly_v239_points_and_tiers_can_both_run', 'db/tests/v239_points_and_tiers_can_both_run.sql'],
   ['nestly_v241_reward_catalog_carries_its_mode_as_an_object', 'db/tests/v241_reward_catalog_object_shape.sql'],
+  ['nestly_v248_customer_directory_reports_loyalty_availability', 'db/tests/v248_customer_directory_loyalty_availability.sql'],
   ['nestly_v242_customer_business_directory', 'db/tests/v242_customer_business_directory.sql'],
   ['nestly_v202a_activate_branch_on_paid_command', 'db/tests/v202_branch_add_and_billing.sql'],
   ['nestly_v202b_branch_insert_only_via_paid_rpc', 'db/tests/v202_branch_add_and_billing.sql'],
@@ -727,7 +728,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 214);
+  assert.equal(pending.length, 215);
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

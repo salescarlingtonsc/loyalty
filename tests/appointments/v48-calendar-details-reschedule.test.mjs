@@ -101,8 +101,17 @@ test('appointment detail sheet exposes authorized particulars and safe call/edit
 });
 
 test('calendar rows minimize PII and fetch one branch-scoped detail record on demand',()=>{
-  const minimal="id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)";
-  assert.equal(calendar.split(minimal).length-1,2,'week and list queries must use the minimal projection');
+  /* V251: the owner asked for the customer name in the LIST to open that customer's profile,
+     which needs the join key. client_id is an opaque internal id, not personal data, and it
+     replaces a second query rather than adding one — so the invariant this line protects is
+     re-stated as what it actually guards: NEITHER calendar query may pull contact PII. */
+  const tail="service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)";
+  assert.equal(calendar.split("id,branch_id,"+tail).length-1,1,'the week query keeps the minimal projection');
+  assert.equal(calendar.split("id,branch_id,client_id,"+tail).length-1,1,'the list query adds only the join key');
+  for(const projection of [ "id,branch_id,"+tail, "id,branch_id,client_id,"+tail ]){
+    assert.doesNotMatch(projection,/phone|email|birth_date|notes/,
+      'a calendar row must never carry contact PII — that stays in the on-demand detail record');
+  }
   assert.match(calendar,/async function openAppointmentDetails\(summary,\{startEditing=false\}=\{\}\)[\s\S]*Loading customer and service information/);
   assert.match(calendar,/select\('id,branch_id,service_id,starts_at,ends_at,status,staff_id,note,total_cents,clients\(full_name,phone,phone_norm,email,birth_date,notes\),services!appointments_service_id_fkey\(name,duration_min,price_cents\)'\)[\s\S]*eq\('branch_id',summary\.branch_id\)[\s\S]*eq\('id',summary\.id\)\.maybeSingle\(\)/);
   assert.match(calendar,/const stillCurrent=detailGate\.begin\(\)[\s\S]*if\(!stillCurrent\(\)\|\|!loading\.isConnected\)\{removeLoading\(\{restoreFocus:false\}\);return\}/);
@@ -148,7 +157,10 @@ test('route changes dispose loaded and pending appointment dialogs without PII, 
   // The closer gained a handOffHistory option for back-button handling; the focus-restore
   // contract under test is unchanged.
   assert.match(customerUi,/return \(\{restoreFocus=true[^}]*\}=\{\}\)=>\{[\s\S]*if\(restoreFocus&&returnFocus\?\.isConnected\)returnFocus\.focus\(\)/);
-  assert.match(calendar,/if\(!stillCurrent\(\)\|\|!loading\.isConnected\)\{removeLoading\(\{restoreFocus:false\}\);return\}[\s\S]*removeLoading\(\);renderAppointmentDetails\(data,\{startEditing\}\)/,
+  // V248: the success path now hands the dialog history entry to the detail dialog instead of
+  // unwinding it (see the V248 handoff test); focus restoration on that path is unchanged, which
+  // is what this assertion is actually about.
+  assert.match(calendar,/if\(!stillCurrent\(\)\|\|!loading\.isConnected\)\{removeLoading\(\{restoreFocus:false\}\);return\}[\s\S]*removeLoading\(\{handOffHistory:appointmentDialogHandOffV248>0\}\);\s*renderAppointmentDetails\(data,\{startEditing,inheritHistoryId:appointmentDialogHandOffV248\}\)/,
     'only stale/route disposal may suppress focus restoration; a successful detail transition must preserve the calendar trigger');
 });
 

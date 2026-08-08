@@ -49,7 +49,8 @@ test('customer-facing staff profile removes empty gender noise and explains rewa
      "too confusing" and asked for redeemable rewards to lead instead. The facts this test
      protects — that staff can still see the balance, the earn rate and how far off the next
      reward is — are all still rendered; they are folded behind a summary rather than leading. */
-  assert.match(profile,/Ready to redeem now/);
+  /* V249: heading renamed to the owner's wording. */
+  assert.match(profile,/Redeem now!/);
   assert.match(profile,/<summary>Balance and earning<\/summary>/);
   assert.match(profile,/Balance:/);
   assert.match(profile,/Earn:/);

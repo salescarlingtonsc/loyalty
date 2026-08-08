@@ -1,0 +1,144 @@
+/* V249 — the owner annotated the Customer 360 page and drew the layout they want:
+     name / contact
+     [2 visits] [SGD 30.00 lifetime] [PDPA consent]     ← chips, one row
+     [ POINTS 300 · expiry · Balance and earning · Correct balance ]  [ SPENDABLE CREDIT ]
+   The yellow suggestion banner was struck out entirely, the four KPI cards became two, the
+   rewards card heading became "Redeem now!", each redeemable row shows its point COST, and the
+   "scan the pending QR" sentence was deleted with the scanner button pulled up under the list.
+   These assertions pin that shape; none of them changes a handler, an RPC or a permission gate. */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
+const shell = readFileSync(join(root, 'app', 'index.html'), 'utf8');
+const profile = app.slice(
+  app.indexOf('async function clientDetail(id){'),
+  app.indexOf('async function tillPage(){')
+);
+
+test('V249 the struck-out suggestion banner is gone, markup and wiring alike', () => {
+  for (const gone of [
+    'c360-nba',
+    'nbaHtml',
+    'primaryNba',
+    'secondaryNba',
+    'c360Primary',
+    'c360MoreBtn',
+    'c360MoreMenu',
+    'data-c360-secondary'
+  ]) {
+    assert.ok(!app.includes(gone), `the suggestion banner must leave nothing behind: ${gone}`);
+  }
+  /* Its wording is scoped to this page — WORKSPACE_GENERATED_COPY_V97 still carries retired
+     translation keys and is never edited by a layout change. */
+  for (const gone of ['Recommended next action', 'A reward is ready to redeem', 'More options']) {
+    assert.ok(!profile.includes(gone), `banner copy must not survive on this page: ${gone}`);
+  }
+  /* Its Redeem reward button only scrolled to the rewards card, so no flow moved: redemption is
+     still reached from that card, through the same branch-scoped scanner link. */
+  assert.match(profile, /id="c360-loyalty"/);
+  assert.match(profile, /Open Record sale scanner/);
+  /* Its "More options" entries were duplicates of the header buttons, which still exist. */
+  assert.match(profile, /id:'c360QuickEarn',label:'Record sale'/);
+  assert.match(profile, /id:'c360NewAppt',label:'New appointment'/);
+  assert.match(profile, /\$\('c360QuickEarn'\)\)\$\('c360QuickEarn'\)\.onclick=goQuickEarn/);
+  assert.match(profile, /\$\('c360NewAppt'\)\)\$\('c360NewAppt'\)\.onclick=goNewAppt/);
+});
+
+test('V249 the KPI row is two cards and Visits/Lifetime spend became identity chips', () => {
+  const kpiStart = profile.indexOf('const profileKpis=[');
+  const kpis = profile.slice(kpiStart, profile.indexOf('].filter(Boolean).join(\'\');', kpiStart));
+  const cards = kpis.match(/<div class="card kpi/g) || [];
+  assert.equal(cards.length, 2, 'exactly two KPI cards remain');
+  assert.match(kpis, /Business-wide points/);
+  assert.match(kpis, /Business-wide spendable credit/);
+  // The two removed cards must not survive as cards anywhere on this page.
+  assert.doesNotMatch(kpis, /Visible visits|Visible sales total|Lifetime spend/);
+
+  // They are chips on the identity line instead, beside the existing PDPA consent chip.
+  const badgeStart = profile.indexOf('const badges=[];');
+  const badges = profile.slice(badgeStart, profile.indexOf('const badgesHtml=', badgeStart));
+  assert.match(badges, /const visitsLabelV249=`\$\{netVisits\} \$\{isProfileAdmin\?'':'visible '\}visit\$\{netVisits===1\?'':'s'\}`/,
+    'visits pluralise correctly and keep the staff branch-scope qualifier the old card carried');
+  assert.match(badges, /badges\.push\(\{cls:'',icon:'sales',label:`\$\{money\(lifetimeSpendCents\)\} \$\{isProfileAdmin\?'lifetime':'visible sales'\}`\}\)/,
+    'lifetime spend is money() formatted and equally scope-honest');
+  /* Two sentences the deleted banner was the only carrier of keep a home on this page: earning
+     is conditional, and hidden figures are explained rather than shown as zero. */
+  assert.match(profile, /canReadSales&&netVisits<=0\?`<p class="muted small"[^`]*Record an eligible first purchase; points are earned only when an active published loyalty programme applies\./);
+  assert.match(profile, /Sales and reward figures are hidden because this role does not have access to those modules\./);
+  // Exactly ONE visits chip is ever pushed — the pre-existing one, reused, never duplicated.
+  assert.equal((badges.match(/visitsLabelV249/g) || []).length, 4,
+    'one declaration plus the three mutually exclusive tier branches');
+  assert.equal((badges.match(/lifetimeSpendCents/g) || []).length, 1);
+  assert.match(profile, /PDPA consent/);
+  // Chips carry text, not colour alone.
+  assert.match(profile, /class="c360-badge \$\{b\.cls\}">\$\{CUI\.icon\(b\.icon,\{size:14\}\)\}\$\{esc\(b\.label\)\}/);
+});
+
+test('V249 the expiry note and both collapsibles live inside the POINTS card, once each', () => {
+  // Exactly one definition of each collapsible in the whole bundle — moved, not copied.
+  assert.equal((app.match(/<summary>Balance and earning<\/summary>/g) || []).length, 1);
+  assert.equal((app.match(/<summary>Correct points balance<\/summary>/g) || []).length, 1);
+  assert.equal((app.match(/id="adjV"/g) || []).length, 1);
+  assert.equal((app.match(/id="adjGo"/g) || []).length, 1);
+  assert.equal((app.match(/c360-points-expiry/g) || []).length, 1);
+
+  // Both are built into the panel variable the POINTS card renders.
+  const panelStart = profile.indexOf('pointsPanelDetailsV249=`');
+  assert.ok(panelStart > 0, 'the moved collapsibles are assigned to the points panel');
+  const panel = profile.slice(panelStart, profile.indexOf('  }else{', panelStart));
+  assert.match(panel, /<summary>Balance and earning<\/summary>/);
+  assert.match(panel, /<summary>Correct points balance<\/summary>/);
+  assert.ok(panel.indexOf('Balance and earning') < panel.indexOf('Correct points balance'),
+    'balance and earning comes first, as drawn');
+  // Their handlers and gates are untouched: owner-only, loyalty-write-only adjustment.
+  assert.match(panel, /S\.myRole==='owner'&&canWriteLoyalty\?`<details/);
+  assert.match(profile, /\$\('adjGo'\)/);
+
+  // The POINTS card renders expiry note first, then the panel — the owner's order.
+  const pointsCard = profile.match(/<div class="card kpi customer360-points-card-v249">[\s\S]*?<\/div>`:''/)[0];
+  assert.ok(pointsCard.indexOf('${pointsExpiryMarkup}') < pointsCard.indexOf('pointsPanelDetailsV249'),
+    'expiry note sits above the collapsibles');
+  assert.match(pointsCard, /customer360-points-panel-v249/);
+  assert.match(profile, /No actionable points are currently scheduled to expire\./);
+
+  // Neither collapsible is left behind in the rewards card body.
+  const rewardsStart = profile.indexOf('rewardsMarkup=`${readyRewards.length');
+  const rewards = profile.slice(rewardsStart, panelStart);
+  assert.doesNotMatch(rewards, /Balance and earning|Correct points balance/);
+
+  // Minimal supporting CSS exists and stacks the two cards on a phone.
+  assert.match(shell, /\.customer360-points-panel-v249\{/);
+  assert.match(shell, /@media\(max-width:560px\)\{\.customer360-kpis-v249\{grid-template-columns:minmax\(0,1fr\)\}\}/);
+});
+
+test('V249 the rewards card says "Redeem now!" and shows each reward point cost', () => {
+  assert.match(profile, /<p class="eyebrow" style="margin-top:8px">Redeem now!<\/p>/);
+  assert.ok(!app.includes('Ready to redeem now'), 'the old counted heading is gone');
+  // A claimable row shows its cost; a row that is not claimable keeps its honest state.
+  assert.match(profile, /const rewardCostLabelV249=reward=>\{const cost=Number\(reward\.cost_units\)/);
+  assert.match(profile, /ready\?esc\(rewardCostLabelV249\(reward\)\)/);
+  assert.match(profile, /!redemptionEnabled\?'Unavailable'/);
+  assert.match(profile, /\$\{Math\.max\(0,Number\(reward\.remaining_units\)\|\|0\)\} more \$\{unit\}/);
+  // No bare "Ready now" pill on a claimable row any more — only the no-cost fallback.
+  assert.equal((profile.match(/'Ready now'/g) || []).length, 1);
+});
+
+test('V249 the scan sentence is gone and the scanner button sits under the reward list', () => {
+  assert.ok(!app.includes("Scan the customer's pending QR"), 'the deleted sentence is gone');
+  assert.ok(!app.includes('Points change only after confirmation.'));
+  // Same permission gate, same destination — only the position and the wrapper changed.
+  assert.match(profile,
+    /canWriteLoyalty&&redemptionEnabled&&readyRewards\.length\?`<a class="btn sm" href="#\/till"[^`]*Open Record sale scanner/);
+  const rewardsStart = profile.indexOf('rewardsMarkup=`${readyRewards.length');
+  const rewards = profile.slice(rewardsStart, profile.indexOf('pointsPanelDetailsV249=`', rewardsStart));
+  assert.ok(rewards.indexOf('readyRewards.map(reward=>rewardRow(reward,true))') <
+    rewards.indexOf('Open Record sale scanner'),
+    'the scanner follows the reward list');
+  assert.ok(rewards.indexOf('Open Record sale scanner') < rewards.indexOf('Coming up'),
+    'and precedes everything the collapsibles used to sit below');
+});

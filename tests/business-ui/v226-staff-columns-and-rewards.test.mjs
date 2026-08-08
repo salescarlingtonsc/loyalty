@@ -34,12 +34,13 @@ test('V226 the staff list is a real grid with one header per group', () => {
 test('V226 Customer 360 leads with what this customer can redeem now', () => {
   const start = app.indexOf('const readyRewards=redemptionEnabled?');
   const block = app.slice(start, app.indexOf('  }else{', start));
-  assert.match(block, /Ready to redeem now · \$\{readyRewards\.length\}/);
+  // V249: the owner renamed this heading to "Redeem now!" and dropped the count.
+  assert.match(block, /<p class="eyebrow"[^>]*>Redeem now!<\/p>/);
   // The explanation of the scheme that was crossed out must not lead any more.
   assert.doesNotMatch(block, /How rewards work/);
-  assert.ok(block.indexOf('Ready to redeem now') < block.indexOf('Balance and earning'),
+  // V249: the scheme facts moved into the Points KPI card; they are still built here, after the list.
+  assert.ok(block.indexOf('Redeem now!') < block.indexOf('Balance and earning'),
     'redeemable rewards come before the scheme facts');
-  // Those facts are kept, just folded away — staff do occasionally need them.
   assert.match(block, /<summary>Balance and earning<\/summary>/);
   assert.match(block, /<b>Balance:<\/b>/);
   assert.match(block, /<b>Earn:<\/b>/);
@@ -47,7 +48,9 @@ test('V226 Customer 360 leads with what this customer can redeem now', () => {
   assert.match(block, /<summary>Coming up · \$\{pendingRewards\.length\}<\/summary>/);
   assert.match(block, /Nothing ready to redeem yet/);
   // The scanner is the action, and only when there is something to scan for.
-  assert.match(block, /readyRewards\.length\?`<p class="muted small"[^`]*Scan the customer's pending QR/);
+  // V249: the scan sentence was struck out; the scanner button itself is the action, same gate.
+  assert.match(block, /canWriteLoyalty&&redemptionEnabled&&readyRewards\.length\?`<a class="btn sm" href="#\/till"/);
+  assert.doesNotMatch(block, /Scan the customer's pending QR/);
   // Header renamed as annotated.
   assert.match(app, /<b>Rewards for customer<\/b>/);
   assert.doesNotMatch(app, /Balance, earning and next unlock/);

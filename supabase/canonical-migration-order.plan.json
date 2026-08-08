@@ -1558,6 +1558,12 @@
       "version": "20260808230000",
       "name": "nestly_v247_explore_nearest_first",
       "sourcePath": "db/migrations/20260808_nestly_v247_explore_nearest_first.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260808235000",
+      "name": "nestly_v248_customer_directory_reports_loyalty_availability",
+      "sourcePath": "db/migrations/20260809_nestly_v248_customer_directory_reports_loyalty_availability.sql"
     }
   ]
 }

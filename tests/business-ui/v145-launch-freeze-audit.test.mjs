@@ -112,8 +112,10 @@ test('customer reward expiry countdown follows Singapore calendar dates, not rou
     'one second after Singapore midnight the countdown advances by one day');
   assert.equal(helpers.date(new Date(expiry)),'2026-08-05','the displayed expiry date must stay the Singapore date');
   const client=section('async function clientDetail(id)', '/* ---------- sales ---------- */');
-  assert.match(client,/const expiryDate=nextExp\?sgDateInputValue\(new Date\(nextExp\.expires_at\)\):null/);
-  assert.match(client,/completeSgCalendarDaysUntil\(nextExp\.expires_at\)/);
+  /* V249: the owner deleted the suggestion banner that counted the days down, so the profile
+     states the expiry DATE only — still resolved on the Singapore calendar, never a rounded
+     elapsed-time guess. The helper assertions above are unchanged. */
+  assert.match(client,/expire \$\{new Intl\.DateTimeFormat\('en-SG',\{day:'numeric',month:'short',year:'numeric',timeZone:'Asia\/Singapore'\}\)/);
   assert.doesNotMatch(client,/Math\.round\(\(new Date\(nextExp\.expires_at\)\.getTime\(\)-Date\.now\(\)\)\/dayMs\)/);
 });
 
@@ -326,7 +328,10 @@ test('customer profile never converts inaccessible facets into plausible zero va
   assert.match(client, /require_module_scope_v145/);
   assert.match(client, /No partial totals are shown/);
   assert.match(client, /Some profile figures are unavailable/);
-  assert.match(client, /canReadSales\?`<div class="card kpi"/);
+  /* V249: Visits and Lifetime spend left the KPI row for the identity chips, still gated on
+     canReadSales — an unconfirmed sales facet renders neither chip rather than a zero. */
+  assert.match(client, /if\(canReadSales\)\{[\s\S]*?visitsLabelV249/);
+  assert.match(client, /canReadSales&&netVisits<=0\?`<p class="muted small"/);
   assert.match(client, /loyaltyFactsAvailable\?`<div class="card kpi"/);
   assert.match(client, /canReadLoyalty\?`<section class="card c360-rewards-card" id="c360-loyalty"/);
   assert.match(client, /canReadRetention\?`<div class="card"><b>Retention reward history/);
@@ -365,8 +370,9 @@ test('customer profile proves owner-wide or every assigned staff branch without 
   assert.match(client, /profileScopeBranchIds=\(branches\|\|\[\]\)\.map\(branch=>branch\.id\)/);
   assert.match(client, /Promise\.all\(profileScopeBranchIds\.map\(branchId=>[\s\S]*p_branch:branchId/);
   assert.match(client, /access across every branch assigned to this staff account/);
-  assert.match(client, /Visible visits/);
-  assert.match(client, /Visible sales total/);
+  /* V249: the same staff-scope qualifier, now carried by the chips that replaced those cards. */
+  assert.match(client, /isProfileAdmin\?'':'visible '\}visit/);
+  assert.match(client, /isProfileAdmin\?'lifetime':'visible sales'/);
   assert.match(client, /Business-wide points/);
   assert.match(client, /Business-wide spendable credit/);
   assert.match(client, /Staff view scope/);

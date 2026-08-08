@@ -21,12 +21,15 @@ test('renaming the programme badge cannot empty the Running view', () => {
     'keep a text fallback for rows not built by programmeStatus');
 });
 
-test('programmes nav is two destinations, and old hashes still resolve', () => {
-  const i = app.indexOf('const links=[');
-  const src = app.slice(i, i + 260);
-  assert.ok(src.includes("'Programmes list'") && src.includes("'Ongoing programmes'"));
-  assert.ok(!src.includes('Available programmes'), 'available was struck out by the owner');
-  assert.ok(!src.includes('More settings'), 'more settings was struck out by the owner');
+test('programmes nav is one destination, and old hashes still resolve', () => {
+  /* V250: the owner struck out the two remaining sub-rows, so the whole `const links=[…]`
+     helper went with them — Programmes is one flat link onto the list. */
+  assert.ok(app.includes("{key:'grow',icon:'star',flat:'Programmes',href:'#/grow'"),
+    'Programmes must be one flat nav link');
+  assert.ok(!app.includes('const links=['), 'the sub-nav link helper went with its rows');
+  assert.ok(!app.includes("'Programmes list'"), 'the Programmes list row was struck out');
+  assert.ok(!app.includes("['#/grow/ongoing'"), 'the Ongoing programmes row was struck out');
+  assert.ok(!app.includes("['#/grow/available'"), 'the Pending setup row was struck out');
   // Deep links must not 404 just because the nav entry is gone.
   assert.ok(app.includes("['ongoing','available','settings'].includes(String(hashParam||''))"),
     'the removed hashes must still resolve to their views');
