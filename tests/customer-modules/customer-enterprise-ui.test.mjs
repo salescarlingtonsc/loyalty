@@ -209,13 +209,17 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
      SAME markup, lifted whole rather than copied, so the labelling contract is asserted where the
      markup now lives instead of being dropped. */
   const customerInterface=section('function customerInterfaceSectionsHtmlV243(','function wireCustomerInterfaceV243(');
+  /* V259: the owner drew arrows from Workspace & brand onto the same Customer Interface module,
+     so that form followed the other two. It is still ONE definition behind ONE #bsave save — the
+     labelling contract simply moved with it. */
+  const brand=section('function workspaceBrandPanelHtmlV259(){','function wireWorkspaceBrandV259(){');
   const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
 
   assert.match(settings,/<div class="settings-page">/);
   assert.match(customerInterface,/<div class="customer-interface-sections-v243">/);
   for(const [source,id,label] of [
-    [settings,'bn','Name'],[settings,'bi','Industry'],[settings,'bc','Brand colour (used on your portal)'],
-    [settings,'bp','Booking policy (shown on your portal)'],[settings,'ir','Invite role'],
+    [brand,'bn','Name'],[brand,'bi','Industry'],[brand,'bc','Brand colour (used on your portal)'],
+    [brand,'bp','Booking policy (shown on your portal)'],[settings,'ir','Invite role'],
     [settings,'ie','Invite email (optional)'],[customerInterface,'csvf','Customer CSV file'],
     [customerInterface,'cfLabel','Field name'],[customerInterface,'cfType','Answer type'],
     [customerInterface,'cfClass','Data classification'],[customerInterface,'cfOptions','Choices (list type only)'],
@@ -225,7 +229,7 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
   assert.match(mobile,/\.settings-page \.row\{[^}]*flex-wrap:wrap[^}]*width:100%/s);
   assert.match(mobile,/\.settings-page \.row>input,\.settings-page \.row>select\{[^}]*width:100%[^}]*max-width:100%!important/s);
   assert.match(app,/\.settings-choice\{[^}]*min-height:44px/s);
-  assert.match(settings,/<p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{publicAppUrl\(`/);
+  assert.match(brand,/<p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{publicAppUrl\(`/);
   assert.match(app,/\.portal-link\{[^}]*display:flex[^}]*width:100%[^}]*max-width:100%[^}]*min-height:44px[^}]*overflow-wrap:anywhere[^}]*word-break:break-word/s);
   assert.match(mobile,/\.portal-link-row,\.portal-link\{[^}]*width:100%[^}]*max-width:100%[^}]*min-width:0/s);
   assert.ok(contrast('#A64020','#FFFFFF')>=4.5,'portal URL text must meet WCAG AA on white');

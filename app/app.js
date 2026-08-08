@@ -10518,9 +10518,25 @@ async function clientDetail(id){
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
+  }else if(prog){
+    /* V259: a programme that EXISTS but is paused is not the same thing as one that was never
+       built. Saying "not set up yet" about a paused programme is what sent the owner looking for
+       a bug in the earn engine. */
+    rewardsMarkup='<p class="muted small" style="margin-top:7px">This programme is paused, so nothing can be redeemed right now. The owner can resume it from Grow.</p>';
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
   }
+  /* V259 (owner: "points not fixed yet - does not sync with actual points"). Nothing is wrong
+     with the earn engine. staff_get_customer_actionable_loyalty_v145 reports 0 ACTIONABLE points
+     while a programme is paused (`case when program.enabled ... else 0 end`), and the customer
+     wallet's customer_get_wallet does exactly the same on `coalesce(lp.active,false)` — so both
+     surfaces agree, and both show 0. What neither said is WHY. points_ledger still holds every
+     point ever earned, and the history dialog below shows them. This one muted line is the
+     difference between "paused" and "your points vanished". */
+  const programmePausedV259=loyaltyFactsAvailable&&!!prog&&prog.active!==true;
+  const pointsPausedNoteV259=programmePausedV259
+    ?'<p class="muted small customer360-points-paused-v259" style="margin-top:7px;line-height:1.4">Programme paused — sales are not earning points right now. Points already earned stay in the history.</p>'
+    :'';
   const pointsUnit=prog?.unit==='stamps'?'stamps':'points';
   const nextExpiryLabel=nextExp
     ?`${nextExp.remaining} ${pointsUnit} expire ${new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(nextExp.expires_at))}`
@@ -10530,7 +10546,7 @@ async function clientDetail(id){
   /* V249: two KPI cards, not four. Visits and Lifetime spend are chips on the identity line
      above; Points carries its expiry note and the two moved collapsibles. */
   const profileKpis=[
-    loyaltyFactsAvailable?`<div class="card kpi customer360-points-card-v249"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v">${pts}</div>${pointsExpiryMarkup}${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}</div>`:'',
+    loyaltyFactsAvailable?`<div class="card kpi customer360-points-card-v249"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v"><button type="button" id="c360PointsHistoryV259" class="customer360-points-open-v259" aria-haspopup="dialog" aria-label="View points history" style="background:none;border:0;padding:0;margin:0;font:inherit;font-variant-numeric:tabular-nums;color:inherit;letter-spacing:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:5px">${pts}</button></div>${pointsPausedNoteV259}${pointsExpiryMarkup}${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}</div>`:'',
     loyaltyFactsAvailable?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Spendable credit':'Business-wide spendable credit'}</div><div class="v">${money(cred)}</div></div>`:''
   ].filter(Boolean).join('');
   const referralMarkup=canReadReferrals?`<p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
@@ -10592,6 +10608,103 @@ async function clientDetail(id){
   routeMain.querySelector('.cui-page-title h1')?.setAttribute('data-merchant-content','');
   /* Header quick actions. Every handler routes to an existing surface — no new write path is
      introduced here. */
+  /* V259 (owner: "not clickable to see where the points came from"). The POINTS number now opens
+     the customer's own points ledger — newest first, with what happened, what it came from, the
+     signed amount and a running balance.
+
+     Source: public.points_ledger itself, scoped to this business AND this customer. It is read
+     under the table's existing `points_select` RLS policy (app.has_perm(business_id,'view_sales')),
+     the same policy the reports page already reads it with, and the button only exists inside a
+     card that canReadLoyalty has already gated. No new RPC, no new privilege, no second copy of
+     the balance — the KPI number still comes from staff_get_customer_actionable_loyalty_v145.
+
+     The dialog is opened from the PAGE, never from another dialog, so it needs no V248
+     handOffHistory / inheritHistoryId hand-off: it owns its single history entry outright. */
+  let pointsHistoryResultV259=null;
+  async function loadPointsHistoryV259(){
+    if(pointsHistoryResultV259)return pointsHistoryResultV259;
+    const {data,error}=await fetchAllRowsResult(()=>sb.from('points_ledger')
+      .select('id,created_at,entry_type,points,sale_id,reference',{count:'exact'})
+      .eq('business_id',S.biz.id).eq('client_id',id)
+      .order('created_at',{ascending:true}).order('id'));
+    if(error)return {error};
+    pointsHistoryResultV259={rows:data||[]};
+    return pointsHistoryResultV259;
+  }
+  function pointsHistoryRowHtmlV259(entry,balance){
+    const sale=entry.sale_id?saleById[entry.sale_id]:null;
+    const amount=Number(entry.points)||0;
+    const type=String(entry.entry_type||'');
+    const what=type==='earn'?'Earned from a sale'
+      :type==='redeem'?'Redeemed for a reward'
+      :type==='expire'?'Points expired'
+      :type==='adjust'?'Manual adjustment'
+      :'Points movement';
+    /* The SOURCE is never invented. A sale already loaded on this page prints its own amount and
+       date; a sale this role cannot see says so rather than pretending; anything else prints the
+       reason the ledger row itself recorded. */
+    const source=sale?`Sale · ${money(Number(sale.amount_cents)||0)} · ${esc(String(sale.occurred_at||'').slice(0,10))}`
+      :entry.sale_id?'Sale · not visible to this role'
+      :esc(String(entry.reference||'').trim()||'No source recorded');
+    return `<tr>
+      <td data-label="When">${esc(sgt(entry.created_at)||'—')}</td>
+      <td data-label="What happened">${esc(what)}</td>
+      <td data-label="Source">${source}</td>
+      <td data-label="Points" style="text-align:right;font-variant-numeric:tabular-nums">${amount>0?'+':''}${amount}</td>
+      <td data-label="Balance" style="text-align:right;font-variant-numeric:tabular-nums">${balance}</td>
+    </tr>`;
+  }
+  async function renderPointsHistoryBodyV259(){
+    const body=$('c360PointsHistoryBodyV259');
+    if(!body)return;
+    body.innerHTML=CUI.loadingState({title:'Loading points history',iconName:'loyalty'});
+    const result=await loadPointsHistoryV259();
+    if(!body.isConnected)return;
+    if(result.error){
+      body.innerHTML=CUI.errorState({
+        title:'Points history unavailable',
+        message:result.error.message||'The points ledger could not be read.',
+        retryId:'c360PointsHistoryRetryV259'
+      });
+      const retry=$('c360PointsHistoryRetryV259');
+      if(retry)retry.onclick=()=>{pointsHistoryResultV259=null;renderPointsHistoryBodyV259()};
+      return;
+    }
+    const rows=result.rows;
+    if(!rows.length){
+      body.innerHTML=CUI.emptyState({
+        iconName:'loyalty',
+        title:'No points movements yet',
+        body:'Nothing has been earned, redeemed, expired or adjusted for this customer.'
+      });
+      return;
+    }
+    let running=0;
+    const withBalance=rows.map(entry=>{running+=Number(entry.points)||0;return {entry,balance:running}});
+    body.innerHTML=`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Points history">
+      <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th style="text-align:right">Points</th><th style="text-align:right">Balance</th></tr></thead>
+      <tbody>${withBalance.slice().reverse().map(row=>pointsHistoryRowHtmlV259(row.entry,row.balance)).join('')}</tbody></table></div>
+      <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}. ${programmePausedV259
+        ?'The card behind this dialog shows 0 because the programme is paused — these points were not removed.'
+        :'Every recorded movement is listed; the ledger is append-only and is never edited in place.'}</p>`;
+    CUI.enhance(body);
+  }
+  function openPointsHistoryV259(){
+    if(document.getElementById('c360PointsHistoryDialogV259'))return;
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="c360PointsHistoryDialogV259" role="dialog" aria-modal="true" aria-labelledby="c360PointsHistoryTitleV259" tabindex="-1"><div class="modal-card" style="max-width:720px;max-height:min(85vh,760px);overflow:auto">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px"><div><p class="eyebrow">Points history</p><h2 id="c360PointsHistoryTitleV259" style="margin-top:4px">${esc(c.full_name)}</h2></div><button class="btn ghost sm" type="button" id="c360PointsHistoryCloseV259">Close</button></div>
+      ${pointsPausedNoteV259}
+      <div id="c360PointsHistoryBodyV259" style="margin-top:12px"></div>
+    </div></div>`);
+    const dialog=$('c360PointsHistoryDialogV259');
+    let deactivate=null;
+    const close=()=>{const release=deactivate;deactivate=null;release?.({restoreFocus:true})};
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#c360PointsHistoryCloseV259'});
+    $('c360PointsHistoryCloseV259').onclick=close;
+    dialog.onclick=event=>{if(event.target===dialog)close()};
+    renderPointsHistoryBodyV259();
+  }
+  if($('c360PointsHistoryV259'))$('c360PointsHistoryV259').onclick=()=>openPointsHistoryV259();
   if($('c360QuickEarn'))$('c360QuickEarn').onclick=goQuickEarn;
   if($('c360FeedbackRetry'))$('c360FeedbackRetry').onclick=()=>clientDetail(id);
   if($('c360BirthdayRetry'))$('c360BirthdayRetry').onclick=()=>clientDetail(id);
@@ -12420,14 +12533,12 @@ async function salesPage(){
       <div style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
   const [
     {data:cl,error:clientError},
-    {data:branchRows,error:branchError},
     {data:saleStaff,error:staffError}
   ]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
-    fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default,active',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('staff').select('id,full_name,user_id',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('full_name').order('id'))]);
   if(!isCurrent())return;
-  const salesLoadError=clientError||branchError||staffError;
+  const salesLoadError=clientError||staffError;
   if(salesLoadError){
     const shell=$('salesShell');
     if(shell)shell.innerHTML=`<div class="err" role="alert"><b>Sales could not be loaded. Nothing was changed.</b><p class="muted small" style="margin-top:5px">${esc(salesLoadError.message||'Please try again.')}</p></div>
@@ -12435,18 +12546,14 @@ async function salesPage(){
     const retry=$('salesRetry');if(retry)retry.onclick=()=>salesPage();
     return;
   }
-  const saleBranches=branchRows||[];
   const saleTeam=saleStaff||[];
   const signedInStaff=saleTeam.find(person=>person.user_id===S.user?.id);
-  const initialSaleBranch=saleBranches.some(b=>b.id===selectedBranchId)
-    ?selectedBranchId:(saleBranches.find(b=>b.is_default)?.id||saleBranches[0]?.id||'');
   M().innerHTML=`${salesHead}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
         <div class="sales-filter-row">
           <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${shiftSgDateInput(sgDateInputValue(),-29)}"></div>
           <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${sgDateInputValue()}"></div>
-          <div><label for="salesBranch">Branch</label><select id="salesBranch"><option value="">All branches</option>${saleBranches.map(b=>`<option value="${b.id}" ${b.id===initialSaleBranch?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div>
           <div><label for="salesCustomer">Customer search</label><input id="salesCustomer" type="search" placeholder="Name"></div>
         </div>
         <div class="sales-filter-row secondary">
@@ -12460,10 +12567,12 @@ async function salesPage(){
       <div id="recent" style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
   async function loadRecent(){
     let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
-    const from=$('salesFrom')?.value,to=$('salesTo')?.value,branch=$('salesBranch')?.value,staff=$('salesStaff')?.value,type=$('salesType')?.value,paid=$('salesPayment')?.value;
+    const from=$('salesFrom')?.value,to=$('salesTo')?.value,staff=$('salesStaff')?.value,type=$('salesType')?.value,paid=$('salesPayment')?.value;
     if(from)query=query.gte('occurred_at',sgIso(from+'T00:00'));
     if(to)query=query.lte('occurred_at',sgIso(to+'T23:59'));
-    if(branch)query=query.eq('branch_id',branch);
+    /* V260: the per-page Branch filter was struck out — the top bar's branch scope
+       (selectedBranchId) is the single source of truth for which branch the query covers. */
+    if(selectedBranchId)query=query.eq('branch_id',selectedBranchId);
     if(staff)query=query.eq('staff_id',staff);
     if(type)query=query.eq('kind',type);
     if(paid)query=query.eq('paid',paid==='true');
@@ -12488,10 +12597,10 @@ async function salesPage(){
       },loadRecent);
     });
   }
-  ['salesApply','salesFrom','salesTo','salesBranch','salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
+  ['salesApply','salesFrom','salesTo','salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
   $('salesApply').onclick=loadRecent;
   $('salesCustomer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();loadRecent()}};
-  $('salesClear').onclick=()=>{['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');$('salesBranch').value='';loadRecent()};
+  $('salesClear').onclick=()=>{['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');loadRecent()};
   loadRecent();
 }
 
@@ -21447,35 +21556,29 @@ async function reportsPage(){
   const returningGate=createLatestRequestGate(isCurrent);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const canSeeReturningAnswer=canReadModule('clients')&&hasRoleCapability('view_finance');
+  /* V260: the owner struck out the three "…answer" collapsibles that sat below the scope
+     card and drew arrows moving each one INTO its matching decision card (Money answer ->
+     Sales & revenue, Busy-time answer -> Appointments & busy times, Returning-customer
+     answer -> Customer retention). Rather than keep a button that reveals a details section
+     elsewhere on the page, each decision card IS now the <details>/<summary> collapsible:
+     detailsId/bodyId below are exactly the ids the existing runMoney/runBusy/runReturning
+     and the answerLoaders toggle-listener (further down this function) already target, so
+     no other logic had to move — only where the markup lives. */
   const decisions=[
-    {id:'moneyAnswer',tone:'sales',icon:'reports',title:'Sales & revenue',body:'Revenue, reversals, liabilities and exports.'},
-    canReadModule('appointments')&&{id:'busyAnswer',tone:'appointments',icon:'appointments',title:'Appointments & busy times',body:'Booked hours, outcomes and scheduled capacity.'},
-    canSeeReturningAnswer&&{id:'returningAnswer',tone:'retention',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.'},
+    {detailsId:'moneyDetails',bodyId:'rbody',tone:'sales',icon:'reports',title:'Sales & revenue',body:'Revenue, reversals, liabilities and exports.',emptyBody:'Select this card, then run the report for this period.'},
+    canReadModule('appointments')&&{detailsId:'busyDetails',bodyId:'busyBody',tone:'appointments',icon:'appointments',title:'Appointments & busy times',body:'Booked hours, outcomes and scheduled capacity.',emptyBody:'Select this card, then run the report for this period.'},
+    canSeeReturningAnswer&&{detailsId:'returningDetails',bodyId:'returningBody',tone:'retention',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.',emptyBody:'Select this card, then run the report for this period.'},
     canReadModule('staffperf')&&{href:'#/staffperf',tone:'team',icon:'staff',title:'Team performance',body:'Staff activity and performance.'}
   ].filter(Boolean);
   M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div>
-    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<button type="button" class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.id}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></button>`).join('')}</div>
+    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<details class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.detailsId}"><summary><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></summary>
+      <div class="grid reports-grid" id="${item.bodyId}"><div class="card">${CUI.emptyState({iconName:item.icon,title:'Choose a report category',body:item.emptyBody})}</div></div></details>`).join('')}</div>
     <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
       <span id="branchWrap"></span><button class="btn sm" id="rgo">Run report</button>
-      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div></div>
-    <details class="card" id="moneyDetails"><summary style="cursor:pointer;font-weight:750">Money answer</summary>
-      <div class="grid reports-grid" id="rbody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a report category',body:'Select Sales & revenue, then run the report for this period.'})}</div></div></details>
-    ${canReadModule('appointments')?`<details class="card" id="busyDetails"><summary style="cursor:pointer;font-weight:750">Busy-time answer</summary>
-      <div class="grid reports-grid" id="busyBody"><div class="card">${CUI.emptyState({iconName:'appointments',title:'Choose a report category',body:'Select Appointments & busy times, then run the report for this period.'})}</div></div></details>`:''}
-    ${canSeeReturningAnswer?`<details class="card" id="returningDetails"><summary style="cursor:pointer;font-weight:750">Returning-customer answer</summary>
-      <div class="grid reports-grid" id="returningBody"><div class="card">${CUI.emptyState({iconName:'customers',title:'Choose a report category',body:'Select Customer retention, then run the report for this period.'})}</div></div></details>`:''}`;
-  const scriptedAnswerToggles=new WeakSet();
-  const revealAnswer=id=>{
-    const details=$(id);if(!details)return;
-    if(!details.open){scriptedAnswerToggles.add(details);details.open=true}
-    details.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-  };
+      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div></div>`;
   const runAnswer=runner=>runner().catch(error=>{if(isCurrent())fail(error)});
-  $('moneyAnswer').onclick=()=>{revealAnswer('moneyDetails');runAnswer(runMoney)};
-  if($('busyAnswer'))$('busyAnswer').onclick=()=>{revealAnswer('busyDetails');runAnswer(runBusy)};
-  if($('returningAnswer'))$('returningAnswer').onclick=()=>{revealAnswer('returningDetails');runAnswer(runReturning)};
   let lastScope=null;
   const answerRange=()=>{
     const from=$('rf').value,to=$('rt2').value;
@@ -21737,12 +21840,11 @@ async function reportsPage(){
     ['returningDetails',runReturning]
   ].filter(([id])=>Boolean($(id)));
   for(const [id,runner] of answerLoaders){
+    /* V260: each decision card is now the <details> element itself (see the report-decision-grid
+       markup above) — there is no separate button that opens it AND calls the runner, so a plain
+       native toggle listener is the only trigger and cannot double-fire on one click. */
     $(id).addEventListener('toggle',event=>{
-      /* Setting details.open dispatches a trusted toggle event in browsers. Suppress that
-         one event because the question-card handler already invoked the runner; otherwise
-         one user action performs the same remote report twice. */
-      if(scriptedAnswerToggles.delete(event.currentTarget))return;
-      if(event.isTrusted&&event.currentTarget.open)runAnswer(runner);
+      if(event.currentTarget.open)runAnswer(runner);
     });
   }
   const runOpenAnswers=()=>Promise.all(answerLoaders
@@ -22115,13 +22217,14 @@ function enhanceStaffMembersTabsV164(teamPanel){
      never signs in — is a first-class record. This adds that form. Giving them app access is
      still a separate, deliberate act: an invite. */
   listPanel.innerHTML=`<div><h2>Staff list</h2></div>
-    <!-- V228: working hours live with the people they belong to. -->
-    <section class="card" id="staffRotaCardV228" style="margin-top:12px" aria-busy="true">
-      <div class="v150-soft-head"><b>Working hours</b><p>Who customers may ask for, and anyone who works different hours from the shop. The shop's own opening hours stay in Bookings.</p></div>
-      <div id="staffRotaBodyV228" style="margin-top:12px"><p class="muted small">Loading working hours…</p></div>
-      <div class="row" style="margin-top:14px"><button type="button" class="btn sm" id="staffRotaSaveV228">Save working hours</button></div>
-      <div id="staffRotaErrV228" role="status"></div>
-    </section>
+    <!-- V260: the owner struck out the whole "Working hours" card (heading, explanatory line,
+         perpetual loading-state placeholder and the Save button) from the top of the Staff
+         list tab. loadStaffRotaV228/saveStaffRotaV228/staffRotaSectionMarkupV228 below are left
+         defined but no longer invoked here — this editor does not exist anywhere else in the
+         app (verified: no per-staff row exposes working hours), so deleting those handlers
+         would drop the only place that reads/writes staff.customer_bookable + staff_hours.
+         Where this belongs (a per-staff row control, its own settings tab, or elsewhere) is an
+         owner/product decision this fix does not make. -->
     <div class="card" id="staffManualAddCard" style="display:none;margin-top:12px">
       <div class="v150-soft-head"><b>Add a teammate</b><p>They appear on the rota and can be credited for sales straight away. They do not get a login until you send an invite.</p></div>
       <!-- V207 (owner: "add staff > then add details later (wrong) — supposed to be during adding
@@ -22300,7 +22403,7 @@ async function dailyReportPage(){
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
   M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div>
-    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><span id="branchWrap"></span><button class="btn sm" id="drGo">Generate</button>
+    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
   $('drPrint').onclick=()=>window.print();
@@ -22418,7 +22521,13 @@ async function dailyReportPage(){
       backgroundColor:kindValues.map(value=>value<0?'#C83F35':coral),borderRadius:8}]},
       options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
   }
-  refreshBranchFilter(()=>{invalidate();load()},isCurrent);
+  /* V260: the per-page branch picker (and its "waiting for payment" notice) was struck
+     out — the top bar already carries the single branch scope for the whole app, and
+     `scope.branchId` above already reads it straight from selectedBranchId. Changing the
+     top-bar branch triggers a full route() re-render (see hydrateProfileBranchSelectorV158),
+     which re-enters this page and reloads with the new scope, so no local re-fetch trigger
+     is needed here. */
+  invalidate();load();
 }
 
 /* ---------- expenses ---------- */
@@ -23058,24 +23167,9 @@ async function settingsPage(){
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
     </div>
-    <section class="settings-panel" id="setpanel-workspace" role="tabpanel" aria-labelledby="settab-workspace" tabindex="-1"><div class="card"><b>Business</b>
-      ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'business'})}</div>`:''}
-      <label for="bn">Name</label><input id="bn" value="${esc(S.biz.name)}">
-      <label for="bi">Industry</label><select id="bi" disabled aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
-      <p class="muted small" id="biSectorHint" style="margin-top:4px">Set by Peekaa for your sector.</p>
-      <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
-      <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
-      <label for="blegal">Registered company name (for receipts)</label>
-      <input id="blegal" maxlength="200" placeholder="e.g. HOUGANG ABC PTE. LTD." value="${esc(S.biz.legal_name||'')}">
-      <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
-      <label for="buen">Business registration number / UEN</label>
-      <input id="buen" maxlength="60" placeholder="e.g. 202612345A" value="${esc(S.biz.registration_number||'')}">
-      <p class="muted small" style="margin-top:4px">Shown on receipts so customers can identify who they paid.</p>
-      <label for="bru">Public review link (Google, Facebook, etc.)</label><input id="bru" type="url" inputmode="url" placeholder="https://g.page/your-business/review" value="${esc(S.biz.review_url||'')}" aria-describedby="bruHint">
-      <p class="muted small" id="bruHint" style="margin-top:4px">Optional. Must start with https://. Shown to customers in their wallet — it is offered to everyone, never used to hide low ratings.</p>
-      <p class="field-label">Portal link (share with customers)</p>
-      <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}">${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}</a></p>
-      <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, brand colour, booking policy and public review link.</span></div></div></section>
+    <section class="settings-panel" id="setpanel-workspace" role="tabpanel" aria-labelledby="settab-workspace" tabindex="-1">
+      ${settingsMovedToCustomerInterfaceCardV243('Workspace &amp; brand')}
+    </section>
     ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-programme" role="tabpanel" aria-labelledby="settab-programme" tabindex="-1" hidden>
       ${settingsMovedToCustomerInterfaceCardV243('Customer programme')}
     </section>`:''}
@@ -23140,8 +23234,10 @@ async function settingsPage(){
   });
   const initialSettingsTab=document.getElementById('settab-'+settingsActiveTab);
   if(initialSettingsTab&&initialSettingsTab!==settingsTabs[0])selectSettingsTab(initialSettingsTab,false);
+  /* V259: loadWorkspaceLogoEditorV96() moved out with the Workspace & brand panel — the host
+     element it fills now lives in the Customer Interface module, and wireWorkspaceBrandV259()
+     is what calls it. */
   if(S.myRole==='owner'){
-    loadWorkspaceLogoEditorV96();
     loadCustomerProgrammePresentationEditorV95();
   }
   /* Checkout Catalogue is deliberately separate from Inventory: it only controls whether an
@@ -23236,26 +23332,6 @@ async function settingsPage(){
     if(canUploadCatalogueMedia)bindCataloguePhotoUploadsV158({onSaved:()=>loadCheckoutCatalogue(selectedBranch)});
   }
   loadCheckoutCatalogue();
-  $('bsave').onclick=async()=>{
-    /* Client-side mirror of the DB CHECK (review_url is null or length<=500 and ~ '^https://').
-       review_url rides this existing businesses UPDATE — no new call site is introduced. */
-    const reviewUrlRaw=($('bru').value||'').trim();
-    if(reviewUrlRaw&&(!/^https:\/\//.test(reviewUrlRaw)||reviewUrlRaw.length>500)){
-      $('bru').focus();return toast('Public review link must start with https:// and be under 500 characters');
-    }
-    const reviewUrl=reviewUrlRaw||null;
-    /* V188: legal_name and registration_number already existed on businesses but nothing ever
-       asked for them, so every receipt in production printed only a workspace nickname. They
-       ride this same UPDATE — no new call site. */
-    const legalName=($('blegal')?.value||'').trim()||null;
-    const registrationNumber=($('buen')?.value||'').trim()||null;
-    const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
-      brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,
-      legal_name:legalName,registration_number:registrationNumber}).eq('id',S.biz.id);
-    if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber});
-    toast('Saved');route();
-  };
   /* team + per-staff module permissions (v74) */
   let openModId=null;   // staff.id whose "Modules" panel is expanded, or null
   let openProfileId=null; // V180: staff.id whose editable profile is expanded, or null
@@ -23481,7 +23557,7 @@ async function settingsPage(){
         ?'<span class="muted small">Commission not set</span>'
         :`<span class="muted small">Svc ${esc(pct(s.commission_service_bps))} · Prod ${esc(pct(s.commission_product_bps))}</span>`;
       return `<div class="team-member-card">
-        <div class="row staff-row-line">
+        <div class="staff-row-line">
           <button type="button" class="staff-row-open" data-merchant-content onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
             <!-- V226 (owner drew the columns by hand: Name | phone | email | Position |
                  Commission, captioned "I want clear segmentation"). The row was a flex wrap, so
@@ -23495,10 +23571,16 @@ async function settingsPage(){
             <span class="staff-col-v226" data-staff-col="Position"><span class="pill ${s.role==='owner'?'ok':'off'}" data-merchant-content>${esc(s.title||ROLE_LABELS[s.role]||s.role)}</span></span>
             <span class="staff-col-v226" data-staff-col="Commission">${commissionSummary}</span>
           </button>
-          ${accessPill}${modPill}<span class="spacer"></span>
-          ${s.role!=='owner'?`${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
-          <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
-          <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Remove</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
+          <!-- V260: status pills and action buttons moved to their own row beneath the name/
+               phone/email/position/commission grid, so .staff-row-open always renders at the
+               row's full width (see the CSS note by .staff-row-actions) instead of shrinking by
+               however much this particular row's pills+buttons happen to take up. -->
+          <div class="staff-row-actions">
+            ${accessPill}${modPill}<span class="spacer"></span>
+            ${s.role!=='owner'?`${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
+            <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
+            <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Remove</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
+          </div>
         </div>
         ${openProfileId===s.id?staffProfilePanelHtml(s):''}
         ${(s.role!=='owner'&&openModId===s.id)?modPanelHtml(s):''}
@@ -23692,7 +23774,9 @@ async function settingsPage(){
   };
   await loadTemplates();
   loadTeam();
-  loadStaffRotaV228();
+  /* V260: loadStaffRotaV228() intentionally not called — its host card (#staffRotaCardV228)
+     was removed above per the owner's strikeout. The function stays defined (see the note
+     above staffManualAddCard) rather than deleted. */
   /* ---------- billing (read-only) ---------- */
   /* V124 adds guarded checkout commands; billing truth remains provider-backed. */
   /* V184 (owner: "we can have default for the sectors but able to off or on if needed to").
@@ -24075,9 +24159,68 @@ async function loadCommissionConfig(){
    pointer instead of a second copy, because a tab that silently disappears reads as a lost
    feature.
 
-   Workspace & brand stayed in Settings: it is ONE interleaved form (name, industry, brand colour,
-   booking policy, legal name, UEN, review link) behind a single Save, so the customer-visible
-   parts cannot be lifted without forking the form. It is linked from here instead. */
+   Workspace & brand stayed in Settings at the time: it is ONE interleaved form (name, industry,
+   brand colour, booking policy, legal name, UEN, review link) behind a single Save, so the
+   customer-visible parts could not be lifted without forking the form.
+   V259 SUPERSEDES that: the owner drew arrows from all three tabs, so the whole form moved here
+   intact — see workspaceBrandPanelHtmlV259 / wireWorkspaceBrandV259 above. */
+/* V259 (owner, arrows drawn from ALL THREE Settings tabs — including Workspace & brand — onto
+   the Customer Interface nav item). V243 deliberately left this one behind because it is ONE
+   interleaved form (name, industry, brand colour, booking policy, registered name, UEN, review
+   link) behind a single `#bsave` write, and splitting it would have forked the save.
+
+   So it travels WHOLE. This function is the single definition of that markup and
+   wireWorkspaceBrandV259() is the single `#bsave` handler; both were LIFTED out of settingsPage,
+   not copied — Settings now shows the same one-line pointer card V243 left for the other two.
+
+   Two fields in here are not customer-facing: the registered company name and the UEN, which
+   exist for receipts. They stay in the form anyway. Splitting one save into two so that a legal
+   name could live elsewhere would buy tidiness with a second write path over the same row, and
+   that is a worse trade than an owner finding "for receipts" on a customer-facing screen. */
+function workspaceBrandPanelHtmlV259(){
+  return `<div class="card" style="margin-top:16px"><b>Business</b>
+      ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'business'})}</div>`:''}
+      <label for="bn">Name</label><input id="bn" value="${esc(S.biz.name)}">
+      <label for="bi">Industry</label><select id="bi" disabled aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
+      <p class="muted small" id="biSectorHint" style="margin-top:4px">Set by Peekaa for your sector.</p>
+      <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
+      <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
+      <label for="blegal">Registered company name (for receipts)</label>
+      <input id="blegal" maxlength="200" placeholder="e.g. HOUGANG ABC PTE. LTD." value="${esc(S.biz.legal_name||'')}">
+      <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
+      <label for="buen">Business registration number / UEN</label>
+      <input id="buen" maxlength="60" placeholder="e.g. 202612345A" value="${esc(S.biz.registration_number||'')}">
+      <p class="muted small" style="margin-top:4px">Shown on receipts so customers can identify who they paid.</p>
+      <label for="bru">Public review link (Google, Facebook, etc.)</label><input id="bru" type="url" inputmode="url" placeholder="https://g.page/your-business/review" value="${esc(S.biz.review_url||'')}" aria-describedby="bruHint">
+      <p class="muted small" id="bruHint" style="margin-top:4px">Optional. Must start with https://. Shown to customers in their wallet — it is offered to everyone, never used to hide low ratings.</p>
+      <p class="field-label">Portal link (share with customers)</p>
+      <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}">${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}</a></p>
+      <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, brand colour, booking policy and public review link.</span></div></div>`;
+}
+function wireWorkspaceBrandV259(){
+  if(!$('bsave'))return;
+  if(S.myRole==='owner')loadWorkspaceLogoEditorV96();
+  $('bsave').onclick=async()=>{
+    /* Client-side mirror of the DB CHECK (review_url is null or length<=500 and ~ '^https://').
+       review_url rides this existing businesses UPDATE — no new call site is introduced. */
+    const reviewUrlRaw=($('bru').value||'').trim();
+    if(reviewUrlRaw&&(!/^https:\/\//.test(reviewUrlRaw)||reviewUrlRaw.length>500)){
+      $('bru').focus();return toast('Public review link must start with https:// and be under 500 characters');
+    }
+    const reviewUrl=reviewUrlRaw||null;
+    /* V188: legal_name and registration_number already existed on businesses but nothing ever
+       asked for them, so every receipt in production printed only a workspace nickname. They
+       ride this same UPDATE — no new call site. */
+    const legalName=($('blegal')?.value||'').trim()||null;
+    const registrationNumber=($('buen')?.value||'').trim()||null;
+    const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
+      brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,
+      legal_name:legalName,registration_number:registrationNumber}).eq('id',S.biz.id);
+    if(error)return fail(error);
+    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber});
+    toast('Saved');route();
+  };
+}
 function settingsMovedToCustomerInterfaceCardV243(label){
   return `<div class="card"><b>${esc(label)}</b>
       <p class="muted small" style="margin:6px 0 12px">Moved to Customer Interface in the main menu.</p>
@@ -24235,14 +24378,15 @@ async function customerInterfacePageV243(){
   if(fieldDefsError) return fail(fieldDefsError);
   M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>Customer Interface</h1><p class="muted small">Everything a customer sees and uses</p></div></div>
     ${customerInterfacePreviewCardHtmlV243()}
-    <div class="card" style="margin-top:16px"><b>Brand</b>
-      <p class="muted small" style="margin:6px 0 12px">Logo and colour customers see. Edit in Settings → Workspace &amp; brand.</p>
-      <a class="btn ghost sm" href="#/settings?tab=workspace">Open Workspace &amp; brand</a></div>
+    ${canEditCustomerInterface?workspaceBrandPanelHtmlV259():''}
     ${canEditCustomerInterface?`<div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
     ${customerInterfaceSectionsHtmlV243(fieldDefs)}`:'<div class="card" style="margin-top:16px"><p class="muted small">Only the owner can change what customers see.</p></div>'}
   </div>`;
   wireCustomerInterfacePreviewV243();
   if(!canEditCustomerInterface)return;
+  /* V259: brand/identity first, then the customer programme, then sign-up QR and app actions —
+     the order the panels are rendered in above. */
+  wireWorkspaceBrandV259();
   loadCustomerProgrammePresentationEditorV95();
   wireCustomerInterfaceV243(customerInterfacePageV243);
 }

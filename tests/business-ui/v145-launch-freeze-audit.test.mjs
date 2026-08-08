@@ -547,9 +547,15 @@ test('manual booking requests state only persisted review status and never promi
 
 test('report question cards issue one remote answer request per user action', () => {
   const reports=section('async function reportsPage()', '/* ---------- get started');
-  assert.match(reports,/const scriptedAnswerToggles=new WeakSet\(\)/);
-  assert.match(reports,/scriptedAnswerToggles\.add\(details\);details\.open=true/);
-  assert.match(reports,/if\(scriptedAnswerToggles\.delete\(event\.currentTarget\)\)return/);
+  // V260: the owner folded the three "…answer" collapsibles up into their matching decision
+  // card — each card IS the <details> element now, so there is no longer a separate button
+  // that both opens a details section elsewhere AND calls the runner (the scriptedAnswerToggles
+  // dedupe existed only to stop that pair from double-firing). One native toggle listener is
+  // now the only trigger, so one click can no longer fire the same remote report twice.
+  assert.doesNotMatch(reports,/scriptedAnswerToggles/);
+  assert.match(reports,/for\(const \[id,runner\] of answerLoaders\)\{/);
+  assert.match(reports,/\$\(id\)\.addEventListener\('toggle',event=>\{/);
+  assert.match(reports,/if\(event\.currentTarget\.open\)runAnswer\(runner\)/);
 });
 
 test('waitlist terminal booked rows are labelled as conversions, never proven seating', () => {

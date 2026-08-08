@@ -85,14 +85,19 @@ test('V243 the customer fields and CSV import moved with their panel, once', () 
   assert.equal((app.match(/<b>Import customers \(CSV\)<\/b>/g) || []).length, 1);
 });
 
-test('V243 brand is LINKED, not forked — Workspace & brand is one interleaved form', () => {
-  // The single Save writes name, colour, policy, legal name, UEN and review link together, so
-  // the customer-visible fields cannot be lifted out without splitting that write in two.
-  assert.match(settings, /id="bsave"/);
-  assert.match(settings, /<label for="bc">Brand colour \(used on your portal\)<\/label>/);
-  assert.doesNotMatch(page, /id="bsave"|id="bc"/);
-  assert.match(page, /Logo and colour customers see\. Edit in Settings → Workspace &amp; brand\./);
-  assert.match(page, /href="#\/settings\?tab=workspace"/);
+/* V259 SUPERSEDES this expectation. The owner drew arrows from ALL THREE Settings tabs —
+   Workspace & brand included — onto the Customer Interface nav item, so "linked, not moved" is no
+   longer the instruction. The form still may not be FORKED: it moved whole, one definition, one
+   #bsave handler. tests/business-ui/v259-points-provenance-and-brand-move.test.mjs owns the full
+   contract; this file keeps the part it was already guarding — that Settings never grows a second
+   copy of the form. */
+test('V259 Workspace & brand moved to Customer Interface as ONE form with ONE save', () => {
+  assert.doesNotMatch(settings, /id="bsave"/, 'Settings must not carry a second copy of the form');
+  assert.doesNotMatch(settings, /<label for="bc">Brand colour/);
+  assert.match(page, /\$\{canEditCustomerInterface\?workspaceBrandPanelHtmlV259\(\):''\}/);
+  assert.match(app, /<label for="bc">Brand colour \(used on your portal\)<\/label>/);
+  assert.equal((app.match(/id="bsave"/g) || []).length, 1, 'exactly one Workspace & brand form');
+  assert.equal((app.match(/\$\('bsave'\)\.onclick=/g) || []).length, 1, 'exactly one save handler');
 });
 
 /* -------------------------------------------- (c) Settings points at it instead of duplicating */
@@ -102,6 +107,8 @@ test('V243 the Settings tabs stay visible but render a pointer, never a second f
   const order = [...tabs.matchAll(/data-settab="([a-z]+)"/g)].map((m) => m[1]);
   assert.deepEqual(order, ['workspace', 'programme', 'fields', 'modules', 'catalogue', 'team'],
     'a tab that vanishes reads as a lost feature');
+  // V259: Workspace & brand joined the other two pointers.
+  assert.match(settings, /\$\{settingsMovedToCustomerInterfaceCardV243\('Workspace &amp; brand'\)\}/);
   assert.match(settings, /\$\{settingsMovedToCustomerInterfaceCardV243\('Customer programme'\)\}/);
   assert.match(settings, /\$\{settingsMovedToCustomerInterfaceCardV243\('Customer interface'\)\}/);
   assert.match(app, /Moved to Customer Interface in the main menu\./);

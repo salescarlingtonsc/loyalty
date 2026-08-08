@@ -1,0 +1,152 @@
+/* V259 — two owner reports against the Peekaa business portal.
+
+   (1) "points not fixed yet - does not sync with actual points and not clickable to see where the
+       points came from". The earn engine is correct and the two surfaces agree: the Customer 360
+       card reads staff_get_customer_actionable_loyalty_v145.points_balance and the customer wallet
+       reads customer_get_wallet — BOTH report 0 while the programme is paused, by design, while
+       points_ledger still holds every point ever earned. What was missing was any explanation, and
+       any way to see the rows. This file pins the explanation and the provenance dialog.
+
+   (2) The owner drew arrows from all three Settings tabs onto the Customer Interface nav item.
+       V243 moved two and deliberately left Workspace & brand behind because it is ONE interleaved
+       form behind a single #bsave write. V259 moves it WHOLE. The contract is that it moved, not
+       that it was copied: one definition of the markup, one save handler, a pointer in Settings. */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
+
+function section(start, end) {
+  const from = app.indexOf(start);
+  assert.ok(from >= 0, `missing section start: ${start}`);
+  const to = app.indexOf(end, from + start.length);
+  assert.ok(to > from, `missing section end: ${end}`);
+  return app.slice(from, to);
+}
+
+const clientDetail = section('async function clientDetail(id){', 'function renderHistPage(history,n){');
+const settings = section('async function settingsPage(){', '/* ---------- billing (read-only) ---------- */');
+const brandPanel = section('function workspaceBrandPanelHtmlV259(){', 'function wireWorkspaceBrandV259(){');
+const brandWiring = section('function wireWorkspaceBrandV259(){', 'function settingsMovedToCustomerInterfaceCardV243(');
+const interfacePage = section('async function customerInterfacePageV243()', '/* ---------- phone country-code picker');
+
+/* ------------------------------------------------------- (1a) the number is a real control */
+
+test('V259 the POINTS number is a button that opens a dialog, not inert text', () => {
+  assert.match(clientDetail, /<button type="button" id="c360PointsHistoryV259"[^>]*aria-haspopup="dialog"/);
+  assert.match(clientDetail, /aria-label="View points history"/);
+  assert.match(clientDetail, /\$\('c360PointsHistoryV259'\)\.onclick=\(\)=>openPointsHistoryV259\(\)/);
+  // the value it renders is still the ONE balance the KPI always showed — no second source
+  assert.match(clientDetail, /id="c360PointsHistoryV259"[^>]*>\$\{pts\}<\/button>/);
+});
+
+test('V259 the dialog uses the shared modal + CUI.activateDialog pattern', () => {
+  assert.match(clientDetail, /<div class="modal" id="c360PointsHistoryDialogV259" role="dialog" aria-modal="true"/);
+  assert.match(clientDetail, /<div class="modal-card"/);
+  assert.match(clientDetail, /CUI\.activateDialog\(dialog,\{onClose:close,initialFocus:'#c360PointsHistoryCloseV259'\}\)/);
+  // opened from the page, so it owns its own history entry outright
+  assert.match(clientDetail, /handOffHistory \/ inheritHistoryId hand-off/);
+});
+
+/* ------------------------------------------------------- (1b) the rows are the real ledger */
+
+test('V259 the history reads points_ledger, business- and customer-scoped, oldest first', () => {
+  assert.match(clientDetail, /sb\.from\('points_ledger'\)\s*\n?\s*\.select\('id,created_at,entry_type,points,sale_id,reference'/);
+  assert.match(clientDetail, /\.eq\('business_id',S\.biz\.id\)\.eq\('client_id',id\)/);
+  assert.match(clientDetail, /\.order\('created_at',\{ascending:true\}\)\.order\('id'\)/);
+});
+
+test('V259 every row names what happened, where it came from and a signed amount', () => {
+  assert.match(clientDetail, /type==='earn'\?'Earned from a sale'/);
+  assert.match(clientDetail, /:type==='redeem'\?'Redeemed for a reward'/);
+  assert.match(clientDetail, /:type==='expire'\?'Points expired'/);
+  assert.match(clientDetail, /:type==='adjust'\?'Manual adjustment'/);
+  // the signed amount, and a source that is never invented
+  assert.match(clientDetail, /\$\{amount>0\?'\+':''\}\$\{amount\}/);
+  assert.match(clientDetail, /entry\.sale_id\?'Sale · not visible to this role'/);
+  assert.match(clientDetail, /'No source recorded'/);
+});
+
+test('V259 the dialog carries a running balance, newest first', () => {
+  assert.match(clientDetail, /running\+=Number\(entry\.points\)\|\|0;return \{entry,balance:running\}/);
+  assert.match(clientDetail, /withBalance\.slice\(\)\.reverse\(\)\.map\(row=>pointsHistoryRowHtmlV259\(row\.entry,row\.balance\)\)/);
+  assert.match(clientDetail, /<th>When<\/th><th>What happened<\/th><th>Source<\/th>/);
+  assert.match(clientDetail, /<th style="text-align:right">Balance<\/th>/);
+});
+
+test('V259 an unreadable or empty ledger is explained, never rendered as a silent zero', () => {
+  assert.match(clientDetail, /title:'Points history unavailable'/);
+  assert.match(clientDetail, /title:'No points movements yet'/);
+  assert.doesNotMatch(clientDetail, /pointsHistoryResultV259=\{rows:\[\]\};\s*return/);
+});
+
+/* --------------------------------------------------------- (1c) a paused programme SAYS SO */
+
+test('V259 the paused line renders only when the programme is not live', () => {
+  assert.match(clientDetail, /const programmePausedV259=loyaltyFactsAvailable&&!!prog&&prog\.active!==true;/);
+  assert.match(clientDetail, /const pointsPausedNoteV259=programmePausedV259\s*\n?\s*\?/);
+  assert.match(clientDetail, /Programme paused — sales are not earning points right now\./);
+  // the empty string is the other branch: an active programme prints nothing at all
+  assert.match(clientDetail, /Points already earned stay in the history\.<\/p>'\s*\n?\s*:'';/);
+  assert.equal((app.match(/Programme paused — sales are not earning points right now\./g) || []).length, 1,
+    'one sentence, one definition — the card and the dialog render the same string');
+  assert.match(clientDetail, /\$\{pointsPausedNoteV259\}\$\{pointsExpiryMarkup\}/);
+});
+
+test('V259 a paused programme is no longer described as "not set up yet"', () => {
+  assert.match(clientDetail, /This programme is paused, so nothing can be redeemed right now\./);
+  assert.match(clientDetail, /Rewards are not set up yet\. The owner can create them from Grow\./);
+});
+
+test('V259 the dialog explains the 0 on the card instead of contradicting it', () => {
+  assert.match(clientDetail, /The card behind this dialog shows 0 because the programme is paused — these points were not removed\./);
+});
+
+/* ---------------------------------------- (2) Workspace & brand moved, whole and only once */
+
+test('V259 the Workspace & brand form lives in the Customer Interface module', () => {
+  assert.match(interfacePage, /\$\{canEditCustomerInterface\?workspaceBrandPanelHtmlV259\(\):''\}/);
+  assert.match(interfacePage, /wireWorkspaceBrandV259\(\);/);
+  // brand/identity first, then the customer programme, then sign-up QR and app actions
+  const order = ['workspaceBrandPanelHtmlV259()', 'customerProgrammeEditorV95', 'customerInterfaceSectionsHtmlV243('];
+  let cursor = -1;
+  for (const marker of order) {
+    const at = interfacePage.indexOf(marker);
+    assert.ok(at > cursor, `${marker} is out of order inside the module`);
+    cursor = at;
+  }
+});
+
+test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
+  assert.equal((app.match(/id="bsave"/g) || []).length, 1, 'exactly one Workspace & brand form');
+  assert.equal((app.match(/\$\('bsave'\)\.onclick=/g) || []).length, 1, 'exactly one #bsave handler');
+  assert.equal((app.match(/function workspaceBrandPanelHtmlV259\(\)\{/g) || []).length, 1);
+  assert.equal((app.match(/function wireWorkspaceBrandV259\(\)\{/g) || []).length, 1);
+  // every field the single UPDATE writes is still in the one panel
+  for (const id of ['bn', 'bi', 'bc', 'bp', 'blegal', 'buen', 'bru']) {
+    assert.match(brandPanel, new RegExp(`id="${id}"`), `${id} must not be split out of the form`);
+  }
+  assert.match(brandWiring, /sb\.from\('businesses'\)\.update\(\{name:\$\('bn'\)\.value\.trim\(\),/);
+  assert.match(brandWiring, /legal_name:legalName,registration_number:registrationNumber\}\)\.eq\('id',S\.biz\.id\)/);
+});
+
+test('V259 Settings keeps the tab and shows a pointer, never a second copy', () => {
+  assert.match(settings, /data-settab="workspace">Workspace &amp; brand<\/button>/,
+    'a tab that vanishes reads as a lost feature');
+  assert.match(settings, /\$\{settingsMovedToCustomerInterfaceCardV243\('Workspace &amp; brand'\)\}/);
+  assert.doesNotMatch(settings, /id="bsave"|id="bru"|<label for="bc">/);
+  // the loader moved with its host; only the explanatory comment still names it here
+  assert.doesNotMatch(settings, /^\s*loadWorkspaceLogoEditorV96\(\);/m);
+});
+
+test('V259 the owner-only gate is unchanged on both sides of the move', () => {
+  // both routes fail closed for a typed hash, identically
+  assert.match(app, /if\(pageKey==='settings'&&S\.myRole!=='owner'\)\{/);
+  assert.match(app, /if\(pageKey==='customer-interface'&&S\.myRole!=='owner'\)\{/);
+  assert.match(interfacePage, /const canEditCustomerInterface=S\.myRole==='owner';/);
+  assert.match(brandWiring, /if\(S\.myRole==='owner'\)loadWorkspaceLogoEditorV96\(\);/);
+});

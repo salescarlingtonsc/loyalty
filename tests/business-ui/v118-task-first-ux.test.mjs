@@ -96,17 +96,19 @@ test('reports answer money, capacity and returning-customer questions from recor
   const reports = section('async function reportsPage(){', '/* ---------- get started');
   // The question-phrased headings became plain decision cards, but the three domains the test
   // exists to protect are unchanged and still carry their original ids.
-  assert.match(reports, /id:'moneyAnswer'/);
-  assert.match(reports, /id:'busyAnswer'/);
-  assert.match(reports, /id:'returningAnswer'/);
+  // V260: the owner folded the three "…answer" collapsibles up INTO their matching decision
+  // card (arrows: Money answer -> Sales & revenue, Busy-time answer -> Appointments & busy
+  // times, Returning-customer answer -> Customer retention). Each card is now the <details>
+  // element itself (id=detailsId) instead of a button (id:'moneyAnswer') that revealed a
+  // separate <details id="moneyDetails"> section further down the page — same three ids,
+  // now carried by detailsId/bodyId on one merged element instead of two separate ones.
+  assert.match(reports, /detailsId:'moneyDetails'/);
+  assert.match(reports, /detailsId:'busyDetails'/);
+  assert.match(reports, /detailsId:'returningDetails'/);
   assert.match(reports, /title:'Sales & revenue'/);
-  // Staff performance became its own Reports route rather than a fourth card on this page.
-  assert.match(reports, /id:'moneyAnswer'/);
-  assert.match(reports, /id:'busyAnswer'/);
-  assert.match(reports, /id:'returningAnswer'/);
-  assert.match(reports, /id="moneyDetails"/);
-  assert.match(reports, /id="busyDetails"/);
-  assert.match(reports, /id="returningDetails"/);
+  // Team performance is the fourth card and links straight to the real Staff performance route.
+  assert.match(reports, /href:'#\/staffperf'/);
+  assert.match(reports, /id="\$\{item\.detailsId\}"/);
   assert.match(reports, /get_customer_lifecycle_v107/);
   assert.match(reports, /staff_hours/);
   assert.match(reports, /staff_off_days/);
