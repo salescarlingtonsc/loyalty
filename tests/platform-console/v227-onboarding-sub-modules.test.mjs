@@ -24,6 +24,23 @@ test('signups and applications are super-admin sub-modules',async()=>{
   assert.equal(Console.onboardingTabStripHtml('pipeline',false,{}),'');
 });
 
+test('CRM is a named entry in the rail, not the unlabelled group home',async()=>{
+  const Console=await loadConsole();
+  const access=Console.normalizePlatformAccess({
+    role:'super_admin',scope:'all',module_perms:{'*':'rw'}
+  });
+  const sales=Console.platformNavigationGroups(Console.visibleRoutes(access))
+    .find(group=>group.key==='sales');
+  const keys=Array.from(sales.routes,route=>route.key);
+
+  // The rail renders routes[0] as the group home using the GROUP's label, so
+  // whichever route sits first never shows its own name. CRM must not be that
+  // route or the word "CRM" appears nowhere in the navigation.
+  assert.notEqual(keys[0],'crm','CRM must not be the unlabelled group home');
+  assert.equal(keys[0],'onboarding','Onboarding stays the Sales home it has always been');
+  assert.ok(keys.slice(1).includes('crm'),'CRM must appear as a named child item');
+});
+
 test('the tab strip marks the active section and carries its counts',async()=>{
   const Console=await loadConsole();
   Console.setPlatformLocaleForTest('en');

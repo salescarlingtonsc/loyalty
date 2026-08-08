@@ -286,7 +286,7 @@ test('task-first desktop groups remain permission-filtered for sales staff',asyn
     })),
     [
       {key:'overview',label:'Today',routes:['overview']},
-      {key:'sales',label:'Sales',routes:['crm','onboarding']},
+      {key:'sales',label:'Sales',routes:['onboarding','crm']},
       {key:'customers',label:'Customers',routes:['firms']},
       {key:'reports',label:'Reports',routes:['reports']}
     ]

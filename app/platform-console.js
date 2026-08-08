@@ -2989,7 +2989,12 @@
   }
   const platformNavigationBlueprint=Object.freeze([
     Object.freeze({key:'overview',label:'Today',icon:'home',routeKeys:Object.freeze(['overview'])}),
-    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['crm','onboarding'])}),
+    /* Order matters: the FIRST route in a group becomes the group "home" and is
+       rendered with the GROUP's label, so its own name never appears in the
+       rail. Putting CRM first made the Sales header point at CRM while the word
+       "CRM" appeared nowhere. Onboarding stays the home it has always been, and
+       CRM appears as a named child. */
+    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm'])}),
     Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms','companies'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
