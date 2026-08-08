@@ -117,10 +117,10 @@ test('(b) the fixed "% off" presets are gone, replaced by one slider + typed per
 
 test('(c) a tiered programme offers no point-priced rewards, and flags the legacy ones', () => {
   // The chip row is not rendered at all in tiers mode — no empty row, no stray label.
-  assert.match(loyalty, /\$\{loyaltySelectionV230!=='tiers'&&rewards\.filter\(reward=>reward\.active!==false\)\.length\?`<div class="row"[^`]*<span class="muted small">Or add one of your rewards:<\/span>/);
+  assert.match(loyalty, /\$\{tierRewardChipsAllowedV240&&rewards\.filter\(reward=>reward\.active!==false\)\.length\?`<div class="row"[^`]*<span class="muted small">Or add one of your rewards:<\/span>/);
   // Defence in depth: the handler refuses even if a chip somehow exists.
   const handler = loyalty.slice(loyalty.indexOf("document.querySelectorAll('.trBenefitReward')"));
-  assert.match(handler.slice(0, handler.indexOf('});') + 3), /if\(loyaltySelectionV230==='tiers'\)return;/);
+  assert.match(handler.slice(0, handler.indexOf('});') + 3), /if\(!tierRewardChipsAllowedV240\)return;/);
 
   // A legacy "(N points)" line is flagged where it is read. Never rewritten, never deleted.
   assert.match(loyalty, /const tierPointPricedBenefitV238=\(line\)=>loyaltySelectionV230==='tiers'&&\/\\\(\\d\+ points\\\)\$\/i\.test\(String\(line\|\|''\)\);/);

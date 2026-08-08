@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="93e2123d8750f16be71dde2992c73bbaab1a4b6f9d9b555a437ac59e4e309fc0"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="4d06b3445da063c24e92dd3962ff117d8d7e2df24e0ac0315a80f3ba4935c9ea"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1707,7 +1707,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 93e2123d8750f16be71dde2992c73bbaab1a4b6f9d9b555a437ac59e4e309fc0</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 4d06b3445da063c24e92dd3962ff117d8d7e2df24e0ac0315a80f3ba4935c9ea</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2346,12 +2346,17 @@ async function openWelcomeOfferEditorV215(current,onSaved){
      stamp engine, points_mode splits the points engine into redemption vs tier membership —
      so the overview can never disagree with the editor about what customers are on. */
   const liveLoyaltyModelV235=snapshot.loyalty?.loyalty_model==='stamps'?'stamps'
-    :(pointsModeV229==='tiers'?'tiers':'redeem');
-  const loyaltyModelNamesV235={redeem:'Points redemption',tiers:'Tiered membership',stamps:'Stamp card'};
+    :(pointsModeV229==='tiers'?'tiers':pointsModeV229==='both'?'both':'redeem');
+  const loyaltyModelNamesV235={redeem:'Points redemption',tiers:'Tiered membership',both:'Points + tiers',stamps:'Stamp card'};
+  /* V240: 'both' makes TWO tiles live at once (points and tiers), which is the whole point of
+     the Chagee shape. The stamp card is still mutually exclusive with the points engine. */
+  const liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'?['redeem','tiers']:[liveLoyaltyModelV235];
   const loyaltyModelTileStatusV235=key=>!canRewards?['Not included','off']
-    :key!==liveLoyaltyModelV235?['Off','off']
+    :!liveLoyaltyModelKeysV240.includes(key)?['Off','off']
     :loyaltyLive?['Active','on']:['Active · paused','off'];
-  const otherModelLiveV235=()=>`${loyaltyModelNamesV235[liveLoyaltyModelV235]} is the live model`;
+  const otherModelLiveV235=()=>liveLoyaltyModelV235==='both'
+    ?'Points redemption and Tiered membership are both live'
+    :`${loyaltyModelNamesV235[liveLoyaltyModelV235]} is the live model`;
   const bringBackLive=bringBackCount>0;
   const referralLive=snapshot.referral?.enabled===true;
   const giftCardsLive=snapshot.giftcards?.enabled===true;
@@ -2435,19 +2440,19 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const growTopicDefsV229=[
     {key:'points',icon:'till',title:'Points redemption',blurb:'Earning, and the rewards points are spent on.',
       status:loyaltyModelTileStatusV235('redeem'),
-      summary:liveLoyaltyModelV235!=='redeem'?otherModelLiveV235()
+      summary:!liveLoyaltyModelKeysV240.includes('redeem')?otherModelLiveV235()
         :rewardCount?`Live model · ${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`
         :'Live model · set the earning rate and rewards'},
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
       status:loyaltyModelTileStatusV235('tiers'),
-      summary:liveLoyaltyModelV235!=='tiers'?otherModelLiveV235()
+      summary:!liveLoyaltyModelKeysV240.includes('tiers')?otherModelLiveV235()
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :loyaltyTiersV229.length?`Live model · ${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Live model · create the ladder customers climb'},
     {key:'stamps',icon:'check',title:'Stamp card',blurb:'Collect a stamp per spend, claim at each milestone.',
       status:loyaltyModelTileStatusV235('stamps'),
-      summary:liveLoyaltyModelV235!=='stamps'?otherModelLiveV235()
+      summary:!liveLoyaltyModelKeysV240.includes('stamps')?otherModelLiveV235()
         :rewardCount?`Live model · ${rewardCount} milestone${rewardCount===1?'':'s'}`
         :'Live model · set the spend per stamp and its milestones'},
     {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
@@ -2476,15 +2481,16 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     if(!canRewards)return '';
     const locked=!canSetupGrow;
     if(!pointsModeV229)return `<div class="points-mode-chooser-v229" role="group" aria-label="How customers use points">
-      <p class="points-mode-lead-v229"><b>Choose how customers use their points</b><br><span class="muted small">One model at a time keeps the customer story clear. You can change this later.</span></p>
+      <p class="points-mode-lead-v229"><b>Choose how customers use their points</b><br><span class="muted small">You can change this later.</span></p>
       <div class="points-mode-cards-v229">
         <button type="button" class="points-mode-card-v229" data-points-mode-v229="redeem" ${locked?'disabled':''}><b>Redeem rewards</b><span class="muted small">Points are spent on discounts, vouchers and free items.</span></button>
         <button type="button" class="points-mode-card-v229" data-points-mode-v229="tiers" ${locked?'disabled':''}><b>Tier membership</b><span class="muted small">Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits.</span></button>
+        <button type="button" class="points-mode-card-v229" data-points-mode-v229="both" ${locked?'disabled':''}><b>Both</b><span class="muted small">Points buy rewards while visits build the tier — the two never affect each other.</span></button>
       </div></div>`;
     /* V235 (owner: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as
        two half-truths). All three models are named, exactly one carries the Live mark, and the
        change itself happens in one place — the editor's segmented toggle. */
-    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>`<span class="pill ${key===liveLoyaltyModelV235?'on':'off'}">${key===liveLoyaltyModelV235?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`).join('')}</span>${locked?'':editorAction('rewards','Change model','lm')}</div>`;
+    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span>${locked?'':editorAction('rewards','Change model','lm')}</div>`;
   })();
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
@@ -3007,14 +3013,24 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     const next=button.dataset.pointsModeV229;
     /* Switching away from a chosen model changes what customers can do; first-time choice needs
        no confirm. The tiers warning states the concrete consequence the server enforces. */
-    if(S.biz.points_mode&&!confirm(next==='tiers'
-      ?'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.'
-      :'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.'))return;
+    const askV240={
+      tiers:'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.',
+      redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
+      both:'Run points and tiers together? Tiers will count visits instead of points, so points stay free to spend.'};
+    if(S.biz.points_mode&&!confirm(askV240[next]))return;
     button.disabled=true;
     const {error}=await sb.from('businesses').update({points_mode:next}).eq('id',S.biz.id);
-    if(error){button.disabled=false;return fail(error)}
+    if(error){
+      button.disabled=false;
+      /* V240: the server refuses 'both' beside a points-measured ladder. Say the fix. */
+      if(error.code==='23514'||/measure its tiers in points/i.test(error.message||''))
+        return toast('Set the tier to count visits or spend first — points cannot both be spent and decide the tier.');
+      return fail(error);
+    }
     S.biz.points_mode=next;
-    toast(next==='tiers'?'Points now build tier membership':'Points are now redeemed for rewards');
+    toast(next==='tiers'?'Points now build tier membership'
+      :next==='both'?'Points buy rewards and visits build tiers'
+      :'Points are now redeemed for rewards');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
@@ -3128,7 +3144,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'93e2123d8750f16be71dde2992c73bbaab1a4b6f9d9b555a437ac59e4e309fc0',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'4d06b3445da063c24e92dd3962ff117d8d7e2df24e0ac0315a80f3ba4935c9ea',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

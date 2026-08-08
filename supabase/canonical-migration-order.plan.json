@@ -1510,6 +1510,12 @@
       "version": "20260808030000",
       "name": "nestly_v226_crm_consultant_scope",
       "sourcePath": "db/migrations/20260808_nestly_v226_crm_consultant_scope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260808130000",
+      "name": "nestly_v239_points_and_tiers_can_both_run",
+      "sourcePath": "db/migrations/20260808_nestly_v239_points_and_tiers_can_both_run.sql"
     }
   ]
 }

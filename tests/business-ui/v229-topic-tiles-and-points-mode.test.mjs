@@ -43,17 +43,20 @@ test('V229 reward milestones live inside Point system, never on the tile overvie
   assert.match(app, /const topicOnV229=key=>growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229;/);
 });
 
-test('V229 a firm chooses ONE use for points, and the server holds the door', () => {
+/* V240 (owner, Chagee): the exclusivity this test was written for is SUPERSEDED. Points and
+   tiers may run together; what the server still holds the door on is points being spendable
+   AND the tier's yardstick at once. The chooser therefore offers three ways, not two. */
+test('V229/V240 a firm chooses how points are used, and the server holds the door', () => {
   // Unchosen: two cards. Chosen: the pill plus a switch to the OTHER mode only.
   assert.match(app, /Choose how customers use their points/);
-  assert.match(app, /One model at a time keeps the customer story clear/);
+  assert.match(app, /You can change this later\./);
   assert.match(app, /data-points-mode-v229="redeem"/);
   assert.match(app, /data-points-mode-v229="tiers"/);
   /* V235: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as two half
      truths. All three models are now named with exactly one Live mark, and the change itself
      happens in one place — the editor's segmented toggle. */
   assert.match(app, /const liveLoyaltyModelV235=snapshot\.loyalty\?\.loyalty_model==='stamps'\?'stamps'/);
-  assert.match(app, /key===liveLoyaltyModelV235\?'<span aria-hidden="true">●<\/span> Live: ':''/);
+  assert.match(app, /live\?'<span aria-hidden="true">●<\/span> Live: ':''/);
   assert.match(app, /const loyaltyModelTileStatusV235=key=>/);
   // Switching states the concrete consequence and asks first.
   assert.match(app, /Customers will not be able to claim point rewards until you switch back\./);

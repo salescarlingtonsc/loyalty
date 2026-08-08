@@ -1515,6 +1515,12 @@
       "path": "db/migrations/20260808_nestly_v233_login_path_rpc_indexes.sql",
       "semanticVersion": "v233",
       "proposedDeployVersion": "20260808120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v239_points_and_tiers_can_both_run.sql",
+      "semanticVersion": "v239",
+      "proposedDeployVersion": "20260808130000"
     }
   ]
 }

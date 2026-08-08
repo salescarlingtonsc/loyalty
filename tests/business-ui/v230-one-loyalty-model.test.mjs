@@ -30,7 +30,8 @@ test('V230 one three-way model select, in the owner\'s words', () => {
   assert.match(app, /loyaltySelectionV230==='redeem'\?`<label for="lmStyle">Redemption style<\/label>/);
   // Selection previews on change; Save is the decision point, and it writes BOTH stores.
   assert.match(app, /Loyalty model preview updated — Save to apply\./);
-  assert.match(app, /const targetModeV230=loyaltySelectionV230==='tiers'\?'tiers':'redeem';/);
+  /* V240: the target gains 'both' — points redemption and tiers may now run together. */
+  assert.match(app, /targetModeV230=loyaltySelectionV230==='tiers'\?'tiers':loyaltySelectionV230==='both'\?'both':'redeem'/);
   assert.match(app, /save_loyalty_config_draft[\s\S]{0,800}update\(\{points_mode:targetModeV230\}\)/);
   // A stale preview cannot leak into the next visit.
   assert.match(app, /if\(!stableRefresh\)loyaltyModeDraftV230=null;/);
@@ -44,8 +45,15 @@ test('V230 the editor shows only the chosen model\'s setup', () => {
      indexOf would land before `start` and slice to an empty string. */
   const site = app.slice(start, app.indexOf('applyGrowLoyaltyEditorIsolationV139', start));
   assert.ok(site.includes('${tierRows()}'), 'tiers branch renders the tier editor');
-  assert.ok(!site.slice(0, site.indexOf(':`<b>')).includes('rewardRows'), 'tiers branch must not render the reward list');
-  assert.match(app, /\$\{loyaltySelectionV230==='tiers'\?'Your tiers':'Tiers \(optional\)'\}/);
+  /* V240: a 'both' branch now sits between tiers and redeem, so the pure-tiers branch ends at
+     that selector rather than at the next `:`<b>`. The invariant is unchanged — a programme
+     that only runs tiers still offers nothing to redeem. */
+  const tiersOnly = site.slice(0, site.indexOf("loyaltySelectionV230==='both'"));
+  assert.notEqual(tiersOnly.length, 0, 'the both branch must follow the tiers branch');
+  assert.ok(!tiersOnly.includes('rewardRows'), 'tiers branch must not render the reward list');
+  /* V240: tiers are "optional" only in pure redeem — under 'both' they are half the
+     programme, so the heading is owned by the redeem case rather than the tiers case. */
+  assert.match(app, /\$\{loyaltySelectionV230==='redeem'\?'Tiers \(optional\)':'Your tiers'\}/);
   // The paused warning names the fix instead of just the fact.
   assert.match(app, /the programme Status above is Paused\. Set Status to Active/);
 });

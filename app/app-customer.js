@@ -2666,7 +2666,11 @@ function customerTierPanelMarkupV194(tier={}){
     return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${next.label}`;
   })();
   const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
-  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>
+  /* V240: when a firm runs both, the customer holds two independent things — a tier they climb
+     and points they spend. Saying so once here stops "will redeeming cost me my tier?". */
+  const bothNoteV240=String(tier.points_mode||'')==='both'
+    ?`<p class="muted small" style="margin-top:6px">Visits move you up. Points stay yours to spend.</p>`:'';
+  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV240}
     ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
     <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
       :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}

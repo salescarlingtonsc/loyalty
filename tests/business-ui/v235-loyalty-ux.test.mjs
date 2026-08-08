@@ -26,7 +26,8 @@ test('(a) the model choice is a three-way segmented toggle that marks what is li
     assert.match(loyalty, new RegExp(`data-loyalty-model-v235="\\$\\{key\\}"|'${key}'`),
       `${key} must be one of the three segmented options`);
   }
-  assert.match(loyalty, /\['redeem','tiers','stamps'\]\.map\(key=>`<button type="button" class="loyalty-seg-btn-v235/);
+  /* V240: a fourth option, 'both', joins points redemption and tiers (the Chagee model). */
+  assert.match(loyalty, /\['redeem','tiers','both','stamps'\]\.map\(key=>`<button type="button" class="loyalty-seg-btn-v235/);
   // Pressed state is programmatic, not colour-only, and the live model carries a text tag.
   assert.match(loyalty, /aria-pressed="\$\{loyaltySelectionV230===key\?'true':'false'\}"/);
   assert.match(loyalty, /liveLoyaltySelectionV235===key\?'<span class="pill on loyalty-seg-live-v235">Live<\/span>':''/);

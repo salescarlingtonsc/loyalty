@@ -6113,17 +6113,23 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      points engine (loyalty_model classic/points_tiers) and differ by businesses.points_mode —
      which the server already enforces — while 'stamps' is its own model. */
   const loyaltyModeV230=loyaltyModeDraftV230||S.biz.points_mode||'redeem';
-  const loyaltySelectionV230=model==='stamps'?'stamps':(loyaltyModeV230==='tiers'?'tiers':'redeem');
+  /* V240 (owner, the Chagee model): points redemption and a tier ladder may run TOGETHER, with
+     the tier earned by VISITS and points a separate spendable currency. Exclusivity now means
+     the stamp card versus the points engine — plus the one thing the server refuses outright,
+     points MEASURING the tier while they are also spendable. */
+  const loyaltySelectionForModeV240=mode=>mode==='tiers'?'tiers':mode==='both'?'both':'redeem';
+  const loyaltySelectionV230=model==='stamps'?'stamps':loyaltySelectionForModeV240(loyaltyModeV230);
   /* V235: Status is read from the pending draft first, the stored programme second. Every
      render of the Status control and everything that judges "is this running" goes through
      this one value, so a preview re-render can no longer change what Save will write. */
   const loyaltyActiveV235=loyaltyStatusDraftV235===null?Boolean(p?.active):loyaltyStatusDraftV235;
   /* The saved model, ignoring any preview — this is what customers are on right now. */
   const liveLoyaltySelectionV235=(p?.loyalty_model||'classic')==='stamps'?'stamps'
-    :((S.biz.points_mode||'redeem')==='tiers'?'tiers':'redeem');
+    :loyaltySelectionForModeV240(S.biz.points_mode||'redeem');
   const loyaltyModelCopyV235={
     redeem:{name:'Points redemption',line:'Customers earn points on every visit and spend them on rewards you choose.'},
     tiers:{name:'Tiered membership',line:'Customers earn points on every visit and unlock better benefits as they move up.'},
+    both:{name:'Points + tiers',line:'Customers spend points on rewards, and separately climb tiers by visits — the two never affect each other.'},
     stamps:{name:'Stamp card',line:'Customers collect a stamp each time they spend, and claim a reward at each milestone.'}};
   const unit=model==='stamps'?'stamps':'points';
   const groupEligibility=(rows,key)=>rows.reduce((a,x)=>{
@@ -6235,7 +6241,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
   /* V235: the requirement line speaks the firm's own basis, and a zero threshold is the
      starting tier rather than "from 0". */
-  const tierBasisWordV235=({visits:'visits',spend:'spent',points_earned:'points'})[p?.tier_basis||'visits'];
+  /* V240: the server refuses points_mode='both' beside tier_basis='points_earned' (sqlstate
+     23514) — points cannot be spendable AND be the tier's yardstick. The control therefore
+     never offers the state, and a stored points ladder reads as visits the moment the owner
+     previews 'both', so what they see is what Save can actually write. */
+  const tierBasisAllowsPointsV240=loyaltySelectionV230!=='both';
+  const tierBasisValueV240=(()=>{const stored=p?.tier_basis||'visits';
+    return !tierBasisAllowsPointsV240&&stored==='points_earned'?'visits':stored})();
+  const tierBasisWordV235=({visits:'visits',spend:'spent',points_earned:'points'})[tierBasisValueV240];
   const tierRequirementLineV235=(tier)=>{
     const threshold=Number(tier?.threshold)||0;
     if(!threshold)return 'Starting tier';
@@ -6250,13 +6263,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      benefit line carrying a points price is a contradiction left over from an earlier mode. The
      line is the owner's data: it is flagged where it is read, never rewritten or deleted. */
   const tierPointPricedBenefitV238=(line)=>loyaltySelectionV230==='tiers'&&/\(\d+ points\)$/i.test(String(line||''));
+  /* V240: points are spendable in 'both', so the reward chips belong there exactly as they do
+     in redeem — only a pure tiers programme hides them. */
+  const tierRewardChipsAllowedV240=loyaltySelectionV230!=='tiers';
   const tierRows=()=>`
-    <b style="display:block;margin-top:18px">${loyaltySelectionV230==='tiers'?'Your tiers':'Tiers (optional)'}</b>
+    <b style="display:block;margin-top:18px">${loyaltySelectionV230==='redeem'?'Tiers (optional)':'Your tiers'}</b>
     ${tiers.length&&!loyaltyActiveV235?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but the programme Status above is Paused. Set Status to Active, then ${draftVersionId?'Review & publish':'Save'} — that is the whole fix.</p></div>`:''}
-    <label for="ltb">Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
-      <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
-      <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
-      <option value="points_earned" ${p?.tier_basis==='points_earned'?'selected':''}>Lifetime points earned</option></select>
+    <label for="ltb">Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}${tierBasisAllowsPointsV240?'':' aria-describedby="ltbHelpV240"'}>
+      <option value="visits" ${tierBasisValueV240==='visits'?'selected':''}>Number of visits (recommended)</option>
+      <option value="spend" ${tierBasisValueV240==='spend'?'selected':''}>Lifetime spend ($)</option>
+      ${tierBasisAllowsPointsV240?`<option value="points_earned" ${tierBasisValueV240==='points_earned'?'selected':''}>Lifetime points earned</option>`:''}</select>
+    ${tierBasisAllowsPointsV240?'':'<p class="muted small" id="ltbHelpV240" style="margin-top:6px">Tiers count visits so points stay free to spend.</p>'}
     ${loyaltySelectionV230==='tiers'?`<p class="muted small" style="margin-top:10px"><b>How customers move up.</b> Earn ${p?.earn_points_per_dollar??1} points per $1. Points accumulate for life and unlock higher tiers at each threshold.</p>`:''}
     <p class="muted small" style="margin-top:6px">Tiers are based on lifetime ${esc(tierBasisWordV235)} — spending points never drops anyone down.</p>
     ${tiers.length?tiers.map(t=>{const state=tierBoundary(t),benefits=tierBenefitLines(t);return `<div class="reward-item" style="margin-top:8px"><div class="meta"><div>
@@ -6291,7 +6308,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         </div>
         <p class="muted small" id="trDiscountHelpV238" style="margin-top:5px">Drag or type. 0 means no discount. One discount per tier — customers only ever see this one.</p>
       </div>
-      ${loyaltySelectionV230!=='tiers'&&rewards.filter(reward=>reward.active!==false).length?`<div class="row" style="margin-top:10px;flex-wrap:wrap;align-items:center"><span class="muted small">Or add one of your rewards:</span>${(()=>{const live=rewards.filter(reward=>reward.active!==false);
+      ${tierRewardChipsAllowedV240&&rewards.filter(reward=>reward.active!==false).length?`<div class="row" style="margin-top:10px;flex-wrap:wrap;align-items:center"><span class="muted small">Or add one of your rewards:</span>${(()=>{const live=rewards.filter(reward=>reward.active!==false);
         /* V237: two rewards can carry the same customer name, so the picker showed two
            identical chips. Name collisions fall back to the internal name to tell them apart —
            the benefit line written into perk_note is unchanged. */
@@ -6353,8 +6370,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     :[['How customers earn',loyaltyEarnFactV235],['Redeem from',model==='classic'?`${p?.redeem_points??800} points`:'Each reward sets its own cost'],['Rewards',`${rewards.length}`]];
   /* The segmented toggle IS the model control; #lm stays as its hidden state, so the preview
      path, the grow deep-link focus target and the save semantics are all unchanged. */
-  const loyaltySegmentedV235=`<div class="loyalty-seg-v235" role="group" aria-label="Loyalty model — only one is live at a time">
-    ${['redeem','tiers','stamps'].map(key=>`<button type="button" class="loyalty-seg-btn-v235${loyaltySelectionV230===key?' is-on':''}" data-loyalty-model-v235="${key}" aria-pressed="${loyaltySelectionV230===key?'true':'false'}"${loyaltyControlDisabled}><b>${esc(loyaltyModelCopyV235[key].name)}</b>${liveLoyaltySelectionV235===key?'<span class="pill on loyalty-seg-live-v235">Live</span>':''}</button>`).join('')}
+  const loyaltySegmentedV235=`<div class="loyalty-seg-v235" role="group" aria-label="Loyalty model">
+    ${['redeem','tiers','both','stamps'].map(key=>`<button type="button" class="loyalty-seg-btn-v235${loyaltySelectionV230===key?' is-on':''}" data-loyalty-model-v235="${key}" aria-pressed="${loyaltySelectionV230===key?'true':'false'}"${loyaltyControlDisabled}><b>${esc(loyaltyModelCopyV235[key].name)}</b>${liveLoyaltySelectionV235===key?'<span class="pill on loyalty-seg-live-v235">Live</span>':''}</button>`).join('')}
   </div>
   <p class="muted small" id="loyaltyModelNoteV235" style="margin-top:8px">${esc(loyaltyModelCopyV235[loyaltySelectionV230].line)}${loyaltySelectionV230===liveLoyaltySelectionV235?'':' Not live yet — Save changes to apply it.'}</p>`;
   const topTierV235=tiers.length?tiers.slice().sort((a,b)=>(Number(b.threshold)||0)-(Number(a.threshold)||0))[0]:null;
@@ -6423,6 +6440,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ?`<b>Tiers — your loyalty model</b><p class="muted small" style="margin-top:6px">Customers climb these tiers, and each tier carries its own benefits. Points build the tier — they are not redeemed.</p>
           <p class="muted small" style="margin-top:8px">Point rewards are off in this model. Rewards you saved earlier are kept and come back if you switch to Points redemption.</p>
           ${tierRows()}${customerPreviewV235}`
+        :loyaltySelectionV230==='both'
+        ?`<b>Reward catalogue and tiers</b><p class="muted small" style="margin-top:6px">Both run together: points buy rewards, visits build tiers. Spending points never moves anyone down a tier.</p>${rewardRows('Your rewards')}${tierRows()}${customerPreviewV235}`
         :`<b>Reward catalogue</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define.</p>${rewardRows('Your rewards')}${customerPreviewV235}
           <p class="muted small" style="margin-top:14px">Tiers are off in this model — choose Tiered membership above to run them instead. Saved tiers are kept.</p>`}
     </div></div>${birthdayEditor}`;
@@ -6767,10 +6786,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     /* V230: the three-way selection decides BOTH stores. loyalty_model goes into the draft as
        before; points_mode is the instant business switch the server enforces, so switching away
        from a chosen model asks first and states what it stops. */
-    const targetModeV230=loyaltySelectionV230==='tiers'?'tiers':'redeem';
-    if(S.biz.points_mode&&targetModeV230!==S.biz.points_mode&&!confirm(targetModeV230==='tiers'
-      ?'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.'
-      :'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.'))return;
+    /* V240: 'both' joins the two. The server refuses points_mode='both' beside
+       tier_basis='points_earned' (23514), so the basis written below is forced off points
+       first — the draft save lands before the mode switch, which is the order the trigger
+       requires. */
+    const targetModeV230=loyaltySelectionV230==='tiers'?'tiers':loyaltySelectionV230==='both'?'both':'redeem';
+    const modeSwitchAskV240={
+      tiers:'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.',
+      redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
+      both:'Run points and tiers together? Tiers will count visits instead of points, so points stay free to spend.'};
+    if(S.biz.points_mode&&targetModeV230!==S.biz.points_mode&&!confirm(modeSwitchAskV240[targetModeV230]))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
       expiry_mode:expiryMode};
@@ -6779,7 +6804,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     else row.earn_points_per_dollar=parseFloat($('le').value||'1');
     if(model==='classic'){row.redeem_points=parseInt($('lr').value||'800');
       row.reward_credit_cents=Math.round(parseFloat($('lc').value||'20')*100)}
-    if(model==='points_tiers'&&$('ltb')) row.tier_basis=$('ltb').value;
+    if(model==='points_tiers'&&$('ltb')){
+      const basisV240=$('ltb').value;
+      row.tier_basis=targetModeV230==='both'&&basisV240==='points_earned'?'visits':basisV240;
+    }
     $('lsave').disabled=true;
     let versionId=draftVersionId;
     if(!versionId){
@@ -6799,10 +6827,19 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(targetModeV230!==(S.biz.points_mode||null)){
       const {error:modeError}=await sb.from('businesses').update({points_mode:targetModeV230}).eq('id',S.biz.id);
       if(!isLoyaltyCurrent())return;
-      if(modeError){$('lsave').disabled=false;return fail(modeError)}
+      if(modeError){
+        $('lsave').disabled=false;
+        /* The one state the server refuses outright. Keep loyaltyModeDraftV230 so the owner's
+           choice survives, and say the server's own sentence rather than a generic failure. */
+        if(modeError.code==='23514'||/measure its tiers in points/i.test(modeError.message||''))
+          return toast('Set "Tier level is earned by" to visits or spend first — points cannot both be spent and decide the tier.');
+        return fail(modeError);
+      }
       S.biz.points_mode=targetModeV230;
       loyaltyModeDraftV230=null;
-      toast(targetModeV230==='tiers'?'Points now build tier membership':'Points are now redeemed for rewards');
+      toast(targetModeV230==='tiers'?'Points now build tier membership'
+        :targetModeV230==='both'?'Points buy rewards and visits build tiers'
+        :'Points are now redeemed for rewards');
     }
     if(draftVersionId){
       toast('Grow draft saved — customers are still using the published programme');
@@ -7231,7 +7268,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   });
   document.querySelectorAll('.trBenefitReward').forEach(button=>button.onclick=()=>{
     /* V238: defence in depth — tiers mode renders no chips, and never accepts one either. */
-    if(loyaltySelectionV230==='tiers')return;
+    if(!tierRewardChipsAllowedV240)return;
     const textarea=$('trPerk'),benefit=button.dataset.benefit||'';
     const existing=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
     if(benefit&&!existing.includes(benefit))textarea.value=[...existing,benefit].join('\n');
@@ -8395,12 +8432,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      stamp engine, points_mode splits the points engine into redemption vs tier membership —
      so the overview can never disagree with the editor about what customers are on. */
   const liveLoyaltyModelV235=snapshot.loyalty?.loyalty_model==='stamps'?'stamps'
-    :(pointsModeV229==='tiers'?'tiers':'redeem');
-  const loyaltyModelNamesV235={redeem:'Points redemption',tiers:'Tiered membership',stamps:'Stamp card'};
+    :(pointsModeV229==='tiers'?'tiers':pointsModeV229==='both'?'both':'redeem');
+  const loyaltyModelNamesV235={redeem:'Points redemption',tiers:'Tiered membership',both:'Points + tiers',stamps:'Stamp card'};
+  /* V240: 'both' makes TWO tiles live at once (points and tiers), which is the whole point of
+     the Chagee shape. The stamp card is still mutually exclusive with the points engine. */
+  const liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'?['redeem','tiers']:[liveLoyaltyModelV235];
   const loyaltyModelTileStatusV235=key=>!canRewards?['Not included','off']
-    :key!==liveLoyaltyModelV235?['Off','off']
+    :!liveLoyaltyModelKeysV240.includes(key)?['Off','off']
     :loyaltyLive?['Active','on']:['Active · paused','off'];
-  const otherModelLiveV235=()=>`${loyaltyModelNamesV235[liveLoyaltyModelV235]} is the live model`;
+  const otherModelLiveV235=()=>liveLoyaltyModelV235==='both'
+    ?'Points redemption and Tiered membership are both live'
+    :`${loyaltyModelNamesV235[liveLoyaltyModelV235]} is the live model`;
   const bringBackLive=bringBackCount>0;
   const referralLive=snapshot.referral?.enabled===true;
   const giftCardsLive=snapshot.giftcards?.enabled===true;
@@ -8484,19 +8526,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const growTopicDefsV229=[
     {key:'points',icon:'till',title:'Points redemption',blurb:'Earning, and the rewards points are spent on.',
       status:loyaltyModelTileStatusV235('redeem'),
-      summary:liveLoyaltyModelV235!=='redeem'?otherModelLiveV235()
+      summary:!liveLoyaltyModelKeysV240.includes('redeem')?otherModelLiveV235()
         :rewardCount?`Live model · ${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`
         :'Live model · set the earning rate and rewards'},
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
       status:loyaltyModelTileStatusV235('tiers'),
-      summary:liveLoyaltyModelV235!=='tiers'?otherModelLiveV235()
+      summary:!liveLoyaltyModelKeysV240.includes('tiers')?otherModelLiveV235()
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :loyaltyTiersV229.length?`Live model · ${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Live model · create the ladder customers climb'},
     {key:'stamps',icon:'check',title:'Stamp card',blurb:'Collect a stamp per spend, claim at each milestone.',
       status:loyaltyModelTileStatusV235('stamps'),
-      summary:liveLoyaltyModelV235!=='stamps'?otherModelLiveV235()
+      summary:!liveLoyaltyModelKeysV240.includes('stamps')?otherModelLiveV235()
         :rewardCount?`Live model · ${rewardCount} milestone${rewardCount===1?'':'s'}`
         :'Live model · set the spend per stamp and its milestones'},
     {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
@@ -8525,15 +8567,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     if(!canRewards)return '';
     const locked=!canSetupGrow;
     if(!pointsModeV229)return `<div class="points-mode-chooser-v229" role="group" aria-label="How customers use points">
-      <p class="points-mode-lead-v229"><b>Choose how customers use their points</b><br><span class="muted small">One model at a time keeps the customer story clear. You can change this later.</span></p>
+      <p class="points-mode-lead-v229"><b>Choose how customers use their points</b><br><span class="muted small">You can change this later.</span></p>
       <div class="points-mode-cards-v229">
         <button type="button" class="points-mode-card-v229" data-points-mode-v229="redeem" ${locked?'disabled':''}><b>Redeem rewards</b><span class="muted small">Points are spent on discounts, vouchers and free items.</span></button>
         <button type="button" class="points-mode-card-v229" data-points-mode-v229="tiers" ${locked?'disabled':''}><b>Tier membership</b><span class="muted small">Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits.</span></button>
+        <button type="button" class="points-mode-card-v229" data-points-mode-v229="both" ${locked?'disabled':''}><b>Both</b><span class="muted small">Points buy rewards while visits build the tier — the two never affect each other.</span></button>
       </div></div>`;
     /* V235 (owner: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as
        two half-truths). All three models are named, exactly one carries the Live mark, and the
        change itself happens in one place — the editor's segmented toggle. */
-    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>`<span class="pill ${key===liveLoyaltyModelV235?'on':'off'}">${key===liveLoyaltyModelV235?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`).join('')}</span>${locked?'':editorAction('rewards','Change model','lm')}</div>`;
+    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span>${locked?'':editorAction('rewards','Change model','lm')}</div>`;
   })();
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
@@ -9056,14 +9099,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     const next=button.dataset.pointsModeV229;
     /* Switching away from a chosen model changes what customers can do; first-time choice needs
        no confirm. The tiers warning states the concrete consequence the server enforces. */
-    if(S.biz.points_mode&&!confirm(next==='tiers'
-      ?'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.'
-      :'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.'))return;
+    const askV240={
+      tiers:'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.',
+      redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
+      both:'Run points and tiers together? Tiers will count visits instead of points, so points stay free to spend.'};
+    if(S.biz.points_mode&&!confirm(askV240[next]))return;
     button.disabled=true;
     const {error}=await sb.from('businesses').update({points_mode:next}).eq('id',S.biz.id);
-    if(error){button.disabled=false;return fail(error)}
+    if(error){
+      button.disabled=false;
+      /* V240: the server refuses 'both' beside a points-measured ladder. Say the fix. */
+      if(error.code==='23514'||/measure its tiers in points/i.test(error.message||''))
+        return toast('Set the tier to count visits or spend first — points cannot both be spent and decide the tier.');
+      return fail(error);
+    }
     S.biz.points_mode=next;
-    toast(next==='tiers'?'Points now build tier membership':'Points are now redeemed for rewards');
+    toast(next==='tiers'?'Points now build tier membership'
+      :next==='both'?'Points buy rewards and visits build tiers'
+      :'Points are now redeemed for rewards');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
