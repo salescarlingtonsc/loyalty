@@ -2370,7 +2370,7 @@
       "path": "db/migrations/20260808_nestly_v233_login_path_rpc_indexes.sql",
       "semanticVersion": "v233",
       "proposedDeployVersion": "20260808120000",
-      "sha256": "96bd380692d52e223806c284e6ea706ec370a20bf01064c933cce7f0302b7970"
+      "sha256": "49a75c3d70884e27986bf44ec7dd9e0f762af68d06e1a1679db2f6622e9f8199"
     }
   ]
 }
