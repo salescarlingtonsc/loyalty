@@ -9,9 +9,6 @@ const preAuthSb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
   storageKey:'nestly-preauth-anon',persistSession:false,
   autoRefreshToken:false,detectSessionInUrl:false
 }});
-const customerRpc=(name,args,ms=12000)=>sb.rpc(name,args).abortSignal(customerRpcSignal(ms))
-  .then(result=>result,error=>({data:null,error:{code:'timeout',
-    message:`This is taking too long. ${String(error?.message||error||'Request timed out.')}`}}));
 async function submitPublicBookingGateway(body,initiallySignedInUser=null,isCurrent=()=>true){
   const {data,error}=await sb.auth.getSession();
   if(!isCurrent()){
@@ -52,10 +49,6 @@ const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=(
 function takePendingCustomerDestination(fallback=''){
   const destination=normalizeCustomerDestination(pendingCustomerDestination);
   return destination||fallback;
-}
-function completePendingCustomerDestination(route){
-  const destination=normalizeCustomerDestination(pendingCustomerDestination);
-  if(destination&&normalizeCustomerDestination(route)===destination)rememberPendingCustomerDestination('');
 }
 function customerRegistrationDestinationPriority(joinToken,businessSlug){
   if(String(joinToken||''))return 'join';
@@ -356,10 +349,6 @@ function setCustomerThemePreferenceV190(preference){
   const next=CUSTOMER_THEMES_V190.includes(preference)?preference:'light';
   try{localStorage.setItem(CUSTOMER_THEME_KEY_V190,next)}catch{}
   return applyCustomerThemeV190(next);
-}
-function setCustomerSurfaceDocumentV167(){
-  globalThis.document?.documentElement?.setAttribute('data-customer-surface','true');
-  applyCustomerThemeV190();
 }
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
@@ -943,43 +932,8 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
   return renderCustomerPasswordSignIn(isRouteCurrent);
 }
 
-const CUSTOMER_COPY=Object.freeze({
-  en:Object.freeze({
-    home:'Home',programmes:'My Rewards',bookings:'Bookings',scanQr:'Scan QR',
-    notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
-    language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
-    chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
-    programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
-    addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
-    rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
-    firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
-    firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
-    scanBusinessQr:'Scan business QR',qrOnlyHelp:'Businesses can only be added with a business-issued QR.',
-    balance:'Balance',nextReward:'Next reward',tierProgress:'Tier progress',benefits:'Benefits & perks',
-    offers:'Birthday & seasonal offers',rewards:'Rewards',activityHistory:'Activity & history',
-    noBenefits:'No extra perks are available right now.',noOffers:'No birthday or seasonal offers are available right now.',
-    noRewards:'No rewards are available right now.',
-    retry:'Try again',bookNow:'Book now',requestVisit:'Request your next visit with {business}.',
-    points:'points',stamps:'stamps',currentTier:'Current tier',nextTier:'Next: {tier}',
-    terms:'Terms',availableNow:'Available now',
-    loadingProgramme:'Loading rewards…',loadingProgrammes:'Loading My Rewards…',
-    successSounds:'Success sounds',soundOff:'Off by default',soundOn:'On',
-    soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
-    merchantProgramme:'{business} rewards',featured:'Featured products & services',
-    noFeatured:'This business has not published featured items yet.'
-  })
-});
 const normalizeCustomerLocale=()=> 'en';
 let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
-function ct(key,vars={}){
-  let value=CUSTOMER_COPY[customerLocale]?.[key]??CUSTOMER_COPY.en[key]??key;
-  for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
-  return value;
-}
-/* v194: the nav is painted before the wallet data arrives, so the counts are remembered and
-   re-applied in place once they resolve. A stale count is never shown as fresh — see
-   applyCustomerNavCountsV194, which repaints the badges the moment the real numbers land. */
-let customerNavCountsV194={programmes:0,bookings:0};
 function applyCustomerNavCountsV194(counts={}){
   customerNavCountsV194={...customerNavCountsV194,...counts};
   const nav=document.querySelector('.customer-primary-nav');
@@ -992,189 +946,6 @@ function applyCustomerNavCountsV194(counts={}){
   const scan=$('customerNavScan');
   if(scan)scan.onclick=openCustomerJoinScanner;
   return customerNavCountsV194;
-}
-/* v195 (owner circled Scan QR and drew it up beside the bell): scanning is an ACTION, not a
-   destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
-   claimed a quarter of the navigation and read like a fourth page. It is now the header control
-   next to notifications, on every customer screen, and the nav holds only real destinations. */
-const CUSTOMER_PRIMARY_NAV=Object.freeze([
-  {key:'home',href:'#/wallet',icon:'home',copy:'home'},
-  {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'programmes'},
-  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
-]);
-/* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
-   two tabs that hold countable things now carry that count. A zero is not rendered — a badge
-   reading 0 is noise, and the tab already says what it holds. */
-function customerPrimaryNavigation(active,counts={}){
-  const badge=key=>{
-    const value=Math.max(0,Number(counts?.[key])||0);
-    return value?`<span class="customer-nav-count" aria-hidden="true">${value>99?'99+':value}</span>`:'';
-  };
-  const label=(item)=>{
-    const value=Math.max(0,Number(counts?.[item.key])||0);
-    const text=ct(item.copy);
-    return value?`${text}, ${value}`:text;
-  };
-  return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
-    ${CUSTOMER_PRIMARY_NAV.map(item=>
-      `<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
-  </nav>`;
-}
-function customerJoinTokenFromQr(value,currentUrl=location.href){
-  const raw=String(value??'').trim();
-  if(!raw)return '';
-  if(/^[A-Za-z0-9_-]{20,512}$/.test(raw))return raw;
-  try{
-    const url=new URL(raw,currentUrl);
-    const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
-    const token=url.searchParams.get('token')||hashParams.get('token')||'';
-    return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
-  }catch{return ''}
-}
-function openCustomerJoinScanner(){
-  activeCustomerJoinScannerCleanup();
-  const overlay=document.createElement('div');
-  overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
-  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
-  overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
-    <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
-    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
-    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
-      <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
-    </div><p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
-  document.body.appendChild(overlay);
-  const video=overlay.querySelector('#customerJoinScannerVideo');
-  const frame=overlay.querySelector('#customerJoinScannerFrame');
-  const status=overlay.querySelector('#customerJoinScannerStatus');
-  const camera=overlay.querySelector('#customerJoinScannerCamera');
-  const imageInput=overlay.querySelector('#customerJoinScannerImage');
-  const pasteFallback=overlay.querySelector('#customerJoinScannerPaste');
-  const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
-  let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
-  const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
-  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
-  activeCustomerJoinScannerCleanup=close;
-  const accept=value=>{
-    const token=customerJoinTokenFromQr(value);
-    if(!token){status.textContent='That is not an active Peekaa business QR. Ask the business to generate its latest join QR.';return false}
-    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});nav('#/join');return true;
-  };
-  const decode=(source,width,height)=>{
-    if(typeof globalThis.jsQR!=='function'||!context||!width||!height)return '';
-    canvas.width=width;canvas.height=height;context.drawImage(source,0,0,width,height);
-    return globalThis.jsQR(context.getImageData(0,0,width,height).data,width,height)?.data||'';
-  };
-  const scan=()=>{
-    if(closed||!stream)return;
-    if(video.readyState>=2&&accept(decode(video,video.videoWidth,video.videoHeight)))return;
-    frameHandle=requestAnimationFrame(scan);
-  };
-  camera.onclick=async()=>{
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus();return}
-    camera.disabled=true;status.textContent='Starting camera…';
-    try{
-      await loadScannerLibrary();
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
-    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus()}
-  };
-  imageInput.onchange=async event=>{
-    const file=event.target.files?.[0];if(!file)return;
-    status.textContent='Reading QR image…';
-    try{
-      await loadScannerLibrary();
-      const bitmap=await createImageBitmap(file);
-      const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
-      if(!accept(value))status.textContent='No active Peekaa join QR was found in that image.';
-    }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
-  };
-  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
-  overlay.querySelector('#customerJoinScannerClose').onclick=close;
-  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
-  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerCamera'});
-}
-function customerWorkspaceSwitchHtml(staffWorkspaces=[]){
-  const workspaces=sortStaffWorkspaces(staffWorkspaces);
-  if(!workspaces.length)return '';
-  if(workspaces.length===1){
-    const workspace=workspaces[0];
-    const name=workspace.business_name||workspace.business_slug||'Business';
-    return `<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard" aria-label="Open ${esc(name)} staff workspace">${CUI.icon('branch',{size:17})}<span>${esc(name)} workspace</span></a>`;
-  }
-  return `<details class="customer-workspace-switch"><summary class="btn ghost sm" aria-label="Open ${workspaces.length} authorized staff workspaces">${CUI.icon('branch',{size:17})}<span>Business workspaces (${workspaces.length})</span></summary><div class="menu" aria-label="Authorized staff workspaces">${workspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></details>`;
-}
-function renderNoCustomerDestination(staffWorkspaces=[]){
-  const workspaces=sortStaffWorkspaces(staffWorkspaces);
-  const relationshipRetry=customerRelationshipSyncCanRecover();
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:520px;max-width:100%" aria-labelledby="noCustomerTitle">
-    <div class="logo">${brandWordmark()}</div><h1 id="noCustomerTitle" style="font-size:1.55rem;margin-top:16px">${esc(BRAND.customerLabel)} is not set up for this account</h1>
-    <p class="muted" style="margin-top:7px;line-height:1.55">This signed-in account has staff access, but no registered customer profile or linked customer programme. No empty wallet has been shown.</p>
-    ${relationshipRetry?`<div class="row" style="margin-top:16px">${customerRelationshipCheckActionHtml()}</div>`:''}
-    ${workspaces.length?`<div style="margin-top:16px"><b>Open a staff workspace</b><div class="row" style="margin-top:10px">${workspaces.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div>`:''}
-    <a class="btn" href="#/customer" style="margin-top:18px">Set up ${esc(BRAND.customerLabel)}</a>
-    ${legalLinks()}</section></main>`;
-  if(relationshipRetry)wireCustomerRelationshipCheck(()=>route());
-  CUI.focusRoute($('main'),{enhanceContent:true});
-}
-function customerSurfaceQualifies(profile,customerPersonas=[]){
-  return (profile!==null&&profile!==undefined)||(Array.isArray(customerPersonas)&&customerPersonas.length>0);
-}
-function wireCustomerAccountMenu(){
-  customerAccountMenuCleanup();
-  const customerAccountMenuDetails=document.querySelector('.customer-account-menu');
-  if(!customerAccountMenuDetails)return;
-  const summary=customerAccountMenuDetails.querySelector('summary');
-  const onPointerDown=event=>{
-    if(customerAccountMenuDetails.open&&!customerAccountMenuDetails.contains(event.target))customerAccountMenuDetails.open=false;
-  };
-  const onKeyDown=event=>{
-    if(event.key==='Escape'&&customerAccountMenuDetails.open){
-      event.preventDefault();customerAccountMenuDetails.open=false;summary?.focus();
-    }
-  };
-  document.addEventListener('pointerdown',onPointerDown);
-  document.addEventListener('keydown',onKeyDown);
-  customerAccountMenuCleanup=()=>{
-    document.removeEventListener('pointerdown',onPointerDown);
-    document.removeEventListener('keydown',onKeyDown);
-    customerAccountMenuCleanup=()=>{};
-  };
-}
-/* v178: backTo generalises the business-page circle back button so the "My Rewards" tab can
-   carry one too (owner: "There is no back button"). businessSlug keeps its own destination. */
-function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null,navCounts=null}={}){
-  setCustomerSurfaceDocumentV167();
-  globalThis.document?.documentElement?.setAttribute('lang','en');
-  const inboxAvailable=messagesAvailable===null?customerInboxEnabledV178===true:messagesAvailable===true,
-    backHref=businessSlug?'#/customer/programmes':(backTo||''),
-    backLabel=businessSlug?ct('backProgrammes'):'Back to home';
-  root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head">
-    ${backHref?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
-    <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    <span class="spacer"></span><button class="customer-head-scan" id="customerNavScan" type="button" aria-label="${esc(ct('scanQr'))}" title="${esc(ct('scanQr'))}">${CUI.icon('scan',{size:19})}</button><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
-    ${customerWorkspaceSwitchHtml(staffWorkspaces)}
-    <details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu">
-      <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a>
-      <button id="customerPushMenuControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button>
-      <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button>
-    </div></details>
-    </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
-    <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
-    ${legalLinks()}</div></div>`;
-  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-  const customerPush=window.NestlyCustomerPush?.configure({rpc:(name,args)=>sb.rpc(name,args),userId:S.user?.id});
-  if(customerPush){
-    customerPush.bindButton($('customerPushMenuControl'));
-    customerPush.reconcile().catch(()=>{});
-  }
-  wireCustomerAccountMenu();
-  if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
-  if($('walletBack'))$('walletBack').onclick=()=>nav(backHref);
-}
-function focusCustomerRoute(){
-  const main=$('main');if(main)CUI.focusRoute(main,{enhanceContent:true});
-  if(S.user&&typeof completePendingCustomerDestination==='function')completePendingCustomerDestination(location.hash);
 }
 function customerPasskeySupported({management=false}={}){
   return isSecureContext&&'PublicKeyCredential' in globalThis
@@ -1241,55 +1012,6 @@ async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
     };
   });
 }
-function customerRelationshipSyncCanRecover(){
-  return customerRelationshipSyncState.attempted===false
-    &&customerRelationshipSyncState.result?.outcome==='try_later';
-}
-function customerRelationshipCheckActionHtml(){
-  const retry=customerRelationshipSyncCanRecover();
-  return `${retry?'<span class="muted small" id="customerRelationshipRetryHelp" role="status">We could not complete the last programme check. Your account is unchanged.</span>':''}<button class="btn ghost sm" id="customerRelationshipCheck" type="button"${retry?' aria-describedby="customerRelationshipRetryHelp"':''}>${retry?'Retry programme check':'Check for existing programmes'}</button>`;
-}
-function wireCustomerRelationshipCheck(renderer){
-  const button=$('customerRelationshipCheck');
-  if(!button)return;
-  button.onclick=()=>{
-    const userId=S.user?.id||null;
-    customerRelationshipSyncState={userId,attempted:false,result:null};
-    button.disabled=true;button.textContent='Checking…';
-    CUI.announce('Checking for existing programmes.');
-    renderer();
-  };
-}
-/* v178: the header bell is a first-class shell control, so every customer shell — including the
-   QR-join screens that render before a route context exists — reads the same resolved flag. */
-let customerInboxEnabledV178=false;
-async function loadCustomerSurfaceContext(isCurrent=()=>true){
-  const features=await loadCustomerFeatureCapabilities();
-  customerInboxEnabledV178=features?.customer_in_app_inbox===true;
-  if(!isCurrent())return null;
-  if(features._load_error){renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
-  if(!features.customer_wallet){renderCustomerWalletUnavailable();return null}
-  const [profileResult,personaResult]=await Promise.all([
-    features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
-    customerRpc('get_my_personas')
-  ]);
-  if(!isCurrent())return null;
-  let {data:personas,error:personasError}=personaResult;
-  if(personasError){renderCustomerCapabilityRetry('We could not load your customer destinations. Please try again.');return null}
-  let staff=sortStaffWorkspaces(personas?.staff||[]),customer=personas?.customer||[];
-  if(profileResult.error&&!customer.length){
-    renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');return null;
-  }
-  const profile=profileResult.error?null:(profileResult.data?.profile??null);
-  const registeredCustomer=profile!==null;
-  if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
-  S.hasCustomerPersona=true;S.customerProfile=profile;
-  customerLocale='en';
-  globalThis.document?.documentElement?.setAttribute('lang','en');
-  if(!isCurrent())return null;
-  return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
-}
-
 async function renderCustomerProgrammes(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
@@ -1957,31 +1679,6 @@ async function renderCustomerClaim(){
   };
 }
 
-function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
-  setCustomerSurfaceDocumentV167();
-  globalThis.document?.documentElement?.setAttribute('lang','en');
-  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
-    <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
-    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
-      <p class="muted" style="margin-top:8px">${esc(message)}</p>
-    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
-  wireAccountDeletionButton();
-  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-}
-
-function renderCustomerCapabilityRetry(message){
-  setCustomerSurfaceDocumentV167();
-  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
-    <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
-    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
-      <p class="muted" style="margin-top:8px">${esc(message)}</p>
-      <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
-    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
-  wireAccountDeletionButton();
-  $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
-  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-}
-
 function renderCustomerWalletRetry(message,businessSlug,retry=()=>renderCustomerWallet(businessSlug),error=null){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const body=$('walletBody');if(!body)return;
@@ -2158,10 +1855,6 @@ function customerProgrammeSwitcherMarkup(cards=[],activeSlug=''){
     const business=card?.business||{};
     return `<a href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-current="${business.slug===activeSlug?'true':'false'}">${esc(business.name||ct('localBusiness'))}</a>`;
   }).join('')}</div>`;
-}
-function customerPointTotalV103(value){
-  return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
-    .format(Math.max(0,Number(value)||0));
 }
 const CUSTOMER_SEEN_OFFERS_KEY_V167='peekaa.customer.offers.seen.v1';
 let customerOfferFocusV167=null;
@@ -3017,67 +2710,9 @@ function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=
 function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
   return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
 }
-/* v242 (owner: "customer to view all businesses - within the ecosystem - then show (not set up)
-   for businesses that they yet to scan QRcode. and they able to see each customised points
-   (existing infrastructure). the rewards are customised to each company and not shared."):
-   Home ends with the whole Peekaa ecosystem, not only the businesses this customer already
-   scanned into. A business the customer has NOT joined is shown, never linked: no points, no
-   route into a wallet that does not exist for them, and one line saying the only way in is the
-   shop's own QR. A joined business shows ITS OWN balance and opens ITS OWN wallet — the
-   directory never adds points across businesses, because they are never shared.
-   The section is loaded AFTER Home has painted (customer_list_business_directory_v242 is a
-   second round trip and Home must not wait on it), so it paints a skeleton first and fills
-   itself in place. */
-function customerBusinessDirectoryHostV242(){
-  return '<div id="customerBusinessDirectoryV242"></div>';
-}
-function customerBusinessDirectoryRowMarkupV242(row){
-  const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
-    id=String(row?.business_id||''),joined=row?.joined===true,
-    points=Math.max(0,Number(row?.points_balance||0)),
-    copy=`<div class="customer-directory-copy"><h3 data-merchant-content>${esc(name)}</h3>${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}</div>`;
-  /* Joined rows reuse the wallet route the linked-programme tiles already use, so there is
-     exactly one way into a business from the customer app. */
-  return joined
-    ?`<a class="card customer-directory-row" href="#/wallet/${encodeURIComponent(row?.slug||'')}" data-directory-business="${esc(id)}" data-directory-joined="1">${copy}<div class="customer-directory-side"><span class="pill customer-directory-pill">Member</span><b class="customer-directory-points">${esc(points.toLocaleString())} points</b></div></a>`
-    :`<div class="card customer-directory-row customer-directory-row--locked" data-directory-business="${esc(id)}" data-directory-joined="0">${copy}<div class="customer-directory-side"><span class="pill customer-directory-pill">Not set up</span><span class="muted small">Scan their QR in store to join.</span></div></div>`;
-}
-function customerBusinessDirectoryMarkupV242(state={status:'loading',rows:[]}){
-  let body='<div class="card customer-directory-state"><p class="muted small">Loading businesses…</p></div>';
-  if(state.status==='ready'){
-    /* The server may legitimately list two businesses with the same name; only an identical
-       business_id is a duplicate, and demo or QA tenants are shown like any other. */
-    const seen=new Set(),rows=(Array.isArray(state.rows)?state.rows:[]).filter(row=>{
-      const id=String(row?.business_id||'');
-      if(!id||seen.has(id))return false;
-      seen.add(id);return true;
-    });
-    body=rows.length
-      ?`<div class="customer-directory-list">${rows.map(customerBusinessDirectoryRowMarkupV242).join('')}</div><p class="muted small customer-directory-note">Points and rewards are separate for every business.</p>`
-      :'<div class="card customer-directory-state"><p class="muted small">No businesses to show yet.</p></div>';
-  }else if(state.status==='error'){
-    body='<div class="card customer-directory-state"><p class="muted small">Businesses couldn’t load.</p><button class="btn ghost sm" id="customerDirectoryRetry" type="button" style="margin-top:10px">Try again</button></div>';
-  }
-  return `<section class="customer-directory-v242" aria-labelledby="customerDirectoryTitle"><div class="customer-directory-head"><h2 id="customerDirectoryTitle">All businesses</h2><p class="muted small">Every business on Peekaa. Scan a shop’s QR in store to start earning there.</p></div>${body}</section>`;
-}
-let customerDirectoryEpochV242=0;
-function mountCustomerBusinessDirectoryV242(){
-  const host=$('customerBusinessDirectoryV242');
-  if(!host)return;
-  const epoch=++customerDirectoryEpochV242;
-  host.innerHTML=customerBusinessDirectoryMarkupV242({status:'loading',rows:[]});
-  const paint=state=>{
-    /* A later Home render (or a later retry) owns the section; an in-flight reply from an
-       earlier one must never overwrite it. */
-    if(epoch!==customerDirectoryEpochV242||!document.body.contains(host))return;
-    host.innerHTML=customerBusinessDirectoryMarkupV242(state);
-    const retry=host.querySelector('#customerDirectoryRetry');
-    if(retry)retry.onclick=()=>mountCustomerBusinessDirectoryV242();
-  };
-  Promise.resolve(customerRpc('customer_list_business_directory_v242'))
-    .then(({data,error})=>paint(error?{status:'error',rows:[]}:{status:'ready',rows:Array.isArray(data)?data:(Array.isArray(data?.rows)?data.rows:[])}))
-    .catch(()=>paint({status:'error',rows:[]}));
-}
+/* v244: the v242 "All businesses" directory moved off the bottom of Home into the Explore tab,
+   where it is the empty-query result of the ecosystem search. Same rules (an unjoined business
+   never navigates, never shows points); Home stays offers-first. */
 /* v194 (owner struck both cards out on Home): the two quick links repeated the primary nav
    directly above them — My Rewards and Bookings are already one tap away in the tab bar, and
    the counts they carried now live on those tabs. Home is the offers shelf. */
@@ -3088,10 +2723,8 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
   if(!cards.length){
     $('walletBody').innerHTML=`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
-    if(isHome)$('walletBody').insertAdjacentHTML('beforeend',customerBusinessDirectoryHostV242());
     $('customerFirstScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(repaint);
-    if(isHome)mountCustomerBusinessDirectoryV242();
     return;
   }
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
@@ -3102,11 +2735,9 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
-  if(isHome)$('walletBody').insertAdjacentHTML('beforeend',customerBusinessDirectoryHostV242());
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
   if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));
   wireCustomerHomeOffersV167(repaint);
-  if(isHome)mountCustomerBusinessDirectoryV242();
 }
 async function renderCustomerWallet(businessSlug=null){
   const walletRenderEpoch=++customerWalletRenderEpoch;
@@ -3200,14 +2831,13 @@ async function renderCustomerWallet(businessSlug=null){
     $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
       ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}
-      ${customerBusinessDirectoryHostV242()}`;
+      `;
     /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
        lands here through the legacy read must not see empty tabs where the other path shows
        counts. A booking read that failed contributes 0, never a guess. */
     applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
-    mountCustomerBusinessDirectoryV242();
     focusCustomerRoute();
     return;
   }

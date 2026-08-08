@@ -111,14 +111,20 @@ test('the "N linked reward accounts" subtitle is gone, along with its helper', (
 
 /* ------------------------------------------------------------ 3 · Scan QR is an action, not a tab */
 
-test('the scanner moved to the header and the nav holds three destinations', () => {
-  assert.match(appJs, /<button class="customer-head-scan" id="customerNavScan" type="button"/);
-  assert.match(appJs, /if\(\$\('customerNavScan'\)\)\$\('customerNavScan'\)\.onclick=openCustomerJoinScanner/);
+test('the scanner is the raised centre of a five-slot nav (v244 Grab-style revamp)', () => {
+  /* v195 moved Scan to the header; the owner's v244 reference put it back in the nav as the
+     signature centre control, with Explore joining as a real destination. Same action, same id. */
   const nav = section(appJs, 'const CUSTOMER_PRIMARY_NAV=Object.freeze([', 'function customerPrimaryNavigation(');
-  assert.equal((nav.match(/\{key:/g) || []).length, 3);
-  assert.doesNotMatch(nav, /key:'scan'/);
-  assert.match(indexHtml, /\.customer-primary-nav\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(indexHtml, /\.customer-head-scan\{[^}]*min-width:44px;min-height:44px/);
+  assert.equal((nav.match(/\{key:/g) || []).length, 5);
+  assert.match(nav, /\{key:'scan',icon:'scan',copy:'scanQr'\}/);
+  assert.match(nav, /\{key:'explore',href:'#\/customer\/explore',icon:'search',copy:'explore'\}/);
+  assert.ok(nav.indexOf("key:'programmes'") < nav.indexOf("key:'scan'"), 'Scan sits in the centre');
+  assert.ok(nav.indexOf("key:'scan'") < nav.indexOf("key:'explore'"));
+  assert.match(appJs, /id="customerNavScan" class="customer-nav-scan"/);
+  assert.match(appJs, /if\(\$\('customerNavScan'\)\)\$\('customerNavScan'\)\.onclick=openCustomerJoinScanner/);
+  assert.doesNotMatch(appJs, /customer-head-scan/, 'the header no longer duplicates the scanner');
+  assert.match(indexHtml, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr 1fr/);
+  assert.match(indexHtml, /\.customer-nav-scan-fab\{[^}]*border-radius:999px;background:var\(--grad\)/);
 });
 
 /* --------------------------------------------------------------- 4 · tier rungs and tab pictograms */
@@ -291,9 +297,9 @@ test('the company row shows the address and phone, and opens the company profile
 /* ---------------------------------------------------- 8 · v196 follow-ups on the same surfaces */
 
 test('the header controls sit on one shared rhythm', () => {
-  // owner: "qrcode and notification gap further than profile icon — please align it"
-  assert.doesNotMatch(indexHtml, /\.customer-head-scan\{[^}]*margin-right/,
-    'the scan button carried its own margin on top of the header gap');
+  // owner: "qrcode and notification gap further than profile icon — please align it".
+  // v244 then removed the header scanner entirely (it became the nav centre), which is the
+  // strongest possible form of that alignment: nothing in the header carries its own margin.
   assert.match(indexHtml, /\.wallet-head\{[^}]*gap:12px/);
   assert.match(indexHtml, /#customerInboxBellSlot:empty\{display:none\}/,
     'an empty bell slot must not leave a double gap where the bell would be');

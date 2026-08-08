@@ -1533,6 +1533,12 @@
       "path": "db/migrations/20260808_nestly_v242_customer_business_directory.sql",
       "semanticVersion": "v242",
       "proposedDeployVersion": "20260808150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v244_customer_explore_search.sql",
+      "semanticVersion": "v244",
+      "proposedDeployVersion": "20260808160000"
     }
   ]
 }

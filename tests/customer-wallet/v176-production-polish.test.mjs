@@ -99,7 +99,8 @@ test('customer dead ends resolve: offers shelf, QR fallback, contact panel, book
 });
 
 test('responsive and tap-target guards are in place across the customer surface',()=>{
-  assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button\{flex-direction:column;gap:3px;min-height:58px/);
+  // v244: the centre Scan FAB has its own geometry, so the shared rule excludes it by selector.
+  assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button:not\(\.customer-nav-scan\)\{flex-direction:column;gap:3px;min-height:58px/);
   assert.match(app,/\.customer-primary-nav a span,\.customer-primary-nav button span\{min-width:0;overflow-wrap:break-word;hyphens:auto\}/);
   assert.doesNotMatch(app,/\.customer-primary-nav a span,\.customer-primary-nav button span\{min-width:0;overflow-wrap:anywhere\}/);
   assert.match(app,/\.customer-surface summary\.small,\.customer-surface summary\.muted\{min-height:44px;display:flex;align-items:center\}/);

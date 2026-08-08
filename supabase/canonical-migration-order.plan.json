@@ -1528,6 +1528,12 @@
       "version": "20260808150000",
       "name": "nestly_v242_customer_business_directory",
       "sourcePath": "db/migrations/20260808_nestly_v242_customer_business_directory.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260808160000",
+      "name": "nestly_v244_customer_explore_search",
+      "sourcePath": "db/migrations/20260808_nestly_v244_customer_explore_search.sql"
     }
   ]
 }

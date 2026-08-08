@@ -95,7 +95,8 @@ test('customer Home does not expose operator ranking language',async()=>{
      v194 removed even that, because the same two destinations are permanent navigation tabs.
      What must survive is the neutral destination itself, wherever it is rendered. */
   assert.doesNotMatch(app,/customerHomeQuickLinksV183/);
-  assert.match(app,/\{key:'programmes',href:'#\/customer\/programmes'[\s\S]{0,120}\{key:'bookings',href:'#\/customer\/bookings'/);
+  // v244 put Scan and Explore between them; the neutral destinations themselves are the invariant.
+  assert.match(app,/\{key:'programmes',href:'#\/customer\/programmes'[\s\S]{0,320}\{key:'bookings',href:'#\/customer\/bookings'/);
 });
 
 test('canonical cancellation remains row-locked, scoped and non-economic',async()=>{

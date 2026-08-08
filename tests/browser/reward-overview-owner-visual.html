@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="b25f1d7f0b7ab1c7c2e96a4599bebab055338cb1fc9c585e109c8f99e908acce"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="36d270537a25bdf1e7fc9a5100fed2594f29096b67bfe157af1b1405ac343081"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1274,10 +1274,15 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
 .customer-shell .wallet-inner{width:min(1040px,100%)}
 .customer-shell .wallet-head{min-height:48px}
-.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;
+.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:1fr 1fr auto 1fr 1fr;gap:6px;
   margin:0 0 24px;padding:6px;border:1px solid var(--hair);border-radius:16px;background:rgba(255,255,255,.88);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:var(--shadow)}
-.customer-primary-nav a,.customer-primary-nav button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
+/* v244 · the raised centre Scan control (owner's Grab-style reference) */
+.customer-nav-scan{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:74px;border:0;background:none;color:var(--ink2);font-size:11px;font-weight:650;cursor:pointer}
+.customer-nav-scan-fab{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(194,65,53,.35)}
+.customer-nav-scan:hover .customer-nav-scan-fab{filter:brightness(1.06)}
+.customer-nav-scan:active .customer-nav-scan-fab{transform:scale(.96)}
+.customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
   color:var(--ink2);font-size:12.5px;font-weight:650;text-align:center;transition:background .14s var(--ease),color .14s var(--ease),transform .18s var(--spring)}
 .customer-primary-nav button{font-family:inherit;background:transparent;cursor:pointer}
 .customer-primary-nav a:hover,.customer-primary-nav button:hover{background:#F2EFEA;color:var(--ink);transform:translateY(-1px)}
@@ -1472,7 +1477,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
-.customer-directory-v242{margin-top:22px}.customer-directory-head{margin-bottom:10px}.customer-directory-head h2{font-size:1.25rem}.customer-directory-head p{margin-top:4px}.customer-directory-list{display:grid;gap:10px}.customer-directory-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 14px}.customer-directory-copy{min-width:0;flex:1 1 auto}.customer-directory-copy h3{font-size:1rem;overflow-wrap:anywhere}.customer-directory-copy p{margin-top:3px;overflow-wrap:anywhere}.customer-directory-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;min-width:0}.customer-directory-points{white-space:nowrap}.customer-directory-row--locked{opacity:.72;box-shadow:none}.customer-directory-note{margin-top:10px}.customer-directory-state{min-height:64px;padding:16px}@media(max-width:400px){.customer-directory-side{flex-direction:row;align-items:center;flex-wrap:wrap;justify-content:flex-start;text-align:left;width:100%}}
+/* v244 · Explore — the ecosystem search behind its own tab */
+.customer-explore-search{display:flex;align-items:center;gap:10px;padding:0 14px;margin:0 0 14px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
+.customer-explore-search input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--ink);font:inherit}
+.customer-explore-search input:focus{outline:none}
+.customer-explore-search:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-explore-list{display:grid;gap:10px}
+.customer-explore-row{display:flex;align-items:center;gap:12px;padding:14px;color:inherit;text-decoration:none}
+.customer-explore-row--locked{opacity:.88}
+.customer-explore-logo{flex:none;width:46px;height:46px;border-radius:14px;object-fit:cover;background:var(--tint)}
+.customer-explore-logo--fallback{display:flex;align-items:center;justify-content:center;color:var(--coral);font-weight:700;font-size:1.1rem}
+.customer-explore-copy{flex:1;min-width:0}
+.customer-explore-copy h3{font-size:1.02rem;overflow-wrap:anywhere}
+.customer-explore-match{margin-top:2px;color:var(--green);font-weight:600}
+.customer-explore-address{margin-top:2px;overflow-wrap:anywhere}
+.customer-explore-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right;max-width:132px}
+.customer-explore-side b{font-size:1.05rem}
+.customer-explore-join-hint{font-size:.72rem;line-height:1.3}
+.customer-explore-state{padding:18px;text-align:center}
+.customer-explore-note{margin-top:12px;text-align:center}
 /* v192 (owner: "the promotion content occupies more than a screen — i need it to be smaller").
    The artwork is still never cropped and never painted over: object-fit:contain only SCALES it,
    so an EDM with its words baked in stays whole — just smaller in the list. Full size is one tap
@@ -1600,7 +1623,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:720px){
   .customer-shell{padding-bottom:calc(104px + env(safe-area-inset-bottom))}.customer-shell .wallet-head{align-items:center;flex-wrap:nowrap}
   .customer-primary-nav{position:fixed;top:auto;bottom:max(8px,env(safe-area-inset-bottom));left:10px;right:10px;z-index:70;margin:0;padding:5px;gap:2px;border-radius:17px}
-  .customer-primary-nav a,.customer-primary-nav button{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
+  .customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
+  .customer-nav-scan{min-width:64px;margin-top:-18px}
+  .customer-nav-scan-fab{width:54px;height:54px;border:4px solid var(--bg)}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
   .customer-home-summary .customer-home-quick{grid-template-columns:1fr}.customer-home-summary-body{max-height:30dvh}
@@ -1713,7 +1738,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b25f1d7f0b7ab1c7c2e96a4599bebab055338cb1fc9c585e109c8f99e908acce</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 36d270537a25bdf1e7fc9a5100fed2594f29096b67bfe157af1b1405ac343081</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3150,7 +3175,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'b25f1d7f0b7ab1c7c2e96a4599bebab055338cb1fc9c585e109c8f99e908acce',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'36d270537a25bdf1e7fc9a5100fed2594f29096b67bfe157af1b1405ac343081',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

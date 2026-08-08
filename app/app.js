@@ -1936,6 +1936,7 @@ async function route(){
     if(h==='#/join')return renderCustomerQrJoin();
     if(h==='#/customer/programmes')return renderCustomerProgrammes();
     if(h==='#/customer/bookings')return renderCustomerBookings();
+    if(h==='#/customer/explore')return renderCustomerExplore();
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
@@ -2900,7 +2901,7 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
 const CUSTOMER_LOCALES=Object.freeze(['en']);
 const CUSTOMER_COPY=Object.freeze({
   en:Object.freeze({
-    home:'Home',programmes:'My Rewards',bookings:'Bookings',scanQr:'Scan QR',
+    home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',
     notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
     language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
     chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
@@ -2966,9 +2967,16 @@ function applyCustomerNavCountsV194(counts={}){
    destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
    claimed a quarter of the navigation and read like a fourth page. It is now the header control
    next to notifications, on every customer screen, and the nav holds only real destinations. */
+/* v244 (owner, Grab-style reference screenshot): five slots — Home · Rewards · Scan · Explore ·
+   Bookings — with Scan as the raised centre control. Scan returned to the nav from the header
+   because the reference makes it the app's signature action, not a corner utility; it is still
+   the same openCustomerJoinScanner behind the same id. Explore is new: search the whole Peekaa
+   ecosystem ("chicken rice", "food near me") the way you'd search Google. */
 const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',copy:'home'},
-  {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'programmes'},
+  {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'rewardsTab'},
+  {key:'scan',icon:'scan',copy:'scanQr'},
+  {key:'explore',href:'#/customer/explore',icon:'search',copy:'explore'},
   {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
 ]);
 /* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
@@ -2985,8 +2993,9 @@ function customerPrimaryNavigation(active,counts={}){
     return value?`${text}, ${value}`:text;
   };
   return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
-    ${CUSTOMER_PRIMARY_NAV.map(item=>
-      `<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
+    ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
+      ?`<button type="button" id="customerNavScan" class="customer-nav-scan" aria-label="${esc(ct(item.copy))}"><span class="customer-nav-scan-fab">${CUI.icon(item.icon,{size:22})}</span><span>${esc(ct(item.copy))}</span></button>`
+      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
   </nav>`;
 }
 function customerJoinTokenFromQr(value,currentUrl=location.href){
@@ -3144,7 +3153,7 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
   root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head">
     ${backHref?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
     <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    <span class="spacer"></span><button class="customer-head-scan" id="customerNavScan" type="button" aria-label="${esc(ct('scanQr'))}" title="${esc(ct('scanQr'))}">${CUI.icon('scan',{size:19})}</button><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
+    <span class="spacer"></span><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
     ${customerWorkspaceSwitchHtml(staffWorkspaces)}
     <details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu">
       <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a>
@@ -3356,6 +3365,83 @@ async function renderCustomerProgrammes(){
   focusCustomerRoute();
 }
 
+/* v244 (owner, nav revamp): Explore — "search for nearby peekaa businessess (can type example
+   food near me, chicken rice, dessert shop etc) - then will pop up relevant business based on
+   search - like google search)". The matching runs on the SERVER, because "chicken rice" should
+   find a business that SELLS chicken rice — a fact only the catalogue knows — not just one named
+   after it. The empty query is the whole ecosystem, joined businesses first, which is the v242
+   directory the owner already approved; it lives here now, behind its own tab, instead of at the
+   bottom of Home. */
+function customerExploreRowMarkupV244(row){
+  const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
+    joined=row?.joined===true,slug=String(row?.slug||''),
+    logo=customerMediaUrlV95(row?.logo_url),
+    address=String(row?.address||'').trim(),
+    match=String(row?.match_note||'').trim(),
+    points=Math.max(0,Number(row?.points_balance||0)),
+    initial=(name[0]||'B').toUpperCase();
+  const media=logo
+    ?`<img class="customer-explore-logo" src="${esc(logo)}" alt="" loading="lazy" width="46" height="46">`
+    :`<span class="customer-explore-logo customer-explore-logo--fallback" aria-hidden="true">${esc(initial)}</span>`;
+  const copy=`<div class="customer-explore-copy">
+      <h3 data-merchant-content>${esc(name)}</h3>
+      ${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}
+      ${match?`<p class="small customer-explore-match">Has: ${esc(match)}</p>`:''}
+      ${address?`<p class="muted small customer-explore-address" data-merchant-content>${esc(address)}</p>`:''}
+    </div>`;
+  const side=joined
+    ?`<div class="customer-explore-side"><span class="pill ok">Member</span><b>${esc(customerPointTotalV103(points))}</b><span class="muted small">points</span></div>`
+    :`<div class="customer-explore-side"><span class="pill off">Not set up</span><span class="muted small customer-explore-join-hint">Scan their QR in store to join</span></div>`;
+  /* Joined rows use the one existing route into a business. An unjoined row deliberately does
+     not navigate — v242's rule: the shop's own QR is the only way in. */
+  return joined
+    ?`<a class="card customer-explore-row" href="#/wallet/${encodeURIComponent(slug)}">${media}${copy}${side}</a>`
+    :`<div class="card customer-explore-row customer-explore-row--locked">${media}${copy}${side}</div>`;
+}
+function customerExploreResultsMarkupV244(state){
+  if(state.status==='loading')return '<div class="card customer-explore-state" aria-busy="true"><p class="muted small">Searching…</p></div>';
+  if(state.status==='error')return '<div class="card customer-explore-state"><p class="muted small">Businesses couldn’t load.</p><button class="btn ghost sm" id="customerExploreRetry" type="button" style="margin-top:10px">Try again</button></div>';
+  const seen=new Set(),rows=(Array.isArray(state.rows)?state.rows:[]).filter(row=>{
+    const id=String(row?.business_id||'');
+    if(!id||seen.has(id))return false;
+    seen.add(id);return true;
+  });
+  if(!rows.length)return state.query
+    ?`<div class="card customer-explore-state"><p class="muted small">Nothing matches “${esc(state.query)}”. Try a food, a service, or a shop name.</p></div>`
+    :'<div class="card customer-explore-state"><p class="muted small">No businesses to show yet.</p></div>';
+  return `<div class="customer-explore-list">${rows.map(customerExploreRowMarkupV244).join('')}</div>
+    <p class="muted small customer-explore-note">Points and rewards are separate for every business.</p>`;
+}
+async function renderCustomerExplore(){
+  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
+  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
+  renderCustomerShell({active:'explore',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,
+    body:`<header class="customer-page-head"><div><h1>Explore</h1><p class="muted small">Every business on Peekaa — find one by what it sells.</p></div></header>
+    <div class="customer-explore-search"><label class="sr-only" for="customerExploreQuery">Search businesses</label>
+      ${CUI.icon('search',{size:18})}<input id="customerExploreQuery" type="search" autocomplete="off" enterkeyhint="search" placeholder="Try “chicken rice”, “facial”, “dessert”…"></div>
+    <div id="customerExploreResults" role="region" aria-live="polite" aria-label="Search results">${customerExploreResultsMarkupV244({status:'loading'})}</div>`});
+  const input=$('customerExploreQuery'),results=$('customerExploreResults');
+  let searchEpoch=0,debounce=0;
+  const run=async(query)=>{
+    const epoch=++searchEpoch;
+    results.innerHTML=customerExploreResultsMarkupV244({status:'loading'});
+    const {data,error}=await customerRpc('customer_explore_businesses_v244',{p_query:query||null});
+    /* Replies can land out of order — a stale reply must never overwrite a newer query's list. */
+    if(!isCurrent()||epoch!==searchEpoch||!results.isConnected)return;
+    results.innerHTML=customerExploreResultsMarkupV244(error?{status:'error'}:{status:'ready',rows:Array.isArray(data)?data:[],query});
+    const retry=$('customerExploreRetry');
+    if(retry)retry.onclick=()=>run(input.value.trim());
+  };
+  input.addEventListener('input',()=>{
+    clearTimeout(debounce);
+    debounce=setTimeout(()=>run(input.value.trim()),300);
+  });
+  input.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){event.preventDefault();clearTimeout(debounce);run(input.value.trim())}
+  });
+  run('');
+  focusCustomerRoute();
+}
 const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES=new Set(['pending','waitlisted','new']);
 const isActiveCustomerBookingRequest=request=>ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES.has(String(request?.status||'').toLowerCase());
 const customerRepeatBookingPreferencesV167=new Map();
@@ -5137,67 +5223,9 @@ function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=
 function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
   return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
 }
-/* v242 (owner: "customer to view all businesses - within the ecosystem - then show (not set up)
-   for businesses that they yet to scan QRcode. and they able to see each customised points
-   (existing infrastructure). the rewards are customised to each company and not shared."):
-   Home ends with the whole Peekaa ecosystem, not only the businesses this customer already
-   scanned into. A business the customer has NOT joined is shown, never linked: no points, no
-   route into a wallet that does not exist for them, and one line saying the only way in is the
-   shop's own QR. A joined business shows ITS OWN balance and opens ITS OWN wallet — the
-   directory never adds points across businesses, because they are never shared.
-   The section is loaded AFTER Home has painted (customer_list_business_directory_v242 is a
-   second round trip and Home must not wait on it), so it paints a skeleton first and fills
-   itself in place. */
-function customerBusinessDirectoryHostV242(){
-  return '<div id="customerBusinessDirectoryV242"></div>';
-}
-function customerBusinessDirectoryRowMarkupV242(row){
-  const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
-    id=String(row?.business_id||''),joined=row?.joined===true,
-    points=Math.max(0,Number(row?.points_balance||0)),
-    copy=`<div class="customer-directory-copy"><h3 data-merchant-content>${esc(name)}</h3>${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}</div>`;
-  /* Joined rows reuse the wallet route the linked-programme tiles already use, so there is
-     exactly one way into a business from the customer app. */
-  return joined
-    ?`<a class="card customer-directory-row" href="#/wallet/${encodeURIComponent(row?.slug||'')}" data-directory-business="${esc(id)}" data-directory-joined="1">${copy}<div class="customer-directory-side"><span class="pill customer-directory-pill">Member</span><b class="customer-directory-points">${esc(points.toLocaleString())} points</b></div></a>`
-    :`<div class="card customer-directory-row customer-directory-row--locked" data-directory-business="${esc(id)}" data-directory-joined="0">${copy}<div class="customer-directory-side"><span class="pill customer-directory-pill">Not set up</span><span class="muted small">Scan their QR in store to join.</span></div></div>`;
-}
-function customerBusinessDirectoryMarkupV242(state={status:'loading',rows:[]}){
-  let body='<div class="card customer-directory-state"><p class="muted small">Loading businesses…</p></div>';
-  if(state.status==='ready'){
-    /* The server may legitimately list two businesses with the same name; only an identical
-       business_id is a duplicate, and demo or QA tenants are shown like any other. */
-    const seen=new Set(),rows=(Array.isArray(state.rows)?state.rows:[]).filter(row=>{
-      const id=String(row?.business_id||'');
-      if(!id||seen.has(id))return false;
-      seen.add(id);return true;
-    });
-    body=rows.length
-      ?`<div class="customer-directory-list">${rows.map(customerBusinessDirectoryRowMarkupV242).join('')}</div><p class="muted small customer-directory-note">Points and rewards are separate for every business.</p>`
-      :'<div class="card customer-directory-state"><p class="muted small">No businesses to show yet.</p></div>';
-  }else if(state.status==='error'){
-    body='<div class="card customer-directory-state"><p class="muted small">Businesses couldn’t load.</p><button class="btn ghost sm" id="customerDirectoryRetry" type="button" style="margin-top:10px">Try again</button></div>';
-  }
-  return `<section class="customer-directory-v242" aria-labelledby="customerDirectoryTitle"><div class="customer-directory-head"><h2 id="customerDirectoryTitle">All businesses</h2><p class="muted small">Every business on Peekaa. Scan a shop’s QR in store to start earning there.</p></div>${body}</section>`;
-}
-let customerDirectoryEpochV242=0;
-function mountCustomerBusinessDirectoryV242(){
-  const host=$('customerBusinessDirectoryV242');
-  if(!host)return;
-  const epoch=++customerDirectoryEpochV242;
-  host.innerHTML=customerBusinessDirectoryMarkupV242({status:'loading',rows:[]});
-  const paint=state=>{
-    /* A later Home render (or a later retry) owns the section; an in-flight reply from an
-       earlier one must never overwrite it. */
-    if(epoch!==customerDirectoryEpochV242||!document.body.contains(host))return;
-    host.innerHTML=customerBusinessDirectoryMarkupV242(state);
-    const retry=host.querySelector('#customerDirectoryRetry');
-    if(retry)retry.onclick=()=>mountCustomerBusinessDirectoryV242();
-  };
-  Promise.resolve(customerRpc('customer_list_business_directory_v242'))
-    .then(({data,error})=>paint(error?{status:'error',rows:[]}:{status:'ready',rows:Array.isArray(data)?data:(Array.isArray(data?.rows)?data.rows:[])}))
-    .catch(()=>paint({status:'error',rows:[]}));
-}
+/* v244: the v242 "All businesses" directory moved off the bottom of Home into the Explore tab,
+   where it is the empty-query result of the ecosystem search. Same rules (an unjoined business
+   never navigates, never shows points); Home stays offers-first. */
 /* v194 (owner struck both cards out on Home): the two quick links repeated the primary nav
    directly above them — My Rewards and Bookings are already one tap away in the tab bar, and
    the counts they carried now live on those tabs. Home is the offers shelf. */
@@ -5208,10 +5236,8 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
   if(!cards.length){
     $('walletBody').innerHTML=`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
-    if(isHome)$('walletBody').insertAdjacentHTML('beforeend',customerBusinessDirectoryHostV242());
     $('customerFirstScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(repaint);
-    if(isHome)mountCustomerBusinessDirectoryV242();
     return;
   }
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
@@ -5222,11 +5248,9 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
-  if(isHome)$('walletBody').insertAdjacentHTML('beforeend',customerBusinessDirectoryHostV242());
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
   if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));
   wireCustomerHomeOffersV167(repaint);
-  if(isHome)mountCustomerBusinessDirectoryV242();
 }
 async function renderCustomerWallet(businessSlug=null){
   const walletRenderEpoch=++customerWalletRenderEpoch;
@@ -5320,14 +5344,13 @@ async function renderCustomerWallet(businessSlug=null){
     $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
       ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}
-      ${customerBusinessDirectoryHostV242()}`;
+      `;
     /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
        lands here through the legacy read must not see empty tabs where the other path shows
        counts. A booking read that failed contributes 0, never a guess. */
     applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
-    mountCustomerBusinessDirectoryV242();
     focusCustomerRoute();
     return;
   }

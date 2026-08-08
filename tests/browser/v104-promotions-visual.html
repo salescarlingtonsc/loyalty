@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="ae2bce1e7d8cc617b8d59b0812a9d90ba7abf6af4ae6391e3ac80f0e31f84c52">
+<meta name="v104-production-source-sha256" content="d659ec7eb920a927d043b2159cfd3bd7aa30e0752c59d657e921302e9cabfea7">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1281,10 +1281,15 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
 .customer-shell .wallet-inner{width:min(1040px,100%)}
 .customer-shell .wallet-head{min-height:48px}
-.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;
+.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:1fr 1fr auto 1fr 1fr;gap:6px;
   margin:0 0 24px;padding:6px;border:1px solid var(--hair);border-radius:16px;background:rgba(255,255,255,.88);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:var(--shadow)}
-.customer-primary-nav a,.customer-primary-nav button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
+/* v244 · the raised centre Scan control (owner's Grab-style reference) */
+.customer-nav-scan{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:74px;border:0;background:none;color:var(--ink2);font-size:11px;font-weight:650;cursor:pointer}
+.customer-nav-scan-fab{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(194,65,53,.35)}
+.customer-nav-scan:hover .customer-nav-scan-fab{filter:brightness(1.06)}
+.customer-nav-scan:active .customer-nav-scan-fab{transform:scale(.96)}
+.customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
   color:var(--ink2);font-size:12.5px;font-weight:650;text-align:center;transition:background .14s var(--ease),color .14s var(--ease),transform .18s var(--spring)}
 .customer-primary-nav button{font-family:inherit;background:transparent;cursor:pointer}
 .customer-primary-nav a:hover,.customer-primary-nav button:hover{background:#F2EFEA;color:var(--ink);transform:translateY(-1px)}
@@ -1479,7 +1484,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
-.customer-directory-v242{margin-top:22px}.customer-directory-head{margin-bottom:10px}.customer-directory-head h2{font-size:1.25rem}.customer-directory-head p{margin-top:4px}.customer-directory-list{display:grid;gap:10px}.customer-directory-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 14px}.customer-directory-copy{min-width:0;flex:1 1 auto}.customer-directory-copy h3{font-size:1rem;overflow-wrap:anywhere}.customer-directory-copy p{margin-top:3px;overflow-wrap:anywhere}.customer-directory-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;min-width:0}.customer-directory-points{white-space:nowrap}.customer-directory-row--locked{opacity:.72;box-shadow:none}.customer-directory-note{margin-top:10px}.customer-directory-state{min-height:64px;padding:16px}@media(max-width:400px){.customer-directory-side{flex-direction:row;align-items:center;flex-wrap:wrap;justify-content:flex-start;text-align:left;width:100%}}
+/* v244 · Explore — the ecosystem search behind its own tab */
+.customer-explore-search{display:flex;align-items:center;gap:10px;padding:0 14px;margin:0 0 14px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
+.customer-explore-search input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--ink);font:inherit}
+.customer-explore-search input:focus{outline:none}
+.customer-explore-search:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-explore-list{display:grid;gap:10px}
+.customer-explore-row{display:flex;align-items:center;gap:12px;padding:14px;color:inherit;text-decoration:none}
+.customer-explore-row--locked{opacity:.88}
+.customer-explore-logo{flex:none;width:46px;height:46px;border-radius:14px;object-fit:cover;background:var(--tint)}
+.customer-explore-logo--fallback{display:flex;align-items:center;justify-content:center;color:var(--coral);font-weight:700;font-size:1.1rem}
+.customer-explore-copy{flex:1;min-width:0}
+.customer-explore-copy h3{font-size:1.02rem;overflow-wrap:anywhere}
+.customer-explore-match{margin-top:2px;color:var(--green);font-weight:600}
+.customer-explore-address{margin-top:2px;overflow-wrap:anywhere}
+.customer-explore-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right;max-width:132px}
+.customer-explore-side b{font-size:1.05rem}
+.customer-explore-join-hint{font-size:.72rem;line-height:1.3}
+.customer-explore-state{padding:18px;text-align:center}
+.customer-explore-note{margin-top:12px;text-align:center}
 /* v192 (owner: "the promotion content occupies more than a screen — i need it to be smaller").
    The artwork is still never cropped and never painted over: object-fit:contain only SCALES it,
    so an EDM with its words baked in stays whole — just smaller in the list. Full size is one tap
@@ -1607,7 +1630,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:720px){
   .customer-shell{padding-bottom:calc(104px + env(safe-area-inset-bottom))}.customer-shell .wallet-head{align-items:center;flex-wrap:nowrap}
   .customer-primary-nav{position:fixed;top:auto;bottom:max(8px,env(safe-area-inset-bottom));left:10px;right:10px;z-index:70;margin:0;padding:5px;gap:2px;border-radius:17px}
-  .customer-primary-nav a,.customer-primary-nav button{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
+  .customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
+  .customer-nav-scan{min-width:64px;margin-top:-18px}
+  .customer-nav-scan-fab{width:54px;height:54px;border:4px solid var(--bg)}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
   .customer-home-summary .customer-home-quick{grid-template-columns:1fr}.customer-home-summary-body{max-height:30dvh}
@@ -1725,7 +1750,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source ae2bce1e7d8cc617b8d59b0812a9d90ba7abf6af4ae6391e3ac80f0e31f84c52</p>
+  <p class="v104-provenance">Local production-render harness · source d659ec7eb920a927d043b2159cfd3bd7aa30e0752c59d657e921302e9cabfea7</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -1737,7 +1762,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="ae2bce1e7d8cc617b8d59b0812a9d90ba7abf6af4ae6391e3ac80f0e31f84c52";
+const PRODUCTION_SOURCE_SHA256="d659ec7eb920a927d043b2159cfd3bd7aa30e0752c59d657e921302e9cabfea7";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

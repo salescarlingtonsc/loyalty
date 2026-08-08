@@ -116,6 +116,9 @@ const customerRpcSignal=ms=>{
   setTimeout(()=>{try{controller.abort()}catch{}},ms);
   return controller.signal;
 };
+const customerRpc=(name,args,ms=12000)=>sb.rpc(name,args).abortSignal(customerRpcSignal(ms))
+  .then(result=>result,error=>({data:null,error:{code:'timeout',
+    message:`This is taking too long. ${String(error?.message||error||'Request timed out.')}`}}));
 let buildIdentity=Object.freeze({available:false});
 const buildIdentityLabel=()=>buildIdentity.available
   ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
@@ -555,6 +558,10 @@ function rememberPendingCustomerDestination(value){
     else sessionStorage.removeItem(CUSTOMER_DESTINATION_SESSION_KEY);
   }catch{}
   return pendingCustomerDestination;
+}
+function completePendingCustomerDestination(route){
+  const destination=normalizeCustomerDestination(pendingCustomerDestination);
+  if(destination&&normalizeCustomerDestination(route)===destination)rememberPendingCustomerDestination('');
 }
 function resetClientSessionState({preserveInvitation=false}={}){
   globalThis.NestlyCustomerPush?.clearSession?.();
@@ -1045,6 +1052,7 @@ async function route(){
     if(h==='#/join')return renderCustomerQrJoin();
     if(h==='#/customer/programmes')return renderCustomerProgrammes();
     if(h==='#/customer/bookings')return renderCustomerBookings();
+    if(h==='#/customer/explore')return renderCustomerExplore();
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
@@ -1352,8 +1360,43 @@ function applyCustomerThemeV190(preference=customerThemePreferenceV190()){
 try{globalThis.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change',()=>{
   if(customerThemePreferenceV190()==='device')applyCustomerThemeV190('device');
 })}catch{}
+function setCustomerSurfaceDocumentV167(){
+  globalThis.document?.documentElement?.setAttribute('data-customer-surface','true');
+  applyCustomerThemeV190();
+}
 const CUSTOMER_LOCALES=Object.freeze(['en']);
+const CUSTOMER_COPY=Object.freeze({
+  en:Object.freeze({
+    home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',
+    notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
+    language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
+    chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
+    programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
+    addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
+    rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
+    firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
+    firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
+    scanBusinessQr:'Scan business QR',qrOnlyHelp:'Businesses can only be added with a business-issued QR.',
+    balance:'Balance',nextReward:'Next reward',tierProgress:'Tier progress',benefits:'Benefits & perks',
+    offers:'Birthday & seasonal offers',rewards:'Rewards',activityHistory:'Activity & history',
+    noBenefits:'No extra perks are available right now.',noOffers:'No birthday or seasonal offers are available right now.',
+    noRewards:'No rewards are available right now.',
+    retry:'Try again',bookNow:'Book now',requestVisit:'Request your next visit with {business}.',
+    points:'points',stamps:'stamps',currentTier:'Current tier',nextTier:'Next: {tier}',
+    terms:'Terms',availableNow:'Available now',
+    loadingProgramme:'Loading rewards…',loadingProgrammes:'Loading My Rewards…',
+    successSounds:'Success sounds',soundOff:'Off by default',soundOn:'On',
+    soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
+    merchantProgramme:'{business} rewards',featured:'Featured products & services',
+    noFeatured:'This business has not published featured items yet.'
+  })
+});
 let customerLocale='en';
+function ct(key,vars={}){
+  let value=CUSTOMER_COPY[customerLocale]?.[key]??CUSTOMER_COPY.en[key]??key;
+  for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
+  return value;
+}
 function customerMediaUrlV95(value){
   const raw=String(value||'').trim();
   if(!raw)return '';
@@ -1367,14 +1410,209 @@ function customerMediaUrlV95(value){
   if(absolutePath&&objectPathPattern.test(absolutePath))return raw;
   return '';
 }
+/* v194: the nav is painted before the wallet data arrives, so the counts are remembered and
+   re-applied in place once they resolve. A stale count is never shown as fresh — see
+   applyCustomerNavCountsV194, which repaints the badges the moment the real numbers land. */
+let customerNavCountsV194={programmes:0,bookings:0};
+/* v195 (owner circled Scan QR and drew it up beside the bell): scanning is an ACTION, not a
+   destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
+   claimed a quarter of the navigation and read like a fourth page. It is now the header control
+   next to notifications, on every customer screen, and the nav holds only real destinations. */
+/* v244 (owner, Grab-style reference screenshot): five slots — Home · Rewards · Scan · Explore ·
+   Bookings — with Scan as the raised centre control. Scan returned to the nav from the header
+   because the reference makes it the app's signature action, not a corner utility; it is still
+   the same openCustomerJoinScanner behind the same id. Explore is new: search the whole Peekaa
+   ecosystem ("chicken rice", "food near me") the way you'd search Google. */
+const CUSTOMER_PRIMARY_NAV=Object.freeze([
+  {key:'home',href:'#/wallet',icon:'home',copy:'home'},
+  {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'rewardsTab'},
+  {key:'scan',icon:'scan',copy:'scanQr'},
+  {key:'explore',href:'#/customer/explore',icon:'search',copy:'explore'},
+  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
+]);
+/* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
+   two tabs that hold countable things now carry that count. A zero is not rendered — a badge
+   reading 0 is noise, and the tab already says what it holds. */
+function customerPrimaryNavigation(active,counts={}){
+  const badge=key=>{
+    const value=Math.max(0,Number(counts?.[key])||0);
+    return value?`<span class="customer-nav-count" aria-hidden="true">${value>99?'99+':value}</span>`:'';
+  };
+  const label=(item)=>{
+    const value=Math.max(0,Number(counts?.[item.key])||0);
+    const text=ct(item.copy);
+    return value?`${text}, ${value}`:text;
+  };
+  return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
+    ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
+      ?`<button type="button" id="customerNavScan" class="customer-nav-scan" aria-label="${esc(ct(item.copy))}"><span class="customer-nav-scan-fab">${CUI.icon(item.icon,{size:22})}</span><span>${esc(ct(item.copy))}</span></button>`
+      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
+  </nav>`;
+}
+function customerJoinTokenFromQr(value,currentUrl=location.href){
+  const raw=String(value??'').trim();
+  if(!raw)return '';
+  if(/^[A-Za-z0-9_-]{20,512}$/.test(raw))return raw;
+  try{
+    const url=new URL(raw,currentUrl);
+    const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
+    const token=url.searchParams.get('token')||hashParams.get('token')||'';
+    return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
+  }catch{return ''}
+}
 let activeCustomerJoinScannerCleanup=()=>{};
+function openCustomerJoinScanner(){
+  activeCustomerJoinScannerCleanup();
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
+    <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
+    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
+    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
+      <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
+    </div><p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
+  document.body.appendChild(overlay);
+  const video=overlay.querySelector('#customerJoinScannerVideo');
+  const frame=overlay.querySelector('#customerJoinScannerFrame');
+  const status=overlay.querySelector('#customerJoinScannerStatus');
+  const camera=overlay.querySelector('#customerJoinScannerCamera');
+  const imageInput=overlay.querySelector('#customerJoinScannerImage');
+  const pasteFallback=overlay.querySelector('#customerJoinScannerPaste');
+  const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
+  let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
+  const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
+  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
+  activeCustomerJoinScannerCleanup=close;
+  const accept=value=>{
+    const token=customerJoinTokenFromQr(value);
+    if(!token){status.textContent='That is not an active Peekaa business QR. Ask the business to generate its latest join QR.';return false}
+    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});nav('#/join');return true;
+  };
+  const decode=(source,width,height)=>{
+    if(typeof globalThis.jsQR!=='function'||!context||!width||!height)return '';
+    canvas.width=width;canvas.height=height;context.drawImage(source,0,0,width,height);
+    return globalThis.jsQR(context.getImageData(0,0,width,height).data,width,height)?.data||'';
+  };
+  const scan=()=>{
+    if(closed||!stream)return;
+    if(video.readyState>=2&&accept(decode(video,video.videoWidth,video.videoHeight)))return;
+    frameHandle=requestAnimationFrame(scan);
+  };
+  camera.onclick=async()=>{
+    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus();return}
+    camera.disabled=true;status.textContent='Starting camera…';
+    try{
+      await loadScannerLibrary();
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
+    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus()}
+  };
+  imageInput.onchange=async event=>{
+    const file=event.target.files?.[0];if(!file)return;
+    status.textContent='Reading QR image…';
+    try{
+      await loadScannerLibrary();
+      const bitmap=await createImageBitmap(file);
+      const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
+      if(!accept(value))status.textContent='No active Peekaa join QR was found in that image.';
+    }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
+  };
+  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
+  overlay.querySelector('#customerJoinScannerClose').onclick=close;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerCamera'});
+}
 function sortStaffWorkspaces(staff){
   return [...(Array.isArray(staff)?staff:[])].sort((a,b)=>{
     const byName=String(a?.business_name||'').localeCompare(String(b?.business_name||''),undefined,{sensitivity:'base'});
     return byName||String(a?.business_slug||'').localeCompare(String(b?.business_slug||''));
   });
 }
+function customerWorkspaceSwitchHtml(staffWorkspaces=[]){
+  const workspaces=sortStaffWorkspaces(staffWorkspaces);
+  if(!workspaces.length)return '';
+  if(workspaces.length===1){
+    const workspace=workspaces[0];
+    const name=workspace.business_name||workspace.business_slug||'Business';
+    return `<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard" aria-label="Open ${esc(name)} staff workspace">${CUI.icon('branch',{size:17})}<span>${esc(name)} workspace</span></a>`;
+  }
+  return `<details class="customer-workspace-switch"><summary class="btn ghost sm" aria-label="Open ${workspaces.length} authorized staff workspaces">${CUI.icon('branch',{size:17})}<span>Business workspaces (${workspaces.length})</span></summary><div class="menu" aria-label="Authorized staff workspaces">${workspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></details>`;
+}
+function renderNoCustomerDestination(staffWorkspaces=[]){
+  const workspaces=sortStaffWorkspaces(staffWorkspaces);
+  const relationshipRetry=customerRelationshipSyncCanRecover();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:520px;max-width:100%" aria-labelledby="noCustomerTitle">
+    <div class="logo">${brandWordmark()}</div><h1 id="noCustomerTitle" style="font-size:1.55rem;margin-top:16px">${esc(BRAND.customerLabel)} is not set up for this account</h1>
+    <p class="muted" style="margin-top:7px;line-height:1.55">This signed-in account has staff access, but no registered customer profile or linked customer programme. No empty wallet has been shown.</p>
+    ${relationshipRetry?`<div class="row" style="margin-top:16px">${customerRelationshipCheckActionHtml()}</div>`:''}
+    ${workspaces.length?`<div style="margin-top:16px"><b>Open a staff workspace</b><div class="row" style="margin-top:10px">${workspaces.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div>`:''}
+    <a class="btn" href="#/customer" style="margin-top:18px">Set up ${esc(BRAND.customerLabel)}</a>
+    ${legalLinks()}</section></main>`;
+  if(relationshipRetry)wireCustomerRelationshipCheck(()=>route());
+  CUI.focusRoute($('main'),{enhanceContent:true});
+}
+function customerSurfaceQualifies(profile,customerPersonas=[]){
+  return (profile!==null&&profile!==undefined)||(Array.isArray(customerPersonas)&&customerPersonas.length>0);
+}
 let customerAccountMenuCleanup=()=>{};
+function wireCustomerAccountMenu(){
+  customerAccountMenuCleanup();
+  const customerAccountMenuDetails=document.querySelector('.customer-account-menu');
+  if(!customerAccountMenuDetails)return;
+  const summary=customerAccountMenuDetails.querySelector('summary');
+  const onPointerDown=event=>{
+    if(customerAccountMenuDetails.open&&!customerAccountMenuDetails.contains(event.target))customerAccountMenuDetails.open=false;
+  };
+  const onKeyDown=event=>{
+    if(event.key==='Escape'&&customerAccountMenuDetails.open){
+      event.preventDefault();customerAccountMenuDetails.open=false;summary?.focus();
+    }
+  };
+  document.addEventListener('pointerdown',onPointerDown);
+  document.addEventListener('keydown',onKeyDown);
+  customerAccountMenuCleanup=()=>{
+    document.removeEventListener('pointerdown',onPointerDown);
+    document.removeEventListener('keydown',onKeyDown);
+    customerAccountMenuCleanup=()=>{};
+  };
+}
+/* v178: backTo generalises the business-page circle back button so the "My Rewards" tab can
+   carry one too (owner: "There is no back button"). businessSlug keeps its own destination. */
+function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null,navCounts=null}={}){
+  setCustomerSurfaceDocumentV167();
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  const inboxAvailable=messagesAvailable===null?customerInboxEnabledV178===true:messagesAvailable===true,
+    backHref=businessSlug?'#/customer/programmes':(backTo||''),
+    backLabel=businessSlug?ct('backProgrammes'):'Back to home';
+  root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head">
+    ${backHref?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
+    <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
+    <span class="spacer"></span><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
+    ${customerWorkspaceSwitchHtml(staffWorkspaces)}
+    <details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu">
+      <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a>
+      <button id="customerPushMenuControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button>
+      <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button>
+    </div></details>
+    </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
+    <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
+    ${legalLinks()}</div></div>`;
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  const customerPush=window.NestlyCustomerPush?.configure({rpc:(name,args)=>sb.rpc(name,args),userId:S.user?.id});
+  if(customerPush){
+    customerPush.bindButton($('customerPushMenuControl'));
+    customerPush.reconcile().catch(()=>{});
+  }
+  wireCustomerAccountMenu();
+  if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
+  if($('walletBack'))$('walletBack').onclick=()=>nav(backHref);
+}
+function focusCustomerRoute(){
+  const main=$('main');if(main)CUI.focusRoute(main,{enhanceContent:true});
+  if(S.user&&typeof completePendingCustomerDestination==='function')completePendingCustomerDestination(location.hash);
+}
 async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
   const userId=S.user?.id||null;
   if(!userId)return {attempted:false,linked:false};
@@ -1410,12 +1648,167 @@ async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
   customerRelationshipSyncState.result=data||{outcome:'synchronized',linked_count:0};
   return {attempted:true,linked:Number(data?.linked_count||0)>0,result:data};
 }
+function customerRelationshipSyncCanRecover(){
+  return customerRelationshipSyncState.attempted===false
+    &&customerRelationshipSyncState.result?.outcome==='try_later';
+}
+function customerRelationshipCheckActionHtml(){
+  const retry=customerRelationshipSyncCanRecover();
+  return `${retry?'<span class="muted small" id="customerRelationshipRetryHelp" role="status">We could not complete the last programme check. Your account is unchanged.</span>':''}<button class="btn ghost sm" id="customerRelationshipCheck" type="button"${retry?' aria-describedby="customerRelationshipRetryHelp"':''}>${retry?'Retry programme check':'Check for existing programmes'}</button>`;
+}
+function wireCustomerRelationshipCheck(renderer){
+  const button=$('customerRelationshipCheck');
+  if(!button)return;
+  button.onclick=()=>{
+    const userId=S.user?.id||null;
+    customerRelationshipSyncState={userId,attempted:false,result:null};
+    button.disabled=true;button.textContent='Checking…';
+    CUI.announce('Checking for existing programmes.');
+    renderer();
+  };
+}
+/* v178: the header bell is a first-class shell control, so every customer shell — including the
+   QR-join screens that render before a route context exists — reads the same resolved flag. */
+let customerInboxEnabledV178=false;
+async function loadCustomerSurfaceContext(isCurrent=()=>true){
+  const features=await loadCustomerFeatureCapabilities();
+  customerInboxEnabledV178=features?.customer_in_app_inbox===true;
+  if(!isCurrent())return null;
+  if(features._load_error){renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
+  if(!features.customer_wallet){renderCustomerWalletUnavailable();return null}
+  const [profileResult,personaResult]=await Promise.all([
+    features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
+    customerRpc('get_my_personas')
+  ]);
+  if(!isCurrent())return null;
+  let {data:personas,error:personasError}=personaResult;
+  if(personasError){renderCustomerCapabilityRetry('We could not load your customer destinations. Please try again.');return null}
+  let staff=sortStaffWorkspaces(personas?.staff||[]),customer=personas?.customer||[];
+  if(profileResult.error&&!customer.length){
+    renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');return null;
+  }
+  const profile=profileResult.error?null:(profileResult.data?.profile??null);
+  const registeredCustomer=profile!==null;
+  if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
+  S.hasCustomerPersona=true;S.customerProfile=profile;
+  customerLocale='en';
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  if(!isCurrent())return null;
+  return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
+}
+
+/* v244 (owner, nav revamp): Explore — "search for nearby peekaa businessess (can type example
+   food near me, chicken rice, dessert shop etc) - then will pop up relevant business based on
+   search - like google search)". The matching runs on the SERVER, because "chicken rice" should
+   find a business that SELLS chicken rice — a fact only the catalogue knows — not just one named
+   after it. The empty query is the whole ecosystem, joined businesses first, which is the v242
+   directory the owner already approved; it lives here now, behind its own tab, instead of at the
+   bottom of Home. */
+function customerExploreRowMarkupV244(row){
+  const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
+    joined=row?.joined===true,slug=String(row?.slug||''),
+    logo=customerMediaUrlV95(row?.logo_url),
+    address=String(row?.address||'').trim(),
+    match=String(row?.match_note||'').trim(),
+    points=Math.max(0,Number(row?.points_balance||0)),
+    initial=(name[0]||'B').toUpperCase();
+  const media=logo
+    ?`<img class="customer-explore-logo" src="${esc(logo)}" alt="" loading="lazy" width="46" height="46">`
+    :`<span class="customer-explore-logo customer-explore-logo--fallback" aria-hidden="true">${esc(initial)}</span>`;
+  const copy=`<div class="customer-explore-copy">
+      <h3 data-merchant-content>${esc(name)}</h3>
+      ${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}
+      ${match?`<p class="small customer-explore-match">Has: ${esc(match)}</p>`:''}
+      ${address?`<p class="muted small customer-explore-address" data-merchant-content>${esc(address)}</p>`:''}
+    </div>`;
+  const side=joined
+    ?`<div class="customer-explore-side"><span class="pill ok">Member</span><b>${esc(customerPointTotalV103(points))}</b><span class="muted small">points</span></div>`
+    :`<div class="customer-explore-side"><span class="pill off">Not set up</span><span class="muted small customer-explore-join-hint">Scan their QR in store to join</span></div>`;
+  /* Joined rows use the one existing route into a business. An unjoined row deliberately does
+     not navigate — v242's rule: the shop's own QR is the only way in. */
+  return joined
+    ?`<a class="card customer-explore-row" href="#/wallet/${encodeURIComponent(slug)}">${media}${copy}${side}</a>`
+    :`<div class="card customer-explore-row customer-explore-row--locked">${media}${copy}${side}</div>`;
+}
+function customerExploreResultsMarkupV244(state){
+  if(state.status==='loading')return '<div class="card customer-explore-state" aria-busy="true"><p class="muted small">Searching…</p></div>';
+  if(state.status==='error')return '<div class="card customer-explore-state"><p class="muted small">Businesses couldn’t load.</p><button class="btn ghost sm" id="customerExploreRetry" type="button" style="margin-top:10px">Try again</button></div>';
+  const seen=new Set(),rows=(Array.isArray(state.rows)?state.rows:[]).filter(row=>{
+    const id=String(row?.business_id||'');
+    if(!id||seen.has(id))return false;
+    seen.add(id);return true;
+  });
+  if(!rows.length)return state.query
+    ?`<div class="card customer-explore-state"><p class="muted small">Nothing matches “${esc(state.query)}”. Try a food, a service, or a shop name.</p></div>`
+    :'<div class="card customer-explore-state"><p class="muted small">No businesses to show yet.</p></div>';
+  return `<div class="customer-explore-list">${rows.map(customerExploreRowMarkupV244).join('')}</div>
+    <p class="muted small customer-explore-note">Points and rewards are separate for every business.</p>`;
+}
+async function renderCustomerExplore(){
+  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
+  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
+  renderCustomerShell({active:'explore',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,
+    body:`<header class="customer-page-head"><div><h1>Explore</h1><p class="muted small">Every business on Peekaa — find one by what it sells.</p></div></header>
+    <div class="customer-explore-search"><label class="sr-only" for="customerExploreQuery">Search businesses</label>
+      ${CUI.icon('search',{size:18})}<input id="customerExploreQuery" type="search" autocomplete="off" enterkeyhint="search" placeholder="Try “chicken rice”, “facial”, “dessert”…"></div>
+    <div id="customerExploreResults" role="region" aria-live="polite" aria-label="Search results">${customerExploreResultsMarkupV244({status:'loading'})}</div>`});
+  const input=$('customerExploreQuery'),results=$('customerExploreResults');
+  let searchEpoch=0,debounce=0;
+  const run=async(query)=>{
+    const epoch=++searchEpoch;
+    results.innerHTML=customerExploreResultsMarkupV244({status:'loading'});
+    const {data,error}=await customerRpc('customer_explore_businesses_v244',{p_query:query||null});
+    /* Replies can land out of order — a stale reply must never overwrite a newer query's list. */
+    if(!isCurrent()||epoch!==searchEpoch||!results.isConnected)return;
+    results.innerHTML=customerExploreResultsMarkupV244(error?{status:'error'}:{status:'ready',rows:Array.isArray(data)?data:[],query});
+    const retry=$('customerExploreRetry');
+    if(retry)retry.onclick=()=>run(input.value.trim());
+  };
+  input.addEventListener('input',()=>{
+    clearTimeout(debounce);
+    debounce=setTimeout(()=>run(input.value.trim()),300);
+  });
+  input.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){event.preventDefault();clearTimeout(debounce);run(input.value.trim())}
+  });
+  run('');
+  focusCustomerRoute();
+}
+function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
+  setCustomerSurfaceDocumentV167();
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
+    <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
+      <p class="muted" style="margin-top:8px">${esc(message)}</p>
+    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+  wireAccountDeletionButton();
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+}
+
+function renderCustomerCapabilityRetry(message){
+  setCustomerSurfaceDocumentV167();
+  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
+    <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
+      <p class="muted" style="margin-top:8px">${esc(message)}</p>
+      <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
+    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+  wireAccountDeletionButton();
+  $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+}
+
 function walletDate(value,withTime=false){
   if(!value)return '';
   const date=new Date(value);if(Number.isNaN(date.getTime()))return '';
   return date.toLocaleString('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium',...(withTime?{timeStyle:'short'}:{})});
 }
 
+function customerPointTotalV103(value){
+  return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
+    .format(Math.max(0,Number(value)||0));
+}
 /* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
    for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
    read as a control with no purpose. The tagline is dropped when it echoes the title — compared on
