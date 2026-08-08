@@ -5117,6 +5117,67 @@ function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=
 function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
   return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
 }
+/* v242 (owner: "customer to view all businesses - within the ecosystem - then show (not set up)
+   for businesses that they yet to scan QRcode. and they able to see each customised points
+   (existing infrastructure). the rewards are customised to each company and not shared."):
+   Home ends with the whole Peekaa ecosystem, not only the businesses this customer already
+   scanned into. A business the customer has NOT joined is shown, never linked: no points, no
+   route into a wallet that does not exist for them, and one line saying the only way in is the
+   shop's own QR. A joined business shows ITS OWN balance and opens ITS OWN wallet — the
+   directory never adds points across businesses, because they are never shared.
+   The section is loaded AFTER Home has painted (customer_list_business_directory_v242 is a
+   second round trip and Home must not wait on it), so it paints a skeleton first and fills
+   itself in place. */
+function customerBusinessDirectoryHostV242(){
+  return '<div id="customerBusinessDirectoryV242"></div>';
+}
+function customerBusinessDirectoryRowMarkupV242(row){
+  const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
+    id=String(row?.business_id||''),joined=row?.joined===true,
+    points=Math.max(0,Number(row?.points_balance||0)),
+    copy=`<div class="customer-directory-copy"><h3 data-merchant-content>${esc(name)}</h3>${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}</div>`;
+  /* Joined rows reuse the wallet route the linked-programme tiles already use, so there is
+     exactly one way into a business from the customer app. */
+  return joined
+    ?`<a class="card customer-directory-row" href="#/wallet/${encodeURIComponent(row?.slug||'')}" data-directory-business="${esc(id)}" data-directory-joined="1">${copy}<div class="customer-directory-side"><span class="pill customer-directory-pill">Member</span><b class="customer-directory-points">${esc(points.toLocaleString())} points</b></div></a>`
+    :`<div class="card customer-directory-row customer-directory-row--locked" data-directory-business="${esc(id)}" data-directory-joined="0">${copy}<div class="customer-directory-side"><span class="pill customer-directory-pill">Not set up</span><span class="muted small">Scan their QR in store to join.</span></div></div>`;
+}
+function customerBusinessDirectoryMarkupV242(state={status:'loading',rows:[]}){
+  let body='<div class="card customer-directory-state"><p class="muted small">Loading businesses…</p></div>';
+  if(state.status==='ready'){
+    /* The server may legitimately list two businesses with the same name; only an identical
+       business_id is a duplicate, and demo or QA tenants are shown like any other. */
+    const seen=new Set(),rows=(Array.isArray(state.rows)?state.rows:[]).filter(row=>{
+      const id=String(row?.business_id||'');
+      if(!id||seen.has(id))return false;
+      seen.add(id);return true;
+    });
+    body=rows.length
+      ?`<div class="customer-directory-list">${rows.map(customerBusinessDirectoryRowMarkupV242).join('')}</div><p class="muted small customer-directory-note">Points and rewards are separate for every business.</p>`
+      :'<div class="card customer-directory-state"><p class="muted small">No businesses to show yet.</p></div>';
+  }else if(state.status==='error'){
+    body='<div class="card customer-directory-state"><p class="muted small">Businesses couldn’t load.</p><button class="btn ghost sm" id="customerDirectoryRetry" type="button" style="margin-top:10px">Try again</button></div>';
+  }
+  return `<section class="customer-directory-v242" aria-labelledby="customerDirectoryTitle"><div class="customer-directory-head"><h2 id="customerDirectoryTitle">All businesses</h2><p class="muted small">Every business on Peekaa. Scan a shop’s QR in store to start earning there.</p></div>${body}</section>`;
+}
+let customerDirectoryEpochV242=0;
+function mountCustomerBusinessDirectoryV242(){
+  const host=$('customerBusinessDirectoryV242');
+  if(!host)return;
+  const epoch=++customerDirectoryEpochV242;
+  host.innerHTML=customerBusinessDirectoryMarkupV242({status:'loading',rows:[]});
+  const paint=state=>{
+    /* A later Home render (or a later retry) owns the section; an in-flight reply from an
+       earlier one must never overwrite it. */
+    if(epoch!==customerDirectoryEpochV242||!document.body.contains(host))return;
+    host.innerHTML=customerBusinessDirectoryMarkupV242(state);
+    const retry=host.querySelector('#customerDirectoryRetry');
+    if(retry)retry.onclick=()=>mountCustomerBusinessDirectoryV242();
+  };
+  Promise.resolve(customerRpc('customer_list_business_directory_v242'))
+    .then(({data,error})=>paint(error?{status:'error',rows:[]}:{status:'ready',rows:Array.isArray(data)?data:(Array.isArray(data?.rows)?data.rows:[])}))
+    .catch(()=>paint({status:'error',rows:[]}));
+}
 /* v194 (owner struck both cards out on Home): the two quick links repeated the primary nav
    directly above them — My Rewards and Bookings are already one tap away in the tab bar, and
    the counts they carried now live on those tabs. Home is the offers shelf. */
@@ -5127,8 +5188,10 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
   if(!cards.length){
     $('walletBody').innerHTML=`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
+    if(isHome)$('walletBody').insertAdjacentHTML('beforeend',customerBusinessDirectoryHostV242());
     $('customerFirstScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(repaint);
+    if(isHome)mountCustomerBusinessDirectoryV242();
     return;
   }
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
@@ -5139,9 +5202,11 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
+  if(isHome)$('walletBody').insertAdjacentHTML('beforeend',customerBusinessDirectoryHostV242());
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
   if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));
   wireCustomerHomeOffersV167(repaint);
+  if(isHome)mountCustomerBusinessDirectoryV242();
 }
 async function renderCustomerWallet(businessSlug=null){
   const walletRenderEpoch=++customerWalletRenderEpoch;
@@ -5234,13 +5299,15 @@ async function renderCustomerWallet(businessSlug=null){
     const offersState=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
     $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
       ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
-      ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}`;
+      ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}
+      ${customerBusinessDirectoryHostV242()}`;
     /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
        lands here through the legacy read must not see empty tabs where the other path shows
        counts. A booking read that failed contributes 0, never a guess. */
     applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
+    mountCustomerBusinessDirectoryV242();
     focusCustomerRoute();
     return;
   }

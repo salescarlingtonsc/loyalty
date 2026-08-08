@@ -20,14 +20,11 @@ begin
   from pg_proc p join pg_namespace n on n.oid=p.pronamespace
   where n.nspname='public' and p.proname='customer_get_reward_catalog';
 
-  v_old := '  -- v230: the one owner choice for what points are FOR, so the wallet tells one story.
-  v_result := v_result || jsonb_build_object(''points_mode'',
-    (select points_mode from public.businesses where id = v_context.business_id));
-
-  return v_result;';
-  v_new := '  -- v230/v241: the one owner choice for what points are FOR, so the wallet tells one
-  -- story. As an OBJECT: appending to the rewards array made the mode unreadable (v241).
-  return jsonb_build_object(
+  -- Needle and replacement are COMMENT-FREE: the MCP apply strips full-line comments on some
+  -- clusters, so a comment-anchored needle would match rehearsal and not production.
+  v_old := 'v_result := v_result || jsonb_build_object(''points_mode'',
+    (select points_mode from public.businesses where id = v_context.business_id));';
+  v_new := 'return jsonb_build_object(
     ''rewards'', coalesce(v_result, ''[]''::jsonb),
     ''points_mode'', (select points_mode from public.businesses where id = v_context.business_id));';
 

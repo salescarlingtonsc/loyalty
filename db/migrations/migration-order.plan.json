@@ -1527,6 +1527,12 @@
       "path": "db/migrations/20260808_nestly_v241_reward_catalog_carries_its_mode_as_an_object.sql",
       "semanticVersion": "v241",
       "proposedDeployVersion": "20260808140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260808_nestly_v242_customer_business_directory.sql",
+      "semanticVersion": "v242",
+      "proposedDeployVersion": "20260808150000"
     }
   ]
 }
