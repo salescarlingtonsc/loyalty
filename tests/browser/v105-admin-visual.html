@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="8adb34a921dfe1e366f57f2617ea957665a51816369f6b8ba2fb0b131305b153">
+<meta name="v105-production-component-sha256" content="85f9ad78eb321bf642ae5f2f261ad8effacf1b29cf571d6bdbbbf3ff3a937c98">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1559,6 +1559,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer-share-button{flex:none}
 .customer-share-modal .modal-card{width:min(420px,94vw)}
 .customer-share-sheet h2{font-size:1.1rem}
+/* v267 · the co-branded lockup: Peekaa and the firm, side by side, never one alone */
+.customer-share-lockup{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0 10px}
+.customer-share-marks{display:flex;align-items:center;gap:10px}
+.customer-share-mark{width:44px;height:44px;border-radius:12px;object-fit:cover;background:var(--card);border:1px solid var(--line)}
+.customer-share-mark--fallback{display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--coral);background:var(--tint)}
+.customer-share-cross{color:var(--muted);font-size:18px;font-weight:600;line-height:1}
+.customer-share-cobrand{margin:0;font-weight:700;font-size:.95rem;color:var(--ink);text-align:center}
 .customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
 .customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
 .customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
@@ -2543,7 +2550,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 8adb34a921df</span>
+<span class="v105-provenance">v105 production-component harness · 85f9ad78eb32</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2668,7 +2675,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'8adb34a921dfe1e366f57f2617ea957665a51816369f6b8ba2fb0b131305b153',
+  sourceHash:'85f9ad78eb321bf642ae5f2f261ad8effacf1b29cf571d6bdbbbf3ff3a937c98',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

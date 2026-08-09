@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="99b1575dda52d11f53dfbc8eba2837819e7fe396f021be8fb0e33b55ca900d13"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="48c815252cd21a22e04b9598451a803966d44216535662f65fd617b9099bed25"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1554,6 +1554,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer-share-button{flex:none}
 .customer-share-modal .modal-card{width:min(420px,94vw)}
 .customer-share-sheet h2{font-size:1.1rem}
+/* v267 · the co-branded lockup: Peekaa and the firm, side by side, never one alone */
+.customer-share-lockup{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0 10px}
+.customer-share-marks{display:flex;align-items:center;gap:10px}
+.customer-share-mark{width:44px;height:44px;border-radius:12px;object-fit:cover;background:var(--card);border:1px solid var(--line)}
+.customer-share-mark--fallback{display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--coral);background:var(--tint)}
+.customer-share-cross{color:var(--muted);font-size:18px;font-weight:600;line-height:1}
+.customer-share-cobrand{margin:0;font-weight:700;font-size:.95rem;color:var(--ink);text-align:center}
 .customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
 .customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
 .customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
@@ -2680,6 +2687,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'99b1575dda52d11f53dfbc8eba2837819e7fe396f021be8fb0e33b55ca900d13',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'48c815252cd21a22e04b9598451a803966d44216535662f65fd617b9099bed25',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

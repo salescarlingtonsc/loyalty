@@ -1623,6 +1623,12 @@
       "path": "db/migrations/20260810_nestly_v265_marketing_consent_scope.sql",
       "semanticVersion": "v265",
       "proposedDeployVersion": "20260810000100"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260810_nestly_v267_summary_business_logo.sql",
+      "semanticVersion": "v267",
+      "proposedDeployVersion": "20260810000300"
     }
   ]
 }

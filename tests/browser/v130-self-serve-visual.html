@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="708389787d4d4c7df0441b37b73725e64bdcda6757375263e389d94ddb5d27e0"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="f0bded1bbb10a58e9aae38e2de80f8db197627e9c9c686cbf211320b2e80998b"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1552,6 +1552,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer-share-button{flex:none}
 .customer-share-modal .modal-card{width:min(420px,94vw)}
 .customer-share-sheet h2{font-size:1.1rem}
+/* v267 · the co-branded lockup: Peekaa and the firm, side by side, never one alone */
+.customer-share-lockup{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0 10px}
+.customer-share-marks{display:flex;align-items:center;gap:10px}
+.customer-share-mark{width:44px;height:44px;border-radius:12px;object-fit:cover;background:var(--card);border:1px solid var(--line)}
+.customer-share-mark--fallback{display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--coral);background:var(--tint)}
+.customer-share-cross{color:var(--muted);font-size:18px;font-weight:600;line-height:1}
+.customer-share-cobrand{margin:0;font-weight:700;font-size:.95rem;color:var(--ink);text-align:center}
 .customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
 .customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
 .customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}

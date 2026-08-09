@@ -2274,7 +2274,7 @@ function customerBusinessIdV103({summaryBusiness={},actionableCard=null,programm
    letter — the owner saw a big "N" instead of the photo they had chosen.
    The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
    already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
-/* v265 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
+/* v264 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
    IG / tiktok/wechat/ telegram - so customers can help businesses to share").
    How sharing actually works, and why this is built the way it is:
      * Instagram, TikTok and WeChat have NO web share endpoint. Nothing a web page can link to
@@ -2310,25 +2310,65 @@ function customerShareTextV264(item={},business={}){
   const validity=customerPromotionValidityV104(item);
   return [shop?`${name} at ${shop}`:name,validity].filter(Boolean).join(' · ');
 }
-function customerShareSheetMarkupV264({text,url}){
+/* v267 (owner: "you can put peekaa x (company name) - with our logos together"). A share is a
+   customer vouching for a business, so it goes out CO-BRANDED: the platform and the firm side by
+   side, never Peekaa alone and never the firm alone.
+   The line is built from the firm's own name, so it reads "Peekaa × Cubbly" — and degrades to
+   plain "Peekaa" rather than "Peekaa × " when a business has somehow lost its name. */
+const CUSTOMER_BRAND_NAME_V267='Peekaa',CUSTOMER_BRAND_MARK_V267='/icons/peekaa-192.png';
+function customerShareCoBrandV267(business={}){
+  const shop=String(business?.name||'').trim();
+  return shop?`${CUSTOMER_BRAND_NAME_V267} × ${shop}`:CUSTOMER_BRAND_NAME_V267;
+}
+/* What actually leaves the phone. The co-brand sits on its own line directly above the link, so
+   the offer still reads first and the pairing is the last thing before the URL — the shape a
+   forwarded WhatsApp message is skimmed in. The sheet shows the offer line alone, because the
+   lockup above it is already saying "Peekaa × Cubbly" in pictures. */
+function customerShareMessageV267(text,business={}){
+  return [String(text||'').trim(),customerShareCoBrandV267(business)].filter(Boolean).join('\n');
+}
+/* Both marks together, at the top of the sheet. The firm's logo is resolved through the same
+   storage allowlist every other customer-facing image uses; a firm with no logo yet gets its
+   initial in the same circle rather than a broken image or an empty gap — the lockup must never
+   render half of itself. The images are decorative because the line beneath them already says
+   "Peekaa × Cubbly", so a screen reader hears the pairing once, not three times. */
+function customerShareLockupV267(business={}){
+  const logo=customerMediaUrlV95(business?.logo_url),
+    name=String(business?.name||'').trim(),
+    initial=(name[0]||'?').toUpperCase();
+  const shopMark=logo
+    ?`<img class="customer-share-mark" src="${esc(logo)}" alt="" loading="lazy">`
+    :`<span class="customer-share-mark customer-share-mark--fallback">${esc(initial)}</span>`;
+  return `<div class="customer-share-lockup">
+    <div class="customer-share-marks" aria-hidden="true">
+      <img class="customer-share-mark" src="${CUSTOMER_BRAND_MARK_V267}" alt="">
+      <span class="customer-share-cross">×</span>
+      ${shopMark}
+    </div>
+    <p class="customer-share-cobrand">${esc(customerShareCoBrandV267(business))}</p>
+  </div>`;
+}
+function customerShareSheetMarkupV264({text,url,business={}}){
+  const message=customerShareMessageV267(text,business);
   const channels=CUSTOMER_SHARE_CHANNELS_V264
-    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
+    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text:message,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
     .join('');
   return `<section class="modal-card customer-share-sheet">
     <div class="row"><h2 id="customerShareTitle">Share this offer</h2><span class="spacer"></span>
       <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
-    <p class="muted small" style="margin-top:8px">${esc(text)}</p>
+    ${customerShareLockupV267(business)}
+    <p class="muted small">${esc(text)}</p>
     <div class="customer-share-channels">${channels}</div>
     <button class="btn ghost sm customer-share-copy" id="customerShareCopy" type="button" data-share-channel="copy">${CUI.icon('copy',{size:17})}<span>Copy link</span></button>
     <p class="muted small customer-share-note">Instagram, TikTok and WeChat can be reached from your phone's own share button.</p>
   </section>`;
 }
-function showCustomerShareSheetV264({text,url,onChannel=()=>{}}){
+function showCustomerShareSheetV264({text,url,business={},onChannel=()=>{}}){
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-share-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerShareTitle');
-  overlay.innerHTML=customerShareSheetMarkupV264({text,url});
+  overlay.innerHTML=customerShareSheetMarkupV264({text,url,business});
   document.body.appendChild(overlay);
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerShareClose'});
   overlay.querySelector('#customerShareClose').onclick=()=>deactivate({restoreFocus:true});
@@ -2349,10 +2389,11 @@ function showCustomerShareSheetV264({text,url,onChannel=()=>{}}){
   return deactivate;
 }
 async function shareCustomerOfferV264(item,business){
-  const url=customerShareUrlV264(business||item?.business||{});
+  const shop=business||item?.business||{};
+  const url=customerShareUrlV264(shop);
   if(!url)return toast('This business has no public page to share yet.');
-  const text=customerShareTextV264(item,business||item?.business||{});
-  const businessId=String((business||item?.business||{})?.id||'');
+  const text=customerShareTextV264(item,shop),brand=customerShareCoBrandV267(shop);
+  const businessId=String(shop?.id||'');
   const record=channel=>recordProductInteractionV100('customer.promotion_shared',businessId,
     {context:{channel,promotion_id:String(item?.id||''),surface_version:'v264'}});
   /* The device sheet is the only way to reach Instagram, TikTok and WeChat, so it is tried first
@@ -2360,15 +2401,15 @@ async function shareCustomerOfferV264(item,business){
      error and must not be answered with a second, different sheet. */
   if(navigator.share){
     try{
-      await navigator.share({title:String(item?.name||'Offer'),text,url});
+      await navigator.share({title:brand,text:customerShareMessageV267(text,shop),url});
       record('device');
     }catch(error){
       if(error?.name==='AbortError')return;
-      showCustomerShareSheetV264({text,url,onChannel:record});
+      showCustomerShareSheetV264({text,url,business:shop,onChannel:record});
     }
     return;
   }
-  showCustomerShareSheetV264({text,url,onChannel:record});
+  showCustomerShareSheetV264({text,url,business:shop,onChannel:record});
 }
 function openCustomerPromotionDetailsV104(card){
   const template=card?.querySelector('template[data-promotion-details-template]');

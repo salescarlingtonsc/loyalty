@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="e842b3ad2d3e49b54b24d0f801a323806cc3b1cca90cc7cd8751640bd53c6983">
+<meta name="v104-production-source-sha256" content="fc741271203527b6b3271891444e0d52c33db6927f559d8c1ea166e3b2557157">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1560,6 +1560,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer-share-button{flex:none}
 .customer-share-modal .modal-card{width:min(420px,94vw)}
 .customer-share-sheet h2{font-size:1.1rem}
+/* v267 · the co-branded lockup: Peekaa and the firm, side by side, never one alone */
+.customer-share-lockup{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0 10px}
+.customer-share-marks{display:flex;align-items:center;gap:10px}
+.customer-share-mark{width:44px;height:44px;border-radius:12px;object-fit:cover;background:var(--card);border:1px solid var(--line)}
+.customer-share-mark--fallback{display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--coral);background:var(--tint)}
+.customer-share-cross{color:var(--muted);font-size:18px;font-weight:600;line-height:1}
+.customer-share-cobrand{margin:0;font-weight:700;font-size:.95rem;color:var(--ink);text-align:center}
 .customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
 .customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
 .customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
@@ -1835,7 +1842,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source e842b3ad2d3e49b54b24d0f801a323806cc3b1cca90cc7cd8751640bd53c6983</p>
+  <p class="v104-provenance">Local production-render harness · source fc741271203527b6b3271891444e0d52c33db6927f559d8c1ea166e3b2557157</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -1847,7 +1854,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="e842b3ad2d3e49b54b24d0f801a323806cc3b1cca90cc7cd8751640bd53c6983";
+const PRODUCTION_SOURCE_SHA256="fc741271203527b6b3271891444e0d52c33db6927f559d8c1ea166e3b2557157";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -1923,7 +1930,7 @@ function customerPromotionValidityV104(item={}){
    letter — the owner saw a big "N" instead of the photo they had chosen.
    The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
    already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
-/* v265 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
+/* v264 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
    IG / tiktok/wechat/ telegram - so customers can help businesses to share").
    How sharing actually works, and why this is built the way it is:
      * Instagram, TikTok and WeChat have NO web share endpoint. Nothing a web page can link to
@@ -1959,28 +1966,68 @@ function customerShareTextV264(item={},business={}){
   const validity=customerPromotionValidityV104(item);
   return [shop?`${name} at ${shop}`:name,validity].filter(Boolean).join(' · ');
 }
+/* v267 (owner: "you can put peekaa x (company name) - with our logos together"). A share is a
+   customer vouching for a business, so it goes out CO-BRANDED: the platform and the firm side by
+   side, never Peekaa alone and never the firm alone.
+   The line is built from the firm's own name, so it reads "Peekaa × Cubbly" — and degrades to
+   plain "Peekaa" rather than "Peekaa × " when a business has somehow lost its name. */
+const CUSTOMER_BRAND_NAME_V267='Peekaa',CUSTOMER_BRAND_MARK_V267='/icons/peekaa-192.png';
+function customerShareCoBrandV267(business={}){
+  const shop=String(business?.name||'').trim();
+  return shop?`${CUSTOMER_BRAND_NAME_V267} × ${shop}`:CUSTOMER_BRAND_NAME_V267;
+}
+/* What actually leaves the phone. The co-brand sits on its own line directly above the link, so
+   the offer still reads first and the pairing is the last thing before the URL — the shape a
+   forwarded WhatsApp message is skimmed in. The sheet shows the offer line alone, because the
+   lockup above it is already saying "Peekaa × Cubbly" in pictures. */
+function customerShareMessageV267(text,business={}){
+  return [String(text||'').trim(),customerShareCoBrandV267(business)].filter(Boolean).join('\n');
+}
+/* Both marks together, at the top of the sheet. The firm's logo is resolved through the same
+   storage allowlist every other customer-facing image uses; a firm with no logo yet gets its
+   initial in the same circle rather than a broken image or an empty gap — the lockup must never
+   render half of itself. The images are decorative because the line beneath them already says
+   "Peekaa × Cubbly", so a screen reader hears the pairing once, not three times. */
+function customerShareLockupV267(business={}){
+  const logo=customerMediaUrlV95(business?.logo_url),
+    name=String(business?.name||'').trim(),
+    initial=(name[0]||'?').toUpperCase();
+  const shopMark=logo
+    ?`<img class="customer-share-mark" src="${esc(logo)}" alt="" loading="lazy">`
+    :`<span class="customer-share-mark customer-share-mark--fallback">${esc(initial)}</span>`;
+  return `<div class="customer-share-lockup">
+    <div class="customer-share-marks" aria-hidden="true">
+      <img class="customer-share-mark" src="${CUSTOMER_BRAND_MARK_V267}" alt="">
+      <span class="customer-share-cross">×</span>
+      ${shopMark}
+    </div>
+    <p class="customer-share-cobrand">${esc(customerShareCoBrandV267(business))}</p>
+  </div>`;
+}
 function customerShareButtonMarkupV264(offerId,{small=true}={}){
   return `<button class="btn ghost${small?' sm':''} customer-share-button" type="button" data-share-offer="${esc(offerId||'')}" aria-label="Share this offer">${CUI.icon('share',{size:16})}<span>Share</span></button>`;
 }
-function customerShareSheetMarkupV264({text,url}){
+function customerShareSheetMarkupV264({text,url,business={}}){
+  const message=customerShareMessageV267(text,business);
   const channels=CUSTOMER_SHARE_CHANNELS_V264
-    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
+    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text:message,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
     .join('');
   return `<section class="modal-card customer-share-sheet">
     <div class="row"><h2 id="customerShareTitle">Share this offer</h2><span class="spacer"></span>
       <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
-    <p class="muted small" style="margin-top:8px">${esc(text)}</p>
+    ${customerShareLockupV267(business)}
+    <p class="muted small">${esc(text)}</p>
     <div class="customer-share-channels">${channels}</div>
     <button class="btn ghost sm customer-share-copy" id="customerShareCopy" type="button" data-share-channel="copy">${CUI.icon('copy',{size:17})}<span>Copy link</span></button>
     <p class="muted small customer-share-note">Instagram, TikTok and WeChat can be reached from your phone's own share button.</p>
   </section>`;
 }
-function showCustomerShareSheetV264({text,url,onChannel=()=>{}}){
+function showCustomerShareSheetV264({text,url,business={},onChannel=()=>{}}){
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-share-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerShareTitle');
-  overlay.innerHTML=customerShareSheetMarkupV264({text,url});
+  overlay.innerHTML=customerShareSheetMarkupV264({text,url,business});
   document.body.appendChild(overlay);
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerShareClose'});
   overlay.querySelector('#customerShareClose').onclick=()=>deactivate({restoreFocus:true});
@@ -2001,10 +2048,11 @@ function showCustomerShareSheetV264({text,url,onChannel=()=>{}}){
   return deactivate;
 }
 async function shareCustomerOfferV264(item,business){
-  const url=customerShareUrlV264(business||item?.business||{});
+  const shop=business||item?.business||{};
+  const url=customerShareUrlV264(shop);
   if(!url)return toast('This business has no public page to share yet.');
-  const text=customerShareTextV264(item,business||item?.business||{});
-  const businessId=String((business||item?.business||{})?.id||'');
+  const text=customerShareTextV264(item,shop),brand=customerShareCoBrandV267(shop);
+  const businessId=String(shop?.id||'');
   const record=channel=>recordProductInteractionV100('customer.promotion_shared',businessId,
     {context:{channel,promotion_id:String(item?.id||''),surface_version:'v264'}});
   /* The device sheet is the only way to reach Instagram, TikTok and WeChat, so it is tried first
@@ -2012,15 +2060,15 @@ async function shareCustomerOfferV264(item,business){
      error and must not be answered with a second, different sheet. */
   if(navigator.share){
     try{
-      await navigator.share({title:String(item?.name||'Offer'),text,url});
+      await navigator.share({title:brand,text:customerShareMessageV267(text,shop),url});
       record('device');
     }catch(error){
       if(error?.name==='AbortError')return;
-      showCustomerShareSheetV264({text,url,onChannel:record});
+      showCustomerShareSheetV264({text,url,business:shop,onChannel:record});
     }
     return;
   }
-  showCustomerShareSheetV264({text,url,onChannel:record});
+  showCustomerShareSheetV264({text,url,business:shop,onChannel:record});
 }
 function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
   const image=previewImageUrl||customerMediaUrlV95(item?.image_url),

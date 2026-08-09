@@ -32,11 +32,12 @@ function section(source, start, end) {
 const shareSource = section(appJs, 'const CUSTOMER_SHARE_CHANNELS_V264', 'async function shareCustomerOfferV264');
 const dispatchSource = section(appJs, 'async function shareCustomerOfferV264', 'function customerPromotionCardV104');
 
-const api = new Function('esc', 'CUI', 'NestlyNativeBridge', 'promotionDateTextV104', `
+const api = new Function('esc', 'CUI', 'NestlyNativeBridge', 'promotionDateTextV104', 'customerMediaUrlV95', `
   ${section(appJs, 'function customerPromotionValidityV104', '/* V183 (owner: "Upload the image')}
   ${shareSource}
   return {url:customerShareUrlV264,text:customerShareTextV264,channels:CUSTOMER_SHARE_CHANNELS_V264,
-    button:customerShareButtonMarkupV264,sheet:customerShareSheetMarkupV264};`)(
+    button:customerShareButtonMarkupV264,sheet:customerShareSheetMarkupV264,
+    cobrand:customerShareCoBrandV267,message:customerShareMessageV267,lockup:customerShareLockupV267};`)(
   (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
   { icon: () => '<svg></svg>' },
   { publicUrl: (path) => {
@@ -44,7 +45,8 @@ const api = new Function('esc', 'CUI', 'NestlyNativeBridge', 'promotionDateTextV
     if (target.origin !== 'https://www.peekaa.asia') throw new Error('non-canonical');
     return target.href;
   } },
-  (value) => value ? String(value) : '');
+  (value) => value ? String(value) : '',
+  (value) => String(value || ''));
 
 const OFFER = { id: 'o1', name: 'National Day: 50% off first prata', starts_at: '7 August 2026', ends_at: '31 August 2026' };
 const BUSINESS = { id: 'b1', name: 'Cubbly', slug: 'kopi-tiam-tyeh' };
@@ -117,7 +119,7 @@ test('copy link is always offered, because it works where nothing else does', ()
 
 test('the OS share sheet is tried first, since it is the only path to IG, TikTok and WeChat', () => {
   assert.match(dispatchSource, /if\(navigator\.share\)\{/);
-  assert.match(dispatchSource, /await navigator\.share\(\{title:[^,]+,text,url\}\)/);
+  assert.match(dispatchSource, /await navigator\.share\(\{title:brand,text:customerShareMessageV267\(text,shop\),url\}\)/);
   const nativeAt = dispatchSource.indexOf('navigator.share');
   const fallbackAt = dispatchSource.lastIndexOf('showCustomerShareSheetV264');
   assert.ok(nativeAt < fallbackAt, 'the in-app sheet is the fallback, not the default');
@@ -174,4 +176,63 @@ test('the share sheet is a real dialog and styles at 390px', () => {
 
 test('external share links cannot reach back into the app', () => {
   assert.match(shareSource, /target="_blank" rel="noopener noreferrer"/);
+});
+
+/* ---------------------------------------------------------------------------- v267 co-branding */
+
+/* v267 (owner): "you can put peekaa x (company name) - with our logos together." */
+
+test('the share is co-branded: Peekaa and the firm, never one without the other', () => {
+  assert.equal(api.cobrand(BUSINESS), 'Peekaa × Cubbly');
+  // a business that has somehow lost its name degrades to the platform alone, not "Peekaa × "
+  assert.equal(api.cobrand({}), 'Peekaa');
+  assert.doesNotMatch(api.cobrand({}), /×/);
+});
+
+test('the co-brand travels with the message, on its own line above the link', () => {
+  const message = api.message(api.text(OFFER, BUSINESS), BUSINESS);
+  assert.match(message, /National Day: 50% off first prata/);
+  assert.match(message, /\nPeekaa × Cubbly$/, 'the pairing is the last thing before the URL');
+  // every channel that sends TEXT carries it; Facebook takes a URL only and cannot
+  const hrefs = Object.fromEntries(api.channels.map((c) => [c.key, c.href({ text: message, url: api.url(BUSINESS) })]));
+  for (const key of ['whatsapp', 'telegram']) {
+    assert.ok(decodeURIComponent(hrefs[key]).includes('Peekaa × Cubbly'), `${key} must carry the co-brand`);
+  }
+});
+
+test('both marks are drawn together, from the firm\'s own published logo', () => {
+  const html = api.lockup({ ...BUSINESS, logo_url: '/storage/v1/object/public/business-public/b/logo/x.jpg' });
+  assert.match(html, /src="\/icons\/peekaa-192\.png"/, 'the Peekaa mark');
+  assert.match(html, /src="\/storage\/v1\/object\/public\/business-public\/b\/logo\/x\.jpg"/, 'the firm\'s mark');
+  assert.match(html, /customer-share-cross">×</);
+  assert.match(html, /Peekaa × Cubbly/);
+  // the images are decorative — the line beneath them already names the pairing
+  assert.equal((html.match(/alt=""/g) || []).length, 2);
+});
+
+test('a firm with no logo gets its initial, never a broken image or half a lockup', () => {
+  const html = api.lockup({ name: 'Cubbly', slug: 's' });
+  assert.doesNotMatch(html, /<img class="customer-share-mark" src="\/storage/);
+  assert.match(html, /customer-share-mark--fallback">C</);
+  assert.match(html, /src="\/icons\/peekaa-192\.png"/, 'the Peekaa mark is still there — never half a lockup');
+  assert.match(html, /Peekaa × Cubbly/);
+});
+
+test('the lockup is escaped and appears at the top of the sheet', () => {
+  const evil = api.lockup({ name: '<img src=x onerror=alert(1)>', logo_url: '"><svg>' });
+  assert.doesNotMatch(evil, /<img src=x/);
+  assert.doesNotMatch(evil, /"><svg>/);
+  const sheet = api.sheet({ text: 'x', url: 'https://www.peekaa.asia/', business: { ...BUSINESS } });
+  assert.ok(sheet.indexOf('customer-share-lockup') < sheet.indexOf('customer-share-channels'));
+  assert.match(indexHtml, /\.customer-share-marks\{[^}]*display:flex/);
+  assert.match(indexHtml, /\.customer-share-mark\{[^}]*width:44px/);
+});
+
+test('the firm logo the lockup needs is actually returned by the programme RPC', async () => {
+  const summary = await read('db/migrations/20260810_nestly_v267_summary_business_logo.sql');
+  // both projections, or a firm with every module off shares uncobranded
+  assert.equal((summary.match(/'logo_url', app\.v267_business_logo_url/g) || []).length, 2);
+  assert.match(summary, /and logo\.customer_visible/,
+    'an asset the firm has not published to customers must never reach a stranger');
+  assert.match(summary, /revoke all on function public\.customer_get_business_summary\(text\) from public, anon;/);
 });
