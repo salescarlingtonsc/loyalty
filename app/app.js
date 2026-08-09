@@ -606,7 +606,7 @@ const PRODUCT_INTERACTION_EVENTS_V100=new Set([
   'merchant.surface_viewed','customer.session_started','customer.surface_viewed',
   'customer.promotion_viewed','customer.promotion_opened','customer.reward_viewed',
   'customer.notification_opened','customer.explore_searched',
-  /* v264: a customer sharing a promotion. The taxonomy row is in the database (v264 migration);
+  /* v265: a customer sharing a promotion. The taxonomy row is in the database (v265 migration);
      both halves must name it or the write is refused with 22023. */
   'customer.promotion_shared'
 ]);
@@ -2395,6 +2395,18 @@ function customerSignupProfileStash(){
       &&['female','male'].includes(profile.gender)?profile:null;
   }catch{return null}
 }
+/* V265: the marketing tick and the v263 Communications switches are one promise, so a
+   grant must leave every category x channel on. The v92 consent record is always written
+   FIRST and the v263 master grant follows: the reverse order would start delivery before
+   the evidence exists. A failed grant therefore leaves consent recorded while some
+   switches stay off — the Communications screen still shows exactly what is stored, so it
+   never overstates; callers surface the partial failure rather than claiming success. */
+async function grantAllCommunicationsV265(){
+  try{
+    const {error}=await sb.rpc('customer_set_all_communications_v263',{p_enabled:true});
+    return !error;
+  }catch{return false}
+}
 function customerSignupConsentRecorded(){
   if(customerRegistrationState.legalAccepted)return true;
   try{return String(sessionStorage.getItem('peekaa-customer-signup-consent-v163')||'').startsWith('accepted')}catch{return false}
@@ -2756,7 +2768,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     <select id="customerSignupGender" autocomplete="sex"><option value="">Select gender</option><option value="female" ${customerSignupProfileStash()?.gender==='female'?'selected':''}>Female</option><option value="male" ${customerSignupProfileStash()?.gender==='male'?'selected':''}>Male</option></select>
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Agreements</legend>
       <label class="row" for="customerSignupConsent" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerSignupConsent" type="checkbox" ${customerRegistrationState.legalAccepted?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a> and acknowledge the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>.</span></label>
-      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me offers and updates</b> from ${esc(BRAND.productName)}, participating businesses, and selected partners (retail, F&amp;B, beauty &amp; wellness, hospitality and technology brands) by app notification, in-app message, email, SMS or WhatsApp. ${esc(BRAND.productName)} sends these itself — partners never receive my contact details. I can change my mind anytime in Profile → Marketing choices. <span class="muted">(Optional)</span></span></label>
+      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me offers and updates.</b> Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners may send me marketing by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. My name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. I can turn this off any time in Profile → Communications. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days. <span class="muted">(Optional)</span></span></label>
     </fieldset>`}
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Send the verification code by</legend>
       <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS</span></label>
@@ -2946,12 +2958,19 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     }
     register.disabled=true;register.querySelector('span').textContent='Creating your account…';
     await runCustomerRegistrationProfileSubmission({
-      registerRequest:()=>sb.rpc('customer_register_verified_phone',{
-        p_full_name:fullName,p_birth_date:birthDate,p_gender:gender,p_preferred_language:language,
-        p_accept_terms:true,p_accept_privacy:true,
-        p_platform_marketing_opted_in:customerSignupMarketingOptedIn(),
-        p_idempotency_key:crypto.randomUUID()
-      }),
+      registerRequest:async()=>{
+        const result=await sb.rpc('customer_register_verified_phone',{
+          p_full_name:fullName,p_birth_date:birthDate,p_gender:gender,p_preferred_language:language,
+          p_accept_terms:true,p_accept_privacy:true,
+          p_platform_marketing_opted_in:customerSignupMarketingOptedIn(),
+          p_idempotency_key:crypto.randomUUID()
+        });
+        /* Best-effort here on purpose: a brand-new customer holds no v263 deviation rows and
+           an absent row already means ON, so a failed grant cannot contradict the tick. It
+           runs anyway to repair an identity that somehow carries earlier deviations. */
+        if(!result.error&&customerSignupMarketingOptedIn())await grantAllCommunicationsV265();
+        return result;
+      },
       resolveDestination:()=>{
         resetCustomerRegistrationState();
         return resolveCustomerRegistrationDestination(isRouteCurrent,register);
@@ -4000,8 +4019,8 @@ async function renderCustomerProfile(){
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
     </section>
     <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><span>${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span></label></div></section>
-    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Offers and updates from ${esc(BRAND.productName)}, participating businesses and selected partners, by app notification, in-app message, email, SMS or WhatsApp. Partners never receive your contact details. This is separate from messages sent by individual businesses.</p>
-      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates, as described in the Privacy Notice. Withdrawing takes effect within 10 business days and does not affect my points, bookings or service messages.</span></label>
+    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Offers and updates from Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.</p>
+      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates. I can turn this off here, or in <a href="#/customer/communications" style="color:var(--coral);text-decoration:underline">Communications</a>, at any time. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.</span></label>
       <div id="customerProfileMarketingStatus" role="status" aria-live="polite"></div>
       <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save marketing choice</span></button>`
       :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p>'}
@@ -4073,6 +4092,12 @@ async function renderCustomerProfile(){
         status.innerHTML='<div class="err">Your marketing choice could not be saved. Please try again.</div>';return;
       }
       marketingAttempt=null;
+      if(optedIn&&!await grantAllCommunicationsV265()){
+        if(!isCurrent()||!marketingSave.isConnected)return;
+        status.innerHTML='<div class="err">Marketing consent saved, but some communication switches could not be turned back on. Open <a href="#/customer/communications">Communications</a> to check them.</div>';
+        CUI.announce('Marketing consent saved. Some communication switches could not be turned back on.');return;
+      }
+      if(!isCurrent()||!marketingSave.isConnected)return;
       status.innerHTML=`<p class="muted small" style="margin-top:10px;color:var(--green)">${optedIn?'Marketing consent saved.':'Marketing consent withdrawn.'}</p>`;
       CUI.announce(optedIn?'Marketing consent saved.':'Marketing consent withdrawn.');
     };
@@ -4922,7 +4947,7 @@ function customerPromotionValidityV104(item={}){
    letter — the owner saw a big "N" instead of the photo they had chosen.
    The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
    already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
-/* v264 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
+/* v265 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
    IG / tiktok/wechat/ telegram - so customers can help businesses to share").
    How sharing actually works, and why this is built the way it is:
      * Instagram, TikTok and WeChat have NO web share endpoint. Nothing a web page can link to
@@ -5813,7 +5838,7 @@ async function renderCustomerWallet(businessSlug=null){
   document.querySelectorAll('[data-promotion-details]').forEach(button=>button.onclick=()=>{
     openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
   });
-  /* v264: Share reads the offer back out of the list the page already rendered, so the sheet can
+  /* v265: Share reads the offer back out of the list the page already rendered, so the sheet can
      never describe a different promotion from the card that was tapped. */
   document.querySelectorAll('[data-share-offer]').forEach(button=>button.onclick=()=>{
     const offerId=String(button.dataset.shareOffer||'');
@@ -6935,7 +6960,7 @@ function createBusinessOAuthAdmissionClient(){
 }
 const BUSINESS_LEGAL_V138=Object.freeze({
   terms:Object.freeze({version:'2026-08-04',sha256:'012e09a4a7b6df2a5acc9da3b6512c1cfeb42e903fd8306f6ff09866a9f1e4a5'}),
-  privacy:Object.freeze({version:'2026-08-06',sha256:'b9aa956263f0ac12d85be069ee05b4960b4130be33289c06df1e4eee59c59245'})
+  privacy:Object.freeze({version:'2026-08-10',sha256:'960434af7919e5401b3587111eb746fbba41f739edacd74cb5aeeca0402c224f'})
 });
 function businessGoogleButtonHtml(id){
   return `<button class="btn ghost" id="${esc(id)}" type="button" style="width:100%;min-height:44px;margin-top:12px"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span><span>Continue with Google</span></button>`;

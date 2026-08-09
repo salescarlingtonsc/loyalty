@@ -1617,6 +1617,12 @@
       "path": "db/migrations/20260809_nestly_v264_promotion_share_event.sql",
       "semanticVersion": "v264",
       "proposedDeployVersion": "20260809000800"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260810_nestly_v265_marketing_consent_scope.sql",
+      "semanticVersion": "v265",
+      "proposedDeployVersion": "20260810000100"
     }
   ]
 }

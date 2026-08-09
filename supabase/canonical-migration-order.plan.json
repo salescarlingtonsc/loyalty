@@ -1612,6 +1612,12 @@
       "version": "20260809000800",
       "name": "nestly_v264_promotion_share_event",
       "sourcePath": "db/migrations/20260809_nestly_v264_promotion_share_event.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260810000100",
+      "name": "nestly_v265_marketing_consent_scope",
+      "sourcePath": "db/migrations/20260810_nestly_v265_marketing_consent_scope.sql"
     }
   ]
 }

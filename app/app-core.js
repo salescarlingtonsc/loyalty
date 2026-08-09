@@ -433,7 +433,7 @@ const PRODUCT_INTERACTION_EVENTS_V100=new Set([
   'merchant.surface_viewed','customer.session_started','customer.surface_viewed',
   'customer.promotion_viewed','customer.promotion_opened','customer.reward_viewed',
   'customer.notification_opened','customer.explore_searched',
-  /* v264: a customer sharing a promotion. The taxonomy row is in the database (v264 migration);
+  /* v265: a customer sharing a promotion. The taxonomy row is in the database (v265 migration);
      both halves must name it or the write is refused with 22023. */
   'customer.promotion_shared'
 ]);
@@ -2419,7 +2419,7 @@ function createBusinessOAuthAdmissionClient(){
 }
 const BUSINESS_LEGAL_V138=Object.freeze({
   terms:Object.freeze({version:'2026-08-04',sha256:'012e09a4a7b6df2a5acc9da3b6512c1cfeb42e903fd8306f6ff09866a9f1e4a5'}),
-  privacy:Object.freeze({version:'2026-08-06',sha256:'b9aa956263f0ac12d85be069ee05b4960b4130be33289c06df1e4eee59c59245'})
+  privacy:Object.freeze({version:'2026-08-10',sha256:'960434af7919e5401b3587111eb746fbba41f739edacd74cb5aeeca0402c224f'})
 });
 function businessGoogleButtonHtml(id){
   return `<button class="btn ghost" id="${esc(id)}" type="button" style="width:100%;min-height:44px;margin-top:12px"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span><span>Continue with Google</span></button>`;
