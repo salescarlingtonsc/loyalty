@@ -883,6 +883,7 @@
       'Proof rejected':'凭证被拒',
       'Scan a receipt':'扫描收据',
       'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.':'在此拍摄收据即可直接进入支出账簿。在您于现金损益表确认金额之前，不会入账。',
+      'Snap a receipt, check what was read off it, and post it to the expense books without leaving this page.':'在此拍摄收据，核对系统读出的内容，无需离开本页即可入账到支出账簿。',
       'Receipt saved. Confirm the amounts in Cash P&L to post it.':'收据已保存。请在现金损益表中确认金额以完成入账。',
       'Receipts to post':'待入账收据',
       'Photograph or upload a receipt and it is read for you. Nothing reaches the books until you confirm the figures.':'拍照或上传收据，系统会为您读取。在您确认金额之前，不会记入账簿。',
@@ -1222,6 +1223,7 @@
       'Proof rejected':'Bukti ditolak',
       'Scan a receipt':'Imbas resit',
       'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.':'Ambil gambar resit di sini dan ia terus masuk ke buku perbelanjaan. Tiada apa-apa dipos sehingga anda mengesahkan angka dalam Untung Rugi Tunai.',
+      'Snap a receipt, check what was read off it, and post it to the expense books without leaving this page.':'Ambil gambar resit, semak apa yang dibaca daripadanya, dan pos ke buku perbelanjaan tanpa meninggalkan halaman ini.',
       'Receipt saved. Confirm the amounts in Cash P&L to post it.':'Resit disimpan. Sahkan jumlahnya dalam Untung Rugi Tunai untuk mengeposnya.',
       'Receipts to post':'Resit untuk dipos',
       'Photograph or upload a receipt and it is read for you. Nothing reaches the books until you confirm the figures.':'Ambil gambar atau muat naik resit dan ia akan dibaca untuk anda. Tiada apa-apa masuk ke akaun sehingga anda mengesahkan angkanya.',
@@ -8643,7 +8645,11 @@
   }
   // Everything posted is the figure the operator confirmed. The model's reading
   // only pre-fills the form; it never posts on its own.
-  function receiptPostModal(receipt,context,range) {
+  /* onDone lets the caller refresh the surface the operator is actually looking
+     at. Cash P&L keeps its own behaviour by default; Today passes its own
+     reload so posting from there does not silently re-render a page the
+     operator cannot see. */
+  function receiptPostModal(receipt,context,range,onDone) {
     const {CUI,sb}=context,attemptKey=idempotencyKey(),extracted=asObject(receipt.extracted);
     const suggestedAmount=Number.isFinite(Number(extracted.total_cents))
       ?(Number(extracted.total_cents)/100).toFixed(2):'';
@@ -8653,7 +8659,11 @@
       <p class="platform-route-note">${escapeHtml(pt('Check every figure against the receipt before posting. Posted expenses cannot be edited — only reversed.'))}</p>
       <div class="platform-form-grid">
       ${CUI.field({id:'receiptDate',label:'Expense date',type:'date',required:true,value:extracted.document_date||range.to,attributes:'name="expense_date"'})}
-      ${CUI.field({id:'receiptCategory',label:'Category',control:'select',required:true,options:categories.map(value=>({value,label:platformStatus(value)})),value:suggestedCategory,attributes:'name="category"'})}
+      ${/* CUI.field ignores `value` for a select — only option.selected is
+            honoured — so marking the option is the only way the reading
+            actually reaches the form. Passing value alone silently posted every
+            receipt under the first category. */''}
+      ${CUI.field({id:'receiptCategory',label:'Category',control:'select',required:true,options:categories.map(value=>({value,label:platformStatus(value),selected:value===suggestedCategory})),attributes:'name="category"'})}
       ${CUI.field({id:'receiptAmount',label:'Amount (SGD)',required:true,value:suggestedAmount,attributes:'name="amount" inputmode="decimal"'})}
       ${CUI.field({id:'receiptCounterparty',label:'Supplier / payee',required:true,value:extracted.vendor_name||'',attributes:'name="counterparty_name" minlength="2" maxlength="200"'})}
       ${CUI.field({id:'receiptSupplierUen',label:'Supplier UEN',value:extracted.vendor_registration_number||'',attributes:'name="counterparty_registration_number" maxlength="40"'})}
@@ -8666,15 +8676,18 @@
         p_counterparty_name:form.get('counterparty_name'),p_payment_reference:form.get('payment_reference'),
         p_counterparty_registration_number:form.get('counterparty_registration_number')||null,
         p_idempotency_key:attemptKey});
-      controls.close();await renderPlatformFinance(context,range);
+      controls.close();
+      await (onDone?onDone():renderPlatformFinance(context,range));
       CUI.announce(pt('Receipt posted to the books.'));
     }});
   }
-  function receiptDiscardModal(receiptId,context,range) {
+  function receiptDiscardModal(receiptId,context,range,onDone) {
     const {CUI,sb}=context;
     modal({title:'Discard receipt',submitLabel:'Discard',CUI,body:CUI.field({id:'receiptDiscardReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="3" maxlength="240" rows="3"'}),onSubmit:async(form,controls)=>{
       await rpc(sb,'platform_discard_receipt_v199',{p_receipt:receiptId,p_reason:form.get('reason')});
-      controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Receipt discarded.'));
+      controls.close();
+      await (onDone?onDone():renderPlatformFinance(context,range));
+      CUI.announce(pt('Receipt discarded.'));
     }});
   }
   function platformExpenseReversalModal(expenseId,context,range) {
@@ -9226,7 +9239,8 @@
       rpc(sb,'get_platform_billing_v77',{p_business:null,p_limit:250}),
       rpc(sb,'get_consultant_commission_dashboard_v78',{p_consultant:null,p_limit:100}),
       rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:null,p_limit:100}),
-      rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50})
+      rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50}),
+      rpc(sb,'platform_list_receipts_v199',{p_status:null,p_limit:50})
     ]);
     if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
     const value=index=>results[index].status==='fulfilled'?results[index].value:null;
@@ -9236,6 +9250,9 @@
     const applicationPayload=asObject(value(4));
     const applications=asArray(applicationPayload,['applications']);
     const automation=asObject(value(5)),automationRuns=asArray(automation.runs);
+    // Anything already posted is finished work, not a decision waiting here.
+    const pendingReceipts=asArray(asObject(value(6)).items)
+      .filter(receipt=>receipt.status!=='posted');
     let automationDetailFailed=false;
     let automationIncidents=automationRuns.filter(run=>
       !['completed','ok','healthy','success'].includes(String(run.status||'').toLowerCase())
@@ -9331,12 +9348,18 @@
         const domain=coverageByKey.get(key);
         return `<article class="card platform-kpi" data-kpi-coverage-state="${escapeHtml(domain?.state||'unknown')}"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(platformTodayMetric(metric,domain,{exact}))}</div></article>`;
       }).join('')}</section>
-      ${CUI.card({title:'Scan a receipt',description:'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.',body:`
+      ${CUI.card({title:'Scan a receipt',description:'Snap a receipt, check what was read off it, and post it to the expense books without leaving this page.',body:`
         <div class="cui-field"><label for="todayReceiptFile">${escapeHtml(pt('Add a receipt'))}</label><input id="todayReceiptFile" type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" capture="environment"><p class="muted small">${escapeHtml(pt('Photo or PDF, up to 20 MB. A PDF is stored as evidence but has to be keyed in.'))}</p></div>
-        <div data-today-receipt-progress aria-live="polite"></div>`})}
+        <div data-today-receipt-progress aria-live="polite"></div>
+        ${pendingReceipts.length
+          ? CUI.table({caption:'Receipts awaiting review',headers:['File','Status','Read as','Action'],rows:receiptRows(pendingReceipts,CUI)})
+          : localizedEmptyHtml('Uploaded receipts appear here with their amounts read out, ready for you to confirm.')}`})}
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Today stays operational"))}</b><p class="small">${escapeHtml(pt("Firm browsing, report generation, pricing and platform configuration stay in their dedicated work areas so this page remains a short decision queue."))}</p></div></div>`;
-    // Capture is deliberately one step here: the receipt is stored and read, and
-    // the confirm-and-post decision stays in Cash P&L where the books are.
+    /* Capture, read and post all happen here now. The reading is asynchronous —
+       the worker is nudged on upload but may not have finished — so the list is
+       refreshed rather than assumed, and a receipt that is still being read
+       simply shows its status until it is ready. */
+    const reloadOverview=()=>loadOverview(context);
     const todayReceipt=main.querySelector('#todayReceiptFile'),todayProgress=main.querySelector('[data-today-receipt-progress]');
     if(todayReceipt)todayReceipt.onchange=async event=>{
       const file=event.currentTarget.files?.[0];
@@ -9345,16 +9368,20 @@
       todayProgress.innerHTML=`<p class="muted small">${escapeHtml(pt('Uploading and reading the receipt…'))}</p>`;
       try{
         const registered=await uploadReceipt(file,context);
-        todayProgress.innerHTML=`<p class="platform-route-note">${escapeHtml(registered.duplicate
-          ?pt('That receipt was already captured.')
-          :pt('Receipt saved. Confirm the amounts in Cash P&L to post it.'))}</p>`;
         CUI.announce(registered.duplicate?pt('That receipt was already captured.'):pt('Receipt uploaded and being read.'));
         todayReceipt.value='';todayReceipt.disabled=false;
+        await reloadOverview();
       }catch(error){
         todayReceipt.disabled=false;
         todayProgress.innerHTML=`<p class="platform-route-note">${escapeHtml(platformErrorMessage(error,pt('The receipt could not be uploaded.')))}</p>`;
       }
     };
+    // Same review-and-post modal Cash P&L uses; only the refresh differs.
+    main.querySelectorAll('[data-post-receipt]').forEach(button=>button.onclick=()=>
+      receiptPostModal(pendingReceipts.find(receipt=>String(receipt.id)===button.dataset.postReceipt),
+        context,financeMonthRange(),reloadOverview));
+    main.querySelectorAll('[data-discard-receipt]').forEach(button=>button.onclick=()=>
+      receiptDiscardModal(button.dataset.discardReceipt,context,financeMonthRange(),reloadOverview));
     CUI.focusRoute(main);
   }
 
