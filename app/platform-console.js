@@ -895,6 +895,7 @@
       'Read as':'读取为',
       '{percent}% legible':'清晰度 {percent}%',
       'Could not be read — key it in.':'无法读取，请手动输入。',
+      'Reading is unavailable right now — key the figures in.':'目前无法读取收据，请手动输入金额。',
       'Review & post':'核对并入账',
       'Receipts must be 20 MB or smaller.':'收据不得超过 20 MB。',
       'Review receipt and post':'核对收据并入账',
@@ -1235,6 +1236,7 @@
       'Read as':'Dibaca sebagai',
       '{percent}% legible':'{percent}% boleh dibaca',
       'Could not be read — key it in.':'Tidak dapat dibaca — masukkan secara manual.',
+      'Reading is unavailable right now — key the figures in.':'Pembacaan tidak tersedia buat masa ini — masukkan angka secara manual.',
       'Review & post':'Semak & pos',
       'Receipts must be 20 MB or smaller.':'Resit mestilah 20 MB atau lebih kecil.',
       'Review receipt and post':'Semak resit dan pos',
@@ -8836,6 +8838,21 @@
     }
     return registered;
   }
+  /* A provider error is a diagnostic, not a message to an operator. Dumping it
+     raw put `401 {"type":"error",...,"message":"API key is invalid."}` in the
+     Read as column, which neither explains what happened nor says what to do.
+     Two outcomes are worth telling apart: the reader is misconfigured or down
+     (nothing wrong with the receipt, and somebody has to fix the setup), or the
+     image genuinely could not be read. Either way the operator keys it in; only
+     one of them is worth chasing. The raw text stays on the title attribute so
+     it is still recoverable when debugging. */
+  function receiptUnreadableReason(receipt) {
+    const raw=String(receipt.extraction_error||'');
+    if(!raw)return pt('Could not be read — key it in.');
+    return /401|403|authentication|api key|unauthor|invalid_api_key|credit balance|quota|rate.?limit|5\d\d/i.test(raw)
+      ? pt('Reading is unavailable right now — key the figures in.')
+      : pt('Could not be read — key it in.');
+  }
   function receiptRows(receipts,CUI) {
     return receipts.map(receipt=>{
       const extracted=asObject(receipt.extracted),status=String(receipt.status||'');
@@ -8845,7 +8862,7 @@
       const readAs=status==='extracted'
         ? `${escapeHtml(vendor)} · ${escapeHtml(amount)}${Number.isFinite(confidence)?` <span class="muted small">${escapeHtml(pt('{percent}% legible',{percent:Math.round(confidence*100)}))}</span>`:''}`
         : status==='extraction_failed'
-          ? `<span class="muted small">${escapeHtml(receipt.extraction_error||pt('Could not be read — key it in.'))}</span>`
+          ? `<span class="muted small"${receipt.extraction_error?` title="${escapeHtml(String(receipt.extraction_error).slice(0,300))}"`:''}>${escapeHtml(receiptUnreadableReason(receipt))}</span>`
           : `<span class="muted small">${escapeHtml(platformStatus(status))}</span>`;
       const action=status==='extracted'||status==='extraction_failed'||status==='uploaded'
         ? `<button type="button" class="btn" data-post-receipt="${escapeHtml(receipt.id)}">${escapeHtml(pt('Review & post'))}</button>
@@ -10615,7 +10632,8 @@
     commissionRosterRows,commissionAccrualRows,automationRunRows,
     subscriptionDurationHtml,subscriptionOperationsTable,
     companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
-    renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange
+    renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
+    receiptRows,receiptUnreadableReason
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -10637,7 +10655,8 @@
       commissionRosterRows,commissionAccrualRows,automationRunRows,
       subscriptionDurationHtml,subscriptionOperationsTable,
       companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
-      renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange
+      renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
+      receiptRows,receiptUnreadableReason
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);
