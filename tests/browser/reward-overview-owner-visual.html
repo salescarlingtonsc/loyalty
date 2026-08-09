@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="1539bf41d3cf2957cfd996807e846dd965563f53b03475702e9de26ff9eb822a"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="11a7802c5bea35ba70ea2523cae1bb6825588b66c6fad9875d07334317be5b78"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1549,6 +1549,16 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 /* v244 · Explore — the ecosystem search behind its own tab */
+/* v264 · sharing a promotion */
+.customer-share-button{flex:none}
+.customer-share-modal .modal-card{width:min(420px,94vw)}
+.customer-share-sheet h2{font-size:1.1rem}
+.customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
+.customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
+.customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
+.customer-share-channel svg{color:var(--coral)}
+.customer-share-copy{width:100%}
+.customer-share-note{margin-top:12px;text-align:center}
 .customer-explore-search{display:flex;align-items:center;gap:10px;padding:0 14px;margin:0 0 14px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
 .customer-explore-search input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--ink);font:inherit}
 .customer-explore-search input:focus{outline:none}
@@ -1813,7 +1823,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 1539bf41d3cf2957cfd996807e846dd965563f53b03475702e9de26ff9eb822a</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 11a7802c5bea35ba70ea2523cae1bb6825588b66c6fad9875d07334317be5b78</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3304,7 +3314,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'1539bf41d3cf2957cfd996807e846dd965563f53b03475702e9de26ff9eb822a',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'11a7802c5bea35ba70ea2523cae1bb6825588b66c6fad9875d07334317be5b78',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

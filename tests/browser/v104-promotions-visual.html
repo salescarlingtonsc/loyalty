@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="791e39800c1bb934d2cfaf262ef0942582f663f19cb29929df06ea638f302f96">
+<meta name="v104-production-source-sha256" content="1fa640419d070c2d8ec3cb55296863338fb94066089b59597f7857a9a37542f5">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1556,6 +1556,16 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 /* v244 · Explore — the ecosystem search behind its own tab */
+/* v264 · sharing a promotion */
+.customer-share-button{flex:none}
+.customer-share-modal .modal-card{width:min(420px,94vw)}
+.customer-share-sheet h2{font-size:1.1rem}
+.customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
+.customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
+.customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
+.customer-share-channel svg{color:var(--coral)}
+.customer-share-copy{width:100%}
+.customer-share-note{margin-top:12px;text-align:center}
 .customer-explore-search{display:flex;align-items:center;gap:10px;padding:0 14px;margin:0 0 14px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
 .customer-explore-search input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--ink);font:inherit}
 .customer-explore-search input:focus{outline:none}
@@ -1825,7 +1835,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 791e39800c1bb934d2cfaf262ef0942582f663f19cb29929df06ea638f302f96</p>
+  <p class="v104-provenance">Local production-render harness · source 1fa640419d070c2d8ec3cb55296863338fb94066089b59597f7857a9a37542f5</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -1837,13 +1847,18 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="791e39800c1bb934d2cfaf262ef0942582f663f19cb29929df06ea638f302f96";
+const PRODUCTION_SOURCE_SHA256="1fa640419d070c2d8ec3cb55296863338fb94066089b59597f7857a9a37542f5";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const customerMediaUrlV95=value=>String(value||'');
-const CUI={activateDialog(modal,{onClose,initialFocus}={}){
+const CUI={
+  /* v264: the card draws a Share button through the shared icon set. The fixture stubs the glyph
+     rather than inlining customer-ui.js — this evidence is about the promotion CARD's layout and
+     wrap behaviour, and a real path would only change the pixels inside a 16px box. */
+  icon:(name,options)=>'<svg class="cui-icon" width="'+(((options||{}).size)||20)+'" height="'+(((options||{}).size)||20)+'" viewBox="0 0 24 24" aria-hidden="true"></svg>',
+  activateDialog(modal,{onClose,initialFocus}={}){
   const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
   document.addEventListener('keydown',keydown);
   requestAnimationFrame(()=>modal.querySelector(initialFocus)?.focus());
@@ -1879,6 +1894,9 @@ function customerOfferDescriptionV195(description){
   for(const pattern of PROMOTION_GENERATED_TAIL_V195)text=text.replace(pattern,'').trim();
   return text;
 }
+function customerShareButtonMarkupV264(offerId,{small=true}={}){
+  return `<button class="btn ghost${small?' sm':''} customer-share-button" type="button" data-share-offer="${esc(offerId||'')}" aria-label="Share this offer">${CUI.icon('share',{size:16})}<span>Share</span></button>`;
+}
 function customerPromotionCtaV104(item,business,bookingEnabled){
   const metadata=item?.metadata||{},cta=metadata.cta||{},
     requestedKind=String(cta.kind||metadata.cta_kind||'programme'),
@@ -1905,6 +1923,105 @@ function customerPromotionValidityV104(item={}){
    letter — the owner saw a big "N" instead of the photo they had chosen.
    The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
    already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
+/* v264 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
+   IG / tiktok/wechat/ telegram - so customers can help businesses to share").
+   How sharing actually works, and why this is built the way it is:
+     * Instagram, TikTok and WeChat have NO web share endpoint. Nothing a web page can link to
+       will post to them. The only route is the DEVICE share sheet (navigator.share), which lists
+       every app the customer has installed — so that is the primary action, and on a phone it
+       covers all seven of the owner's channels plus anything else they use.
+     * WhatsApp, Telegram and Facebook do publish real share URLs, so a desktop browser (where
+       there is usually no share sheet) still gets working buttons instead of a dead end.
+     * Copy link is always offered, because it works everywhere including apps with no endpoint.
+   No fake buttons: a channel is never drawn unless the tap genuinely reaches it. */
+const CUSTOMER_SHARE_CHANNELS_V264=Object.freeze([
+  {key:'whatsapp',label:'WhatsApp',icon:'chat',
+    href:({text,url})=>`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`},
+  {key:'telegram',label:'Telegram',icon:'forward',
+    href:({text,url})=>`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`},
+  {key:'facebook',label:'Facebook',icon:'customers',
+    href:({url})=>`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
+]);
+/* The link a stranger receives must open something they can actually use without an account.
+   The business's public booking page is that surface today; it is the canonical origin, never
+   whatever host this app happens to be running on. */
+function customerShareUrlV264(business={}){
+  const slug=String(business?.slug||'').trim();
+  if(!slug)return '';
+  try{return NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`)}
+  catch{return ''}
+}
+/* The message carries the offer, because the destination page cannot show it yet. Name, business
+   and validity — merchant-authored text, passed through as the merchant wrote it. */
+function customerShareTextV264(item={},business={}){
+  const name=String(item?.name||'').trim()||'this offer';
+  const shop=String(business?.name||item?.business?.name||'').trim();
+  const validity=customerPromotionValidityV104(item);
+  return [shop?`${name} at ${shop}`:name,validity].filter(Boolean).join(' · ');
+}
+function customerShareButtonMarkupV264(offerId,{small=true}={}){
+  return `<button class="btn ghost${small?' sm':''} customer-share-button" type="button" data-share-offer="${esc(offerId||'')}" aria-label="Share this offer">${CUI.icon('share',{size:16})}<span>Share</span></button>`;
+}
+function customerShareSheetMarkupV264({text,url}){
+  const channels=CUSTOMER_SHARE_CHANNELS_V264
+    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
+    .join('');
+  return `<section class="modal-card customer-share-sheet">
+    <div class="row"><h2 id="customerShareTitle">Share this offer</h2><span class="spacer"></span>
+      <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
+    <p class="muted small" style="margin-top:8px">${esc(text)}</p>
+    <div class="customer-share-channels">${channels}</div>
+    <button class="btn ghost sm customer-share-copy" id="customerShareCopy" type="button" data-share-channel="copy">${CUI.icon('copy',{size:17})}<span>Copy link</span></button>
+    <p class="muted small customer-share-note">Instagram, TikTok and WeChat can be reached from your phone's own share button.</p>
+  </section>`;
+}
+function showCustomerShareSheetV264({text,url,onChannel=()=>{}}){
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-surface customer-share-modal';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerShareTitle');
+  overlay.innerHTML=customerShareSheetMarkupV264({text,url});
+  document.body.appendChild(overlay);
+  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerShareClose'});
+  overlay.querySelector('#customerShareClose').onclick=()=>deactivate({restoreFocus:true});
+  overlay.querySelectorAll('[data-share-channel]').forEach(control=>{
+    control.addEventListener('click',async event=>{
+      const channel=control.dataset.shareChannel;
+      if(channel==='copy'){
+        event.preventDefault();
+        /* One clipboard path for the whole app: it disables the button while it runs, announces
+           the result to a screen reader, and says so honestly when the browser refuses. */
+        await copyTextToClipboard(url,{button:control,success:'Link copied. Paste it anywhere.',
+          failure:'Copying is blocked in this browser. Long-press the link to copy it.'});
+      }
+      onChannel(channel);
+      if(channel!=='copy')deactivate({restoreFocus:false});
+    });
+  });
+  return deactivate;
+}
+async function shareCustomerOfferV264(item,business){
+  const url=customerShareUrlV264(business||item?.business||{});
+  if(!url)return toast('This business has no public page to share yet.');
+  const text=customerShareTextV264(item,business||item?.business||{});
+  const businessId=String((business||item?.business||{})?.id||'');
+  const record=channel=>recordProductInteractionV100('customer.promotion_shared',businessId,
+    {context:{channel,promotion_id:String(item?.id||''),surface_version:'v264'}});
+  /* The device sheet is the only way to reach Instagram, TikTok and WeChat, so it is tried first
+     wherever it exists. A customer who dismisses it has decided not to share — that is not an
+     error and must not be answered with a second, different sheet. */
+  if(navigator.share){
+    try{
+      await navigator.share({title:String(item?.name||'Offer'),text,url});
+      record('device');
+    }catch(error){
+      if(error?.name==='AbortError')return;
+      showCustomerShareSheetV264({text,url,onChannel:record});
+    }
+    return;
+  }
+  showCustomerShareSheetV264({text,url,onChannel:record});
+}
 function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
   const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
     validity=customerPromotionValidityV104(item),
@@ -1922,6 +2039,7 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
       <div class="customer-promotion-card-actions">
         ${customerPromotionCtaV104(item,business,bookingEnabled)}
+        ${customerShareButtonMarkupV264(item?.id)}
         ${terms?`<details><summary class="small">Terms</summary><p class="small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
       </div>
       <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>

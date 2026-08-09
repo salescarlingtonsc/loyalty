@@ -432,7 +432,10 @@ const PRODUCT_INTERACTION_EVENTS_V100=new Set([
      there is refused with 22023. */
   'merchant.surface_viewed','customer.session_started','customer.surface_viewed',
   'customer.promotion_viewed','customer.promotion_opened','customer.reward_viewed',
-  'customer.notification_opened','customer.explore_searched'
+  'customer.notification_opened','customer.explore_searched',
+  /* v264: a customer sharing a promotion. The taxonomy row is in the database (v264 migration);
+     both halves must name it or the write is refused with 22023. */
+  'customer.promotion_shared'
 ]);
 /* Business discovery is genuinely tenant-free: the customer is looking for a business they have
    no relationship with, so attaching one would be a fiction. Every OTHER customer event stays
@@ -2047,12 +2050,9 @@ function customerPromotionValidityV104(item={}){
   if(ends)return `Valid until ${ends}`;
   return starts?`Valid from ${starts}`:'';
 }
-/* V183 (owner: "Upload the image but not reflected on the right ... only after publish then is
-   able to see"). customerMediaUrlV95 is a strict allowlist of Supabase storage object paths, so
-   the blob: URL of a just-picked file resolved to '' and the card fell back to its initial
-   letter — the owner saw a big "N" instead of the photo they had chosen.
-   The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
-   already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
+function customerShareButtonMarkupV264(offerId,{small=true}={}){
+  return `<button class="btn ghost${small?' sm':''} customer-share-button" type="button" data-share-offer="${esc(offerId||'')}" aria-label="Share this offer">${CUI.icon('share',{size:16})}<span>Share</span></button>`;
+}
 function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
   const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
     validity=customerPromotionValidityV104(item),
@@ -2070,6 +2070,7 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
       <div class="customer-promotion-card-actions">
         ${customerPromotionCtaV104(item,business,bookingEnabled)}
+        ${customerShareButtonMarkupV264(item?.id)}
         ${terms?`<details><summary class="small">Terms</summary><p class="small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
       </div>
       <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>

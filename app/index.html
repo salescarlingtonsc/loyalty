@@ -1580,6 +1580,16 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 /* v244 · Explore — the ecosystem search behind its own tab */
+/* v264 · sharing a promotion */
+.customer-share-button{flex:none}
+.customer-share-modal .modal-card{width:min(420px,94vw)}
+.customer-share-sheet h2{font-size:1.1rem}
+.customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
+.customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
+.customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
+.customer-share-channel svg{color:var(--coral)}
+.customer-share-copy{width:100%}
+.customer-share-note{margin-top:12px;text-align:center}
 .customer-explore-search{display:flex;align-items:center;gap:10px;padding:0 14px;margin:0 0 14px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
 .customer-explore-search input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--ink);font:inherit}
 .customer-explore-search input:focus{outline:none}
@@ -1889,7 +1899,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=92572bac2c8e","business":"/app-business.js?b=6e80d904225e","i18n":"/app-i18n.js?b=232400221146"}
+{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=e96dcdce1bb8","business":"/app-business.js?b=6e80d904225e","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -1913,6 +1923,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=cfc592fb5b40" defer></script>
+<script src="/app-core.js?b=8328a677cbf8" defer></script>
 </body>
 </html>

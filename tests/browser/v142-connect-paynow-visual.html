@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="be715fde32ef97e3b3376b17d1038836463e3092c8fb70dcddfd6f6026f3ede7"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="ee39bdecb8479af4fc004bdf053309d202c5747291dce67ebcfdd064d7a1d19a"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1549,6 +1549,16 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 /* v244 · Explore — the ecosystem search behind its own tab */
+/* v264 · sharing a promotion */
+.customer-share-button{flex:none}
+.customer-share-modal .modal-card{width:min(420px,94vw)}
+.customer-share-sheet h2{font-size:1.1rem}
+.customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
+.customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
+.customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
+.customer-share-channel svg{color:var(--coral)}
+.customer-share-copy{width:100%}
+.customer-share-note{margin-top:12px;text-align:center}
 .customer-explore-search{display:flex;align-items:center;gap:10px;padding:0 14px;margin:0 0 14px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
 .customer-explore-search input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--ink);font:inherit}
 .customer-explore-search input:focus{outline:none}
@@ -1814,7 +1824,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · be715fde32ef97e3b3376b17d1038836463e3092c8fb70dcddfd6f6026f3ede7</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · ee39bdecb8479af4fc004bdf053309d202c5747291dce67ebcfdd064d7a1d19a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -1828,6 +1838,11 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
     giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
     star:'m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.77 6.4 20.91l1.07-6.24-4.53-4.42 6.26-.91L12 3Z',
+    /* v264: a real share glyph — the standard three linked nodes. 'export' was being used for
+       the share button and read as "download", which is a different promise. 'chat' gives the
+       messaging channels a speech bubble instead of a crowd of people. */
+    share:'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8.6 13.5l6.8 3.9M15.4 6.6 8.6 10.5',
+    chat:'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z',
     /* v195: the owner drew a star, a crown and a gem on the tier bar — a rung a customer can
        recognise before reading its name. Same 24-box, same stroke weight as every icon here. */
     crown:'M4 18h16M3 7l4.5 4L12 4l4.5 7L21 7l-2 9H5L3 7Z',
@@ -3767,7 +3782,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'be715fde32ef97e3b3376b17d1038836463e3092c8fb70dcddfd6f6026f3ede7',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'ee39bdecb8479af4fc004bdf053309d202c5747291dce67ebcfdd064d7a1d19a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

@@ -605,7 +605,10 @@ const PRODUCT_INTERACTION_EVENTS_V100=new Set([
      there is refused with 22023. */
   'merchant.surface_viewed','customer.session_started','customer.surface_viewed',
   'customer.promotion_viewed','customer.promotion_opened','customer.reward_viewed',
-  'customer.notification_opened','customer.explore_searched'
+  'customer.notification_opened','customer.explore_searched',
+  /* v264: a customer sharing a promotion. The taxonomy row is in the database (v264 migration);
+     both halves must name it or the write is refused with 22023. */
+  'customer.promotion_shared'
 ]);
 /* Business discovery is genuinely tenant-free: the customer is looking for a business they have
    no relationship with, so attaching one would be a fiction. Every OTHER customer event stays
@@ -4787,11 +4790,14 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
            so it can never send someone to a booking page that will refuse them. */''}
       ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`
         :`<span data-offer-book></span>`}
+      ${customerShareButtonMarkupV264(item?.id,{small:false})}
     </div></section>`;
   document.body.appendChild(overlay);
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerOfferDetailClose',inheritHistoryId});
   overlay.querySelector('#customerOfferDetailClose').onclick=()=>deactivate({restoreFocus:true});
   wireCustomerSheetNavV183(overlay,deactivate);
+  const shareButton=overlay.querySelector('[data-share-offer]');
+  if(shareButton)shareButton.onclick=()=>shareCustomerOfferV264(item,business);
   const companyButton=overlay.querySelector('[data-company-detail]');
   if(companyButton)companyButton.onclick=()=>{
     const handOff=CUI.currentDialogHistoryId?.()||0;
@@ -4916,6 +4922,105 @@ function customerPromotionValidityV104(item={}){
    letter — the owner saw a big "N" instead of the photo they had chosen.
    The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
    already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
+/* v264 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
+   IG / tiktok/wechat/ telegram - so customers can help businesses to share").
+   How sharing actually works, and why this is built the way it is:
+     * Instagram, TikTok and WeChat have NO web share endpoint. Nothing a web page can link to
+       will post to them. The only route is the DEVICE share sheet (navigator.share), which lists
+       every app the customer has installed — so that is the primary action, and on a phone it
+       covers all seven of the owner's channels plus anything else they use.
+     * WhatsApp, Telegram and Facebook do publish real share URLs, so a desktop browser (where
+       there is usually no share sheet) still gets working buttons instead of a dead end.
+     * Copy link is always offered, because it works everywhere including apps with no endpoint.
+   No fake buttons: a channel is never drawn unless the tap genuinely reaches it. */
+const CUSTOMER_SHARE_CHANNELS_V264=Object.freeze([
+  {key:'whatsapp',label:'WhatsApp',icon:'chat',
+    href:({text,url})=>`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`},
+  {key:'telegram',label:'Telegram',icon:'forward',
+    href:({text,url})=>`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`},
+  {key:'facebook',label:'Facebook',icon:'customers',
+    href:({url})=>`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
+]);
+/* The link a stranger receives must open something they can actually use without an account.
+   The business's public booking page is that surface today; it is the canonical origin, never
+   whatever host this app happens to be running on. */
+function customerShareUrlV264(business={}){
+  const slug=String(business?.slug||'').trim();
+  if(!slug)return '';
+  try{return NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`)}
+  catch{return ''}
+}
+/* The message carries the offer, because the destination page cannot show it yet. Name, business
+   and validity — merchant-authored text, passed through as the merchant wrote it. */
+function customerShareTextV264(item={},business={}){
+  const name=String(item?.name||'').trim()||'this offer';
+  const shop=String(business?.name||item?.business?.name||'').trim();
+  const validity=customerPromotionValidityV104(item);
+  return [shop?`${name} at ${shop}`:name,validity].filter(Boolean).join(' · ');
+}
+function customerShareButtonMarkupV264(offerId,{small=true}={}){
+  return `<button class="btn ghost${small?' sm':''} customer-share-button" type="button" data-share-offer="${esc(offerId||'')}" aria-label="Share this offer">${CUI.icon('share',{size:16})}<span>Share</span></button>`;
+}
+function customerShareSheetMarkupV264({text,url}){
+  const channels=CUSTOMER_SHARE_CHANNELS_V264
+    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
+    .join('');
+  return `<section class="modal-card customer-share-sheet">
+    <div class="row"><h2 id="customerShareTitle">Share this offer</h2><span class="spacer"></span>
+      <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
+    <p class="muted small" style="margin-top:8px">${esc(text)}</p>
+    <div class="customer-share-channels">${channels}</div>
+    <button class="btn ghost sm customer-share-copy" id="customerShareCopy" type="button" data-share-channel="copy">${CUI.icon('copy',{size:17})}<span>Copy link</span></button>
+    <p class="muted small customer-share-note">Instagram, TikTok and WeChat can be reached from your phone's own share button.</p>
+  </section>`;
+}
+function showCustomerShareSheetV264({text,url,onChannel=()=>{}}){
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-surface customer-share-modal';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerShareTitle');
+  overlay.innerHTML=customerShareSheetMarkupV264({text,url});
+  document.body.appendChild(overlay);
+  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerShareClose'});
+  overlay.querySelector('#customerShareClose').onclick=()=>deactivate({restoreFocus:true});
+  overlay.querySelectorAll('[data-share-channel]').forEach(control=>{
+    control.addEventListener('click',async event=>{
+      const channel=control.dataset.shareChannel;
+      if(channel==='copy'){
+        event.preventDefault();
+        /* One clipboard path for the whole app: it disables the button while it runs, announces
+           the result to a screen reader, and says so honestly when the browser refuses. */
+        await copyTextToClipboard(url,{button:control,success:'Link copied. Paste it anywhere.',
+          failure:'Copying is blocked in this browser. Long-press the link to copy it.'});
+      }
+      onChannel(channel);
+      if(channel!=='copy')deactivate({restoreFocus:false});
+    });
+  });
+  return deactivate;
+}
+async function shareCustomerOfferV264(item,business){
+  const url=customerShareUrlV264(business||item?.business||{});
+  if(!url)return toast('This business has no public page to share yet.');
+  const text=customerShareTextV264(item,business||item?.business||{});
+  const businessId=String((business||item?.business||{})?.id||'');
+  const record=channel=>recordProductInteractionV100('customer.promotion_shared',businessId,
+    {context:{channel,promotion_id:String(item?.id||''),surface_version:'v264'}});
+  /* The device sheet is the only way to reach Instagram, TikTok and WeChat, so it is tried first
+     wherever it exists. A customer who dismisses it has decided not to share — that is not an
+     error and must not be answered with a second, different sheet. */
+  if(navigator.share){
+    try{
+      await navigator.share({title:String(item?.name||'Offer'),text,url});
+      record('device');
+    }catch(error){
+      if(error?.name==='AbortError')return;
+      showCustomerShareSheetV264({text,url,onChannel:record});
+    }
+    return;
+  }
+  showCustomerShareSheetV264({text,url,onChannel:record});
+}
 function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
   const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
     validity=customerPromotionValidityV104(item),
@@ -4933,6 +5038,7 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
       <div class="customer-promotion-card-actions">
         ${customerPromotionCtaV104(item,business,bookingEnabled)}
+        ${customerShareButtonMarkupV264(item?.id)}
         ${terms?`<details><summary class="small">Terms</summary><p class="small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
       </div>
       <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>
@@ -5706,6 +5812,13 @@ async function renderCustomerWallet(businessSlug=null){
   });
   document.querySelectorAll('[data-promotion-details]').forEach(button=>button.onclick=()=>{
     openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
+  });
+  /* v264: Share reads the offer back out of the list the page already rendered, so the sheet can
+     never describe a different promotion from the card that was tapped. */
+  document.querySelectorAll('[data-share-offer]').forEach(button=>button.onclick=()=>{
+    const offerId=String(button.dataset.shareOffer||'');
+    const offer=(Array.isArray(presentation.offers)?presentation.offers:[]).find(item=>String(item?.id||'')===offerId);
+    if(offer)shareCustomerOfferV264(offer,{...b,id:businessId||b.id,slug:businessSlug});
   });
   document.querySelector('[data-programme-offers-retry]')?.addEventListener('click',()=>renderCustomerWallet(businessSlug));
   document.querySelector('[data-points-explainer-dismiss]')?.addEventListener('click',event=>{

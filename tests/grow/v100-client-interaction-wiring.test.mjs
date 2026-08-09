@@ -66,7 +66,7 @@ test('v100 telemetry records interaction starts and views without asserting outc
 
 test('v100 interaction contexts remain short allowlisted dimensions with no customer input',()=>{
   const calls=[...app.matchAll(/recordProductInteractionV100\(\s*'(?:merchant|customer)\.[^']+'[\s\S]{0,420}?context:\{([\s\S]*?)\}\s*\}\s*\)/g)];
-  assert.equal(calls.length,16); // V256: 7 v100 call sites plus the 9 v255 emit points
+  assert.equal(calls.length,17); // V256: 7 v100 call sites plus the 9 v255 emit points; V264 adds the promotion share
   for(const [,context] of calls){
     // V256: query_shape is deliberately allowed and deliberately NOT the typed text — the
     // shape helper is asserted separately in tests/business-ui/v255-interaction-batching.
@@ -74,8 +74,12 @@ test('v100 interaction contexts remain short allowlisted dimensions with no cust
     assert.doesNotMatch(context,/query\s*:|search\s*:|query_text|search_text/i);
     for(const key of context.matchAll(/([a-z_]+)\s*:/g)){
       assert.ok(
+        /* V264: 'channel' is which share destination the customer chose — one of a fixed handful
+           (device, whatsapp, telegram, facebook, copy). It is chosen from a list the app drew, so
+           it can never carry customer-typed text, and it is what makes a share countable for the
+           business the owner wants this feature to help. */
         ['action_key','entry_point','locale','surface_version','outcome',
-          'surface_key','promotion_id','query_shape'].includes(key[1]),
+          'surface_key','promotion_id','query_shape','channel'].includes(key[1]),
         `unexpected context key ${key[1]}`
       );
     }
