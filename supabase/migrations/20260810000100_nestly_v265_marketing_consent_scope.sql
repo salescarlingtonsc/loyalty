@@ -41,6 +41,14 @@
 -- partner received which customer and when, and a way to issue and evidence a suppression
 -- instruction - do NOT exist in this repository yet.
 --
+-- NAME NOTE: this was applied to production under the name
+-- `nestly_v264_marketing_consent_scope`, before a concurrent session pushed a DIFFERENT
+-- v264 (the promotion share event). This file was renumbered to v265 so the two increments
+-- stay distinguishable in the repo; the production migration record keeps its original
+-- name. The chain replays by file, so nothing depends on the two matching, but anyone
+-- reconciling supabase_migrations against db/migrations should expect this one pair to
+-- differ by name only. The SQL is identical.
+--
 -- Applied to production 2026-08-09 and verified inside an aborted transaction:
 --   V265_RESULT ALL PASS (recorded as V264_RESULT when it ran; renumbered to v265
 --   because a concurrent session shipped a different v264, the promotion share event) -- notice-active-2026-08-10; constraint-v1v2v3; pins-consistent;

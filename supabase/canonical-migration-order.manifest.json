@@ -2695,8 +2695,8 @@
       "version": "20260810000100",
       "name": "nestly_v265_marketing_consent_scope",
       "path": "supabase/migrations/20260810000100_nestly_v265_marketing_consent_scope.sql",
-      "octetLength": 10187,
-      "sha256": "e267cdd4cf9cfecc4ab272a96d4e69357dcaa407bfa0ba9fa4d85f9f70307cfa",
+      "octetLength": 10740,
+      "sha256": "f5a12372bae3ee54bee5e180b865457e7998ea2e092992d67b085b668aa4e154",
       "provenance": "local-source"
     }
   ]

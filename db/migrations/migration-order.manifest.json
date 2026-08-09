@@ -2537,7 +2537,7 @@
       "path": "db/migrations/20260810_nestly_v265_marketing_consent_scope.sql",
       "semanticVersion": "v265",
       "proposedDeployVersion": "20260810000100",
-      "sha256": "e267cdd4cf9cfecc4ab272a96d4e69357dcaa407bfa0ba9fa4d85f9f70307cfa"
+      "sha256": "f5a12372bae3ee54bee5e180b865457e7998ea2e092992d67b085b668aa4e154"
     }
   ]
 }
