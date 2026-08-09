@@ -26,6 +26,9 @@ function productionSources(app){
        carry them or it would render a card production no longer produces. */
     sourceBetween(app,'function customerOfferTaglineV194','function customerOfferDescriptionV195'),
     sourceBetween(app,'function customerOfferDescriptionV195','function showCustomerOfferDetailV173'),
+    /* v264: the card now carries a Share button, so the fixture must carry the function that
+       draws it or it would render a card production no longer produces. */
+    sourceBetween(app,'function customerShareButtonMarkupV264','function customerShareSheetMarkupV264'),
     sourceBetween(app,'function customerPromotionCtaV104','function customerPromotionValidityV104'),
     sourceBetween(app,'function customerPromotionValidityV104','function customerPromotionCardV104'),
     sourceBetween(app,'function customerPromotionCardV104','function openCustomerPromotionDetailsV104'),
@@ -100,7 +103,12 @@ const FIXTURE_OFFERS=${JSON.stringify(offers)};
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const customerMediaUrlV95=value=>String(value||'');
-const CUI={activateDialog(modal,{onClose,initialFocus}={}){
+const CUI={
+  /* v264: the card draws a Share button through the shared icon set. The fixture stubs the glyph
+     rather than inlining customer-ui.js — this evidence is about the promotion CARD's layout and
+     wrap behaviour, and a real path would only change the pixels inside a 16px box. */
+  icon:(name,options)=>'<svg class="cui-icon" width="'+(((options||{}).size)||20)+'" height="'+(((options||{}).size)||20)+'" viewBox="0 0 24 24" aria-hidden="true"></svg>',
+  activateDialog(modal,{onClose,initialFocus}={}){
   const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
   document.addEventListener('keydown',keydown);
   requestAnimationFrame(()=>modal.querySelector(initialFocus)?.focus());

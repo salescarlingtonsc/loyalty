@@ -111,7 +111,11 @@ test('pending OAuth attempt distinguishes sign-in from server-recorded consented
   assert.equal(rpcCalls[0].name,'begin_business_google_oauth_signup_v138');
   assert.equal(rpcCalls[0].args.p_terms_version,'2026-08-04');
   assert.equal(rpcCalls[0].args.p_terms_sha256,'012e09a4a7b6df2a5acc9da3b6512c1cfeb42e903fd8306f6ff09866a9f1e4a5');
-  assert.equal(rpcCalls[0].args.p_privacy_sha256,'8e152d208b271da5a1f71630b17c5c82e8b7bd930c5508da8b4d95597c0a1568');
+  // Retargeted to the currently active Privacy Notice: the 2026-08-09 owner ruling (partners may
+  // receive customer contact details for marketing) required app/privacy.html to be corrected, so
+  // v265 published 2026-08-10 / 960434af79... This pin had also been stale since the earlier
+  // 2026-08-06 notice, so the assertion was already failing before v264.
+  assert.equal(rpcCalls[0].args.p_privacy_sha256,'960434af7919e5401b3587111eb746fbba41f739edacd74cb5aeeca0402c224f');
 
   sessionStorage.setItem('nestly-business-google-oauth', '{bad json');
   assert.equal(context.takeBusinessGoogleOAuthAttempt(), false);

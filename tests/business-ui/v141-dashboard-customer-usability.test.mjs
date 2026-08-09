@@ -95,8 +95,10 @@ test('V141 customer directory exposes last-visit choice and date joined',()=>{
   assert.match(customers,/Never visited/);
 });
 
-test("V141 customer profile presents Peekaa's suggestion, expiry and an icon-led rewards card",()=>{
-  assert.match(profile,/Peekaa(?:&apos;|')s suggestion/);
+/* V249: the owner struck out the "Peekaa's suggestion" banner entirely; the expiry note and the
+   icon-led rewards card this test also protects are unchanged. */
+test("V141 customer profile presents the points expiry note and an icon-led rewards card",()=>{
+  assert.doesNotMatch(profile,/Peekaa(?:&apos;|')s suggestion/);
   assert.match(profile,/c360-points-expiry/);
   assert.match(profile,/nextExp\.remaining/);
   assert.match(profile,/staff_get_customer_actionable_loyalty_v145/);

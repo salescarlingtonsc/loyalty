@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
-const till = app.slice(app.indexOf('async function tillPage'), app.indexOf('async function tillPage') + 95000);
+/* V257: this was a fixed 95000-character window, so growing Record sale silently sliced the
+   fourth money path out of view and the count assertion below failed for no behavioural
+   reason. Cut at the real section boundary instead. */
+const till = app.slice(app.indexOf('async function tillPage'), app.indexOf('async function salesPage(){'));
 
 test('a sale can be credited to the teammate who performed it, not just the till operator', () => {
   // Owner: "under record sale - i must be able to select who is the sales staff to allocate

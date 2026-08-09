@@ -206,7 +206,13 @@ test('customer account and profile controls are touch-sized, accessible, private
   assert.match(html,/id="customerPushMenuControl"[^>]*aria-pressed="false"/);
   assert.match(html,/id="customerPushProfileControl"[^>]*aria-pressed="false"/);
   assert.match(html,/data-push-status role="status" aria-live="polite"/);
-  assert.match(html,/Businesses cannot send promotional push notifications/);
+  /* V263 supersedes this pin. It asserted the copy "Businesses cannot send promotional push
+     notifications", which the owner ruled is false: promotional push IS intended, default on,
+     with per-channel switches. The device toggle never governed that anyway — it governs
+     whether the device may show anything — so the old sentence was both wrong and misplaced.
+     What must stay true is that this card sends the customer to where the real choice lives. */
+  assert.match(html,/controls whether this device can show notifications at all/);
+  assert.doesNotMatch(html,/Businesses cannot send promotional push notifications/);
   assert.match(html,/\.customer-account-menu \.menu a,\.customer-account-menu \.menu button\{[^}]*min-height:44px/s);
   assert.match(html,/@media\(max-width:560px\)\{\.customer-push-setting\{grid-template-columns:1fr\}/);
   assert.match(html,/function resetClientSessionState[\s\S]*NestlyCustomerPush\?\.clearSession/);

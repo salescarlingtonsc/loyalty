@@ -50,10 +50,14 @@ test('workspace logo publication arguments bind the logo and brand versions to t
 });
 
 test('Workspace & brand provides owner preview and replace controls wired only to atomic publication',()=>{
-  const settings=section('async function settingsPage(){','/* ---------- billing (read-only) ---------- */');
+  /* V259: the Workspace & brand form (logo host included) moved out of settingsPage into the
+     Customer Interface module, on the owner's instruction. Same single markup definition and same
+     single loader — so the host and the call are asserted where they now live. */
+  const panel=section('function workspaceBrandPanelHtmlV259(){','function wireWorkspaceBrandV259(){');
+  const wiring=section('function wireWorkspaceBrandV259(){','function settingsMovedToCustomerInterfaceCardV243(');
   const logo=section('async function loadWorkspaceLogoEditorV96(){','async function loadCustomerProgrammePresentationEditorV95(){');
-  assert.match(settings,/id="workspaceLogoEditorV96"/);
-  assert.match(settings,/loadWorkspaceLogoEditorV96\(\)/);
+  assert.match(panel,/id="workspaceLogoEditorV96"/);
+  assert.match(wiring,/loadWorkspaceLogoEditorV96\(\)/);
   assert.match(logo,/business_get_presentation_editor_v95/);
   assert.match(logo,/id="workspaceLogoPreviewV96"/);
   assert.match(logo,/\$\{existing\?'Replace logo':'Upload logo'\}/);

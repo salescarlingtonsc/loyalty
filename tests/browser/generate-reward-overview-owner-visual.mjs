@@ -19,7 +19,7 @@ function sourceBetween(source,start,end){
 export function buildRewardOverviewVisualFixture(app){
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!style)throw new Error('production inline stylesheet missing');
-  const growBack=sourceBetween(app,'function growBackActionHtmlV138','function growNavItemHtml');
+  const growBack=sourceBetween(app,'function growBackActionHtmlV138','function waitlistBadgeHtml');
   const loyaltyAuthority=sourceBetween(app,'function loyaltyAuthorityActionV140','function growLoyaltyEditorIntentV139');
   const loyaltyIsolation=sourceBetween(app,'function growLoyaltyEditorIntentV139','const refreshLoyaltyPanel');
   const snapshotAdapter=sourceBetween(app,'async function growOverviewSnapshot','function ownerRewardJourneyV122');

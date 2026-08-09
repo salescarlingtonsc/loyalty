@@ -9,9 +9,6 @@ const preAuthSb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
   storageKey:'nestly-preauth-anon',persistSession:false,
   autoRefreshToken:false,detectSessionInUrl:false
 }});
-const customerRpc=(name,args,ms=12000)=>sb.rpc(name,args).abortSignal(customerRpcSignal(ms))
-  .then(result=>result,error=>({data:null,error:{code:'timeout',
-    message:`This is taking too long. ${String(error?.message||error||'Request timed out.')}`}}));
 async function submitPublicBookingGateway(body,initiallySignedInUser=null,isCurrent=()=>true){
   const {data,error}=await sb.auth.getSession();
   if(!isCurrent()){
@@ -49,13 +46,28 @@ const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=(
   CUSTOMER_PHONE_OTP_RUNTIME_ENABLED
   && window.__FRENLY_CUSTOMER_WHATSAPP_OTP_ENABLED__===true
 );
+/* The promotion detail modal is opened from a card, not from the wallet renderer, so it has no
+   business id in hand. Held here for the life of the wallet render that set it. */
+let customerWalletBusinessIdV256='';
+const customerPromotionsSeenV256=new Set();
+/* One session-start per browser session, recorded the first time a business scope is known.
+   sessionStorage carries it across a reload of the same tab, so a refresh is not a new session. */
+function recordCustomerSessionStartV256(businessId,locale){
+  if(productInteractionSessionStartedV256)return;
+  try{
+    if(sessionStorage.getItem(PRODUCT_INTERACTION_SESSION_START_KEY_V256)==='1'){
+      productInteractionSessionStartedV256=true;return;
+    }
+  }catch{}
+  productInteractionSessionStartedV256=true;
+  try{sessionStorage.setItem(PRODUCT_INTERACTION_SESSION_START_KEY_V256,'1')}catch{}
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.session_started',businessId,{
+    context:{entry_point:'customer_app',locale,surface_version:'v255'}
+  });
+}
 function takePendingCustomerDestination(fallback=''){
   const destination=normalizeCustomerDestination(pendingCustomerDestination);
   return destination||fallback;
-}
-function completePendingCustomerDestination(route){
-  const destination=normalizeCustomerDestination(pendingCustomerDestination);
-  if(destination&&normalizeCustomerDestination(route)===destination)rememberPendingCustomerDestination('');
 }
 function customerRegistrationDestinationPriority(joinToken,businessSlug){
   if(String(joinToken||''))return 'join';
@@ -332,6 +344,18 @@ function customerSignupProfileStash(){
       &&['female','male'].includes(profile.gender)?profile:null;
   }catch{return null}
 }
+/* V265: the marketing tick and the v263 Communications switches are one promise, so a
+   grant must leave every category x channel on. The v92 consent record is always written
+   FIRST and the v263 master grant follows: the reverse order would start delivery before
+   the evidence exists. A failed grant therefore leaves consent recorded while some
+   switches stay off — the Communications screen still shows exactly what is stored, so it
+   never overstates; callers surface the partial failure rather than claiming success. */
+async function grantAllCommunicationsV265(){
+  try{
+    const {error}=await sb.rpc('customer_set_all_communications_v263',{p_enabled:true});
+    return !error;
+  }catch{return false}
+}
 function customerSignupConsentRecorded(){
   if(customerRegistrationState.legalAccepted)return true;
   try{return String(sessionStorage.getItem('peekaa-customer-signup-consent-v163')||'').startsWith('accepted')}catch{return false}
@@ -356,10 +380,6 @@ function setCustomerThemePreferenceV190(preference){
   const next=CUSTOMER_THEMES_V190.includes(preference)?preference:'light';
   try{localStorage.setItem(CUSTOMER_THEME_KEY_V190,next)}catch{}
   return applyCustomerThemeV190(next);
-}
-function setCustomerSurfaceDocumentV167(){
-  globalThis.document?.documentElement?.setAttribute('data-customer-surface','true');
-  applyCustomerThemeV190();
 }
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
@@ -655,7 +675,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     <select id="customerSignupGender" autocomplete="sex"><option value="">Select gender</option><option value="female" ${customerSignupProfileStash()?.gender==='female'?'selected':''}>Female</option><option value="male" ${customerSignupProfileStash()?.gender==='male'?'selected':''}>Male</option></select>
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Agreements</legend>
       <label class="row" for="customerSignupConsent" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerSignupConsent" type="checkbox" ${customerRegistrationState.legalAccepted?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a> and acknowledge the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>.</span></label>
-      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me offers and updates</b> from ${esc(BRAND.productName)}, participating businesses, and selected partners (retail, F&amp;B, beauty &amp; wellness, hospitality and technology brands) by app notification, in-app message, email, SMS or WhatsApp. ${esc(BRAND.productName)} sends these itself — partners never receive my contact details. I can change my mind anytime in Profile → Marketing choices. <span class="muted">(Optional)</span></span></label>
+      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me offers and updates.</b> Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners may send me marketing by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. My name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. I can turn this off any time in Profile → Communications. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days. <span class="muted">(Optional)</span></span></label>
     </fieldset>`}
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Send the verification code by</legend>
       <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS</span></label>
@@ -845,12 +865,19 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     }
     register.disabled=true;register.querySelector('span').textContent='Creating your account…';
     await runCustomerRegistrationProfileSubmission({
-      registerRequest:()=>sb.rpc('customer_register_verified_phone',{
-        p_full_name:fullName,p_birth_date:birthDate,p_gender:gender,p_preferred_language:language,
-        p_accept_terms:true,p_accept_privacy:true,
-        p_platform_marketing_opted_in:customerSignupMarketingOptedIn(),
-        p_idempotency_key:crypto.randomUUID()
-      }),
+      registerRequest:async()=>{
+        const result=await sb.rpc('customer_register_verified_phone',{
+          p_full_name:fullName,p_birth_date:birthDate,p_gender:gender,p_preferred_language:language,
+          p_accept_terms:true,p_accept_privacy:true,
+          p_platform_marketing_opted_in:customerSignupMarketingOptedIn(),
+          p_idempotency_key:crypto.randomUUID()
+        });
+        /* Best-effort here on purpose: a brand-new customer holds no v263 deviation rows and
+           an absent row already means ON, so a failed grant cannot contradict the tick. It
+           runs anyway to repair an identity that somehow carries earlier deviations. */
+        if(!result.error&&customerSignupMarketingOptedIn())await grantAllCommunicationsV265();
+        return result;
+      },
       resolveDestination:()=>{
         resetCustomerRegistrationState();
         return resolveCustomerRegistrationDestination(isRouteCurrent,register);
@@ -894,6 +921,17 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
     if(profileError){
       if(!isRouteCurrent())return;
       return renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');
+    }
+    /* V246 (owner: "why pressing back will log me out of the app? i thought there is local
+       cache?"). The session was never lost. Back lands on '#/', the customer entry, and a
+       signed-in BUSINESS user has no customer profile — so this surface fell through to the
+       customer sign-in screen, which reads exactly like being logged out. A user whose only
+       persona is staff goes home to their workspace instead. A user with a customer profile
+       is untouched, and a user with neither still sees sign-in, which is then true. */
+    if(profile?.profile===null||profile?.profile===undefined){
+      const personasResultV246=await sb.rpc('get_my_personas');
+      if(!isRouteCurrent())return;
+      if((personasResultV246.data?.staff||[]).length){nav('#/dashboard');return;}
     }
     if(profile?.profile!==null&&profile?.profile!==undefined){
       if(customerRegistrationDestinationPriority(pendingCustomerJoinToken,pendingCustomerBusinessSlug)==='join'){
@@ -943,43 +981,8 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
   return renderCustomerPasswordSignIn(isRouteCurrent);
 }
 
-const CUSTOMER_COPY=Object.freeze({
-  en:Object.freeze({
-    home:'Home',programmes:'My Rewards',bookings:'Bookings',scanQr:'Scan QR',
-    notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
-    language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
-    chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
-    programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
-    addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
-    rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
-    firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
-    firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
-    scanBusinessQr:'Scan business QR',qrOnlyHelp:'Businesses can only be added with a business-issued QR.',
-    balance:'Balance',nextReward:'Next reward',tierProgress:'Tier progress',benefits:'Benefits & perks',
-    offers:'Birthday & seasonal offers',rewards:'Rewards',activityHistory:'Activity & history',
-    noBenefits:'No extra perks are available right now.',noOffers:'No birthday or seasonal offers are available right now.',
-    noRewards:'No rewards are available right now.',
-    retry:'Try again',bookNow:'Book now',requestVisit:'Request your next visit with {business}.',
-    points:'points',stamps:'stamps',currentTier:'Current tier',nextTier:'Next: {tier}',
-    terms:'Terms',availableNow:'Available now',
-    loadingProgramme:'Loading rewards…',loadingProgrammes:'Loading My Rewards…',
-    successSounds:'Success sounds',soundOff:'Off by default',soundOn:'On',
-    soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
-    merchantProgramme:'{business} rewards',featured:'Featured products & services',
-    noFeatured:'This business has not published featured items yet.'
-  })
-});
 const normalizeCustomerLocale=()=> 'en';
 let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
-function ct(key,vars={}){
-  let value=CUSTOMER_COPY[customerLocale]?.[key]??CUSTOMER_COPY.en[key]??key;
-  for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
-  return value;
-}
-/* v194: the nav is painted before the wallet data arrives, so the counts are remembered and
-   re-applied in place once they resolve. A stale count is never shown as fresh — see
-   applyCustomerNavCountsV194, which repaints the badges the moment the real numbers land. */
-let customerNavCountsV194={programmes:0,bookings:0};
 function applyCustomerNavCountsV194(counts={}){
   customerNavCountsV194={...customerNavCountsV194,...counts};
   const nav=document.querySelector('.customer-primary-nav');
@@ -992,189 +995,6 @@ function applyCustomerNavCountsV194(counts={}){
   const scan=$('customerNavScan');
   if(scan)scan.onclick=openCustomerJoinScanner;
   return customerNavCountsV194;
-}
-/* v195 (owner circled Scan QR and drew it up beside the bell): scanning is an ACTION, not a
-   destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
-   claimed a quarter of the navigation and read like a fourth page. It is now the header control
-   next to notifications, on every customer screen, and the nav holds only real destinations. */
-const CUSTOMER_PRIMARY_NAV=Object.freeze([
-  {key:'home',href:'#/wallet',icon:'home',copy:'home'},
-  {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'programmes'},
-  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
-]);
-/* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
-   two tabs that hold countable things now carry that count. A zero is not rendered — a badge
-   reading 0 is noise, and the tab already says what it holds. */
-function customerPrimaryNavigation(active,counts={}){
-  const badge=key=>{
-    const value=Math.max(0,Number(counts?.[key])||0);
-    return value?`<span class="customer-nav-count" aria-hidden="true">${value>99?'99+':value}</span>`:'';
-  };
-  const label=(item)=>{
-    const value=Math.max(0,Number(counts?.[item.key])||0);
-    const text=ct(item.copy);
-    return value?`${text}, ${value}`:text;
-  };
-  return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
-    ${CUSTOMER_PRIMARY_NAV.map(item=>
-      `<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
-  </nav>`;
-}
-function customerJoinTokenFromQr(value,currentUrl=location.href){
-  const raw=String(value??'').trim();
-  if(!raw)return '';
-  if(/^[A-Za-z0-9_-]{20,512}$/.test(raw))return raw;
-  try{
-    const url=new URL(raw,currentUrl);
-    const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
-    const token=url.searchParams.get('token')||hashParams.get('token')||'';
-    return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
-  }catch{return ''}
-}
-function openCustomerJoinScanner(){
-  activeCustomerJoinScannerCleanup();
-  const overlay=document.createElement('div');
-  overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
-  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
-  overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
-    <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
-    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
-    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
-      <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
-    </div><p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
-  document.body.appendChild(overlay);
-  const video=overlay.querySelector('#customerJoinScannerVideo');
-  const frame=overlay.querySelector('#customerJoinScannerFrame');
-  const status=overlay.querySelector('#customerJoinScannerStatus');
-  const camera=overlay.querySelector('#customerJoinScannerCamera');
-  const imageInput=overlay.querySelector('#customerJoinScannerImage');
-  const pasteFallback=overlay.querySelector('#customerJoinScannerPaste');
-  const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
-  let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
-  const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
-  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
-  activeCustomerJoinScannerCleanup=close;
-  const accept=value=>{
-    const token=customerJoinTokenFromQr(value);
-    if(!token){status.textContent='That is not an active Peekaa business QR. Ask the business to generate its latest join QR.';return false}
-    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});nav('#/join');return true;
-  };
-  const decode=(source,width,height)=>{
-    if(typeof globalThis.jsQR!=='function'||!context||!width||!height)return '';
-    canvas.width=width;canvas.height=height;context.drawImage(source,0,0,width,height);
-    return globalThis.jsQR(context.getImageData(0,0,width,height).data,width,height)?.data||'';
-  };
-  const scan=()=>{
-    if(closed||!stream)return;
-    if(video.readyState>=2&&accept(decode(video,video.videoWidth,video.videoHeight)))return;
-    frameHandle=requestAnimationFrame(scan);
-  };
-  camera.onclick=async()=>{
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus();return}
-    camera.disabled=true;status.textContent='Starting camera…';
-    try{
-      await loadScannerLibrary();
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
-    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus()}
-  };
-  imageInput.onchange=async event=>{
-    const file=event.target.files?.[0];if(!file)return;
-    status.textContent='Reading QR image…';
-    try{
-      await loadScannerLibrary();
-      const bitmap=await createImageBitmap(file);
-      const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
-      if(!accept(value))status.textContent='No active Peekaa join QR was found in that image.';
-    }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
-  };
-  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
-  overlay.querySelector('#customerJoinScannerClose').onclick=close;
-  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
-  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerCamera'});
-}
-function customerWorkspaceSwitchHtml(staffWorkspaces=[]){
-  const workspaces=sortStaffWorkspaces(staffWorkspaces);
-  if(!workspaces.length)return '';
-  if(workspaces.length===1){
-    const workspace=workspaces[0];
-    const name=workspace.business_name||workspace.business_slug||'Business';
-    return `<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard" aria-label="Open ${esc(name)} staff workspace">${CUI.icon('branch',{size:17})}<span>${esc(name)} workspace</span></a>`;
-  }
-  return `<details class="customer-workspace-switch"><summary class="btn ghost sm" aria-label="Open ${workspaces.length} authorized staff workspaces">${CUI.icon('branch',{size:17})}<span>Business workspaces (${workspaces.length})</span></summary><div class="menu" aria-label="Authorized staff workspaces">${workspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></details>`;
-}
-function renderNoCustomerDestination(staffWorkspaces=[]){
-  const workspaces=sortStaffWorkspaces(staffWorkspaces);
-  const relationshipRetry=customerRelationshipSyncCanRecover();
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:520px;max-width:100%" aria-labelledby="noCustomerTitle">
-    <div class="logo">${brandWordmark()}</div><h1 id="noCustomerTitle" style="font-size:1.55rem;margin-top:16px">${esc(BRAND.customerLabel)} is not set up for this account</h1>
-    <p class="muted" style="margin-top:7px;line-height:1.55">This signed-in account has staff access, but no registered customer profile or linked customer programme. No empty wallet has been shown.</p>
-    ${relationshipRetry?`<div class="row" style="margin-top:16px">${customerRelationshipCheckActionHtml()}</div>`:''}
-    ${workspaces.length?`<div style="margin-top:16px"><b>Open a staff workspace</b><div class="row" style="margin-top:10px">${workspaces.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div>`:''}
-    <a class="btn" href="#/customer" style="margin-top:18px">Set up ${esc(BRAND.customerLabel)}</a>
-    ${legalLinks()}</section></main>`;
-  if(relationshipRetry)wireCustomerRelationshipCheck(()=>route());
-  CUI.focusRoute($('main'),{enhanceContent:true});
-}
-function customerSurfaceQualifies(profile,customerPersonas=[]){
-  return (profile!==null&&profile!==undefined)||(Array.isArray(customerPersonas)&&customerPersonas.length>0);
-}
-function wireCustomerAccountMenu(){
-  customerAccountMenuCleanup();
-  const customerAccountMenuDetails=document.querySelector('.customer-account-menu');
-  if(!customerAccountMenuDetails)return;
-  const summary=customerAccountMenuDetails.querySelector('summary');
-  const onPointerDown=event=>{
-    if(customerAccountMenuDetails.open&&!customerAccountMenuDetails.contains(event.target))customerAccountMenuDetails.open=false;
-  };
-  const onKeyDown=event=>{
-    if(event.key==='Escape'&&customerAccountMenuDetails.open){
-      event.preventDefault();customerAccountMenuDetails.open=false;summary?.focus();
-    }
-  };
-  document.addEventListener('pointerdown',onPointerDown);
-  document.addEventListener('keydown',onKeyDown);
-  customerAccountMenuCleanup=()=>{
-    document.removeEventListener('pointerdown',onPointerDown);
-    document.removeEventListener('keydown',onKeyDown);
-    customerAccountMenuCleanup=()=>{};
-  };
-}
-/* v178: backTo generalises the business-page circle back button so the "My Rewards" tab can
-   carry one too (owner: "There is no back button"). businessSlug keeps its own destination. */
-function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null,navCounts=null}={}){
-  setCustomerSurfaceDocumentV167();
-  globalThis.document?.documentElement?.setAttribute('lang','en');
-  const inboxAvailable=messagesAvailable===null?customerInboxEnabledV178===true:messagesAvailable===true,
-    backHref=businessSlug?'#/customer/programmes':(backTo||''),
-    backLabel=businessSlug?ct('backProgrammes'):'Back to home';
-  root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head">
-    ${backHref?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
-    <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    <span class="spacer"></span><button class="customer-head-scan" id="customerNavScan" type="button" aria-label="${esc(ct('scanQr'))}" title="${esc(ct('scanQr'))}">${CUI.icon('scan',{size:19})}</button><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
-    ${customerWorkspaceSwitchHtml(staffWorkspaces)}
-    <details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu">
-      <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a>
-      <button id="customerPushMenuControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button>
-      <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button>
-    </div></details>
-    </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
-    <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
-    ${legalLinks()}</div></div>`;
-  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-  const customerPush=window.NestlyCustomerPush?.configure({rpc:(name,args)=>sb.rpc(name,args),userId:S.user?.id});
-  if(customerPush){
-    customerPush.bindButton($('customerPushMenuControl'));
-    customerPush.reconcile().catch(()=>{});
-  }
-  wireCustomerAccountMenu();
-  if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
-  if($('walletBack'))$('walletBack').onclick=()=>nav(backHref);
-}
-function focusCustomerRoute(){
-  const main=$('main');if(main)CUI.focusRoute(main,{enhanceContent:true});
-  if(S.user&&typeof completePendingCustomerDestination==='function')completePendingCustomerDestination(location.hash);
 }
 function customerPasskeySupported({management=false}={}){
   return isSecureContext&&'PublicKeyCredential' in globalThis
@@ -1241,55 +1061,6 @@ async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
     };
   });
 }
-function customerRelationshipSyncCanRecover(){
-  return customerRelationshipSyncState.attempted===false
-    &&customerRelationshipSyncState.result?.outcome==='try_later';
-}
-function customerRelationshipCheckActionHtml(){
-  const retry=customerRelationshipSyncCanRecover();
-  return `${retry?'<span class="muted small" id="customerRelationshipRetryHelp" role="status">We could not complete the last programme check. Your account is unchanged.</span>':''}<button class="btn ghost sm" id="customerRelationshipCheck" type="button"${retry?' aria-describedby="customerRelationshipRetryHelp"':''}>${retry?'Retry programme check':'Check for existing programmes'}</button>`;
-}
-function wireCustomerRelationshipCheck(renderer){
-  const button=$('customerRelationshipCheck');
-  if(!button)return;
-  button.onclick=()=>{
-    const userId=S.user?.id||null;
-    customerRelationshipSyncState={userId,attempted:false,result:null};
-    button.disabled=true;button.textContent='Checking…';
-    CUI.announce('Checking for existing programmes.');
-    renderer();
-  };
-}
-/* v178: the header bell is a first-class shell control, so every customer shell — including the
-   QR-join screens that render before a route context exists — reads the same resolved flag. */
-let customerInboxEnabledV178=false;
-async function loadCustomerSurfaceContext(isCurrent=()=>true){
-  const features=await loadCustomerFeatureCapabilities();
-  customerInboxEnabledV178=features?.customer_in_app_inbox===true;
-  if(!isCurrent())return null;
-  if(features._load_error){renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
-  if(!features.customer_wallet){renderCustomerWalletUnavailable();return null}
-  const [profileResult,personaResult]=await Promise.all([
-    features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
-    customerRpc('get_my_personas')
-  ]);
-  if(!isCurrent())return null;
-  let {data:personas,error:personasError}=personaResult;
-  if(personasError){renderCustomerCapabilityRetry('We could not load your customer destinations. Please try again.');return null}
-  let staff=sortStaffWorkspaces(personas?.staff||[]),customer=personas?.customer||[];
-  if(profileResult.error&&!customer.length){
-    renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');return null;
-  }
-  const profile=profileResult.error?null:(profileResult.data?.profile??null);
-  const registeredCustomer=profile!==null;
-  if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
-  S.hasCustomerPersona=true;S.customerProfile=profile;
-  customerLocale='en';
-  globalThis.document?.documentElement?.setAttribute('lang','en');
-  if(!isCurrent())return null;
-  return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
-}
-
 async function renderCustomerProgrammes(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
@@ -1659,12 +1430,13 @@ async function renderCustomerProfile(){
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
     </section>
     <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><span>${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span></label></div></section>
-    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Offers and updates from ${esc(BRAND.productName)}, participating businesses and selected partners, by app notification, in-app message, email, SMS or WhatsApp. Partners never receive your contact details. This is separate from messages sent by individual businesses.</p>
-      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates, as described in the Privacy Notice. Withdrawing takes effect within 10 business days and does not affect my points, bookings or service messages.</span></label>
+    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Offers and updates from Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.</p>
+      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates. I can turn this off here, or in <a href="#/customer/communications" style="color:var(--coral);text-decoration:underline">Communications</a>, at any time. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.</span></label>
       <div id="customerProfileMarketingStatus" role="status" aria-live="polite"></div>
       <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save marketing choice</span></button>`
       :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p>'}
     </section>
+    <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Communications</h2><p class="muted small">Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>Open communications</span></a></div></section>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
@@ -1672,7 +1444,7 @@ async function renderCustomerProfile(){
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Update password</span></button>
     </section>
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
-    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">Only service updates such as bookings, points, rewards, quests, and birthday benefits. Businesses cannot send promotional push notifications from this control.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
+    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">This switch controls whether this device can show notifications at all. Which ones you actually receive is set in <a href="#/customer/communications">Communications</a> — offers, rewards and points, and Peekaa updates each have their own channels there.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
     ${accountDeletionCardHtml()}`;
   bindPasswordVisibility($('walletBody'));
   /* v190: applied immediately on change — the person is looking at the surface they just picked,
@@ -1731,6 +1503,12 @@ async function renderCustomerProfile(){
         status.innerHTML='<div class="err">Your marketing choice could not be saved. Please try again.</div>';return;
       }
       marketingAttempt=null;
+      if(optedIn&&!await grantAllCommunicationsV265()){
+        if(!isCurrent()||!marketingSave.isConnected)return;
+        status.innerHTML='<div class="err">Marketing consent saved, but some communication switches could not be turned back on. Open <a href="#/customer/communications">Communications</a> to check them.</div>';
+        CUI.announce('Marketing consent saved. Some communication switches could not be turned back on.');return;
+      }
+      if(!isCurrent()||!marketingSave.isConnected)return;
       status.innerHTML=`<p class="muted small" style="margin-top:10px;color:var(--green)">${optedIn?'Marketing consent saved.':'Marketing consent withdrawn.'}</p>`;
       CUI.announce(optedIn?'Marketing consent saved.':'Marketing consent withdrawn.');
     };
@@ -1957,31 +1735,6 @@ async function renderCustomerClaim(){
   };
 }
 
-function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
-  setCustomerSurfaceDocumentV167();
-  globalThis.document?.documentElement?.setAttribute('lang','en');
-  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
-    <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
-    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
-      <p class="muted" style="margin-top:8px">${esc(message)}</p>
-    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
-  wireAccountDeletionButton();
-  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-}
-
-function renderCustomerCapabilityRetry(message){
-  setCustomerSurfaceDocumentV167();
-  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
-    <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
-    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
-      <p class="muted" style="margin-top:8px">${esc(message)}</p>
-      <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
-    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
-  wireAccountDeletionButton();
-  $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
-  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-}
-
 function renderCustomerWalletRetry(message,businessSlug,retry=()=>renderCustomerWallet(businessSlug),error=null){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const body=$('walletBody');if(!body)return;
@@ -2158,10 +1911,6 @@ function customerProgrammeSwitcherMarkup(cards=[],activeSlug=''){
     const business=card?.business||{};
     return `<a href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-current="${business.slug===activeSlug?'true':'false'}">${esc(business.name||ct('localBusiness'))}</a>`;
   }).join('')}</div>`;
-}
-function customerPointTotalV103(value){
-  return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
-    .format(Math.max(0,Number(value)||0));
 }
 const CUSTOMER_SEEN_OFFERS_KEY_V167='peekaa.customer.offers.seen.v1';
 let customerOfferFocusV167=null;
@@ -2413,11 +2162,14 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
            so it can never send someone to a booking page that will refuse them. */''}
       ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`
         :`<span data-offer-book></span>`}
+      ${customerShareButtonMarkupV264(item?.id,{small:false})}
     </div></section>`;
   document.body.appendChild(overlay);
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerOfferDetailClose',inheritHistoryId});
   overlay.querySelector('#customerOfferDetailClose').onclick=()=>deactivate({restoreFocus:true});
   wireCustomerSheetNavV183(overlay,deactivate);
+  const shareButton=overlay.querySelector('[data-share-offer]');
+  if(shareButton)shareButton.onclick=()=>shareCustomerOfferV264(item,business);
   const companyButton=overlay.querySelector('[data-company-detail]');
   if(companyButton)companyButton.onclick=()=>{
     const handOff=CUI.currentDialogHistoryId?.()||0;
@@ -2516,9 +2268,115 @@ function customerBusinessIdV103({summaryBusiness={},actionableCard=null,programm
   return candidates.map(value=>String(value||'').trim())
     .find(value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))||null;
 }
+/* V183 (owner: "Upload the image but not reflected on the right ... only after publish then is
+   able to see"). customerMediaUrlV95 is a strict allowlist of Supabase storage object paths, so
+   the blob: URL of a just-picked file resolved to '' and the card fell back to its initial
+   letter — the owner saw a big "N" instead of the photo they had chosen.
+   The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
+   already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
+/* v265 (owner: "i need a share button for promotions - to share to social media / whatsapp / FB /
+   IG / tiktok/wechat/ telegram - so customers can help businesses to share").
+   How sharing actually works, and why this is built the way it is:
+     * Instagram, TikTok and WeChat have NO web share endpoint. Nothing a web page can link to
+       will post to them. The only route is the DEVICE share sheet (navigator.share), which lists
+       every app the customer has installed — so that is the primary action, and on a phone it
+       covers all seven of the owner's channels plus anything else they use.
+     * WhatsApp, Telegram and Facebook do publish real share URLs, so a desktop browser (where
+       there is usually no share sheet) still gets working buttons instead of a dead end.
+     * Copy link is always offered, because it works everywhere including apps with no endpoint.
+   No fake buttons: a channel is never drawn unless the tap genuinely reaches it. */
+const CUSTOMER_SHARE_CHANNELS_V264=Object.freeze([
+  {key:'whatsapp',label:'WhatsApp',icon:'chat',
+    href:({text,url})=>`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`},
+  {key:'telegram',label:'Telegram',icon:'forward',
+    href:({text,url})=>`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`},
+  {key:'facebook',label:'Facebook',icon:'customers',
+    href:({url})=>`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
+]);
+/* The link a stranger receives must open something they can actually use without an account.
+   The business's public booking page is that surface today; it is the canonical origin, never
+   whatever host this app happens to be running on. */
+function customerShareUrlV264(business={}){
+  const slug=String(business?.slug||'').trim();
+  if(!slug)return '';
+  try{return NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`)}
+  catch{return ''}
+}
+/* The message carries the offer, because the destination page cannot show it yet. Name, business
+   and validity — merchant-authored text, passed through as the merchant wrote it. */
+function customerShareTextV264(item={},business={}){
+  const name=String(item?.name||'').trim()||'this offer';
+  const shop=String(business?.name||item?.business?.name||'').trim();
+  const validity=customerPromotionValidityV104(item);
+  return [shop?`${name} at ${shop}`:name,validity].filter(Boolean).join(' · ');
+}
+function customerShareSheetMarkupV264({text,url}){
+  const channels=CUSTOMER_SHARE_CHANNELS_V264
+    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
+    .join('');
+  return `<section class="modal-card customer-share-sheet">
+    <div class="row"><h2 id="customerShareTitle">Share this offer</h2><span class="spacer"></span>
+      <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
+    <p class="muted small" style="margin-top:8px">${esc(text)}</p>
+    <div class="customer-share-channels">${channels}</div>
+    <button class="btn ghost sm customer-share-copy" id="customerShareCopy" type="button" data-share-channel="copy">${CUI.icon('copy',{size:17})}<span>Copy link</span></button>
+    <p class="muted small customer-share-note">Instagram, TikTok and WeChat can be reached from your phone's own share button.</p>
+  </section>`;
+}
+function showCustomerShareSheetV264({text,url,onChannel=()=>{}}){
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-surface customer-share-modal';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerShareTitle');
+  overlay.innerHTML=customerShareSheetMarkupV264({text,url});
+  document.body.appendChild(overlay);
+  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerShareClose'});
+  overlay.querySelector('#customerShareClose').onclick=()=>deactivate({restoreFocus:true});
+  overlay.querySelectorAll('[data-share-channel]').forEach(control=>{
+    control.addEventListener('click',async event=>{
+      const channel=control.dataset.shareChannel;
+      if(channel==='copy'){
+        event.preventDefault();
+        /* One clipboard path for the whole app: it disables the button while it runs, announces
+           the result to a screen reader, and says so honestly when the browser refuses. */
+        await copyTextToClipboard(url,{button:control,success:'Link copied. Paste it anywhere.',
+          failure:'Copying is blocked in this browser. Long-press the link to copy it.'});
+      }
+      onChannel(channel);
+      if(channel!=='copy')deactivate({restoreFocus:false});
+    });
+  });
+  return deactivate;
+}
+async function shareCustomerOfferV264(item,business){
+  const url=customerShareUrlV264(business||item?.business||{});
+  if(!url)return toast('This business has no public page to share yet.');
+  const text=customerShareTextV264(item,business||item?.business||{});
+  const businessId=String((business||item?.business||{})?.id||'');
+  const record=channel=>recordProductInteractionV100('customer.promotion_shared',businessId,
+    {context:{channel,promotion_id:String(item?.id||''),surface_version:'v264'}});
+  /* The device sheet is the only way to reach Instagram, TikTok and WeChat, so it is tried first
+     wherever it exists. A customer who dismisses it has decided not to share — that is not an
+     error and must not be answered with a second, different sheet. */
+  if(navigator.share){
+    try{
+      await navigator.share({title:String(item?.name||'Offer'),text,url});
+      record('device');
+    }catch(error){
+      if(error?.name==='AbortError')return;
+      showCustomerShareSheetV264({text,url,onChannel:record});
+    }
+    return;
+  }
+  showCustomerShareSheetV264({text,url,onChannel:record});
+}
 function openCustomerPromotionDetailsV104(card){
   const template=card?.querySelector('template[data-promotion-details-template]');
   if(!template)return;
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.promotion_opened',customerWalletBusinessIdV256,{
+    context:{promotion_id:String(card?.dataset?.promotionId||''),surface_key:'promotion_detail',
+      entry_point:'customer_wallet',surface_version:'v255'}
+  });
   $('customerPromotionDetailsModal')?.remove();
   const title=card.querySelector('h3')?.textContent?.trim()||'Offer details';
   document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerPromotionDetailsModal" role="dialog" aria-modal="true" aria-labelledby="customerPromotionDetailsTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
@@ -2588,6 +2446,11 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
       p_business_slug:businessSlug,p_event_id:prompt.event_id,
       p_operation:operation,p_idempotency_key:operationKeys[operation]
     }).catch(()=>{});
+    if(operation==='read')typeof recordProductInteractionV100==='function'&&recordProductInteractionV100(
+      'customer.notification_opened',customerWalletBusinessIdV256,
+      {context:{surface_key:'promotion_prompt',entry_point:'customer_wallet',
+        outcome:'read',surface_version:'v255'}}
+    );
     afterClose?.();
   };
   deactivate=CUI.activateDialog(dialog,{onClose:()=>close('dismiss'),initialFocus:'[data-promotion-popup-view]'});
@@ -2667,10 +2530,12 @@ function customerTierPanelMarkupV194(tier={}){
   })();
   const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
   /* V240: when a firm runs both, the customer holds two independent things — a tier they climb
-     and points they spend. Saying so once here stops "will redeeming cost me my tier?". */
-  const bothNoteV240=String(tier.points_mode||'')==='both'
-    ?`<p class="muted small" style="margin-top:6px">Visits move you up. Points stay yours to spend.</p>`:'';
-  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV240}
+     and points they spend. Saying so once here stops "will redeeming cost me my tier?".
+     V258: the sentence now reads the firm's actual basis. 'points_earned' counts LIFETIME
+     points earned, which redemption never reduces, so the reassurance is still true there. */
+  const bothNoteV258=String(tier.points_mode||'')==='both'
+    ?`<p class="muted small" style="margin-top:6px">${basis==='points_earned'?'Points you earn move you up — spending them never lowers your tier.':basis==='spend'?'What you spend moves you up. Points stay yours to spend.':'Visits move you up. Points stay yours to spend.'}</p>`:'';
+  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV258}
     ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
     <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
       :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
@@ -3017,67 +2882,9 @@ function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=
 function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
   return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
 }
-/* v242 (owner: "customer to view all businesses - within the ecosystem - then show (not set up)
-   for businesses that they yet to scan QRcode. and they able to see each customised points
-   (existing infrastructure). the rewards are customised to each company and not shared."):
-   Home ends with the whole Peekaa ecosystem, not only the businesses this customer already
-   scanned into. A business the customer has NOT joined is shown, never linked: no points, no
-   route into a wallet that does not exist for them, and one line saying the only way in is the
-   shop's own QR. A joined business shows ITS OWN balance and opens ITS OWN wallet — the
-   directory never adds points across businesses, because they are never shared.
-   The section is loaded AFTER Home has painted (customer_list_business_directory_v242 is a
-   second round trip and Home must not wait on it), so it paints a skeleton first and fills
-   itself in place. */
-function customerBusinessDirectoryHostV242(){
-  return '<div id="customerBusinessDirectoryV242"></div>';
-}
-function customerBusinessDirectoryRowMarkupV242(row){
-  const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
-    id=String(row?.business_id||''),joined=row?.joined===true,
-    points=Math.max(0,Number(row?.points_balance||0)),
-    copy=`<div class="customer-directory-copy"><h3 data-merchant-content>${esc(name)}</h3>${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}</div>`;
-  /* Joined rows reuse the wallet route the linked-programme tiles already use, so there is
-     exactly one way into a business from the customer app. */
-  return joined
-    ?`<a class="card customer-directory-row" href="#/wallet/${encodeURIComponent(row?.slug||'')}" data-directory-business="${esc(id)}" data-directory-joined="1">${copy}<div class="customer-directory-side"><span class="pill customer-directory-pill">Member</span><b class="customer-directory-points">${esc(points.toLocaleString())} points</b></div></a>`
-    :`<div class="card customer-directory-row customer-directory-row--locked" data-directory-business="${esc(id)}" data-directory-joined="0">${copy}<div class="customer-directory-side"><span class="pill customer-directory-pill">Not set up</span><span class="muted small">Scan their QR in store to join.</span></div></div>`;
-}
-function customerBusinessDirectoryMarkupV242(state={status:'loading',rows:[]}){
-  let body='<div class="card customer-directory-state"><p class="muted small">Loading businesses…</p></div>';
-  if(state.status==='ready'){
-    /* The server may legitimately list two businesses with the same name; only an identical
-       business_id is a duplicate, and demo or QA tenants are shown like any other. */
-    const seen=new Set(),rows=(Array.isArray(state.rows)?state.rows:[]).filter(row=>{
-      const id=String(row?.business_id||'');
-      if(!id||seen.has(id))return false;
-      seen.add(id);return true;
-    });
-    body=rows.length
-      ?`<div class="customer-directory-list">${rows.map(customerBusinessDirectoryRowMarkupV242).join('')}</div><p class="muted small customer-directory-note">Points and rewards are separate for every business.</p>`
-      :'<div class="card customer-directory-state"><p class="muted small">No businesses to show yet.</p></div>';
-  }else if(state.status==='error'){
-    body='<div class="card customer-directory-state"><p class="muted small">Businesses couldn’t load.</p><button class="btn ghost sm" id="customerDirectoryRetry" type="button" style="margin-top:10px">Try again</button></div>';
-  }
-  return `<section class="customer-directory-v242" aria-labelledby="customerDirectoryTitle"><div class="customer-directory-head"><h2 id="customerDirectoryTitle">All businesses</h2><p class="muted small">Every business on Peekaa. Scan a shop’s QR in store to start earning there.</p></div>${body}</section>`;
-}
-let customerDirectoryEpochV242=0;
-function mountCustomerBusinessDirectoryV242(){
-  const host=$('customerBusinessDirectoryV242');
-  if(!host)return;
-  const epoch=++customerDirectoryEpochV242;
-  host.innerHTML=customerBusinessDirectoryMarkupV242({status:'loading',rows:[]});
-  const paint=state=>{
-    /* A later Home render (or a later retry) owns the section; an in-flight reply from an
-       earlier one must never overwrite it. */
-    if(epoch!==customerDirectoryEpochV242||!document.body.contains(host))return;
-    host.innerHTML=customerBusinessDirectoryMarkupV242(state);
-    const retry=host.querySelector('#customerDirectoryRetry');
-    if(retry)retry.onclick=()=>mountCustomerBusinessDirectoryV242();
-  };
-  Promise.resolve(customerRpc('customer_list_business_directory_v242'))
-    .then(({data,error})=>paint(error?{status:'error',rows:[]}:{status:'ready',rows:Array.isArray(data)?data:(Array.isArray(data?.rows)?data.rows:[])}))
-    .catch(()=>paint({status:'error',rows:[]}));
-}
+/* v244: the v242 "All businesses" directory moved off the bottom of Home into the Explore tab,
+   where it is the empty-query result of the ecosystem search. Same rules (an unjoined business
+   never navigates, never shows points); Home stays offers-first. */
 /* v194 (owner struck both cards out on Home): the two quick links repeated the primary nav
    directly above them — My Rewards and Bookings are already one tap away in the tab bar, and
    the counts they carried now live on those tabs. Home is the offers shelf. */
@@ -3088,10 +2895,8 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
   if(!cards.length){
     $('walletBody').innerHTML=`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
-    if(isHome)$('walletBody').insertAdjacentHTML('beforeend',customerBusinessDirectoryHostV242());
     $('customerFirstScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(repaint);
-    if(isHome)mountCustomerBusinessDirectoryV242();
     return;
   }
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
@@ -3102,11 +2907,9 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
-  if(isHome)$('walletBody').insertAdjacentHTML('beforeend',customerBusinessDirectoryHostV242());
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
   if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));
   wireCustomerHomeOffersV167(repaint);
-  if(isHome)mountCustomerBusinessDirectoryV242();
 }
 async function renderCustomerWallet(businessSlug=null){
   const walletRenderEpoch=++customerWalletRenderEpoch;
@@ -3200,14 +3003,13 @@ async function renderCustomerWallet(businessSlug=null){
     $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
       ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}
-      ${customerBusinessDirectoryHostV242()}`;
+      `;
     /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
        lands here through the legacy read must not see empty tabs where the other path shows
        counts. A booking read that failed contributes 0, never a guess. */
     applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
-    mountCustomerBusinessDirectoryV242();
     focusCustomerRoute();
     return;
   }
@@ -3223,9 +3025,22 @@ async function renderCustomerWallet(businessSlug=null){
   const businessId=customerBusinessIdV103({
     summaryBusiness:b,actionableCard,programmeCards,businessSlug
   });
-  if(businessId)recordProductInteractionV100('customer.programme_viewed',businessId,{
+  if(businessId)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.programme_viewed',businessId,{
       context:{entry_point:'customer_wallet',locale:customerLocale,surface_version:'v100'}
     });
+  if(businessId){
+    customerWalletBusinessIdV256=businessId;
+    recordCustomerSessionStartV256(businessId,customerLocale);
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.surface_viewed',businessId,{
+      context:{surface_key:'wallet',entry_point:'customer_wallet',
+        locale:customerLocale,surface_version:'v255'}
+    });
+    /* v255 (audit 3, "customer DAU"): customer_account_open_days_v175 was built for exactly
+       this and its wallet channel had no caller, so the only DAU signal the product had was
+       the booking path. One idempotent, deduped-per-day write. */
+    try{Promise.resolve(sb.rpc('customer_record_account_open_v175',{p_business:businessId}))
+      .catch(()=>{})}catch{}
+  }
   const unavailableBusinessId=()=>Promise.resolve({
     data:null,error:{code:'business_id_unavailable',message:'Business identifier is unavailable'}
   });
@@ -3258,6 +3073,18 @@ async function renderCustomerWallet(businessSlug=null){
   presentation.offers=promotionsResult.error
     ?[]
     :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,6);
+  /* v255 (audit finding: promotion views were class C — nothing recorded between "we published
+     it" and "someone redeemed"). Deduped per browser session so a wallet the customer reopens
+     five times is one view, not five. */
+  if(businessId)for(const offerV256 of presentation.offers){
+    const promotionIdV256=String(offerV256?.id||offerV256?.promotion_id||'');
+    if(!isUuidV100(promotionIdV256)||customerPromotionsSeenV256.has(promotionIdV256))continue;
+    customerPromotionsSeenV256.add(promotionIdV256);
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.promotion_viewed',businessId,{
+      context:{promotion_id:promotionIdV256,surface_key:'wallet',
+        entry_point:'customer_wallet',locale:customerLocale,surface_version:'v255'}
+    });
+  }
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
@@ -3301,6 +3128,13 @@ async function renderCustomerWallet(businessSlug=null){
   });
   document.querySelectorAll('[data-promotion-details]').forEach(button=>button.onclick=()=>{
     openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
+  });
+  /* v265: Share reads the offer back out of the list the page already rendered, so the sheet can
+     never describe a different promotion from the card that was tapped. */
+  document.querySelectorAll('[data-share-offer]').forEach(button=>button.onclick=()=>{
+    const offerId=String(button.dataset.shareOffer||'');
+    const offer=(Array.isArray(presentation.offers)?presentation.offers:[]).find(item=>String(item?.id||'')===offerId);
+    if(offer)shareCustomerOfferV264(offer,{...b,id:businessId||b.id,slug:businessSlug});
   });
   document.querySelector('[data-programme-offers-retry]')?.addEventListener('click',()=>renderCustomerWallet(businessSlug));
   document.querySelector('[data-points-explainer-dismiss]')?.addEventListener('click',event=>{
@@ -3424,6 +3258,12 @@ async function renderCustomerWallet(businessSlug=null){
       host.innerHTML=`<div class="card customer-home-offers-state"><b>Your points build your tier</b><p class="muted small" style="margin-top:6px">Every point earned here counts toward your membership tier and its benefits — there is nothing to redeem. Your tier and what it unlocks are shown above.</p></div>`;
       return;
     }
+    /* v255: reward VIEWS were class C — only redemption outcomes existed, so the funnel had no
+       middle. One event per wallet render of the reward section, not one per card. */
+    if(businessId)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.reward_viewed',businessId,{
+      context:{surface_key:'rewards',entry_point:'customer_wallet',
+        locale:customerLocale,surface_version:'v255'}
+    });
     const classicAction=!actionsResult.error&&actionsResult.data?.redemption?.classic
       ?actionsResult.data.redemption.classic:null;
     const actionRewards=actionsResult.error?[]:[
@@ -3765,6 +3605,12 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     const {error}=await request('customer_set_in_app_inbox_state',{
       p_business_slug:slug,p_event_id:item.event_id,p_operation:operation,p_idempotency_key:crypto.randomUUID()
     });
+    if(!error&&operation==='read')typeof recordProductInteractionV100==='function'&&recordProductInteractionV100(
+      'customer.notification_opened',
+      isUuidV100(item?.business?.id)?item.business.id:customerWalletBusinessIdV256,
+      {context:{surface_key:'inbox',entry_point:'customer_inbox',
+        outcome:'read',surface_version:'v255'}}
+    );
     if(!walletSectionStillCurrent(host,isCurrent))return;
     const status=$('customerInboxStatus');
     if(error){if(status)status.textContent='That inbox item could not be updated. Please try again.';return;}
@@ -3834,6 +3680,96 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     });
   };
   await refreshInbox();
+}
+
+/* V263 - the customer Communications screen.
+   Owner ruling 2026-08-09, with Grab's Communications screen as the supplied reference: purpose
+   categories, one row per channel, "default is all on". The labels live here and the effective
+   values come from the server in one call, so the client never reproduces the default rule - that
+   is exactly how a screen and its send-path gate drift apart.
+   Transactional messages (receipts, booking confirmations, security notices) are deliberately
+   absent: they have no category server-side and cannot be switched off from anywhere. */
+const CUSTOMER_COMMUNICATION_CATEGORIES_V263=[
+  ['business_offers','Offers from businesses you follow','Promotions and deals from the businesses whose programmes you have joined.'],
+  ['rewards_and_points','Your rewards and points','Points you earn, rewards unlocked, and value that is about to expire.'],
+  ['peekaa_updates','Peekaa updates','News and new features from Peekaa itself.']
+];
+const CUSTOMER_COMMUNICATION_CHANNELS_V263=[
+  ['in_app','In-app message'],['push','Push notification'],['email','Email'],
+  ['sms','SMS'],['whatsapp','WhatsApp'],['call','Call']
+];
+async function renderCustomerCommunicationsV263(){
+  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
+  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
+  const shell=body=>renderCustomerShell({
+    active:'profile',staffWorkspaces:context.staffWorkspaces,
+    messagesAvailable:context.features.customer_in_app_inbox===true,
+    backTo:'#/customer/profile',body
+  });
+  shell(CUI.loadingState({title:'Communications',body:'Loading your communication choices…',variant:'form'}));
+  focusCustomerRoute();
+  const {data,error}=await sb.rpc('customer_get_communication_preferences_v263');
+  if(!isCurrent())return;
+  if(error){
+    shell(CUI.errorState({title:'Communications',message:'Your communication choices could not be loaded. Nothing has been changed.',retryId:'customerCommsRetry'}));
+    const retry=$('customerCommsRetry');if(retry)retry.onclick=()=>renderCustomerCommunicationsV263();
+    focusCustomerRoute();return;
+  }
+  const serverCategories=Array.isArray(data?.categories)?data.categories:[];
+  const known=new Map(CUSTOMER_COMMUNICATION_CATEGORIES_V263.map(([key,label,help])=>[key,{label,help}]));
+  const rows=serverCategories.filter(entry=>known.has(entry?.category));
+  if(!rows.length){
+    shell(`<header class="customer-page-head"><div><h1>Communications</h1></div></header>${CUI.emptyState({iconName:'bell',title:'No communication choices yet',body:'There is nothing to set here for your account right now.'})}`);
+    focusCustomerRoute();return;
+  }
+  const allEnabled=data?.all_enabled===true;
+  shell(`<header class="customer-page-head"><div><h1>Communications</h1><p class="muted">Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.</p></div></header>
+    <section class="card"><label class="row" for="customerCommsAll" style="align-items:flex-start;color:var(--ink);font-weight:600"><input id="customerCommsAll" type="checkbox" ${allEnabled?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:2px"> <span>Send me all marketing messages<span class="muted small" style="display:block;font-weight:400;margin-top:3px">One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.</span></span></label>
+      <p class="muted small" id="customerCommsStatus" role="status" aria-live="polite" style="margin-top:10px"></p></section>
+    ${rows.map(entry=>{
+      const meta=known.get(entry.category);
+      const channels=Array.isArray(entry.channels)?entry.channels:[];
+      return `<section class="card" style="margin-top:14px"><h2>${esc(meta.label)}</h2><p class="muted small" style="margin-top:5px">${esc(meta.help)}</p>
+      ${channels.map(channel=>{
+        const label=(CUSTOMER_COMMUNICATION_CHANNELS_V263.find(([key])=>key===channel?.channel)||[null,channel?.channel])[1];
+        return `<label class="row" for="customerComms-${esc(entry.category)}-${esc(channel.channel)}" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="customerComms-${esc(entry.category)}-${esc(channel.channel)}" class="customerCommsToggle" type="checkbox" style="width:auto" data-category="${esc(entry.category)}" data-channel="${esc(channel.channel)}" ${channel.enabled===true?'checked':''}>${esc(label||channel.channel)}</label>`;
+      }).join('')}</section>`;
+    }).join('')}`);
+  focusCustomerRoute();
+  const status=$('customerCommsStatus');
+  const say=message=>{if(status)status.textContent=message;if(message)CUI.announce(message)};
+  const master=$('customerCommsAll');
+  const syncMaster=()=>{
+    if(!master)return;
+    master.checked=[...document.querySelectorAll('.customerCommsToggle')].every(input=>input.checked);
+  };
+  /* Optimistic, but never dishonest: a failed write puts the switch back where it was and says so,
+     so the screen can never claim a preference the server did not store. */
+  document.querySelectorAll('.customerCommsToggle').forEach(input=>input.onchange=async()=>{
+    const wanted=input.checked;
+    input.disabled=true;say('Saving…');
+    const {error:setError}=await sb.rpc('customer_set_communication_preference_v263',{
+      p_category:input.dataset.category,p_channel:input.dataset.channel,p_enabled:wanted
+    });
+    if(!isCurrent()||!input.isConnected)return;
+    input.disabled=false;
+    if(setError){input.checked=!wanted;syncMaster();say('That choice could not be saved, so it has been put back. Please try again.');return}
+    syncMaster();say('Saved.');
+  });
+  if(master)master.onchange=async()=>{
+    const wanted=master.checked;
+    const before=[...document.querySelectorAll('.customerCommsToggle')].map(input=>[input,input.checked]);
+    master.disabled=true;before.forEach(([input])=>{input.disabled=true;input.checked=wanted});
+    say('Saving…');
+    const {error:setError}=await sb.rpc('customer_set_all_communications_v263',{p_enabled:wanted});
+    if(!isCurrent()||!master.isConnected)return;
+    master.disabled=false;before.forEach(([input])=>{input.disabled=false});
+    if(setError){
+      master.checked=!wanted;before.forEach(([input,was])=>{input.checked=was});
+      say('That change could not be saved, so your choices have been put back. Please try again.');return;
+    }
+    say(wanted?'All marketing messages are on.':'All marketing messages are off. Receipts, bookings and security messages still send.');
+  };
 }
 
 /* ---------- phone country-code picker (portal booking form only) ----------

@@ -87,7 +87,19 @@ export type CustomerPushEventType =
   | 'booking_request_received'
   | 'appointment_time_changed';
 
-export function customerPushEventType(lease: PushLease): CustomerPushEventType {
+/**
+ * Returns null - never throws - for a lease this dispatcher cannot render.
+ *
+ * Audit finding 1.9: the throwing form was called INSIDE the send try-block, so
+ * an unmapped topic (promotion_alerts, today) surfaced as a transport error
+ * with no HTTP status. pushDisposition(null) is 'retry', so the delivery
+ * retried five times and then stalled forever, invisible. An event type we
+ * cannot render is a permanent, deterministic failure and must fail CLOSED:
+ * the caller checks this BEFORE the try-block and records 'failed'.
+ */
+export function customerPushEventTypeOrNull(
+  lease: PushLease,
+): CustomerPushEventType | null {
   if (lease.source_kind === 'v33_booking_action') {
     return 'booking_request_received';
   }
@@ -100,7 +112,13 @@ export function customerPushEventType(lease: PushLease): CustomerPushEventType {
   ) {
     return lease.topic;
   }
-  throw new Error('unsupported push event');
+  return null;
+}
+
+export function customerPushEventType(lease: PushLease): CustomerPushEventType {
+  const eventType = customerPushEventTypeOrNull(lease);
+  if (eventType === null) throw new Error('unsupported push event');
+  return eventType;
 }
 
 export function pushDisposition(statusCode: number | null): PushDisposition {

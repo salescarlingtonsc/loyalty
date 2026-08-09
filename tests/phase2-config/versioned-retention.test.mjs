@@ -126,7 +126,8 @@ test('retention UI uses RPC drafts and keeps draft identities out of live reads'
   assert.match(app, /const livePrograms=currentVersion[\s\S]*Promise\.resolve\(\{data:\[\],error:null\}\)/i,
     'a new business without an active version must not serialize null through a UUID equality filter');
   assert.match(app, /Promise\.all\(\[\s*livePrograms,/i);
-  assert.match(app, /Publish your loyalty foundation first; retention rules share the same versioned configuration/);
+  // V255: owner copy sweep dropped "versioned configuration" internal-architecture wording.
+  assert.match(app, /Publish your loyalty foundation first; retention rules are part of the same programme/);
   assert.match(app, /href="#\/loyalty">Set up loyalty first<\/a>/);
   assert.match(app, /if\(\$\('beginRetentionDraft'\)\)\$\('beginRetentionDraft'\)\.onclick/,
     'new-business guidance must not leave an unguarded missing-button handler');

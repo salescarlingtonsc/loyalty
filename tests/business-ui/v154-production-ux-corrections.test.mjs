@@ -105,9 +105,12 @@ test('V154 Staff Members is a visible operations setup destination reusing setti
 });
 
 test('V154 Programmes replaces Grow label and categorises programme rows', () => {
-  assert.match(nav, /label:'Programmes'/);
+  /* V250: the owner made Programmes ONE flat nav link, so the group declares `flat` rather
+     than `label`, and the old "Available programmes" sub-row is gone. The naming this test
+     protects — that the module is called Programmes, not Grow — is unchanged. */
+  assert.match(nav, /flat:'Programmes'/);
+  assert.doesNotMatch(nav, /label:'Programmes'/);
   assert.match(app, /Ongoing programmes/);
-  assert.match(app, /Available programmes/);
   assert.match(grow, /<h1 id="growTitle">Programmes<\/h1>/);
   /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two
      categories: Point system holds everything earned and spent in points, Other rewards

@@ -141,19 +141,25 @@ test('public legal surfaces use the supplied company identity and business mailb
 });
 
 test('V144/V162 publish the exact current Peekaa legal digests without rewriting acceptance history', async () => {
-  const [v144, v162, terms, privacy] = await Promise.all([
+  // Retargeted: the privacy digest is asserted against whichever migration LAST published it,
+  // not against v144 forever. The 2026-08-09 owner ruling (partners may receive customer contact
+  // details for marketing) made section 5 of app/privacy.html false, so v265 corrected the notice
+  // and published 2026-08-10 / 960434af79... as the active document. v144 still carries the
+  // 2026-08-03 bytes it published, which is correct and must not be rewritten.
+  const [v144, v162, v264, terms, privacy] = await Promise.all([
     read('supabase/migrations/20260803120000_nestly_v144_self_serve_subscription_consent.sql'),
     read('supabase/migrations/20260804170000_nestly_v162_stripe_launch_price_148.sql'),
+    read('db/migrations/20260810_nestly_v265_marketing_consent_scope.sql'),
     read('app/terms.html'),
     read('app/privacy.html'),
   ]);
   const termsDigest = createHash('sha256').update(terms).digest('hex');
   const privacyDigest = createHash('sha256').update(privacy).digest('hex');
   assert.match(v162, new RegExp(termsDigest));
-  assert.match(v144, new RegExp(privacyDigest));
+  assert.match(v264, new RegExp(privacyDigest));
   assert.match(v162, /2026-08-04/);
   assert.match(v162, /alter column legal_document_version set default '2026-08-04'/);
-  for (const sql of [v144, v162]) {
+  for (const sql of [v144, v162, v264]) {
     assert.doesNotMatch(sql, /(?:delete from|truncate)\s+(?:app\.)?customer_legal_documents/i);
     assert.doesNotMatch(sql, /(?:insert into|update|delete from|truncate)\s+public\.customer_legal_acceptances/i);
   }

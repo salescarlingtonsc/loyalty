@@ -117,10 +117,14 @@ test('owner cards route by stable ID to the exact reward and birthday editors',(
 
   const grow=section('async function growPage(','/* ---------- Bring-back playbooks');
   assert.match(grow,/Rewards overview/);
-  assert.match(grow,/data-rewards-overview-edit="catalogue"/);
-  assert.match(grow,/data-reward-id="\$\{esc\(milestone\.id\)\}"/);
+  /* V250 turned the reward rows into the card grid the owner drew. The routing contract this
+     test exists for is deliberately identical — same attribute, same stable id — it is just
+     emitted once by rewardCardHtmlV250 instead of at each row. */
+  assert.match(grow,/data-rewards-overview-edit="\$\{esc\(editKind\)\}"/);
+  assert.match(grow,/editKind:'catalogue',rewardId:milestone\.id/);
+  assert.match(grow,/data-reward-id="\$\{esc\(rewardId\)\}"/);
   assert.match(grow,/data-rewards-overview-edit="birthday"/);
-  assert.match(grow,/data-rewards-overview-edit="classic"/);
+  assert.match(grow,/editKind:'classic'/);  // V250: emitted through the same card attribute
   assert.match(grow,/pendingGuideAction=action/,
     'clicking from a published overview must prepare a protected draft before editing');
   assert.match(grow,/\.rwEdit\[data-reward-id=/,

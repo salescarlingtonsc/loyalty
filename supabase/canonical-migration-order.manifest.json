@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 210,
-  "itemCount": 255,
+  "pendingCount": 224,
+  "itemCount": 269,
   "items": [
     {
       "order": 1,
@@ -2557,6 +2557,146 @@
       "path": "supabase/migrations/20260808160000_nestly_v244_crm_ai_report_flag_matches_v176.sql",
       "octetLength": 6192,
       "sha256": "83aa7b1d4cefa945d4f36d6122b22386194fc99bb36fb15a167e1b5c63e41afd",
+      "provenance": "local-source"
+    },
+    {
+      "order": 256,
+      "kind": "pending",
+      "version": "20260808200000",
+      "name": "nestly_v244_retention_audience_server_side",
+      "path": "supabase/migrations/20260808200000_nestly_v244_retention_audience_server_side.sql",
+      "octetLength": 8651,
+      "sha256": "2dae5ee2fccca8c466fee29593ecea62ccba27938e479b633176534f503ae6e1",
+      "provenance": "local-source"
+    },
+    {
+      "order": 257,
+      "kind": "pending",
+      "version": "20260808210000",
+      "name": "nestly_v245_customer_explore_search",
+      "path": "supabase/migrations/20260808210000_nestly_v245_customer_explore_search.sql",
+      "octetLength": 6434,
+      "sha256": "c01fe14454acdb54de54a1fc10510f86cbe87ef47fd3bfdfa664c01563ca4a5c",
+      "provenance": "local-source"
+    },
+    {
+      "order": 258,
+      "kind": "pending",
+      "version": "20260808220000",
+      "name": "nestly_v246_personas_direct_resolver",
+      "path": "supabase/migrations/20260808220000_nestly_v246_personas_direct_resolver.sql",
+      "octetLength": 12213,
+      "sha256": "5ef74478c87c1444c36b743b67c928b390a1e8b25957998ad3087ffe396545dc",
+      "provenance": "local-source"
+    },
+    {
+      "order": 259,
+      "kind": "pending",
+      "version": "20260808230000",
+      "name": "nestly_v247_explore_nearest_first",
+      "path": "supabase/migrations/20260808230000_nestly_v247_explore_nearest_first.sql",
+      "octetLength": 9557,
+      "sha256": "72088c321f4097e506503cd2af0a1cf48431d9def9ecea35dbd617a327260d59",
+      "provenance": "local-source"
+    },
+    {
+      "order": 260,
+      "kind": "pending",
+      "version": "20260808235000",
+      "name": "nestly_v248_customer_directory_reports_loyalty_availability",
+      "path": "supabase/migrations/20260808235000_nestly_v248_customer_directory_reports_loyalty_availability.sql",
+      "octetLength": 3469,
+      "sha256": "2183ef54d74e61cffb6203dfcf8f0e565cb7672fee7d0b711d4c4013bb4787e1",
+      "provenance": "local-source"
+    },
+    {
+      "order": 261,
+      "kind": "pending",
+      "version": "20260809000100",
+      "name": "nestly_v255_marketing_send_records_and_taxonomy",
+      "path": "supabase/migrations/20260809000100_nestly_v255_marketing_send_records_and_taxonomy.sql",
+      "octetLength": 25697,
+      "sha256": "390d1dd6d884044a9acd939720030d4048a6dcc588e82055c188650928910f33",
+      "provenance": "local-source"
+    },
+    {
+      "order": 262,
+      "kind": "pending",
+      "version": "20260809000200",
+      "name": "nestly_v255a_client_interaction_batch",
+      "path": "supabase/migrations/20260809000200_nestly_v255a_client_interaction_batch.sql",
+      "octetLength": 4325,
+      "sha256": "8aa56751b6734c9d31b2fe52c71f83322d862b687bbf60ec0c8119fed66b5fbe",
+      "provenance": "local-source"
+    },
+    {
+      "order": 263,
+      "kind": "pending",
+      "version": "20260809000300",
+      "name": "nestly_v255b_platform_marketing_reads",
+      "path": "supabase/migrations/20260809000300_nestly_v255b_platform_marketing_reads.sql",
+      "octetLength": 24058,
+      "sha256": "04e51c161a439ac96c2f1cef1e2bbe144035b095f4d6baf823f711e1a6e52d39",
+      "provenance": "local-source"
+    },
+    {
+      "order": 264,
+      "kind": "pending",
+      "version": "20260809000400",
+      "name": "nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable",
+      "path": "supabase/migrations/20260809000400_nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable.sql",
+      "octetLength": 2846,
+      "sha256": "8ed850da0755da023e11f36ddaaff012ff72e888c19af39028e994aaf1ad7dac",
+      "provenance": "local-source"
+    },
+    {
+      "order": 265,
+      "kind": "pending",
+      "version": "20260809000500",
+      "name": "nestly_v257_bundle_finalise_rehash",
+      "path": "supabase/migrations/20260809000500_nestly_v257_bundle_finalise_rehash.sql",
+      "octetLength": 9902,
+      "sha256": "cda98488d625eeedd96b258b4cf2a430cd9f3db755310c6f07c07c1f0c3991a5",
+      "provenance": "local-source"
+    },
+    {
+      "order": 266,
+      "kind": "pending",
+      "version": "20260809000600",
+      "name": "nestly_v258_recommended_draft_inherits_live_status",
+      "path": "supabase/migrations/20260809000600_nestly_v258_recommended_draft_inherits_live_status.sql",
+      "octetLength": 11568,
+      "sha256": "c7e18749bf7ab015366d9996d837812588f14e22127ed82d087cb61d12abdbf4",
+      "provenance": "local-source"
+    },
+    {
+      "order": 267,
+      "kind": "pending",
+      "version": "20260809000700",
+      "name": "nestly_v263_customer_communication_preferences",
+      "path": "supabase/migrations/20260809000700_nestly_v263_customer_communication_preferences.sql",
+      "octetLength": 29129,
+      "sha256": "7840e148f893b6ce1c30646afcef85b9bb6a4bf0e7fffc00e94df83f23debc6e",
+      "provenance": "local-source"
+    },
+    {
+      "order": 268,
+      "kind": "pending",
+      "version": "20260809000800",
+      "name": "nestly_v264_promotion_share_event",
+      "path": "supabase/migrations/20260809000800_nestly_v264_promotion_share_event.sql",
+      "octetLength": 1830,
+      "sha256": "ebab0e029b0482b70c675afba6382b43acb212b995fb17793d6fe1bb3eeb0fce",
+      "provenance": "local-source"
+    },
+    {
+      "order": 269,
+      "kind": "pending",
+      "version": "20260810000100",
+      "name": "nestly_v265_marketing_consent_scope",
+      "path": "supabase/migrations/20260810000100_nestly_v265_marketing_consent_scope.sql",
+      "octetLength": 10187,
+      "sha256": "e267cdd4cf9cfecc4ab272a96d4e69357dcaa407bfa0ba9fa4d85f9f70307cfa",
       "provenance": "local-source"
     }
   ]

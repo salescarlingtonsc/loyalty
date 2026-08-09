@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="b25f1d7f0b7ab1c7c2e96a4599bebab055338cb1fc9c585e109c8f99e908acce"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="11a7802c5bea35ba70ea2523cae1bb6825588b66c6fad9875d07334317be5b78"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -234,6 +234,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
 .dashboard-schedule-chip.more a{color:var(--coral);font-weight:700;display:inline-flex;align-items:center;min-height:34px}
 .dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
+/* V252: the removed subtitle promoted the eyebrow to the card heading, and the new day tabs
+   plus date picker sit between the heading row and the chips. */
+.dashboard-schedule-controls-v252{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 10px}
+.dashboard-schedule-tabs-v252{display:flex;gap:6px}
+.dashboard-schedule-controls-v252 input[type="date"]{max-width:190px}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
@@ -277,6 +282,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .appointment-list-filters>div>input,
 .appointment-list-filters>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
+/* V251 (owner: From/To date boxes in the appointments List filter bar are too wide). The grid
+   column can grow past 170px via 1fr; cap the input itself so it does not stretch to fill it. */
+.appt-date-narrow-v251{max-width:170px;width:100%}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
 /* V180: the filter labels used to sit at different heights. Cause was the global
@@ -942,18 +950,35 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    is a good result and must not render as an alarm. */
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
-.staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
+.staff-row-line{display:flex;flex-direction:column;align-items:stretch;gap:6px}
 /* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
    The row was a flex wrap, so a field landed at a different x-position on every line and could
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
 :root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
-.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
+/* V260 (owner: Owner & managers vs Roster only tables had different column widths, and the
+   App-access/module pills collided with POSITION/COMMISSION text). Root cause: .staff-row-open
+   used to flex-grow to fill whatever space its sibling pills+buttons left over, and that
+   leftover varied per row (an owner row has one status line; a roster row has two pills plus
+   three buttons) — so the SAME grid template rendered at a different pixel width per row,
+   drifting the columns and squeezing the last cells into the pills next to them. Giving the
+   name/phone/email/position/commission grid its own full-width row, with the pills and action
+   buttons on a second row underneath, makes .staff-row-open always render at the row's full
+   width — identical to the header's — regardless of how many badges or buttons a given
+   teammate has, and removes the possibility of the two ever touching. */
+.staff-row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px}
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
+/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious. */
+.grow-topic-group-v244{margin-top:20px}
+.grow-topic-group-head-v244 h3{font-size:1.02rem;font-weight:750}
+.grow-topic-group-head-v244 p{margin-top:3px}
+.grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
+.grow-topic-tile-pending-v244{border-style:dashed}
 .grow-topic-tile-v229{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
 .grow-topic-tile-v229:hover{background:var(--tint);border-color:var(--coral)}
 .grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em}
@@ -968,6 +993,22 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .points-mode-card-v229:disabled{opacity:.6;cursor:default}
 .points-mode-chosen-v229{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
 .points-mode-row-v229{cursor:default;flex-wrap:wrap}
+/* V250 (owner drew reward boxes with a "+" over the numbered reward rows). Cards reuse the
+   existing pill and surface tokens — no new colours — and the grid is minmax(150px,1fr) so two
+   still sit side by side at 390px. The add card is the same box in a dashed outline. */
+.reward-card-grid-v250{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:14px}
+.reward-card-v250{appearance:none;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-width:0;min-height:118px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font:inherit}
+button.reward-card-v250{cursor:pointer;transition:background .16s ease,border-color .16s ease}
+button.reward-card-v250:hover{background:var(--tint);border-color:var(--coral)}
+button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outline-offset:2px}
+.reward-card-name-v250{font-size:.98rem;line-height:1.25;overflow-wrap:anywhere}
+.reward-card-cost-v250{font-size:.86rem;color:var(--muted);overflow-wrap:anywhere}
+.reward-card-open-v250{margin-top:auto;color:var(--coral);font-size:12px;font-weight:750}
+.reward-card-add-v250{border-style:dashed;align-items:center;justify-content:center;text-align:center;gap:4px}
+.reward-card-plus-v250{font-size:1.6rem;line-height:1;color:var(--coral);font-weight:750}
+.reward-card-v250[hidden]{display:none!important}
+.reward-card-empty-v250{padding:0 14px 14px}
+.reward-card-templates-v250{margin:0;padding:0 14px 14px}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1063,6 +1104,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .report-decision-card .task-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--coral);position:relative;z-index:1}
 .report-decision-card b{margin-top:13px;font-size:16px;position:relative;z-index:1}.report-decision-card>span:not(.task-icon):not(.report-card-visual){margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4;position:relative;z-index:1}
 .report-card-visual{display:flex;gap:5px;margin-top:auto;padding-top:14px;position:relative;z-index:1}.report-card-visual i{display:block;width:24px;height:8px;border-radius:999px;background:rgba(202,62,50,.22)}.report-card-visual i:nth-child(2){width:34px;background:rgba(202,62,50,.38)}.report-card-visual i:nth-child(3){width:18px;background:rgba(202,62,50,.16)}
+/* V260: three "…answer" collapsibles folded into their matching decision card — the card
+   itself is now a <details>, its clickable face a <summary> laid out exactly like the old
+   button face (icon/title/body/dots), with the marker triangle suppressed and the answer
+   body appearing below once expanded. */
+details.report-decision-card{overflow:visible}
+details.report-decision-card>summary{display:flex;flex-direction:column;align-items:flex-start;width:100%;cursor:pointer;list-style:none}
+details.report-decision-card>summary::-webkit-details-marker{display:none}
+details.report-decision-card>summary::marker{content:''}
+details.report-decision-card[open]{align-items:stretch;grid-column:1/-1}
+details.report-decision-card[open]>summary{margin-bottom:14px}
+details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .schedule-suggestion{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
 .schedule-suggestion h3{font-size:14px}.schedule-suggestion-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 .calendar-week-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;max-height:70vh}
@@ -1114,6 +1166,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-more-menu button{display:block;text-align:left;width:100%;background:none;border:0;border-radius:8px;padding:9px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;min-height:44px}
 .c360-more-menu button:hover,.c360-more-menu button:focus-visible{background:#FBF7F3}
 .c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
+.customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
+.customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
+.customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
+.customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
+.customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
+.customer360-points-panel-v249 input{max-width:100%}
+@media(max-width:560px){.customer360-kpis-v249{grid-template-columns:minmax(0,1fr)}}
 .c360-flash{animation:c360flash 1.3s var(--ease)}
 @keyframes c360flash{0%{box-shadow:0 0 0 0 rgba(194,65,53,.35)}100%{box-shadow:0 0 0 10px rgba(194,65,53,0)}}
 .c360-timeline{display:grid;gap:0;margin-top:8px;list-style:none;padding:0}
@@ -1133,6 +1192,15 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-tl-side{text-align:right;white-space:nowrap}
 .c360-tl-amt{font-weight:680;font-variant-numeric:tabular-nums;font-size:13.5px}
 .c360-tl-when{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;margin-top:3px}
+/* V252: Activity history is a table. The pictogram tile and the timestamp style are reused from
+   the list it replaces so the row still reads at a glance; notes stack under the ITEM cell. */
+.c360-activity-table-v252 td{vertical-align:top}
+.c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
+.c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
+.c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+.c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
+.c360-act-note-v252 .btn{margin-top:3px}
+.c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
@@ -1274,10 +1342,15 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
 .customer-shell .wallet-inner{width:min(1040px,100%)}
 .customer-shell .wallet-head{min-height:48px}
-.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;
+.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:1fr 1fr auto 1fr;gap:6px;
   margin:0 0 24px;padding:6px;border:1px solid var(--hair);border-radius:16px;background:rgba(255,255,255,.88);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:var(--shadow)}
-.customer-primary-nav a,.customer-primary-nav button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
+/* v244 · the raised centre Scan control (owner's Grab-style reference) */
+.customer-nav-scan{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:74px;border:0;background:none;color:var(--ink2);font-size:11px;font-weight:650;cursor:pointer}
+.customer-nav-scan-fab{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(194,65,53,.35)}
+.customer-nav-scan:hover .customer-nav-scan-fab{filter:brightness(1.06)}
+.customer-nav-scan:active .customer-nav-scan-fab{transform:scale(.96)}
+.customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
   color:var(--ink2);font-size:12.5px;font-weight:650;text-align:center;transition:background .14s var(--ease),color .14s var(--ease),transform .18s var(--spring)}
 .customer-primary-nav button{font-family:inherit;background:transparent;cursor:pointer}
 .customer-primary-nav a:hover,.customer-primary-nav button:hover{background:#F2EFEA;color:var(--ink);transform:translateY(-1px)}
@@ -1447,7 +1520,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-tier-remaining{margin-top:2px}
 .customer-tier-ladder{margin-top:14px;border-top:1px solid var(--hair);padding-top:12px}
 .customer-tier-ladder>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;cursor:pointer;font-weight:650;list-style-position:inside}
-.customer-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:700;line-height:1}
+/* v247 (owner: "the rewards showing (2) - it should be at top right (not below)"): the count is
+   a corner badge on its own tab, the way every app marks a tab with something waiting. In the
+   flow it pushed the label down and made that tab taller than its neighbours. */
+.customer-nav-count{position:absolute;top:4px;right:8px;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--coral);color:#fff;font-size:10.5px;font-weight:700;line-height:1}
 .customer-primary-nav a[aria-current="page"] .customer-nav-count{background:var(--coral)}
 @media(max-width:560px){.customer-programme-identity-hint{display:none}.customer-tier-milestone b{font-size:9.5px}}
 .customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
@@ -1472,7 +1548,39 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
-.customer-directory-v242{margin-top:22px}.customer-directory-head{margin-bottom:10px}.customer-directory-head h2{font-size:1.25rem}.customer-directory-head p{margin-top:4px}.customer-directory-list{display:grid;gap:10px}.customer-directory-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 14px}.customer-directory-copy{min-width:0;flex:1 1 auto}.customer-directory-copy h3{font-size:1rem;overflow-wrap:anywhere}.customer-directory-copy p{margin-top:3px;overflow-wrap:anywhere}.customer-directory-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;min-width:0}.customer-directory-points{white-space:nowrap}.customer-directory-row--locked{opacity:.72;box-shadow:none}.customer-directory-note{margin-top:10px}.customer-directory-state{min-height:64px;padding:16px}@media(max-width:400px){.customer-directory-side{flex-direction:row;align-items:center;flex-wrap:wrap;justify-content:flex-start;text-align:left;width:100%}}
+/* v244 · Explore — the ecosystem search behind its own tab */
+/* v264 · sharing a promotion */
+.customer-share-button{flex:none}
+.customer-share-modal .modal-card{width:min(420px,94vw)}
+.customer-share-sheet h2{font-size:1.1rem}
+.customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
+.customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
+.customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
+.customer-share-channel svg{color:var(--coral)}
+.customer-share-copy{width:100%}
+.customer-share-note{margin-top:12px;text-align:center}
+.customer-explore-search{display:flex;align-items:center;gap:10px;padding:0 14px;margin:0 0 14px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
+.customer-explore-search input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--ink);font:inherit}
+.customer-explore-search input:focus{outline:none}
+.customer-explore-search:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-explore-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.customer-explore-tools .btn.is-on{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.customer-explore-order{display:flex;align-items:center;gap:6px;margin:0 0 10px}
+.customer-explore-distance{display:inline-block;margin-right:6px;color:var(--coral);font-weight:700}
+.customer-explore-list{display:grid;gap:10px}
+.customer-explore-row{display:flex;align-items:center;gap:12px;padding:14px;color:inherit;text-decoration:none}
+.customer-explore-row--locked{opacity:.88}
+.customer-explore-logo{flex:none;width:46px;height:46px;border-radius:14px;object-fit:cover;background:var(--tint)}
+.customer-explore-logo--fallback{display:flex;align-items:center;justify-content:center;color:var(--coral);font-weight:700;font-size:1.1rem}
+.customer-explore-copy{flex:1;min-width:0}
+.customer-explore-copy h3{font-size:1.02rem;overflow-wrap:anywhere}
+.customer-explore-match{margin-top:2px;color:var(--green);font-weight:600}
+.customer-explore-address{margin-top:2px;overflow-wrap:anywhere}
+.customer-explore-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right;max-width:132px}
+.customer-explore-side b{font-size:1.05rem}
+.customer-explore-join-hint{font-size:.72rem;line-height:1.3}
+.customer-explore-state{padding:18px;text-align:center}
+.customer-explore-note{margin-top:12px;text-align:center}
 /* v192 (owner: "the promotion content occupies more than a screen — i need it to be smaller").
    The artwork is still never cropped and never painted over: object-fit:contain only SCALES it,
    so an EDM with its words baked in stays whole — just smaller in the list. Full size is one tap
@@ -1600,7 +1708,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:720px){
   .customer-shell{padding-bottom:calc(104px + env(safe-area-inset-bottom))}.customer-shell .wallet-head{align-items:center;flex-wrap:nowrap}
   .customer-primary-nav{position:fixed;top:auto;bottom:max(8px,env(safe-area-inset-bottom));left:10px;right:10px;z-index:70;margin:0;padding:5px;gap:2px;border-radius:17px}
-  .customer-primary-nav a,.customer-primary-nav button{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
+  .customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
+  .customer-nav-scan{min-width:64px;margin-top:-18px}
+  .customer-nav-scan-fab{width:54px;height:54px;border:4px solid var(--bg)}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
   .customer-home-summary .customer-home-quick{grid-template-columns:1fr}.customer-home-summary-body{max-height:30dvh}
@@ -1713,7 +1823,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b25f1d7f0b7ab1c7c2e96a4599bebab055338cb1fc9c585e109c8f99e908acce</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 11a7802c5bea35ba70ea2523cae1bb6825588b66c6fad9875d07334317be5b78</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -1750,14 +1860,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     function growBackActionHtmlV138(){
   return '<a class="btn ghost sm" href="#/grow" aria-label="Back to Grow overview">← Back to Grow overview</a>';
 }
-/* Loyalty + retention render as ONE sidebar link (owner directive 2026-07-23: keep both
-   engines separate underneath, merge the experience into a single "Grow" surface — see
-   growPage()). This only changes what the link looks like; NAVGROUPS.grow.items still lists
-   both real module keys so the access filter above (business-enabled + this staff member's
-   modules) keeps gating each of them exactly as before — a teammate with only one of the two
-   still only ever sees that one module key pass the filter, so hasRewards/hasWinback below
-   can never both be false while this renders. Links to whichever tab is already open if the
-   staff member is already on the Grow surface, else defaults to Everyday rewards. */
     function loyaltyAuthorityActionV140({canManage=false,draftVersionId=null}={}){
   if(!canManage)return '<span class="pill off">Read only</span>';
   if(draftVersionId)return '<span class="pill new">Editable draft</span>';
@@ -1941,8 +2043,8 @@ function pruneRewardSiblingsV139(root){
   const displayReward=(r)=>r.fulfillment_kind==='credit'?money(r.credit_cents||0)
     :r.fulfillment_kind==='discount_pct'?`${r.discount_percent||0}% off`:esc(r.manual_item||'manual item');
   const versionTools=isOwner?`<div class="card" style="margin-bottom:16px">
-    <div class="row"><div><b>${draftVersionId?'Draft configuration':'Published configuration'}</b>
-      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':currentVersion?'Create a draft before changing retention behavior.':'Publish your loyalty foundation first; retention rules share the same versioned configuration.'}</div></div><span class="spacer"></span>
+    <div class="row"><div><b>${draftVersionId?'Draft — not visible to customers':'Published configuration'}</b>
+      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':currentVersion?'Create a draft before changing retention behavior.':'Publish your loyalty foundation first; retention rules are part of the same programme.'}</div></div><span class="spacer"></span>
       ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Review &amp; publish</button>`
         :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
           :'<a class="btn" href="#/loyalty">Set up loyalty first</a>'}</div>
@@ -1950,7 +2052,7 @@ function pruneRewardSiblingsV139(root){
       <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Versioned return-visit rules with immutable reward behavior and grant history.',iconName:'retention',actions:growBackActionHtmlV138(),canWrite:isOwner,moduleLabel:'Retention configuration'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Return-visit rules customers actually experience, with reward behavior and grant history intact.',iconName:'retention',actions:growBackActionHtmlV138(),canWrite:isOwner,moduleLabel:'Retention configuration'})}
     ${draftVersionId?'':'<section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
     ${versionTools}
     ${exactProgramMissing?`<div class="notice warn" id="retentionExactProgramMissing" role="alert" tabindex="-1" style="margin-bottom:16px"><b>This Bring-back rule is not present in the editable draft.</b><p class="small" style="margin-top:5px">Return to the programme overview and refresh before changing another rule.</p></div>`:''}
@@ -2280,7 +2382,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const canSetupGrow=isOwner&&canRewards&&canWriteModule('loyalty');
   const canSetupWinback=isOwner&&canWinback&&canWriteModule('retention');
   const canEditProductCosts=isOwner&&canRewards&&canWriteModule('loyalty');
-  recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
+  typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
   outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
@@ -2315,16 +2417,6 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
     ?rewardJourney.earning.label
     :`Paused — customers earn nothing and no reward below is claimable. Open Edit to turn it on. Configured as ${rewardJourney.earning?.label||'no earning rule'}`;
-  const milestoneOverviewCopy=(milestone,index)=>{
-    const cost=milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:'';
-    if(milestone.availableToCustomers)return `Reach ${milestone.threshold} ${milestone.unit}${index?` · ${milestone.additional} more after the previous reward`:''}${cost}`;
-    const state=milestone.availability==='programme_paused'?'Programme paused'
-      :milestone.availability==='not_started'?'Scheduled · not available yet'
-      :milestone.availability==='ended'?'Claim period ended'
-      :milestone.availability==='not_current_model'?'Not used by the current Simple points programme'
-      :'Programme not configured';
-    return `${state} · configured at ${milestone.threshold} ${milestone.unit}${cost}`;
-  };
   const rewardsOverviewIncomplete=Object.values(snapshot.overviewErrors||{}).some(Boolean);
   const growAsOfDate=Number.isFinite(Date.parse(snapshot.asOf||''))
     ?sgDateInputValue(new Date(snapshot.asOf)):sgDateInputValue();
@@ -2447,14 +2539,14 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     {key:'points',icon:'till',title:'Points redemption',blurb:'Earning, and the rewards points are spent on.',
       status:loyaltyModelTileStatusV235('redeem'),
       summary:!liveLoyaltyModelKeysV240.includes('redeem')?otherModelLiveV235()
-        :rewardCount?`Live model · ${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`
+        :rewardCount?`${rewardCount} redeemable reward${rewardCount===1?'':'s'}`
         :'Live model · set the earning rate and rewards'},
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
       status:loyaltyModelTileStatusV235('tiers'),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?otherModelLiveV235()
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
-        :loyaltyTiersV229.length?`Live model · ${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
+        :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Live model · create the ladder customers climb'},
     {key:'stamps',icon:'check',title:'Stamp card',blurb:'Collect a stamp per spend, claim at each milestone.',
       status:loyaltyModelTileStatusV235('stamps'),
@@ -2481,9 +2573,38 @@ async function openWelcomeOfferEditorV215(current,onSaved){
      drills into the same rows, so nothing is duplicated and no tile is a dead end. */
   const growTopicSectionV235=growActiveTopicV229?.key==='stamps'?'points':(growActiveTopicV229?.key||null);
   const topicOnV229=key=>growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229;
-  const growTilesHtmlV229=growTopicDefsV229.map(topic=>`<button type="button" class="grow-topic-tile-v229" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">View →</span></button>`).join('');
+  /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
+     for those (non) ongoing program - so business can easily set up"). Same tile, split into
+     what is reaching customers now and what still needs the owner. 'on' is the one tone that
+     means live; everything else is work outstanding, and its call to action says which kind of
+     work — finishing a draft is not the same job as starting from nothing. */
+  const growTopicOngoingV244=topic=>topic.status[1]==='on';
+  const growTopicActionV244=topic=>{
+    if(growTopicOngoingV244(topic))return 'View →';
+    const label=String(topic.status[0]||'');
+    if(label==='Draft')return 'Finish setup →';
+    if(label==='Paused')return 'Resume →';
+    if(label==='Not included')return 'See plan →';
+    if(label==='Off')return 'Switch to this →';
+    return 'Set up →';
+  };
+  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
+  const growOngoingTopicsV244=growTopicDefsV229.filter(growTopicOngoingV244);
+  const growPendingTopicsV244=growTopicDefsV229.filter(topic=>!growTopicOngoingV244(topic));
+  const growTileSectionV244=(title,note,topics,empty)=>`<div class="grow-topic-group-v244">
+    <div class="grow-topic-group-head-v244"><h3>${esc(title)}${topics.length?` <span class="muted small">(${topics.length})</span>`:''}</h3><p class="muted small">${esc(note)}</p></div>
+    ${topics.length?`<div class="grow-topic-tiles-v229">${topics.map(growTileHtmlV244).join('')}</div>`
+      :`<p class="muted small grow-topic-group-empty-v244">${esc(empty)}</p>`}</div>`;
+  const growTilesHtmlV229=`${growTileSectionV244('Ongoing programmes','Running now — customers can see and use these.',growOngoingTopicsV244,'Nothing is reaching customers yet. Set one up below.')}
+    ${growTileSectionV244('Pending setup','Not running yet. Open one to set it up.',growPendingTopicsV244,'Every programme is running.')}`;
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
-  const growPointsModeChooserV229=(()=>{
+  /* V250 (owner crossed out the "● Live: Points redemption / ● Live: Tiered membership /
+     Stamp card" chip column on the Points redemption page). Which model is live is already the
+     answer to the tile the owner pressed to get here, so on that page the chips only restated
+     the heading; they still earn their place on the Tiered membership page, where the reader is
+     choosing between models. "Change model" is untouched — it is the only way to switch, so
+     removing it would have removed the capability rather than the clutter. */
+  const growPointsModeChooserV229=({showLiveModelsV250=true}={})=>{
     if(!canRewards)return '';
     const locked=!canSetupGrow;
     if(!pointsModeV229)return `<div class="points-mode-chooser-v229" role="group" aria-label="How customers use points">
@@ -2496,8 +2617,45 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     /* V235 (owner: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as
        two half-truths). All three models are named, exactly one carries the Live mark, and the
        change itself happens in one place — the editor's segmented toggle. */
-    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span>${locked?'':editorAction('rewards','Change model','lm')}</div>`;
-  })();
+    return `<div class="points-mode-chosen-v229">${showLiveModelsV250?`<span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span>`:''}${locked?'':editorAction('rewards','Change model','lm')}</div>`;
+  };
+  /* V250 (owner drew reward boxes over this list — "Free Facial / 5 points", "Free Moisturiser /
+     150 points", "Free xxx / xx points", plus a "+" — and crossed out the numbered rows, the
+     "Add another reward" row and the "Start from a template" row). A reward is the thing a
+     customer picks, so it reads as a card carrying its name and its price in points, not as a
+     line in a settings list. Every card keeps its own status pill: a paused, scheduled or ended
+     reward rendered identically to a live one is the single way this shape could lie to the
+     owner about what customers can actually claim. The cards carry the SAME
+     data-rewards-overview-edit contract the rows carried, so there is one edit path, not two,
+     and the dashed "+" card fires the identical 'add' action the struck row fired. Templates
+     were the only door into rewardTemplatesForSectorV172, so that flow survives as a secondary
+     link under the grid — the row went, the capability did not. */
+  const rewardCardStatusV250=milestone=>milestone.availableToCustomers?['Live','on']
+    :milestone.availability==='not_started'?['Scheduled','off']
+    :milestone.availability==='ended'?['Ended','off']:['Paused','off'];
+  const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId})=>{
+    const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>`;
+    return canSetupGrow
+      ?`<button type="button" class="reward-card-v250" data-programme-kind="redeemable" data-rewards-overview-edit="${esc(editKind)}"${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="reward-card-open-v250">Edit →</span></button>`
+      :`<article class="reward-card-v250" data-programme-kind="redeemable"${editKind==='catalogue'?' data-reward-milestone':''}${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="grow-programme-access">Read only</span></article>`;
+  };
+  const rewardCardsV250=[
+    ...(rewardJourney.classicReward?[{name:rewardJourney.classicReward.name,cost:rewardJourney.classicReward.threshold,unit:rewardJourney.classicReward.unit,
+      status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
+    ...rewardJourney.milestones.map(milestone=>{
+      const [status,tone]=rewardCardStatusV250(milestone);
+      return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id};
+    }),
+    ...rewardJourney.archivedRewards.map(reward=>({name:reward.name,cost:reward.threshold,unit:reward.unit,
+      status:'Paused',tone:'off',editKind:'catalogue',rewardId:reward.id}))
+  ];
+  const rewardCardGridV250=`<div class="reward-card-grid-v250" data-reward-card-grid-v250>
+      ${rewardCardsV250.map(rewardCardHtmlV250).join('')}
+      ${canSetupGrow?`<button type="button" class="reward-card-v250 reward-card-add-v250" data-programme-kind="redeemable" data-rewards-overview-edit="add"><span class="reward-card-plus-v250" aria-hidden="true">+</span><b class="reward-card-name-v250">Add reward</b></button>`:''}
+    </div>
+    ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}
+    ${canSetupGrow?`<p class="reward-card-templates-v250"><button type="button" class="btn ghost sm" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel">${CUI.icon('star',{size:16})}<span>Start from a template</span></button></p>
+    <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}`;
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -2506,10 +2664,10 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
-      ${growTilesModeV229?`<div class="grow-topic-tiles-v229">${growTilesHtmlV229}</div>`:''}
+      ${growTilesModeV229?growTilesHtmlV229:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
            rewards, Add another reward and Start from a template onto the Point system row).
@@ -2518,28 +2676,19 @@ async function openWelcomeOfferEditorV215(current,onSaved){
            points balance — the welcome offer for a first visit, a birthday benefit, a
            bring-back for someone who has drifted — are their own group. -->
       <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
-        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>`:''}
+        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229({showLiveModelsV250:false})}</div>`:''}
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
           <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
-        ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
-          <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
-        ${snapshot.overviewErrors?.rewards?'':rewardJourney.milestones.map((milestone,index)=>canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="catalogue" data-reward-id="${esc(milestone.id)}">
-          <span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div><span class="grow-programme-meta">${programmeStatus(milestone.availableToCustomers?'Live':milestone.availability==='not_started'?'Scheduled':milestone.availability==='ended'?'Ended':'Paused',milestone.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="redeemable" data-reward-milestone><span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div><span class="grow-programme-meta">${programmeStatus(milestone.availableToCustomers?'Live':milestone.availability==='not_started'?'Scheduled':milestone.availability==='ended'?'Ended':'Paused',milestone.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`).join('')}
-        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
-        ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
-        <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
-        ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
+        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardCardGridV250}
         `}
       </div></div>
       `:''}
       ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
-        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>
+        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
           :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
@@ -2625,7 +2774,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     let visibleCategories=0;
     outerMain.querySelectorAll('.programme-category').forEach(category=>{
       let visible=0;
-      category.querySelectorAll('.grow-programme-row').forEach(row=>{
+      category.querySelectorAll('.grow-programme-row,.reward-card-v250').forEach(row=>{
         /* V180: this used to match the badge TEXT for "live". Renaming the badge to "Ongoing"
            would have silently emptied the Running view — the filter would have found no row
            whose pill said "live" and hidden everything. The tone class is the actual status
@@ -2962,7 +3111,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       busy=true;rewardAutoConfirm.disabled=true;rewardAutoConfirm.textContent='Creating draft…';
       status.textContent='Preparing one editable draft. Nothing is being published.';
       rewardAutoSetupRequestKey??=crypto.randomUUID();
-      recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
+      typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
         context:{action_key:'automatic_rewards_setup',entry_point:'grow_overview',locale:workspaceLocale,surface_version:'v128'}
       });
       try{
@@ -3022,23 +3171,44 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     const askV240={
       tiers:'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.',
       redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
-      both:'Run points and tiers together? Tiers will count visits instead of points, so points stay free to spend.'};
+      both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis set in the editor.'};
     if(S.biz.points_mode&&!confirm(askV240[next]))return;
     button.disabled=true;
     const {error}=await sb.from('businesses').update({points_mode:next}).eq('id',S.biz.id);
     if(error){
       button.disabled=false;
-      /* V240: the server refuses 'both' beside a points-measured ladder. Say the fix. */
-      if(error.code==='23514'||/measure its tiers in points/i.test(error.message||''))
-        return toast('Set the tier to count visits or spend first — points cannot both be spent and decide the tier.');
+      /* V258: V256 dropped the trigger that raised 23514 here, so the special-case branch was
+         unreachable and was removed. */
       return fail(error);
     }
     S.biz.points_mode=next;
     toast(next==='tiers'?'Points now build tier membership'
-      :next==='both'?'Points buy rewards and visits build tiers'
+      :next==='both'?'Points buy rewards, and tiers run alongside them'
       :'Points are now redeemed for rewards');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
+  /* V258 (owner item 7: "why does edit require draft then edit? it causes additional steps and
+     more bugs"). The versioning is kept — every edit still lands on a draft version and
+     customers keep seeing the published programme until Review & publish. What is dropped is
+     the CEREMONY: an owner whose programme already exists no longer has to read a
+     recommended-starting-point dialog and click "Create draft" before the editor will open.
+     The draft is created implicitly on entry to the editor, from the live version, exactly as
+     the dialog's Confirm did. The dialog is kept for the one path it is actually about — a
+     business with no published loyalty configuration, where there is a recommendation to
+     review and no live version to clone. */
+  const growProgrammeExistsV258=Boolean(snapshot.currentVersion&&snapshot.loyalty);
+  const openGrowEditorV258=async(action)=>{
+    if(growDraftVersionId)return mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+    if(!canSetupGrow||!growProgrammeExistsV258)return openRewardsAutoSetup(action);
+    const {data,error}=await sb.rpc('create_loyalty_config_draft',{
+      p_business:S.biz.id,p_based_on:snapshot.currentVersion,p_source:'owner_editor'});
+    if(!isGrowCurrent())return;
+    /* Fail soft: if the implicit draft cannot be created, the owner still gets the explicit
+       dialog rather than a dead button. */
+    if(error||!data?.version_id)return openRewardsAutoSetup(action);
+    growDraftVersionId=data.version_id;
+    return mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+  };
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));
@@ -3063,9 +3233,8 @@ async function openWelcomeOfferEditorV215(current,onSaved){
         })();
         return;
       }
-      openRewardsAutoSetup(action);return
     }
-    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+    openGrowEditorV258(action).catch(fail);
   });
   /* V172 template picker: choosing a template stores the prefill and routes through the SAME
      add-reward path as "+ Add reward" (auto-setup when no draft exists, otherwise straight to
@@ -3097,8 +3266,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
         if(!template)return;
         pendingRewardTemplateV172={name:template.name,desc:template.desc,estimateCents:template.budget};
         const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
-        if(!growDraftVersionId){openRewardsAutoSetup(action);return}
-        mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+        openGrowEditorV258(action).catch(fail);
       });
     };
   }
@@ -3133,11 +3301,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter a valid proposed reward cost first');
     pendingRewardEstimateCents=Math.round(Number(raw)*100);
     const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
-    if(!growDraftVersionId){
-      openRewardsAutoSetup(action);
-      return;
-    }
-    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+    openGrowEditorV258(action).catch(fail);
   });
   /* A deep link is a deliberate request to open an engine. The normal #/loyalty and
      #/retention destinations stop at this overview, so ordinary Grow use stays coherent.
@@ -3150,7 +3314,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'b25f1d7f0b7ab1c7c2e96a4599bebab055338cb1fc9c585e109c8f99e908acce',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'11a7802c5bea35ba70ea2523cae1bb6825588b66c6fad9875d07334317be5b78',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

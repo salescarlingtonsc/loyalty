@@ -139,7 +139,9 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.doesNotMatch(customerRoute, /id="customerMarketing" type="checkbox"/);
   assert.doesNotMatch(customerRoute, /id="customerSignupConsent"[^>]*checked=["']checked["']/i);
   assert.match(customerRoute, /Yes — send me offers and updates/i);
-  assert.match(customerRoute, /change my mind anytime in Profile/i);
+  // V265 (owner ruling C, 2026-08-09): the withdrawal route moved from "Profile → Marketing
+  // choices" to the Communications screen, and the tick now also fires the v263 master grant.
+  assert.match(customerRoute, /turn this off any time in Profile → Communications/i);
   assert.match(customerRoute, /if\(!\$\('customerSignupConsent'\)\.checked\)/);
   assert.match(customerRoute, /if\(!customerSignupConsentRecorded\(\)\)/);
   assert.match(customerRoute, /id="customerGender"/);

@@ -116,6 +116,9 @@ const customerRpcSignal=ms=>{
   setTimeout(()=>{try{controller.abort()}catch{}},ms);
   return controller.signal;
 };
+const customerRpc=(name,args,ms=12000)=>sb.rpc(name,args).abortSignal(customerRpcSignal(ms))
+  .then(result=>result,error=>({data:null,error:{code:'timeout',
+    message:`This is taking too long. ${String(error?.message||error||'Request timed out.')}`}}));
 let buildIdentity=Object.freeze({available:false});
 const buildIdentityLabel=()=>buildIdentity.available
   ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
@@ -423,13 +426,38 @@ let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:nul
 const PRODUCT_INTERACTION_EVENTS_V100=new Set([
   'merchant.workspace_viewed','merchant.grow_opened','merchant.grow_draft_started',
   'merchant.counter_action_opened','merchant.counter_action_started',
-  'merchant.redemption_scan_started','customer.programme_viewed'
+  'merchant.redemption_scan_started','customer.programme_viewed',
+  /* v255: the taxonomy rows behind these names are already in the database. This allowlist is
+     the second half of the same contract — a name absent here is never sent, and a name absent
+     there is refused with 22023. */
+  'merchant.surface_viewed','customer.session_started','customer.surface_viewed',
+  'customer.promotion_viewed','customer.promotion_opened','customer.reward_viewed',
+  'customer.notification_opened','customer.explore_searched',
+  /* v265: a customer sharing a promotion. The taxonomy row is in the database (v265 migration);
+     both halves must name it or the write is refused with 22023. */
+  'customer.promotion_shared'
 ]);
+/* Business discovery is genuinely tenant-free: the customer is looking for a business they have
+   no relationship with, so attaching one would be a fiction. Every OTHER customer event stays
+   business-scoped and is dropped without one. */
+const PRODUCT_INTERACTION_UNSCOPED_EVENTS_V256=new Set(['customer.explore_searched']);
 const PRODUCT_INTERACTION_CONTEXT_KEYS_V100=new Set([
-  'action_key','entry_point','locale','device_class','install_mode','surface_version','outcome'
+  'action_key','entry_point','locale','device_class','install_mode','surface_version','outcome',
+  'surface_key','promotion_id','query_shape'
 ]);
 const PRODUCT_INTERACTION_SESSION_KEY_V100='nestly.productAdoption.session.v100';
 let productInteractionSessionIdV100=null;
+const PRODUCT_INTERACTION_BATCH_SIZE_V256=10;
+const PRODUCT_INTERACTION_BATCH_MAX_V256=50;
+const PRODUCT_INTERACTION_BATCH_IDLE_MS_V256=5000;
+const PRODUCT_INTERACTION_QUEUE_CAP_V256=50;
+const PRODUCT_INTERACTION_SESSION_START_KEY_V256='nestly.productAdoption.sessionStarted.v255';
+let productInteractionQueueV256=[];
+let productInteractionFlushTimerV256=0;
+let productInteractionFlushInFlightV256=false;
+let productInteractionAccessTokenV256='';
+let productInteractionFlushBoundV256=false;
+let productInteractionSessionStartedV256=false;
 const isUuidV100=value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||''));
 function productInteractionSessionV100(){
   if(isUuidV100(productInteractionSessionIdV100))return productInteractionSessionIdV100;
@@ -443,7 +471,13 @@ function productInteractionSessionV100(){
 }
 function resetProductInteractionSessionV100(){
   productInteractionSessionIdV100=null;
+  /* Anything still queued belongs to the session that just ended. The server attributes on
+     auth.uid(), so flushing it after a different sign-in would hand one person's taps to
+     another. Dropping is the only safe option, and telemetry is allowed to be lossy. */
+  productInteractionQueueV256=[];
+  productInteractionSessionStartedV256=false;
   try{sessionStorage.removeItem(PRODUCT_INTERACTION_SESSION_KEY_V100)}catch{}
+  try{sessionStorage.removeItem(PRODUCT_INTERACTION_SESSION_START_KEY_V256)}catch{}
 }
 function privacySafeProductContextV100(context={}){
   const safe={};
@@ -454,23 +488,112 @@ function privacySafeProductContextV100(context={}){
   }
   return safe;
 }
+/* v255 batching. Instrumenting route views, promotion views and search shapes turns one request
+   per tap into ten, which on a phone on 4G is a tax the customer pays for our analytics. Events
+   now accumulate and leave in one call: at 10 queued, after 5s of quiet, and on the page going
+   away. The queue is capped and drops the OLDEST on overflow, because unbounded telemetry in a
+   long-lived tab is a memory leak.
+
+   No sendBeacon: it cannot carry the Authorization header this RPC needs. On pagehide we do a
+   best-effort keepalive fetch and accept the loss when it does not land. */
+function productInteractionKeepaliveV256(events){
+  if(!productInteractionAccessTokenV256)return false;
+  try{
+    fetch(`${SB_URL}/rest/v1/rpc/record_product_interactions_batch_v255`,{
+      method:'POST',keepalive:true,
+      headers:{'content-type':'application/json','apikey':SB_KEY,
+        'authorization':`Bearer ${productInteractionAccessTokenV256}`},
+      body:JSON.stringify({p_events:events})
+    }).catch(()=>{});
+    return true;
+  }catch{return false}
+}
+function flushProductInteractionsV256(keepalive){
+  if(productInteractionFlushTimerV256){
+    clearTimeout(productInteractionFlushTimerV256);productInteractionFlushTimerV256=0;
+  }
+  if(!productInteractionQueueV256.length)return;
+  if(productInteractionFlushInFlightV256&&!keepalive)return;
+  const events=productInteractionQueueV256.splice(0,PRODUCT_INTERACTION_BATCH_MAX_V256);
+  try{
+    if(keepalive&&productInteractionKeepaliveV256(events))return;
+    productInteractionFlushInFlightV256=true;
+    const settleV256=()=>{
+      productInteractionFlushInFlightV256=false;
+      if(productInteractionQueueV256.length)flushProductInteractionsV256(false);
+    };
+    Promise.resolve(sb.rpc('record_product_interactions_batch_v255',{p_events:events}))
+      .then(settleV256,settleV256);
+  }catch{productInteractionFlushInFlightV256=false}
+}
+function bindProductInteractionFlushV256(){
+  if(productInteractionFlushBoundV256)return;
+  productInteractionFlushBoundV256=true;
+  try{
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='hidden')flushProductInteractionsV256(true);
+    });
+    window.addEventListener('pagehide',()=>flushProductInteractionsV256(true));
+    /* The keepalive path needs a bearer token synchronously, and getSession() is async — on
+       pagehide there is no time to await it. Bound lazily so a page that never records anything
+       never subscribes. */
+    sb.auth.onAuthStateChange((_event,session)=>{
+      productInteractionAccessTokenV256=session?.access_token||'';
+    });
+    Promise.resolve(sb.auth.getSession()).then(result=>{
+      productInteractionAccessTokenV256=result?.data?.session?.access_token||'';
+    },()=>{});
+  }catch{}
+}
+/* Records the SHAPE of a search, never the words. Token count, a coarse length bucket and
+   whether anything matched are enough to say "customers keep asking for something nobody
+   sells"; the typed text, joined to auth.uid(), would be re-identifying and PDPA-sensitive. */
+function exploreQueryShapeV256(query,matched){
+  const text=String(query||'').trim();
+  const tokens=text?text.split(/\s+/).filter(Boolean).length:0;
+  const length=text.length===0?'empty':text.length<=12?'short':text.length<=30?'medium':'long';
+  return `t${Math.min(tokens,6)}:${length}:${matched?'matched':'unmatched'}`;
+}
 /* Interaction telemetry is deliberately fail-open. It records only that an allowed surface
    was opened or started; completed and economic outcomes remain database-authored. A missing
    migration, denied scope, or network failure must never delay or alter the user's action. */
+/* V261: analytics is best-effort by contract — "a failed analytics request must NEVER break the
+   user's actual Peekaa action". Every emit site is written as an inline
+   `typeof recordProductInteractionV100==='function'&&…` guard: `typeof` is legal on an
+   UNDECLARED identifier, so the guard survives a surface being evaluated without the core chunk.
+   The v104 evidence fixture proved this is not hypothetical — an unguarded call threw a
+   ReferenceError that stopped a customer opening a promotion. */
 function recordProductInteractionV100(eventName,businessId,{branchId=null,context={}}={}){
-  if(!S.user?.id||!isUuidV100(businessId)||!PRODUCT_INTERACTION_EVENTS_V100.has(eventName))return;
-  let sessionId,idempotencyKey,occurredAt;
+  if(!S.user?.id||!PRODUCT_INTERACTION_EVENTS_V100.has(eventName))return;
+  const scopedV256=isUuidV100(businessId);
+  if(!scopedV256&&!PRODUCT_INTERACTION_UNSCOPED_EVENTS_V256.has(eventName))return;
+  let eventV256;
   try{
-    sessionId=productInteractionSessionV100();
-    idempotencyKey=`v100:${crypto.randomUUID()}`;
-    occurredAt=new Date().toISOString();
+    eventV256={
+      event_name:eventName,
+      business_id:scopedV256?businessId:null,
+      branch_id:isUuidV100(branchId)?branchId:null,
+      session_id:productInteractionSessionV100(),
+      idempotency_key:`v100:${crypto.randomUUID()}`,
+      occurred_at:new Date().toISOString(),
+      context:privacySafeProductContextV100(context)
+    };
   }catch{return}
   try{
-    Promise.resolve(sb.rpc('record_product_interaction_v100',{
-      p_event_name:eventName,p_business:businessId,p_branch:isUuidV100(branchId)?branchId:null,
-      p_session_id:sessionId,p_idempotency_key:idempotencyKey,p_occurred_at:occurredAt,
-      p_context:privacySafeProductContextV100(context)
-    })).catch(()=>{});
+    bindProductInteractionFlushV256();
+    productInteractionQueueV256.push(eventV256);
+    if(productInteractionQueueV256.length>PRODUCT_INTERACTION_QUEUE_CAP_V256){
+      productInteractionQueueV256.splice(
+        0,productInteractionQueueV256.length-PRODUCT_INTERACTION_QUEUE_CAP_V256
+      );
+    }
+    if(productInteractionQueueV256.length>=PRODUCT_INTERACTION_BATCH_SIZE_V256){
+      flushProductInteractionsV256(false);return;
+    }
+    if(productInteractionFlushTimerV256)clearTimeout(productInteractionFlushTimerV256);
+    productInteractionFlushTimerV256=setTimeout(
+      ()=>flushProductInteractionsV256(false),PRODUCT_INTERACTION_BATCH_IDLE_MS_V256
+    );
   }catch{}
 }
 let customerFeatureCapabilities=null;
@@ -555,6 +678,10 @@ function rememberPendingCustomerDestination(value){
     else sessionStorage.removeItem(CUSTOMER_DESTINATION_SESSION_KEY);
   }catch{}
   return pendingCustomerDestination;
+}
+function completePendingCustomerDestination(route){
+  const destination=normalizeCustomerDestination(pendingCustomerDestination);
+  if(destination&&normalizeCustomerDestination(route)===destination)rememberPendingCustomerDestination('');
 }
 function resetClientSessionState({preserveInvitation=false}={}){
   globalThis.NestlyCustomerPush?.clearSession?.();
@@ -1045,8 +1172,10 @@ async function route(){
     if(h==='#/join')return renderCustomerQrJoin();
     if(h==='#/customer/programmes')return renderCustomerProgrammes();
     if(h==='#/customer/bookings')return renderCustomerBookings();
+    if(h==='#/customer/explore')return CUSTOMER_EXPLORE_LIVE_V248?renderCustomerExplore():nav('#/wallet');
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
+    if(h==='#/customer/communications')return renderCustomerCommunicationsV263();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
       const customerCapabilities=await loadCustomerFeatureCapabilities();
       if(!isRouteCurrent())return;
@@ -1352,8 +1481,43 @@ function applyCustomerThemeV190(preference=customerThemePreferenceV190()){
 try{globalThis.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change',()=>{
   if(customerThemePreferenceV190()==='device')applyCustomerThemeV190('device');
 })}catch{}
+function setCustomerSurfaceDocumentV167(){
+  globalThis.document?.documentElement?.setAttribute('data-customer-surface','true');
+  applyCustomerThemeV190();
+}
 const CUSTOMER_LOCALES=Object.freeze(['en']);
+const CUSTOMER_COPY=Object.freeze({
+  en:Object.freeze({
+    home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',
+    notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
+    language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
+    chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
+    programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
+    addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
+    rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
+    firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
+    firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
+    scanBusinessQr:'Scan business QR',qrOnlyHelp:'Businesses can only be added with a business-issued QR.',
+    balance:'Balance',nextReward:'Next reward',tierProgress:'Tier progress',benefits:'Benefits & perks',
+    offers:'Birthday & seasonal offers',rewards:'Rewards',activityHistory:'Activity & history',
+    noBenefits:'No extra perks are available right now.',noOffers:'No birthday or seasonal offers are available right now.',
+    noRewards:'No rewards are available right now.',
+    retry:'Try again',bookNow:'Book now',requestVisit:'Request your next visit with {business}.',
+    points:'points',stamps:'stamps',currentTier:'Current tier',nextTier:'Next: {tier}',
+    terms:'Terms',availableNow:'Available now',
+    loadingProgramme:'Loading rewards…',loadingProgrammes:'Loading My Rewards…',
+    successSounds:'Success sounds',soundOff:'Off by default',soundOn:'On',
+    soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
+    merchantProgramme:'{business} rewards',featured:'Featured products & services',
+    noFeatured:'This business has not published featured items yet.'
+  })
+});
 let customerLocale='en';
+function ct(key,vars={}){
+  let value=CUSTOMER_COPY[customerLocale]?.[key]??CUSTOMER_COPY.en[key]??key;
+  for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
+  return value;
+}
 function customerMediaUrlV95(value){
   const raw=String(value||'').trim();
   if(!raw)return '';
@@ -1367,14 +1531,215 @@ function customerMediaUrlV95(value){
   if(absolutePath&&objectPathPattern.test(absolutePath))return raw;
   return '';
 }
+/* v194: the nav is painted before the wallet data arrives, so the counts are remembered and
+   re-applied in place once they resolve. A stale count is never shown as fresh — see
+   applyCustomerNavCountsV194, which repaints the badges the moment the real numbers land. */
+let customerNavCountsV194={programmes:0,bookings:0};
+/* v195 (owner circled Scan QR and drew it up beside the bell): scanning is an ACTION, not a
+   destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
+   claimed a quarter of the navigation and read like a fourth page. It is now the header control
+   next to notifications, on every customer screen, and the nav holds only real destinations. */
+/* v248 (owner: "just hide the explore button entire (so will not shown to customers)"): Explore
+   is not offered at all for now — no tab, and the route refuses rather than rendering a page a
+   customer has no way to reach. The search below is finished, shipped and tested (v245 catalogue
+   search, v247 nearest-first); this ONE constant is the whole switch, so nothing is deleted,
+   nothing is half-wired, and turning it on restores the tab and the route together. */
+const CUSTOMER_EXPLORE_LIVE_V248=false;
+/* v244 (owner, Grab-style reference screenshot): five slots — Home · Rewards · Scan · Explore ·
+   Bookings — with Scan as the raised centre control. Scan returned to the nav from the header
+   because the reference makes it the app's signature action, not a corner utility; it is still
+   the same openCustomerJoinScanner behind the same id. Explore is new: search the whole Peekaa
+   ecosystem ("chicken rice", "food near me") the way you'd search Google. */
+const CUSTOMER_PRIMARY_NAV=Object.freeze([
+  {key:'home',href:'#/wallet',icon:'home',copy:'home'},
+  {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'rewardsTab'},
+  {key:'scan',icon:'scan',copy:'scanQr'},
+  ...(CUSTOMER_EXPLORE_LIVE_V248?[{key:'explore',href:'#/customer/explore',icon:'search',copy:'explore'}]:[]),
+  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
+]);
+/* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
+   two tabs that hold countable things now carry that count. A zero is not rendered — a badge
+   reading 0 is noise, and the tab already says what it holds. */
+function customerPrimaryNavigation(active,counts={}){
+  const badge=key=>{
+    const value=Math.max(0,Number(counts?.[key])||0);
+    return value?`<span class="customer-nav-count" aria-hidden="true">${value>99?'99+':value}</span>`:'';
+  };
+  const label=(item)=>{
+    const value=Math.max(0,Number(counts?.[item.key])||0);
+    const text=ct(item.copy);
+    return value?`${text}, ${value}`:text;
+  };
+  return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
+    ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
+      ?`<button type="button" id="customerNavScan" class="customer-nav-scan" aria-label="${esc(ct(item.copy))}"><span class="customer-nav-scan-fab">${CUI.icon(item.icon,{size:22})}</span><span>${esc(ct(item.copy))}</span></button>`
+      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
+  </nav>`;
+}
+function customerJoinTokenFromQr(value,currentUrl=location.href){
+  const raw=String(value??'').trim();
+  if(!raw)return '';
+  if(/^[A-Za-z0-9_-]{20,512}$/.test(raw))return raw;
+  try{
+    const url=new URL(raw,currentUrl);
+    const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
+    const token=url.searchParams.get('token')||hashParams.get('token')||'';
+    return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
+  }catch{return ''}
+}
 let activeCustomerJoinScannerCleanup=()=>{};
+function openCustomerJoinScanner(){
+  activeCustomerJoinScannerCleanup();
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
+    <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
+    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
+    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
+      <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
+    </div><p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
+  document.body.appendChild(overlay);
+  const video=overlay.querySelector('#customerJoinScannerVideo');
+  const frame=overlay.querySelector('#customerJoinScannerFrame');
+  const status=overlay.querySelector('#customerJoinScannerStatus');
+  const camera=overlay.querySelector('#customerJoinScannerCamera');
+  const imageInput=overlay.querySelector('#customerJoinScannerImage');
+  const pasteFallback=overlay.querySelector('#customerJoinScannerPaste');
+  const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
+  let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
+  const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
+  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
+  activeCustomerJoinScannerCleanup=close;
+  const accept=value=>{
+    const token=customerJoinTokenFromQr(value);
+    if(!token){status.textContent='That is not an active Peekaa business QR. Ask the business to generate its latest join QR.';return false}
+    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});nav('#/join');return true;
+  };
+  const decode=(source,width,height)=>{
+    if(typeof globalThis.jsQR!=='function'||!context||!width||!height)return '';
+    canvas.width=width;canvas.height=height;context.drawImage(source,0,0,width,height);
+    return globalThis.jsQR(context.getImageData(0,0,width,height).data,width,height)?.data||'';
+  };
+  const scan=()=>{
+    if(closed||!stream)return;
+    if(video.readyState>=2&&accept(decode(video,video.videoWidth,video.videoHeight)))return;
+    frameHandle=requestAnimationFrame(scan);
+  };
+  camera.onclick=async()=>{
+    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus();return}
+    camera.disabled=true;status.textContent='Starting camera…';
+    try{
+      await loadScannerLibrary();
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
+    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus()}
+  };
+  imageInput.onchange=async event=>{
+    const file=event.target.files?.[0];if(!file)return;
+    status.textContent='Reading QR image…';
+    try{
+      await loadScannerLibrary();
+      const bitmap=await createImageBitmap(file);
+      const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
+      if(!accept(value))status.textContent='No active Peekaa join QR was found in that image.';
+    }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
+  };
+  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
+  overlay.querySelector('#customerJoinScannerClose').onclick=close;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerCamera'});
+}
 function sortStaffWorkspaces(staff){
   return [...(Array.isArray(staff)?staff:[])].sort((a,b)=>{
     const byName=String(a?.business_name||'').localeCompare(String(b?.business_name||''),undefined,{sensitivity:'base'});
     return byName||String(a?.business_slug||'').localeCompare(String(b?.business_slug||''));
   });
 }
+function customerWorkspaceSwitchHtml(staffWorkspaces=[]){
+  const workspaces=sortStaffWorkspaces(staffWorkspaces);
+  if(!workspaces.length)return '';
+  if(workspaces.length===1){
+    const workspace=workspaces[0];
+    const name=workspace.business_name||workspace.business_slug||'Business';
+    return `<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard" aria-label="Open ${esc(name)} staff workspace">${CUI.icon('branch',{size:17})}<span>${esc(name)} workspace</span></a>`;
+  }
+  return `<details class="customer-workspace-switch"><summary class="btn ghost sm" aria-label="Open ${workspaces.length} authorized staff workspaces">${CUI.icon('branch',{size:17})}<span>Business workspaces (${workspaces.length})</span></summary><div class="menu" aria-label="Authorized staff workspaces">${workspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></details>`;
+}
+function renderNoCustomerDestination(staffWorkspaces=[]){
+  const workspaces=sortStaffWorkspaces(staffWorkspaces);
+  const relationshipRetry=customerRelationshipSyncCanRecover();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:520px;max-width:100%" aria-labelledby="noCustomerTitle">
+    <div class="logo">${brandWordmark()}</div><h1 id="noCustomerTitle" style="font-size:1.55rem;margin-top:16px">${esc(BRAND.customerLabel)} is not set up for this account</h1>
+    <p class="muted" style="margin-top:7px;line-height:1.55">This signed-in account has staff access, but no registered customer profile or linked customer programme. No empty wallet has been shown.</p>
+    ${relationshipRetry?`<div class="row" style="margin-top:16px">${customerRelationshipCheckActionHtml()}</div>`:''}
+    ${workspaces.length?`<div style="margin-top:16px"><b>Open a staff workspace</b><div class="row" style="margin-top:10px">${workspaces.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div>`:''}
+    <a class="btn" href="#/customer" style="margin-top:18px">Set up ${esc(BRAND.customerLabel)}</a>
+    ${legalLinks()}</section></main>`;
+  if(relationshipRetry)wireCustomerRelationshipCheck(()=>route());
+  CUI.focusRoute($('main'),{enhanceContent:true});
+}
+function customerSurfaceQualifies(profile,customerPersonas=[]){
+  return (profile!==null&&profile!==undefined)||(Array.isArray(customerPersonas)&&customerPersonas.length>0);
+}
 let customerAccountMenuCleanup=()=>{};
+function wireCustomerAccountMenu(){
+  customerAccountMenuCleanup();
+  const customerAccountMenuDetails=document.querySelector('.customer-account-menu');
+  if(!customerAccountMenuDetails)return;
+  const summary=customerAccountMenuDetails.querySelector('summary');
+  const onPointerDown=event=>{
+    if(customerAccountMenuDetails.open&&!customerAccountMenuDetails.contains(event.target))customerAccountMenuDetails.open=false;
+  };
+  const onKeyDown=event=>{
+    if(event.key==='Escape'&&customerAccountMenuDetails.open){
+      event.preventDefault();customerAccountMenuDetails.open=false;summary?.focus();
+    }
+  };
+  document.addEventListener('pointerdown',onPointerDown);
+  document.addEventListener('keydown',onKeyDown);
+  customerAccountMenuCleanup=()=>{
+    document.removeEventListener('pointerdown',onPointerDown);
+    document.removeEventListener('keydown',onKeyDown);
+    customerAccountMenuCleanup=()=>{};
+  };
+}
+/* v178: backTo generalises the business-page circle back button so the "My Rewards" tab can
+   carry one too (owner: "There is no back button"). businessSlug keeps its own destination. */
+function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null,navCounts=null}={}){
+  setCustomerSurfaceDocumentV167();
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  const inboxAvailable=messagesAvailable===null?customerInboxEnabledV178===true:messagesAvailable===true,
+    backHref=businessSlug?'#/customer/programmes':(backTo||''),
+    backLabel=businessSlug?ct('backProgrammes'):'Back to home';
+  root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head">
+    ${backHref?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
+    <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
+    <span class="spacer"></span><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
+    ${customerWorkspaceSwitchHtml(staffWorkspaces)}
+    <details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu">
+      <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a>
+      <button id="customerPushMenuControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button>
+      <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button>
+    </div></details>
+    </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
+    <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
+    ${legalLinks()}</div></div>`;
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  const customerPush=window.NestlyCustomerPush?.configure({rpc:(name,args)=>sb.rpc(name,args),userId:S.user?.id});
+  if(customerPush){
+    customerPush.bindButton($('customerPushMenuControl'));
+    customerPush.reconcile().catch(()=>{});
+  }
+  wireCustomerAccountMenu();
+  if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
+  if($('walletBack'))$('walletBack').onclick=()=>nav(backHref);
+}
+function focusCustomerRoute(){
+  const main=$('main');if(main)CUI.focusRoute(main,{enhanceContent:true});
+  if(S.user&&typeof completePendingCustomerDestination==='function')completePendingCustomerDestination(location.hash);
+}
 async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
   const userId=S.user?.id||null;
   if(!userId)return {attempted:false,linked:false};
@@ -1410,12 +1775,232 @@ async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
   customerRelationshipSyncState.result=data||{outcome:'synchronized',linked_count:0};
   return {attempted:true,linked:Number(data?.linked_count||0)>0,result:data};
 }
+function customerRelationshipSyncCanRecover(){
+  return customerRelationshipSyncState.attempted===false
+    &&customerRelationshipSyncState.result?.outcome==='try_later';
+}
+function customerRelationshipCheckActionHtml(){
+  const retry=customerRelationshipSyncCanRecover();
+  return `${retry?'<span class="muted small" id="customerRelationshipRetryHelp" role="status">We could not complete the last programme check. Your account is unchanged.</span>':''}<button class="btn ghost sm" id="customerRelationshipCheck" type="button"${retry?' aria-describedby="customerRelationshipRetryHelp"':''}>${retry?'Retry programme check':'Check for existing programmes'}</button>`;
+}
+function wireCustomerRelationshipCheck(renderer){
+  const button=$('customerRelationshipCheck');
+  if(!button)return;
+  button.onclick=()=>{
+    const userId=S.user?.id||null;
+    customerRelationshipSyncState={userId,attempted:false,result:null};
+    button.disabled=true;button.textContent='Checking…';
+    CUI.announce('Checking for existing programmes.');
+    renderer();
+  };
+}
+/* v178: the header bell is a first-class shell control, so every customer shell — including the
+   QR-join screens that render before a route context exists — reads the same resolved flag. */
+let customerInboxEnabledV178=false;
+async function loadCustomerSurfaceContext(isCurrent=()=>true){
+  const features=await loadCustomerFeatureCapabilities();
+  customerInboxEnabledV178=features?.customer_in_app_inbox===true;
+  if(!isCurrent())return null;
+  if(features._load_error){renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
+  if(!features.customer_wallet){renderCustomerWalletUnavailable();return null}
+  const [profileResult,personaResult]=await Promise.all([
+    features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
+    customerRpc('get_my_personas')
+  ]);
+  if(!isCurrent())return null;
+  let {data:personas,error:personasError}=personaResult;
+  if(personasError){renderCustomerCapabilityRetry('We could not load your customer destinations. Please try again.');return null}
+  let staff=sortStaffWorkspaces(personas?.staff||[]),customer=personas?.customer||[];
+  if(profileResult.error&&!customer.length){
+    renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');return null;
+  }
+  const profile=profileResult.error?null:(profileResult.data?.profile??null);
+  const registeredCustomer=profile!==null;
+  if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
+  S.hasCustomerPersona=true;S.customerProfile=profile;
+  customerLocale='en';
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  if(!isCurrent())return null;
+  return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
+}
+
+/* v244 (owner, nav revamp): Explore — "search for nearby peekaa businessess (can type example
+   food near me, chicken rice, dessert shop etc) - then will pop up relevant business based on
+   search - like google search)". The matching runs on the SERVER, because "chicken rice" should
+   find a business that SELLS chicken rice — a fact only the catalogue knows — not just one named
+   after it. The empty query is the whole ecosystem, joined businesses first, which is the v242
+   directory the owner already approved; it lives here now, behind its own tab, instead of at the
+   bottom of Home. */
+/* v247 (owner: "add the geocoding + nearest first sorting"): a distance is only ever printed when
+   the SERVER computed one from a real geocoded branch. A business with no location shows nothing
+   here rather than a guess, and it still appears in the list — being unlocated is the owner's
+   admin gap, not a reason to hide a business the customer may already belong to. */
+function customerExploreDistanceTextV247(km){
+  /* Number(null) and Number('') are both 0, which would print "50 m" for a business whose
+     location is simply UNKNOWN — the exact fabrication this function exists to prevent. Only a
+     real number counts as a distance. */
+  if(typeof km!=='number'&&typeof km!=='string')return '';
+  if(typeof km==='string'&&!km.trim())return '';
+  const value=Number(km);
+  if(!Number.isFinite(value)||value<0)return '';
+  if(value<1)return `${Math.max(50,Math.round(value*1000/50)*50)} m`;
+  return `${value<10?value.toFixed(1):Math.round(value)} km`;
+}
+function customerExploreRowMarkupV244(row){
+  const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
+    joined=row?.joined===true,slug=String(row?.slug||''),
+    logo=customerMediaUrlV95(row?.logo_url),
+    address=String(row?.address||'').trim(),
+    match=String(row?.match_note||'').trim(),
+    distance=customerExploreDistanceTextV247(row?.distance_km),
+    points=Math.max(0,Number(row?.points_balance||0)),
+    initial=(name[0]||'B').toUpperCase();
+  const media=logo
+    ?`<img class="customer-explore-logo" src="${esc(logo)}" alt="" loading="lazy" width="46" height="46">`
+    :`<span class="customer-explore-logo customer-explore-logo--fallback" aria-hidden="true">${esc(initial)}</span>`;
+  const copy=`<div class="customer-explore-copy">
+      <h3 data-merchant-content>${esc(name)}</h3>
+      ${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}
+      ${match?`<p class="small customer-explore-match">Has: ${esc(match)}</p>`:''}
+      ${address||distance?`<p class="muted small customer-explore-address">${distance?`<span class="customer-explore-distance">${esc(distance)}</span>`:''}${address?`<span data-merchant-content>${esc(address)}</span>`:''}</p>`:''}
+    </div>`;
+  const side=joined
+    ?`<div class="customer-explore-side"><span class="pill ok">Member</span><b>${esc(customerPointTotalV103(points))}</b><span class="muted small">points</span></div>`
+    :`<div class="customer-explore-side"><span class="pill off">Not set up</span><span class="muted small customer-explore-join-hint">Scan their QR in store to join</span></div>`;
+  /* Joined rows use the one existing route into a business. An unjoined row deliberately does
+     not navigate — v242's rule: the shop's own QR is the only way in. */
+  return joined
+    ?`<a class="card customer-explore-row" href="#/wallet/${encodeURIComponent(slug)}">${media}${copy}${side}</a>`
+    :`<div class="card customer-explore-row customer-explore-row--locked">${media}${copy}${side}</div>`;
+}
+function customerExploreResultsMarkupV244(state){
+  if(state.status==='loading')return '<div class="card customer-explore-state" aria-busy="true"><p class="muted small">Searching…</p></div>';
+  if(state.status==='error')return '<div class="card customer-explore-state"><p class="muted small">Businesses couldn’t load.</p><button class="btn ghost sm" id="customerExploreRetry" type="button" style="margin-top:10px">Try again</button></div>';
+  const seen=new Set(),rows=(Array.isArray(state.rows)?state.rows:[]).filter(row=>{
+    const id=String(row?.business_id||'');
+    if(!id||seen.has(id))return false;
+    seen.add(id);return true;
+  });
+  if(!rows.length)return state.query
+    ?`<div class="card customer-explore-state"><p class="muted small">Nothing matches “${esc(state.query)}”. Try a food, a service, or a shop name.</p></div>`
+    :'<div class="card customer-explore-state"><p class="muted small">No businesses to show yet.</p></div>';
+  /* When the customer shared a position, say so — and say plainly how many businesses could not be
+     ranked, because a list that silently mixes "2 km away" with "somewhere unknown" is misleading. */
+  const unlocated=state.near?rows.filter(row=>row?.located!==true).length:0;
+  const order=state.near
+    ?`<p class="muted small customer-explore-order">${CUI.icon('bookings',{size:14})} Nearest first${unlocated?` · ${unlocated} ${unlocated===1?'business has':'businesses have'} no address yet, shown last`:''}</p>`
+    :'';
+  return `${order}<div class="customer-explore-list">${rows.map(customerExploreRowMarkupV244).join('')}</div>
+    <p class="muted small customer-explore-note">Points and rewards are separate for every business.</p>`;
+}
+async function renderCustomerExplore(){
+  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
+  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
+  renderCustomerShell({active:'explore',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,
+    body:`<header class="customer-page-head"><div><h1>Explore</h1><p class="muted small">Every business on Peekaa — find one by what it sells.</p></div></header>
+    <div class="customer-explore-search"><label class="sr-only" for="customerExploreQuery">Search businesses</label>
+      ${CUI.icon('search',{size:18})}<input id="customerExploreQuery" type="search" autocomplete="off" enterkeyhint="search" placeholder="Try “chicken rice”, “facial”, “dessert”…"></div>
+    <div class="customer-explore-tools"><button class="btn ghost sm" id="customerExploreNear" type="button" aria-pressed="false">${CUI.icon('bookings',{size:16})}<span>Near me</span></button>
+      <p class="muted small" id="customerExploreNearNote" role="status"></p></div>
+    <div id="customerExploreResults" role="region" aria-live="polite" aria-label="Search results">${customerExploreResultsMarkupV244({status:'loading'})}</div>`});
+  const input=$('customerExploreQuery'),results=$('customerExploreResults'),
+    nearButton=$('customerExploreNear'),nearNote=$('customerExploreNearNote');
+  /* The customer's position is held for this render only and travels no further than the RPC
+     argument — nothing stores it, and turning Near me off forgets it immediately. */
+  let searchEpoch=0,debounce=0,position=null;
+  const run=async(query)=>{
+    const epoch=++searchEpoch;
+    results.innerHTML=customerExploreResultsMarkupV244({status:'loading'});
+    const {data,error}=await customerRpc('customer_explore_businesses_v244',{
+      p_query:query||null,p_lat:position?.lat??null,p_lng:position?.lng??null
+    });
+    /* v255 (audit class E — the highest-value signal the product was losing every day). The
+       SHAPE only: how many words, how long, and whether anything matched. Never the words.
+       Discovery is not business-scoped, so this is the one event recorded with no tenant. */
+    if(!error)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.explore_searched',null,{
+      context:{query_shape:exploreQueryShapeV256(query,Array.isArray(data)&&data.length>0),
+        surface_key:'explore',entry_point:'customer_explore',surface_version:'v255'}
+    });
+    /* Replies can land out of order — a stale reply must never overwrite a newer query's list. */
+    if(!isCurrent()||epoch!==searchEpoch||!results.isConnected)return;
+    results.innerHTML=customerExploreResultsMarkupV244(error
+      ?{status:'error'}
+      :{status:'ready',rows:Array.isArray(data)?data:[],query,near:!!position});
+    const retry=$('customerExploreRetry');
+    if(retry)retry.onclick=()=>run(input.value.trim());
+  };
+  const setNear=(next,note='')=>{
+    position=next;
+    nearButton.setAttribute('aria-pressed',String(!!next));
+    nearButton.classList.toggle('is-on',!!next);
+    nearNote.textContent=note;
+  };
+  nearButton.onclick=()=>{
+    if(position){setNear(null,'');run(input.value.trim());return}
+    if(!navigator.geolocation){
+      setNear(null,'This browser cannot share your location. Search by name instead.');
+      return;
+    }
+    nearButton.disabled=true;nearNote.textContent='Finding you…';
+    navigator.geolocation.getCurrentPosition(reading=>{
+      nearButton.disabled=false;
+      if(!isCurrent())return;
+      setNear({lat:reading.coords.latitude,lng:reading.coords.longitude},'');
+      run(input.value.trim());
+    },error=>{
+      nearButton.disabled=false;
+      if(!isCurrent())return;
+      /* Denial is a decision, not a failure: say what happened, keep the list the customer has. */
+      setNear(null,error?.code===1
+        ?'Location is off for this site. Turn it on in your browser to sort by distance.'
+        :'Your location could not be read just now. The list is still here, sorted by name.');
+    },{enableHighAccuracy:false,timeout:8000,maximumAge:60000});
+  };
+  input.addEventListener('input',()=>{
+    clearTimeout(debounce);
+    debounce=setTimeout(()=>run(input.value.trim()),300);
+  });
+  input.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){event.preventDefault();clearTimeout(debounce);run(input.value.trim())}
+  });
+  run('');
+  focusCustomerRoute();
+}
+function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
+  setCustomerSurfaceDocumentV167();
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
+    <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
+      <p class="muted" style="margin-top:8px">${esc(message)}</p>
+    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+  wireAccountDeletionButton();
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+}
+
+function renderCustomerCapabilityRetry(message){
+  setCustomerSurfaceDocumentV167();
+  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
+    <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
+      <p class="muted" style="margin-top:8px">${esc(message)}</p>
+      <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
+    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+  wireAccountDeletionButton();
+  $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+}
+
 function walletDate(value,withTime=false){
   if(!value)return '';
   const date=new Date(value);if(Number.isNaN(date.getTime()))return '';
   return date.toLocaleString('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium',...(withTime?{timeStyle:'short'}:{})});
 }
 
+function customerPointTotalV103(value){
+  return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
+    .format(Math.max(0,Number(value)||0));
+}
 /* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
    for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
    read as a control with no purpose. The tagline is dropped when it echoes the title — compared on
@@ -1465,12 +2050,9 @@ function customerPromotionValidityV104(item={}){
   if(ends)return `Valid until ${ends}`;
   return starts?`Valid from ${starts}`:'';
 }
-/* V183 (owner: "Upload the image but not reflected on the right ... only after publish then is
-   able to see"). customerMediaUrlV95 is a strict allowlist of Supabase storage object paths, so
-   the blob: URL of a just-picked file resolved to '' and the card fell back to its initial
-   letter — the owner saw a big "N" instead of the photo they had chosen.
-   The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
-   already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
+function customerShareButtonMarkupV264(offerId,{small=true}={}){
+  return `<button class="btn ghost${small?' sm':''} customer-share-button" type="button" data-share-offer="${esc(offerId||'')}" aria-label="Share this offer">${CUI.icon('share',{size:16})}<span>Share</span></button>`;
+}
 function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
   const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
     validity=customerPromotionValidityV104(item),
@@ -1488,6 +2070,7 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
       <div class="customer-promotion-card-actions">
         ${customerPromotionCtaV104(item,business,bookingEnabled)}
+        ${customerShareButtonMarkupV264(item?.id)}
         ${terms?`<details><summary class="small">Terms</summary><p class="small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
       </div>
       <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>
@@ -1836,7 +2419,7 @@ function createBusinessOAuthAdmissionClient(){
 }
 const BUSINESS_LEGAL_V138=Object.freeze({
   terms:Object.freeze({version:'2026-08-04',sha256:'012e09a4a7b6df2a5acc9da3b6512c1cfeb42e903fd8306f6ff09866a9f1e4a5'}),
-  privacy:Object.freeze({version:'2026-08-06',sha256:'b9aa956263f0ac12d85be069ee05b4960b4130be33289c06df1e4eee59c59245'})
+  privacy:Object.freeze({version:'2026-08-10',sha256:'960434af7919e5401b3587111eb746fbba41f739edacd74cb5aeeca0402c224f'})
 });
 function businessGoogleButtonHtml(id){
   return `<button class="btn ghost" id="${esc(id)}" type="button" style="width:100%;min-height:44px;margin-top:12px"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span><span>Continue with Google</span></button>`;

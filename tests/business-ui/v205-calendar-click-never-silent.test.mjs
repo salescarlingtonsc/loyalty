@@ -23,8 +23,12 @@ test('a calendar tap can no longer end in silence', () => {
 
 test('the lookup is an optimisation, not a precondition', () => {
   // the button carries the branch, which is all the detail read needs besides the id
-  assert.match(app, /const branchId=button\.dataset\.appointmentBranch\|\|branchId;/);
-  assert.match(app, /return openAppointmentDetails\(\{id,branch_id:branchId\},\{startEditing\}\)/);
+  /* V248: this used to pin `const branchId=button.dataset.appointmentBranch||branchId;` — a const
+     initialised from itself, so the fallback V205 added threw a TDZ ReferenceError the moment it
+     was needed. The guarantee under test is the fallback, not the name it used. */
+  assert.match(app, /const fallbackBranchV248=button\.dataset\.appointmentBranch\|\|branchId;/);
+  assert.doesNotMatch(app, /const branchId=button\.dataset\.appointmentBranch\|\|branchId;/);
+  assert.match(app, /return openAppointmentDetails\(\{id,branch_id:fallbackBranchV248\},\{startEditing\}\)/);
   assert.ok((app.match(/data-appointment-branch="/g) || []).length >= 3,
     'every rendered appointment button must carry its own branch');
 });

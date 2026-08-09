@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e4898cef5d650312a46319c594b046e564c42e6bcaad94454eae67c2e8262038"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="99b1575dda52d11f53dfbc8eba2837819e7fe396f021be8fb0e33b55ca900d13"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -235,6 +235,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
 .dashboard-schedule-chip.more a{color:var(--coral);font-weight:700;display:inline-flex;align-items:center;min-height:34px}
 .dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
+/* V252: the removed subtitle promoted the eyebrow to the card heading, and the new day tabs
+   plus date picker sit between the heading row and the chips. */
+.dashboard-schedule-controls-v252{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 10px}
+.dashboard-schedule-tabs-v252{display:flex;gap:6px}
+.dashboard-schedule-controls-v252 input[type="date"]{max-width:190px}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
@@ -278,6 +283,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .appointment-list-filters>div>input,
 .appointment-list-filters>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
+/* V251 (owner: From/To date boxes in the appointments List filter bar are too wide). The grid
+   column can grow past 170px via 1fr; cap the input itself so it does not stretch to fill it. */
+.appt-date-narrow-v251{max-width:170px;width:100%}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
 /* V180: the filter labels used to sit at different heights. Cause was the global
@@ -943,18 +951,35 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    is a good result and must not render as an alarm. */
 /* V180: one readable line per teammate. Wraps rather than truncating, because an owner
    scanning for a phone number must never be shown a clipped one. */
-.staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
+.staff-row-line{display:flex;flex-direction:column;align-items:stretch;gap:6px}
 /* V226 (owner drew these columns by hand and captioned them "I want clear segmentation").
    The row was a flex wrap, so a field landed at a different x-position on every line and could
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
 :root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
-.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
+/* V260 (owner: Owner & managers vs Roster only tables had different column widths, and the
+   App-access/module pills collided with POSITION/COMMISSION text). Root cause: .staff-row-open
+   used to flex-grow to fill whatever space its sibling pills+buttons left over, and that
+   leftover varied per row (an owner row has one status line; a roster row has two pills plus
+   three buttons) — so the SAME grid template rendered at a different pixel width per row,
+   drifting the columns and squeezing the last cells into the pills next to them. Giving the
+   name/phone/email/position/commission grid its own full-width row, with the pills and action
+   buttons on a second row underneath, makes .staff-row-open always render at the row's full
+   width — identical to the header's — regardless of how many badges or buttons a given
+   teammate has, and removes the possibility of the two ever touching. */
+.staff-row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px}
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
+/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious. */
+.grow-topic-group-v244{margin-top:20px}
+.grow-topic-group-head-v244 h3{font-size:1.02rem;font-weight:750}
+.grow-topic-group-head-v244 p{margin-top:3px}
+.grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
+.grow-topic-tile-pending-v244{border-style:dashed}
 .grow-topic-tile-v229{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
 .grow-topic-tile-v229:hover{background:var(--tint);border-color:var(--coral)}
 .grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em}
@@ -969,6 +994,22 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .points-mode-card-v229:disabled{opacity:.6;cursor:default}
 .points-mode-chosen-v229{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
 .points-mode-row-v229{cursor:default;flex-wrap:wrap}
+/* V250 (owner drew reward boxes with a "+" over the numbered reward rows). Cards reuse the
+   existing pill and surface tokens — no new colours — and the grid is minmax(150px,1fr) so two
+   still sit side by side at 390px. The add card is the same box in a dashed outline. */
+.reward-card-grid-v250{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:14px}
+.reward-card-v250{appearance:none;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-width:0;min-height:118px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font:inherit}
+button.reward-card-v250{cursor:pointer;transition:background .16s ease,border-color .16s ease}
+button.reward-card-v250:hover{background:var(--tint);border-color:var(--coral)}
+button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outline-offset:2px}
+.reward-card-name-v250{font-size:.98rem;line-height:1.25;overflow-wrap:anywhere}
+.reward-card-cost-v250{font-size:.86rem;color:var(--muted);overflow-wrap:anywhere}
+.reward-card-open-v250{margin-top:auto;color:var(--coral);font-size:12px;font-weight:750}
+.reward-card-add-v250{border-style:dashed;align-items:center;justify-content:center;text-align:center;gap:4px}
+.reward-card-plus-v250{font-size:1.6rem;line-height:1;color:var(--coral);font-weight:750}
+.reward-card-v250[hidden]{display:none!important}
+.reward-card-empty-v250{padding:0 14px 14px}
+.reward-card-templates-v250{margin:0;padding:0 14px 14px}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1064,6 +1105,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .report-decision-card .task-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--coral);position:relative;z-index:1}
 .report-decision-card b{margin-top:13px;font-size:16px;position:relative;z-index:1}.report-decision-card>span:not(.task-icon):not(.report-card-visual){margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4;position:relative;z-index:1}
 .report-card-visual{display:flex;gap:5px;margin-top:auto;padding-top:14px;position:relative;z-index:1}.report-card-visual i{display:block;width:24px;height:8px;border-radius:999px;background:rgba(202,62,50,.22)}.report-card-visual i:nth-child(2){width:34px;background:rgba(202,62,50,.38)}.report-card-visual i:nth-child(3){width:18px;background:rgba(202,62,50,.16)}
+/* V260: three "…answer" collapsibles folded into their matching decision card — the card
+   itself is now a <details>, its clickable face a <summary> laid out exactly like the old
+   button face (icon/title/body/dots), with the marker triangle suppressed and the answer
+   body appearing below once expanded. */
+details.report-decision-card{overflow:visible}
+details.report-decision-card>summary{display:flex;flex-direction:column;align-items:flex-start;width:100%;cursor:pointer;list-style:none}
+details.report-decision-card>summary::-webkit-details-marker{display:none}
+details.report-decision-card>summary::marker{content:''}
+details.report-decision-card[open]{align-items:stretch;grid-column:1/-1}
+details.report-decision-card[open]>summary{margin-bottom:14px}
+details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .schedule-suggestion{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
 .schedule-suggestion h3{font-size:14px}.schedule-suggestion-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 .calendar-week-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;max-height:70vh}
@@ -1115,6 +1167,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-more-menu button{display:block;text-align:left;width:100%;background:none;border:0;border-radius:8px;padding:9px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;min-height:44px}
 .c360-more-menu button:hover,.c360-more-menu button:focus-visible{background:#FBF7F3}
 .c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
+.customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
+.customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
+.customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
+.customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
+.customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
+.customer360-points-panel-v249 input{max-width:100%}
+@media(max-width:560px){.customer360-kpis-v249{grid-template-columns:minmax(0,1fr)}}
 .c360-flash{animation:c360flash 1.3s var(--ease)}
 @keyframes c360flash{0%{box-shadow:0 0 0 0 rgba(194,65,53,.35)}100%{box-shadow:0 0 0 10px rgba(194,65,53,0)}}
 .c360-timeline{display:grid;gap:0;margin-top:8px;list-style:none;padding:0}
@@ -1134,6 +1193,15 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-tl-side{text-align:right;white-space:nowrap}
 .c360-tl-amt{font-weight:680;font-variant-numeric:tabular-nums;font-size:13.5px}
 .c360-tl-when{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;margin-top:3px}
+/* V252: Activity history is a table. The pictogram tile and the timestamp style are reused from
+   the list it replaces so the row still reads at a glance; notes stack under the ITEM cell. */
+.c360-activity-table-v252 td{vertical-align:top}
+.c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
+.c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
+.c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+.c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
+.c360-act-note-v252 .btn{margin-top:3px}
+.c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
@@ -1275,10 +1343,15 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
 .customer-shell .wallet-inner{width:min(1040px,100%)}
 .customer-shell .wallet-head{min-height:48px}
-.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;
+.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:1fr 1fr auto 1fr;gap:6px;
   margin:0 0 24px;padding:6px;border:1px solid var(--hair);border-radius:16px;background:rgba(255,255,255,.88);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:var(--shadow)}
-.customer-primary-nav a,.customer-primary-nav button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
+/* v244 · the raised centre Scan control (owner's Grab-style reference) */
+.customer-nav-scan{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:74px;border:0;background:none;color:var(--ink2);font-size:11px;font-weight:650;cursor:pointer}
+.customer-nav-scan-fab{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(194,65,53,.35)}
+.customer-nav-scan:hover .customer-nav-scan-fab{filter:brightness(1.06)}
+.customer-nav-scan:active .customer-nav-scan-fab{transform:scale(.96)}
+.customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
   color:var(--ink2);font-size:12.5px;font-weight:650;text-align:center;transition:background .14s var(--ease),color .14s var(--ease),transform .18s var(--spring)}
 .customer-primary-nav button{font-family:inherit;background:transparent;cursor:pointer}
 .customer-primary-nav a:hover,.customer-primary-nav button:hover{background:#F2EFEA;color:var(--ink);transform:translateY(-1px)}
@@ -1448,7 +1521,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-tier-remaining{margin-top:2px}
 .customer-tier-ladder{margin-top:14px;border-top:1px solid var(--hair);padding-top:12px}
 .customer-tier-ladder>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;cursor:pointer;font-weight:650;list-style-position:inside}
-.customer-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:700;line-height:1}
+/* v247 (owner: "the rewards showing (2) - it should be at top right (not below)"): the count is
+   a corner badge on its own tab, the way every app marks a tab with something waiting. In the
+   flow it pushed the label down and made that tab taller than its neighbours. */
+.customer-nav-count{position:absolute;top:4px;right:8px;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--coral);color:#fff;font-size:10.5px;font-weight:700;line-height:1}
 .customer-primary-nav a[aria-current="page"] .customer-nav-count{background:var(--coral)}
 @media(max-width:560px){.customer-programme-identity-hint{display:none}.customer-tier-milestone b{font-size:9.5px}}
 .customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
@@ -1473,7 +1549,39 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
-.customer-directory-v242{margin-top:22px}.customer-directory-head{margin-bottom:10px}.customer-directory-head h2{font-size:1.25rem}.customer-directory-head p{margin-top:4px}.customer-directory-list{display:grid;gap:10px}.customer-directory-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 14px}.customer-directory-copy{min-width:0;flex:1 1 auto}.customer-directory-copy h3{font-size:1rem;overflow-wrap:anywhere}.customer-directory-copy p{margin-top:3px;overflow-wrap:anywhere}.customer-directory-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;min-width:0}.customer-directory-points{white-space:nowrap}.customer-directory-row--locked{opacity:.72;box-shadow:none}.customer-directory-note{margin-top:10px}.customer-directory-state{min-height:64px;padding:16px}@media(max-width:400px){.customer-directory-side{flex-direction:row;align-items:center;flex-wrap:wrap;justify-content:flex-start;text-align:left;width:100%}}
+/* v244 · Explore — the ecosystem search behind its own tab */
+/* v264 · sharing a promotion */
+.customer-share-button{flex:none}
+.customer-share-modal .modal-card{width:min(420px,94vw)}
+.customer-share-sheet h2{font-size:1.1rem}
+.customer-share-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px}
+.customer-share-channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;color:var(--ink2);font-size:12px;font-weight:650;text-align:center}
+.customer-share-channel:hover{border-color:var(--coral);color:var(--coral);background:var(--tint)}
+.customer-share-channel svg{color:var(--coral)}
+.customer-share-copy{width:100%}
+.customer-share-note{margin-top:12px;text-align:center}
+.customer-explore-search{display:flex;align-items:center;gap:10px;padding:0 14px;margin:0 0 14px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
+.customer-explore-search input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--ink);font:inherit}
+.customer-explore-search input:focus{outline:none}
+.customer-explore-search:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-explore-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.customer-explore-tools .btn.is-on{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.customer-explore-order{display:flex;align-items:center;gap:6px;margin:0 0 10px}
+.customer-explore-distance{display:inline-block;margin-right:6px;color:var(--coral);font-weight:700}
+.customer-explore-list{display:grid;gap:10px}
+.customer-explore-row{display:flex;align-items:center;gap:12px;padding:14px;color:inherit;text-decoration:none}
+.customer-explore-row--locked{opacity:.88}
+.customer-explore-logo{flex:none;width:46px;height:46px;border-radius:14px;object-fit:cover;background:var(--tint)}
+.customer-explore-logo--fallback{display:flex;align-items:center;justify-content:center;color:var(--coral);font-weight:700;font-size:1.1rem}
+.customer-explore-copy{flex:1;min-width:0}
+.customer-explore-copy h3{font-size:1.02rem;overflow-wrap:anywhere}
+.customer-explore-match{margin-top:2px;color:var(--green);font-weight:600}
+.customer-explore-address{margin-top:2px;overflow-wrap:anywhere}
+.customer-explore-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right;max-width:132px}
+.customer-explore-side b{font-size:1.05rem}
+.customer-explore-join-hint{font-size:.72rem;line-height:1.3}
+.customer-explore-state{padding:18px;text-align:center}
+.customer-explore-note{margin-top:12px;text-align:center}
 /* v192 (owner: "the promotion content occupies more than a screen — i need it to be smaller").
    The artwork is still never cropped and never painted over: object-fit:contain only SCALES it,
    so an EDM with its words baked in stays whole — just smaller in the list. Full size is one tap
@@ -1601,7 +1709,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:720px){
   .customer-shell{padding-bottom:calc(104px + env(safe-area-inset-bottom))}.customer-shell .wallet-head{align-items:center;flex-wrap:nowrap}
   .customer-primary-nav{position:fixed;top:auto;bottom:max(8px,env(safe-area-inset-bottom));left:10px;right:10px;z-index:70;margin:0;padding:5px;gap:2px;border-radius:17px}
-  .customer-primary-nav a,.customer-primary-nav button{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
+  .customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
+  .customer-nav-scan{min-width:64px;margin-top:-18px}
+  .customer-nav-scan-fab{width:54px;height:54px;border:4px solid var(--bg)}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
   .customer-home-summary .customer-home-quick{grid-template-columns:1fr}.customer-home-summary-body{max-height:30dvh}
@@ -1729,6 +1839,11 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
     giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
     star:'m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.77 6.4 20.91l1.07-6.24-4.53-4.42 6.26-.91L12 3Z',
+    /* v264: a real share glyph — the standard three linked nodes. 'export' was being used for
+       the share button and read as "download", which is a different promise. 'chat' gives the
+       messaging channels a speech bubble instead of a crowd of people. */
+    share:'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8.6 13.5l6.8 3.9M15.4 6.6 8.6 10.5',
+    chat:'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z',
     /* v195: the owner drew a star, a crown and a gem on the tier bar — a rung a customer can
        recognise before reading its name. Same 24-box, same stroke weight as every icon here. */
     crown:'M4 18h16M3 7l4.5 4L12 4l4.5 7L21 7l-2 9H5L3 7Z',
@@ -2294,12 +2409,23 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       <div class="dashboard-schedule-top">
         <div class="dashboard-schedule-copy">
           ${CUI.icon('appointments',{size:24})}
-          <div><p class="eyebrow">Today schedule</p><h2>Bookings and appointments</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
+          <div><h2 class="eyebrow">Today schedule</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
         </div>
         <div class="dashboard-schedule-actions">
-          <a class="btn secondary" href="#/appointments?view=list&preset=today">View bookings</a>
           <a class="btn secondary" href="#/appointments">Open calendar</a>
         </div>
+      </div>
+      <!-- V252 (owner screenshot): the subtitle line and the second appointments button are
+           struck out — that button only reached the same surface the Open calendar link already
+           reaches. The two tabs and the date input are the owner’s "can view by date too":
+           every day is reachable, and the strip is no longer permanently pinned to today. -->
+      <div class="dashboard-schedule-controls-v252">
+        <div class="dashboard-schedule-tabs-v252" role="group" aria-label="Schedule day">
+          <button type="button" class="qbtn act" data-schedule-day-v252="0" aria-pressed="true">Today</button>
+          <button type="button" class="qbtn" data-schedule-day-v252="1" aria-pressed="false">Tomorrow</button>
+        </div>
+        <label class="sr-only" for="dashboardScheduleDate">Schedule date</label>
+        <input type="date" id="dashboardScheduleDate" value="${today}">
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
@@ -2358,12 +2484,33 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
     dashboardRoot.querySelector('#df').value=shiftSgDateInput(sgDateInputValue(),-(Number(b.dataset.d)-1));dashboardRoot.querySelector('#dt').value=sgDateInputValue();load();
   });
-  dashboardRoot.querySelectorAll('input[type="date"]').forEach(input=>input.oninput=()=>{
+  /* V252: scoped to the Performance range pair. Unscoped, the new schedule date picker also
+     cleared the 1d/7d/30d/90d selection and invalidated the KPI panel on every day change. */
+  dashboardRoot.querySelectorAll('.dashboard-range input[type="date"]').forEach(input=>input.oninput=()=>{
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>button.classList.remove('act'));
     invalidatePerformance();
   });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
+  /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
+     being shown. Both routes call the same applier, so the tab pressed-state, the input value
+     and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
+     west of Singapore must not see yesterday’s schedule under a "Today" tab. */
+  const scheduleDateInputV252=dashboardRoot.querySelector('#dashboardScheduleDate');
+  const scheduleTabsV252=[...dashboardRoot.querySelectorAll('[data-schedule-day-v252]')];
+  const scheduleTabDateV252=tab=>shiftSgDateInput(sgDateInputValue(),Number(tab.dataset.scheduleDayV252)||0);
+  const applyScheduleDayV252=date=>{
+    scheduleTabsV252.forEach(tab=>{
+      const on=scheduleTabDateV252(tab)===date;
+      tab.classList.toggle('act',on);tab.setAttribute('aria-pressed',on?'true':'false');
+    });
+    if(scheduleDateInputV252&&scheduleDateInputV252.value!==date)scheduleDateInputV252.value=date;
+    loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,date);
+  };
+  scheduleTabsV252.forEach(tab=>{tab.onclick=()=>applyScheduleDayV252(scheduleTabDateV252(tab))});
+  if(scheduleDateInputV252)scheduleDateInputV252.onchange=()=>{
+    if(scheduleDateInputV252.value)applyScheduleDayV252(scheduleDateInputV252.value);
+  };
   async function load(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
@@ -2533,6 +2680,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'e4898cef5d650312a46319c594b046e564c42e6bcaad94454eae67c2e8262038',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'99b1575dda52d11f53dfbc8eba2837819e7fe396f021be8fb0e33b55ca900d13',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

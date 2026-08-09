@@ -21,12 +21,15 @@ test('renaming the programme badge cannot empty the Running view', () => {
     'keep a text fallback for rows not built by programmeStatus');
 });
 
-test('programmes nav is two destinations, and old hashes still resolve', () => {
-  const i = app.indexOf('const links=[');
-  const src = app.slice(i, i + 260);
-  assert.ok(src.includes("'Programmes list'") && src.includes("'Ongoing programmes'"));
-  assert.ok(!src.includes('Available programmes'), 'available was struck out by the owner');
-  assert.ok(!src.includes('More settings'), 'more settings was struck out by the owner');
+test('programmes nav is one destination, and old hashes still resolve', () => {
+  /* V250: the owner struck out the two remaining sub-rows, so the whole `const links=[…]`
+     helper went with them — Programmes is one flat link onto the list. */
+  assert.ok(app.includes("{key:'grow',icon:'star',flat:'Programmes',href:'#/grow'"),
+    'Programmes must be one flat nav link');
+  assert.ok(!app.includes('const links=['), 'the sub-nav link helper went with its rows');
+  assert.ok(!app.includes("'Programmes list'"), 'the Programmes list row was struck out');
+  assert.ok(!app.includes("['#/grow/ongoing'"), 'the Ongoing programmes row was struck out');
+  assert.ok(!app.includes("['#/grow/available'"), 'the Pending setup row was struck out');
   // Deep links must not 404 just because the nav entry is gone.
   assert.ok(app.includes("['ongoing','available','settings'].includes(String(hashParam||''))"),
     'the removed hashes must still resolve to their views');
@@ -36,7 +39,9 @@ test('programmes nav is two destinations, and old hashes still resolve', () => {
 test('#/grow lands on the full list, not a filtered view', () => {
   assert.ok(/includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/.test(app),
     'default programme view must be the full list');
-  assert.ok(app.includes("'To set up':'List'"), 'list heading missing');
+  /* V245: the owner asked "Pending setup — where is it?", so the view names now match the
+     nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
+  assert.ok(app.includes("'Pending setup':'List'"), 'list heading missing');
 });
 
 test('staff row carries every detail on one line and opens an editable profile', () => {
@@ -110,9 +115,14 @@ test('merchant insights sits outside the Performance section', () => {
 test('today schedule glance shows real bookings and is fixed to today', () => {
   const i = app.indexOf('async function loadDashboardScheduleGlanceV180');
   assert.ok(i > 0, 'no schedule glance loader');
-  const src = app.slice(i, i + 2600);
-  assert.ok(src.includes("sgDateBoundary(sgDateInputValue())") && src.includes("sgDateBoundary(sgDateInputValue(),1)"),
-    'the glance must be pinned to today, not to the Performance date range');
+  const src = app.slice(i, i + 3600);
+  // V252: the glance is no longer pinned to today — the owner added Today/Tomorrow tabs and a
+  // date picker. What must still hold is that the day is a SINGAPORE calendar date (defaulting
+  // to today) and that it is never widened by the Performance date range above it.
+  assert.ok(src.includes("const day=dateV252||sgDateInputValue()") && src.includes("sgDateBoundary(day),to=sgDateBoundary(day,1)"),
+    'the glance day must be an SGT calendar date, defaulting to today');
+  assert.ok(!src.includes("dashboardRoot.querySelector('#df')"),
+    'the glance must never read the Performance date range');
   assert.ok(src.includes("String(row.status||'').toLowerCase()!=='cancelled'"),
     'cancelled bookings must not be counted as people expected today');
   assert.ok(src.includes('dashboardScheduleRetry'),
@@ -126,10 +136,11 @@ test('today schedule glance shows real bookings and is fixed to today', () => {
 test('the glance takes its branch scope as an argument, not from a closure it cannot see', () => {
   // appliedDashboardScopeV141 is declared inside dashboard(); reading it from this
   // module-level function threw a ReferenceError.
-  assert.ok(app.includes('async function loadDashboardScheduleGlanceV180(root,branchId=null)'));
+  // V252: a third parameter (the day to show) was added; branchId is still an argument.
+  assert.ok(app.includes('async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)'));
   assert.ok(app.includes('loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId)'));
   const i = app.indexOf('async function loadDashboardScheduleGlanceV180');
-  assert.ok(!app.slice(i, i + 2600).includes('appliedDashboardScopeV141'),
+  assert.ok(!app.slice(i, i + 3600).includes('appliedDashboardScopeV141'),
     'the loader must never reference the dashboard closure variable directly');
 });
 

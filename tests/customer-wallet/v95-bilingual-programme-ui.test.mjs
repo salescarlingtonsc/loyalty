@@ -94,7 +94,7 @@ test('celebration sound is opt-in, stored locally, and blocked for reduced-motio
 });
 
 test('customer mobile navigation and media layouts keep accessible touch targets and stable image geometry',()=>{
-  assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button\{[^}]*min-height:48px/s);
+  assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button:not\(\.customer-nav-scan\)\{[^}]*min-height:48px/s);
   assert.match(app,/\.customer-avatar\{[^}]*width:44px;height:44px/s);
   assert.doesNotMatch(app,/\.customer-account-menu \.customer-locale-switch/);
   assert.match(app,/\.customer-perk-card img,\.customer-offer-card img,\.customer-reward-card img\{[^}]*height:132px/s);

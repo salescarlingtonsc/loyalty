@@ -16,7 +16,13 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const migration = readFileSync(join(root, 'db', 'migrations', '20260808_nestly_v239_points_and_tiers_can_both_run.sql'), 'utf8');
 
-test('V240 the server allows both and refuses only the incoherent pairing', () => {
+/* V258: V256 DROPPED the two v239 triggers in production (verified: pg_trigger has no v239_*
+   rows). The owner's ruling replaced the old invariant — a tier measured by 'points_earned'
+   sums points_ledger entry_type='earn', i.e. LIFETIME points earned, which redemption never
+   reduces, so it may coexist with points_mode='both'. The assertions below still pin the v239
+   migration FILE, which is immutable history; the live rule is pinned by the client tests
+   below and by tests/business-ui/v258-loyalty-setup-friction.test.mjs. */
+test('V240 the v239 migration file records the rule V256 later removed', () => {
   assert.match(migration, /check \(points_mode is null or points_mode = any \(array\['redeem','tiers','both'\]\)\)/);
   assert.match(migration, /if v_mode = 'both' and v_basis = 'points_earned' then/);
   assert.match(migration, /set the tier to visits or spend/);
@@ -31,7 +37,8 @@ test('V240 the editor offers a fourth model and derives the selection from it', 
   assert.match(app, /const loyaltySelectionForModeV240=mode=>mode==='tiers'\?'tiers':mode==='both'\?'both':'redeem';/);
   assert.match(app, /loyaltySelectionV230=model==='stamps'\?'stamps':loyaltySelectionForModeV240\(loyaltyModeV230\)/);
   assert.match(app, /liveLoyaltySelectionV235=\(p\?\.loyalty_model\|\|'classic'\)==='stamps'\?'stamps'\s*\n\s*:loyaltySelectionForModeV240/);
-  assert.match(app, /both:\{name:'Points \+ tiers',line:'Customers spend points on rewards, and separately climb tiers by visits/);
+  // V258: the line no longer names a basis, because every basis is now selectable under 'both'.
+  assert.match(app, /both:\{name:'Points \+ tiers',line:'Customers spend points on rewards, and separately climb tiers — the two never affect each other\.'\}/);
   assert.match(app, /\$\{\['redeem','tiers','both','stamps'\]\.map\(key=>/);
   // The group label no longer claims exclusivity, because it is no longer true.
   assert.doesNotMatch(app, /aria-label="Loyalty model — only one is live at a time"/);
@@ -42,34 +49,39 @@ test('V240 both renders the catalogue AND the ladder', () => {
   const both = site.slice(site.indexOf("loyaltySelectionV230==='both'"));
   assert.match(both, /rewardRows\('Your rewards'\)\}\$\{tierRows\(\)\}/,
     'both must reuse the same composables, not fork them');
-  assert.match(both, /Both run together: points buy rewards, visits build tiers\./);
+  // V258: the sentence reads the firm's own basis instead of asserting visits.
+  assert.match(both, /Both run together: points buy rewards, and tiers count lifetime \$\{esc\(tierBasisWordV235\)\}\./);
   // Pure tiers still hides rewards; pure redeem still hides tiers.
   assert.match(site, /Point rewards are off in this model/);
   assert.match(site, /Tiers are off in this model/);
 });
 
-test('V240 the tier basis can never offer points while points are spendable', () => {
-  assert.match(app, /const tierBasisAllowsPointsV240=loyaltySelectionV230!=='both';/);
-  // A stored points ladder reads as visits the moment 'both' is previewed, so what the owner
-  // sees is what Save can actually write.
-  assert.match(app, /return !tierBasisAllowsPointsV240&&stored==='points_earned'\?'visits':stored/);
-  assert.match(app, /\$\{tierBasisAllowsPointsV240\?`<option value="points_earned"/);
-  assert.match(app, /Tiers count visits so points stay free to spend\./);
+/* V258 (owner item 8) inverts this test: the restriction it used to pin is the bug. */
+test('V240/V258 the tier basis always offers lifetime points earned', () => {
+  assert.doesNotMatch(app, /tierBasisAllowsPointsV240/);
+  assert.doesNotMatch(app, /tierBasisValueV240/);
+  // The stored basis is shown as stored — nothing is rewritten on the way to the screen.
+  assert.match(app, /const tierBasisValueV258=p\?\.tier_basis\|\|'visits';/);
+  // The option is unconditional now, not gated behind a mode test.
+  assert.match(app, /<option value="points_earned" \$\{tierBasisValueV258==='points_earned'\?'selected':''\}>Lifetime points earned<\/option>/);
+  // The old helper line was inaccurate; the new one explains why the pairing is coherent.
+  assert.doesNotMatch(app, /Tiers count visits so points stay free to spend\./);
+  assert.match(app, /Tiers count lifetime points earned — spending points never lowers a tier\./);
 });
 
-test('V240 the save path writes a safe basis first and explains a refusal', () => {
+test('V240/V258 the save path writes the chosen basis unchanged', () => {
   const save = app.slice(app.indexOf("const loyaltySave=$('lsave')"), app.indexOf("if(draftVersionId){\n      toast('Grow draft saved"));
   assert.match(save, /targetModeV230=loyaltySelectionV230==='tiers'\?'tiers':loyaltySelectionV230==='both'\?'both':'redeem'/);
-  // The basis leaves for the server already free of points when heading into 'both'.
-  assert.match(save, /row\.tier_basis=targetModeV230==='both'&&basisV240==='points_earned'\?'visits':basisV240/);
+  // V258: no coercion at all — 'points_earned' reaches the server exactly as chosen.
+  assert.doesNotMatch(save, /basisV240/);
+  assert.match(save, /row\.tier_basis=\$\('ltb'\)\.value;/);
   // The draft save (carrying tier_basis) precedes the points_mode switch — the order the
   // database trigger requires.
   assert.ok(save.indexOf("save_loyalty_config_draft") < save.indexOf("update({points_mode:targetModeV230})"));
-  // A refusal states the fix and does NOT discard the owner's choice.
-  assert.match(save, /modeError\.code==='23514'\|\|\/measure its tiers in points\/i\.test\(modeError\.message\|\|''\)/);
-  const refusal = save.slice(save.indexOf("modeError.code==='23514'"));
-  assert.ok(refusal.indexOf('loyaltyModeDraftV230=null') === -1 || refusal.indexOf('return toast(') < refusal.indexOf('loyaltyModeDraftV230=null'),
-    'the mode draft must survive a refusal so the choice is not silently lost');
+  // V258: the 23514 branch is unreachable since V256 dropped the trigger, so it is gone from
+  // both write paths — a dead branch can only ever mislead.
+  assert.doesNotMatch(save, /modeError\.code==='23514'/);
+  assert.doesNotMatch(app, /measure its tiers in points\/i\.test/);
 });
 
 test('V240 reward chips return in both, and stay hidden in pure tiers', () => {
@@ -89,7 +101,9 @@ test('V240 the wallet shows the ladder and the rewards together', () => {
   assert.match(app, /if\(walletPointsModeV241==='tiers'\)\{/);
   assert.match(app, /Array\.isArray\(data\?\.rewards\)\?data\.rewards:\[\]/);
   // And a customer in 'both' is told the two are independent.
-  assert.match(app, /bothNoteV240=String\(tier\.points_mode\|\|''\)==='both'/);
+  // V258: the note reads the firm's real basis rather than asserting visits.
+  assert.match(app, /bothNoteV258=String\(tier\.points_mode\|\|''\)==='both'/);
+  assert.match(app, /Points you earn move you up — spending them never lowers your tier\./);
   assert.match(app, /Visits move you up\. Points stay yours to spend\./);
 });
 

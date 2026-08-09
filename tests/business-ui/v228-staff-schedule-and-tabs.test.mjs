@@ -28,10 +28,15 @@ test('V228 Bookings no longer owns the staff rota', () => {
 });
 
 test('V228 the rota renders and saves from Staff Members', () => {
+  // V260: the owner struck out the whole "Working hours" card at the top of the Staff list
+  // tab (heading, explanatory line, "Loading working hours…" state, and Save button). It has
+  // no other home in the app (verified: no per-staff row exposes it), so the handlers stay
+  // defined rather than deleted — only the markup and its call site were removed. These two
+  // assertions that used to pin the visible card are now assertions that it is GONE.
   assert.match(app, /function staffRotaSectionMarkupV228\(team,rotaByStaff\)\{/);
-  assert.match(app, /id="staffRotaCardV228"/);
-  assert.match(app, /<b>Working hours<\/b>/);
-  assert.match(app, /loadTeam\(\);\s*\n\s*loadStaffRotaV228\(\);/);
+  assert.doesNotMatch(app, /id="staffRotaCardV228"/);
+  assert.doesNotMatch(app, /<b>Working hours<\/b>/);
+  assert.doesNotMatch(app, /loadTeam\(\);\s*\n\s*loadStaffRotaV228\(\);/);
   const save = app.slice(app.indexOf('async function saveStaffRotaV228'), app.indexOf('async function loadTeam'));
   // It writes exactly what the Bookings version wrote, so an existing rota is unchanged.
   assert.match(save, /sb\.from\('staff'\)\.update\(\{customer_bookable:member\.customer_bookable\}\)/);

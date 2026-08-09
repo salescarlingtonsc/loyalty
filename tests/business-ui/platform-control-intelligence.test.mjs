@@ -64,8 +64,9 @@ test('customer profile cannot bypass the branch-scoped QR redemption workflow',(
      rewards to lead. The scanner is still the only way a loyalty writer completes a
      reward — that is the contract this test protects — it is just shown when there IS
      something ready to scan for. */
-  assert.match(detail,/Scan the customer's pending QR in Record sale to complete one\. Points change only after confirmation\./);
+  /* V249: the owner deleted the sentence; the scanner link is still the only redemption door. */
   assert.match(detail,/Open Record sale scanner/);
+  assert.match(detail,/canWriteLoyalty&&redemptionEnabled&&readyRewards\.length/);
   assert.doesNotMatch(detail,/sb\.rpc\('redeem_points'/);
   assert.doesNotMatch(detail,/sb\.rpc\('redeem_reward(?:_at_context)?'/);
   assert.doesNotMatch(detail,/class="btn sm rewardGo"/);

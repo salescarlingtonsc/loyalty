@@ -25,7 +25,7 @@ export function buildV129TrialTestVisual(app,customerUi){
   const historyRenderer=between(app,'function renderHistPage(','/* ---------- quick earn');
   const till=between(app,'async function tillPage()','/* ---------- sales ---------- */');
   const whatsapp=between(app,'function appointmentWhatsAppUrlV129','async function appointmentsPage()');
-  const appointmentRenderer=between(app,'  function renderAppointmentDetails(item,{startEditing=false}={}){','  function wireAppointmentActions(){');
+  const appointmentRenderer=between(app,'  function renderAppointmentDetails(item,{startEditing=false,inheritHistoryId=0}={}){','  function wireAppointmentActions(){');
   const sourceHash=createHash('sha256').update([
     style,customerUi,customers,profile,historyRenderer,till,whatsapp,appointmentRenderer
   ].join('\n')).digest('hex');

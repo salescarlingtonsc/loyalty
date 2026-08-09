@@ -21,7 +21,11 @@ test('V229 the overview is six topic tiles, and drilling in is the only way to t
   /* V235: a Stamp card tile joins the two points tiles, so all THREE loyalty models are
      represented on the overview and exactly one of them can read Active. */
   assert.deepEqual(keys, ['points', 'tiers', 'stamps', 'lifestyle', 'promotions', 'referrals', 'recurring']);
-  assert.match(app, /growTilesModeV229\?`<div class="grow-topic-tiles-v229">/);
+  /* V244: the grid moved inside each of the two groups (Ongoing / Pending setup), so the
+     render site emits the grouped markup rather than one bare grid. The tiles-mode gate — the
+     thing this line actually protects — is unchanged. */
+  assert.match(app, /\$\{growTilesModeV229\?growTilesHtmlV229:''\}/);
+  assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
   assert.match(shell, /\.grow-topic-tiles-v229\{display:grid/);
   // Tiles only exist on the default list view; Ongoing / To set up stay flat lists.
   assert.match(app, /const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;/);
@@ -31,11 +35,16 @@ test('V229 the overview is six topic tiles, and drilling in is the only way to t
 });
 
 test('V229 reward milestones live inside Point system, never on the tile overview', () => {
-  // The milestone rows render only inside the points wrapper...
+  /* V250 turned the milestone ROWS into the reward card grid the owner drew, so the mapping
+     moved one step earlier into rewardCardsV250 and the points wrapper renders that grid. The
+     containment this test protects — milestones belong to Point system and appear nowhere else
+     — is unchanged, and is now checked at both ends. */
   const points = app.slice(app.indexOf("${topicOnV229('points')?`"), app.indexOf("${growActiveTopicV229?.key==='tiers'?"));
-  assert.match(points, /rewardJourney\.milestones\.map/);
-  // ...and nowhere else in the file's render paths.
+  assert.match(points, /rewardCardGridV250/);
+  assert.equal((app.match(/rewardCardGridV250\b/g) || []).length, 2);
   assert.equal((app.match(/rewardJourney\.milestones\.map/g) || []).length, 1);
+  const cards = app.slice(app.indexOf('const rewardCardsV250=['), app.indexOf('const rewardCardGridV250='));
+  assert.match(cards, /rewardJourney\.milestones\.map/);
   // In tiles mode no topic is on, so no category rows exist at all.
   /* V235: Stamp card is a third VIEW of the point engine, so it drills into the points
      section rather than duplicating it — the mapping is what keeps the tile from dead-ending. */

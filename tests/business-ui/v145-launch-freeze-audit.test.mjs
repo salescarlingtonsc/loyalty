@@ -37,7 +37,9 @@ test('dashboard uses Singapore dates and labels every mixed metric scope', () =>
   assert.match(dashboard, /requestGate\.begin\(\)/);
   assert.match(dashboard, /await renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\);[\s\S]*if\(isDashboardCurrent\(\)\)await load\(\)/,
     'the dashboard must load once after its reporting scope is initialized');
-  assert.match(dashboard, /querySelectorAll\('input\[type="date"\]'\)\.forEach/);
+  // V252: the handler is now scoped to `.dashboard-range`. Unscoped, it also captured the new
+  // Today-schedule date picker and invalidated the Performance panel on every schedule day change.
+  assert.match(dashboard, /querySelectorAll\('\.dashboard-range input\[type="date"\]'\)\.forEach/);
   assert.doesNotMatch(dashboard, /Record a sale[\s\S]*Add appointment[\s\S]*Find a customer[\s\S]*Set up rewards/,
     'the removed dashboard task-card row must not return');
   assert.doesNotMatch(dashboard, /Services and goods sold|dashboardSaleMixV141|sale_items/,
@@ -89,14 +91,15 @@ test('customer inactivity uses complete Singapore calendar days at midnight boun
     'crossing Singapore midnight advances one complete calendar day even when only two seconds elapsed');
   assert.equal(daysSince('2026-08-02T00:00:00.000Z',new Date('2026-08-02T15:59:59.000Z')),0);
 
-  const pbStart=app.indexOf('function pbComputeCandidates(');
-  const pbEnd=app.indexOf('async function pbActivateCampaign',pbStart);
-  const compute=new Function('completeSgCalendarDaysSince',`${app.slice(pbStart,pbEnd)};return pbComputeCandidates`)(daysSince);
-  const candidate={id:'customer-1',full_name:'Boundary customer',phone:'81234567'};
-  const audience={clients:[candidate],byClient:new Map([[candidate.id,{net:3,lastIso:justBeforeSgMidnight}]])};
-  assert.equal(compute(audience,1,3,justAfterSgMidnight).length,1,
-    'the bring-back threshold matches the canonical at-least calendar-day rule');
-  assert.equal(compute(audience,2,3,justAfterSgMidnight).length,0);
+  /* v244: the bring-back candidate reduction moved into the database
+     (retention_lapsed_candidates_v244) — the browser no longer computes it. The Singapore
+     calendar-day rule is pinned in the migration SQL instead of in extractable JS. */
+  const v244=fs.readFileSync(new URL('../../db/migrations/20260808_nestly_v244_retention_audience_server_side.sql',import.meta.url),'utf8');
+  assert.match(v244,/at time zone 'Asia\/Singapore'\)::date/,
+    'the server-side audience must use Singapore calendar dates, not raw timestamps');
+  assert.match(v244,/greatest\(0, v_today - \(pc\.last_visit_at at time zone 'Asia\/Singapore'\)::date\)/,
+    'lapse days are complete SG calendar days, clamped non-negative — completeSgCalendarDaysSince parity');
+  assert.match(v244,/>= v_lapsed/,'the at-least threshold survives the port');
 });
 
 test('customer reward expiry countdown follows Singapore calendar dates, not rounded elapsed time', () => {
@@ -111,8 +114,10 @@ test('customer reward expiry countdown follows Singapore calendar dates, not rou
     'one second after Singapore midnight the countdown advances by one day');
   assert.equal(helpers.date(new Date(expiry)),'2026-08-05','the displayed expiry date must stay the Singapore date');
   const client=section('async function clientDetail(id)', '/* ---------- sales ---------- */');
-  assert.match(client,/const expiryDate=nextExp\?sgDateInputValue\(new Date\(nextExp\.expires_at\)\):null/);
-  assert.match(client,/completeSgCalendarDaysUntil\(nextExp\.expires_at\)/);
+  /* V249: the owner deleted the suggestion banner that counted the days down, so the profile
+     states the expiry DATE only — still resolved on the Singapore calendar, never a rounded
+     elapsed-time guess. The helper assertions above are unchanged. */
+  assert.match(client,/expire \$\{new Intl\.DateTimeFormat\('en-SG',\{day:'numeric',month:'short',year:'numeric',timeZone:'Asia\/Singapore'\}\)/);
   assert.doesNotMatch(client,/Math\.round\(\(new Date\(nextExp\.expires_at\)\.getTime\(\)-Date\.now\(\)\)\/dayMs\)/);
 });
 
@@ -158,10 +163,19 @@ test('valid visit helper removes reversal rows and their original visits everywh
   assert.match(client, /const validVisits=validVisitSales\(allSl\|\|\[\]\)/);
   assert.match(client, /const netVisits=validVisits\.length/);
   assert.match(client, /const lastVisitIso=validVisits/);
-  const audience = section('async function pbLoadAudience()', 'function pbComputeCandidates');
-  assert.match(audience, /require_module_scope_v145[\s\S]*p_module:'retention'/);
-  assert.match(audience, /const validVisits=validVisitSales\(sales\)/);
-  assert.doesNotMatch(audience, /s\.reversal_of\?-1:1/);
+  /* v244: the audience reduction lives in retention_lapsed_candidates_v244. The reversal
+     semantics (a reversal row is never a visit; a reversed original is discounted) and the
+     retention scope gate must survive in the SQL, and the client must call the RPC rather
+     than paging the whole business through fetchAllRows. */
+  const v244sql=fs.readFileSync(new URL('../../db/migrations/20260808_nestly_v244_retention_audience_server_side.sql',import.meta.url),'utf8');
+  assert.match(v244sql,/counts_as_visit = true/);
+  assert.match(v244sql,/reversal_of is null/);
+  assert.match(v244sql,/not exists \(\s*select 1 from visit_rows r where r\.reversal_of = v\.id\s*\)/);
+  assert.match(v244sql,/require_module_scope_v145\(p_business, null, 'retention'\)/);
+  const loader = section('async function pbLoadCandidatesV244(', 'async function pbActivateCampaign');
+  assert.match(loader, /sb\.rpc\('retention_lapsed_candidates_v244'/);
+  assert.doesNotMatch(loader, /fetchAllRows/,
+    'the bring-back audience must never again page every client and sale into the browser');
   assert.doesNotMatch(app, /pbAudienceCache/, 'bring-back audience must be re-read after sales or reversals');
 });
 
@@ -316,7 +330,10 @@ test('customer profile never converts inaccessible facets into plausible zero va
   assert.match(client, /require_module_scope_v145/);
   assert.match(client, /No partial totals are shown/);
   assert.match(client, /Some profile figures are unavailable/);
-  assert.match(client, /canReadSales\?`<div class="card kpi"/);
+  /* V249: Visits and Lifetime spend left the KPI row for the identity chips, still gated on
+     canReadSales — an unconfirmed sales facet renders neither chip rather than a zero. */
+  assert.match(client, /if\(canReadSales\)\{[\s\S]*?visitsLabelV249/);
+  assert.match(client, /canReadSales&&netVisits<=0\?`<p class="muted small"/);
   assert.match(client, /loyaltyFactsAvailable\?`<div class="card kpi"/);
   assert.match(client, /canReadLoyalty\?`<section class="card c360-rewards-card" id="c360-loyalty"/);
   assert.match(client, /canReadRetention\?`<div class="card"><b>Retention reward history/);
@@ -355,8 +372,9 @@ test('customer profile proves owner-wide or every assigned staff branch without 
   assert.match(client, /profileScopeBranchIds=\(branches\|\|\[\]\)\.map\(branch=>branch\.id\)/);
   assert.match(client, /Promise\.all\(profileScopeBranchIds\.map\(branchId=>[\s\S]*p_branch:branchId/);
   assert.match(client, /access across every branch assigned to this staff account/);
-  assert.match(client, /Visible visits/);
-  assert.match(client, /Visible sales total/);
+  /* V249: the same staff-scope qualifier, now carried by the chips that replaced those cards. */
+  assert.match(client, /isProfileAdmin\?'':'visible '\}visit/);
+  assert.match(client, /isProfileAdmin\?'lifetime':'visible sales'/);
   assert.match(client, /Business-wide points/);
   assert.match(client, /Business-wide spendable credit/);
   assert.match(client, /Staff view scope/);
@@ -529,9 +547,15 @@ test('manual booking requests state only persisted review status and never promi
 
 test('report question cards issue one remote answer request per user action', () => {
   const reports=section('async function reportsPage()', '/* ---------- get started');
-  assert.match(reports,/const scriptedAnswerToggles=new WeakSet\(\)/);
-  assert.match(reports,/scriptedAnswerToggles\.add\(details\);details\.open=true/);
-  assert.match(reports,/if\(scriptedAnswerToggles\.delete\(event\.currentTarget\)\)return/);
+  // V260: the owner folded the three "…answer" collapsibles up into their matching decision
+  // card — each card IS the <details> element now, so there is no longer a separate button
+  // that both opens a details section elsewhere AND calls the runner (the scriptedAnswerToggles
+  // dedupe existed only to stop that pair from double-firing). One native toggle listener is
+  // now the only trigger, so one click can no longer fire the same remote report twice.
+  assert.doesNotMatch(reports,/scriptedAnswerToggles/);
+  assert.match(reports,/for\(const \[id,runner\] of answerLoaders\)\{/);
+  assert.match(reports,/\$\(id\)\.addEventListener\('toggle',event=>\{/);
+  assert.match(reports,/if\(event\.currentTarget\.open\)runAnswer\(runner\)/);
 });
 
 test('waitlist terminal booked rows are labelled as conversions, never proven seating', () => {

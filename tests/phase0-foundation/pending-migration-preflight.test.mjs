@@ -135,7 +135,13 @@ const sqlTestBySemanticVersion = new Map([
   ['v145', 'db/tests/v145_launch_freeze_metrics.sql'],
   ['v146', 'db/tests/v146_platform_finance.sql'],
   ['v147', 'db/tests/v147_platform_accounting.sql'],
-  ['v148', 'db/tests/v148_owner_launch_closure.sql']
+  ['v148', 'db/tests/v148_owner_launch_closure.sql'],
+  ['v256', 'db/tests/v256_tier_may_measure_lifetime_points.sql'],
+  ['v257', 'db/tests/v257_bundle_finalise_rehash.sql'],
+  ['v258', 'db/tests/v258_recommended_draft_inherits_live_status.sql'],
+  ['v263', 'db/tests/v263_customer_communication_preferences.sql'],
+  ['v264', 'db/tests/v264_promotion_share_event.sql'],
+  ['v265', 'db/tests/v265_marketing_consent_scope.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
@@ -191,6 +197,7 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v202_branch_add_and_billing', 'db/tests/v202_branch_add_and_billing.sql'],
   ['nestly_v239_points_and_tiers_can_both_run', 'db/tests/v239_points_and_tiers_can_both_run.sql'],
   ['nestly_v241_reward_catalog_carries_its_mode_as_an_object', 'db/tests/v241_reward_catalog_object_shape.sql'],
+  ['nestly_v248_customer_directory_reports_loyalty_availability', 'db/tests/v248_customer_directory_loyalty_availability.sql'],
   ['nestly_v242_customer_business_directory', 'db/tests/v242_customer_business_directory.sql'],
   ['nestly_v202a_activate_branch_on_paid_command', 'db/tests/v202_branch_add_and_billing.sql'],
   ['nestly_v202b_branch_insert_only_via_paid_rpc', 'db/tests/v202_branch_add_and_billing.sql'],
@@ -210,6 +217,10 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v232_promotion_lock_cannot_take_down_the_api', 'db/tests/v232_promotion_lock_guard.sql'],
   ['nestly_v233_admin_sessions_get_the_same_reaper', 'db/tests/v233_admin_session_reaper.sql'],
   ['nestly_v234_advisor_hygiene', 'db/tests/v234_advisor_hygiene.sql'],
+  ['nestly_v244_retention_audience_server_side', 'db/tests/v244_retention_audience_server_side.sql'],
+  ['nestly_v246_personas_direct_resolver', 'db/tests/v246_personas_direct_resolver.sql'],
+  ['nestly_v247_explore_nearest_first', 'db/tests/v247_explore_nearest_first.sql'],
+  ['nestly_v245_customer_explore_search', 'db/tests/v245_customer_explore_search.sql'],
   ['nestly_v197_persistent_join_qr', 'db/tests/v197_persistent_join_qr.sql'],
   ['nestly_v198_join_qr_print_lock', 'db/tests/v198_join_qr_print_lock.sql'],
   ['nestly_v199_receipt_capture', 'db/tests/v199_receipt_capture.sql'],
@@ -219,7 +230,11 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v203_company_directory', 'db/tests/v203_company_directory.sql'],
   ['nestly_v225_company_detail', 'db/tests/v225_company_detail.sql'],
   ['nestly_v226_crm_consultant_scope', 'db/tests/v226_crm_consultant_scope.sql'],
-  ['nestly_v244_crm_ai_report_flag_matches_v176', 'db/tests/v244_crm_ai_report_flag.sql']
+  ['nestly_v244_crm_ai_report_flag_matches_v176', 'db/tests/v244_crm_ai_report_flag.sql'],
+  // V256 — one suite covers all three v255 migrations; they are one change.
+  ['nestly_v255_marketing_send_records_and_taxonomy', 'db/tests/v255_marketing_send_records_and_reads.sql'],
+  ['nestly_v255a_client_interaction_batch', 'db/tests/v255_marketing_send_records_and_reads.sql'],
+  ['nestly_v255b_platform_marketing_reads', 'db/tests/v255_marketing_send_records_and_reads.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -723,7 +738,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 210);
+  assert.equal(pending.length, 224); // V265
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
