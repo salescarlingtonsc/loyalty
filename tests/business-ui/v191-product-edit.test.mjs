@@ -60,7 +60,11 @@ test('a paused programme explains the consequence and the fix, once', () => {
   // Owner: "why already active already - but still show inactive?" — loyalty_programs.active was
   // false, so all eight rows said "Programme paused" and none said how to turn it on. Publishing
   // a config does not activate the programme; they are separate switches.
-  assert.match(app, /Paused — customers earn nothing and no reward below is claimable\. Open Edit to turn it on\./);
+  /* V271 superseded the SENTENCE (the owner struck it with "remove wording") but not the fact it
+     was protecting. The paused state is still said once, on the row that owns the switch — now as
+     the status pill rather than a paragraph, and the pill is what the Ongoing filter reads. */
+  assert.doesNotMatch(app, /customers earn nothing and no reward below is claimable/);
+  assert.match(app, /programmeStatus\(rewardJourney\.earning\.availableToCustomers\?'Live':'Paused',rewardJourney\.earning\.availableToCustomers\?'on':'off'\)/);
   assert.match(app, /const programmeActive=loyalty\?\.active===true/,
     'one master switch drives every row, which is why the message belongs on the earning row');
 });

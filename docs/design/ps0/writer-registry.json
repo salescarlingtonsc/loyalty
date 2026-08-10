@@ -2811,6 +2811,10 @@
     {
       "id": "browser.rpc:app/app.js:customer_get_communication_preferences_v263",
       "reason": "v263 read-only projection of the customer's own marketing category x channel matrix, resolved through app.customer_communication_identity_v263() from auth.uid(). Pure SELECT over customer_communication_preferences_v263 plus the two immutable taxonomy functions; no DML, no ledger, no value table. It returns the EFFECTIVE value for every cell (absence = ON) precisely so the browser never reproduces the default rule and drifts apart from the send-path gate."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_programme_usage_v271",
+      "reason": "v271 read-only Programmes Overview aggregate. Returns DISTINCT-CUSTOMER counts per programme (points_ledger earns, loyalty_redemptions, reward_grants, standing birthday redemptions, redeemed welcome offers, qualified referrals, membership enrolments) plus the birthday programme's created_at. Pure SELECTs behind the same owner-or-loyalty-read authorisation business_get_welcome_offer_v215 already uses; no DML, no ledger, no value table, and no customer identity leaves the function - only counts. It exists because a DISTINCT count cannot be expressed through PostgREST, and paging the ledger into the browser to count it there would under-count silently the moment a page limit clipped the result."
     }
   ]
 }

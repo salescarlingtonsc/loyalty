@@ -1,0 +1,263 @@
+/* V271 — one owner screenshot of Programmes → the loyalty programme, marked up in red.
+
+   A. The POINT SYSTEM row. The owner struck "Change model", struck "paused" out of the heading and
+      wrote "Point System" beside it, struck the sentence "Open Edit to turn it on. Configured as
+      Earn 1 points per SGD 1 spent" with "remove wording", struck the Paused pill, and wrote
+      underneath: "Current Setting: SGD 1 spent → 1 points" with a circled Edit.
+
+      Three separate things said "paused". The instruction is de-duplication, not concealment: a
+      paused point system earns customers nothing, and an owner who cannot see that state blames
+      the engine. Exactly ONE status indicator survives — the pill in the row's meta column, which
+      is also the signal the Ongoing/Pending filter and the suggestion strips read (they match
+      `.pill:not(.grow-pending-pill-v268)`), so removing it would have silently emptied those views.
+
+   B. Programmes gets three views: Overview (a columnar at-a-glance table of what is running),
+      List (unchanged), History (what has ended). The honesty rule the Overview lives by: a cell is
+      sourced or it is absent. A count nothing records renders "Not tracked"; a count whose read
+      failed renders "Not available". Neither ever renders 0, because a zero reads as a measurement.
+
+   C. Two delegated decisions. The duplicate "A thank-you on your next visits" rewards are not
+      deleted — the retired one is already invisible to customers and the defect is that the editor
+      drew both identically — so the labelling is fixed instead. And the overloaded Paused pill is
+      split: a reward the owner retired and a reward that is off only because the programme is off
+      no longer read the same. */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
+const html = readFileSync(join(root, 'app', 'index.html'), 'utf8');
+const migration = readFileSync(
+  join(root, 'db', 'migrations', '20260810_nestly_v271_programme_overview.sql'), 'utf8');
+
+const section = (start, end) => {
+  const from = app.indexOf(start), to = app.indexOf(end, from + start.length);
+  assert.ok(from >= 0, `missing section start: ${start}`);
+  assert.ok(to > from, `missing section end: ${end}`);
+  return app.slice(from, to);
+};
+const grow = section('async function growPage(', '/* ---------- Bring-back playbooks');
+/* The writable Point system row only — it ends where the read-only <article> variant begins. */
+const pointSystemRow = () =>
+  section('data-rewards-overview-edit="earning">', ':`<article class="grow-programme-row" data-programme-kind="earning">');
+
+/* ---------------- A. the Point system row ---------------- */
+
+test('V271 (a) every struck string is gone from the application code', () => {
+  assert.doesNotMatch(app, /Point system paused/);
+  assert.doesNotMatch(app, /'Change model'/);
+  assert.doesNotMatch(app, /Open Edit to turn it on/);
+  assert.doesNotMatch(app, /Configured as \$\{rewardJourney/);
+  assert.doesNotMatch(app, /customers earn nothing and no reward below is claimable/);
+});
+
+test('V271 (a) the heading is an unconditional "Point system"', () => {
+  const row = pointSystemRow();
+  // One heading, no ternary that could reintroduce a state word into the title.
+  assert.match(row, /<div><b>Point system<\/b>/);
+  assert.doesNotMatch(row, /<b>\$\{rewardJourney\.earning\.availableToCustomers\?/);
+});
+
+test('V271 (a) the current-setting line is DERIVED, never a hardcoded 1 or a hardcoded SGD', () => {
+  const derive = section('const growCurrencyV271=', 'const rewardsOverviewIncomplete=');
+  assert.match(derive, /const growCurrencyV271=S\.biz\?\.currency\|\|'SGD';/);
+  // The rate comes from the configured value on the programme, not a literal in the string.
+  assert.match(derive, /Math\.max\(0,Number\(earning\.rate\)\|\|0\)/);
+  assert.match(derive, /\$\{growCurrencyV271\} 1 spent → \$\{growEarnUnitV271\(/);
+  assert.match(derive, /\$\{growCurrencyV271\} \$\{\(Math\.max\(0,Number\(earning\.rate\)\|\|0\)\/100\)\.toFixed\(2\)\} spent → 1 stamp/);
+  assert.match(derive, /const earningOverviewCopy=`Current setting: \$\{growEarnRateTextV271\(rewardJourney\.earning\)\}`;/);
+  // No literal "SGD 1 spent" or "1 point" anywhere in the derivation.
+  assert.doesNotMatch(derive, /SGD 1 spent/);
+  // ...and rewardJourney.earning.label, which hardcodes SGD, is deliberately not reused here.
+  assert.doesNotMatch(derive, /rewardJourney\.earning\.label/);
+});
+
+test('V271 (a) the line pluralises the unit rather than always saying "points"', () => {
+  assert.match(app,
+    /growEarnUnitV271=\(value,unit\)=>`\$\{value\} \$\{Number\(value\)===1\?\(unit==='stamps'\?'stamp':'point'\):\(unit==='stamps'\?'stamps':'points'\)\}`/);
+});
+
+test('V271 (a) exactly ONE status indicator survives on that row', () => {
+  const row = pointSystemRow();
+  const pills = row.match(/programmeStatus\(/g) || [];
+  assert.equal(pills.length, 1, 'the writable row must carry one status pill and no other');
+  // It is the pill, and it still tells the truth in both directions.
+  assert.match(row,
+    /programmeStatus\(rewardJourney\.earning\.availableToCustomers\?'Live':'Paused',rewardJourney\.earning\.availableToCustomers\?'on':'off'\)/);
+  // The status must NOT have moved back into the heading or the copy line.
+  assert.doesNotMatch(row, /Point system[^<]*[Pp]aused/);
+  assert.doesNotMatch(row, /[Pp]aused —/);
+  // The copy line is the derived setting and nothing else.
+  assert.match(row, /<p class="muted small">\$\{esc\(earningOverviewCopy\)\}<\/p>/);
+  // The filter that builds the Ongoing / Pending views reads exactly this pill.
+  assert.match(app, /row\.querySelector\('\.pill:not\(\.grow-pending-pill-v268\)'\)/);
+});
+
+test('V271 (a) the Edit control on the row survives, and still opens the model editor', () => {
+  const row = pointSystemRow();
+  assert.match(row, /<span class="grow-programme-action">Edit →<\/span>/);
+  // Deleting "Change model" strands nothing: this Edit resolves to the SAME destination it did.
+  assert.match(app, /focusTarget:kind==='earning'\?'lm'/);
+  assert.match(app, /if\(focusTarget==='lm'\)return \{kind:'earning'\}/);
+  // ...and that destination is the editor's four-way model toggle.
+  assert.match(app, /data-loyalty-model-v235="\$\{key\}"/);
+  assert.match(app, /\['redeem','tiers','both','stamps'\]\.map\(key=>/);
+});
+
+test('V271 (a) removing the chooser button leaves no empty row behind', () => {
+  assert.match(app, /if\(!showLiveModelsV250\)return '';/);
+  assert.match(app, /const growPointsChooserRowV271=growPointsModeChooserV229\(\{showLiveModelsV250:false\}\);/);
+  assert.match(grow, /growActiveTopicV229&&growPointsChooserRowV271\?`<div class="grow-programme-row points-mode-row-v229">/);
+});
+
+/* ---------------- B. three views ---------------- */
+
+test('V271 (b) all three views exist, resolve from the hash, and keep the old ones working', () => {
+  assert.match(app,
+    /const programmeView=\['overview','history','ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
+  // A view hash must never be mistaken for an engine deep link (that crashed on the surface map).
+  assert.match(app,
+    /const hashParamIsProgrammeView=\['overview','history','ongoing','available','settings'\]\.includes/);
+  // Each view names itself in the heading.
+  assert.match(app, /programmeView==='overview'\?'Overview':programmeView==='history'\?'History'/);
+});
+
+test('V271 (b) the three views are reachable from one strip, each with its own linkable hash', () => {
+  assert.match(app, /\[\['overview','Overview','#\/grow\/overview'\],\['list','List','#\/grow'\],\['history','History','#\/grow\/history'\]\]/);
+  assert.match(app, /data-grow-view-v271="\$\{esc\(href\)\}"/);
+  assert.match(app, /aria-pressed="\$\{growViewTabActiveV271===key\?'true':'false'\}"/);
+  assert.match(app, /document\.querySelectorAll\('\[data-grow-view-v271\]'\)\.forEach\(button=>button\.onclick=\(\)=>\s*\r?\n?\s*nav\(button\.dataset\.growViewV271\)\)/);
+  // Rendered into the page, once.
+  assert.equal(grow.split('${growViewTabsV271}').length - 1, 1);
+  // It reuses the existing sub-module strip, so no new 390px behaviour is invented.
+  assert.match(app, /class="v150-segment section-subtabs-v200" role="group" aria-label="Programme views"/);
+  assert.match(html, /\.section-subtabs-v200\{display:flex;max-width:100%/);
+});
+
+test('V271 (b) Overview and History replace the category list rather than stacking on it', () => {
+  assert.match(app, /const growCategoryViewV271=!\['overview','history'\]\.includes\(programmeView\);/);
+  assert.match(app, /const topicOnV229=key=>!growCategoryViewV271\?false:\(growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229\);/);
+  assert.match(grow, /\$\{programmeView==='overview'\?growOverviewTableV271:''\}/);
+  assert.match(grow, /\$\{programmeView==='history'\?growHistoryTableV271:''\}/);
+});
+
+test('V271 (b) Overview is a columnar table with the four columns the owner named', () => {
+  const table = section('const growOverviewTableV271=', 'const growHistoryTableV271=');
+  assert.match(table, /\['Programme',row=>/);
+  assert.match(table, /\['Type',row=>esc\(row\.type\)\]/);
+  assert.match(table, /\['Started',row=>growDateCellV271\(row\.started\)\]/);
+  assert.match(table, /\['Customers used',row=>growCountCellV271\(row\.customers\)\]/);
+  // Only what is running is on this table.
+  assert.match(app, /const growOverviewRowsV271=growProgrammeEntriesV271\.filter\(entry=>entry\.state==='live'\);/);
+  // House table idiom, so 390px is handled by the existing data-label rules.
+  assert.match(app, /<table class="cui-table" data-responsive="true">/);
+  assert.match(app, /<td data-label="\$\{esc\(column\[0\]\)\}">/);
+  assert.match(html, /\.cui-table\[data-responsive="true"\] td::before\{content:attr\(data-label\)/);
+});
+
+test('V271 (b) an unsourceable cell says so — it is never a zero', () => {
+  assert.match(app,
+    /const growCountCellV271=value=>value==null\s*\r?\n?\s*\?`<span class="muted">\$\{growUsageV271\?'Not tracked':'Not available'\}<\/span>`\s*\r?\n?\s*:esc\(String\(Number\(value\)\)\);/);
+  assert.match(app,
+    /const growDateCellV271=value=>Number\.isFinite\(Date\.parse\(value\|\|''\)\)\s*\r?\n?\s*\?esc\(promotionDateTextV104\(value\)\):'<span class="muted">Not tracked<\/span>';/);
+  // Promotions and gift cards are the two programmes with no usage record at all.
+  const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
+  assert.match(entries, /type:'Promotion',[\s\S]{0,220}?customers:null/);
+  assert.match(entries, /name:'Gift cards',type:'Gift cards',[\s\S]{0,120}?customers:null/);
+  // A failed usage read must not be laundered into zeros anywhere.
+  assert.doesNotMatch(app, /growUsageV271\?\.[a-z_]+\?\.customers\|\|0/);
+  assert.doesNotMatch(app, /customers:Number\([^)]*\)\|\|0/);
+});
+
+test('V271 (b) every Overview number names its source', () => {
+  const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
+  // Point system: first published config version + the server's distinct earner count.
+  assert.match(entries, /started:growFirstPublishedV271/);
+  assert.match(entries, /customers:growUsageV271\?\(growUsageV271\.point_system\?\.customers\?\?null\):null/);
+  // Rewards: the reward's own created_at + its distinct redeemer count.
+  assert.match(entries, /started:reward\.created_at\|\|null/);
+  assert.match(entries, /customers:growRewardUsageV271\.get\(String\(reward\.id\)\)\?\?null/);
+  // Bring-back: the programme's own start date + its distinct grantee count.
+  assert.match(entries, /started:program\.starts_on\|\|program\.created_at\|\|null/);
+  assert.match(entries, /customers:growRetentionUsageV271\.get\(String\(program\.id\)\)\?\?null/);
+  // The reads those columns depend on are actually requested.
+  assert.match(app, /claim_available_until,created_at'\)/);
+  assert.match(app, /sb\.from\('retention_programs'\)\.select\('id,name,active,goal_visits,period_days,starts_on,created_at'\)/);
+  assert.match(app, /sb\.from\('membership_plans'\)\.select\('id,name,active,created_at'\)/);
+  assert.match(app, /sb\.from\('referral_programs'\)\.select\('id,enabled,reward_cents,min_spend_cents,created_at'\)/);
+  assert.match(app, /sb\.rpc\('business_programme_usage_v271',\{p_business:S\.biz\.id\}\)/);
+  assert.match(app, /sb\.from\('firm_config_versions'\)\.select\('published_at'\)[\s\S]{0,180}?order\('published_at',\{ascending:true\}\)/);
+});
+
+test('V271 (b) History is what STOPPED — a paused programme is not filed as expired', () => {
+  assert.match(app,
+    /const growHistoryRowsV271=growProgrammeEntriesV271\.filter\(entry=>entry\.state==='ended'\|\|entry\.state==='retired'\);/);
+  const table = section('const growHistoryTableV271=', '/* One strip, three destinations');
+  assert.match(table, /\['Ran from',row=>growDateCellV271\(row\.started\)\]/);
+  assert.match(table, /\['Ran until',row=>growDateCellV271\(row\.ended\)\]/);
+  assert.match(table, /\['Why it stopped',row=>esc\(row\.state==='ended'\?'Reached its end date':'Retired by you'\)\]/);
+  // The two ways a programme lands here, derived rather than assumed.
+  const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
+  assert.match(entries, /reward\.active===false\?'retired'/);
+  assert.match(entries, /milestone\?\.availability==='ended'\?'ended'/);
+  assert.match(entries, /const ended=Number\.isFinite\(Date\.parse\(promotion\?\.ends_at\|\|''\)\)&&Date\.parse\(promotion\.ends_at\)<=Date\.now\(\)/);
+});
+
+test('V271 (b) the new server read is curated in the PS0 writer registry', () => {
+  const registry = readFileSync(join(root, 'docs', 'design', 'ps0', 'writer-registry.json'), 'utf8');
+  assert.match(registry, /browser\.rpc:app\/app\.js:business_programme_usage_v271/);
+});
+
+test('V271 (b) the pending migration keeps its honesty contract and its grants', () => {
+  assert.match(migration, /^begin;/m);
+  assert.match(migration, /^commit;/m);
+  assert.match(migration, /revoke all on function public\.business_programme_usage_v271\(uuid\) from public, anon;/);
+  assert.match(migration, /grant execute on function public\.business_programme_usage_v271\(uuid\) to authenticated;/);
+  // Read-only, and authorised exactly like the counter already on this screen.
+  assert.match(migration, /stable security definer/);
+  assert.doesNotMatch(migration, /\b(insert into|update |delete from)\b/i);
+  assert.match(migration, /app\.is_salon_owner\(p_business\) or app\.can_module_read\(p_business, 'loyalty'\)/);
+  // Distinct CUSTOMERS, not row counts.
+  assert.match(migration, /count\(distinct client_id\)::int into v_point_customers/);
+  assert.match(migration, /count\(distinct redemption\.client_id\)/);
+  // The two deliberate nulls.
+  assert.match(migration, /'promotions', jsonb_build_object\('customers', null\)/);
+  assert.match(migration, /'gift_cards', jsonb_build_object\('customers', null\)/);
+});
+
+/* ---------------- C. the two delegated decisions ---------------- */
+
+test('V271 (c) nothing is deleted — the retired duplicate is still rendered', () => {
+  // The archived catalogue keeps its card; the fix was the label, not a removal.
+  assert.match(app, /\.\.\.rewardJourney\.archivedRewards\.map\(reward=>\(\{/);
+  assert.match(app, /const archivedRewards=allRewards\.filter\(reward=>reward\?\.active===false\)/);
+});
+
+test('V271 (c) retired and programme-paused rewards carry different, plain-language labels', () => {
+  const cards = section('const rewardCardStatusV250=', 'const rewardCardGridV250=');
+  assert.match(cards, /milestone\.availability==='programme_paused'\?\['Paused with programme','off'\]/);
+  assert.match(cards, /status:'Retired',tone:'off'/);
+  // A genuinely live reward still reads as live (V180 renders 'Live' as the house word 'Ongoing').
+  assert.match(cards, /milestone\.availableToCustomers\?\['Live','on'\]/);
+  assert.match(app, /const PROGRAMME_STATUS_LABEL_V180=\{Live:'Ongoing'\}/);
+  // The two labels are genuinely different strings, so neither can be mistaken for the other.
+  assert.notEqual('Retired', 'Paused with programme');
+});
+
+test('V271 (c) the editor list says the same two things, and disambiguates same-named rewards', () => {
+  const editor = section('const rewardStatusV271=', 'const rewardRows=(label)=>');
+  assert.match(editor, /r\?\.active===false\?\{label:'Retired',tone:'off'\}/);
+  assert.match(editor, /:p\?\.active===false\?\{label:'Paused with programme',tone:'off'\}/);
+  assert.match(editor, /:rewardBoundary\(r\)/);
+  // The duplicate-name case the owner circled: each says when it was added.
+  assert.match(editor, /const rewardNameCountsV271=\(rewards\|\|\[\]\)\.reduce\(/);
+  assert.match(editor, /rewardNameCountsV271\[rewardLabel\(r\)\.toLowerCase\(\)\]>1/);
+  assert.match(editor, /r\?\.created_at\?`Added \$\{walletDate\(r\.created_at,true\)\}`:'Added date not recorded'/);
+  assert.match(editor, /Retired — customers cannot see or claim this/);
+  // The row actually uses them.
+  assert.match(app, /rewards\.map\(r=>\{const state=rewardStatusV271\(r\);/);
+  assert.match(app, /\$\{rewardIdentityLineV271\(r\)\}/);
+});

@@ -25,7 +25,10 @@ test('Grow starts with one task and one complete single-column programme overvie
      this line protects is still the fallback and is asserted as such. */
   /* V245: the owner asked "Pending setup — where is it?", so the view names now match the
      nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
-  assert.match(grow,/id="rewardJourneyTitle">\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\):\(programmeView==='ongoing'\?'Ongoing programmes'/);
+  /* V271 put the owner's two new views (Overview, History) ahead of the older three in the same
+     fallback chain; the tab-driven heading this line protects is unchanged in kind. */
+  assert.match(grow,/id="rewardJourneyTitle">\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\):\(programmeView==='overview'\?'Overview'/);
+  assert.match(grow,/programmeView==='ongoing'\?'Ongoing programmes'/);
   assert.match(grow,/class="grow-programme-list"/);
   assert.match(app,/\.grow-programme-list\{display:grid;grid-template-columns:1fr/);
   assert.doesNotMatch(grow,/class="rewards-overview-grid"/,
@@ -49,7 +52,8 @@ test('overview reads enough server state to label programme status without inven
   assert.match(snapshot,/referral_programs/);
   assert.match(snapshot,/membership_plans/);
   assert.match(snapshot,/business_get_checkout_preferences_v102/);
-  assert.match(snapshot,/retention_programs'\)\.select\('id,name,active,goal_visits,period_days,starts_on'/);
+  // V271 added created_at so Programmes History can say when a bring-back reward ran.
+  assert.match(snapshot,/retention_programs'\)\.select\('id,name,active,goal_visits,period_days,starts_on,created_at'/);
   assert.match(snapshot,/overviewErrors:[\s\S]*referrals:[\s\S]*memberships:[\s\S]*giftcards:/);
   assert.match(grow,/snapshot\.retention\.length\?snapshot\.retention\.map/);
   assert.match(grow,/const retentionOverviewState=program=>/);

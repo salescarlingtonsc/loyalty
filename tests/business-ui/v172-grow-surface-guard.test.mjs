@@ -22,7 +22,9 @@ test('mountGrowSurface refuses unknown surfaces instead of crashing', () => {
 });
 
 test('programme-view tab hashes never mount an engine surface', () => {
-  assert.match(app, /hashParamIsProgrammeView=\['ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/);
+  // V271 added 'overview' and 'history'; they are views of this page, so they must be in the same
+  // guard — a view hash that reached the surface dictionary is what crashed this page once.
+  assert.match(app, /hashParamIsProgrammeView=\['overview','history','ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/);
   assert.match(app, /if\(!hashParamIsProgrammeView&&\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|routedSurface==='studio'\)\)/);
 });
 

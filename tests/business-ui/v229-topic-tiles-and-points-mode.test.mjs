@@ -49,7 +49,9 @@ test('V229 reward milestones live inside Point system, never on the tile overvie
   /* V235: Stamp card is a third VIEW of the point engine, so it drills into the points
      section rather than duplicating it — the mapping is what keeps the tile from dead-ending. */
   assert.match(app, /const growTopicSectionV235=growActiveTopicV229\?\.key==='stamps'\?'points':\(growActiveTopicV229\?\.key\|\|null\);/);
-  assert.match(app, /const topicOnV229=key=>growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229;/);
+  /* V271 wrapped this with the Overview/History guard — those two views replace the category list
+     rather than sitting above it. The drill-in vs tiles behaviour it protects is unchanged. */
+  assert.match(app, /const topicOnV229=key=>!growCategoryViewV271\?false:\(growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229\);/);
 });
 
 /* V240 (owner, Chagee): the exclusivity this test was written for is SUPERSEDED. Points and

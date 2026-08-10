@@ -48,11 +48,13 @@ test('V250 (a) Programmes is one flat nav group and both sub-rows are gone', () 
 });
 
 test('V250 (b) the filtered hashes still resolve and the list keeps both V244 sections', () => {
-  assert.match(app, /const programmeView=\['ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
-  // V245 heading logic is untouched, so a deep link still names its own view.
+  // V271 added the owner's two new views (overview, history). The three V250-era hashes must
+  // still resolve — deleting a destination was never part of adding one.
+  assert.match(app, /const programmeView=\['overview','history','ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
+  // V245 heading logic still names each view.
   assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes':programmeView==='available'\?'Pending setup':'List'/);
-  // ...and neither hash is mistaken for an engine deep link.
-  assert.match(app, /const hashParamIsProgrammeView=\['ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/);
+  // ...and no view hash is mistaken for an engine deep link.
+  assert.match(app, /const hashParamIsProgrammeView=\['overview','history','ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/);
   // The SECTIONS the owner kept are still what #/grow opens with.
   assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
   assert.match(app, /growTileSectionV244\('Pending setup'/);
@@ -72,11 +74,17 @@ test('V250 (c) the flat link stays active across every route that resolves to Pr
 test('V250 (d) the status-chip column is gone from the Points redemption view', () => {
   assert.match(app, /const growPointsModeChooserV229=\(\{showLiveModelsV250=true\}=\{\}\)=>\{/);
   // Points redemption asks for the chooser WITHOUT the chips; Tiered membership still shows them.
-  assert.match(grow, /points-mode-row-v229">\$\{growPointsModeChooserV229\(\{showLiveModelsV250:false\}\)\}/);
+  assert.match(grow, /points-mode-row-v229">\$\{growPointsChooserRowV271\}/);
   assert.match(grow, /points-mode-row-v229">\$\{growPointsModeChooserV229\(\)\}/);
-  assert.match(app, /\$\{showLiveModelsV250\?`<span class="loyalty-live-models-v235">/);
-  // "Change model" is the only way to switch, so it survives the chip removal.
-  assert.match(app, /\$\{locked\?'':editorAction\('rewards','Change model','lm'\)\}/);
+  // V271: the chips are now suppressed by an early return rather than an inline ternary, because
+  // the same flag also decides whether the container renders at all.
+  assert.match(app, /if\(!showLiveModelsV250\)return '';/);
+  // V271 (owner struck "Change model" and wrote "delete"). It is gone. It was NOT the only way to
+  // switch: it opened surface 'rewards' focus 'lm', which is the exact destination the Point
+  // system row's own Edit opens, and the four-way toggle lives inside that editor.
+  assert.doesNotMatch(app, /'Change model'/);
+  assert.match(app, /data-loyalty-model-v235="\$\{key\}"/);
+  assert.match(app, /focusTarget:kind==='earning'\?'lm'/);
 });
 
 test('V250 (e) rewards render as cards with a name, a point cost and their own status pill', () => {
