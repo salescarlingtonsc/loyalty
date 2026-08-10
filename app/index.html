@@ -1236,6 +1236,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-act-note-v252 .btn{margin-top:3px}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
+/* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
+   raw UUID. The reference is a button only when its counterpart row is on screen; otherwise it
+   renders as plain text with no affordance, because there is nowhere to go. */
+.c360-act-sort-v267{display:inline-flex;align-items:center;gap:5px;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.c360-act-caret-v267{opacity:.6;font-size:.8em}
+.c360-act-ref-v267{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;overflow-wrap:anywhere}
+button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.c360-act-flash-v267{animation:c360ActFlashV267 2.2s ease-out}
+@keyframes c360ActFlashV267{0%,55%{background:#FFF3D6}100%{background:transparent}}
+@media(prefers-reduced-motion:reduce){.c360-act-flash-v267{animation:none;outline:2px solid var(--coral);outline-offset:-2px}}
+.c360-activity-filters-v267{align-items:flex-end;row-gap:10px}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}

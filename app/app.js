@@ -10841,9 +10841,24 @@ async function clientDetail(id){
       :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
     </div>`:'';
   const activitySources=[canReadSales&&'sales and visits',canReadAppointments&&'appointments',canReadLoyalty&&'reward redemptions',canReadRetention&&'retention rewards',canReadMemberships&&'memberships',canReadPackages&&'packages'].filter(Boolean);
+  /* V267: the Type and Team member menus are built from the rows THIS customer actually has,
+     through the same activityTypeOfV267 the cells use, so the menu can never offer a type the
+     table cannot show or drift from the renderer. */
+  const activityTypeOptionsV267=[...new Set(history.map(activityTypeOfV267))].sort();
+  const activityStaffOptionsV267=[...new Set(history.map(h=>h.staff).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const activityHasUnassignedV267=history.some(h=>!h.staff);
+  const activityFiltersV267=`<div class="v150-filterbar c360-activity-filters-v267" role="group" aria-label="Filter activity history" style="margin-top:12px">
+    <div style="flex:1 1 160px;min-width:min(100%,160px)"><label for="actType">Type</label><select id="actType"><option value="">All types</option>${activityTypeOptionsV267.map(type=>`<option value="${esc(type)}">${esc(type)}</option>`).join('')}</select></div>
+    <div style="flex:1 1 175px;min-width:min(100%,175px)"><label for="actStaff">Team member</label><select id="actStaff"><option value="">All team members</option>${activityStaffOptionsV267.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('')}${activityHasUnassignedV267?`<option value="${ACTIVITY_STAFF_NONE_V267}">No team member</option>`:''}</select></div>
+    <div style="flex:1 1 150px;min-width:min(100%,150px)"><label for="actFrom">From</label><input type="date" id="actFrom"></div>
+    <div style="flex:1 1 150px;min-width:min(100%,150px)"><label for="actTo">To</label><input type="date" id="actTo"></div>
+    <div style="flex:1 1 195px;min-width:min(100%,195px)"><label for="actSort">Sort by</label><select id="actSort">${ACTIVITY_SORTS_V267.map(option=>`<option value="${option.key}"${option.key===ACTIVITY_SORT_DEFAULT_V267?' selected':''}>${esc(option.label)}</option>`).join('')}</select></div>
+    <button class="btn ghost sm" id="actClear">Clear filters</button>
+  </div>`;
   const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b>
+    ${activityFiltersV267}
     <div id="histBody">${renderHistPage(history,histShown)}</div>
-    ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
+    <div id="histMoreWrap" style="text-align:center;margin-top:10px${history.length>histShown?'':';display:none'}"><button class="btn ghost sm" id="histMore">Show earlier</button></div>
     </div>`:'';
   const profileScopeLabel=isProfileAdmin
     ?'complete business-wide access'
@@ -11104,15 +11119,157 @@ async function clientDetail(id){
     if(error){consentButton.disabled=false;return fail(error)}
     toast(to?'Consent recorded':'Consent withdrawn — recorded');clientDetail(id);
   };
-  const histMore=$('histMore');
-  if(histMore) histMore.onclick=()=>{
-    histShown+=50;
+  /* V267: paging, filtering and sorting all go through ONE redraw, so the Show earlier control
+     and the table can never disagree about how many rows the current filter actually left. */
+  const redrawActivityV267=()=>{
+    const body=$('histBody');
+    if(!body)return;
     $('histBody').innerHTML=renderHistPage(history,histShown);
+    const moreWrap=$('histMoreWrap');
+    if(moreWrap)moreWrap.style.display=activityFilteredRowsV267(history).length>histShown?'':'none';
     bindReversalButtons(()=>clientDetail(id));
-    if(histShown>=history.length) histMore.parentElement.style.display='none';
+    bindActivityRowControlsV267(redrawActivityV267);
   };
+  bindActivityRowControlsV267(redrawActivityV267);
+  const histMore=$('histMore');
+  if(histMore) histMore.onclick=()=>{histShown+=50;redrawActivityV267()};
+  /* Changing a filter returns to the first page: keeping an offset from the previous filter
+     would show an owner the middle of a result set and hide its first rows. */
+  ['actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
+    const control=$(controlId);
+    if(control)control.onchange=()=>{histShown=50;redrawActivityV267()};
+  });
+  const clearActivity=$('actClear');
+  if(clearActivity)clearActivity.onclick=()=>{clearActivityFiltersV267();histShown=50;redrawActivityV267()};
   if($('c360ExpiryRetry'))$('c360ExpiryRetry').onclick=()=>clientDetail(id);
   bindReversalButtons(()=>clientDetail(id));
+}
+/* V267 (owner, circling three raw UUIDs in Activity history: "what is this?", and separately
+   "i want a drop down filter i can filter what i want to see" with sort arrows drawn beside
+   AMOUNT and STAFF). These helpers are the SINGLE source for what a row's Type is, what money
+   it carries and how it is described, so the filter menus, the sort comparators and the
+   rendered cells cannot drift apart as new row kinds are added to the feed. */
+const ACTIVITY_STAFF_NONE_V267='__no_staff__';
+const ACTIVITY_SORT_DEFAULT_V267='date_desc';
+const ACTIVITY_SORTS_V267=[
+  {key:'date_desc',label:'Date — newest first'},
+  {key:'date_asc',label:'Date — oldest first'},
+  {key:'amount_desc',label:'Amount — highest first'},
+  {key:'amount_asc',label:'Amount — lowest first'},
+  {key:'staff_asc',label:'Team member — A to Z'},
+  {key:'staff_desc',label:'Team member — Z to A'}
+];
+function activityTypeOfV267(h){
+  if(!h)return 'Appointment';
+  if(h.kind==='sale')return h.is_reversal?'Reversal':'Sale';
+  if(h.kind==='redemption')return 'Reward';
+  if(h.kind==='grant')return 'Retention';
+  if(h.kind==='membership')return 'Membership';
+  if(h.kind==='package')return 'Package';
+  return 'Appointment';
+}
+/* Returns cents for a row that really carries money, and null for one that does not. Null is
+   not zero: an appointment with no money must never rank alongside a genuine SGD 0.00 sale. */
+function activityAmountCentsV267(h){
+  if(!h)return null;
+  if(h.kind==='sale')return Number((h.amount??h.amount_cents)??0);
+  if(h.kind==='redemption')return h.credit_cents?Number(h.credit_cents):null;
+  if(h.kind==='grant'){
+    if(campaignEntitlementDisplayV99(h).pending)return null;
+    return h.fulfillment_kind==='credit'?Number(h.reward_value||0):null;
+  }
+  return null;
+}
+/* Singapore time, like every other date on this surface. The end bound covers the whole day:
+   sgIso() only carries minutes, so an inclusive "to" built from it would drop a 23:59:30 sale
+   from a range that ends on that sale's own date. */
+function activityRangeBoundV267(value,{end=false}={}){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||'')))return null;
+  const at=Date.parse(end?`${value}T23:59:59.999+08:00`:sgIso(`${value}T00:00`));
+  return Number.isFinite(at)?at:null;
+}
+function activityWhenTextV267(iso){
+  if(!iso)return '';
+  const at=new Date(iso);
+  if(Number.isNaN(at.getTime()))return '';
+  return new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',
+    hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(at);
+}
+/* The human description of a sale row, used both in its own ITEM cell and when another row has
+   to refer to it. Never an id: the owner cannot act on a UUID. */
+function activityItemTextV267(h){
+  const note=String((h&&h.note)||'').trim();
+  const text=note||String((h&&h.saleKind)||'sale').replace(/_/g,' ');
+  return text.length>64?text.slice(0,61)+'…':text;
+}
+function activityFilterStateV267(){
+  const read=controlId=>{const el=$(controlId);return el?String(el.value||''):''};
+  const sort=read('actSort');
+  return {type:read('actType'),staff:read('actStaff'),from:read('actFrom'),to:read('actTo'),
+    sort:ACTIVITY_SORTS_V267.some(option=>option.key===sort)?sort:ACTIVITY_SORT_DEFAULT_V267};
+}
+/* Client-side over the COMPLETE feed. Every reader behind this timeline pages the whole
+   history with fetchAllRows before the six sources are merged, so nothing is left on the
+   server for a filter to miss; `histShown` only controls how much of the result is painted. */
+function activityFilteredRowsV267(history,state){
+  const s=state||activityFilterStateV267();
+  const from=activityRangeBoundV267(s.from),to=activityRangeBoundV267(s.to,{end:true});
+  const kept=(history||[]).filter(h=>{
+    if(s.type&&activityTypeOfV267(h)!==s.type)return false;
+    if(s.staff===ACTIVITY_STAFF_NONE_V267){if(h.staff)return false}
+    else if(s.staff&&h.staff!==s.staff)return false;
+    if(from!=null||to!=null){
+      const at=Date.parse(h.t||'');
+      if(!Number.isFinite(at))return false;
+      if(from!=null&&at<from)return false;
+      if(to!=null&&at>to)return false;
+    }
+    return true;
+  });
+  const direction=s.sort.endsWith('_asc')?1:-1;
+  const key=s.sort.replace(/_(asc|desc)$/,'');
+  return kept.map((row,index)=>({row,index})).sort((a,b)=>{
+    let comparison=0;
+    if(key==='amount'){
+      const av=activityAmountCentsV267(a.row),bv=activityAmountCentsV267(b.row);
+      /* Rows with no money sink to the bottom in BOTH directions rather than being ranked
+         as if they were zero-value transactions. */
+      if(av==null&&bv!=null)return 1;
+      if(bv==null&&av!=null)return -1;
+      comparison=(av==null&&bv==null)?0:av-bv;
+    }else if(key==='staff'){
+      const av=a.row.staff||'',bv=b.row.staff||'';
+      if(!av&&bv)return 1;
+      if(!bv&&av)return -1;
+      comparison=av.localeCompare(bv);
+    }else comparison=String(a.row.t||'').localeCompare(String(b.row.t||''));
+    return comparison?comparison*direction:a.index-b.index;
+  }).map(entry=>entry.row);
+}
+function clearActivityFiltersV267(){
+  ['actType','actStaff','actFrom','actTo'].forEach(controlId=>{const el=$(controlId);if(el)el.value=''});
+  const sort=$('actSort');
+  if(sort)sort.value=ACTIVITY_SORT_DEFAULT_V267;
+}
+/* Controls that live INSIDE the redrawn table body, so they are rewired on every redraw. */
+function bindActivityRowControlsV267(redraw){
+  document.querySelectorAll('[data-act-sort]').forEach(button=>{
+    button.onclick=()=>{const sort=$('actSort');if(sort)sort.value=button.dataset.actSort;redraw()};
+  });
+  /* A reference is only ever rendered as a button when its counterpart row is actually
+     painted, so this can never offer navigation that goes nowhere. */
+  document.querySelectorAll('[data-act-jump]').forEach(button=>{
+    button.onclick=()=>{
+      const target=document.getElementById(button.dataset.actJump);
+      if(!target)return;
+      target.scrollIntoView({block:'center',behavior:'smooth'});
+      target.classList.add('c360-act-flash-v267');
+      target.focus({preventScroll:true});
+      setTimeout(()=>{if(target.isConnected)target.classList.remove('c360-act-flash-v267')},2200);
+    };
+  });
+  const clearFromEmpty=$('actClearEmpty');
+  if(clearFromEmpty)clearFromEmpty.onclick=()=>{clearActivityFiltersV267();redraw()};
 }
 /* Renders the first n entries of the unified Customer 360 timeline.
    V252 (owner): the stacked pictogram list is now a TABLE — DATE / TYPE / ITEM / AMOUNT / STAFF.
@@ -11125,19 +11282,55 @@ async function clientDetail(id){
    its data-reverse-kind/data-reverse-id hooks so bindReversalButtons still works unchanged.
    The wrap scrolls horizontally on a narrow phone rather than breaking the page. */
 function renderHistPage(history,n){
-  const rows=history.slice(0,n);
-  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
+  /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
+     survived. Doing it the other way round would let a filter report "nothing" while matching
+     rows sat one page below. An empty result is two different facts and says which. */
+  if(!history.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
+  const stateV267=activityFilterStateV267();
+  const filteredV267=activityFilteredRowsV267(history,stateV267);
+  if(!filteredV267.length) return CUI.emptyState({iconName:'search',title:'No activity matches these filters',
+    body:'This customer does have history — the filters above are hiding all of it. Clear them to see the full record.',
+    actionHtml:'<button class="btn ghost sm" id="actClearEmpty">Clear filters</button>'});
+  const rows=filteredV267.slice(0,n);
+  /* The counterpart of a reversal is looked up across the WHOLE feed, not just this page, so a
+     reference can be described even when its partner row is not currently painted. */
+  const saleRowsByIdV267=new Map();
+  history.forEach(row=>{if(row.kind==='sale'&&row.id)saleRowsByIdV267.set(String(row.id),row)});
+  const paintedRowIdsV267=new Set(rows.filter(row=>row.kind==='sale'&&row.id).map(row=>`c360-act-sale-${row.id}`));
+  /* V267 (owner circled three raw UUIDs: "what is this?"). A UUID is not something a shop owner
+     can act on. The reference now describes the counterpart row in its own terms — what it was
+     and when — and becomes a jump only when that row is on screen. When the counterpart cannot
+     be resolved at all (an older row outside this customer's visible sales, or one hidden from
+     this role by branch scope) it says so plainly rather than falling back to the id. The
+     audit wording is untouched: this is still unmistakably a reversal. */
+  const counterpartRefV267=(token,tone,counterpartId,missingText)=>{
+    const other=counterpartId?saleRowsByIdV267.get(String(counterpartId)):null;
+    const description=other
+      ?`${esc(activityItemTextV267(other))} · ${esc(activityWhenTextV267(other.t))}`
+      :esc(missingText);
+    const anchor=other?`c360-act-sale-${other.id}`:'';
+    const body=anchor&&paintedRowIdsV267.has(anchor)
+      ?`<button type="button" class="c360-act-ref-v267" data-act-jump="${anchor}">${description}</button>`
+      :`<span class="c360-act-ref-v267">${description}</span>`;
+    return `<span class="pill ${tone}"><span data-workspace-i18n>${token}</span> ${body}</span>`;
+  };
+  const sortHeadV267=(key,label)=>{
+    const active=stateV267.sort.startsWith(key+'_');
+    const ascending=active&&stateV267.sort.endsWith('_asc');
+    const next=active&&!ascending?`${key}_asc`:`${key}_desc`;
+    return `<th aria-sort="${active?(ascending?'ascending':'descending'):'none'}"><button type="button" class="c360-act-sort-v267" data-act-sort="${next}" aria-label="Sort by ${label}, ${next.endsWith('_asc')?'ascending':'descending'}">${label}<span class="c360-act-caret-v267" aria-hidden="true">${active?(ascending?'▲':'▼'):'↕'}</span></button></th>`;
+  };
   const DASH_V252='—';
   const cellsV252=h=>{
     if(h.kind==='sale'){
       const isRev=!!h.is_reversal;
-      const relation=isRev?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(h.original_sale_id||'')}</span></span>`
-        :h.reversal_sale_id?`<span class="pill off"><span data-workspace-i18n>reversed →</span> <span data-merchant-content>${esc(h.reversal_sale_id)}</span></span>`:'';
+      const relation=isRev?counterpartRefV267('reversal of','no',h.original_sale_id,'an earlier sale that is not in this history')
+        :h.reversal_sale_id?counterpartRefV267('reversed →','off',h.reversal_sale_id,'a correction that is not in this history'):'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      const amount=Number((h.amount??h.amount_cents)??0);
+      const amount=Number(activityAmountCentsV267(h)||0);
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
-        type:isRev?'Reversal':'Sale',
+        type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
         notes:[relation,
           h.note?esc(h.note):'',
@@ -11150,10 +11343,11 @@ function renderHistPage(history,n){
       const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      return {tone:'reward',icon:'redeem',type:'Reward',
+      const redemptionAmountV267=activityAmountCentsV267(h);
+      return {tone:'reward',icon:'redeem',type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc(h.reward_name||'Loyalty reward')}</span>`,
         notes:[relation,`${Number(h.points_spent||0)} points spent`,action],
-        amount:h.credit_cents?money(Number(h.credit_cents)):'',staff:''};
+        amount:redemptionAmountV267!=null?money(redemptionAmountV267):'',staff:''};
     }
     if(h.kind==='grant'){
       const campaign=campaignEntitlementDisplayV99(h);
@@ -11189,10 +11383,10 @@ function renderHistPage(history,n){
       notes:[`<span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span>`],
       amount:'',staff:h.staff?esc(h.staff):''};
   };
-  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Amount</th><th>Staff</th></tr></thead><tbody>${rows.map(h=>{
+  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr>${sortHeadV267('date','Date')}<th>Type</th><th>Item</th>${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}</tr></thead><tbody>${rows.map(h=>{
     const cell=cellsV252(h);
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
-    return `<tr>
+    return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
       <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
       <td data-label="Item">${cell.item}${notes}</td>
