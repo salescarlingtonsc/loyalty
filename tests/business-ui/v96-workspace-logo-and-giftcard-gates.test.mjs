@@ -54,7 +54,7 @@ test('Workspace & brand provides owner preview and replace controls wired only t
      Customer Interface module, on the owner's instruction. Same single markup definition and same
      single loader — so the host and the call are asserted where they now live. */
   const panel=section('function workspaceBrandPanelHtmlV259(){','function wireWorkspaceBrandV259(){');
-  const wiring=section('function wireWorkspaceBrandV259(){','function settingsMovedToCustomerInterfaceCardV243(');
+  const wiring=section('function wireWorkspaceBrandV259(){','/* The public page a customer meets before joining.');
   const logo=section('async function loadWorkspaceLogoEditorV96(){','async function loadCustomerProgrammePresentationEditorV95(){');
   assert.match(panel,/id="workspaceLogoEditorV96"/);
   assert.match(wiring,/loadWorkspaceLogoEditorV96\(\)/);

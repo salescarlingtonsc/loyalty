@@ -555,7 +555,7 @@ let loyaltyStatusDraftV235=null;
    birthday / bring-back / referral editors. Module-level because those editors live in
    different page functions from the Programmes overview that sets it. */
 let pendingProgrammeSuggestV172=null;
-let settingsActiveTab='workspace';
+let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
 let shellRenderEpoch=0;
@@ -894,7 +894,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';growTopicV229='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -8003,7 +8003,7 @@ function staffMobileActionsHtml(page){
     <div class="mobile-action-sheet">
       <div class="mobile-workspace-summary" aria-label="Current workspace"><b data-merchant-content>${esc(S.biz?.name||BRAND.productName)}</b><span class="muted" data-merchant-content>${esc(INDUSTRIES[S.biz?.industry]?.label||S.biz?.industry||'Workspace')}</span><span class="muted">Signed in as ${esc(S.user?.email||'Email unavailable')}</span></div>
       <label class="mobile-language-label" for="workspaceLanguageMobileV151">Language</label>${workspaceLanguagePickerV97('workspaceLanguageMobileV151')}
-      <a class="btn ghost sm" href="#/settings?tab=workspace">Workspace settings</a>
+      <a class="btn ghost sm" href="#/settings">Workspace settings</a>
     </div>
     <nav class="nav" aria-label="More workspace modules">${navHtml(page,'mobile-nav')}</nav></div></details>`);
   return `<div class="staff-mobile-dock" style="--staff-mobile-count:${items.length}" aria-label="Staff quick actions">${items.join('')}</div>`;
@@ -20357,7 +20357,21 @@ async function appointmentsPage(){
   });
   const staffOpts=(sel,id)=>`${canSeeAll?`<option value="all" ${sel==='all'?'selected':''}>Everyone</option>`:''}`+
     branchStaff(id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(staffLabel(s))}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
-  const apptHeaderActions=canWrite?`<button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button>`:'';
+  /* V269 (owner: "need to add some buttons to see appointment requests by customer, when customer
+     book for appointment, need some place to accept / decline"). The place to accept or decline
+     already existed — Bookings → Booking requests, backed by staff_decide_booking_request_v73 —
+     but nothing on the calendar said requests were waiting, so the person watching the calendar
+     never learned there was anything to answer. This is a signpost, not a second decision surface:
+     one counted button that hands off to the one page that owns the decision, so there is still
+     exactly one accept path and one decline path.
+     Read access to Bookings is the gate, because seeing that N requests are waiting is a read;
+     whether this person may actually decide them is enforced on the Bookings page and again in
+     the RPC (confirm needs appointments write, decline needs bookings write). */
+  const canSeeBookingRequestsV269=canReadModule('bookings');
+  const bookingRequestsActionV269=canSeeBookingRequestsV269
+    ?`<button class="btn ghost" type="button" id="apptBookingRequestsV269" aria-label="Booking requests">${CUI.icon('bookings',{size:18})} Booking requests<span class="pill new" id="apptBookingRequestsCountV269" hidden></span></button>`
+    :'';
+  const apptHeaderActions=`${bookingRequestsActionV269}${canWrite?`<button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button>`:''}`;
   routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'',iconName:'appointments',actions:apptHeaderActions,canWrite,moduleLabel:'Appointment scheduling'})}</div>
     ${!visibleBranches.length?CUI.card({title:'No appointment access',description:'This account has no active branch where Appointments is enabled.'}):`
     <div class="appointment-layout" id="appointmentLayout">
@@ -20396,6 +20410,34 @@ async function appointmentsPage(){
         <div id="calendarSelection"></div><div id="alist" style="margin-top:12px"><p class="muted small">Loading calendar…</p></div>
       </section>
     </div>`}`;
+  /* V269: the count is fetched after paint so a slow or failing count never delays the calendar,
+     which is what this page is actually for. The button is always usable — an unreadable count
+     degrades to "no number", never to a missing way in, and never to a fabricated zero. */
+  const bookingRequestsButtonV269=$('apptBookingRequestsV269');
+  if(bookingRequestsButtonV269){
+    bookingRequestsButtonV269.onclick=()=>nav('#/bookings');
+    (async()=>{
+      const {count,error}=await sb.from('booking_requests').select('id',{count:'exact',head:true})
+        .eq('business_id',S.biz.id).in('status',[...STAFF_BOOKING_DECISION_STATUSES]);
+      if(!isCurrent())return;
+      const badge=$('apptBookingRequestsCountV269');
+      if(!badge?.isConnected)return;
+      if(error){
+        bookingRequestsButtonV269.title='Waiting requests could not be counted. Open Bookings to see them.';
+        bookingRequestsButtonV269.setAttribute('aria-label','Booking requests — count unavailable');
+        return;
+      }
+      const waiting=Number(count||0);
+      if(!waiting){
+        bookingRequestsButtonV269.title='No booking requests are waiting.';
+        bookingRequestsButtonV269.setAttribute('aria-label','Booking requests — none waiting');
+        return;
+      }
+      badge.textContent=String(waiting);badge.hidden=false;
+      bookingRequestsButtonV269.title=`${waiting} booking ${waiting===1?'request is':'requests are'} waiting for a decision.`;
+      bookingRequestsButtonV269.setAttribute('aria-label',`Booking requests — ${waiting} waiting`);
+    })();
+  }
   if(!visibleBranches.length)return;
   const appointmentLayout=$('appointmentLayout'),appointmentFormCard=$('appointmentFormCard');
   function closeNewAppointmentForm(){
@@ -23807,12 +23849,17 @@ async function loadCustomerProgrammePresentationEditorV95(){
   };
 }
 
+/* V269 (owner, the first three Settings tabs circled: "delete these from settings, all put inside
+   under Customer Interface"). V243/V259 moved the panels but left labelled pointer tabs behind so
+   an owner who knew the old address would not find a hole. The owner has now read those pointers
+   and asked for them to go, so the tabs, the panels and the pointer card are all deleted. A deep
+   link to one of them is redirected to the surface that owns it instead of opening a blank tab. */
+const SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269=['workspace','programme','fields','data'];
 async function settingsPage(){
   const requestedSettingsTab=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('tab');
-  /* V209: 'data' was the Import & sign-up tab, now folded into 'fields' (Customer interface).
-     Old ?tab=data links still land somewhere sensible rather than on a dead tab. */
-  if(requestedSettingsTab==='data')requestedSettingsTab='fields';
-  if(['workspace','programme','modules','catalogue','team','fields'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
+  if(SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269.includes(requestedSettingsTab))return nav('#/customer-interface');
+  if(['modules','catalogue','team'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
+  if(!['modules','catalogue','team'].includes(settingsActiveTab))settingsActiveTab='modules';
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
   /* V243: the customer field definitions moved out with the Customer interface panel — this page
      no longer renders them, so it no longer reads them. */
@@ -23824,34 +23871,13 @@ async function settingsPage(){
     .map(k=>MODULES[k]?.[1]||k).join(', ');
   M().innerHTML=`<div class="settings-page"><div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
-      <button type="button" class="settings-tab" role="tab" id="settab-workspace" aria-controls="setpanel-workspace" aria-selected="true" data-settab="workspace">Workspace &amp; brand</button>
-      ${S.myRole==='owner'?'<button type="button" class="settings-tab" role="tab" id="settab-programme" aria-controls="setpanel-programme" aria-selected="false" tabindex="-1" data-settab="programme">Customer programme</button>':''}
-      <!-- V209 (owner annotations): "Import & sign-up" struck out, and an arrow from "Customer
-           fields & privacy" reading "should be here under new tab Customer Interface". Everything
-           the CUSTOMER meets — the sign-up QR they scan and the fields they are asked for — now
-           sits behind one tab named for them, instead of being filed under an operations word
-           ("Import") that describes what the owner does rather than what the customer sees.
-           V228 (owner drew arrows from Workspace & brand, Customer programme and Customer
-           interface onto one spot, captioned "Put new tab here · Customer Interface"): it now
-           sits BESIDE the other customer-facing tabs instead of last, after the operations ones.
-           Everything the customer meets is reachable without crossing Modules, Checkout and
-           Team to get there.
-           V243: both customer-facing tabs now live in the Customer Interface module in the main
-           menu. The LABELS stay here on purpose — an owner who learned where these live must not
-           find the tab simply gone — but each panel is a one-line pointer, never a second copy of
-           the form. -->
-      <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer interface</button>
-      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
+      <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
+           They are sections of the Customer Interface module now; see customerInterfacePageV243. -->
+      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="true" data-settab="modules">Modules &amp; plan</button>
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
     </div>
-    <section class="settings-panel" id="setpanel-workspace" role="tabpanel" aria-labelledby="settab-workspace" tabindex="-1">
-      ${settingsMovedToCustomerInterfaceCardV243('Workspace &amp; brand')}
-    </section>
-    ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-programme" role="tabpanel" aria-labelledby="settab-programme" tabindex="-1" hidden>
-      ${settingsMovedToCustomerInterfaceCardV243('Customer programme')}
-    </section>`:''}
-    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1" hidden><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
+    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1"><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
       <p class="muted small" style="margin:6px 0 10px">Your sector sets a sensible default — a cafe starts with products only, a massage shop with services only, a salon with both. Change it here if your shop is different.</p>
       <label class="row sales-mix-row"><input type="checkbox" id="sellsServices" style="width:auto" ${(S.biz.enabled_modules||[]).includes('services')?'checked':''}> <span><b>Services</b><br><span class="muted small">Bookable treatments, classes or appointments.</span></span></label>
       <label class="row sales-mix-row"><input type="checkbox" id="sellsProducts" style="width:auto" ${(S.biz.enabled_modules||[]).includes('inventory')?'checked':''}> <span><b>Products</b><br><span class="muted small">Physical items you stock and sell.</span></span></label>
@@ -23877,10 +23903,7 @@ async function settingsPage(){
       <p class="muted small" style="margin:4px 0 8px">Reusable module sets — save one from a staff member's "Modules" panel below, then apply it to others. Example: Staff A → Dashboard + Customers. Staff B → Inventory only.</p>
       <div id="tplList">${CUI.skeletonGrid({cards:1,lines:3})}</div>
     </div>
-</section>
-    <section class="settings-panel" id="setpanel-fields" role="tabpanel" aria-labelledby="settab-fields" tabindex="-1" hidden>
-    ${settingsMovedToCustomerInterfaceCardV243('Customer interface')}
-    </section></div>`;
+</section></div>`;
   M().querySelector('.settings-page')?.setAttribute('data-workspace-i18n','');
   /* Tabbed sections (ARIA tablist): every field stays in the DOM at once — only the active
      panel is shown — so each Save button keeps reading exactly the inputs it always did, no
@@ -23915,9 +23938,9 @@ async function settingsPage(){
   /* V259: loadWorkspaceLogoEditorV96() moved out with the Workspace & brand panel — the host
      element it fills now lives in the Customer Interface module, and wireWorkspaceBrandV259()
      is what calls it. */
-  if(S.myRole==='owner'){
-    loadCustomerProgrammePresentationEditorV95();
-  }
+  /* V269: loadCustomerProgrammePresentationEditorV95() left with its host element — the editor
+     is rendered and wired by customerInterfacePageV243 now, and calling it here would have been
+     a load against a card that no longer exists on this page. */
   /* Checkout Catalogue is deliberately separate from Inventory: it only controls whether an
      existing service/product may be selected at checkout. Stock, suppliers, quantities and cost
      data are never loaded or rendered here. All reads and writes are owner-gated RPC contracts. */
@@ -24899,11 +24922,6 @@ function wireWorkspaceBrandV259(){
     toast('Saved');route();
   };
 }
-function settingsMovedToCustomerInterfaceCardV243(label){
-  return `<div class="card"><b>${esc(label)}</b>
-      <p class="muted small" style="margin:6px 0 12px">Moved to Customer Interface in the main menu.</p>
-      <a class="btn sm" href="#/customer-interface">Open Customer Interface</a></div>`;
-}
 /* The public page a customer meets before joining. Relative to this document, so it is the same
    origin on every deploy (production, preview, or a native WebView) without a hard-coded host. */
 function customerInterfacePreviewUrlV243(){
@@ -24941,6 +24959,13 @@ function wireCustomerInterfacePreviewV243(){
       if(blocked)blocked.hidden=painted;
     },5000);
   };
+}
+/* V269 (owner drew the target shape: Customer Interface → Workspace & Brand / Customer Programme
+   / Interface). The three panels already lived on this page in that order; what was missing was
+   any label saying which is which, so an owner arriving from the deleted Settings tabs could not
+   tell where the thing they used to open had landed. Headings only — no panel moved. */
+function customerInterfaceSectionHeadingV269(id,label,hint){
+  return `<h2 class="customer-interface-section-v269" id="${esc(id)}" style="margin:26px 0 0;font-size:1.05rem">${esc(label)}<span class="muted small" style="display:block;font-weight:400;margin-top:4px">${esc(hint)}</span></h2>`;
 }
 function customerInterfaceSectionsHtmlV243(fieldDefs){
   return `<div class="customer-interface-sections-v243">
@@ -25056,8 +25081,11 @@ async function customerInterfacePageV243(){
   if(fieldDefsError) return fail(fieldDefsError);
   M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>Customer Interface</h1><p class="muted small">Everything a customer sees and uses</p></div></div>
     ${customerInterfacePreviewCardHtmlV243()}
-    ${canEditCustomerInterface?workspaceBrandPanelHtmlV259():''}
-    ${canEditCustomerInterface?`<div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
+    ${canEditCustomerInterface?`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Workspace & brand','Your name, logo, colour and the policy your customers read.')}
+    ${workspaceBrandPanelHtmlV259()}
+    ${customerInterfaceSectionHeadingV269('ciSectionProgrammeV269','Customer programme','How your points, tiers and rewards are presented in the customer wallet.')}
+    <div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
+    ${customerInterfaceSectionHeadingV269('ciSectionInterfaceV269','Interface','Sign-up, the fields you ask customers for, and what they may do in their app.')}
     ${customerInterfaceSectionsHtmlV243(fieldDefs)}`:'<div class="card" style="margin-top:16px"><p class="muted small">Only the owner can change what customers see.</p></div>'}
   </div>`;
   wireCustomerInterfacePreviewV243();
