@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="0cba527865ac1f470f9d14c144f3b9bdceb0190789e453d2a2a4ce260b085c2f"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="a748bf4cb0151ecdc84ea17b3548da4a657cd7beb8639b93217bb6e5df3d8baf"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2312,6 +2312,35 @@ function branchScopeUnavailableReasonV217(branch){
     ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
     :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
 }
+/* V272: removing the Business Insights branch select also removed the only place that said an
+   unpaid or switched-off branch is LEFT OUT of these figures. A consolidated total nobody can
+   scope is the failure this page exists to avoid, and the top bar deliberately carries no such
+   pill (V224), so the fact is restated once, next to the figures, in the owner's own terms. */
+function reportScopeNoteTextV272(branches=[]){
+  const usable=activeBranchesForScopeV217(branches);
+  const current=selectedBranchId?usable.find(branch=>branch.id===selectedBranchId):null;
+  const covered=current
+    ?`${current.name||'the branch selected at the top'} only`
+    :usable.length>1
+      ?`all ${usable.length} branches you can report on (${usable.map(branch=>branch.name||'Branch').join(', ')})`
+      :(usable[0]?.name||'this business');
+  const withheld=(branches||[]).filter(branch=>branch&&branch.active===false)
+    .map(branchScopeUnavailableReasonV217).filter(Boolean);
+  return `Figures below cover ${covered}. ${withheld.join(' ')}`.trim();
+}
+async function renderReportScopeNoteV272(isCurrent=()=>true,targetId='reportScopeNoteV272'){
+  const host=$(targetId);
+  if(!host)return;
+  let branches=[];
+  try{({branches}=await visibleBranchesForCurrentUser())}
+  catch(error){
+    console.error(error);
+    if(isCurrent()&&$(targetId)===host)host.textContent='The branches these figures cover could not be confirmed.';
+    return;
+  }
+  if(!isCurrent()||$(targetId)!==host)return;
+  host.textContent=reportScopeNoteTextV272(branches);
+}
 /* V217: the server's scope codes are precise but unreadable. An owner should never be shown
    `foreign_or_inactive_branch_scope` — they should be told which branch is unavailable and why,
    which after this change should not happen at all, since the pickers no longer offer one. */
@@ -2723,6 +2752,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'0cba527865ac1f470f9d14c144f3b9bdceb0190789e453d2a2a4ce260b085c2f',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'a748bf4cb0151ecdc84ea17b3548da4a657cd7beb8639b93217bb6e5df3d8baf',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
