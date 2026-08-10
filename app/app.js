@@ -15651,6 +15651,20 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     {data:birthday,error:birthdayError}]
     =await Promise.all([retentionRequest,draftRequest,birthdayRequest]);
   if(!isCurrent())return null;
+  /* V268 (owner: "why inside after edit does not updated"). Until now this overview fetched the
+     PUBLISHED catalogue plus the draft's header row only, so a saved edit had no representation
+     on this page at all — the list could not have shown a pending change even in principle.
+     Read the draft's own programme and reward values as well. They are never substituted for the
+     published ones; they only let a changed card say what it will become. Owner-gated (the RPC
+     raises 42501 otherwise) and fail-soft: a failed read leaves the page exactly as it was. */
+  const draftHeaderV268=draftError?null:(drafts||[])[0]||null;
+  let draftDetailV268=null,draftDetailErrorV268=null;
+  if(draftHeaderV268?.id&&canSetupGrow){
+    const {data:draftDetail,error:draftDetailError}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftHeaderV268.id});
+    if(!isCurrent())return null;
+    draftDetailErrorV268=draftDetailError||null;
+    draftDetailV268=draftDetailError?null:draftDetail||null;
+  }
   /* Overview reads are intentionally fail-soft. A failed optional-engine read must not hide the
      rest of Grow or be mistaken for an unconfigured programme; its row remains Unavailable. */
   return {
@@ -15667,7 +15681,9 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     giftcards:giftcardsError?null:{available:giftcardPreferences?.status==='available'
       &&typeof giftcardPreferences?.gift_card_sales_enabled==='boolean',
       enabled:giftcardPreferences?.gift_card_sales_enabled===true},
-    draft:draftError?null:(drafts||[])[0]||null,
+    draft:draftHeaderV268,
+    draftDetail:draftDetailV268,
+    draftDetailError:Boolean(draftDetailErrorV268),
     overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError),
       retention:Boolean(retentionError),referrals:Boolean(referralsError),memberships:Boolean(membershipsError),
       promotions:Boolean(promotionsError),
@@ -16623,6 +16639,59 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   /* V229: the Ongoing / To set up views are flat lists; a drilled topic only makes sense from
      the tile overview, so arriving via those views clears it. */
   if(programmeView!=='list')growTopicV229='';
+  /* V268 (owner circled four reward cards: "why inside after edit does not updated"). V198 put a
+     banner at the top of the page, but the banner cannot say WHICH card the owner just edited, so
+     a person who typed a new number still reads the old one as a lost edit. The published value
+     therefore stays exactly where it was — customers' current reality is the one thing this list
+     must never blur — and the pending value is added BESIDE it, only on the cards whose draft
+     genuinely differs. Marking every card would make the marker worthless. */
+  const growDraftDetailV268=snapshot.draftDetail||null;
+  const growDraftDetailErrorV268=Boolean(snapshot.draftDetailError);
+  const growRewardLabelV268=row=>String(row?.customer_name||row?.name||'Reward').trim();
+  const growPendingRewardsV268=new Map();
+  const growPendingNewRewardsV268=[];
+  if(growDraftDetailV268){
+    const publishedByIdV268=new Map((snapshot.rewards||[]).map(reward=>[String(reward.id),reward]));
+    (Array.isArray(growDraftDetailV268.rewards)?growDraftDetailV268.rewards:[]).forEach(draftReward=>{
+      const key=String(draftReward.reward_id||draftReward.id||'');
+      const live=publishedByIdV268.get(key);
+      if(!live){
+        /* A reward the draft creates does not exist for customers at all, so it gets its own
+           card marked as not live rather than a pending line on somebody else's card. */
+        if(draftReward.active!==false)growPendingNewRewardsV268.push({
+          name:growRewardLabelV268(draftReward),cost:Math.max(0,Number(draftReward.cost_points||0))});
+        return;
+      }
+      const changes=[];
+      if(growRewardLabelV268(draftReward)!==growRewardLabelV268(live))
+        changes.push({label:'Name',live:growRewardLabelV268(live),pending:growRewardLabelV268(draftReward)});
+      if(Number(draftReward.cost_points||0)!==Number(live.cost_points||0))
+        changes.push({label:'Cost',live:`${Math.max(0,Number(live.cost_points||0))} ${rewardJourney.unit}`,
+          pending:`${Math.max(0,Number(draftReward.cost_points||0))} ${rewardJourney.unit}`});
+      if((draftReward.active!==false)!==(live.active!==false))
+        changes.push({label:'Offered',live:live.active!==false?'Yes':'No',pending:draftReward.active!==false?'Yes':'No'});
+      if(changes.length)growPendingRewardsV268.set(key,changes);
+    });
+  }
+  const growPendingEarningV268=(()=>{
+    const draft=growDraftDetailV268?.program||null,live=snapshot.loyalty||null;
+    if(!draft||!live)return [];
+    const changes=[];
+    if(String(draft.loyalty_model||'')!==String(live.loyalty_model||''))
+      changes.push({label:'Model',live:String(live.loyalty_model||'points'),pending:String(draft.loyalty_model||'points')});
+    if(Number(draft.earn_points_per_dollar||0)!==Number(live.earn_points_per_dollar||0))
+      changes.push({label:'Points per SGD 1',live:String(Number(live.earn_points_per_dollar||0)),
+        pending:String(Number(draft.earn_points_per_dollar||0))});
+    if(Number(draft.stamp_per_cents||0)!==Number(live.stamp_per_cents||0))
+      changes.push({label:'Spend per stamp',live:money(Number(live.stamp_per_cents||0)),
+        pending:money(Number(draft.stamp_per_cents||0))});
+    if((draft.active===true)!==(live.active===true))
+      changes.push({label:'Programme',live:live.active===true?'Active':'Paused',pending:draft.active===true?'Active':'Paused'});
+    return changes;
+  })();
+  /* Live value struck through, pending value in bold after the arrow: both readable, neither
+     replacing the other, and the block wraps to one item per line at 390px. */
+  const growPendingBlockV268=changes=>!changes||!changes.length?'':`<span class="grow-pending-v268" data-grow-pending-v268><span class="pill new grow-pending-pill-v268">Edited · not live yet</span>${changes.map(change=>`<span class="grow-pending-line-v268">${esc(change.label)}: <s data-merchant-content>${esc(change.live)}</s> → <b data-merchant-content>${esc(change.pending)}</b></span>`).join('')}</span>`;
   /* V198 (owner: "edited name inside but not shown"). This list is deliberately the PUBLISHED
      programme — it answers "what can my customers use right now", so a reward renamed in an open
      draft must keep its live name here or the list would promise something no customer can see.
@@ -16630,7 +16699,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      Say the edit is saved, say it is not live, and put the publish step one tap away. */
   const growDraftPendingId=snapshot.draft?.id||null;
   const growUnpublishedMarkerV198=growDraftPendingId&&canRewards
-    ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
+    ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
      Reward milestones live INSIDE Point system — the overview never floods. */
@@ -16669,6 +16738,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       summary:[activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:'',giftCardsLive?'gift cards on':''].filter(Boolean).join(' · ')||'Plans and gift cards'},
   ];
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
+  /* V268 (owner drew the hierarchy: category name, then its items with their set-up status).
+     Drilling in already showed the category name and its items — what was missing was WHERE the
+     reader is. "All programmes" sat alone on the right of the heading, so at 390px it read as a
+     stray action rather than the level above. The same trail now renders for every category, and
+     it keeps the one back control (id and handler unchanged) instead of adding a second. */
+  const growBreadcrumbV268=topic=>!topic?'':`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button><span aria-hidden="true">/</span><span class="grow-breadcrumb-current-v268">${esc(topic.title)}</span></nav>`;
   const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
   /* V235: the Stamp card tile is a third VIEW of the point engine, not a third section — it
      drills into the same rows, so nothing is duplicated and no tile is a dead end. */
@@ -16734,8 +16809,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const rewardCardStatusV250=milestone=>milestone.availableToCustomers?['Live','on']
     :milestone.availability==='not_started'?['Scheduled','off']
     :milestone.availability==='ended'?['Ended','off']:['Paused','off'];
-  const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId})=>{
-    const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>`;
+  const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId,pending=null})=>{
+    const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>${growPendingBlockV268(pending)}`;
     return canSetupGrow
       ?`<button type="button" class="reward-card-v250" data-programme-kind="redeemable" data-rewards-overview-edit="${esc(editKind)}"${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="reward-card-open-v250">Edit →</span></button>`
       :`<article class="reward-card-v250" data-programme-kind="redeemable"${editKind==='catalogue'?' data-reward-milestone':''}${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="grow-programme-access">Read only</span></article>`;
@@ -16745,13 +16820,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
     ...rewardJourney.milestones.map(milestone=>{
       const [status,tone]=rewardCardStatusV250(milestone);
-      return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id};
+      return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id,
+        pending:growPendingRewardsV268.get(String(milestone.id))||null};
     }),
     ...rewardJourney.archivedRewards.map(reward=>({name:reward.name,cost:reward.threshold,unit:reward.unit,
-      status:'Paused',tone:'off',editKind:'catalogue',rewardId:reward.id}))
+      status:'Paused',tone:'off',editKind:'catalogue',rewardId:reward.id,
+      pending:growPendingRewardsV268.get(String(reward.id))||null}))
   ];
   const rewardCardGridV250=`<div class="reward-card-grid-v250" data-reward-card-grid-v250>
       ${rewardCardsV250.map(rewardCardHtmlV250).join('')}
+      ${growPendingNewRewardsV268.map(reward=>`<article class="reward-card-v250 reward-card-pending-new-v268" data-programme-kind="redeemable" data-grow-pending-new-v268><span class="pill new">Not live yet</span><b class="reward-card-name-v250" data-merchant-content>${esc(reward.name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${reward.cost} ${rewardJourney.unit}`)}</span><span class="grow-pending-line-v268">Customers see this once you publish.</span></article>`).join('')}
       ${canSetupGrow?`<button type="button" class="reward-card-v250 reward-card-add-v250" data-programme-kind="redeemable" data-rewards-overview-edit="add"><span class="reward-card-plus-v250" aria-hidden="true">+</span><b class="reward-card-name-v250">Add reward</b></button>`:''}
     </div>
     ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}
@@ -16765,7 +16843,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Programmes</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growTilesHtmlV229:''}
@@ -16776,11 +16854,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            so the point scheme reads as one thing. Rewards that have nothing to do with a
            points balance — the welcome offer for a first visit, a birthday benefit, a
            bring-back for someone who has drifted — are their own group. -->
-      <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="points"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
         ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229({showLiveModelsV250:false})}</div>`:''}
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
-          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
@@ -16788,8 +16866,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         `}
       </div></div>
       `:''}
-      ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
-        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>
+      ${topicOnV229('tiers')?`<div class="programme-category" data-programme-category-v268="tiers"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
+        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>`:''}
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
           :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
@@ -16797,7 +16875,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}
       ${topicOnV229('lifestyle')?`
-      <div class="programme-category"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="lifestyle"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
         ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
           <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
@@ -16808,17 +16886,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       </div></div>
       `:''}
       ${topicOnV229('promotions')?`
-      <div class="programme-category"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="promotions"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
         ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
       </div></div>
       `:''}
       ${topicOnV229('referrals')?`
-      <div class="programme-category"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
       </div></div>
       `:''}
       ${topicOnV229('recurring')?`
-      <div class="programme-category"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
       </div></div>      `:''}
@@ -16881,7 +16959,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            whose pill said "live" and hidden everything. The tone class is the actual status
            signal (programmeStatus passes 'on' only for a running programme), so match that
            first and keep the text check as a fallback for any row built outside that helper. */
-        const pill=row.querySelector('.pill');
+        const pill=row.querySelector('.pill:not(.grow-pending-pill-v268)');
         const status=String(pill?.textContent||'').toLowerCase();
         const isOngoing=pill?.classList.contains('on')||status.includes('ongoing')||status.includes('live')||status.includes('active');
         const show=programmeView==='ongoing'?isOngoing:!isOngoing;
@@ -16923,7 +17001,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       const kind=row.dataset.programmeKind;
       const suggestion=suggestions[kind];
       if(!suggestion)return;
-      const pill=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
+      const pill=String(row.querySelector('.pill:not(.grow-pending-pill-v268)')?.textContent||'').toLowerCase();
       if(!pill.includes('not set up')||row.hidden)return;
       if(row.nextElementSibling?.classList?.contains('programme-suggest'))return;
       row.insertAdjacentHTML('afterend',`<div class="programme-suggest" data-suggest-kind="${esc(kind)}"><span>✨ Suggested: ${suggestion.text}</span><button type="button" class="btn sm" data-suggest-use="${esc(kind)}">Use suggestion</button></div>`);

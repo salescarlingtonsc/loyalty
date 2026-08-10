@@ -1043,6 +1043,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .reward-card-v250[hidden]{display:none!important}
 .reward-card-empty-v250{padding:0 14px 14px}
 .reward-card-templates-v250{margin:0;padding:0 14px 14px}
+/* V268 (owner: "why inside after edit does not updated"). The pending value is ADDED under the
+   published one, never in place of it: struck-through live value, arrow, bold pending value. One
+   change per line so a two-column 150px card at 390px still wraps cleanly, and no new colours. */
+.grow-pending-v268{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;margin-top:2px}
+.grow-pending-line-v268{font-size:.78rem;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+.grow-pending-line-v268 b{color:var(--ink)}
+.grow-pending-line-v268 s{opacity:.85}
+.reward-card-pending-new-v268{border-style:dashed}
+/* The trail above a drilled-in category: where you are, and one tap back to the level above. */
+.grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
+.grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
