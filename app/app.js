@@ -519,7 +519,11 @@ const NAVGROUPS=[
      Record sale first, and V150 caught it, because keeping operational actions separate from
      money history is a decision that was made on purpose. Overturning it is the owner's call,
      not a side effect of a label fix. */
-  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf']},
+  /* V272: the owner struck "Staff performance" out of this nav and wrote "delete this tab cause
+     here have already", arrowing at the Team performance card on Business Insights. The nav entry
+     is gone; the #/staffperf route, its page and that card's link are untouched, so deep links and
+     history keep working. activeGroupKey() below maps the route back to this group. */
+  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel']},
   {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages']}
 ];
 let navOpen={};
@@ -7895,8 +7899,10 @@ function importBtn(moduleKey,label='Import',done='route'){
 }
 
 /* ---------- shell ---------- */
+/* V272: staffperf no longer has a nav entry of its own, so it borrows the Reports group it is
+   reached from — otherwise the whole rail goes unlit on a route that is still reachable. */
 function activeGroupKey(pageKey){
-  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey;
+  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey==='staffperf'?'reports':pageKey;
   if(k==='grow')return 'grow';
   const g=NAVGROUPS.find(g=>g.items.includes(k));
   return g?g.key:null;
@@ -9447,6 +9453,35 @@ function branchScopeUnavailableReasonV217(branch){
   return branch.billing_state==='pending_payment'
     ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
     :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
+}
+/* V272: removing the Business Insights branch select also removed the only place that said an
+   unpaid or switched-off branch is LEFT OUT of these figures. A consolidated total nobody can
+   scope is the failure this page exists to avoid, and the top bar deliberately carries no such
+   pill (V224), so the fact is restated once, next to the figures, in the owner's own terms. */
+function reportScopeNoteTextV272(branches=[]){
+  const usable=activeBranchesForScopeV217(branches);
+  const current=selectedBranchId?usable.find(branch=>branch.id===selectedBranchId):null;
+  const covered=current
+    ?`${current.name||'the branch selected at the top'} only`
+    :usable.length>1
+      ?`all ${usable.length} branches you can report on (${usable.map(branch=>branch.name||'Branch').join(', ')})`
+      :(usable[0]?.name||'this business');
+  const withheld=(branches||[]).filter(branch=>branch&&branch.active===false)
+    .map(branchScopeUnavailableReasonV217).filter(Boolean);
+  return `Figures below cover ${covered}. ${withheld.join(' ')}`.trim();
+}
+async function renderReportScopeNoteV272(isCurrent=()=>true,targetId='reportScopeNoteV272'){
+  const host=$(targetId);
+  if(!host)return;
+  let branches=[];
+  try{({branches}=await visibleBranchesForCurrentUser())}
+  catch(error){
+    console.error(error);
+    if(isCurrent()&&$(targetId)===host)host.textContent='The branches these figures cover could not be confirmed.';
+    return;
+  }
+  if(!isCurrent()||$(targetId)!==host)return;
+  host.textContent=reportScopeNoteTextV272(branches);
 }
 /* V217: the server's scope codes are precise but unreadable. An owner should never be shown
    `foreign_or_inactive_branch_scope` — they should be told which branch is unavailable and why,
@@ -22295,14 +22330,18 @@ async function reportsPage(){
     canSeeReturningAnswer&&{detailsId:'returningDetails',bodyId:'returningBody',tone:'retention',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.',emptyBody:'Select this card, then run the report for this period.'},
     canReadModule('staffperf')&&{href:'#/staffperf',tone:'team',icon:'staff',title:'Team performance',body:'Staff activity and performance.'}
   ].filter(Boolean);
+  /* V272: the owner bracketed the control bar up to just under the subtitle and wrote "put top
+     here" — the period and the Run report button decide what every card below shows, so they
+     are read first. The markup moved; the ids, handlers and the report bodies did not. */
   M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div>
-    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<details class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.detailsId}"><summary><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></summary>
-      <div class="grid reports-grid" id="${item.bodyId}"><div class="card">${CUI.emptyState({iconName:item.icon,title:'Choose a report category',body:item.emptyBody})}</div></div></details>`).join('')}</div>
     <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
-      <span id="branchWrap"></span><button class="btn sm" id="rgo">Run report</button>
-      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div></div>`;
+      <button class="btn sm" id="rgo">Run report</button>
+      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div>
+      <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
+    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<details class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.detailsId}"><summary><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></summary>
+      <div class="grid reports-grid" id="${item.bodyId}"><div class="card">${CUI.emptyState({iconName:item.icon,title:'Choose a report category',body:item.emptyBody})}</div></div></details>`).join('')}</div>`;
   const runAnswer=runner=>runner().catch(error=>{if(isCurrent())fail(error)});
   let lastScope=null;
   const answerRange=()=>{
@@ -22606,7 +22645,14 @@ async function reportsPage(){
     $('rcsv').disabled=false;
     toast('CSV downloaded');
   };
-  refreshBranchFilter(()=>{invalidateAnswers();runOpenAnswers().catch(error=>{if(isCurrent())fail(error)})},isCurrent);
+  /* V272: the owner struck out the per-page branch select ("remove this"). The top bar already
+     carries the single branch scope for the workspace — the same removal V260 made on the Daily
+     report and the Sales ledger — and answerRange() above already reads selectedBranchId, so the
+     figures keep scoping correctly. Changing the top-bar branch re-enters this page through
+     route() (hydrateProfileBranchSelectorV158), which re-renders it with the new scope, so no
+     local re-fetch trigger is needed. The truth the removed notice carried is not dropped with
+     it: see renderReportScopeNoteV272. */
+  renderReportScopeNoteV272(isCurrent);
 }
 
 /* ---------- get started (first-run setup guide) ---------- */

@@ -100,7 +100,11 @@ test('every responsive Chart.js canvas is isolated in a bounded frame', () => {
   assert.match(dashboard, /const renderEpoch=\+\+dashboardRenderEpoch/);
   assert.match(dashboard, /const isDashboardCurrent=\(\)=>dashboardRenderEpoch===renderEpoch&&dashboardRoot\.isConnected&&\$\('dashboardView'\)===dashboardRoot/);
   assert.match(dashboard, /async function load\(\)\{\s*const isCurrent=requestGate\.begin\(\);\s*if\(!isCurrent\(\)\)return;[\s\S]*if\(!from\|\|!to\|\|from>to\)[\s\S]*killCharts\(\)/);
-  assert.match(dashboard, /try\{\[response,inactiveResponse\]=await Promise\.all\(\[[\s\S]*sb\.rpc\('get_dashboard_summary'[\s\S]*catch\(error\)\{if\(isCurrent\(\)\)showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'\);return\}[\s\S]*if\(!isCurrent\(\)\)return;[\s\S]*if\(error\)\{showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'\);return\}/);
+  /* V272: the destructuring gained three more parallel reads since this was written, so the
+     literal tuple no longer matched. What the assertion is really for is unchanged and is
+     what is pinned here: the batch is inside try/catch, a throw reports through the
+     dashboard's own retry, and a stale invocation returns before touching the DOM. */
+  assert.match(dashboard, /try\{\[response,[\s\S]*?\]=await Promise\.all\(\[[\s\S]*sb\.rpc\('get_dashboard_summary_v155'[\s\S]*catch\(error\)\{if\(isCurrent\(\)\)showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'[^;]*;return\}[\s\S]*if\(!isCurrent\(\)\)return;[\s\S]*if\(error\)\{showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'[^;]*;return\}/);
   assert.doesNotMatch(dashboard, /saleMixRows|Services and goods sold/,
     'the unreconciled gross line-item mix must remain hidden from the launch dashboard');
   assert.match(dashboard, /id="dashboardStatus" aria-live="polite"/);
@@ -108,10 +112,19 @@ test('every responsive Chart.js canvas is isolated in a bounded frame', () => {
   assert.doesNotMatch(dashboard, /dashboardSaleMixRetry/);
   assert.match(dashboard, /const C=\(id,cfg\)=>\{if\(isCurrent\(\)\)/);
   assert.equal((dashboard.match(/dashboardChartCardV141\(\{/g) || []).length, 4);
-  assert.match(dashboard, /refreshBranchFilter\(load,isDashboardCurrent,'dashboardBranchWrap'\)/);
+  /* V272: V225 removed the dashboard's own branch picker — branch scope is the top bar's job
+     and re-enters the page through route(). What must stay true is that the dashboard reads
+     that shared scope rather than keeping a second one of its own. */
+  assert.doesNotMatch(dashboard, /dashboardBranchWrap/);
+  assert.match(dashboard, /visibleBranchesForCurrentUser\(\)/);
+  assert.match(dashboard, /currentReportingScopePayloadV155\(scopeBranches\)/);
   assert.match(app, /async function route\(\)\{\s*const isRouteCurrent=beginRouteInvocation\(\);\s*dashboardRenderEpoch\+=1/);
-  assert.match(app, /if\(!isCurrent\(\)\|\|!wrap\.isConnected\|\|\$\(targetId\)!==wrap\)return/);
-  assert.match(app, /const sel=wrap\.querySelector\('#branchSel'\)/);
+  /* V272: the guard survived, its parameter names did not (targetId -> id). What matters is
+     that a branch-filter refresh still refuses to write into a wrap the route has replaced. */
+  assert.match(app, /if\(!wrap\.isConnected\|\|\$\(id\)!==wrap\)return;/);
+  /* V272: #branchSel is still the branch control's id, but it is now read by $() from the
+     pages that own a picker rather than queried out of a wrap element. */
+  assert.match(app, /\$\('branchSel'\)/);
   assert.equal((dashboard.match(/class="chart-frame"/g) || []).length, 1);
 });
 

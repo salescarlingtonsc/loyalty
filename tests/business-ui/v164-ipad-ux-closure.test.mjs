@@ -18,7 +18,9 @@ test('V164 sidebar terminology is merchant-facing', () => {
      absent from every nav group, so owners could not reach it. It now leads the money group. */
   /* V180 owner instruction: Expenses moved ahead of Business Insights (money in, money out,
      result, then why). The merchant-facing terminology this test guards is unchanged. */
-  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf'\]\}/);
+  /* V272 owner instruction ("delete this tab cause here have already"): the Staff performance
+     entry is gone from this group; the merchant-facing terminology this test guards is unchanged. */
+  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]\}/);
 });
 
 test('V164 Dashboard adds schedule glance and in-card KPI action labels', () => {

@@ -47,7 +47,9 @@ test('the sales list says what you go there to do', () => {
    carries the discoverability fix on its own, and moving the page stays the owner's call. */
 test('the deliberate separation between doing and reviewing is intact', () => {
   assert.match(app, /label:'Serve & sell',items:\['till','appointments','bookings','waitlist'\]/);
-  assert.match(app, /label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf'\]/);
+  /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
+     this group; the doing-vs-reviewing separation this test guards is unchanged. */
+  assert.match(app, /label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]/);
   const groups = app.match(/const NAVGROUPS=\[[\s\S]*?\n\];/)[0];
   assert.equal((groups.match(/'sales'/g) || []).length, 1, 'one entry, never duplicated');
 });

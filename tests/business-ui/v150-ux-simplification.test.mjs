@@ -28,7 +28,9 @@ test('V150 sidebar keeps operational actions separate from money history', () =>
   assert.match(navBlock, /items:\['till','appointments','bookings','waitlist'\]/);
   /* V180 owner instruction: Business Insights and Expenses swapped so the money group reads
      as money in -> money out -> result -> why. The separation this test guards is unchanged. */
-  assert.match(navBlock, /items:\['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf'\]/);
+  /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
+     this nav; the #/staffperf route and the Business Insights card that reaches it are unchanged. */
+  assert.match(navBlock, /items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]/);
 });
 
 test('V150 dashboard removes launch banner and keeps the requested KPI and chart structure', () => {

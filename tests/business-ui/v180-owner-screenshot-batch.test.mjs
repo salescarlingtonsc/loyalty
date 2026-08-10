@@ -76,7 +76,9 @@ test('staff performance shows two money cards, and the grid matches', () => {
 });
 
 test('reports read as money in, money out, result, then why', () => {
-  assert.ok(app.includes("items:['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf']"),
+  // V272 owner instruction ("delete this tab cause here have already"): Staff performance is no
+  // longer a nav entry, so the order this test guards now ends at Customer intelligence.
+  assert.ok(app.includes("items:['dailyreport','sales','expenses','pnl','reports','customerintel']"),
     'reports nav order not applied');
 });
 
