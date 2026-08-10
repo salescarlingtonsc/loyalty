@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="35f007e33f6a603f76c0e2e1e38d91c3065829657d0ae869e3a685b00e713cc2"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="788e5b2f2df6f8ffb7df90c6103a989e7d8a7b457e252cca1b09b8120703c8ac"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1856,7 +1856,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 35f007e33f6a603f76c0e2e1e38d91c3065829657d0ae869e3a685b00e713cc2</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 788e5b2f2df6f8ffb7df90c6103a989e7d8a7b457e252cca1b09b8120703c8ac</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3138,6 +3138,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const activityStaffOptionsV267=[...new Set(history.map(h=>h.staff).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   const activityHasUnassignedV267=history.some(h=>!h.staff);
   const activityFiltersV267=`<div class="v150-filterbar c360-activity-filters-v267" role="group" aria-label="Filter activity history" style="margin-top:12px">
+    <div style="flex:1 1 190px;min-width:min(100%,190px)"><label for="actItem">Item</label><input type="search" id="actItem" inputmode="search" autocomplete="off" placeholder="Search item"></div>
     <div style="flex:1 1 160px;min-width:min(100%,160px)"><label for="actType">Type</label><select id="actType"><option value="">All types</option>${activityTypeOptionsV267.map(type=>`<option value="${esc(type)}">${esc(type)}</option>`).join('')}</select></div>
     <div style="flex:1 1 175px;min-width:min(100%,175px)"><label for="actStaff">Team member</label><select id="actStaff"><option value="">All team members</option>${activityStaffOptionsV267.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('')}${activityHasUnassignedV267?`<option value="${ACTIVITY_STAFF_NONE_V267}">No team member</option>`:''}</select></div>
     <div style="flex:1 1 150px;min-width:min(100%,150px)"><label for="actFrom">From</label><input type="date" id="actFrom"></div>
@@ -3425,7 +3426,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(histMore) histMore.onclick=()=>{histShown+=50;redrawActivityV267()};
   /* Changing a filter returns to the first page: keeping an offset from the previous filter
      would show an owner the middle of a result set and hide its first rows. */
-  ['actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
+  ['actItem','actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
     const control=$(controlId);
     if(control)control.onchange=()=>{histShown=50;redrawActivityV267()};
   });
@@ -3495,7 +3496,8 @@ function activityItemTextV267(h){
 function activityFilterStateV267(){
   const read=controlId=>{const el=$(controlId);return el?String(el.value||''):''};
   const sort=read('actSort');
-  return {type:read('actType'),staff:read('actStaff'),from:read('actFrom'),to:read('actTo'),
+  return {item:read('actItem').trim().toLowerCase(),
+    type:read('actType'),staff:read('actStaff'),from:read('actFrom'),to:read('actTo'),
     sort:ACTIVITY_SORTS_V267.some(option=>option.key===sort)?sort:ACTIVITY_SORT_DEFAULT_V267};
 }
 /* Client-side over the COMPLETE feed. Every reader behind this timeline pages the whole
@@ -3505,6 +3507,9 @@ function activityFilteredRowsV267(history,state){
   const s=state||activityFilterStateV267();
   const from=activityRangeBoundV267(s.from),to=activityRangeBoundV267(s.to,{end:true});
   const kept=(history||[]).filter(h=>{
+    /* V270: matched against activityItemTextV267 — the same text the ITEM cell prints — so a
+       search can never hide a row that visibly contains the words the owner typed. */
+    if(s.item&&!activityItemTextV267(h).toLowerCase().includes(s.item))return false;
     if(s.type&&activityTypeOfV267(h)!==s.type)return false;
     if(s.staff===ACTIVITY_STAFF_NONE_V267){if(h.staff)return false}
     else if(s.staff&&h.staff!==s.staff)return false;
@@ -3537,7 +3542,7 @@ function activityFilteredRowsV267(history,state){
   }).map(entry=>entry.row);
 }
 function clearActivityFiltersV267(){
-  ['actType','actStaff','actFrom','actTo'].forEach(controlId=>{const el=$(controlId);if(el)el.value=''});
+  ['actItem','actType','actStaff','actFrom','actTo'].forEach(controlId=>{const el=$(controlId);if(el)el.value=''});
   const sort=$('actSort');
   if(sort)sort.value=ACTIVITY_SORT_DEFAULT_V267;
 }
@@ -4536,7 +4541,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'35f007e33f6a603f76c0e2e1e38d91c3065829657d0ae869e3a685b00e713cc2',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'788e5b2f2df6f8ffb7df90c6103a989e7d8a7b457e252cca1b09b8120703c8ac',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

@@ -10851,6 +10851,7 @@ async function clientDetail(id){
   const activityStaffOptionsV267=[...new Set(history.map(h=>h.staff).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   const activityHasUnassignedV267=history.some(h=>!h.staff);
   const activityFiltersV267=`<div class="v150-filterbar c360-activity-filters-v267" role="group" aria-label="Filter activity history" style="margin-top:12px">
+    <div style="flex:1 1 190px;min-width:min(100%,190px)"><label for="actItem">Item</label><input type="search" id="actItem" inputmode="search" autocomplete="off" placeholder="Search item"></div>
     <div style="flex:1 1 160px;min-width:min(100%,160px)"><label for="actType">Type</label><select id="actType"><option value="">All types</option>${activityTypeOptionsV267.map(type=>`<option value="${esc(type)}">${esc(type)}</option>`).join('')}</select></div>
     <div style="flex:1 1 175px;min-width:min(100%,175px)"><label for="actStaff">Team member</label><select id="actStaff"><option value="">All team members</option>${activityStaffOptionsV267.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('')}${activityHasUnassignedV267?`<option value="${ACTIVITY_STAFF_NONE_V267}">No team member</option>`:''}</select></div>
     <div style="flex:1 1 150px;min-width:min(100%,150px)"><label for="actFrom">From</label><input type="date" id="actFrom"></div>
@@ -11138,7 +11139,7 @@ async function clientDetail(id){
   if(histMore) histMore.onclick=()=>{histShown+=50;redrawActivityV267()};
   /* Changing a filter returns to the first page: keeping an offset from the previous filter
      would show an owner the middle of a result set and hide its first rows. */
-  ['actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
+  ['actItem','actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
     const control=$(controlId);
     if(control)control.onchange=()=>{histShown=50;redrawActivityV267()};
   });
@@ -11208,7 +11209,8 @@ function activityItemTextV267(h){
 function activityFilterStateV267(){
   const read=controlId=>{const el=$(controlId);return el?String(el.value||''):''};
   const sort=read('actSort');
-  return {type:read('actType'),staff:read('actStaff'),from:read('actFrom'),to:read('actTo'),
+  return {item:read('actItem').trim().toLowerCase(),
+    type:read('actType'),staff:read('actStaff'),from:read('actFrom'),to:read('actTo'),
     sort:ACTIVITY_SORTS_V267.some(option=>option.key===sort)?sort:ACTIVITY_SORT_DEFAULT_V267};
 }
 /* Client-side over the COMPLETE feed. Every reader behind this timeline pages the whole
@@ -11218,6 +11220,9 @@ function activityFilteredRowsV267(history,state){
   const s=state||activityFilterStateV267();
   const from=activityRangeBoundV267(s.from),to=activityRangeBoundV267(s.to,{end:true});
   const kept=(history||[]).filter(h=>{
+    /* V270: matched against activityItemTextV267 — the same text the ITEM cell prints — so a
+       search can never hide a row that visibly contains the words the owner typed. */
+    if(s.item&&!activityItemTextV267(h).toLowerCase().includes(s.item))return false;
     if(s.type&&activityTypeOfV267(h)!==s.type)return false;
     if(s.staff===ACTIVITY_STAFF_NONE_V267){if(h.staff)return false}
     else if(s.staff&&h.staff!==s.staff)return false;
@@ -11250,7 +11255,7 @@ function activityFilteredRowsV267(history,state){
   }).map(entry=>entry.row);
 }
 function clearActivityFiltersV267(){
-  ['actType','actStaff','actFrom','actTo'].forEach(controlId=>{const el=$(controlId);if(el)el.value=''});
+  ['actItem','actType','actStaff','actFrom','actTo'].forEach(controlId=>{const el=$(controlId);if(el)el.value=''});
   const sort=$('actSort');
   if(sort)sort.value=ACTIVITY_SORT_DEFAULT_V267;
 }

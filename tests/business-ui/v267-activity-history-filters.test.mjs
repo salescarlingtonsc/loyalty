@@ -261,13 +261,14 @@ test('B7 a filtered-empty table is a different message from a genuinely empty on
 });
 
 test('B8 the filter controls exist, are labelled, and every one of them redraws the table', () => {
-  for (const id of ['actType', 'actStaff', 'actFrom', 'actTo', 'actSort']) {
+  for (const id of ['actItem', 'actType', 'actStaff', 'actFrom', 'actTo', 'actSort']) {
     assert.ok(clientDetail.includes(`id="${id}"`), `${id} must exist`);
     assert.ok(clientDetail.includes(`for="${id}"`), `${id} must be labelled`);
   }
   assert.ok(clientDetail.includes('<input type="date" id="actFrom">') && clientDetail.includes('<input type="date" id="actTo">'));
-  assert.ok(clientDetail.includes("['actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{"),
-    'all five controls are wired to the one redraw');
+  /* V270: six, not five — the ITEM search the owner circled was missing from the V267 pass. */
+  assert.ok(clientDetail.includes("['actItem','actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{"),
+    'all six controls are wired to the one redraw');
   assert.ok(clientDetail.includes('control.onchange=()=>{histShown=50;redrawActivityV267()}'),
     'changing a filter returns to the first page');
   assert.ok(clientDetail.includes("clearActivity.onclick=()=>{clearActivityFiltersV267();histShown=50;redrawActivityV267()}"));
@@ -328,4 +329,18 @@ test('V267 the Sales audit disclosure keeps the id, but calls it a record id', (
   // is the one place a reconciler genuinely needs the key. It must not read as prose.
   assert.match(app, /Compensating reversal row\. Audit record id of the sale it reverses: \$\{s\.reversal_of\}/);
   assert.match(app, /Original sale row, fully reversed\. Audit record id of the reversal: \$\{w\.reversal_sale_id\}/);
+});
+
+/* V270 — the owner circled DATE, TYPE and ITEM on the Activity history header. Type and date
+   shipped in V267; ITEM did not. Item values are free text across six different row shapes
+   (service, plan name, reward name, sale kind), so a substring search over the SAME text the
+   ITEM cell renders is the only honest form: it cannot disagree with what is on screen. */
+test('V270 the ITEM search exists, is labelled, and matches the text the ITEM cell prints', () => {
+  assert.match(clientDetail, /<label for="actItem">Item<\/label><input type="search" id="actItem"/);
+  assert.match(app, /if\(s\.item&&!activityItemTextV267\(h\)\.toLowerCase\(\)\.includes\(s\.item\)\)return false;/);
+  assert.match(app, /item:read\('actItem'\)\.trim\(\)\.toLowerCase\(\)/);
+});
+
+test('V270 clearing the filters clears the ITEM search too', () => {
+  assert.match(app, /\['actItem','actType','actStaff','actFrom','actTo'\]\.forEach\(controlId=>\{const el=\$\(controlId\);if\(el\)el\.value=''\}\);/);
 });
