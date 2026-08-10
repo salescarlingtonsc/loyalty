@@ -10,7 +10,7 @@
       statistics or an invented price would be a lie told to the exact people we
       want to trust us, so the page is pinned against inventing any. */
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
@@ -160,32 +160,30 @@ test('the forwarding script actually behaves as specified when executed', () => 
 
 /* ── the rewrite contract ─────────────────────────────────────────────────── */
 
-test('the four rewrites are present, in the order Vercel evaluates them', () => {
+test('"/" is owned by edge middleware, and the rewrites cover only the app paths', () => {
+  /* V274 follow-up, learned in production: Vercel resolves the FILESYSTEM before rewrites, so a
+     rewrite on "/" can never beat a real index.html — the first deploy served the app at "/"
+     with the landing reachable only at /landing.html. The split therefore lives in
+     app/middleware.js (edge middleware runs before the filesystem). This test pins that
+     middleware's whole contract, because a silent regression here strands either every new
+     visitor (no landing) or every installed PWA (no app). */
+  const middleware = readFileSync(resolve(root, 'app/middleware.js'), 'utf8');
+  assert.match(middleware, /matcher:\s*'\/'/, 'middleware must run on exactly "/"');
+  assert.match(middleware, /searchParams\.get\('source'\)\s*===\s*'pwa'/, 'installed PWAs (start_url /?source=pwa) must fall through to the app');
+  assert.match(middleware, /return undefined/, 'the PWA branch and the catch must fall OPEN to the app');
+  assert.match(middleware, /x-middleware-rewrite/, 'the rewrite is the x-middleware-rewrite contract');
+  assert.match(middleware, /landing\.html/, 'and it must target the landing');
+  assert.match(middleware, /catch/, 'a middleware throw must not 500 the domain root');
+  assert.doesNotMatch(middleware, /^\s*import\s/m, 'zero imports: there is no package.json in the deploy root');
+
   const rewrites = vercel.rewrites;
-  assert.ok(Array.isArray(rewrites), 'app/vercel.json must define rewrites');
-
-  assert.deepEqual(rewrites[0], {
-    source: '/',
-    has: [{ type: 'query', key: 'source', value: 'pwa' }],
-    destination: '/index.html'
-  }, 'installed PWAs open /?source=pwa (manifest start_url) and must still get the app');
-
-  assert.deepEqual(rewrites[1], { source: '/', destination: '/landing.html' },
-    'everyone else gets the marketing page');
-
-  assert.deepEqual(rewrites[2], { source: '/app', destination: '/index.html' },
-    '/app is the app\'s new canonical path and the target of every forward');
-
-  const paths = rewrites.map((rule) => rule.source);
-  assert.ok(paths.indexOf('/') < paths.indexOf('/app'),
-    'the root rules must be evaluated before /app');
+  assert.deepEqual(rewrites.map((r) => r.source), ['/app', '/business', '/admin'],
+    'no "/" rewrite may exist — it cannot fire and would misleadingly imply it does');
+  assert.deepEqual(rewrites[0], { source: '/app', destination: '/index.html' },
+    "/app is the app's canonical path and the target of every forward");
   assert.ok(
     rewrites.some((r) => r.source === '/business' && r.destination === '/index.html'),
     '/business must keep serving the app'
-  );
-  assert.ok(
-    rewrites.some((r) => r.source === '/admin' && r.destination === '/index.html'),
-    '/admin must keep serving the app'
   );
 });
 
@@ -198,12 +196,12 @@ test('the rewrites live in the template that generates app/vercel.json', async (
     'the routing change must be made in config/runtime/vercel.template.json, not in the generated file');
 });
 
-test('the PWA guard is order-sensitive: the unconditional root rule cannot shadow it', () => {
+test('no rewrite claims "/" — the middleware is the only owner of the root', () => {
+  /* V274 follow-up: superseded by the middleware. A "/" rewrite can never fire (filesystem
+     first), so any rule claiming "/" is dead config that misleads the next reader into
+     believing rewrites route the root. Zero is the only correct number. */
   const rootRules = vercel.rewrites.filter((rule) => rule.source === '/');
-  assert.equal(rootRules.length, 2, 'exactly two rules may claim "/"');
-  assert.ok(Array.isArray(rootRules[0].has) && rootRules[0].has.length === 1,
-    'the first "/" rule must be the conditional one');
-  assert.equal(rootRules[1].has, undefined, 'the fallback "/" rule must be unconditional');
+  assert.equal(rootRules.length, 0, 'the middleware owns "/"; a "/" rewrite is dead config');
 });
 
 test('the manifest start_url still matches the PWA rewrite condition', async () => {

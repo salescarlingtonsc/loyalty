@@ -44,9 +44,11 @@ test('root is customer-first and business sign-in is a separate clean entry path
   /* V274: "/" now serves the marketing landing page. The app keeps every entry it had —
      installed PWAs via the ?source=pwa guard, and everyone else via /app, which
      entryRouteForLocation resolves to '#/' exactly as bare "/" used to. */
+  /* V274 follow-up: the first deploy proved a "/" rewrite can never fire — Vercel resolves the
+     filesystem before rewrites, and index.html always won. "/" is owned by app/middleware.js
+     (edge middleware runs before the filesystem), which falls OPEN to the app on any failure.
+     The two dead "/" rewrites are gone rather than left as misleading config. */
   const expectedRewrites=[
-    {source:'/',has:[{type:'query',key:'source',value:'pwa'}],destination:'/index.html'},
-    {source:'/',destination:'/landing.html'},
     {source:'/app',destination:'/index.html'},
     {source:'/business',destination:'/index.html'},
     {source:'/admin',destination:'/index.html'}
