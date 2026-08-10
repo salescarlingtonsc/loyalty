@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="7f99058bef134477e0a7e74aac24913cb98dd0706355d888a7ba7ced657234f0"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="b6e56488cfc0a2a02df44b054adef4825a7133eb5621cd53b1a6b3c55fabbb5b"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1856,7 +1856,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 7f99058bef134477e0a7e74aac24913cb98dd0706355d888a7ba7ced657234f0</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · b6e56488cfc0a2a02df44b054adef4825a7133eb5621cd53b1a6b3c55fabbb5b</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -1869,6 +1869,8 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     referrals:'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 8h6M20 5v6',
     memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
     giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
+    /* V275: bottle keep is a bar-only module; a bottle needs a bottle, not a borrowed box. */
+    bottle:'M10 2h4v3.6l2.4 3.6c.4.6.6 1.3.6 2V21a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V11.2c0-.7.2-1.4.6-2L10 5.6zM7 15h10',
     star:'m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.77 6.4 20.91l1.07-6.24-4.53-4.42 6.26-.91L12 3Z',
     /* v264: a real share glyph — the standard three linked nodes. 'export' was being used for
        the share button and read as "download", which is a different promise. 'chat' gives the
@@ -3814,7 +3816,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'7f99058bef134477e0a7e74aac24913cb98dd0706355d888a7ba7ced657234f0',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'b6e56488cfc0a2a02df44b054adef4825a7133eb5621cd53b1a6b3c55fabbb5b',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

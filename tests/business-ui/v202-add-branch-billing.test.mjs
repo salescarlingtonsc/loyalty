@@ -17,7 +17,10 @@ const lock = readFileSync(resolve(root, 'db/migrations/20260807_nestly_v202b_bra
    profile menu for the sidebar, beside Staff Members and Services where the rest of the setup
    lives. The account menu is for the account, not for operations. */
 test('the owner reaches branches from Operations setup, not the account menu', () => {
-  assert.match(app, /items:\['staffmembers','branches','services','inventory','packages'\]/);
+  /* V275: the Operations setup group gained a bar-only "Bottle keep" row. This assertion guards
+     that the setup surfaces live HERE rather than in the account menu, not that the group is
+     frozen, so the new row is admitted explicitly and everything it protects still holds. */
+  assert.match(app, /items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?\]/);
   assert.doesNotMatch(app, /id="pmAddBranch"/);
 });
 

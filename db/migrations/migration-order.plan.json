@@ -1641,6 +1641,12 @@
       "path": "db/migrations/20260810_nestly_v273_usage_null_when_never_set_up.sql",
       "semanticVersion": "v273",
       "proposedDeployVersion": "20260810000500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v275_bar_bottle_keep.sql",
+      "semanticVersion": "v275",
+      "proposedDeployVersion": "20260811000100"
     }
   ]
 }

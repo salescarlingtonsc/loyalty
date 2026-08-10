@@ -3561,13 +3561,46 @@ async function renderCustomerWallet(businessSlug=null){
      rating and its comment box are removed from the customer surface. The public-review link
      stays, and the anti-review-gating invariant is now trivially satisfied — every customer
      sees the same review link, and Peekaa never asks for a private rating first. */
+  /* V275 (owner: "the customer sees their bottle details inside the business's page"). Bottle
+     keep is a bar-only module, so this card must be INVISIBLE everywhere else — including as a
+     skeleton. It is therefore inserted only after customer_get_bottles_v275 has actually
+     returned rows, never rendered as an empty shell that flashes and disappears.
+     Fail-soft by construction: a 42501 (not a bar, or module off), a missing function on an
+     older deployment, or any other error simply leaves the wallet as it was. A bottle the
+     customer left at a bar is never a reason for the rest of their wallet to break. */
+  const loadBottlesV275=async()=>{
+    if(String(b.industry||'').toLowerCase()!=='bar')return;
+    const sections=$('walletSections');
+    if(!sections||!isWalletCurrent())return;
+    const {data,error}=await customerRpc('customer_get_bottles_v275',{p_business_slug:businessSlug});
+    if(!isWalletCurrent()||!sections.isConnected||$('walletSections')!==sections)return;
+    if(error)return;
+    const bottles=Array.isArray(data?.items)?data.items:[];
+    if(!bottles.length)return;
+    if($('walletBottles'))return;
+    sections.insertAdjacentHTML('afterbegin',`<section class="card wallet-section" id="walletBottles" data-section-title="Your bottles">
+      <div class="wallet-section-head"><div><h2>Your bottles</h2><p class="muted small">What ${esc(b.name||'this bar')} is keeping for you. Show this screen at the counter to have one brought out.</p></div><span class="spacer"></span><span class="pill">${bottles.length}</span></div>
+      ${bottles.map(bottle=>{
+        const days=Number(bottle.days_left);
+        const soon=Number.isFinite(days)&&days<=7;
+        const fill=Math.max(0,Math.min(100,Math.round(Number(bottle.fill_percent)||0)));
+        return `<div class="wallet-line"><div style="width:100%">
+          <div class="row"><b>${esc(String(bottle.label||'Bottle'))}</b><span class="spacer"></span><span class="pill">${fill}% left</span></div>
+          <div style="margin-top:8px">${bottleFillBarV275(fill)}</div>
+          <p class="muted small" style="margin-top:6px">${esc(bottle.serial_code||'')}${bottle.size_ml?` · ${Number(bottle.size_ml)}ml`:''}${bottle.storage_location_name?` · ${esc(bottle.storage_location_name)}`:''}</p>
+          <p class="muted small" style="margin-top:3px">Left with them ${esc(walletDate(bottle.parked_at))}${bottle.reentry_limit?` · ${Number(bottle.reentry_limit)} can drink from it`:''}</p>
+          <p class="small" style="margin-top:3px;${soon?'color:#B4761F;font-weight:600':'color:var(--muted)'}">${esc(bottleDaysLabelV275(bottle.days_left))}</p>
+        </div></div>`;
+      }).join('')}</section>`);
+    ensureWalletEmptyState(businessSlug);
+  };
   const loadFeedback=async()=>{
     const host=$('walletFeedback');if(!host||!walletReviewUrl)return;
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Rate your visit</h2><p class="muted small">Your review helps other people find ${esc(b.name||'this business')}.</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
   };
-  await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback()]);
+  await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
   if(!isWalletCurrent())return;
 }
 

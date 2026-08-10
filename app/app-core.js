@@ -356,7 +356,11 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
-  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started']};
+  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started'],
+  /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar
+     sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
+     that lives in Operations setup, never an entitlement a staff member can be granted. */
+  bottles:['bottle','Bottles'],bottlesetup:['bottle','Bottle keep']};
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
@@ -372,7 +376,8 @@ const ROLE_CAPABILITIES={
    has one deny-list to fill instead of two hard-coded checks. */
 const HIDDEN_BUSINESS_SURFACES=new Set([]);
 const FINANCE_MODULES=new Set(['expenses','pnl','staffperf']);
-const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup']);
+const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup']);
+const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -1375,7 +1380,13 @@ async function route(){
       toast('Waitlist works with Bookings. Turn on Bookings first.');
       return nav('#/dashboard');
     }
+    /* V275: the bottle surfaces are exempt from the generic bounce. A non-bar tenant that
+       follows a bookmarked #/bottles link gets a plain "not available for this business type"
+       card from the page itself; being thrown to the dashboard with a toast reads as a broken
+       app rather than as an answer. The page re-checks the sector and the module before it
+       renders anything, and the RPCs refuse independently. */
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)&&pageKey!=='dashboard'
+       &&!BOTTLE_SURFACES_V275.has(pageKey)
        &&!canReadModule(pageKey)){
       toast('You don\'t have access to that.');
       return nav('#/dashboard');
@@ -3569,6 +3580,18 @@ async function svRunTopupFlow({branches,state,testOnly}){
   render();
 }
 
+function bottleFillBarV275(percent){
+  const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
+  const tone=value>=50?'#2E7D5B':value>=25?'#B4761F':'#B3453A';
+  return `<span class="bottle-fill" role="img" aria-label="${value}% left" style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
+}
+function bottleDaysLabelV275(days){
+  const value=Number(days);
+  if(!Number.isFinite(value))return '';
+  if(value<0)return 'Overdue';
+  if(value===0)return 'Last day';
+  return `${value} day${value===1?'':'s'} left`;
+}
 /* ---------- V142 merchant-owned customer payments ---------- */
 async function loadMerchantPaymentsV142(){
   const wrap=$('merchantPaymentsWrapV142');if(!wrap||!S.biz?.id)return;

@@ -1636,6 +1636,12 @@
       "version": "20260810000500",
       "name": "nestly_v273_usage_null_when_never_set_up",
       "sourcePath": "db/migrations/20260810_nestly_v273_usage_null_when_never_set_up.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260811000100",
+      "name": "nestly_v275_bar_bottle_keep",
+      "sourcePath": "db/migrations/20260811_nestly_v275_bar_bottle_keep.sql"
     }
   ]
 }

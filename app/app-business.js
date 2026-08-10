@@ -54,6 +54,11 @@ function configureChartDefaults(){
 const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses'];
 const INDUSTRIES={
   fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
+  /* V275 (owner, 2026-08-11): bars are a sector of their own, not a cafe with spirits. The
+     module list is the F&B list plus bottle keep, packages and memberships — a bar seats guests
+     and takes bookings like a cafe, but it also keeps customers' property. 'bottles' is
+     deliberately NOT in ALLMODS: it must never arrive by default in another sector's bundle. */
+  bar:{em:'🍸',label:'Bar / Pub',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','bottles','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
   facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
   massage:{em:'💆',label:'Massage',mods:ALLMODS},
@@ -66,6 +71,12 @@ const INDUSTRIES={
 const STAFF_ROLE_OPTIONS_V207=Object.freeze(
   ['manager','staff','frontdesk','bookkeeper'].map(role=>[role,ROLE_LABELS[role]]));
 const hasRoleCapability=capability=>ROLE_CAPABILITIES[S.myRole]?.has(capability)===true;
+/* V275 (owner amendment 4): bottle keep is a SaaS module EXCLUSIVE to industry='bar'. These two
+   are the client-side half of that rule — the rail never advertises the surfaces and the routes
+   answer with a plain card. They are a courtesy, not the gate: every bottle RPC calls
+   app.require_bar_business_v275() first and refuses a non-bar tenant with 42501, so nothing here
+   is load-bearing for access control. */
+const isBarSectorV275=()=>String(S.biz?.industry||'').toLowerCase()==='bar';
 /* Sidebar grouping (owner's "Cubbly" 4-header direction): flat modules are grouped under
    collapsible headers. Settings moves to the Profile menu, out of main nav. Group-open state
    lives in this plain JS object (NOT localStorage — prohibited in this stack) so it resets
@@ -78,7 +89,9 @@ const hasRoleCapability=capability=>ROLE_CAPABILITIES[S.myRole]?.has(capability)
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
-  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
+  /* V275: Bottles sits with the jobs done during service, beside Record sale — parking and
+     calling a bottle happens at the same moment as ringing the drink. Bar tenants only. */
+  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bottles','bookings','waitlist']},
   /* V250 (owner nav sketch): Programmes is ONE flat link. Its three sub-rows — Programmes list,
      Ongoing programmes, Pending setup — were a menu of the same page's own sections: the list
      already opens with the V244 "Ongoing programmes" and "Pending setup" groups, so the rail
@@ -105,7 +118,9 @@ const NAVGROUPS=[
      is gone; the #/staffperf route, its page and that card's link are untouched, so deep links and
      history keep working. activeGroupKey() below maps the route back to this group. */
   {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel']},
-  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages']}
+  /* V275: "Bottle keep" is the bar's own configuration — one keep-days number and the shelf
+     list — so it belongs beside Services and Products, not inside the daily Bottles screen. */
+  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup']}
 ];
 let navOpen={};
 let pendingCustomerInactivity=null;
@@ -902,8 +917,13 @@ async function refreshWaitlistBadge(){
   setWaitlistBadgeCount(count||0);
 }
 function navHtml(page,idPrefix='nav'){
+  /* V275: bottle keep is stripped from the resolved module list for every non-bar sector BEFORE
+     the rail is built, so no other sector's navigation can gain a row even if an entitlement
+     ever handed the key out by mistake. Every existing module rule below is untouched. */
+  const sectorShowsBottlesV275=isBarSectorV275();
   const enabled=filterResolvedModulesForRole(S.myModules||S.biz.enabled_modules||[],S.myRole)
-    .filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module));
+    .filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module))
+    .filter(module=>module!=='bottles'||sectorShowsBottlesV275);
   const activeKey=page[0]==='client'?'clients':page[0];
   const activeGrp=activeGroupKey(page[0]);
   /* V219. Owner: "add branch inside (so can add or manage branches using the module as well)".
@@ -931,6 +951,7 @@ function navHtml(page,idPrefix='nav'){
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
+    ||(m==='bottlesetup'&&sectorShowsBottlesV275&&S.myRole==='owner')
     ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
     ||(m!=='waitlist'&&m!=='appointments'&&enabled.includes(m))
     ||(m==='appointments'&&!sectorHidesAppointmentsV246&&enabled.includes(m));
@@ -1627,6 +1648,7 @@ function renderShell(page){
     bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus),retention:(hashParam,routedFocus)=>growPage('winback',hashParam,routedFocus),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam),storedvalue:hashParam=>growPage('storedvalue',hashParam),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
+    bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
     'customer-interface':customerInterfacePageV243};
@@ -13617,6 +13639,579 @@ async function appointmentsPage(){
    "Book instead" resolve to the sole positive terminal 'booked'; "waited" is a duration
    (now − created_at, timezone-independent); today's cohort is bounded by the SGT day start.
    Deep-links reuse the shipped consume-once vars (pendingTillPhone / pendingApptClientId). */
+/* ---------- V275 · bottle keep (bar sector only) ----------
+   Owner brief 2026-08-11: a bar parks the customer's leftover bottle, tracks how full it is and
+   how long it may be kept, and the customer sees it inside the business's page in the customer
+   app. Owner amendment 4 makes this a SaaS module EXCLUSIVE to industry='bar'. Everything in
+   this section re-checks that sector before it renders, and the RPCs behind it refuse a non-bar
+   tenant with 42501 regardless of what the client does.
+   Low-literacy rules (CLAUDE.md): pictogram status, <=3-word labels, big tap targets, numbers
+   over words. A bartender reads "50%" and a half-filled bar faster than "half full". */
+const BOTTLE_STATUS_V275=Object.freeze({
+  stored:{label:'Stored',icon:'inventory'},
+  called:{label:'Called',icon:'bell'},
+  at_table:{label:'At table',icon:'till'},
+  finished:{label:'Finished',icon:'check'},
+  expired:{label:'Expired',icon:'info'},
+  transferred:{label:'Moved',icon:'forward'},
+  removed:{label:'Removed',icon:'close'}
+});
+/* The reference product's five presets. A number input sits beside them for the in-between
+   pours, so a bartender never has to fight a slider on a wet phone. */
+const BOTTLE_FILL_PRESETS_V275=Object.freeze([[100,'100%'],[75,'75%'],[50,'50%'],[25,'25%'],[0,'Empty']]);
+const BOTTLE_EXPIRING_DAYS_V275=7;
+
+function bottleStatusPillV275(status){
+  const meta=BOTTLE_STATUS_V275[status]||{label:String(status||'').replaceAll('_',' '),icon:'info'};
+  return `<span class="pill">${CUI.icon(meta.icon,{size:15})} ${esc(meta.label)}</span>`;
+}
+function bottleNameV275(bottle){
+  return String(bottle?.label||'').trim()||'Bottle';
+}
+/* The one card a non-bar tenant ever sees on these routes. It is a plain answer, not an error
+   and not a bounce: a converted tenant with a bookmarked link must be told why, once. */
+function bottlesUnavailableCardV275(title){
+  const host=M();if(!host)return;
+  host.innerHTML=CUI.pageHeader({title,iconName:'bottle',canWrite:false,moduleLabel:title})
+    +CUI.emptyState({iconName:'bottle',title:'Not available for this business type',
+      body:'Bottle keep is built for bars. This workspace is set up for a different kind of business, so there is nothing to keep here.',
+      actionHtml:'<a class="btn ghost sm" href="#/dashboard">Back to dashboard</a>'});
+}
+function bottlesDeniedCardV275(title){
+  const host=M();if(!host)return;
+  host.innerHTML=CUI.pageHeader({title,iconName:'bottle',canWrite:false,moduleLabel:title})
+    +CUI.emptyState({iconName:'bottle',title:'You do not have access to bottles',
+      body:'Ask the owner to give you access to the Bottles module.',
+      actionHtml:'<a class="btn ghost sm" href="#/dashboard">Back to dashboard</a>'});
+}
+
+/* Operations setup → Bottle keep. Two owner decisions and nothing else: how long a bottle is
+   kept (owner amendment 2 — ONE number, adjustable per business) and where bottles live
+   (amendment 3 — the bar defines its own list). */
+async function bottleSetupPageV275(){
+  disposeCurrentRoute();
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  if(!isBarSectorV275())return bottlesUnavailableCardV275('Bottle keep');
+  if(S.myRole!=='owner')return bottlesDeniedCardV275('Bottle keep');
+  routeMain.innerHTML=CUI.loadingState({title:'Bottle keep',iconName:'bottle',body:'Loading your keep window…'});
+  const {data,error}=await sb.rpc('bar_get_setup_v275',{p_business:S.biz.id});
+  if(!isCurrent())return;
+  if(error){
+    routeMain.innerHTML=CUI.errorState({title:'Bottle keep unavailable',message:ownerErrorText(error)||'Please try again.'});
+    const retry=$('routeRetry');if(retry)retry.onclick=()=>bottleSetupPageV275().catch(fail);
+    return;
+  }
+  /* Locations are edited in memory and saved as ONE declarative list, because the server treats
+     a name that disappears from the list as "deactivate", never "delete" — a bottle still points
+     at its shelf and must keep a nameable answer to "where is it". */
+  let locations=(Array.isArray(data?.locations)?data.locations:[])
+    .filter(location=>location?.active!==false)
+    .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
+  routeMain.innerHTML=CUI.pageHeader({title:'Bottle keep',
+    subtitle:'How long you keep a bottle, and where you put it.',iconName:'bottle',
+    canWrite:true,moduleLabel:'Bottle keep'})
+    +`<section class="card">
+      <div class="cui-card-head"><h2>Keep window</h2><p>How many days a parked bottle stays the customer's before it expires. 30 days is standard.</p></div>
+      <label for="bkDays">Days</label>
+      <input id="bkDays" type="number" min="1" max="365" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(data?.keep_days)||30))}">
+      <p class="muted small" style="margin-top:-2px">Every bottle parked from now on uses this number. Bottles already on the shelf keep the date they were given.</p>
+    </section>
+    <section class="card" style="margin-top:16px">
+      <div class="cui-card-head"><h2>Storage places</h2><p>Where bottles live — a shelf, a chiller, a room. Staff pick one when they park a bottle.</p></div>
+      <div class="row"><label class="sr-only" for="bkNewLoc">New storage place</label>
+        <input id="bkNewLoc" maxlength="60" autocomplete="off" placeholder="e.g. Shelf A">
+        <button class="btn sm" id="bkAddLoc" type="button">${CUI.icon('add',{size:17})}<span>Add</span></button></div>
+      <div id="bkLocList" style="margin-top:14px"></div>
+    </section>
+    <div class="row" style="margin-top:18px"><button class="btn" id="bkSave" type="button">Save bottle keep</button>
+      <span class="muted small" id="bkStatus" role="status" aria-live="polite"></span></div>
+    <div id="bkErr"></div>`;
+
+  function paintLocations(){
+    const host=$('bkLocList');if(!host)return;
+    if(!locations.length){
+      host.innerHTML=CUI.emptyState({iconName:'inventory',title:'No storage places yet',
+        body:'Add at least one so staff can say where a bottle is.'});
+      return;
+    }
+    host.innerHTML=locations.map((location,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(location.name)}</b>
+      ${location.in_use?'<span class="muted small">In use</span>':''}
+      <button class="btn ghost sm" type="button" data-remove-location="${index}" aria-label="Remove ${esc(location.name)}"><span aria-hidden="true">×</span></button>
+    </div>`).join('');
+    host.querySelectorAll('[data-remove-location]').forEach(button=>button.onclick=()=>{
+      const index=Number(button.dataset.removeLocation);
+      const removed=locations[index];
+      if(removed?.in_use&&!confirm(`${removed.name} still holds bottles. Remove it from the list? Bottles already there keep the name, staff just cannot pick it again.`))return;
+      locations=locations.filter((_,position)=>position!==index);
+      paintLocations();
+    });
+  }
+  paintLocations();
+
+  const addLocation=()=>{
+    const input=$('bkNewLoc');if(!input)return;
+    const name=input.value.trim();
+    if(!name)return toast('Type a name first');
+    if(name.length>60)return toast('Keep the name under 60 characters');
+    if(locations.some(location=>location.name.toLocaleLowerCase()===name.toLocaleLowerCase()))return toast('That place is already on the list');
+    locations.push({id:null,name,in_use:false});
+    input.value='';input.focus();paintLocations();
+  };
+  $('bkAddLoc').onclick=addLocation;
+  $('bkNewLoc').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();addLocation()}};
+  $('bkSave').onclick=async()=>{
+    const days=Number($('bkDays').value);
+    const errorHost=$('bkErr'),status=$('bkStatus'),save=$('bkSave');
+    errorHost.innerHTML='';
+    if(!Number.isInteger(days)||days<1||days>365){
+      errorHost.innerHTML='<div class="err">The keep window must be a whole number between 1 and 365 days.</div>';
+      return;
+    }
+    CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
+    const {data:saved,error:saveError}=await sb.rpc('bar_save_setup_v275',{
+      p_business:S.biz.id,p_keep_days:days,
+      p_locations:locations.map(location=>({id:location.id,name:location.name}))
+    });
+    if(!isCurrent()||!save.isConnected)return;
+    CUI.setButtonBusy(save,{busy:false});
+    if(saveError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'Bottle keep could not be saved.')}</div>`;
+      return;
+    }
+    locations=(Array.isArray(saved?.locations)?saved.locations:[])
+      .filter(location=>location?.active!==false)
+      .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
+    paintLocations();
+    if(status)status.textContent='Saved.';
+    toast('Bottle keep saved');
+  };
+}
+
+/* Serve & sell → Bottles. The shelf, as the bar sees it during service. */
+async function bottlesPage(){
+  disposeCurrentRoute();
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  if(!isBarSectorV275())return bottlesUnavailableCardV275('Bottles');
+  if(S.myRole!=='owner'&&!canReadModule('bottles'))return bottlesDeniedCardV275('Bottles');
+  routeMain.innerHTML=CUI.loadingState({title:'Bottles',iconName:'bottle',body:'Loading the shelf…'});
+  const branchId=selectedBranchId||null;
+  /* One idempotency key per in-flight intention, exactly like the appointments blocked-time
+     dialog: a double tap replays the same key and the server answers duplicate_ignored, and the
+     key is released only once the write has actually landed. */
+  const bottleAttemptKeys=new Map();
+  const attemptKey=fingerprint=>{
+    if(!bottleAttemptKeys.has(fingerprint))bottleAttemptKeys.set(fingerprint,crypto.randomUUID());
+    return bottleAttemptKeys.get(fingerprint);
+  };
+  const [listResult,setupResult,clientsResult,productsResult]=await Promise.all([
+    sb.rpc('list_bar_bottles_v275',{p_business:S.biz.id,p_branch:branchId,p_status:null,
+      p_search:null,p_expiring_days:null,p_bottle:null,p_limit:200}),
+    sb.rpc('bar_get_setup_v275',{p_business:S.biz.id}),
+    fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone',{count:'exact'})
+      .eq('business_id',S.biz.id).order('full_name').order('id')),
+    fetchAllRowsResult(()=>sb.from('products').select('id,name',{count:'exact'})
+      .eq('business_id',S.biz.id).eq('active',true).order('name').order('id'))
+  ]);
+  if(!isCurrent())return;
+  if(listResult.error){
+    routeMain.innerHTML=CUI.errorState({title:'Bottles unavailable',message:ownerErrorText(listResult.error)||'Please try again.'});
+    const retry=$('routeRetry');if(retry)retry.onclick=()=>bottlesPage().catch(fail);
+    return;
+  }
+  const canWrite=listResult.data?.can_write===true;
+  const keepDays=Number(listResult.data?.keep_days)||30;
+  const clients=clientsResult.error?[]:(clientsResult.data||[]);
+  /* A bar without the Products module still parks bottles: the catalogue picker simply falls
+     back to a typed name rather than blocking the whole screen. */
+  const products=productsResult.error?[]:(productsResult.data||[]);
+  const locations=(setupResult.error?[]:(setupResult.data?.locations||[])).filter(location=>location?.active!==false);
+  let snapshot=listResult.data;
+  let filters={status:'',search:'',expiring:false};
+  let closeBottleDialog=null;
+  const listGate=createLatestRequestGate(isCurrent);
+
+  const clientLabel=client=>`${String(client?.full_name||'Customer').trim()||'Customer'} · ${String(client?.phone||'').trim()||'no phone'}`;
+  const clientMatches=(client,query)=>{
+    const needle=String(query||'').trim().toLocaleLowerCase();
+    if(!needle)return true;
+    const digits=needle.replace(/\D/g,'');
+    const text=[client?.full_name,client?.phone].filter(Boolean).join(' ').toLocaleLowerCase();
+    return text.includes(needle)||(digits.length>=3&&String(client?.phone||'').replace(/\D/g,'').includes(digits));
+  };
+
+  routeMain.innerHTML=CUI.pageHeader({title:'Bottles',
+    subtitle:'Every bottle your customers left with you.',iconName:'bottle',
+    canWrite,moduleLabel:'Bottles',
+    actions:canWrite?`<button class="btn" id="bottlePark" type="button">${CUI.icon('add',{size:17})}<span>Park bottle</span></button>`:''})
+    +`<div class="kpis" id="bottleCounts" style="margin-bottom:16px"></div>
+    <section class="card">
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <label class="sr-only" for="bottleSearch">Search bottles</label>
+        <input id="bottleSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name, phone or PK-code" style="flex:1 1 200px">
+        <label class="sr-only" for="bottleStatusFilter">Show</label>
+        <select id="bottleStatusFilter" style="max-width:170px">
+          <option value="">On the shelf</option>
+          <option value="stored">Stored</option>
+          <option value="called">Called</option>
+          <option value="at_table">At table</option>
+          <option value="finished">Finished</option>
+          <option value="expired">Expired</option>
+          <option value="all">Everything</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="bottleExpiring" style="width:auto"> Expiring soon</label>
+      </div>
+      <div id="bottleList" style="margin-top:14px">${CUI.skeletonGrid({cards:3,lines:2})}</div>
+    </section>`;
+
+  function paintCounts(){
+    const host=$('bottleCounts');if(!host)return;
+    const counts=snapshot?.counts||{};
+    const tile=(key,label,iconName)=>`<div class="card kpi"><div class="l">${CUI.icon(iconName,{size:14})} ${esc(label)}</div><div class="v">${Number(counts[key]||0)}</div></div>`;
+    host.innerHTML=tile('stored','Stored','inventory')+tile('called','Called','bell')
+      +tile('at_table','At table','till')+tile('expiring_soon','Expiring soon','info');
+  }
+  function paintList(){
+    const host=$('bottleList');if(!host)return;
+    const items=Array.isArray(snapshot?.items)?snapshot.items:[];
+    if(!items.length){
+      host.innerHTML=CUI.emptyState({iconName:'bottle',title:'No bottles here',
+        body:filters.search||filters.status||filters.expiring
+          ?'Nothing matches that. Clear the filters to see the whole shelf.'
+          :`Park a bottle and it is kept for ${keepDays} days.`,
+        actionHtml:canWrite&&!(filters.search||filters.status||filters.expiring)
+          ?'<button class="btn sm" type="button" data-park-empty>Park bottle</button>':''});
+      const parkEmpty=host.querySelector('[data-park-empty]');
+      if(parkEmpty)parkEmpty.onclick=()=>openParkDialog();
+      return;
+    }
+    host.innerHTML=items.map(item=>{
+      const days=Number(item.days_left);
+      const soon=Number.isFinite(days)&&days<=BOTTLE_EXPIRING_DAYS_V275
+        &&['stored','called','at_table'].includes(item.status);
+      return `<button type="button" class="card bottle-row" data-bottle="${esc(item.id)}" style="display:flex;gap:12px;align-items:center;width:100%;text-align:left;margin-bottom:10px;padding:14px;min-height:64px;${soon?'border-color:#B4761F':''}">
+        <span style="flex:1 1 auto;min-width:0">
+          <b style="display:block;overflow-wrap:anywhere">${esc(bottleNameV275(item))}</b>
+          <span class="muted small" style="display:block;margin-top:3px">${esc(item.serial_code||'')}${item.size_ml?` · ${Number(item.size_ml)}ml`:''} · ${esc(String(item.client_name||'Customer'))}</span>
+          <span style="display:flex;align-items:center;gap:9px;margin-top:7px">${bottleFillBarV275(item.fill_percent)}<span class="small"><b>${Math.max(0,Math.min(100,Math.round(Number(item.fill_percent)||0)))}%</b></span></span>
+        </span>
+        <span style="flex:0 0 auto;text-align:right">
+          ${bottleStatusPillV275(item.status)}
+          <span class="small" style="display:block;margin-top:6px;${soon?'color:#B4761F;font-weight:600':'color:var(--muted)'}">${esc(bottleDaysLabelV275(item.days_left))}</span>
+          ${item.storage_location_name?`<span class="muted small" style="display:block;margin-top:3px">${CUI.icon('inventory',{size:14})} ${esc(item.storage_location_name)}</span>`:''}
+        </span>
+      </button>`;
+    }).join('');
+    host.querySelectorAll('[data-bottle]').forEach(row=>row.onclick=()=>openBottleDetail(row.dataset.bottle));
+  }
+  async function reload(){
+    const host=$('bottleList');
+    if(host)host.setAttribute('aria-busy','true');
+    const isLatest=listGate.begin();
+    const {data,error}=await sb.rpc('list_bar_bottles_v275',{
+      p_business:S.biz.id,p_branch:branchId,
+      p_status:filters.status||null,p_search:filters.search||null,
+      p_expiring_days:filters.expiring?BOTTLE_EXPIRING_DAYS_V275:null,
+      p_bottle:null,p_limit:200});
+    if(!isLatest())return;
+    if(host)host.setAttribute('aria-busy','false');
+    if(error){
+      if(host)host.innerHTML=`<div class="err">${esc(ownerErrorText(error)||'The shelf could not be refreshed.')}</div>`;
+      return;
+    }
+    snapshot=data;paintCounts();paintList();
+  }
+  paintCounts();paintList();
+
+  let searchTimer=0;
+  $('bottleSearch').oninput=()=>{
+    filters.search=$('bottleSearch').value.trim();
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(()=>{if(isCurrent())reload()},250);
+  };
+  $('bottleStatusFilter').onchange=()=>{filters.status=$('bottleStatusFilter').value;reload()};
+  $('bottleExpiring').onchange=()=>{filters.expiring=$('bottleExpiring').checked;reload()};
+  if($('bottlePark'))$('bottlePark').onclick=()=>openParkDialog();
+
+  function closeDialog({restoreFocus=true}={}){
+    if(!closeBottleDialog)return;
+    const close=closeBottleDialog;closeBottleDialog=null;close({restoreFocus});
+  }
+
+  /* Park. Mirrors the reference product's 30-second flow: who, what, where, how full, how many
+     people may re-enter on it — and the expiry the bar's own keep window produces, shown before
+     the button is pressed so nobody has to trust it. */
+  function openParkDialog(){
+    closeDialog();
+    const expiry=new Date(Date.now()+keepDays*864e5);
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','parkBottleTitle');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(560px,100%)">
+      <div class="row"><div><h2 id="parkBottleTitle">Park bottle</h2><p class="muted small" style="margin-top:4px">Kept for ${keepDays} days.</p></div><span class="spacer"></span>
+        <button type="button" class="btn ghost sm" id="parkClose" aria-label="Close park bottle">Close</button></div>
+      <form id="parkForm" style="margin-top:16px">
+        <label for="parkCustomerSearch">Customer</label>
+        <input id="parkCustomerSearch" type="search" inputmode="search" autocomplete="off" placeholder="Search name or phone" aria-controls="parkClient">
+        <select id="parkClient" required aria-label="Choose the customer"></select>
+        <p class="muted small" style="margin-top:-2px">New customer? <a href="#/clients">Add them in Customers</a> first.</p>
+        ${products.length?`<label for="parkProduct">Bottle</label>
+        <select id="parkProduct"><option value="">Type the name instead</option>${products.map(product=>`<option value="${esc(product.id)}">${esc(product.name)}</option>`).join('')}</select>`:''}
+        <label for="parkLabel">Bottle name</label>
+        <input id="parkLabel" maxlength="120" autocomplete="off" placeholder="e.g. Hibiki 12">
+        <div class="split">
+          <div><label for="parkSize">Size (ml)</label><input id="parkSize" type="number" min="1" max="20000" inputmode="numeric" placeholder="700"></div>
+          <div><label for="parkFill">How full (%)</label><input id="parkFill" type="number" min="0" max="100" inputmode="numeric" value="100"></div>
+        </div>
+        <label for="parkLocation">Where is it?</label>
+        <select id="parkLocation"><option value="">Not recorded</option>${locations.map(location=>`<option value="${esc(location.id)}">${esc(location.name)}</option>`).join('')}</select>
+        ${locations.length?'':`<p class="muted small" style="margin-top:-2px">No storage places yet. ${S.myRole==='owner'?'<a href="#/bottlesetup">Add them in Bottle keep</a>.':'Ask the owner to add them.'}</p>`}
+        <label for="parkReentry">Re-entry</label>
+        <select id="parkReentry">
+          <option value="1">Default · 1 person</option>
+          <option value="">Disabled</option>
+          <option value="2">2 people</option>
+          <option value="3">3 people</option>
+          <option value="4">4 people</option>
+          <option value="6">6 people</option>
+          <option value="10">10 people</option>
+        </select>
+        <p class="muted small" style="margin-top:-2px">How many people may drink from this bottle without the owner present.</p>
+        <div class="imp-note small" style="margin-top:14px">Expires ${esc(sgt(expiry.toISOString())||'')} · ${keepDays} days</div>
+        <div id="parkError" role="alert"></div>
+        <div class="row" style="margin-top:16px"><span class="spacer"></span>
+          <button type="button" class="btn ghost" id="parkCancel">Cancel</button>
+          <button type="submit" class="btn" id="parkSave">Park bottle</button></div>
+      </form></div>`;
+    document.body.append(dialog);
+    closeBottleDialog=CUI.activateDialog(dialog,{onClose:()=>closeDialog(),initialFocus:'#parkCustomerSearch'});
+    $('parkClose').onclick=()=>closeDialog();
+    $('parkCancel').onclick=()=>closeDialog();
+    dialog.onclick=event=>{if(event.target===dialog)closeDialog()};
+
+    const renderClientOptions=(query='')=>{
+      const select=$('parkClient');if(!select)return;
+      const selected=select.value;
+      const matches=clients.filter(client=>clientMatches(client,query)).slice(0,200);
+      select.innerHTML=`<option value="">Choose a customer</option>`
+        +matches.map(client=>`<option value="${esc(client.id)}"${client.id===selected?' selected':''}>${esc(clientLabel(client))}</option>`).join('');
+      if(!matches.length)select.innerHTML=`<option value="">No customer matches that</option>`;
+    };
+    renderClientOptions();
+    $('parkCustomerSearch').oninput=()=>renderClientOptions($('parkCustomerSearch').value);
+    if($('parkProduct'))$('parkProduct').onchange=()=>{
+      const chosen=products.find(product=>product.id===$('parkProduct').value);
+      if(chosen&&!$('parkLabel').value.trim())$('parkLabel').value=chosen.name;
+    };
+
+    $('parkForm').onsubmit=async event=>{
+      event.preventDefault();
+      const errorHost=$('parkError'),save=$('parkSave');
+      errorHost.innerHTML='';
+      const clientId=$('parkClient').value;
+      const productId=$('parkProduct')?$('parkProduct').value||null:null;
+      const label=$('parkLabel').value.trim();
+      const fill=Number($('parkFill').value);
+      const size=$('parkSize').value.trim()?Number($('parkSize').value):null;
+      const reentryRaw=$('parkReentry').value;
+      if(!clientId){errorHost.innerHTML='<div class="err">Choose a customer.</div>';return}
+      if(!label&&!productId){errorHost.innerHTML='<div class="err">Name the bottle, or pick it from the list.</div>';return}
+      if(!Number.isInteger(fill)||fill<0||fill>100){errorHost.innerHTML='<div class="err">How full must be a whole number from 0 to 100.</div>';return}
+      if(size!==null&&(!Number.isInteger(size)||size<1||size>20000)){errorHost.innerHTML='<div class="err">Size must be a whole number of millilitres.</div>';return}
+      const request={p_business:S.biz.id,p_client:clientId,p_label:label||null,p_product:productId||null,
+        p_size_ml:size,p_fill_percent:fill,p_storage_location:$('parkLocation').value||null,
+        p_reentry_limit:reentryRaw===''?null:Number(reentryRaw),p_branch:branchId,p_sale:null};
+      const key=attemptKey('park:'+JSON.stringify(request));
+      CUI.setButtonBusy(save,{busy:true,label:'Parking…'});
+      const {data,error}=await sb.rpc('park_bottle_v275',{...request,p_idempotency_key:key});
+      if(!isCurrent()||!save.isConnected)return;
+      CUI.setButtonBusy(save,{busy:false});
+      if(error){
+        errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(error)||'The bottle could not be parked.')}</div>`;
+        return;
+      }
+      bottleAttemptKeys.delete('park:'+JSON.stringify(request));
+      closeDialog();
+      toast(isReplayResult(data)?'Already parked':`Parked ${data?.bottle?.serial_code||''}`.trim());
+      await reload();
+    };
+  }
+
+  /* Bottle detail. Everything a bartender does to a bottle in one sheet, with the event history
+     underneath — the record that answers "my bottle was fuller than that". */
+  async function openBottleDetail(bottleId){
+    closeDialog();
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','bottleDetailTitle');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(560px,100%)"><div id="bottleDetailBody">
+      <h2 id="bottleDetailTitle">Bottle</h2><div style="margin-top:14px">${CUI.skeletonGrid({cards:2,lines:3})}</div></div></div>`;
+    document.body.append(dialog);
+    closeBottleDialog=CUI.activateDialog(dialog,{onClose:()=>closeDialog(),initialFocus:'#bottleDetailBody'});
+    dialog.onclick=event=>{if(event.target===dialog)closeDialog()};
+    const detailCurrent=()=>isCurrent()&&dialog.isConnected;
+
+    async function paintDetail(){
+      const {data,error}=await sb.rpc('list_bar_bottles_v275',{p_business:S.biz.id,p_branch:null,
+        p_status:null,p_search:null,p_expiring_days:null,p_bottle:bottleId,p_limit:1});
+      if(!detailCurrent())return;
+      const host=$('bottleDetailBody');if(!host)return;
+      if(error){
+        host.innerHTML=`<div class="row"><h2 id="bottleDetailTitle">Bottle</h2><span class="spacer"></span><button type="button" class="btn ghost sm" data-bottle-close>Close</button></div>
+          <div class="err" style="margin-top:12px">${esc(ownerErrorText(error)||'This bottle could not be loaded.')}</div>`;
+        host.querySelector('[data-bottle-close]').onclick=()=>closeDialog();
+        return;
+      }
+      const bottle=data?.bottle||{};
+      const events=Array.isArray(data?.events)?data.events:[];
+      const live=['stored','called','at_table'].includes(bottle.status);
+      const mayWrite=canWrite&&data?.can_write!==false;
+      const fill=Math.max(0,Math.min(100,Math.round(Number(bottle.fill_percent)||0)));
+      host.innerHTML=`<div class="row"><div><h2 id="bottleDetailTitle">${esc(bottleNameV275(bottle))}</h2>
+          <p class="muted small" style="margin-top:4px">${esc(bottle.serial_code||'')}${bottle.size_ml?` · ${Number(bottle.size_ml)}ml`:''} · ${esc(String(bottle.client_name||'Customer'))}${bottle.client_phone?` · ${esc(bottle.client_phone)}`:''}</p></div>
+        <span class="spacer"></span><button type="button" class="btn ghost sm" data-bottle-close aria-label="Close bottle">Close</button></div>
+        <div class="row" style="margin-top:14px;gap:10px;flex-wrap:wrap">${bottleStatusPillV275(bottle.status)}
+          <span class="pill">${CUI.icon('bell',{size:15})} ${esc(bottleDaysLabelV275(bottle.days_left))}</span>
+          ${bottle.storage_location_name?`<span class="pill">${CUI.icon('inventory',{size:15})} ${esc(bottle.storage_location_name)}</span>`:''}
+          ${bottle.reentry_limit?`<span class="pill">${CUI.icon('customers',{size:15})} ${Number(bottle.reentry_limit)} pax</span>`:'<span class="pill">No re-entry</span>'}</div>
+        <div style="margin-top:14px;display:flex;align-items:center;gap:10px">${bottleFillBarV275(fill)}<b>${fill}%</b></div>
+        ${mayWrite&&live?`<div class="cui-card-head" style="margin-top:18px"><h3 style="margin:0;font-size:15px">How full</h3></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">${BOTTLE_FILL_PRESETS_V275.map(([value,label])=>`<button type="button" class="btn ghost sm" data-fill="${value}" style="min-width:64px;min-height:42px"${value===fill?' aria-pressed="true"':''}>${esc(label)}</button>`).join('')}
+          <input type="number" id="bottleFillInput" min="0" max="100" inputmode="numeric" value="${fill}" style="max-width:88px" aria-label="Exact fill percent">
+          <button type="button" class="btn sm" data-fill-exact>Set</button></div>
+        <div class="cui-card-head" style="margin-top:18px"><h3 style="margin:0;font-size:15px">Where is it</h3></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          ${bottle.status==='stored'?'':`<button type="button" class="btn ghost sm" data-status="stored" style="min-height:42px">${CUI.icon('inventory',{size:16})}<span>To storage</span></button>`}
+          ${bottle.status==='called'?'':`<button type="button" class="btn ghost sm" data-status="called" style="min-height:42px">${CUI.icon('bell',{size:16})}<span>Called</span></button>`}
+          ${bottle.status==='at_table'?'':`<button type="button" class="btn ghost sm" data-status="at_table" style="min-height:42px">${CUI.icon('till',{size:16})}<span>At table</span></button>`}
+        </div>
+        <div class="cui-card-head" style="margin-top:18px"><h3 style="margin:0;font-size:15px">Keep it longer, move it, close it</h3></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn ghost sm" data-extend style="min-height:42px">${CUI.icon('retention',{size:16})}<span>Extend ${keepDays}d</span></button>
+          <button type="button" class="btn ghost sm" data-transfer style="min-height:42px">${CUI.icon('forward',{size:16})}<span>Transfer</span></button>
+          <button type="button" class="btn ghost sm" data-finish style="min-height:42px">${CUI.icon('check',{size:16})}<span>Finish</span></button>
+        </div>
+        <div id="bottleTransferPanel" hidden style="margin-top:12px">
+          <label for="bottleTransferSearch">Transfer to</label>
+          <input id="bottleTransferSearch" type="search" inputmode="search" autocomplete="off" placeholder="Search name or phone">
+          <select id="bottleTransferClient" aria-label="Customer to transfer to"></select>
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-transfer-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-transfer-confirm>Transfer bottle</button></div>
+        </div>`:''}
+        <div id="bottleActionError" role="alert"></div>
+        <div class="cui-card-head" style="margin-top:20px"><h3 style="margin:0;font-size:15px">History</h3><p>Every change to this bottle, oldest at the bottom.</p></div>
+        <div style="display:grid;gap:6px;margin-top:8px">${events.length?events.map(event=>`<p class="muted small">${esc(sgt(event.occurred_at)||'')} · ${esc(bottleEventTextV275(event))}${event.actor_name?` · ${esc(event.actor_name)}`:''}</p>`).join(''):'<p class="muted small">Nothing recorded yet.</p>'}</div>`;
+      host.querySelector('[data-bottle-close]').onclick=()=>closeDialog();
+      if(!(mayWrite&&live))return;
+
+      /* Each action hands in its OWN literal sb.rpc(...) call rather than an RPC name, because
+         the PS-0 writer discovery matches rpc('<literal>') — a name threaded through a variable
+         would have hidden five write sites from the audit whose whole job is to guarantee that
+         no writer reaches production uncurated. */
+      const runAction=async(button,fingerprint,call,successText)=>{
+        const errorHost=$('bottleActionError');
+        if(errorHost)errorHost.innerHTML='';
+        const key=attemptKey(fingerprint);
+        CUI.setButtonBusy(button,{busy:true,label:'Working…'});
+        const {data:result,error:actionError}=await call(key);
+        if(!detailCurrent()||!button.isConnected)return;
+        CUI.setButtonBusy(button,{busy:false});
+        if(actionError){
+          const target=$('bottleActionError');
+          if(target)target.innerHTML=`<div class="err">${esc(ownerErrorText(actionError)||'That change could not be saved.')}</div>`;
+          return;
+        }
+        bottleAttemptKeys.delete(fingerprint);
+        toast(isReplayResult(result)?'Already done':successText);
+        await paintDetail();
+        await reload();
+      };
+
+      host.querySelectorAll('[data-fill]').forEach(button=>button.onclick=()=>runAction(button,
+        `fill:${bottleId}:${button.dataset.fill}`,
+        key=>sb.rpc('set_bottle_fill_v275',{p_business:S.biz.id,p_bottle:bottleId,
+          p_fill_percent:Number(button.dataset.fill),p_idempotency_key:key}),'Fill updated'));
+      const exactButton=host.querySelector('[data-fill-exact]');
+      if(exactButton)exactButton.onclick=()=>{
+        const value=Number($('bottleFillInput').value);
+        if(!Number.isInteger(value)||value<0||value>100){
+          $('bottleActionError').innerHTML='<div class="err">How full must be a whole number from 0 to 100.</div>';
+          return;
+        }
+        runAction(exactButton,`fill:${bottleId}:${value}`,
+          key=>sb.rpc('set_bottle_fill_v275',{p_business:S.biz.id,p_bottle:bottleId,
+            p_fill_percent:value,p_idempotency_key:key}),'Fill updated');
+      };
+      host.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>runAction(button,
+        `status:${bottleId}:${button.dataset.status}`,
+        key=>sb.rpc('set_bottle_status_v275',{p_business:S.biz.id,p_bottle:bottleId,
+          p_status:button.dataset.status,p_idempotency_key:key}),'Bottle moved'));
+      const extendButton=host.querySelector('[data-extend]');
+      if(extendButton)extendButton.onclick=()=>runAction(extendButton,
+        `extend:${bottleId}:${bottle.expires_at||''}`,
+        key=>sb.rpc('extend_bottle_v275',{p_business:S.biz.id,p_bottle:bottleId,
+          p_expires_at:null,p_idempotency_key:key}),`Kept ${keepDays} more days`);
+      const finishButton=host.querySelector('[data-finish]');
+      if(finishButton)finishButton.onclick=()=>{
+        if(!confirm(`Finish ${bottleNameV275(bottle)}? It leaves the shelf and the customer's app.`))return;
+        runAction(finishButton,`finish:${bottleId}`,
+          key=>sb.rpc('finish_bottle_v275',{p_business:S.biz.id,p_bottle:bottleId,
+            p_idempotency_key:key}),'Bottle finished');
+      };
+      const transferButton=host.querySelector('[data-transfer]');
+      const transferPanel=$('bottleTransferPanel');
+      const renderTransferOptions=(query='')=>{
+        const select=$('bottleTransferClient');if(!select)return;
+        const matches=clients.filter(client=>client.id!==bottle.client_id&&clientMatches(client,query)).slice(0,200);
+        select.innerHTML=matches.length
+          ?`<option value="">Choose a customer</option>`+matches.map(client=>`<option value="${esc(client.id)}">${esc(clientLabel(client))}</option>`).join('')
+          :`<option value="">No customer matches that</option>`;
+      };
+      if(transferButton&&transferPanel)transferButton.onclick=()=>{
+        transferPanel.hidden=false;renderTransferOptions();
+        $('bottleTransferSearch').oninput=()=>renderTransferOptions($('bottleTransferSearch').value);
+        $('bottleTransferSearch').focus();
+      };
+      const transferCancel=host.querySelector('[data-transfer-cancel]');
+      if(transferCancel)transferCancel.onclick=()=>{if(transferPanel)transferPanel.hidden=true};
+      const transferConfirm=host.querySelector('[data-transfer-confirm]');
+      if(transferConfirm)transferConfirm.onclick=()=>{
+        const target=$('bottleTransferClient').value;
+        if(!target){
+          $('bottleActionError').innerHTML='<div class="err">Choose who the bottle goes to.</div>';
+          return;
+        }
+        runAction(transferConfirm,`transfer:${bottleId}:${target}`,
+          key=>sb.rpc('transfer_bottle_v275',{p_business:S.biz.id,p_bottle:bottleId,
+            p_client:target,p_idempotency_key:key}),'Bottle transferred');
+      };
+    }
+    await paintDetail();
+  }
+}
+
+/* The event log speaks the bar's language, not the schema's. */
+function bottleEventTextV275(event){
+  const detail=event?.detail||{};
+  switch(event?.kind){
+    case 'park':return `Parked${detail.fill_percent===undefined?'':` at ${Number(detail.fill_percent)}%`}`;
+    case 'fill':return `Fill ${Number(detail.from)}% → ${Number(detail.to)}%`;
+    case 'status':{
+      const to=BOTTLE_STATUS_V275[detail.to]?.label||String(detail.to||'');
+      const from=BOTTLE_STATUS_V275[detail.from]?.label||String(detail.from||'');
+      return `${from} → ${to}`;
+    }
+    case 'extend':return `Kept until ${sgt(detail.to)||''}`;
+    case 'transfer':return 'Transferred to another customer';
+    case 'finish':return 'Finished';
+    case 'expire':return 'Expired';
+    case 'reminder':return 'Reminder sent';
+    default:return String(event?.kind||'Change');
+  }
+}
+
 async function waitlistPage(){
   disposeCurrentRoute(); // safe re-entry (autoRefreshIfRelevant re-invokes this outside renderShell)
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
