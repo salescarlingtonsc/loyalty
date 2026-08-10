@@ -9730,11 +9730,16 @@ async function dashboard(){
         </div>
         <label class="sr-only" for="dashboardScheduleDate">Schedule date</label>
         <input type="date" id="dashboardScheduleDate" value="${today}">
+        <!-- V266 (owner drew arrows from this date chip down to the Performance figures and
+             wrote "by right based on this date, there are no numbers"). The figures were right
+             for the range chosen at the top of the page; this day picker is a different
+             control that happens to sit above them. Say so, at the picker. -->
+        <span class="muted small dashboard-schedule-scope-v266">Changes the bookings shown here only, not the Performance figures below.</span>
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
-      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
+      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
       <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
     <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
@@ -9780,6 +9785,8 @@ async function dashboard(){
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     if(status)status.innerHTML='';
     if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'reports',title:'Date range changed',body:'Apply the new range to refresh these figures.'})}</div>`;
+    const pendingPeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
+    if(pendingPeriod)pendingPeriod.textContent='Date range changed — press Apply.';
     if(loyalty)loyalty.innerHTML='';
     if(insights)insights.innerHTML='';
     if(charts)charts.innerHTML='';
@@ -9880,6 +9887,10 @@ async function dashboard(){
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
+    /* V266: the period is written from the range the RPC was actually answered for, next to the
+       numbers, so the Today-schedule date above can never be mistaken for the driver. */
+    const performancePeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
+    if(performancePeriod)performancePeriod.textContent=`${dashboardScheduleDayLabelV252(from)} to ${dashboardScheduleDayLabelV252(to)}`;
     if(!kpis||!charts)return;
     status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const previousSummary=previousResponse.error?null:previousResponse.data;
@@ -12819,40 +12830,70 @@ async function salesPage(){
   }
   const saleTeam=saleStaff||[];
   const signedInStaff=saleTeam.find(person=>person.user_id===S.user?.id);
+  /* V266 (owner, in red on the Sales page: "I tried to filter by dates & click apply but
+     cannot, please solve!!!"). The defaults are named once so Clear filters can restore the
+     dates too — it used to reset only the four non-date controls, so a range narrowed down to
+     nothing could not be undone by the button whose whole job is undoing filters. */
+  const salesDefaultToV266=sgDateInputValue(),salesDefaultFromV266=shiftSgDateInput(salesDefaultToV266,-29);
   M().innerHTML=`${salesHead}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
         <div class="sales-filter-row">
-          <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${shiftSgDateInput(sgDateInputValue(),-29)}"></div>
-          <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${sgDateInputValue()}"></div>
+          <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${salesDefaultFromV266}"></div>
+          <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${salesDefaultToV266}"></div>
           <div><label for="salesCustomer">Customer search</label><input id="salesCustomer" type="search" placeholder="Name"></div>
         </div>
         <div class="sales-filter-row secondary">
           <div><label for="salesStaff">Team member</label><select id="salesStaff"><option value="">All staff</option>${saleTeam.map(person=>`<option value="${person.id}">${esc(person.full_name||'Team member')}</option>`).join('')}</select></div>
-          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="membership">Membership</option></select></div>
+          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="gift_card">Gift card</option><option value="membership">Membership</option></select></div>
           <div><label for="salesPayment">Payment state</label><select id="salesPayment"><option value="">All states</option><option value="true">Paid</option><option value="false">Unpaid</option></select></div>
           <button class="btn sm" id="salesApply">Apply filters</button>
         </div>
-        <div><button class="btn ghost sm" id="salesClear">Clear filters</button></div>
+        <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" id="salesClear">Clear filters</button><span class="muted small" id="salesFilterSummary" role="status" aria-live="polite"></span></div>
       </div>
       <div id="recent" style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
+  const salesFilterNoteV266=(text,tone='')=>{
+    const note=$('salesFilterSummary');if(!note)return;
+    note.textContent=text;note.className=tone==='warn'?'small':'muted small';
+    note.style.color=tone==='warn'?'#C24135':'';
+  };
   async function loadRecent(){
-    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
     const from=$('salesFrom')?.value,to=$('salesTo')?.value,staff=$('salesStaff')?.value,type=$('salesType')?.value,paid=$('salesPayment')?.value;
-    if(from)query=query.gte('occurred_at',sgIso(from+'T00:00'));
-    if(to)query=query.lte('occurred_at',sgIso(to+'T23:59'));
+    if(from&&to&&from>to){salesFilterNoteV266('The From date is after the To date. Nothing was filtered.','warn');return}
+    const applyButton=$('salesApply');
+    if(applyButton)CUI.setButtonBusy(applyButton,{busy:true,label:'Applying…'});
+    try{
+    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
+    /* V266: the To boundary was built as `<date>T23:59`, which drops the final 59 seconds of
+       the chosen day — a sale recorded at 23:59:30 SGT fell outside a range that named its own
+       date. Singapore calendar days are half-open instants: [From 00:00 SGT, To+1 day 00:00 SGT). */
+    if(from)query=query.gte('occurred_at',sgDateBoundary(from,0));
+    if(to)query=query.lt('occurred_at',sgDateBoundary(to,1));
     /* V260: the per-page Branch filter was struck out — the top bar's branch scope
        (selectedBranchId) is the single source of truth for which branch the query covers. */
     if(selectedBranchId)query=query.eq('branch_id',selectedBranchId);
     if(staff)query=query.eq('staff_id',staff);
     if(type)query=query.eq('kind',type);
-    if(paid)query=query.eq('paid',paid==='true');
     const {data:sl,error}=await fetchAllRowsResult(()=>query.order('occurred_at',{ascending:false}).order('id',{ascending:false}));
-    if(error)return fail(error);
+    if(error){fail(error);salesFilterNoteV266('These filters could not be applied. The rows below are unchanged.','warn');return}
     const workflow=await loadReversalWorkflows(null,Math.max(100,(sl||[]).length)).catch(e=>{fail(e);return null});
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
     const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
-    const rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
+    let rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
+    /* V266: Payment state used to filter on `sales.paid`, a column that does not exist —
+       PostgREST answers 42703 and the WHOLE ledger read fails, so choosing Paid or Unpaid left
+       the previous rows sitting on screen and Apply looked dead. Settlement lives in
+       `payments`, one row per taking, so the state is derived from whether the sale is
+       referenced there. */
+    let paymentStateApplied=!paid;
+    if(paid){
+      const ids=rows.map(row=>row.id);
+      try{
+        const settled=new Set((ids.length?await fetchRowsByIds('payments','sale_id',ids,'sale_id'):[]).map(row=>row.sale_id));
+        rows=rows.filter(row=>settled.has(row.id)===(paid==='true'));
+        paymentStateApplied=true;
+      }catch(paymentError){fail(paymentError)}
+    }
     $('recent').innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Gross</th><th>Net</th><th></th></tr>
       ${rows.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
@@ -12867,11 +12908,30 @@ async function salesPage(){
         ...sale,customer_name:sale.clients?.full_name||'Walk-in'
       },loadRecent);
     });
+    /* V266: pressing Apply with a range that happens to contain the same sales used to change
+       nothing at all on screen, which reads as a broken button. State the range that is now in
+       force and how many rows it matched, next to the control that set it. */
+    const period=`${from?dashboardScheduleDayLabelV252(from):'the earliest sale'} to ${to?dashboardScheduleDayLabelV252(to):'the latest sale'}`;
+    salesFilterNoteV266(paymentStateApplied
+      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}`
+      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied`,
+      paymentStateApplied?'':'warn');
+    }finally{
+      if(applyButton?.isConnected)CUI.setButtonBusy(applyButton,{busy:false});
+    }
   }
-  ['salesApply','salesFrom','salesTo','salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
+  ['salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
+  /* V266: the dates are committed by Apply filters, not by every keystroke inside the date
+     input — a half-typed year would otherwise fire a query the owner never asked for. Editing
+     one says so, so the button visibly has something to do. */
+  ['salesFrom','salesTo'].forEach(id=>{const el=$(id);if(el)el.oninput=()=>salesFilterNoteV266('Dates changed — press Apply filters.')});
   $('salesApply').onclick=loadRecent;
   $('salesCustomer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();loadRecent()}};
-  $('salesClear').onclick=()=>{['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');loadRecent()};
+  $('salesClear').onclick=()=>{
+    ['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');
+    $('salesFrom').value=salesDefaultFromV266;$('salesTo').value=salesDefaultToV266;
+    loadRecent();
+  };
   loadRecent();
 }
 
