@@ -385,7 +385,7 @@ function customerRegistrationShell(body){
   destroyMountedTurnstiles();
   setCustomerSurfaceDocumentV167();
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
-    <a class="logo" href="/" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
+    <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
     </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks()}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }

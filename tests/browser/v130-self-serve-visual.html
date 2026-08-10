@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="46e9ae00847973aaefc57de64f5e45f89a5b3132767673a132357407b421f549"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="f11e7ee084a048601ee511d3e454913d7059bd5107f53395de5a3bfaf6695e22"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2071,7 +2071,7 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
   }
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessAuthTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
+    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/app">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
     ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}

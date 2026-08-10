@@ -26,6 +26,25 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "source",
+          "value": "pwa"
+        }
+      ],
+      "destination": "/index.html"
+    },
+    {
+      "source": "/",
+      "destination": "/landing.html"
+    },
+    {
+      "source": "/app",
+      "destination": "/index.html"
+    },
+    {
       "source": "/business",
       "destination": "/index.html"
     },
