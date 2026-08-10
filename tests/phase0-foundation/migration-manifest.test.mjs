@@ -73,10 +73,10 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'planning_only_not_deployable');
   assert.equal(manifest.hashAlgorithm, 'sha256-raw-bytes');
-  assert.equal(manifest.itemCount, 270); // V271
-  assert.equal(manifest.executableCount, 256); // V271
+  assert.equal(manifest.itemCount, 271); // V273
+  assert.equal(manifest.executableCount, 257); // V273
   assert.equal(manifest.reservationCount, 14);
-  assert.equal(sqlItems.length, 256); // V271
+  assert.equal(sqlItems.length, 257); // V273
   assert.equal(reservations.length, 14);
   assert.equal(manifest.sourceCollisionsResolved, false);
 
@@ -104,7 +104,7 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
     ['20260807', 29],
     ['20260808', 17],
     ['20260809', 9],
-    ['20260810', 3] // V271
+    ['20260810', 4] // V273
   ]);
   assert.deepEqual(
     manifest.sourceDeployVersionCollisions.map(({ sourceDeployVersion, count }) => [sourceDeployVersion, count]),
