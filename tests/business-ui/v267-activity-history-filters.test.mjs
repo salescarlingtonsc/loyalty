@@ -306,3 +306,26 @@ test('B11 the whole history is in memory, so client-side filtering cannot hide a
   assert.ok(clientDetail.includes("canReadPackages?fetchAllRowsResult(()=>sb.from('client_packages')"));
   assert.ok(clientDetail.includes('canReadLoyalty?fetchAllRowsResult(()=>sb.rpc(\'list_customer_redemption_history_v145\''));
 });
+
+/* V267 addendum — the owner's "what is this?" was raised on Customer 360, but the same raw
+   record id was rendered on three other surfaces. Two of them are ordinary operational views
+   where an id is noise; the third is a deliberate audit disclosure where the id is the point,
+   so it stays and is merely labelled as a record id instead of being dropped into prose. */
+test('V267 no operational surface prints a bare record id for a reversal', () => {
+  // Packages session-correction history, in all three shipped languages.
+  assert.doesNotMatch(app, /Reversal of \{id\}/);
+  assert.doesNotMatch(app, /reversed by \{id\}/);
+  assert.match(app, /reversalOf:Object\.freeze\(\{en:'Reversal of an earlier session use'/);
+  assert.match(app, /usedSessionReversedBy:Object\.freeze\(\{en:'Used session → later reversed'/);
+
+  // Daily report's all-sales table no longer echoes the id next to "reversal of".
+  assert.doesNotMatch(app, /<span data-workspace-i18n>reversal of<\/span> <span data-merchant-content>\$\{esc\(r\.reversal_of\)\}/);
+  assert.match(app, /reversal of an earlier sale/);
+});
+
+test('V267 the Sales audit disclosure keeps the id, but calls it a record id', () => {
+  // Deliberate exception: this text lives inside the collapsed "Audit details" disclosure and
+  // is the one place a reconciler genuinely needs the key. It must not read as prose.
+  assert.match(app, /Compensating reversal row\. Audit record id of the sale it reverses: \$\{s\.reversal_of\}/);
+  assert.match(app, /Original sale row, fully reversed\. Audit record id of the reversal: \$\{w\.reversal_sale_id\}/);
+});

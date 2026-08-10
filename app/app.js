@@ -8864,8 +8864,11 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* Owner: "recent appointment - how recent?" — the number now states its own window. */
   recentInWindow:Object.freeze({en:'{count} in last {window}','zh-CN':'过去{window}内 {count} 个',ms:'{count} dalam {window} lalu'}),
   recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
-  reversalOf:Object.freeze({en:'Reversal of {id}','zh-CN':'冲销自 {id}',ms:'Pembalikan bagi {id}'}),
-  usedSessionReversedBy:Object.freeze({en:'Used session → reversed by {id}','zh-CN':'已用次数 → 由 {id} 冲销',ms:'Sesi digunakan → dibalikkan oleh {id}'}),
+  /* V267: the id is gone from these two. A staff member reading the session-correction table
+     cannot do anything with a UUID, and the owner asked "what is this?" the first time they
+     met one. The relationship is what matters and the counterpart row is in the same table. */
+  reversalOf:Object.freeze({en:'Reversal of an earlier session use','zh-CN':'冲销较早的次数使用','ms':'Pembalikan penggunaan sesi terdahulu'}),
+  usedSessionReversedBy:Object.freeze({en:'Used session → later reversed','zh-CN':'已用次数 → 之后已冲销','ms':'Sesi digunakan → dibalikkan kemudian'}),
   preparingExport:Object.freeze({en:'Preparing {current} of {total}…','zh-CN':'正在准备第 {current}／{total} 条…',ms:'Menyediakan {current} daripada {total}…'}),
   imageCleanupPending:Object.freeze({en:'{count} previous image cleanup item is still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
   imageCleanupsPending:Object.freeze({en:'{count} previous image cleanup items are still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
@@ -12994,8 +12997,8 @@ function sgLedgerDateV154(iso){
   };
 }
 function saleRecordStatusV154(s,w={}){
-  if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row linked to ${s.reversal_of}.`};
-  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row reversed by ${w.reversal_sale_id}.`};
+  if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
+  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
   if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Corrected by ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}.`};
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
@@ -23103,7 +23106,7 @@ async function dailyReportPage(){
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
         ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th>Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
-            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(r.reversal_of)}</span></span>`:'<span class="pill ok">original</span>'}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
+            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
     if(!rows.length) return;
     try{await loadChartLibrary()}catch{if(isLatest())$('drBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified report totals and rows remain available.</div>');return}
