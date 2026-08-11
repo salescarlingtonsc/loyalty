@@ -172,16 +172,57 @@ Deno.serve(async (req) => {
        live payment path for every existing command type and is not worth reshaping for this.
        Grandfathered branches are 'included' and deliberately excluded: the owner already had
        them, so they are never back-charged. */
+    /* V280 (owner, live bar tenant: "why when add branch = pay for 2 branch? i only added 1 new
+       branch - the older one is manual payment"). The count above is right; the CONSTANT 1 was
+       not. That 1 is the firm's own base unit, and it belongs in the Stripe quantity only when
+       Stripe is the thing collecting the base plan. Bistro 999 pays for the firm outside Stripe,
+       so its branch checkout asked for 1 (firm) + 1 (branch) = two units of the plan — the firm a
+       second time, plus the one branch they actually bought.
+
+       Whether Stripe collects the base is recorded on the subscription
+       (subscriptions.provider_covers_base_unit, V280 migration): true for every firm whose
+       subscription was created by the Settings checkout, and set to false by
+       business_add_branch_v202 when the checkout it mints exists only to pay for a branch.
+       Unknown (column absent, row missing, SELECT failed) resolves by intent: a branch command
+       bills branches only. Every unknown therefore under-bills rather than over-bills, which is
+       the same direction the V202 fail-closed comment chose. */
     let planUnits = 1;
     {
-      const { count, error: branchError } = await admin
-        .from('branches')
-        .select('id', { count: 'exact', head: true })
-        .eq('business_id', businessId)
-        .in('billing_state', ['pending_payment', 'active']);
-      /* Fail closed on an unreadable count: bill the base unit only. Over-charging a firm
-         because a SELECT failed is the one outcome that must not happen. */
-      if (!branchError && typeof count === 'number') planUnits = 1 + count;
+      const [branchCount, commandRow, subscriptionRow] = await Promise.all([
+        admin
+          .from('branches')
+          .select('id', { count: 'exact', head: true })
+          .eq('business_id', businessId)
+          .in('billing_state', ['pending_payment', 'active']),
+        admin
+          .from('billing_commands')
+          .select('requested_branch_id')
+          .eq('id', commandId)
+          .maybeSingle(),
+        admin
+          .from('subscriptions')
+          .select('provider_covers_base_unit')
+          .eq('business_id', businessId)
+          .maybeSingle(),
+      ]);
+      const { count, error: branchError } = branchCount;
+      const isBranchCommand = commandType === 'change_branches' ||
+        Boolean(commandRow?.data?.requested_branch_id);
+      const declaredBaseCoverage = subscriptionRow?.error
+        ? null
+        : subscriptionRow?.data?.provider_covers_base_unit;
+      const baseUnits = (
+        typeof declaredBaseCoverage === 'boolean' ? declaredBaseCoverage : !isBranchCommand
+      )
+        ? 1
+        : 0;
+      /* Fail closed on an unreadable count: a branch command is paying for the one branch it
+         names, and a base command adds nothing. Over-charging a firm because a SELECT failed is
+         the one outcome that must not happen. */
+      const branchUnits = !branchError && typeof count === 'number'
+        ? count
+        : (isBranchCommand ? 1 : 0);
+      planUnits = Math.max(1, baseUnits + branchUnits);
     }
     let providerResolved = false;
     let providerConfirmationPending = false;

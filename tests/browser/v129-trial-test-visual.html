@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="aedbbfab49f972e649a59849ba2b41497dfabc14a538413dc1b1dd4a7c7a006f"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="69e30fcf8f07acef34a839f3c76001b537ad72dd599fbc56d09c0646c14c5424"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1856,7 +1856,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · aedbbfab49f972e649a59849ba2b41497dfabc14a538413dc1b1dd4a7c7a006f</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 69e30fcf8f07acef34a839f3c76001b537ad72dd599fbc56d09c0646c14c5424</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -8232,6 +8232,92 @@ function promotionRpcErrorIsAmbiguousV104(error){
   return /failed to fetch|network|load failed|timeout|timed out|connection|offline/i
     .test(String(error.message||error.error||error));
 }
+/* V280 (owner, live bar tenant: "promotions loading forever - cannot publish"). Three separate
+   defects sat behind that one sentence, and all three are fixed here rather than papered over.
+
+   1. NOTHING released the busy state on an unexpected throw. save() disabled the buttons, wrote
+      "Publishing…", and every later line assumed each await would RESOLVE. storage-js rethrows any
+      failure that is not a StorageError (a dropped connection during upload or remove is exactly
+      that), so a single throw skipped every re-enable path and left Publish disabled with the two
+      status lines frozen — forever, with no error anywhere. runSave is now wrapped, and every
+      storage call goes through withDeadlineV280, which turns a throw OR a stall into a normal
+      {error} the existing branches already handle.
+   2. The photo status line was never updated after the upload SUCCEEDED, so "Uploading promotion
+      photo…" stayed on screen through the whole finalize and any later failure looked like an
+      upload that never ended. It now says what is actually happening.
+   3. A 2 MB phone/AI-generated PNG was uploaded byte-for-byte. It is downscaled before upload, so
+      the request that used to sit there is small enough to finish, and an oversized file is
+      refused with a plain sentence BEFORE anything is uploaded. */
+const PROMOTION_MEDIA_MAX_BYTES_V280=10485760;
+const PROMOTION_MEDIA_TYPES_V280=Object.freeze(['image/png','image/jpeg','image/webp','image/gif']);
+/* A promotion photo is rendered in a card no wider than a phone screen; 1600px on the long edge is
+   already generous for a 2x display. GIFs are never touched — redrawing one to a canvas keeps the
+   first frame and silently destroys the animation the owner chose. */
+const PROMOTION_MEDIA_MAX_EDGE_V280=1600;
+const PROMOTION_MEDIA_DOWNSCALE_ABOVE_BYTES_V280=1048576;
+const PROMOTION_STORAGE_TIMEOUT_MS_V280=45000;
+function promotionPhotoRefusalV280(file){
+  if(!file)return '';
+  if(!PROMOTION_MEDIA_TYPES_V280.includes(file.type))return 'That file type cannot be used. Choose a PNG, JPG, WebP or GIF.';
+  if(Number(file.size||0)>PROMOTION_MEDIA_MAX_BYTES_V280){
+    return `That photo is ${(Number(file.size||0)/1048576).toFixed(1)} MB. The limit is 10 MB — choose a smaller photo.`;
+  }
+  return '';
+}
+/* Every storage call in this editor is bounded. The underlying request may still be in flight when
+   the deadline fires; that is deliberate — releasing the owner's screen matters more than the
+   orphaned object, which the v95 cleanup queue already exists to collect. */
+const withDeadlineV280=(work,ms,timeoutMessage)=>new Promise(resolve=>{
+  let settled=false;
+  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(value)};
+  const timer=setTimeout(()=>{
+    if(settled)return;settled=true;resolve({data:null,error:new Error(timeoutMessage)});
+  },ms);
+  Promise.resolve(work).then(finish,error=>finish({data:null,error}));
+});
+async function downscalePromotionPhotoV280(file){
+  if(!file||file.type==='image/gif')return file;
+  if(Number(file.size||0)<=PROMOTION_MEDIA_DOWNSCALE_ABOVE_BYTES_V280)return file;
+  if(typeof createImageBitmap!=='function'||typeof document==='undefined')return file;
+  let bitmap=null;
+  try{bitmap=await createImageBitmap(file)}catch(_error){return file}
+  try{
+    const longest=Math.max(Number(bitmap.width||0),Number(bitmap.height||0));
+    if(!longest)return file;
+    const scale=longest>PROMOTION_MEDIA_MAX_EDGE_V280?PROMOTION_MEDIA_MAX_EDGE_V280/longest:1,
+      width=Math.max(1,Math.round(bitmap.width*scale)),
+      height=Math.max(1,Math.round(bitmap.height*scale)),
+      canvas=document.createElement('canvas');
+    canvas.width=width;canvas.height=height;
+    const context=canvas.getContext('2d');
+    if(!context)return file;
+    /* A transparent PNG re-encoded as JPEG would render its transparency as black. */
+    context.fillStyle='#ffffff';context.fillRect(0,0,width,height);
+    context.drawImage(bitmap,0,0,width,height);
+    const blob=await new Promise(resolve=>{
+      try{canvas.toBlob(resolve,'image/jpeg',0.86)}catch(_error){resolve(null)}
+    });
+    if(!blob||blob.size>=Number(file.size||0))return file;
+    const base=String(file.name||'promotion').replace(/\.[^.]+$/,'')||'promotion';
+    return new File([blob],`${base}.jpg`,{type:'image/jpeg',lastModified:Date.now()});
+  }finally{try{bitmap.close?.()}catch(_error){}}
+}
+/* V280 (owner: "cannot publish"). The FIRST publish of a newly created promotion could never
+   succeed. business_create_promotion_draft_v155 returns the v104 receipt — content_version 1 —
+   and only then calls app.save_promotion_scope_v155, which writes the branch scope onto the same
+   row and bumps it to 2. The editor then finalized with the version it was handed and Postgres
+   answered promotion_version_conflict, every single time, for every new offer with a photo.
+   The migration makes the wrapper report the version it actually left behind; this is the client
+   half, which re-reads the promotion and retries ONCE with the true versions. It is worth having
+   on its own: any concurrent edit produces the same conflict, and re-reading is the honest
+   response to "your copy of the version is stale". The retry mints a NEW attempt key because the
+   arguments changed, and it is only ever reached after a definitive rollback, so it cannot
+   double-apply. */
+function promotionVersionConflictV280(error){
+  if(!error)return false;
+  const code=String(error.code||''),message=String(error.message||error.error||'');
+  return code==='40001'||/promotion_version_conflict|promotion_copy_version_conflict|promotion_target_media_version_conflict/.test(message);
+}
 /* V186 (owner: "i dont see the published marketing content - live sync"). The offer WAS
    published — and scheduled to start two days later — but every owner-facing label said only
    "Published", so an offer that no customer could yet see looked live. Customers were right;
@@ -8575,6 +8661,18 @@ async function promotionsPage(selectedPromotionId=null){
     workingPromotion=promotionEditorItemV104(result.data?.item||result.data||{id:workingPromotionId});
     return {data:workingPromotion,error:null};
   };
+  /* V280: the only honest answer to "your version is stale" is to go and read the real one. */
+  const refreshPromotionV280=async promotionId=>{
+    const reread=await withDeadlineV280(
+      sb.rpc('business_get_promotion_editor_v155',{p_business:businessId}),
+      PROMOTION_RPC_TIMEOUT_MS_V186,
+      'Re-reading this promotion took too long.'
+    );
+    if(reread.error)return null;
+    const items=Array.isArray(reread.data?.items)?reread.data.items:[],
+      found=items.find(item=>String(item?.id||item?.promotion_id||'')===String(promotionId));
+    return found?promotionEditorItemV104(found):null;
+  };
   const exactTargetMediaVersion=(item,branchId)=>{
     const exact=promotionScopeMediaV104(item,branchId,{allowGlobalFallback:false});
     return Number(exact?.version||exact?.media_version||exact?.target_media_version||0);
@@ -8599,19 +8697,23 @@ async function promotionsPage(selectedPromotionId=null){
   const clearFinalizedObjects=async(result,pending)=>{
     const oldPath=result?.previous_object_path||null;
     if(oldPath&&oldPath!==pending?.objectPath){
-      await NestlyMediaSyncV95.removeOrQueue({
+      /* V280: housekeeping must never be able to hold the owner's screen. */
+      await withDeadlineV280(NestlyMediaSyncV95.removeOrQueue({
         storage:sb.storage,client:sb,businessId,objectPath:oldPath,
         reason:'superseded v104 promotion photo'
-      });
+      }),PROMOTION_STORAGE_TIMEOUT_MS_V280,'Old photo cleanup did not finish in time.');
     }
   };
   const cleanFailedUpload=async pending=>{
     if(!pending?.objectPath)return {status:'not_required'};
-    return NestlyMediaSyncV95.removeOrQueue({
+    /* V280: this ran on the definitive-failure path with no deadline and no guard. storage-js
+       rethrows anything that is not a StorageError, so a dropped connection here threw straight
+       through save() and froze the editor on "Publishing…" instead of showing the real failure. */
+    return withDeadlineV280(NestlyMediaSyncV95.removeOrQueue({
       storage:sb.storage,client:sb,businessId,
       objectPath:pending.objectPath,
       reason:'v104 promotion photo after definitive finalization failure'
-    });
+    }),PROMOTION_STORAGE_TIMEOUT_MS_V280,'Photo cleanup did not finish in time.');
   };
   const runPendingFinalize=async pending=>{
     const result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
@@ -8620,36 +8722,63 @@ async function promotionsPage(selectedPromotionId=null){
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
       return result;
     }
-    if(!promotionRpcErrorIsAmbiguousV104(result.error)){
+    /* V280: a version conflict is RETRYABLE with re-read versions, and the photo it refers to is
+       the same photo that retry will attach. Deleting it here is what turned a recoverable
+       conflict into an offer that could never be published. */
+    if(!promotionRpcErrorIsAmbiguousV104(result.error)
+       &&!promotionVersionConflictV280(result.error)){
       await cleanFailedUpload(pending);
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
     }
     return result;
   };
   const uploadPromotionPhoto=async({file,alt,promotionId})=>{
+    /* V280: shrink first. The object path extension and the declared mime type are both taken from
+       the file we actually send, because app.v95_storage_object_is_publishable() checks that the
+       path suffix, the declared mime type and the stored object all agree. */
+    const sending=await downscalePromotionPhotoV280(file);
     let dimensions;
-    try{dimensions=await imageDimensionsV95(file)}
+    try{dimensions=await imageDimensionsV95(sending)}
     catch(error){return {error,fileInfo:null}}
-    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type],
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[sending.type],
       objectPath=`${businessId}/offer/${crypto.randomUUID()}.${extension}`,
-      uploaded=await sb.storage.from('business-public').upload(
-        objectPath,file,{contentType:file.type,upsert:false}
+      uploaded=await withDeadlineV280(
+        sb.storage.from('business-public').upload(
+          objectPath,sending,{contentType:sending.type,upsert:false}
+        ),
+        PROMOTION_STORAGE_TIMEOUT_MS_V280,
+        'The photo upload did not finish in time. Check your connection and try again.'
       );
     if(uploaded.error)return {error:uploaded.error,fileInfo:null};
     return {error:null,fileInfo:{
-      objectPath,mimeType:file.type,width:dimensions.width,height:dimensions.height,alt
+      objectPath,mimeType:sending.type,width:dimensions.width,height:dimensions.height,alt
     }};
   };
   const completionMessage=pending=>pending?.operation==='unpublish'
     ?'Promotion unpublished'
     :pending?.publish?'Promotion published':'Promotion draft saved';
-  const save=async(publish,{unpublish=false}={})=>{
+  const runSave=async(publish,{unpublish=false}={})=>{
     if(pendingFinalize){
       const status=field('promotionSaveStatus');
       const pending=pendingFinalize;
       status.textContent='Confirming the previous save…';
       const resumed=await runPendingFinalize(pending);
       if(!isPromotionCurrent())return;
+      if(resumed.error&&promotionVersionConflictV280(resumed.error)){
+        /* V280: a HELD receipt whose expected versions are stale can never succeed, however many
+           times it is replayed — and this branch runs first on every press and after every
+           reload, so keeping it is precisely how "cannot publish" became permanent. Release it
+           (and the photo it points at, which is now attached to nothing) so the next press takes
+           the normal path, which re-reads the promotion before it finalizes. */
+        pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+        await cleanFailedUpload(pending);
+        if(!isPromotionCurrent())return;
+        [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')]
+          .filter(Boolean).forEach(button=>{button.disabled=false});
+        status.textContent='This promotion changed since that save was interrupted. Your edits are still here — choose the photo again and press Publish.';
+        field('promotionImageStatus').textContent='Choose the photo again before publishing.';
+        return;
+      }
       if(resumed.error){
         /* V186: the resume branch left every control disabled, so a stalled save locked the
            owner out of the editor entirely — in this tab and, because pendingFinalize is
@@ -8677,7 +8806,12 @@ async function promotionsPage(selectedPromotionId=null){
     if(!draft.name||!draft.description)return toast('Polish or write the headline and customer message.');
     if(!draft.starts_at||!draft.ends_at||new Date(draft.ends_at)<=new Date(draft.starts_at))return toast('Choose a valid start and end date.');
     if(!PROMOTION_COPY_POLICY_V104.ctas[draft.ctaKind]||!draft.ctaLabel)return toast('Choose a clear customer action.');
-    if(file&&(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760))return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
+    const photoRefusalV280=promotionPhotoRefusalV280(file);
+    if(photoRefusalV280){
+      const refusedStatus=field('promotionImageStatus');
+      if(refusedStatus)refusedStatus.textContent=photoRefusalV280;
+      return toast(photoRefusalV280);
+    }
     if(file&&!alt)return toast('Add a photo description.');
     const status=field('promotionSaveStatus'),buttons=[field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')].filter(Boolean);
     buttons.forEach(button=>button.disabled=true);
@@ -8701,25 +8835,66 @@ async function promotionsPage(selectedPromotionId=null){
       if(file){
         if(isPromotionCurrent())field('promotionImageStatus').textContent='Uploading promotion photo…';
         const uploaded=await uploadPromotionPhoto({file,alt,promotionId:workingPromotionId});
+        if(!isPromotionCurrent())return;
         if(uploaded.error){
-          if(!isPromotionCurrent())return;
-          buttons.forEach(button=>button.disabled=false);
-          status.textContent='Your draft is safe. The photo needs another try.';
-          field('promotionImageStatus').textContent='Photo was not saved. Your draft is safe; try again.';
-          return fail(uploaded.error);
+          /* V280: publishing genuinely needs a photo, so a failed upload still stops it — but a
+             DRAFT save must not lose the owner's words because a photo would not upload. */
+          if(publish){
+            buttons.forEach(button=>button.disabled=false);
+            status.textContent='Your draft is safe. The photo needs another try.';
+            const publishPhotoFailureV280=`Photo was not saved: ${ownerErrorText(uploaded.error)} Your words are safe — press Save draft, or try the photo again.`;
+            field('promotionImageStatus').textContent=publishPhotoFailureV280;
+            return fail(uploaded.error);
+          }
+          const draftPhotoFailureV280=`Photo was not saved: ${ownerErrorText(uploaded.error)} This draft was saved without it.`;
+          field('promotionImageStatus').textContent=draftPhotoFailureV280;
+        }else{
+          fileInfo=uploaded.fileInfo;
+          /* V280: this line used to stay on "Uploading promotion photo…" for the whole finalize,
+             so a later failure looked like an upload that never ended. */
+          field('promotionImageStatus').textContent='Photo uploaded. Saving the promotion…';
         }
-        fileInfo=uploaded.fileInfo;
       }
-      const attemptKey=crypto.randomUUID(),
-        args=finalizeArgs({draft,publish,promotion:workingPromotion,fileInfo,attemptKey});
-      pendingFinalize={
-        businessId,promotionId:workingPromotionId,publish,
-        operation:unpublish?'unpublish':publish?'publish':'draft',
-        objectPath:fileInfo?.objectPath||null,args,attemptKey,
-        fingerprint:JSON.stringify(args)
+      const buildPendingFinalizeV280=(promotion,attemptKey)=>{
+        const args=finalizeArgs({draft,publish,promotion,fileInfo,attemptKey});
+        return {
+          businessId,promotionId:workingPromotionId,publish,
+          operation:unpublish?'unpublish':publish?'publish':'draft',
+          objectPath:fileInfo?.objectPath||null,args,attemptKey,
+          fingerprint:JSON.stringify(args)
+        };
       };
+      pendingFinalize=buildPendingFinalizeV280(workingPromotion,crypto.randomUUID());
       writeSessionValue(pendingStorageKey,pendingFinalize);
-      const finalized=await runPendingFinalize(pendingFinalize);
+      let finalized=await runPendingFinalize(pendingFinalize);
+      if(finalized.error&&promotionVersionConflictV280(finalized.error)){
+        if(!isPromotionCurrent())return;
+        status.textContent='Checking the latest version of this promotion…';
+        const refreshed=await refreshPromotionV280(workingPromotionId);
+        if(!isPromotionCurrent())return;
+        if(refreshed){
+          workingPromotion=refreshed;
+          /* A new attempt key: the arguments changed, and the first attempt definitively rolled
+             back, so replaying the old key would only raise promotion_attempt_key_reused. */
+          pendingFinalize=buildPendingFinalizeV280(refreshed,crypto.randomUUID());
+          writeSessionValue(pendingStorageKey,pendingFinalize);
+          status.textContent=unpublish?'Unpublishing…':publish?'Publishing…':'Saving draft…';
+          finalized=await runPendingFinalize(pendingFinalize);
+        }
+      }
+      if(finalized.error&&promotionVersionConflictV280(finalized.error)){
+        /* Two conflicts in a row means this promotion is being changed somewhere else. Release the
+           held receipt — keeping it would lock the editor into replaying a request that cannot
+           succeed, which is exactly how "cannot publish" became permanent. */
+        const abandoned=pendingFinalize;
+        pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+        await cleanFailedUpload(abandoned);
+        if(!isPromotionCurrent())return;
+        buttons.forEach(button=>button.disabled=false);
+        status.textContent='This promotion was changed somewhere else while you were editing. Reopen it to see the latest version, then publish again.';
+        field('promotionImageStatus').textContent='Choose the photo again after reopening the promotion.';
+        return;
+      }
       if(finalized.error){
         if(!isPromotionCurrent())return;
         buttons.forEach(button=>button.disabled=false);
@@ -8738,6 +8913,26 @@ async function promotionsPage(selectedPromotionId=null){
     const savedId=saveResult?.promotion_id||saveResult?.item?.id||workingPromotionId;
     toast(unpublish?'Promotion unpublished':publish?'Promotion published':'Promotion draft saved');
     promotionsPage(savedId);
+  };
+  /* V280: the busy state is released on EVERY path, including one nobody predicted. runSave
+     disables the buttons before its first await; anything that throws after that point used to
+     leave Publish disabled and "Publishing…" on screen with no error, for as long as the owner
+     was willing to wait. */
+  const save=async(publish,options={})=>{
+    try{return await runSave(publish,options)}
+    catch(error){
+      if(!isPromotionCurrent())return;
+      [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')]
+        .filter(Boolean).forEach(button=>{button.disabled=false});
+      const status=field('promotionSaveStatus');
+      const unexpectedFailureV280=`This did not finish: ${ownerErrorText(error)} Nothing was lost — press again.`;
+      if(status)status.textContent=unexpectedFailureV280;
+      const imageStatus=field('promotionImageStatus');
+      if(imageStatus&&/^(Uploading promotion photo|Photo uploaded)/.test(imageStatus.textContent||'')){
+        imageStatus.textContent='The photo did not finish. Your draft is safe; choose it again and retry.';
+      }
+      return fail(error);
+    }
   };
   if(field('promotionSave'))field('promotionSave').onclick=()=>save(false);
   field('promotionPublish').onclick=()=>save(true);
@@ -13992,6 +14187,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'aedbbfab49f972e649a59849ba2b41497dfabc14a538413dc1b1dd4a7c7a006f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'69e30fcf8f07acef34a839f3c76001b537ad72dd599fbc56d09c0646c14c5424',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

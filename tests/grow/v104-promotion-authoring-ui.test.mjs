@@ -73,10 +73,22 @@ test('photo and copy finalize through one receipt-backed operation and preserve 
   assert.match(page,/Confirming an interrupted save/);
   assert.match(page,/NestlyMediaSyncV95\.removeOrQueue/);
   assert.match(page,/\$\{businessId\}\/offer\/\$\{crypto\.randomUUID\(\)\}\.\$\{extension\}/);
-  assert.match(page,/file\.size>10485760/);
-  assert.match(page,/image\/png','image\/jpeg','image\/webp','image\/gif/);
-  assert.match(page,/try\{dimensions=await imageDimensionsV95\(file\)\}/);
-  assert.match(page,/Photo was not saved\. Your draft is safe; try again\./);
+  /* V280 retarget: the 10 MB ceiling is unchanged, but the literal comparison moved into
+     promotionPhotoRefusalV280 so the owner is told the actual size and the actual limit instead of
+     a generic instruction, before anything is uploaded. */
+  assert.match(page,/const photoRefusalV280=promotionPhotoRefusalV280\(file\);/);
+  assert.match(app,/const PROMOTION_MEDIA_MAX_BYTES_V280=10485760;/);
+  assert.match(app,/Number\(file\.size\|\|0\)>PROMOTION_MEDIA_MAX_BYTES_V280/);
+  /* V280 retarget: the same four types, now named once at module scope and reused by the refusal
+     message, the extension map and the accept attribute. */
+  assert.match(app,/const PROMOTION_MEDIA_TYPES_V280=Object\.freeze\(\['image\/png','image\/jpeg','image\/webp','image\/gif'\]\);/);
+  assert.match(page,/image\/png'\]:'png',\['image\/jpeg'\]:'jpg',\['image\/webp'\]:'webp',\['image\/gif'\]:'gif/);
+  /* V280 retarget: dimensions are read from the file actually being SENT (downscaled when it is
+     large), because the stored object, its declared mime type and the path suffix must agree. The
+     "your draft is safe" promise is kept, now with the real reason attached. */
+  assert.match(page,/try\{dimensions=await imageDimensionsV95\(sending\)\}/);
+  assert.match(page,/Your draft is safe\. The photo needs another try\./);
+  assert.match(page,/Photo was not saved: \$\{ownerErrorText\(uploaded\.error\)\}/);
   assert.match(page,/URL\.revokeObjectURL/);
   assert.match(page,/operation:unpublish\?'unpublish':publish\?'publish':'draft'/);
   assert.match(page,/promotionUnpublish'\)\.onclick=\(\)=>save\(false,\{unpublish:true\}\)/);
