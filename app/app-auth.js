@@ -30,6 +30,64 @@ function renderWorkspaceAccessUnavailable(){
   wireAccountDeletionButton();
 }
 
+/* V281 — the "pay now" button must always land in one of three DEFINED states: redirected to
+   Stripe, a named recoverable message, or a named terminal message. It previously had a fourth,
+   undefined one. stripe-billing-command answers HTTP 202 with status 'uncertain' when it cannot
+   prove whether Stripe executed, and documents its own recovery in the same body:
+   `recovery:'retry_same_command_id'` — re-invoking the SAME command id retrieves the Checkout
+   session that was in fact created and returns its URL. The platform console has performed that
+   replay since V156. Neither owner-facing self-service surface did: both fell through to a
+   generic "still pending" line, leaving an owner who HAD a live Stripe session staring at a
+   screen that told them to wait for a webhook that would never come, because they never paid.
+   Both surfaces now run this one executor, so the two copies cannot drift again. */
+const SELF_SERVE_CHECKOUT_STATUS_V281=Object.freeze({
+  opening:'Opening secure Stripe Checkout…',
+  request_failed:'We could not confirm the saved checkout request. Retry; the same request will be reused.',
+  unreachable:'Stripe could not be reached. Retry to recover the same secure checkout.',
+  pending:'Stripe has not returned a checkout page yet. Retry — the same secure checkout is reused, and nothing is charged twice.'
+});
+function selfServeCheckoutKeyV281(businessId){
+  return `nestly-self-serve-checkout-${businessId}`;
+}
+async function runSelfServeCheckoutV281(onboarding){
+  const storageKey=selfServeCheckoutKeyV281(onboarding.business_id);
+  let idempotencyKey=sessionStorage.getItem(storageKey);
+  if(!idempotencyKey){idempotencyKey=crypto.randomUUID();sessionStorage.setItem(storageKey,idempotencyKey)}
+  const requested=await sb.rpc('request_self_serve_checkout_v130',{
+    p_business:onboarding.business_id,p_cadence:onboarding.cadence,
+    p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:idempotencyKey
+  });
+  if(requested.error||!requested.data?.command_id)
+    return {outcome:'request_failed',message:SELF_SERVE_CHECKOUT_STATUS_V281.request_failed};
+  const commandId=requested.data.command_id;
+  const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
+  if(executed.error)
+    return {outcome:'unreachable',message:SELF_SERVE_CHECKOUT_STATUS_V281.unreachable};
+  let result=executed.data||requested.data;
+  /* Exactly one replay, and only of the same command id — the server holds a stable Stripe
+     idempotency key for it, so this retrieves or replays the identical session and can never
+     create a second one or a second charge. */
+  if(!result?.redirect_url&&['uncertain','pending','processing'].includes(String(result?.status||''))){
+    const recovered=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
+    if(!recovered.error&&recovered.data)result=recovered.data;
+  }
+  if(result?.redirect_url){
+    sessionStorage.removeItem(storageKey);
+    return {outcome:'redirect',redirectUrl:result.redirect_url};
+  }
+  return {outcome:'pending',message:SELF_SERVE_CHECKOUT_STATUS_V281.pending};
+}
+async function driveSelfServeCheckoutV281(onboarding,statusNode,button){
+  if(button)button.disabled=true;
+  if(statusNode)statusNode.textContent=SELF_SERVE_CHECKOUT_STATUS_V281.opening;
+  const outcome=await runSelfServeCheckoutV281(onboarding);
+  if(outcome.outcome==='redirect'){location.assign(outcome.redirectUrl);return outcome}
+  /* Every non-redirect outcome re-enables the button. A disabled button with a "pending"
+     message is the stuck state this function exists to remove. */
+  if(button)button.disabled=false;
+  if(statusNode)statusNode.textContent=outcome.message;
+  return outcome;
+}
 function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
@@ -42,15 +100,9 @@ function renderBusinessWorkspaceControl(control={}){
       }
       if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
       root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Peekaa opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      $('businessControlPay').onclick=async()=>{
-        const button=$('businessControlPay'),status=$('businessControlPayStatus');button.disabled=true;status.textContent='Opening secure Stripe Checkout…';
-        const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;let key=sessionStorage.getItem(storageKey);if(!key){key=crypto.randomUUID();sessionStorage.setItem(storageKey,key)}
-        const requested=await sb.rpc('request_self_serve_checkout_v130',{p_business:onboarding.business_id,p_cadence:onboarding.cadence,p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:key});
-        if(requested.error||!requested.data?.command_id){button.disabled=false;status.textContent='We could not recover the saved checkout. Retry the same payment step.';return}
-        const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
-        if(executed.data?.redirect_url){sessionStorage.removeItem(storageKey);location.assign(executed.data.redirect_url);return}
-        button.disabled=false;status.textContent='Stripe is still processing this payment. Check again after payment is confirmed.';
-      };
+      $('businessControlPay').onclick=()=>driveSelfServeCheckoutV281(
+        onboarding,$('businessControlPayStatus'),$('businessControlPay')
+      );
       $('businessControlRetry').onclick=route;
       $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
       wireAccountDeletionButton();

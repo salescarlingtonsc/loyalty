@@ -73,10 +73,10 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'planning_only_not_deployable');
   assert.equal(manifest.hashAlgorithm, 'sha256-raw-bytes');
-  assert.equal(manifest.itemCount, 279); // V280 + V267(salesforce) + V268
-  assert.equal(manifest.executableCount, 265); // V280 + V267(salesforce) + V268
+  assert.equal(manifest.itemCount, 280); // V280 + V267(salesforce) + V268
+  assert.equal(manifest.executableCount, 266); // V280 + V267(salesforce) + V268
   assert.equal(manifest.reservationCount, 14);
-  assert.equal(sqlItems.length, 265); // V280 + V267(salesforce) + V268
+  assert.equal(sqlItems.length, 266); // V280 + V267(salesforce) + V268
   assert.equal(reservations.length, 14);
   assert.equal(manifest.sourceCollisionsResolved, false);
 

@@ -138,7 +138,11 @@ test('business routes fail closed before modules when approval or billing blocks
 test('new self-service firms remain locked until provider-confirmed payment',()=>{
   const onboard=section('function renderOnboard(){','/* ============================================================================');
   assert.match(onboard,/start_self_serve_business_v130/);
-  assert.match(onboard,/request_self_serve_checkout_v130/);
+  /* V281: the checkout request moved into the shared runSelfServeCheckoutV281 executor, which
+     the workspace-control payment screen now uses too. The lock contract is unchanged. */
+  assert.match(onboard,/driveSelfServeCheckoutV281\(onboarding,statusNode,button\)/);
+  assert.match(section('async function runSelfServeCheckoutV281(','function renderBusinessWorkspaceControl('),
+    /request_self_serve_checkout_v130/);
   assert.match(onboard,/remains locked until Stripe confirms the first paid invoice/);
   assert.doesNotMatch(onboard,/create_business|p_modules|Workspace ready/);
 });

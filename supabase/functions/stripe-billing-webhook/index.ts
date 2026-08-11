@@ -9,6 +9,23 @@ import {
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
 
+/* V281 — the durable inbox stores event.livemode but nothing ever compared it to the mode this
+   deployment is actually operating in, and the two are configured by SEPARATE secrets:
+   STRIPE_WEBHOOK_SECRET decides which events verify, STRIPE_SECRET_KEY decides which mode
+   stripe-billing-command creates Checkout sessions in. Switching to live is therefore a
+   two-value change, and getting it half done is silent: with a live endpoint secret and a test
+   API key, real customers are sent to a TEST Checkout, pay nothing, and no live invoice ever
+   arrives to activate them; with the pair the other way round, test-mode traffic is applied to
+   production billing tables and can drive a real activation. Deriving the expected mode from the
+   API key needs no new configuration and fails the FIRST mismatched event with a named error,
+   which is the moment it is cheapest to notice. An unrecognised key prefix (a restricted key,
+   for example) is not treated as a mismatch — it disables the check rather than the webhook. */
+function expectedLivemode(secretKey: string): boolean | null {
+  if (secretKey.startsWith('sk_live_') || secretKey.startsWith('rk_live_')) return true;
+  if (secretKey.startsWith('sk_test_') || secretKey.startsWith('rk_test_')) return false;
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return billingJson(405, { error: 'method_not_allowed' });
@@ -27,7 +44,8 @@ Deno.serve(async (req) => {
     const signature = req.headers.get('stripe-signature') || '';
     if (!signature) return billingJson(400, { error: 'invalid_signature' });
 
-    const stripe = new Stripe(requiredEnv('STRIPE_SECRET_KEY'), {
+    const secretKey = requiredEnv('STRIPE_SECRET_KEY');
+    const stripe = new Stripe(secretKey, {
       httpClient: Stripe.createFetchHttpClient(),
     });
     const event = await stripe.webhooks.constructEventAsync(
@@ -37,6 +55,17 @@ Deno.serve(async (req) => {
       undefined,
       Stripe.createSubtleCryptoProvider(),
     );
+    const wantLivemode = expectedLivemode(secretKey);
+    if (wantLivemode !== null && event.livemode !== wantLivemode) {
+      /* 400, not 500: this event is not retryable into correctness, and Stripe should stop
+         resending it. Nothing is written to the durable inbox — a mode-mismatched event must
+         not become production billing evidence. */
+      return billingJson(400, {
+        error: 'livemode_mismatch',
+        expected_livemode: wantLivemode,
+        event_livemode: event.livemode,
+      });
+    }
     const object = event.data.object as Stripe.Event.Data.Object & { id?: string };
     if (!object?.id) return billingJson(400, { error: 'invalid_event_object' });
 

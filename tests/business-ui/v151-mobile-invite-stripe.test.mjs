@@ -103,7 +103,11 @@ test('V151 Stripe return polls provider-confirmed self-service status and never 
   assert.match(onboard, /if\(next\?\.status==='active'\)/);
   assert.match(onboard, /Checkout success pages do not unlock access; provider-confirmed payment does/);
   assert.match(onboard, /Stripe confirmation is still processing/);
-  assert.match(onboard, /request_self_serve_checkout_v130/);
+  /* V281: the checkout request moved into the shared runSelfServeCheckoutV281 executor. The
+     poll this test is about is unchanged and still lives in renderOnboard. */
+  assert.match(onboard, /driveSelfServeCheckoutV281\(onboarding,statusNode,button\)/);
+  assert.match(section('async function runSelfServeCheckoutV281(', 'function renderBusinessWorkspaceControl('),
+    /request_self_serve_checkout_v130/);
 });
 
 test('V151 dashboard charts show empty states instead of misleading axes', () => {

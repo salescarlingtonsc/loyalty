@@ -774,32 +774,8 @@ function renderOnboard(){
   if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.55rem;margin-top:18px">Loading secure business setup…</h1><p class="muted small" style="margin-top:7px">Checking current plans and any saved payment step.</p>${businessSetupAccountHtml()}${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   wireBusinessSetupAccount();wireAccountDeletionButton();
-  const finishCheckout=async(onboarding,statusNode,button)=>{
-    if(button)button.disabled=true;
-    if(statusNode)statusNode.textContent='Opening secure Stripe Checkout…';
-    const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;
-    let idempotencyKey=sessionStorage.getItem(storageKey);
-    if(!idempotencyKey){idempotencyKey=crypto.randomUUID();sessionStorage.setItem(storageKey,idempotencyKey)}
-    const requested=await sb.rpc('request_self_serve_checkout_v130',{
-      p_business:onboarding.business_id,p_cadence:onboarding.cadence,
-      p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:idempotencyKey
-    });
-    if(requested.error||!requested.data?.command_id){
-      if(button)button.disabled=false;
-      if(statusNode)statusNode.textContent='We could not confirm the saved checkout request. Retry; the same request will be reused.';
-      return;
-    }
-    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
-    if(executed.error){
-      if(button)button.disabled=false;
-      if(statusNode)statusNode.textContent='Stripe could not be reached. Retry to recover the same secure checkout.';
-      return;
-    }
-    const result=executed.data||requested.data;
-    if(result.redirect_url){sessionStorage.removeItem(storageKey);location.assign(result.redirect_url);return}
-    if(button)button.disabled=false;
-    if(statusNode)statusNode.textContent='Payment confirmation is still pending. Peekaa will open the workspace only after Stripe confirms a paid invoice.';
-  };
+  const finishCheckout=(onboarding,statusNode,button)=>
+    driveSelfServeCheckoutV281(onboarding,statusNode,button);
   (async()=>{
     const state=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
     if(setupEpoch!==businessSetupRenderEpoch)return;
