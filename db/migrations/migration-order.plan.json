@@ -1665,6 +1665,12 @@
       "path": "db/migrations/20260811_nestly_v278_bottle_keep_parity.sql",
       "semanticVersion": "v278",
       "proposedDeployVersion": "20260811000400"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v279_bottle_owner_walkthrough.sql",
+      "semanticVersion": "v279",
+      "proposedDeployVersion": "20260811000500"
     }
   ]
 }

@@ -201,7 +201,11 @@ test('V275 Operations setup carries the keep window and the storage list, owner-
   const page = app.slice(app.indexOf('async function bottleSetupPageV275(){'),
     app.indexOf('async function bottlesPage(){'));
   assert.match(page, /sb\.rpc\('bar_get_setup_v275',\{p_business:S\.biz\.id\}\)/);
-  assert.match(page, /sb\.rpc\('bar_save_setup_v275',\{/);
+  // V279 RETARGET: the setup save moved to bar_save_setup_v279, which writes the same keep window
+  // and shelf list PLUS the storage capacity. A fourth parameter on the old name would have been a
+  // second overload differing only in arity — the shape PostgREST cannot resolve — so the name
+  // changed instead, and bar_save_setup_v275 is deliberately left deployed and callable.
+  assert.match(page, /sb\.rpc\('bar_save_setup_v279',\{/);
   assert.match(page, /<h2>Keep window<\/h2>/);
   assert.match(page, /id="bkDays" type="number" min="1" max="365"/);
   assert.match(page, /<h2>Storage places<\/h2>/);
@@ -216,14 +220,19 @@ test('V275 Operations setup carries the keep window and the storage list, owner-
 test('V275 the Park dialog asks the reference questions and previews the expiry', () => {
   const page = app.slice(app.indexOf('async function bottlesPage(){'),
     app.indexOf('/* The event log speaks'));
+  // V279 RETARGET: 'parkReentry' is GONE (owner: "what is the purpose of re-entry? please remove
+  // it") and 'parkQuantity' takes its place in the flow. The contract this line guards — that the
+  // park dialog asks every question the bar actually needs before it takes somebody's bottle — is
+  // unchanged; the list of questions is the owner's, and it moved.
   for (const field of ['parkCustomerSearch', 'parkClient', 'parkLabel', 'parkSize', 'parkFill',
-    'parkLocation', 'parkReentry']) {
+    'parkLocation', 'parkQuantity']) {
     assert.ok(page.includes(`id="${field}"`), `the Park dialog must carry ${field}`);
   }
+  assert.ok(!page.includes('id="parkReentry"'), 're-entry must be gone from the park dialog');
   assert.match(page, /id="parkProduct"/, 'a bottle may be picked from the product catalogue');
-  // Re-entry: Default (1) / Disabled / N pax, exactly as the owner described.
-  assert.match(page, /<option value="1">Default · 1 person<\/option>/);
-  assert.match(page, /<option value="">Disabled<\/option>/);
+  // V279 RETARGET: the re-entry select and its Default/Disabled/N-pax options were removed on the
+  // owner's instruction. What replaces them here is the quantity the owner asked for instead.
+  assert.match(page, /id="parkQuantity" type="number" min="1" max="20"/);
   // The expiry the business's own keep window produces is shown BEFORE the button is pressed.
   assert.match(page, /const expiry=new Date\(Date\.now\(\)\+keepDays\*864e5\);/);
   assert.match(page, /Expires \$\{esc\(sgt\(expiry\.toISOString\(\)\)\|\|''\)\} · \$\{keepDays\} days/);
@@ -232,20 +241,34 @@ test('V275 the Park dialog asks the reference questions and previews the expiry'
   // park_bottle_v278. park_bottle_v275 is deliberately left deployed and callable so a deploy in
   // flight cannot break, but the browser no longer names it; the contract this line guards — one
   // literal rpc call carrying the whole request plus the idempotency key — is unchanged.
-  assert.match(page, /sb\.rpc\('park_bottle_v278',\{\.\.\.request,p_idempotency_key:key\}\)/);
+  // V279 SUPERSEDES THIS CALL SITE AGAIN. Park now sends the owner's quantity (1..20) to
+  // park_bottles_v279, which writes N bottles in one transaction under ONE idempotency key and
+  // derives the per-bottle evidence keys from it. park_bottle_v275 and park_bottle_v278 both stay
+  // deployed and callable so a deploy in flight cannot break. The contract this line guards — one
+  // literal rpc call carrying the whole request plus the idempotency key — is unchanged.
+  assert.match(page, /sb\.rpc\('park_bottles_v279',\{\.\.\.request,p_idempotency_key:key\}\)/);
 });
 
 test('V275 the bottle detail dialog carries the fill presets and every lifecycle action', () => {
   const page = app.slice(app.indexOf('async function bottlesPage(){'),
     app.indexOf('/* The event log speaks'));
+  // V279 RETARGET: the owner asked for four smart buttons — 25 / 50 / 75 / 100 — so the 'Empty'
+  // preset was dropped. A genuinely empty bottle is still reachable through the exact input beside
+  // them, which is the control this test's next assertion pins.
   assert.match(app,
-    /const BOTTLE_FILL_PRESETS_V275=Object\.freeze\(\[\[100,'100%'\],\[75,'75%'\],\[50,'50%'\],\[25,'25%'\],\[0,'Empty'\]\]\);/);
+    /const BOTTLE_FILL_PRESETS_V275=Object\.freeze\(\[\[100,'100%'\],\[75,'75%'\],\[50,'50%'\],\[25,'25%'\]\]\);/);
   assert.match(page, /BOTTLE_FILL_PRESETS_V275\.map\(\(\[value,label\]\)=>/);
   assert.match(page, /id="bottleFillInput"/, 'an exact number sits beside the presets');
+  // V279 RETARGET: finish_bottle_v275 is no longer called from this screen. 'Retrieved' is
+  // terminal at V279 (owner rulings 10 and 13), so set_bottle_status_v275 is the one control that
+  // ends a bottle and the separate Finish button is gone — two buttons for one physical event is
+  // how a shelf list starts disagreeing with the shelf. The DB function stays deployed.
   for (const rpc of ['set_bottle_fill_v275', 'set_bottle_status_v275', 'extend_bottle_v275',
-    'transfer_bottle_v275', 'finish_bottle_v275']) {
+    'transfer_bottle_v275']) {
     assert.ok(page.includes(`sb.rpc('${rpc}'`), `the detail dialog must call ${rpc} literally`);
   }
+  assert.ok(!page.includes("sb.rpc('finish_bottle_v275'"),
+    'the V279 card ends a bottle with Retrieved, not with a second Finish control');
   // Call / At table / Back to storage.
   for (const status of ['stored', 'called', 'at_table']) {
     assert.ok(page.includes(`data-status="${status}"`), `the detail dialog must offer ${status}`);
@@ -278,10 +301,15 @@ test('V275 the customer card exists only when the read returns rows, and fails s
   assert.doesNotMatch(app, /walletSectionShell\('walletBottles'/,
     'a shell would flash a bottles card at every customer of every non-bar business');
   // What the customer is actually shown.
+  // V279 RETARGET: 'reentry_limit' is gone from the customer card too — the server stopped
+  // publishing it in the shared projection AND in the customer read, so there is nothing left to
+  // render. Everything else the customer is shown is unchanged.
   for (const fragment of ['Your bottles', 'serial_code', 'bottleFillBarV275', 'parked_at',
-    'bottleDaysLabelV275', 'reentry_limit', 'storage_location_name']) {
+    'bottleDaysLabelV275', 'storage_location_name']) {
     assert.ok(loader.includes(fragment), `the customer card must show ${fragment}`);
   }
+  assert.ok(!loader.includes('reentry_limit'),
+    'the customer card must not mention re-entry');
   // It is read-only: no bottle write RPC is reachable from the customer surface.
   for (const rpc of ['park_bottle_v275', 'extend_bottle_v275', 'transfer_bottle_v275',
     'finish_bottle_v275', 'set_bottle_fill_v275', 'set_bottle_status_v275']) {

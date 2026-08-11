@@ -199,25 +199,35 @@ test('V278 the transition matrix is enforced SERVER-SIDE, not merely unbuttoned'
 });
 
 test('V278 the card offers exactly the moves the server allows', () => {
-  assert.match(app, /const BOTTLE_TRANSITIONS_V278=Object\.freeze\(\{/);
+  // V279 RETARGET, owner rulings 10 and 13. V278 modelled 'retrieved' as a floor state you could
+  // walk back from, with a separate Finish beside it. The owner ruled that pressing Retrieved
+  // means the bottle went out with the customer and is DONE. The contract this test guards is
+  // unchanged — the buttons drawn are exactly the moves the server allows — but the matrix it
+  // mirrors is now the V279 one, in which nothing leaves 'retrieved'.
+  assert.match(app, /const BOTTLE_TRANSITIONS_V279=Object\.freeze\(\{/);
   assert.match(app, /stored:Object\.freeze\(\['called','at_table','retrieved'\]\)/);
-  assert.match(app, /retrieved:Object\.freeze\(\['stored'\]\)/);
-  for (const status of ['stored', 'called', 'at_table', 'retrieved']) {
-    assert.ok(bottlesPage.includes(`nextStatusesV278.includes('${status}')`),
+  assert.match(app, /retrieved:Object\.freeze\(\[\]\)/,
+    'V279: nothing transitions out of retrieved');
+  for (const status of ['stored', 'called', 'at_table']) {
+    assert.ok(bottlesPage.includes(`nextStatusesV279.includes('${status}')`),
       `the ${status} button must be drawn from the transition matrix, not from a hand-written rule`);
     assert.ok(bottlesPage.includes(`data-status="${status}"`),
       `the detail dialog must offer ${status}`);
   }
-  assert.match(bottlesPage, /'Back to storage':'To storage'/);
-  assert.match(bottlesPage, /\$\{bottle\.status==='retrieved'\?'Sent out':'Finish'\}/,
-    'closing a retrieved bottle is "Sent out" in the bar\'s own words');
-  // Retrieved is a floor state everywhere it matters: the filters, the live set, the reads.
-  assert.match(app, /const BOTTLE_LIVE_STATUSES_V278=Object\.freeze\(\['stored','called','at_table','retrieved'\]\);/);
-  assert.match(bottlesPage, /<option value="retrieved">Retrieved<\/option>/);
-  assert.match(app, /retrieved:\{label:'Retrieved',icon:'export'\}/);
+  // Sending a bottle out is now its own terminal control rather than a fourth floor button, and
+  // there is no Finish beside it.
+  assert.match(bottlesPage, /data-retrieve style="min-height:42px">\$\{CUI\.icon\('export'/);
+  assert.match(bottlesPage, /p_status:'retrieved',p_idempotency_key:key\}\),'Bottle retrieved'/);
+  assert.ok(!bottlesPage.includes('data-finish'),
+    'V279: two buttons for one physical event is how a shelf list starts disagreeing with the shelf');
+  // The three states the bar is physically holding, and the three tabs that show them.
+  assert.match(app, /const BOTTLE_STORAGE_STATUSES_V279=Object\.freeze\(\['stored','called','at_table'\]\);/);
+  assert.match(bottlesPage, /data-bottle-tab="\$\{esc\(value\)\}"/);
+  assert.match(app, /retrieved:\{label:'Retrieved',icon:'export',tone:'#6B6560'\}/);
   const customerRead = functionBody('customer_get_bottles_v275');
   assert.match(customerRead, /bottle\.status in \('stored', 'called', 'at_table', 'retrieved'\)/,
-    'a bottle out with the customer must still be on their wallet card');
+    'the V278 read kept a retrieved bottle on the wallet card; V279 recreates this function so a '
+    + 'bottle that has left with the customer leaves the card too (see v279_bottle_owner_walkthrough)');
 });
 
 /* ------------------------------------------------------------------ 4-7. notes, notify, purchase, move */
@@ -314,9 +324,14 @@ test('V278 the Dashboard card is bar-only and fails soft in every direction', ()
   assert.match(card, /if\(error\)return;/, 'an error must hide the card, never break the Dashboard');
   assert.match(card, /sb\.rpc\('list_bar_bottles_v275',\{p_business:S\.biz\.id,p_branch:branchId,/,
     'the card must reuse the Bottles page counts rather than invent a second aggregate');
-  for (const label of ['Active', 'Called', 'At table', 'Retrieved', 'Expiring this week']) {
+  // V279 RETARGET: 'Active' became 'In storage', rendered as "N / capacity" — the gauge the owner
+  // asked for, read from the same RPC that ENFORCES the capacity. The rest of the card is
+  // unchanged, and every tile now carries its status colour.
+  for (const label of ['In storage', 'Called', 'At table', 'Retrieved', 'Expiring this week']) {
     assert.ok(card.includes(`'${label}'`), `the card must show ${label}`);
   }
+  assert.match(card, /BOTTLE_STATUS_V275\.stored\.tone/,
+    'the Dashboard must use the same status colours as the Bottles page');
   assert.match(card, /<a class="btn secondary" href="#\/bottles">Open Bottles<\/a>/);
   // The counts it reads have to exist on the server side.
   const list = functionBody('list_bar_bottles_v275');
@@ -393,10 +408,16 @@ test('V278 the existing client keeps working: park_bottle_v275 is superseded, no
   assert.doesNotMatch(migration, /drop function[^\n]*park_bottle_v275/,
     'the V275 park function must stay callable so a deploy in flight cannot break');
   assert.match(migration, /park_bottle_v275 is untouched and still callable/);
-  assert.ok(app.includes("sb.rpc('park_bottle_v278'"),
-    'the browser must call the V278 park');
-  assert.ok(!bottlesPage.includes("sb.rpc('park_bottle_v275'"),
-    'and must no longer call the V275 park');
+  // V279 RETARGET: the same reasoning applied one increment on. The browser now calls
+  // park_bottles_v279 (which adds the owner's quantity, the capacity refusal and the retirement of
+  // re-entry) and BOTH earlier park functions stay deployed and callable, spliced in V279 only so
+  // that an older client in flight cannot overfill the shelf or re-grow the retired field.
+  assert.ok(app.includes("sb.rpc('park_bottles_v279'"),
+    'the browser must call the V279 batch park');
+  for (const retired of ['park_bottle_v275', 'park_bottle_v278']) {
+    assert.ok(!bottlesPage.includes(`sb.rpc('${retired}'`),
+      `and must no longer call ${retired}`);
+  }
 });
 
 test('V278 a non-bar tenant gains none of it', () => {
