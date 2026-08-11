@@ -1621,6 +1621,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260810000200",
+      "name": "nestly_v267_salesforce_crm_scope",
+      "sourcePath": "db/migrations/20260810_nestly_v267_salesforce_crm_scope.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260810000300",
       "name": "nestly_v267_summary_business_logo",
       "sourcePath": "db/migrations/20260810_nestly_v267_summary_business_logo.sql"

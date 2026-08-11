@@ -1626,6 +1626,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260810_nestly_v267_salesforce_crm_scope.sql",
+      "semanticVersion": "v267",
+      "proposedDeployVersion": "20260810000200"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260810_nestly_v267_summary_business_logo.sql",
       "semanticVersion": "v267",
       "proposedDeployVersion": "20260810000300"

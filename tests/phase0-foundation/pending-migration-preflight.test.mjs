@@ -241,6 +241,7 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v225_company_detail', 'db/tests/v225_company_detail.sql'],
   ['nestly_v226_crm_consultant_scope', 'db/tests/v226_crm_consultant_scope.sql'],
   ['nestly_v244_crm_ai_report_flag_matches_v176', 'db/tests/v244_crm_ai_report_flag.sql'],
+  ['nestly_v267_salesforce_crm_scope', 'db/tests/v267_salesforce_crm_scope.sql'],
   // V256 — one suite covers all three v255 migrations; they are one change.
   ['nestly_v255_marketing_send_records_and_taxonomy', 'db/tests/v255_marketing_send_records_and_reads.sql'],
   ['nestly_v255a_client_interaction_batch', 'db/tests/v255_marketing_send_records_and_reads.sql'],
@@ -748,7 +749,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 234); // V280 + V268
+  assert.equal(pending.length, 235); // V280 + V267(salesforce) + V268
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

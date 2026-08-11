@@ -109,9 +109,9 @@ test('materializer creates one byte-preserving 279-file chain and deterministic 
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 234); // V280 + V268
-  assert.equal(manifest.itemCount, 279); // V280 + V268
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 279); // V280 + V268
+  assert.equal(manifest.pendingCount, 235); // V280 + V267(salesforce) + V268
+  assert.equal(manifest.itemCount, 280); // V280 + V267(salesforce) + V268
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 280); // V280 + V267(salesforce) + V268
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(

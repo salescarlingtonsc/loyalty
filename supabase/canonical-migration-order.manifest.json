@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 234,
-  "itemCount": 279,
+  "pendingCount": 235,
+  "itemCount": 280,
   "items": [
     {
       "order": 1,
@@ -2702,6 +2702,16 @@
     {
       "order": 270,
       "kind": "pending",
+      "version": "20260810000200",
+      "name": "nestly_v267_salesforce_crm_scope",
+      "path": "supabase/migrations/20260810000200_nestly_v267_salesforce_crm_scope.sql",
+      "octetLength": 6522,
+      "sha256": "ef8d696c7e27e29c973332b503c6a5907775728c9230404563611079b972ac61",
+      "provenance": "local-source"
+    },
+    {
+      "order": 271,
+      "kind": "pending",
       "version": "20260810000300",
       "name": "nestly_v267_summary_business_logo",
       "path": "supabase/migrations/20260810000300_nestly_v267_summary_business_logo.sql",
@@ -2710,7 +2720,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 271,
+      "order": 272,
       "kind": "pending",
       "version": "20260810000310",
       "name": "nestly_v268_offer_share_page",
@@ -2720,7 +2730,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 272,
+      "order": 273,
       "kind": "pending",
       "version": "20260810000400",
       "name": "nestly_v271_programme_overview",
@@ -2730,7 +2740,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 273,
+      "order": 274,
       "kind": "pending",
       "version": "20260810000500",
       "name": "nestly_v273_usage_null_when_never_set_up",
@@ -2740,7 +2750,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 274,
+      "order": 275,
       "kind": "pending",
       "version": "20260811000100",
       "name": "nestly_v275_bar_bottle_keep",
@@ -2750,7 +2760,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 275,
+      "order": 276,
       "kind": "pending",
       "version": "20260811000200",
       "name": "nestly_v276_bar_sector_polish",
@@ -2760,7 +2770,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 276,
+      "order": 277,
       "kind": "pending",
       "version": "20260811000300",
       "name": "nestly_v277_activation_seeds_loyalty",
@@ -2770,7 +2780,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 277,
+      "order": 278,
       "kind": "pending",
       "version": "20260811000400",
       "name": "nestly_v278_bottle_keep_parity",
@@ -2780,7 +2790,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 278,
+      "order": 279,
       "kind": "pending",
       "version": "20260811000500",
       "name": "nestly_v279_bottle_owner_walkthrough",
@@ -2790,7 +2800,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 279,
+      "order": 280,
       "kind": "pending",
       "version": "20260811000600",
       "name": "nestly_v280_branch_billing_units_and_promotion_version",
