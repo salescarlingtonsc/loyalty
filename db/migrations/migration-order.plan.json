@@ -1668,9 +1668,15 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v279_bottle_owner_walkthrough.sql",
+      "semanticVersion": "v279",
+      "proposedDeployVersion": "20260811000500"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260811_nestly_v280_branch_billing_units_and_promotion_version.sql",
       "semanticVersion": "v280",
-      "proposedDeployVersion": "20260811000500"
+      "proposedDeployVersion": "20260811000600"
     }
   ]
 }

@@ -1664,6 +1664,12 @@
     {
       "kind": "pending",
       "version": "20260811000500",
+      "name": "nestly_v279_bottle_owner_walkthrough",
+      "sourcePath": "db/migrations/20260811_nestly_v279_bottle_owner_walkthrough.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260811000600",
       "name": "nestly_v280_branch_billing_units_and_promotion_version",
       "sourcePath": "db/migrations/20260811_nestly_v280_branch_billing_units_and_promotion_version.sql"
     }

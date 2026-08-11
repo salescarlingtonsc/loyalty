@@ -3580,9 +3580,26 @@ async function svRunTopupFlow({branches,state,testOnly}){
   render();
 }
 
+/* V279 (owner walkthrough item 4), in the owner's own words: red below a quarter, orange below a
+   half, yellow while it is still more gone than not, light green once it is mostly there, and full
+   green only for a bottle nobody has poured from. Each entry is [exclusive ceiling, colour, name].
+   ONE table, consulted by the one bar renderer, so the list rows, the bottle card and the
+   customer's own wallet cannot disagree about what "half" looks like. */
+const BOTTLE_FILL_BANDS_V279=Object.freeze([
+  Object.freeze([25,'#B3453A','red']),
+  Object.freeze([50,'#C2701A','orange']),
+  Object.freeze([75,'#A8951C','yellow']),
+  Object.freeze([100,'#6FAE7C','light green']),
+  Object.freeze([101,'#2E7D5B','green'])
+]);
+function bottleFillToneV279(percent){
+  const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
+  const band=BOTTLE_FILL_BANDS_V279.find(([ceiling])=>value<ceiling);
+  return band?band[1]:'#2E7D5B';
+}
 function bottleFillBarV275(percent){
   const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
-  const tone=value>=50?'#2E7D5B':value>=25?'#B4761F':'#B3453A';
+  const tone=bottleFillToneV279(value);
   return `<span class="bottle-fill" role="img" aria-label="${value}% left" style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
 }
 function bottleDaysLabelV275(days){

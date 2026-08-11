@@ -3590,7 +3590,7 @@ async function renderCustomerWallet(businessSlug=null){
           <div class="row"><b>${esc(String(bottle.label||'Bottle'))}</b><span class="spacer"></span><span class="pill">${fill}% left</span></div>
           <div style="margin-top:8px">${bottleFillBarV275(fill)}</div>
           <p class="muted small" style="margin-top:6px">${esc(bottle.serial_code||'')}${bottle.size_ml?` · ${Number(bottle.size_ml)}ml`:''}${bottle.storage_location_name?` · ${esc(bottle.storage_location_name)}`:''}</p>
-          <p class="muted small" style="margin-top:3px">Left with them ${esc(walletDate(bottle.parked_at))}${bottle.reentry_limit?` · ${Number(bottle.reentry_limit)} can drink from it`:''}</p>
+          <p class="muted small" style="margin-top:3px">Left with them ${esc(walletDate(bottle.parked_at))}</p>
           <p class="small" style="margin-top:3px;${soon?'color:#B4761F;font-weight:600':'color:var(--muted)'}">${esc(bottleDaysLabelV275(bottle.days_left))}</p>
         </div></div>`;
       }).join('')}</section>`);
