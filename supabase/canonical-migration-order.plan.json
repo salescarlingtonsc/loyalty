@@ -1654,6 +1654,12 @@
       "version": "20260811000300",
       "name": "nestly_v277_activation_seeds_loyalty",
       "sourcePath": "db/migrations/20260811_nestly_v277_activation_seeds_loyalty.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260811000400",
+      "name": "nestly_v278_bottle_keep_parity",
+      "sourcePath": "db/migrations/20260811_nestly_v278_bottle_keep_parity.sql"
     }
   ]
 }

@@ -3581,8 +3581,10 @@ async function renderCustomerWallet(businessSlug=null){
     sections.insertAdjacentHTML('afterbegin',`<section class="card wallet-section" id="walletBottles" data-section-title="Your bottles">
       <div class="wallet-section-head"><div><h2>Your bottles</h2><p class="muted small">What ${esc(b.name||'this bar')} is keeping for you. Show this screen at the counter to have one brought out.</p></div><span class="spacer"></span><span class="pill">${bottles.length}</span></div>
       ${bottles.map(bottle=>{
+        /* V278: Number(null) is 0, and 0 <= 7 — the naive test painted every NEVER-expiring
+           bottle amber and told the customer it was about to run out. */
         const days=Number(bottle.days_left);
-        const soon=Number.isFinite(days)&&days<=7;
+        const soon=bottle.days_left!==null&&bottle.days_left!==undefined&&Number.isFinite(days)&&days<=7;
         const fill=Math.max(0,Math.min(100,Math.round(Number(bottle.fill_percent)||0)));
         return `<div class="wallet-line"><div style="width:100%">
           <div class="row"><b>${esc(String(bottle.label||'Bottle'))}</b><span class="spacer"></span><span class="pill">${fill}% left</span></div>

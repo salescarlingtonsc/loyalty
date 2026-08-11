@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="409901097fe8d72ce44cf1b0ee8130bb656642f191d5acb357ae0472cd292461"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="1cfedc6cbe4ab661510c494366d74aa609941600f8470204e3e19ca5f86b1e44"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2497,6 +2497,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
+    <div id="dashboardBottlesV278"></div>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
       <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
@@ -2562,6 +2563,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
+  loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
@@ -2754,6 +2756,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'409901097fe8d72ce44cf1b0ee8130bb656642f191d5acb357ae0472cd292461',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'1cfedc6cbe4ab661510c494366d74aa609941600f8470204e3e19ca5f86b1e44',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

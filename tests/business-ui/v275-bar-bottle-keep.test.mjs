@@ -227,7 +227,12 @@ test('V275 the Park dialog asks the reference questions and previews the expiry'
   // The expiry the business's own keep window produces is shown BEFORE the button is pressed.
   assert.match(page, /const expiry=new Date\(Date\.now\(\)\+keepDays\*864e5\);/);
   assert.match(page, /Expires \$\{esc\(sgt\(expiry\.toISOString\(\)\)\|\|''\)\} · \$\{keepDays\} days/);
-  assert.match(page, /sb\.rpc\('park_bottle_v275',\{\.\.\.request,p_idempotency_key:key\}\)/);
+  // V278 SUPERSEDES THIS CALL SITE. The park dialog now sends the five extra answers the reference
+  // bar asks for (expiry mode, expiry date, notify channel, note, purchase date) to
+  // park_bottle_v278. park_bottle_v275 is deliberately left deployed and callable so a deploy in
+  // flight cannot break, but the browser no longer names it; the contract this line guards — one
+  // literal rpc call carrying the whole request plus the idempotency key — is unchanged.
+  assert.match(page, /sb\.rpc\('park_bottle_v278',\{\.\.\.request,p_idempotency_key:key\}\)/);
 });
 
 test('V275 the bottle detail dialog carries the fill presets and every lifecycle action', () => {

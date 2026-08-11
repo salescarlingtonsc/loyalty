@@ -1659,6 +1659,12 @@
       "path": "db/migrations/20260811_nestly_v277_activation_seeds_loyalty.sql",
       "semanticVersion": "v277",
       "proposedDeployVersion": "20260811000300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v278_bottle_keep_parity.sql",
+      "semanticVersion": "v278",
+      "proposedDeployVersion": "20260811000400"
     }
   ]
 }

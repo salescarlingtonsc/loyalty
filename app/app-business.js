@@ -2115,6 +2115,32 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
 function dashboardLoyaltyRowV170(cards){
   return `<section class="dashboard-loyalty" aria-labelledby="dashboardLoyaltyTitle"><div class="dashboard-loyalty-head">${CUI.icon('loyalty',{size:20})}<div><h3 id="dashboardLoyaltyTitle">Loyalty this period</h3><p class="muted small">Programme activity for the selected dates.</p></div></div><div class="dashboard-loyalty-grid">${cards.map(card=>`<div class="dashboard-loyalty-card"><b>${esc(card.label)}</b><span class="v">${esc(card.value)}</span><span class="metric-hint">${esc(card.hint)}</span>${card.retryId?`<button type="button" class="btn ghost sm" id="${card.retryId}">Retry</button>`:''}</div>`).join('')}</div></section>`;
 }
+/* V278 (owner brief item 9): the bar's own headline on the Dashboard. A bar owner opening the app
+   wants one number first — how many bottles am I holding — and one warning — how many run out this
+   week. It reuses list_bar_bottles_v275's branch-scoped counts with a limit of one row rather than
+   adding a second aggregate that could disagree with the Bottles page.
+   BAR TENANTS ONLY, and FAIL-SOFT in every direction: a non-bar sector, a staff member without
+   bottle access, or any error at all renders NOTHING. A Dashboard is the first screen of the day;
+   it must never be the screen that breaks. */
+async function loadDashboardBottlesV278(root,branchId=null){
+  const host=root?.querySelector('#dashboardBottlesV278');
+  if(!host)return;
+  host.innerHTML='';
+  if(!isBarSectorV275())return;
+  if(S.myRole!=='owner'&&!canReadModule('bottles'))return;
+  const {data,error}=await sb.rpc('list_bar_bottles_v275',{p_business:S.biz.id,p_branch:branchId,
+    p_status:null,p_search:null,p_expiring_days:null,p_bottle:null,p_limit:1});
+  if(!root.isConnected||root!==$('dashboardView'))return;
+  if(error)return;
+  const counts=data?.counts||{};
+  const tile=(label,value,iconName)=>`<div class="card kpi"><div class="l">${CUI.icon(iconName,{size:14})} ${esc(label)}</div><div class="v">${Number(value)||0}</div></div>`;
+  host.innerHTML=`<section class="card" aria-labelledby="dashboardBottlesTitleV278" style="margin-bottom:18px">
+    <div class="cui-card-head">${CUI.icon('bottle',{size:24})}<div><h2 id="dashboardBottlesTitleV278">Bottles</h2><p>What you are holding for your customers right now.</p></div></div>
+    <div class="kpis" style="margin-top:12px">${tile('Active',counts.active,'bottle')}${tile('Called',counts.called,'bell')}${tile('At table',counts.at_table,'till')}${tile('Retrieved',counts.retrieved,'export')}${tile('Expiring this week',counts.expiring_soon,'info')}</div>
+    <div class="row" style="margin-top:14px"><a class="btn secondary" href="#/bottles">Open Bottles</a></div>
+  </section>`;
+}
+
 /* V180 (owner instruction: "I want have simple glance of calendar").
    The Today-schedule strip announced today's bookings but showed none of them — an owner had
    to leave the Dashboard to learn whether anyone was coming in. It now renders today's actual
@@ -2262,6 +2288,7 @@ async function dashboard(){
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
+    <div id="dashboardBottlesV278"></div>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
       <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
@@ -2327,6 +2354,7 @@ async function dashboard(){
   });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
+  loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
@@ -13677,6 +13705,10 @@ const BOTTLE_STATUS_V275=Object.freeze({
   stored:{label:'Stored',icon:'inventory'},
   called:{label:'Called',icon:'bell'},
   at_table:{label:'At table',icon:'till'},
+  /* V278: 'retrieved' is the bottle OUT WITH THE CUSTOMER at the venue. It is not 'at table'
+     (the bar carried it over and will carry it back) and it is not finished. A bar that cannot
+     say which of the three a bottle is, is a bar that loses bottles. */
+  retrieved:{label:'Retrieved',icon:'export'},
   finished:{label:'Finished',icon:'check'},
   expired:{label:'Expired',icon:'info'},
   transferred:{label:'Moved',icon:'forward'},
@@ -13686,6 +13718,56 @@ const BOTTLE_STATUS_V275=Object.freeze({
    pours, so a bartender never has to fight a slider on a wet phone. */
 const BOTTLE_FILL_PRESETS_V275=Object.freeze([[100,'100%'],[75,'75%'],[50,'50%'],[25,'25%'],[0,'Empty']]);
 const BOTTLE_EXPIRING_DAYS_V275=7;
+/* V278 (owner brief, from the reference bar in production use).
+   THE FLOOR TRANSITION MATRIX, mirrored from app.bar_status_transition_allowed_v278. This copy
+   exists only to decide which buttons to DRAW; the server refuses an illegal move whatever the
+   browser offers, which is why the two may safely be written twice rather than threaded through
+   another round trip. 'retrieved' is a one-way door out of the floor states: a bottle that went
+   out with the customer comes back to STORAGE before it can be called or carried again. */
+const BOTTLE_TRANSITIONS_V278=Object.freeze({
+  stored:Object.freeze(['called','at_table','retrieved']),
+  called:Object.freeze(['stored','at_table','retrieved']),
+  at_table:Object.freeze(['stored','called','retrieved']),
+  retrieved:Object.freeze(['stored'])
+});
+const BOTTLE_LIVE_STATUSES_V278=Object.freeze(['stored','called','at_table','retrieved']);
+/* Auto reads the customer's tier keep-days and falls back to the business number; Custom is a
+   date the bar agreed; No expiry is a real answer for a regular's own bottle. */
+const BOTTLE_EXPIRY_MODES_V278=Object.freeze([
+  ['auto','Auto — use the keep window'],['custom','Keep until a date'],['none','No expiry']
+]);
+/* Stored per park. WhatsApp and email SENDING are deferred platform-wide; recording the answer
+   now means the later sweep does not have to ask the customer again. */
+const BOTTLE_NOTIFY_CHANNELS_V278=Object.freeze([
+  ['none','No reminder'],['whatsapp','WhatsApp'],['email','Email']
+]);
+function bottleNotifyLabelV278(channel){
+  const found=BOTTLE_NOTIFY_CHANNELS_V278.find(([value])=>value===String(channel||'none'));
+  return found?found[1]:'No reminder';
+}
+function bottleExpiryModeLabelV278(mode){
+  const found=BOTTLE_EXPIRY_MODES_V278.find(([value])=>value===String(mode||'auto'));
+  return found?found[1]:'Auto — use the keep window';
+}
+/* The tier badge (owner brief item 8). Read-only and fail-soft: the server returns a blank name
+   whenever tiers are absent, unreached or mid-publish, and a blank name renders nothing at all
+   rather than an empty pill that looks like a bug. */
+function bottleTierPillV278(name){
+  const label=String(name||'').trim();
+  if(!label)return '';
+  return `<span class="pill">${CUI.icon('crown',{size:15})} ${esc(label)}</span>`;
+}
+/* The SGT calendar date to prefill an "keep until" input with. expires_at is the INSTANT the
+   bottle stops being kept, and for a custom date that instant is midnight at the START of the
+   following day — so the day a human chose is the day before it. Prefilling the raw date would
+   quietly advance every edited bottle by one day. */
+function bottleDateInputV278(value){
+  if(!value)return '';
+  const at=new Date(value);
+  if(Number.isNaN(at.getTime()))return '';
+  const text=sgt(new Date(at.getTime()-60000).toISOString());
+  return text?String(text).slice(0,10):'';
+}
 
 function bottleStatusPillV275(status){
   const meta=BOTTLE_STATUS_V275[status]||{label:String(status||'').replaceAll('_',' '),icon:'info'};
@@ -13720,7 +13802,18 @@ async function bottleSetupPageV275(){
   if(!isBarSectorV275())return bottlesUnavailableCardV275('Bottle keep');
   if(S.myRole!=='owner')return bottlesDeniedCardV275('Bottle keep');
   routeMain.innerHTML=CUI.loadingState({title:'Bottle keep',iconName:'bottle',body:'Loading your keep window…'});
-  const {data,error}=await sb.rpc('bar_get_setup_v275',{p_business:S.biz.id});
+  /* V278: the keep window and the shelf list still come from V275's reader. The tier windows and
+     the bottle catalogue are a SECOND, independent read, so a bar with no loyalty tiers and no
+     products still gets exactly the page it had before rather than an error. */
+  const bottleKeepReadsV278=await Promise.all([
+    sb.rpc('bar_get_setup_v275',{p_business:S.biz.id}),
+    sb.rpc('bar_get_bottle_setup_v278',{p_business:S.biz.id})
+  ]);
+  /* Named rather than destructured: the undeclared-identifier guard (V200 regression) reads
+     `const <name>=` declarations, and an array pattern would hide these two from it. */
+  const setupResultV278=bottleKeepReadsV278[0];
+  const extraResultV278=bottleKeepReadsV278[1];
+  const {data,error}=setupResultV278;
   if(!isCurrent())return;
   if(error){
     routeMain.innerHTML=CUI.errorState({title:'Bottle keep unavailable',message:ownerErrorText(error)||'Please try again.'});
@@ -13733,6 +13826,18 @@ async function bottleSetupPageV275(){
   let locations=(Array.isArray(data?.locations)?data.locations:[])
     .filter(location=>location?.active!==false)
     .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
+  /* V278 state. Keep-days are held as STRINGS while being edited: '' is a meaningful value here
+     ("this tier has no override") and Number('') is 0, which the server would rightly refuse. */
+  const readTiersV278=payload=>(Array.isArray(payload?.tiers)?payload.tiers:[]).map(tier=>({
+    tier_id:tier.tier_id,name:String(tier.name||'Tier'),threshold:Number(tier.threshold)||0,
+    keep_days:tier.keep_days===null||tier.keep_days===undefined?'':String(tier.keep_days)}));
+  const readCatalogueV278=payload=>(Array.isArray(payload?.products)?payload.products:[]).map(product=>({
+    id:product.id,name:String(product.name||''),
+    size_ml:product.size_ml===null||product.size_ml===undefined?'':String(product.size_ml),
+    price_cents:Number(product.price_cents)||0}));
+  let tiersV278=readTiersV278(extraResultV278.data);
+  let catalogueV278=readCatalogueV278(extraResultV278.data);
+  const extraUnavailableV278=!!extraResultV278.error;
   routeMain.innerHTML=CUI.pageHeader({title:'Bottle keep',
     subtitle:'How long you keep a bottle, and where you put it.',iconName:'bottle',
     canWrite:true,moduleLabel:'Bottle keep'})
@@ -13748,6 +13853,24 @@ async function bottleSetupPageV275(){
         <input id="bkNewLoc" maxlength="60" autocomplete="off" placeholder="e.g. Shelf A">
         <button class="btn sm" id="bkAddLoc" type="button">${CUI.icon('add',{size:17})}<span>Add</span></button></div>
       <div id="bkLocList" style="margin-top:14px"></div>
+    </section>
+    <section class="card" style="margin-top:16px">
+      <div class="cui-card-head"><h2>Tier keep windows</h2><p>Give your best customers longer. A tier left blank uses the keep window above.</p></div>
+      <div id="bkTierList"></div>
+      <div class="row" style="margin-top:14px"><button class="btn sm" id="bkTierSave" type="button">Save tier windows</button>
+        <span class="muted small" id="bkTierStatus" role="status" aria-live="polite"></span></div>
+      <div id="bkTierErr"></div>
+    </section>
+    <section class="card" style="margin-top:16px">
+      <div class="cui-card-head"><h2>Bottle catalogue</h2><p>The bottles you sell and how big they are. Staff pick one when parking and the size comes with it — nobody types it.</p></div>
+      <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:2 1 170px"><label for="bkNewBottleName">Bottle</label><input id="bkNewBottleName" maxlength="120" autocomplete="off" placeholder="e.g. Hibiki 12"></div>
+        <div style="flex:1 1 90px"><label for="bkNewBottleMl">Size (ml)</label><input id="bkNewBottleMl" type="number" min="100" max="5000" inputmode="numeric" placeholder="700"></div>
+        <div style="flex:1 1 90px"><label for="bkNewBottlePrice">Price</label><input id="bkNewBottlePrice" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+        <button class="btn sm" id="bkAddBottle" type="button">${CUI.icon('add',{size:17})}<span>Add bottle</span></button>
+      </div>
+      <div id="bkBottleList" style="margin-top:14px"></div>
+      <div id="bkBottleErr"></div>
     </section>
     <div class="row" style="margin-top:18px"><button class="btn" id="bkSave" type="button">Save bottle keep</button>
       <span class="muted small" id="bkStatus" role="status" aria-live="polite"></span></div>
@@ -13774,6 +13897,136 @@ async function bottleSetupPageV275(){
     });
   }
   paintLocations();
+
+  /* V278 tier windows. The list is declarative like the shelf list: whatever is on screen is what
+     the business has, and a cleared box DELETES that tier's override rather than leaving a number
+     nobody can see still governing the Auto date. */
+  function paintTiersV278(){
+    const host=$('bkTierList');if(!host)return;
+    if(extraUnavailableV278){
+      host.innerHTML='<p class="muted small">Tier windows could not be loaded. The keep window above still applies to everyone.</p>';
+      return;
+    }
+    if(!tiersV278.length){
+      host.innerHTML=CUI.emptyState({iconName:'crown',title:'No tiers yet',
+        body:'Set up spending tiers in Programmes, then come back to give each one its own keep window.',
+        actionHtml:'<a class="btn ghost sm" href="#/loyalty">Open Programmes</a>'});
+      return;
+    }
+    const fallback=String(Number($('bkDays')?.value)||30);
+    host.innerHTML=tiersV278.map((tier,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(tier.name)}</b>
+      <label class="sr-only" for="bkTierDays${index}">Keep days for ${esc(tier.name)}</label>
+      <input id="bkTierDays${index}" type="number" min="1" max="365" inputmode="numeric" style="max-width:110px" placeholder="${esc(fallback)}" value="${esc(tier.keep_days)}" data-tier-days="${index}">
+      <span class="muted small">days</span>
+    </div>`).join('');
+    host.querySelectorAll('[data-tier-days]').forEach(input=>input.oninput=()=>{
+      tiersV278[Number(input.dataset.tierDays)].keep_days=input.value.trim();
+    });
+  }
+  paintTiersV278();
+
+  function paintCatalogueV278(){
+    const host=$('bkBottleList');if(!host)return;
+    if(extraUnavailableV278){
+      host.innerHTML='<p class="muted small">The bottle catalogue could not be loaded. Staff can still type a bottle name when parking.</p>';
+      return;
+    }
+    if(!catalogueV278.length){
+      host.innerHTML=CUI.emptyState({iconName:'bottle',title:'No products yet',
+        body:'Add a bottle above and staff can pick it when parking.'});
+      return;
+    }
+    host.innerHTML=catalogueV278.map((product,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(product.name)}</b>
+      ${product.size_ml?'<span class="pill">Bottle</span>':''}
+      <label class="sr-only" for="bkBottleMl${index}">Size in millilitres for ${esc(product.name)}</label>
+      <input id="bkBottleMl${index}" type="number" min="100" max="5000" inputmode="numeric" style="max-width:110px" placeholder="Not a bottle" value="${esc(product.size_ml)}" data-bottle-ml="${index}">
+      <button class="btn ghost sm" type="button" data-bottle-save="${index}">Save</button>
+    </div>`).join('');
+    host.querySelectorAll('[data-bottle-ml]').forEach(input=>input.oninput=()=>{
+      catalogueV278[Number(input.dataset.bottleMl)].size_ml=input.value.trim();
+    });
+    host.querySelectorAll('[data-bottle-save]').forEach(button=>button.onclick=async()=>{
+      const product=catalogueV278[Number(button.dataset.bottleSave)];
+      const errorHost=$('bkBottleErr');
+      if(errorHost)errorHost.innerHTML='';
+      const size=product.size_ml===''?null:Number(product.size_ml);
+      if(size!==null&&(!Number.isInteger(size)||size<100||size>5000)){
+        if(errorHost)errorHost.innerHTML='<div class="err">A bottle is between 100ml and 5000ml. Clear the box if it is not a bottle.</div>';
+        return;
+      }
+      CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
+      const {data:saved,error:saveError}=await sb.rpc('bar_save_bottle_product_v278',{
+        p_business:S.biz.id,p_product:product.id,p_name:null,p_size_ml:size,p_price_cents:null});
+      if(!isCurrent()||!button.isConnected)return;
+      CUI.setButtonBusy(button,{busy:false});
+      if(saveError){
+        if($('bkBottleErr'))$('bkBottleErr').innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'That bottle could not be saved.')}</div>`;
+        return;
+      }
+      catalogueV278=readCatalogueV278(saved);
+      paintCatalogueV278();
+      toast(size===null?'No longer a bottle':'Bottle saved');
+    });
+  }
+  paintCatalogueV278();
+
+  $('bkTierSave').onclick=async()=>{
+    const errorHost=$('bkTierErr'),status=$('bkTierStatus'),save=$('bkTierSave');
+    errorHost.innerHTML='';
+    for(const tier of tiersV278){
+      if(tier.keep_days==='')continue;
+      const days=Number(tier.keep_days);
+      if(!Number.isInteger(days)||days<1||days>365){
+        errorHost.innerHTML=`<div class="err">${esc(tier.name)} needs a whole number between 1 and 365 days, or an empty box.</div>`;
+        return;
+      }
+    }
+    CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
+    const {data:saved,error:saveError}=await sb.rpc('bar_save_tier_keep_days_v278',{
+      p_business:S.biz.id,
+      p_tiers:tiersV278.map(tier=>({tier_id:tier.tier_id,keep_days:tier.keep_days===''?null:Number(tier.keep_days)}))
+    });
+    if(!isCurrent()||!save.isConnected)return;
+    CUI.setButtonBusy(save,{busy:false});
+    if(saveError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'Tier windows could not be saved.')}</div>`;
+      return;
+    }
+    tiersV278=readTiersV278(saved);
+    paintTiersV278();
+    if(status)status.textContent='Saved.';
+    toast('Tier windows saved');
+  };
+
+  $('bkAddBottle').onclick=async()=>{
+    const errorHost=$('bkBottleErr'),save=$('bkAddBottle');
+    errorHost.innerHTML='';
+    const name=$('bkNewBottleName').value.trim();
+    const size=Number($('bkNewBottleMl').value);
+    const priceText=$('bkNewBottlePrice').value.trim();
+    if(name.length<2){errorHost.innerHTML='<div class="err">Name the bottle first.</div>';return}
+    if(!Number.isInteger(size)||size<100||size>5000){
+      errorHost.innerHTML='<div class="err">Give the size in millilitres, between 100 and 5000.</div>';
+      return;
+    }
+    CUI.setButtonBusy(save,{busy:true,label:'Adding…'});
+    const {data:saved,error:saveError}=await sb.rpc('bar_save_bottle_product_v278',{
+      p_business:S.biz.id,p_product:null,p_name:name,p_size_ml:size,
+      p_price_cents:priceText?Math.round(parseFloat(priceText)*100):0});
+    if(!isCurrent()||!save.isConnected)return;
+    CUI.setButtonBusy(save,{busy:false});
+    if(saveError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'That bottle could not be added.')}</div>`;
+      return;
+    }
+    catalogueV278=readCatalogueV278(saved);
+    paintCatalogueV278();
+    ['bkNewBottleName','bkNewBottleMl','bkNewBottlePrice'].forEach(id=>{if($(id))$(id).value=''});
+    $('bkNewBottleName').focus();
+    toast('Bottle added');
+  };
 
   const addLocation=()=>{
     const input=$('bkNewLoc');if(!input)return;
@@ -13836,7 +14089,7 @@ async function bottlesPage(){
     sb.rpc('bar_get_setup_v275',{p_business:S.biz.id}),
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone',{count:'exact'})
       .eq('business_id',S.biz.id).order('full_name').order('id')),
-    fetchAllRowsResult(()=>sb.from('products').select('id,name',{count:'exact'})
+    fetchAllRowsResult(()=>sb.from('products').select('id,name,size_ml',{count:'exact'})
       .eq('business_id',S.biz.id).eq('active',true).order('name').order('id'))
   ]);
   if(!isCurrent())return;
@@ -13851,6 +14104,9 @@ async function bottlesPage(){
   /* A bar without the Products module still parks bottles: the catalogue picker simply falls
      back to a typed name rather than blocking the whole screen. */
   const products=productsResult.error?[]:(productsResult.data||[]);
+  /* V278: a bottle in the catalogue is a product WITH a size. The park picker offers only those,
+     because the entire point of the catalogue is that the millilitres stop being typed at 1am. */
+  const bottleProductsV278=products.filter(product=>Number(product.size_ml)>0);
   const locations=(setupResult.error?[]:(setupResult.data?.locations||[])).filter(location=>location?.active!==false);
   let snapshot=listResult.data;
   let filters={status:'',search:'',expiring:false};
@@ -13881,6 +14137,7 @@ async function bottlesPage(){
           <option value="stored">Stored</option>
           <option value="called">Called</option>
           <option value="at_table">At table</option>
+          <option value="retrieved">Retrieved</option>
           <option value="finished">Finished</option>
           <option value="expired">Expired</option>
           <option value="all">Everything</option>
@@ -13914,8 +14171,8 @@ async function bottlesPage(){
     }
     host.innerHTML=items.map(item=>{
       const days=Number(item.days_left);
-      const soon=Number.isFinite(days)&&days<=BOTTLE_EXPIRING_DAYS_V275
-        &&['stored','called','at_table'].includes(item.status);
+      const soon=item.days_left!==null&&item.days_left!==undefined&&Number.isFinite(days)
+        &&days<=BOTTLE_EXPIRING_DAYS_V275&&BOTTLE_LIVE_STATUSES_V278.includes(item.status);
       return `<button type="button" class="card bottle-row" data-bottle="${esc(item.id)}" style="display:flex;gap:12px;align-items:center;width:100%;text-align:left;margin-bottom:10px;padding:14px;min-height:64px;${soon?'border-color:#B4761F':''}">
         <span style="flex:1 1 auto;min-width:0">
           <b style="display:block;overflow-wrap:anywhere">${esc(bottleNameV275(item))}</b>
@@ -13923,7 +14180,7 @@ async function bottlesPage(){
           <span style="display:flex;align-items:center;gap:9px;margin-top:7px">${bottleFillBarV275(item.fill_percent)}<span class="small"><b>${Math.max(0,Math.min(100,Math.round(Number(item.fill_percent)||0)))}%</b></span></span>
         </span>
         <span style="flex:0 0 auto;text-align:right">
-          ${bottleStatusPillV275(item.status)}
+          ${bottleStatusPillV275(item.status)}${bottleTierPillV278(item.tier_name)}
           <span class="small" style="display:block;margin-top:6px;${soon?'color:#B4761F;font-weight:600':'color:var(--muted)'}">${esc(bottleDaysLabelV275(item.days_left))}</span>
           ${item.storage_location_name?`<span class="muted small" style="display:block;margin-top:3px">${CUI.icon('inventory',{size:14})} ${esc(item.storage_location_name)}</span>`:''}
         </span>
@@ -13982,8 +14239,9 @@ async function bottlesPage(){
         <input id="parkCustomerSearch" type="search" inputmode="search" autocomplete="off" placeholder="Search name or phone" aria-controls="parkClient">
         <select id="parkClient" required aria-label="Choose the customer"></select>
         <p class="muted small" style="margin-top:-2px">New customer? <a href="#/clients">Add them in Customers</a> first.</p>
-        ${products.length?`<label for="parkProduct">Bottle</label>
-        <select id="parkProduct"><option value="">Type the name instead</option>${products.map(product=>`<option value="${esc(product.id)}">${esc(product.name)}</option>`).join('')}</select>`:''}
+        ${bottleProductsV278.length?`<label for="parkProduct">Bottle</label>
+        <select id="parkProduct"><option value="">Not on the list — type it</option>${bottleProductsV278.map(product=>`<option value="${esc(product.id)}">${esc(product.name)} · ${Number(product.size_ml)}ml</option>`).join('')}</select>`
+        :`<p class="muted small">No bottles in your catalogue yet, so the size has to be typed. ${S.myRole==='owner'?'<a href="#/bottlesetup">Add your bottles in Bottle keep</a>.':'Ask the owner to add them in Bottle keep.'}</p>`}
         <label for="parkLabel">Bottle name</label>
         <input id="parkLabel" maxlength="120" autocomplete="off" placeholder="e.g. Hibiki 12">
         <div class="split">
@@ -14004,7 +14262,17 @@ async function bottlesPage(){
           <option value="10">10 people</option>
         </select>
         <p class="muted small" style="margin-top:-2px">How many people may drink from this bottle without the owner present.</p>
-        <div class="imp-note small" style="margin-top:14px">Expires ${esc(sgt(expiry.toISOString())||'')} · ${keepDays} days</div>
+        <label for="parkExpiryMode">Keep until</label>
+        <select id="parkExpiryMode">${BOTTLE_EXPIRY_MODES_V278.map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`).join('')}</select>
+        <div id="parkExpiryDateWrap" hidden><label for="parkExpiryDate">Date</label><input id="parkExpiryDate" type="date"></div>
+        <label for="parkNotify">Remind them by</label>
+        <select id="parkNotify">${BOTTLE_NOTIFY_CHANNELS_V278.map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`).join('')}</select>
+        <p class="muted small" style="margin-top:-2px">Saved with the bottle. WhatsApp and email are not switched on yet — until they are, Notify on the bottle reaches them inside the app.</p>
+        <div class="split">
+          <div><label for="parkPurchased">Bought on</label><input id="parkPurchased" type="date"></div>
+          <div><label for="parkNote">Note</label><input id="parkNote" maxlength="500" autocomplete="off" placeholder="optional"></div>
+        </div>
+        <div class="imp-note small" id="parkExpiryPreview" style="margin-top:14px">Expires ${esc(sgt(expiry.toISOString())||'')} · ${keepDays} days</div>
         <div id="parkError" role="alert"></div>
         <div class="row" style="margin-top:16px"><span class="spacer"></span>
           <button type="button" class="btn ghost" id="parkCancel">Cancel</button>
@@ -14026,10 +14294,56 @@ async function bottlesPage(){
     };
     renderClientOptions();
     $('parkCustomerSearch').oninput=()=>renderClientOptions($('parkCustomerSearch').value);
-    if($('parkProduct'))$('parkProduct').onchange=()=>{
-      const chosen=products.find(product=>product.id===$('parkProduct').value);
-      if(chosen&&!$('parkLabel').value.trim())$('parkLabel').value=chosen.name;
+    /* V278 item 2: when the bottle comes from the catalogue the size is FILLED and LOCKED. A
+       typed 70 for a 700ml bottle is a fill percentage that is wrong for the rest of that
+       bottle's life, and it is the mistake the reference bar makes least often precisely because
+       its picker carries the size. Clearing the picker hands the field back. */
+    const syncBottleFromCatalogueV278=()=>{
+      const picker=$('parkProduct');if(!picker)return;
+      const size=$('parkSize'),label=$('parkLabel');
+      const chosen=bottleProductsV278.find(product=>product.id===picker.value);
+      if(chosen){
+        label.value=chosen.name;
+        size.value=String(Number(chosen.size_ml)||'');
+        size.readOnly=true;size.setAttribute('aria-readonly','true');
+      }else{
+        size.readOnly=false;size.removeAttribute('aria-readonly');
+      }
     };
+    if($('parkProduct'))$('parkProduct').onchange=syncBottleFromCatalogueV278;
+
+    /* V278 item 1. Auto resolves the CUSTOMER's tier keep-days server-side, so the preview cannot
+       be right on one screen and wrong on another. Until a customer is chosen — and whenever the
+       read fails — the business's own keep window is the honest answer. */
+    let autoKeepV278={keep_days:keepDays,tier_name:''};
+    const paintParkExpiryV278=()=>{
+      const preview=$('parkExpiryPreview');if(!preview)return;
+      const mode=$('parkExpiryMode').value;
+      const dateWrap=$('parkExpiryDateWrap');
+      if(dateWrap)dateWrap.hidden=mode!=='custom';
+      if(mode==='none'){preview.textContent='No expiry — kept until you say otherwise.';return}
+      if(mode==='custom'){
+        const chosen=$('parkExpiryDate').value;
+        preview.textContent=chosen?`Kept until ${chosen}`:'Choose the date it is kept until.';
+        return;
+      }
+      const days=Number(autoKeepV278.keep_days)||keepDays;
+      const auto=new Date(Date.now()+days*864e5);
+      preview.textContent=`Expires ${sgt(auto.toISOString())||''} · ${days} days${autoKeepV278.tier_name?` · ${autoKeepV278.tier_name}`:''}`;
+    };
+    const loadAutoKeepV278=async()=>{
+      const clientId=$('parkClient')?$('parkClient').value:'';
+      if(!clientId){autoKeepV278={keep_days:keepDays,tier_name:''};paintParkExpiryV278();return}
+      const {data,error}=await sb.rpc('bar_client_keep_days_v278',{p_business:S.biz.id,p_client:clientId});
+      if(!isCurrent()||!$('parkExpiryPreview'))return;
+      autoKeepV278=error?{keep_days:keepDays,tier_name:''}
+        :{keep_days:Number(data?.keep_days)||keepDays,tier_name:String(data?.tier_name||'')};
+      paintParkExpiryV278();
+    };
+    $('parkClient').onchange=()=>{loadAutoKeepV278()};
+    $('parkExpiryMode').onchange=paintParkExpiryV278;
+    $('parkExpiryDate').onchange=paintParkExpiryV278;
+    paintParkExpiryV278();
 
     $('parkForm').onsubmit=async event=>{
       event.preventDefault();
@@ -14045,12 +14359,23 @@ async function bottlesPage(){
       if(!label&&!productId){errorHost.innerHTML='<div class="err">Name the bottle, or pick it from the list.</div>';return}
       if(!Number.isInteger(fill)||fill<0||fill>100){errorHost.innerHTML='<div class="err">How full must be a whole number from 0 to 100.</div>';return}
       if(size!==null&&(!Number.isInteger(size)||size<1||size>20000)){errorHost.innerHTML='<div class="err">Size must be a whole number of millilitres.</div>';return}
+      const expiryMode=$('parkExpiryMode').value;
+      const expiryDate=$('parkExpiryDate')?$('parkExpiryDate').value||null:null;
+      if(expiryMode==='custom'&&!expiryDate){errorHost.innerHTML='<div class="err">Choose the date the bottle is kept until.</div>';return}
       const request={p_business:S.biz.id,p_client:clientId,p_label:label||null,p_product:productId||null,
         p_size_ml:size,p_fill_percent:fill,p_storage_location:$('parkLocation').value||null,
-        p_reentry_limit:reentryRaw===''?null:Number(reentryRaw),p_branch:branchId,p_sale:null};
+        p_reentry_limit:reentryRaw===''?null:Number(reentryRaw),p_branch:branchId,p_sale:null,
+        p_expiry_mode:expiryMode,p_expiry_date:expiryMode==='custom'?expiryDate:null,
+        p_notify_channel:$('parkNotify').value||'none',
+        p_note:$('parkNote').value.trim()||null,
+        p_purchased_on:$('parkPurchased').value||null};
       const key=attemptKey('park:'+JSON.stringify(request));
       CUI.setButtonBusy(save,{busy:true,label:'Parking…'});
-      const {data,error}=await sb.rpc('park_bottle_v275',{...request,p_idempotency_key:key});
+      /* V278 supersedes park_bottle_v275 here. The old function is deliberately left in place and
+         callable so a deploy in flight cannot break; the five new answers arrive on a new NAME
+         rather than as a second overload, because two functions of the same name differing only
+         in arity is exactly the shape that makes PostgREST resolution ambiguous. */
+      const {data,error}=await sb.rpc('park_bottle_v278',{...request,p_idempotency_key:key});
       if(!isCurrent()||!save.isConnected)return;
       CUI.setButtonBusy(save,{busy:false});
       if(error){
@@ -14091,14 +14416,19 @@ async function bottlesPage(){
       }
       const bottle=data?.bottle||{};
       const events=Array.isArray(data?.events)?data.events:[];
-      const live=['stored','called','at_table'].includes(bottle.status);
+      const live=BOTTLE_LIVE_STATUSES_V278.includes(bottle.status);
+      const nextStatusesV278=BOTTLE_TRANSITIONS_V278[bottle.status]||[];
       const mayWrite=canWrite&&data?.can_write!==false;
       const fill=Math.max(0,Math.min(100,Math.round(Number(bottle.fill_percent)||0)));
       host.innerHTML=`<div class="row"><div><h2 id="bottleDetailTitle">${esc(bottleNameV275(bottle))}</h2>
           <p class="muted small" style="margin-top:4px">${esc(bottle.serial_code||'')}${bottle.size_ml?` · ${Number(bottle.size_ml)}ml`:''} · ${esc(String(bottle.client_name||'Customer'))}${bottle.client_phone?` · ${esc(bottle.client_phone)}`:''}</p></div>
         <span class="spacer"></span><button type="button" class="btn ghost sm" data-bottle-close aria-label="Close bottle">Close</button></div>
         <div class="row" style="margin-top:14px;gap:10px;flex-wrap:wrap">${bottleStatusPillV275(bottle.status)}
+          ${bottleTierPillV278(bottle.tier_name)}
           <span class="pill">${CUI.icon('bell',{size:15})} ${esc(bottleDaysLabelV275(bottle.days_left))}</span>
+          ${bottle.purchased_on?`<span class="pill">${CUI.icon('sales',{size:15})} Bought ${esc(String(bottle.purchased_on))}</span>`:''}
+          <span class="pill">${CUI.icon('appointments',{size:15})} ${esc(bottleExpiryModeLabelV278(bottle.expiry_mode))}</span>
+          <span class="pill">${CUI.icon('bell',{size:15})} ${esc(bottleNotifyLabelV278(bottle.notify_channel))}</span>
           ${bottle.storage_location_name?`<span class="pill">${CUI.icon('inventory',{size:15})} ${esc(bottle.storage_location_name)}</span>`:''}
           ${bottle.reentry_limit?`<span class="pill">${CUI.icon('customers',{size:15})} ${Number(bottle.reentry_limit)} pax</span>`:'<span class="pill">No re-entry</span>'}</div>
         <div style="margin-top:14px;display:flex;align-items:center;gap:10px">${bottleFillBarV275(fill)}<b>${fill}%</b></div>
@@ -14108,15 +14438,52 @@ async function bottlesPage(){
           <button type="button" class="btn sm" data-fill-exact>Set</button></div>
         <div class="cui-card-head" style="margin-top:18px"><h3 style="margin:0;font-size:15px">Where is it</h3></div>
         <div class="row" style="gap:8px;flex-wrap:wrap">
-          ${bottle.status==='stored'?'':`<button type="button" class="btn ghost sm" data-status="stored" style="min-height:42px">${CUI.icon('inventory',{size:16})}<span>To storage</span></button>`}
-          ${bottle.status==='called'?'':`<button type="button" class="btn ghost sm" data-status="called" style="min-height:42px">${CUI.icon('bell',{size:16})}<span>Called</span></button>`}
-          ${bottle.status==='at_table'?'':`<button type="button" class="btn ghost sm" data-status="at_table" style="min-height:42px">${CUI.icon('till',{size:16})}<span>At table</span></button>`}
+          ${nextStatusesV278.includes('stored')?`<button type="button" class="btn ghost sm" data-status="stored" style="min-height:42px">${CUI.icon('inventory',{size:16})}<span>${bottle.status==='retrieved'?'Back to storage':'To storage'}</span></button>`:''}
+          ${nextStatusesV278.includes('called')?`<button type="button" class="btn ghost sm" data-status="called" style="min-height:42px">${CUI.icon('bell',{size:16})}<span>Called</span></button>`:''}
+          ${nextStatusesV278.includes('at_table')?`<button type="button" class="btn ghost sm" data-status="at_table" style="min-height:42px">${CUI.icon('till',{size:16})}<span>At table</span></button>`:''}
+          ${nextStatusesV278.includes('retrieved')?`<button type="button" class="btn ghost sm" data-status="retrieved" style="min-height:42px">${CUI.icon('export',{size:16})}<span>Retrieved</span></button>`:''}
         </div>
+        ${bottle.status==='retrieved'?'<p class="muted small" style="margin-top:8px">This bottle is out with the customer. Put it back to storage, or close it once it has been sent out.</p>':''}
         <div class="cui-card-head" style="margin-top:18px"><h3 style="margin:0;font-size:15px">Keep it longer, move it, close it</h3></div>
         <div class="row" style="gap:8px;flex-wrap:wrap">
           <button type="button" class="btn ghost sm" data-extend style="min-height:42px">${CUI.icon('retention',{size:16})}<span>Extend ${keepDays}d</span></button>
+          <button type="button" class="btn ghost sm" data-expiry style="min-height:42px">${CUI.icon('appointments',{size:16})}<span>Edit expiry</span></button>
+          <button type="button" class="btn ghost sm" data-move style="min-height:42px">${CUI.icon('branch',{size:16})}<span>Move</span></button>
+          <button type="button" class="btn ghost sm" data-note style="min-height:42px">${CUI.icon('edit',{size:16})}<span>Add note</span></button>
+          <button type="button" class="btn ghost sm" data-purchase style="min-height:42px">${CUI.icon('sales',{size:16})}<span>Bought on</span></button>
+          <button type="button" class="btn ghost sm" data-notify style="min-height:42px">${CUI.icon('bell',{size:16})}<span>Notify</span></button>
           <button type="button" class="btn ghost sm" data-transfer style="min-height:42px">${CUI.icon('forward',{size:16})}<span>Transfer</span></button>
-          <button type="button" class="btn ghost sm" data-finish style="min-height:42px">${CUI.icon('check',{size:16})}<span>Finish</span></button>
+          <button type="button" class="btn ghost sm" data-finish style="min-height:42px">${CUI.icon('check',{size:16})}<span>${bottle.status==='retrieved'?'Sent out':'Finish'}</span></button>
+        </div>
+        <div id="bottleExpiryPanel" hidden style="margin-top:12px">
+          <label for="bottleExpiryMode">Keep until</label>
+          <select id="bottleExpiryMode">${BOTTLE_EXPIRY_MODES_V278.map(([value,label])=>`<option value="${esc(value)}"${value===String(bottle.expiry_mode||'auto')?' selected':''}>${esc(label)}</option>`).join('')}</select>
+          <div id="bottleExpiryDateWrap"><label for="bottleExpiryDate">Date</label><input id="bottleExpiryDate" type="date" value="${esc(bottleDateInputV278(bottle.expires_at))}"></div>
+          <p class="muted small" id="bottleExpiryHint" style="margin-top:-2px">Auto uses ${Number(data?.auto_keep_days)||keepDays} days for this customer.</p>
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-expiry-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-expiry-confirm>Save expiry</button></div>
+        </div>
+        <div id="bottleMovePanel" hidden style="margin-top:12px">
+          <label for="bottleMoveLocation">Move to</label>
+          <select id="bottleMoveLocation"><option value="">Not recorded</option>${locations.map(location=>`<option value="${esc(location.id)}"${location.id===bottle.storage_location_id?' selected':''}>${esc(location.name)}</option>`).join('')}</select>
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-move-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-move-confirm>Move bottle</button></div>
+        </div>
+        <div id="bottleNotePanel" hidden style="margin-top:12px">
+          <label for="bottleNoteText">Note</label>
+          <input id="bottleNoteText" maxlength="500" autocomplete="off" placeholder="e.g. Left the cap at the bar">
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-note-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-note-confirm>Add note</button></div>
+        </div>
+        <div id="bottlePurchasePanel" hidden style="margin-top:12px">
+          <label for="bottlePurchaseDate">Bought on</label>
+          <input id="bottlePurchaseDate" type="date" value="${esc(String(bottle.purchased_on||''))}">
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-purchase-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-purchase-confirm>Save date</button></div>
         </div>
         <div id="bottleTransferPanel" hidden style="margin-top:12px">
           <label for="bottleTransferSearch">Transfer to</label>
@@ -14181,7 +14548,7 @@ async function bottlesPage(){
           p_expires_at:null,p_idempotency_key:key}),`Kept ${keepDays} more days`);
       const finishButton=host.querySelector('[data-finish]');
       if(finishButton)finishButton.onclick=()=>{
-        if(!confirm(`Finish ${bottleNameV275(bottle)}? It leaves the shelf and the customer's app.`))return;
+        if(!confirm(`${bottle.status==='retrieved'?'Sent out':'Finish'} ${bottleNameV275(bottle)}? It leaves the shelf and the customer's app.`))return;
         runAction(finishButton,`finish:${bottleId}`,
           key=>sb.rpc('finish_bottle_v275',{p_business:S.biz.id,p_bottle:bottleId,
             p_idempotency_key:key}),'Bottle finished');
@@ -14195,13 +14562,7 @@ async function bottlesPage(){
           ?`<option value="">Choose a customer</option>`+matches.map(client=>`<option value="${esc(client.id)}">${esc(clientLabel(client))}</option>`).join('')
           :`<option value="">No customer matches that</option>`;
       };
-      if(transferButton&&transferPanel)transferButton.onclick=()=>{
-        transferPanel.hidden=false;renderTransferOptions();
-        $('bottleTransferSearch').oninput=()=>renderTransferOptions($('bottleTransferSearch').value);
-        $('bottleTransferSearch').focus();
-      };
       const transferCancel=host.querySelector('[data-transfer-cancel]');
-      if(transferCancel)transferCancel.onclick=()=>{if(transferPanel)transferPanel.hidden=true};
       const transferConfirm=host.querySelector('[data-transfer-confirm]');
       if(transferConfirm)transferConfirm.onclick=()=>{
         const target=$('bottleTransferClient').value;
@@ -14213,6 +14574,101 @@ async function bottlesPage(){
           key=>sb.rpc('transfer_bottle_v275',{p_business:S.biz.id,p_bottle:bottleId,
             p_client:target,p_idempotency_key:key}),'Bottle transferred');
       };
+
+      /* V278 card actions. One panel open at a time: five stacked forms on a phone-sized sheet is
+         how a bartender edits the wrong field. */
+      const V278_PANELS=['bottleExpiryPanel','bottleMovePanel','bottleNotePanel','bottlePurchasePanel','bottleTransferPanel'];
+      const openPanelV278=(id,focusId)=>{
+        V278_PANELS.forEach(panel=>{const node=$(panel);if(node)node.hidden=panel!==id});
+        const focus=focusId?$(focusId):null;
+        if(focus)focus.focus();
+      };
+      const closePanelsV278=()=>V278_PANELS.forEach(panel=>{const node=$(panel);if(node)node.hidden=true});
+      if(transferButton&&transferPanel)transferButton.onclick=()=>{
+        openPanelV278('bottleTransferPanel','bottleTransferSearch');
+        renderTransferOptions();
+        $('bottleTransferSearch').oninput=()=>renderTransferOptions($('bottleTransferSearch').value);
+      };
+      if(transferCancel)transferCancel.onclick=()=>closePanelsV278();
+
+      const expiryButton=host.querySelector('[data-expiry]');
+      const paintExpiryPanelV278=()=>{
+        const wrap=$('bottleExpiryDateWrap'),hint=$('bottleExpiryHint');
+        const mode=$('bottleExpiryMode')?$('bottleExpiryMode').value:'auto';
+        if(wrap)wrap.hidden=mode!=='custom';
+        if(hint)hint.textContent=mode==='none'
+          ?'The bottle is kept until you say otherwise.'
+          :mode==='custom'?'The bottle is kept until the end of the date you choose.'
+          :`Auto uses ${Number(data?.auto_keep_days)||keepDays} days for this customer.`;
+      };
+      if(expiryButton)expiryButton.onclick=()=>{
+        openPanelV278('bottleExpiryPanel','bottleExpiryMode');
+        if($('bottleExpiryMode'))$('bottleExpiryMode').onchange=paintExpiryPanelV278;
+        paintExpiryPanelV278();
+      };
+      const expiryCancel=host.querySelector('[data-expiry-cancel]');
+      if(expiryCancel)expiryCancel.onclick=()=>closePanelsV278();
+      const expiryConfirm=host.querySelector('[data-expiry-confirm]');
+      if(expiryConfirm)expiryConfirm.onclick=()=>{
+        const mode=$('bottleExpiryMode').value;
+        const date=$('bottleExpiryDate')?$('bottleExpiryDate').value||null:null;
+        if(mode==='custom'&&!date){
+          $('bottleActionError').innerHTML='<div class="err">Choose the date the bottle is kept until.</div>';
+          return;
+        }
+        runAction(expiryConfirm,`expiry:${bottleId}:${mode}:${date||''}`,
+          key=>sb.rpc('set_bottle_expiry_v278',{p_business:S.biz.id,p_bottle:bottleId,
+            p_expiry_mode:mode,p_expiry_date:mode==='custom'?date:null,p_idempotency_key:key}),
+          'Expiry updated');
+      };
+
+      const moveButton=host.querySelector('[data-move]');
+      if(moveButton)moveButton.onclick=()=>openPanelV278('bottleMovePanel','bottleMoveLocation');
+      const moveCancel=host.querySelector('[data-move-cancel]');
+      if(moveCancel)moveCancel.onclick=()=>closePanelsV278();
+      const moveConfirm=host.querySelector('[data-move-confirm]');
+      if(moveConfirm)moveConfirm.onclick=()=>{
+        const target=$('bottleMoveLocation').value||null;
+        runAction(moveConfirm,`move:${bottleId}:${target||''}`,
+          key=>sb.rpc('move_bottle_v278',{p_business:S.biz.id,p_bottle:bottleId,
+            p_storage_location:target,p_idempotency_key:key}),'Bottle moved');
+      };
+
+      const noteButton=host.querySelector('[data-note]');
+      if(noteButton)noteButton.onclick=()=>openPanelV278('bottleNotePanel','bottleNoteText');
+      const noteCancel=host.querySelector('[data-note-cancel]');
+      if(noteCancel)noteCancel.onclick=()=>closePanelsV278();
+      const noteConfirm=host.querySelector('[data-note-confirm]');
+      if(noteConfirm)noteConfirm.onclick=()=>{
+        const text=$('bottleNoteText').value.trim();
+        if(!text){
+          $('bottleActionError').innerHTML='<div class="err">Type the note first.</div>';
+          return;
+        }
+        runAction(noteConfirm,`note:${bottleId}:${text}`,
+          key=>sb.rpc('add_bottle_note_v278',{p_business:S.biz.id,p_bottle:bottleId,
+            p_note:text,p_idempotency_key:key}),'Note added');
+      };
+
+      const purchaseButton=host.querySelector('[data-purchase]');
+      if(purchaseButton)purchaseButton.onclick=()=>openPanelV278('bottlePurchasePanel','bottlePurchaseDate');
+      const purchaseCancel=host.querySelector('[data-purchase-cancel]');
+      if(purchaseCancel)purchaseCancel.onclick=()=>closePanelsV278();
+      const purchaseConfirm=host.querySelector('[data-purchase-confirm]');
+      if(purchaseConfirm)purchaseConfirm.onclick=()=>{
+        const date=$('bottlePurchaseDate').value||null;
+        runAction(purchaseConfirm,`purchase:${bottleId}:${date||''}`,
+          key=>sb.rpc('set_bottle_purchased_on_v278',{p_business:S.biz.id,p_bottle:bottleId,
+            p_purchased_on:date,p_idempotency_key:key}),'Purchase date saved');
+      };
+
+      /* Notify writes an IN-APP inbox event and says which of the four things actually happened,
+         because "Reminder sent" to a customer with no app is the kind of comfortable lie this
+         module exists to avoid. */
+      const notifyButton=host.querySelector('[data-notify]');
+      if(notifyButton)notifyButton.onclick=()=>runAction(notifyButton,`notify:${bottleId}:${bottle.expires_at||''}`,
+        key=>sb.rpc('notify_bottle_v278',{p_business:S.biz.id,p_bottle:bottleId,
+          p_idempotency_key:key}),'Reminder recorded');
     }
     await paintDetail();
   }
@@ -14222,18 +14678,26 @@ async function bottlesPage(){
 function bottleEventTextV275(event){
   const detail=event?.detail||{};
   switch(event?.kind){
-    case 'park':return `Parked${detail.fill_percent===undefined?'':` at ${Number(detail.fill_percent)}%`}`;
+    case 'park':return `Parked${detail.fill_percent===undefined?'':` at ${Number(detail.fill_percent)}%`}${detail.note?` · ${String(detail.note)}`:''}`;
     case 'fill':return `Fill ${Number(detail.from)}% → ${Number(detail.to)}%`;
     case 'status':{
       const to=BOTTLE_STATUS_V275[detail.to]?.label||String(detail.to||'');
       const from=BOTTLE_STATUS_V275[detail.from]?.label||String(detail.from||'');
       return `${from} → ${to}`;
     }
-    case 'extend':return `Kept until ${sgt(detail.to)||''}`;
+    case 'extend':return detail.to?`Kept until ${sgt(detail.to)||''}`:'Expiry removed — kept indefinitely';
     case 'transfer':return 'Transferred to another customer';
     case 'finish':return 'Finished';
     case 'expire':return 'Expired';
-    case 'reminder':return 'Reminder sent';
+    /* V278: what a Notify actually did. "Reminder sent" when nothing could be sent is the kind of
+       comfortable lie an evidence log exists to prevent. */
+    case 'reminder':return detail.delivery==='in_app'?'Reminder sent to their app'
+      :detail.delivery==='already_notified'?'Reminder already waiting in their app'
+      :detail.delivery==='opted_out'?'Reminder not sent — they turned reminders off'
+      :'Reminder not sent — no customer app yet';
+    case 'note':return `Note: ${String(detail.note||'')}`;
+    case 'move':return `Moved ${detail.from_name?`from ${detail.from_name} `:''}to ${detail.to_name||'no place recorded'}`;
+    case 'purchase':return detail.to?`Bought on ${String(detail.to)}`:'Purchase date cleared';
     default:return String(event?.kind||'Change');
   }
 }

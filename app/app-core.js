@@ -3586,6 +3586,10 @@ function bottleFillBarV275(percent){
   return `<span class="bottle-fill" role="img" aria-label="${value}% left" style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
 }
 function bottleDaysLabelV275(days){
+  /* V278: a bottle may now have NO expiry, and the server sends null for it. Number(null) is 0,
+     which would have rendered "Last day" on a bottle that never expires — the exact opposite of
+     the truth, on the number a bartender acts on. */
+  if(days===null||days===undefined||days==='')return 'No expiry';
   const value=Number(days);
   if(!Number.isFinite(value))return '';
   if(value<0)return 'Overdue';
