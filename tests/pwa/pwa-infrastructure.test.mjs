@@ -142,7 +142,9 @@ test('manifest has a stable install identity and real maskable icons', async () 
   assert.deepEqual(
     manifest.shortcuts.map(({ name, url }) => ({ name, url })),
     [
-      { name: 'Customer home', url: '/' },
+      /* V274: bare '/' now serves the marketing landing; every shortcut that means "the
+         customer app" must say /app or a long-press shortcut opens marketing. */
+      { name: 'Customer home', url: '/app' },
       { name: 'Business sign in', url: '/business' }
     ]
   );

@@ -10,6 +10,8 @@
     referrals:'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 8h6M20 5v6',
     memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
     giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
+    /* V275: bottle keep is a bar-only module; a bottle needs a bottle, not a borrowed box. */
+    bottle:'M10 2h4v3.6l2.4 3.6c.4.6.6 1.3.6 2V21a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V11.2c0-.7.2-1.4.6-2L10 5.6zM7 15h10',
     star:'m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.77 6.4 20.91l1.07-6.24-4.53-4.42 6.26-.91L12 3Z',
     /* v264: a real share glyph — the standard three linked nodes. 'export' was being used for
        the share button and read as "download", which is a different promise. 'chat' gives the

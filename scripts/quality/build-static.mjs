@@ -10,6 +10,8 @@ export const requiredStaticHtmlEntries = Object.freeze([
   'data-request.html',
   'index.html',
   'join.html',
+  // V274: the marketing landing page is what "/" now rewrites to; index.html moved to /app.
+  'landing.html',
   'offline.html',
   'privacy.html',
   'terms.html'

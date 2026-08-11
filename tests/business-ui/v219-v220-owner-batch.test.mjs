@@ -35,7 +35,10 @@ test('V219 Branches is reachable from Operations setup for an owner', () => {
   // The page and route already existed; they must still be wired.
   assert.match(app, /branches:branchesPage/);
   assert.match(app, /if\(pageKey==='branches'&&S\.myRole!=='owner'\)/, 'still owner-only');
-  assert.match(app, /\{key:'setup',[^}]*items:\['staffmembers','branches','services','inventory','packages'\]\}/);
+  /* V275: the Operations setup group gained a bar-only "Bottle keep" row. This assertion guards
+     that the setup surfaces live HERE rather than in the account menu, not that the group is
+     frozen, so the new row is admitted explicitly and everything it protects still holds. */
+  assert.match(app, /\{key:'setup',[^}]*items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?\]\}/);
 });
 
 /* (3-repeat) "when selected the staff, it will show the user's next best timings - not other staff" */

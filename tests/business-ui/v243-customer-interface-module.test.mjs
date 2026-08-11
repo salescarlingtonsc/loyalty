@@ -94,7 +94,7 @@ test('V243 the customer fields and CSV import moved with their panel, once', () 
 test('V259 Workspace & brand moved to Customer Interface as ONE form with ONE save', () => {
   assert.doesNotMatch(settings, /id="bsave"/, 'Settings must not carry a second copy of the form');
   assert.doesNotMatch(settings, /<label for="bc">Brand colour/);
-  assert.match(page, /\$\{canEditCustomerInterface\?workspaceBrandPanelHtmlV259\(\):''\}/);
+  assert.match(page, /\$\{workspaceBrandPanelHtmlV259\(\)\}/);
   assert.match(app, /<label for="bc">Brand colour \(used on your portal\)<\/label>/);
   assert.equal((app.match(/id="bsave"/g) || []).length, 1, 'exactly one Workspace & brand form');
   assert.equal((app.match(/\$\('bsave'\)\.onclick=/g) || []).length, 1, 'exactly one save handler');
@@ -102,17 +102,15 @@ test('V259 Workspace & brand moved to Customer Interface as ONE form with ONE sa
 
 /* -------------------------------------------- (c) Settings points at it instead of duplicating */
 
-test('V243 the Settings tabs stay visible but render a pointer, never a second form', () => {
-  const tabs = section(app, 'class="settings-tabs"', '</div>\n    <section class="settings-panel" id="setpanel-workspace"');
+/* V269 SUPERSEDES the "tabs stay visible" half: the owner circled the three tabs and wrote
+   "delete these from settings". The surviving contract is that Settings holds only the three
+   operations tabs and no pointer card. tests/business-ui/v269-* owns the full V269 contract. */
+test('V269 the moved tabs and their pointer cards are gone from Settings', () => {
+  const tabs = section(app, 'class="settings-tabs" data-workspace-i18n', '</div>\n    <section class="settings-panel" id="setpanel-modules"');
   const order = [...tabs.matchAll(/data-settab="([a-z]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['workspace', 'programme', 'fields', 'modules', 'catalogue', 'team'],
-    'a tab that vanishes reads as a lost feature');
-  // V259: Workspace & brand joined the other two pointers.
-  assert.match(settings, /\$\{settingsMovedToCustomerInterfaceCardV243\('Workspace &amp; brand'\)\}/);
-  assert.match(settings, /\$\{settingsMovedToCustomerInterfaceCardV243\('Customer programme'\)\}/);
-  assert.match(settings, /\$\{settingsMovedToCustomerInterfaceCardV243\('Customer interface'\)\}/);
-  assert.match(app, /Moved to Customer Interface in the main menu\./);
-  assert.match(app, /<a class="btn sm" href="#\/customer-interface">Open Customer Interface<\/a>/);
+  assert.deepEqual(order, ['modules', 'catalogue', 'team']);
+  assert.doesNotMatch(app, /settingsMovedToCustomerInterfaceCardV243/);
+  assert.doesNotMatch(app, /Moved to Customer Interface in the main menu\./);
 });
 
 test('V243 Settings no longer renders or wires the moved forms', () => {

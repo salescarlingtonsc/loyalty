@@ -25,10 +25,16 @@ const expensesBlock = sliceBetween('async function expensesPage()', 'async funct
 const pnlBlock = sliceBetween('async function pnlPage()', '/* ---------- settings ---------- */');
 
 test('V150 sidebar keeps operational actions separate from money history', () => {
-  assert.match(navBlock, /items:\['till','appointments','bookings','waitlist'\]/);
+  /* V275: the Serve & sell group gained a bar-only "Bottles" row (bottle keep is a SaaS module
+     exclusive to industry='bar' and is stripped from the resolved module list for every other
+     sector before the rail is built). The doing-vs-reviewing separation this test guards is
+     unchanged: Bottles is something staff DO during service, not money history. */
+  assert.match(navBlock, /items:\['till','appointments',(?:'bottles',)?'bookings','waitlist'\]/);
   /* V180 owner instruction: Business Insights and Expenses swapped so the money group reads
      as money in -> money out -> result -> why. The separation this test guards is unchanged. */
-  assert.match(navBlock, /items:\['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf'\]/);
+  /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
+     this nav; the #/staffperf route and the Business Insights card that reaches it are unchanged. */
+  assert.match(navBlock, /items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]/);
 });
 
 test('V150 dashboard removes launch banner and keeps the requested KPI and chart structure', () => {

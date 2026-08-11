@@ -270,6 +270,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-controls-v252{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 10px}
 .dashboard-schedule-tabs-v252{display:flex;gap:6px}
 .dashboard-schedule-controls-v252 input[type="date"]{max-width:190px}
+.dashboard-schedule-scope-v266{flex-basis:100%;line-height:1.45}
+.performance-heading{flex-wrap:wrap}
+.performance-panel{margin-top:18px}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
@@ -1040,6 +1043,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .reward-card-v250[hidden]{display:none!important}
 .reward-card-empty-v250{padding:0 14px 14px}
 .reward-card-templates-v250{margin:0;padding:0 14px 14px}
+/* V268 (owner: "why inside after edit does not updated"). The pending value is ADDED under the
+   published one, never in place of it: struck-through live value, arrow, bold pending value. One
+   change per line so a two-column 150px card at 390px still wraps cleanly, and no new colours. */
+.grow-pending-v268{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;margin-top:2px}
+.grow-pending-line-v268{font-size:.78rem;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+.grow-pending-line-v268 b{color:var(--ink)}
+.grow-pending-line-v268 s{opacity:.85}
+.reward-card-pending-new-v268{border-style:dashed}
+/* The trail above a drilled-in category: where you are, and one tap back to the level above. */
+.grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
+.grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1233,6 +1247,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-act-note-v252 .btn{margin-top:3px}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
+/* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
+   raw UUID. The reference is a button only when its counterpart row is on screen; otherwise it
+   renders as plain text with no affordance, because there is nowhere to go. */
+.c360-act-sort-v267{display:inline-flex;align-items:center;gap:5px;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.c360-act-caret-v267{opacity:.6;font-size:.8em}
+.c360-act-ref-v267{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;overflow-wrap:anywhere}
+button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.c360-act-flash-v267{animation:c360ActFlashV267 2.2s ease-out}
+@keyframes c360ActFlashV267{0%,55%{background:#FFF3D6}100%{background:transparent}}
+@media(prefers-reduced-motion:reduce){.c360-act-flash-v267{animation:none;outline:2px solid var(--coral);outline-offset:-2px}}
+.c360-activity-filters-v267{align-items:flex-end;row-gap:10px}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
@@ -1906,7 +1931,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=4718ec14a7bc","business":"/app-business.js?b=6e80d904225e","i18n":"/app-i18n.js?b=232400221146"}
+{"auth":"/app-auth.js?b=933a03049f4d","customer":"/app-customer.js?b=a8343c7f64ca","business":"/app-business.js?b=935bfd476f1a","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -1930,6 +1955,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=cfaa17414c2c" defer></script>
+<script src="/app-core.js?b=07e8f5ea5db9" defer></script>
 </body>
 </html>

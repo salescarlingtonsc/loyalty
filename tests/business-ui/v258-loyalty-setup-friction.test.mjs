@@ -115,8 +115,9 @@ test('B: the paused cascade stays honest — a paused programme really is unclai
   // (customer_create_redemption_intent_v89 selects loyalty_programs ... and program.active).
   assert.match(app, /const programmeActive=loyalty\?\.active===true;/);
   assert.match(app, /!loyalty\?'programme_unconfigured':!programmeActive\?'programme_paused'/);
-  assert.match(app,
-    /Paused — customers earn nothing and no reward below is claimable\. Open Edit to turn it on\./);
+  /* V271 removed the sentence the owner struck. The cascade is still visible, and now says WHICH
+     kind of off each reward is: "Paused with programme" is the reward-level readout of this flag. */
+  assert.match(app, /milestone\.availability==='programme_paused'\?\['Paused with programme','off'\]/);
 });
 
 /* ---------------------------------- C ---------------------------------- */

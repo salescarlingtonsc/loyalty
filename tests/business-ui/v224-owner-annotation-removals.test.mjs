@@ -62,7 +62,9 @@ test('V224 Record sale placeholder is not a real-looking number', () => {
 
 test('V224 the earning row is called Point system', () => {
   assert.doesNotMatch(app, />Earn<\/b>/);
-  assert.match(app, /'Point system':'Point system paused'/);
+  // V271 superseded the paused suffix: the owner struck "paused" out of this heading and wrote
+  // "Point System" beside it, so the heading is now unconditional and the state lives in the pill.
+  assert.doesNotMatch(app, /Point system paused/);
   assert.match(app, /title:'Point system'/);
   assert.match(app, /<b>Point system<\/b>/);
 });

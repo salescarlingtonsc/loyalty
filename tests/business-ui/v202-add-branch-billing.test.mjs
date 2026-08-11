@@ -17,7 +17,10 @@ const lock = readFileSync(resolve(root, 'db/migrations/20260807_nestly_v202b_bra
    profile menu for the sidebar, beside Staff Members and Services where the rest of the setup
    lives. The account menu is for the account, not for operations. */
 test('the owner reaches branches from Operations setup, not the account menu', () => {
-  assert.match(app, /items:\['staffmembers','branches','services','inventory','packages'\]/);
+  /* V275: the Operations setup group gained a bar-only "Bottle keep" row. This assertion guards
+     that the setup surfaces live HERE rather than in the account menu, not that the group is
+     frozen, so the new row is admitted explicitly and everything it protects still holds. */
+  assert.match(app, /items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?\]/);
   assert.doesNotMatch(app, /id="pmAddBranch"/);
 });
 
@@ -67,7 +70,15 @@ test('the amount is never named in our code — it comes from the catalogue', ()
 test('billing counts a branch as another unit of the base plan, and fails closed', () => {
   assert.match(fn, /let planUnits = 1;/);
   assert.match(fn, /\.in\('billing_state', \['pending_payment', 'active'\]\)/);
-  assert.match(fn, /if \(!branchError && typeof count === 'number'\) planUnits = 1 \+ count;/);
+  /* V280 retarget (owner: "why when add branch = pay for 2 branch?"). V202 asserted the literal
+     `planUnits = 1 + count`. The COUNT is unchanged and still asserted above; what changed is the
+     constant 1 — the firm's own base unit now enters the quantity only when Stripe is the thing
+     collecting the base plan, because Bistro 999 pays for the firm outside Stripe and was being
+     charged for it a second time inside a branch purchase. The V202 guarantee this test exists to
+     protect — a branch is billed as another UNIT OF THE BASE PLAN, never as a new price — is
+     asserted here directly. */
+  assert.match(fn, /planUnits = Math\.max\(1, baseUnits \+ branchUnits\);/);
+  assert.match(fn, /const branchUnits = !branchError && typeof count === 'number'/);
   assert.match(fn, /quantity: planUnits,/);
   assert.match(fn, /'change_branches'/);
 });

@@ -26,6 +26,10 @@
   ],
   "rewrites": [
     {
+      "source": "/app",
+      "destination": "/index.html"
+    },
+    {
       "source": "/o/:id",
       "destination": "/api/offer-share?id=:id"
     },

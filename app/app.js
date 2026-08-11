@@ -445,6 +445,11 @@ function configureChartDefaults(){
 const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses'];
 const INDUSTRIES={
   fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
+  /* V275 (owner, 2026-08-11): bars are a sector of their own, not a cafe with spirits. The
+     module list is the F&B list plus bottle keep, packages and memberships — a bar seats guests
+     and takes bookings like a cafe, but it also keeps customers' property. 'bottles' is
+     deliberately NOT in ALLMODS: it must never arrive by default in another sector's bundle. */
+  bar:{em:'🍸',label:'Bar / Pub',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','bottles','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
   facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
   massage:{em:'💆',label:'Massage',mods:ALLMODS},
@@ -458,7 +463,11 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
-  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started']};
+  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started'],
+  /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar
+     sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
+     that lives in Operations setup, never an entitlement a staff member can be granted. */
+  bottles:['bottle','Bottles'],bottlesetup:['bottle','Bottle keep']};
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
@@ -479,7 +488,28 @@ const hasRoleCapability=capability=>ROLE_CAPABILITIES[S.myRole]?.has(capability)
    has one deny-list to fill instead of two hard-coded checks. */
 const HIDDEN_BUSINESS_SURFACES=new Set([]);
 const FINANCE_MODULES=new Set(['expenses','pnl','staffperf']);
-const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup']);
+const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup']);
+/* V275 (owner amendment 4): bottle keep is a SaaS module EXCLUSIVE to industry='bar'. These two
+   are the client-side half of that rule — the rail never advertises the surfaces and the routes
+   answer with a plain card. They are a courtesy, not the gate: every bottle RPC calls
+   app.require_bar_business_v275() first and refuses a non-bar tenant with 42501, so nothing here
+   is load-bearing for access control. */
+const isBarSectorV275=()=>String(S.biz?.industry||'').toLowerCase()==='bar';
+const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
+/* V276 (owner, 2026-08-11, looking at a real bar tenant: "i dont see the full suite of modules
+   ready for production"). V246 recorded the owner's ruling that the SECTOR decides the serving
+   model — an F&B floor seats parties at tables (Bookings + Waitlist) while a service sector books
+   a person's time (Appointments) — but it wrote that ruling as one string comparison against
+   'fnb'. A bar serves exactly the way a cafe does, so V275's new sector inherited an Appointments
+   module nobody behind a bar will ever open. The rule is a named set now, so the next seated
+   sector is one entry rather than another hand-written comparison.
+   Route behaviour is deliberately unchanged: #/appointments stays reachable for a deep link, a
+   historical appointment or a Customer 360 hand-off. What stops is the ADVERTISING of it — the
+   rail, the app-bar action and the mobile dock — because a control that opens a module the
+   sector does not use is the same "why is this here?" the owner already ruled on once. */
+const SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276=new Set(['fnb','bar']);
+const sectorHidesAppointmentsV276=()=>
+  SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276.has(String(S.biz?.industry||'').toLowerCase());
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -497,7 +527,9 @@ const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?m
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
-  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
+  /* V275: Bottles sits with the jobs done during service, beside Record sale — parking and
+     calling a bottle happens at the same moment as ringing the drink. Bar tenants only. */
+  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bottles','bookings','waitlist']},
   /* V250 (owner nav sketch): Programmes is ONE flat link. Its three sub-rows — Programmes list,
      Ongoing programmes, Pending setup — were a menu of the same page's own sections: the list
      already opens with the V244 "Ongoing programmes" and "Pending setup" groups, so the rail
@@ -519,8 +551,14 @@ const NAVGROUPS=[
      Record sale first, and V150 caught it, because keeping operational actions separate from
      money history is a decision that was made on purpose. Overturning it is the owner's call,
      not a side effect of a label fix. */
-  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf']},
-  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages']}
+  /* V272: the owner struck "Staff performance" out of this nav and wrote "delete this tab cause
+     here have already", arrowing at the Team performance card on Business Insights. The nav entry
+     is gone; the #/staffperf route, its page and that card's link are untouched, so deep links and
+     history keep working. activeGroupKey() below maps the route back to this group. */
+  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel']},
+  /* V275: "Bottle keep" is the bar's own configuration — one keep-days number and the shelf
+     list — so it belongs beside Services and Products, not inside the daily Bottles screen. */
+  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup']}
 ];
 let navOpen={};
 /* Global top-bar action state (no localStorage in this stack — plain in-session vars). A global
@@ -555,7 +593,7 @@ let loyaltyStatusDraftV235=null;
    birthday / bring-back / referral editors. Module-level because those editors live in
    different page functions from the Programmes overview that sets it. */
 let pendingProgrammeSuggestV172=null;
-let settingsActiveTab='workspace';
+let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
 let shellRenderEpoch=0;
@@ -894,7 +932,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';growTopicV229='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -2284,7 +2322,13 @@ async function route(){
       toast('Waitlist works with Bookings. Turn on Bookings first.');
       return nav('#/dashboard');
     }
+    /* V275: the bottle surfaces are exempt from the generic bounce. A non-bar tenant that
+       follows a bookmarked #/bottles link gets a plain "not available for this business type"
+       card from the page itself; being thrown to the dashboard with a toast reads as a broken
+       app rather than as an answer. The page re-checks the sector and the module before it
+       renders anything, and the RPCs refuse independently. */
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)&&pageKey!=='dashboard'
+       &&!BOTTLE_SURFACES_V275.has(pageKey)
        &&!canReadModule(pageKey)){
       toast('You don\'t have access to that.');
       return nav('#/dashboard');
@@ -2478,7 +2522,7 @@ function customerRegistrationShell(body){
   destroyMountedTurnstiles();
   setCustomerSurfaceDocumentV167();
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
-    <a class="logo" href="/" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
+    <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
     </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks()}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
@@ -6278,13 +6322,48 @@ async function renderCustomerWallet(businessSlug=null){
      rating and its comment box are removed from the customer surface. The public-review link
      stays, and the anti-review-gating invariant is now trivially satisfied — every customer
      sees the same review link, and Peekaa never asks for a private rating first. */
+  /* V275 (owner: "the customer sees their bottle details inside the business's page"). Bottle
+     keep is a bar-only module, so this card must be INVISIBLE everywhere else — including as a
+     skeleton. It is therefore inserted only after customer_get_bottles_v275 has actually
+     returned rows, never rendered as an empty shell that flashes and disappears.
+     Fail-soft by construction: a 42501 (not a bar, or module off), a missing function on an
+     older deployment, or any other error simply leaves the wallet as it was. A bottle the
+     customer left at a bar is never a reason for the rest of their wallet to break. */
+  const loadBottlesV275=async()=>{
+    if(String(b.industry||'').toLowerCase()!=='bar')return;
+    const sections=$('walletSections');
+    if(!sections||!isWalletCurrent())return;
+    const {data,error}=await customerRpc('customer_get_bottles_v275',{p_business_slug:businessSlug});
+    if(!isWalletCurrent()||!sections.isConnected||$('walletSections')!==sections)return;
+    if(error)return;
+    const bottles=Array.isArray(data?.items)?data.items:[];
+    if(!bottles.length)return;
+    if($('walletBottles'))return;
+    sections.insertAdjacentHTML('afterbegin',`<section class="card wallet-section" id="walletBottles" data-section-title="Your bottles">
+      <div class="wallet-section-head"><div><h2>Your bottles</h2><p class="muted small">What ${esc(b.name||'this bar')} is keeping for you. Show this screen at the counter to have one brought out.</p></div><span class="spacer"></span><span class="pill">${bottles.length}</span></div>
+      ${bottles.map(bottle=>{
+        /* V278: Number(null) is 0, and 0 <= 7 — the naive test painted every NEVER-expiring
+           bottle amber and told the customer it was about to run out. */
+        const days=Number(bottle.days_left);
+        const soon=bottle.days_left!==null&&bottle.days_left!==undefined&&Number.isFinite(days)&&days<=7;
+        const fill=Math.max(0,Math.min(100,Math.round(Number(bottle.fill_percent)||0)));
+        return `<div class="wallet-line"><div style="width:100%">
+          <div class="row"><b>${esc(String(bottle.label||'Bottle'))}</b><span class="spacer"></span><span class="pill">${fill}% left</span></div>
+          <div style="margin-top:8px">${bottleFillBarV275(fill)}</div>
+          <p class="muted small" style="margin-top:6px">${esc(bottle.serial_code||'')}${bottle.size_ml?` · ${Number(bottle.size_ml)}ml`:''}${bottle.storage_location_name?` · ${esc(bottle.storage_location_name)}`:''}</p>
+          <p class="muted small" style="margin-top:3px">Left with them ${esc(walletDate(bottle.parked_at))}</p>
+          <p class="small" style="margin-top:3px;${soon?'color:#B4761F;font-weight:600':'color:var(--muted)'}">${esc(bottleDaysLabelV275(bottle.days_left))}</p>
+        </div></div>`;
+      }).join('')}</section>`);
+    ensureWalletEmptyState(businessSlug);
+  };
   const loadFeedback=async()=>{
     const host=$('walletFeedback');if(!host||!walletReviewUrl)return;
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Rate your visit</h2><p class="muted small">Your review helps other people find ${esc(b.name||'this business')}.</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
   };
-  await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback()]);
+  await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
   if(!isWalletCurrent())return;
 }
 
@@ -7269,7 +7348,7 @@ function renderAuth(mode='in',{admin=false}={}){
   }
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessAuthTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
+    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/app">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
     ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
@@ -7903,8 +7982,10 @@ function importBtn(moduleKey,label='Import',done='route'){
 }
 
 /* ---------- shell ---------- */
+/* V272: staffperf no longer has a nav entry of its own, so it borrows the Reports group it is
+   reached from — otherwise the whole rail goes unlit on a route that is still reachable. */
 function activeGroupKey(pageKey){
-  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey;
+  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey==='staffperf'?'reports':pageKey;
   if(k==='grow')return 'grow';
   const g=NAVGROUPS.find(g=>g.items.includes(k));
   return g?g.key:null;
@@ -7931,8 +8012,13 @@ async function refreshWaitlistBadge(){
   setWaitlistBadgeCount(count||0);
 }
 function navHtml(page,idPrefix='nav'){
+  /* V275: bottle keep is stripped from the resolved module list for every non-bar sector BEFORE
+     the rail is built, so no other sector's navigation can gain a row even if an entitlement
+     ever handed the key out by mistake. Every existing module rule below is untouched. */
+  const sectorShowsBottlesV275=isBarSectorV275();
   const enabled=filterResolvedModulesForRole(S.myModules||S.biz.enabled_modules||[],S.myRole)
-    .filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module));
+    .filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module))
+    .filter(module=>module!=='bottles'||sectorShowsBottlesV275);
   const activeKey=page[0]==='client'?'clients':page[0];
   const activeGrp=activeGroupKey(page[0]);
   /* V219. Owner: "add branch inside (so can add or manage branches using the module as well)".
@@ -7955,11 +8041,12 @@ function navHtml(page,idPrefix='nav'){
      Nav-level only, deliberately: the route stays reachable, so an F&B tenant with historical
      appointments, a deep link or a Customer 360 hand-off is never stranded — the irrelevant
      module just stops being advertised. */
-  const sectorHidesAppointmentsV246=String(S.biz?.industry||'')==='fnb';
+  const sectorHidesAppointmentsV246=sectorHidesAppointmentsV276();
   const navModuleVisible=m=>m==='dashboard'
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
+    ||(m==='bottlesetup'&&sectorShowsBottlesV275&&S.myRole==='owner')
     ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
     ||(m!=='waitlist'&&m!=='appointments'&&enabled.includes(m))
     ||(m==='appointments'&&!sectorHidesAppointmentsV246&&enabled.includes(m));
@@ -8003,7 +8090,7 @@ function staffMobileActionsHtml(page){
     clientsReadable:canReadModule('clients'),
     loyaltyWritable:canWriteModule('loyalty')
   });
-  const canViewAppts=canReadModule('appointments');
+  const canViewAppts=canReadModule('appointments')&&!sectorHidesAppointmentsV276();
   if(canQuickEarn)items.push(`<button type="button" class="staff-mobile-action ${active==='till'?'act':''}" id="staffMobileQuickEarn" aria-label="Record sale">${CUI.icon('till',{size:20})}<span data-workspace-i18n>Record sale</span></button>`);
   if(canScanRedemption)items.push(`<button type="button" class="staff-mobile-action" id="staffMobileScan" aria-label="Scan redemption QR">${CUI.icon('scan',{size:20})}<span data-workspace-i18n>Scan QR</span></button>`);
   if(canViewAppts)items.push(`<button type="button" class="staff-mobile-action ${active==='appointments'?'act':''}" id="staffMobileAppointments" aria-label="Appointments">${CUI.icon('appointments',{size:20})}<span data-workspace-i18n>Appointments</span></button>`);
@@ -8011,7 +8098,7 @@ function staffMobileActionsHtml(page){
     <div class="mobile-action-sheet">
       <div class="mobile-workspace-summary" aria-label="Current workspace"><b data-merchant-content>${esc(S.biz?.name||BRAND.productName)}</b><span class="muted" data-merchant-content>${esc(INDUSTRIES[S.biz?.industry]?.label||S.biz?.industry||'Workspace')}</span><span class="muted">Signed in as ${esc(S.user?.email||'Email unavailable')}</span></div>
       <label class="mobile-language-label" for="workspaceLanguageMobileV151">Language</label>${workspaceLanguagePickerV97('workspaceLanguageMobileV151')}
-      <a class="btn ghost sm" href="#/settings?tab=workspace">Workspace settings</a>
+      <a class="btn ghost sm" href="#/settings">Workspace settings</a>
     </div>
     <nav class="nav" aria-label="More workspace modules">${navHtml(page,'mobile-nav')}</nav></div></details>`);
   return `<div class="staff-mobile-dock" style="--staff-mobile-count:${items.length}" aria-label="Staff quick actions">${items.join('')}</div>`;
@@ -8038,7 +8125,7 @@ function wireStaffMobileActions(){
 function globalActionsHtml(){
   const canFindCustomer=canReadModule('clients')||canReadModule('till');
   const canQuickEarn=canReadModule('till')&&canReadModule('clients')&&hasRoleCapability('create_sales');
-  const canViewAppts=canReadModule('appointments');
+  const canViewAppts=canReadModule('appointments')&&!sectorHidesAppointmentsV276();
   const canNewAppt=canWriteModule('appointments');
   return `<div class="global-actions">
     ${canFindCustomer?`<div class="global-search" role="search">
@@ -8872,8 +8959,11 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* Owner: "recent appointment - how recent?" — the number now states its own window. */
   recentInWindow:Object.freeze({en:'{count} in last {window}','zh-CN':'过去{window}内 {count} 个',ms:'{count} dalam {window} lalu'}),
   recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
-  reversalOf:Object.freeze({en:'Reversal of {id}','zh-CN':'冲销自 {id}',ms:'Pembalikan bagi {id}'}),
-  usedSessionReversedBy:Object.freeze({en:'Used session → reversed by {id}','zh-CN':'已用次数 → 由 {id} 冲销',ms:'Sesi digunakan → dibalikkan oleh {id}'}),
+  /* V267: the id is gone from these two. A staff member reading the session-correction table
+     cannot do anything with a UUID, and the owner asked "what is this?" the first time they
+     met one. The relationship is what matters and the counterpart row is in the same table. */
+  reversalOf:Object.freeze({en:'Reversal of an earlier session use','zh-CN':'冲销较早的次数使用','ms':'Pembalikan penggunaan sesi terdahulu'}),
+  usedSessionReversedBy:Object.freeze({en:'Used session → later reversed','zh-CN':'已用次数 → 之后已冲销','ms':'Sesi digunakan → dibalikkan kemudian'}),
   preparingExport:Object.freeze({en:'Preparing {current} of {total}…','zh-CN':'正在准备第 {current}／{total} 条…',ms:'Menyediakan {current} daripada {total}…'}),
   imageCleanupPending:Object.freeze({en:'{count} previous image cleanup item is still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
   imageCleanupsPending:Object.freeze({en:'{count} previous image cleanup items are still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
@@ -9176,6 +9266,7 @@ function renderShell(page){
     bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus),retention:(hashParam,routedFocus)=>growPage('winback',hashParam,routedFocus),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam),storedvalue:hashParam=>growPage('storedvalue',hashParam),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
+    bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
     'customer-interface':customerInterfacePageV243};
@@ -9453,6 +9544,35 @@ function branchScopeUnavailableReasonV217(branch){
     ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
     :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
 }
+/* V272: removing the Business Insights branch select also removed the only place that said an
+   unpaid or switched-off branch is LEFT OUT of these figures. A consolidated total nobody can
+   scope is the failure this page exists to avoid, and the top bar deliberately carries no such
+   pill (V224), so the fact is restated once, next to the figures, in the owner's own terms. */
+function reportScopeNoteTextV272(branches=[]){
+  const usable=activeBranchesForScopeV217(branches);
+  const current=selectedBranchId?usable.find(branch=>branch.id===selectedBranchId):null;
+  const covered=current
+    ?`${current.name||'the branch selected at the top'} only`
+    :usable.length>1
+      ?`all ${usable.length} branches you can report on (${usable.map(branch=>branch.name||'Branch').join(', ')})`
+      :(usable[0]?.name||'this business');
+  const withheld=(branches||[]).filter(branch=>branch&&branch.active===false)
+    .map(branchScopeUnavailableReasonV217).filter(Boolean);
+  return `Figures below cover ${covered}. ${withheld.join(' ')}`.trim();
+}
+async function renderReportScopeNoteV272(isCurrent=()=>true,targetId='reportScopeNoteV272'){
+  const host=$(targetId);
+  if(!host)return;
+  let branches=[];
+  try{({branches}=await visibleBranchesForCurrentUser())}
+  catch(error){
+    console.error(error);
+    if(isCurrent()&&$(targetId)===host)host.textContent='The branches these figures cover could not be confirmed.';
+    return;
+  }
+  if(!isCurrent()||$(targetId)!==host)return;
+  host.textContent=reportScopeNoteTextV272(branches);
+}
 /* V217: the server's scope codes are precise but unreadable. An owner should never be shown
    `foreign_or_inactive_branch_scope` — they should be told which branch is unavailable and why,
    which after this change should not happen at all, since the pickers no longer offer one. */
@@ -9599,6 +9719,37 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
 function dashboardLoyaltyRowV170(cards){
   return `<section class="dashboard-loyalty" aria-labelledby="dashboardLoyaltyTitle"><div class="dashboard-loyalty-head">${CUI.icon('loyalty',{size:20})}<div><h3 id="dashboardLoyaltyTitle">Loyalty this period</h3><p class="muted small">Programme activity for the selected dates.</p></div></div><div class="dashboard-loyalty-grid">${cards.map(card=>`<div class="dashboard-loyalty-card"><b>${esc(card.label)}</b><span class="v">${esc(card.value)}</span><span class="metric-hint">${esc(card.hint)}</span>${card.retryId?`<button type="button" class="btn ghost sm" id="${card.retryId}">Retry</button>`:''}</div>`).join('')}</div></section>`;
 }
+/* V278 (owner brief item 9): the bar's own headline on the Dashboard. A bar owner opening the app
+   wants one number first — how many bottles am I holding — and one warning — how many run out this
+   week. It reuses list_bar_bottles_v275's branch-scoped counts with a limit of one row rather than
+   adding a second aggregate that could disagree with the Bottles page.
+   BAR TENANTS ONLY, and FAIL-SOFT in every direction: a non-bar sector, a staff member without
+   bottle access, or any error at all renders NOTHING. A Dashboard is the first screen of the day;
+   it must never be the screen that breaks. */
+async function loadDashboardBottlesV278(root,branchId=null){
+  const host=root?.querySelector('#dashboardBottlesV278');
+  if(!host)return;
+  host.innerHTML='';
+  if(!isBarSectorV275())return;
+  if(S.myRole!=='owner'&&!canReadModule('bottles'))return;
+  const {data,error}=await sb.rpc('list_bar_bottles_v275',{p_business:S.biz.id,p_branch:branchId,
+    p_status:null,p_search:null,p_expiring_days:null,p_bottle:null,p_limit:1});
+  if(!root.isConnected||root!==$('dashboardView'))return;
+  if(error)return;
+  const counts=data?.counts||{};
+  /* V279: the same status colours and the same capacity gauge the Bottles page shows, read from
+     the same RPC — a Dashboard that coloured a status differently would be teaching one habit and
+     the page another. */
+  const capacity=Number(data?.storage_capacity)||0;
+  const inStorage=Number(data?.in_storage ?? counts.in_storage)||0;
+  const tile=(label,value,iconName,tone)=>`<div class="card kpi"><div class="l">${CUI.icon(iconName,{size:14})} ${esc(label)}</div><div class="v" style="color:${tone}">${esc(String(value))}</div></div>`;
+  host.innerHTML=`<section class="card" aria-labelledby="dashboardBottlesTitleV278" style="margin-bottom:18px">
+    <div class="cui-card-head">${CUI.icon('bottle',{size:24})}<div><h2 id="dashboardBottlesTitleV278">Bottles</h2><p>What you are holding for your customers right now.</p></div></div>
+    <div class="kpis" style="margin-top:12px">${tile('In storage',capacity?`${inStorage} / ${capacity}`:String(inStorage),'inventory',BOTTLE_STATUS_V275.stored.tone)}${tile('Called',Number(counts.called||0),'bell',BOTTLE_STATUS_V275.called.tone)}${tile('At table',Number(counts.at_table||0),'till',BOTTLE_STATUS_V275.at_table.tone)}${tile('Retrieved',Number(counts.retrieved||0),'export',BOTTLE_STATUS_V275.retrieved.tone)}${tile('Expiring this week',Number(counts.expiring_soon||0),'info',BOTTLE_STATUS_V275.expired.tone)}</div>
+    <div class="row" style="margin-top:14px"><a class="btn secondary" href="#/bottles">Open Bottles</a></div>
+  </section>`;
+}
+
 /* V180 (owner instruction: "I want have simple glance of calendar").
    The Today-schedule strip announced today's bookings but showed none of them — an owner had
    to leave the Dashboard to learn whether anyone was coming in. It now renders today's actual
@@ -9738,11 +9889,17 @@ async function dashboard(){
         </div>
         <label class="sr-only" for="dashboardScheduleDate">Schedule date</label>
         <input type="date" id="dashboardScheduleDate" value="${today}">
+        <!-- V266 (owner drew arrows from this date chip down to the Performance figures and
+             wrote "by right based on this date, there are no numbers"). The figures were right
+             for the range chosen at the top of the page; this day picker is a different
+             control that happens to sit above them. Say so, at the picker. -->
+        <span class="muted small dashboard-schedule-scope-v266">Changes the bookings shown here only, not the Performance figures below.</span>
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
+    <div id="dashboardBottlesV278"></div>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
-      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
+      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
       <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
     <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
@@ -9788,6 +9945,8 @@ async function dashboard(){
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     if(status)status.innerHTML='';
     if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'reports',title:'Date range changed',body:'Apply the new range to refresh these figures.'})}</div>`;
+    const pendingPeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
+    if(pendingPeriod)pendingPeriod.textContent='Date range changed — press Apply.';
     if(loyalty)loyalty.innerHTML='';
     if(insights)insights.innerHTML='';
     if(charts)charts.innerHTML='';
@@ -9804,6 +9963,7 @@ async function dashboard(){
   });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
+  loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
@@ -9888,6 +10048,10 @@ async function dashboard(){
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
+    /* V266: the period is written from the range the RPC was actually answered for, next to the
+       numbers, so the Today-schedule date above can never be mistaken for the driver. */
+    const performancePeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
+    if(performancePeriod)performancePeriod.textContent=`${dashboardScheduleDayLabelV252(from)} to ${dashboardScheduleDayLabelV252(to)}`;
     if(!kpis||!charts)return;
     status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const previousSummary=previousResponse.error?null:previousResponse.data;
@@ -10838,9 +11002,25 @@ async function clientDetail(id){
       :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
     </div>`:'';
   const activitySources=[canReadSales&&'sales and visits',canReadAppointments&&'appointments',canReadLoyalty&&'reward redemptions',canReadRetention&&'retention rewards',canReadMemberships&&'memberships',canReadPackages&&'packages'].filter(Boolean);
+  /* V267: the Type and Team member menus are built from the rows THIS customer actually has,
+     through the same activityTypeOfV267 the cells use, so the menu can never offer a type the
+     table cannot show or drift from the renderer. */
+  const activityTypeOptionsV267=[...new Set(history.map(activityTypeOfV267))].sort();
+  const activityStaffOptionsV267=[...new Set(history.map(h=>h.staff).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const activityHasUnassignedV267=history.some(h=>!h.staff);
+  const activityFiltersV267=`<div class="v150-filterbar c360-activity-filters-v267" role="group" aria-label="Filter activity history" style="margin-top:12px">
+    <div style="flex:1 1 190px;min-width:min(100%,190px)"><label for="actItem">Item</label><input type="search" id="actItem" inputmode="search" autocomplete="off" placeholder="Search item"></div>
+    <div style="flex:1 1 160px;min-width:min(100%,160px)"><label for="actType">Type</label><select id="actType"><option value="">All types</option>${activityTypeOptionsV267.map(type=>`<option value="${esc(type)}">${esc(type)}</option>`).join('')}</select></div>
+    <div style="flex:1 1 175px;min-width:min(100%,175px)"><label for="actStaff">Team member</label><select id="actStaff"><option value="">All team members</option>${activityStaffOptionsV267.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('')}${activityHasUnassignedV267?`<option value="${ACTIVITY_STAFF_NONE_V267}">No team member</option>`:''}</select></div>
+    <div style="flex:1 1 150px;min-width:min(100%,150px)"><label for="actFrom">From</label><input type="date" id="actFrom"></div>
+    <div style="flex:1 1 150px;min-width:min(100%,150px)"><label for="actTo">To</label><input type="date" id="actTo"></div>
+    <div style="flex:1 1 195px;min-width:min(100%,195px)"><label for="actSort">Sort by</label><select id="actSort">${ACTIVITY_SORTS_V267.map(option=>`<option value="${option.key}"${option.key===ACTIVITY_SORT_DEFAULT_V267?' selected':''}>${esc(option.label)}</option>`).join('')}</select></div>
+    <button class="btn ghost sm" id="actClear">Clear filters</button>
+  </div>`;
   const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b>
+    ${activityFiltersV267}
     <div id="histBody">${renderHistPage(history,histShown)}</div>
-    ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
+    <div id="histMoreWrap" style="text-align:center;margin-top:10px${history.length>histShown?'':';display:none'}"><button class="btn ghost sm" id="histMore">Show earlier</button></div>
     </div>`:'';
   const profileScopeLabel=isProfileAdmin
     ?'complete business-wide access'
@@ -11101,15 +11281,161 @@ async function clientDetail(id){
     if(error){consentButton.disabled=false;return fail(error)}
     toast(to?'Consent recorded':'Consent withdrawn — recorded');clientDetail(id);
   };
-  const histMore=$('histMore');
-  if(histMore) histMore.onclick=()=>{
-    histShown+=50;
+  /* V267: paging, filtering and sorting all go through ONE redraw, so the Show earlier control
+     and the table can never disagree about how many rows the current filter actually left. */
+  const redrawActivityV267=()=>{
+    const body=$('histBody');
+    if(!body)return;
     $('histBody').innerHTML=renderHistPage(history,histShown);
+    const moreWrap=$('histMoreWrap');
+    if(moreWrap)moreWrap.style.display=activityFilteredRowsV267(history).length>histShown?'':'none';
     bindReversalButtons(()=>clientDetail(id));
-    if(histShown>=history.length) histMore.parentElement.style.display='none';
+    bindActivityRowControlsV267(redrawActivityV267);
   };
+  bindActivityRowControlsV267(redrawActivityV267);
+  const histMore=$('histMore');
+  if(histMore) histMore.onclick=()=>{histShown+=50;redrawActivityV267()};
+  /* Changing a filter returns to the first page: keeping an offset from the previous filter
+     would show an owner the middle of a result set and hide its first rows. */
+  ['actItem','actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
+    const control=$(controlId);
+    if(control)control.onchange=()=>{histShown=50;redrawActivityV267()};
+  });
+  const clearActivity=$('actClear');
+  if(clearActivity)clearActivity.onclick=()=>{clearActivityFiltersV267();histShown=50;redrawActivityV267()};
   if($('c360ExpiryRetry'))$('c360ExpiryRetry').onclick=()=>clientDetail(id);
   bindReversalButtons(()=>clientDetail(id));
+}
+/* V267 (owner, circling three raw UUIDs in Activity history: "what is this?", and separately
+   "i want a drop down filter i can filter what i want to see" with sort arrows drawn beside
+   AMOUNT and STAFF). These helpers are the SINGLE source for what a row's Type is, what money
+   it carries and how it is described, so the filter menus, the sort comparators and the
+   rendered cells cannot drift apart as new row kinds are added to the feed. */
+const ACTIVITY_STAFF_NONE_V267='__no_staff__';
+const ACTIVITY_SORT_DEFAULT_V267='date_desc';
+const ACTIVITY_SORTS_V267=[
+  {key:'date_desc',label:'Date — newest first'},
+  {key:'date_asc',label:'Date — oldest first'},
+  {key:'amount_desc',label:'Amount — highest first'},
+  {key:'amount_asc',label:'Amount — lowest first'},
+  {key:'staff_asc',label:'Team member — A to Z'},
+  {key:'staff_desc',label:'Team member — Z to A'}
+];
+function activityTypeOfV267(h){
+  if(!h)return 'Appointment';
+  if(h.kind==='sale')return h.is_reversal?'Reversal':'Sale';
+  if(h.kind==='redemption')return 'Reward';
+  if(h.kind==='grant')return 'Retention';
+  if(h.kind==='membership')return 'Membership';
+  if(h.kind==='package')return 'Package';
+  return 'Appointment';
+}
+/* Returns cents for a row that really carries money, and null for one that does not. Null is
+   not zero: an appointment with no money must never rank alongside a genuine SGD 0.00 sale. */
+function activityAmountCentsV267(h){
+  if(!h)return null;
+  if(h.kind==='sale')return Number((h.amount??h.amount_cents)??0);
+  if(h.kind==='redemption')return h.credit_cents?Number(h.credit_cents):null;
+  if(h.kind==='grant'){
+    if(campaignEntitlementDisplayV99(h).pending)return null;
+    return h.fulfillment_kind==='credit'?Number(h.reward_value||0):null;
+  }
+  return null;
+}
+/* Singapore time, like every other date on this surface. The end bound covers the whole day:
+   sgIso() only carries minutes, so an inclusive "to" built from it would drop a 23:59:30 sale
+   from a range that ends on that sale's own date. */
+function activityRangeBoundV267(value,{end=false}={}){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||'')))return null;
+  const at=Date.parse(end?`${value}T23:59:59.999+08:00`:sgIso(`${value}T00:00`));
+  return Number.isFinite(at)?at:null;
+}
+function activityWhenTextV267(iso){
+  if(!iso)return '';
+  const at=new Date(iso);
+  if(Number.isNaN(at.getTime()))return '';
+  return new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',
+    hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(at);
+}
+/* The human description of a sale row, used both in its own ITEM cell and when another row has
+   to refer to it. Never an id: the owner cannot act on a UUID. */
+function activityItemTextV267(h){
+  const note=String((h&&h.note)||'').trim();
+  const text=note||String((h&&h.saleKind)||'sale').replace(/_/g,' ');
+  return text.length>64?text.slice(0,61)+'…':text;
+}
+function activityFilterStateV267(){
+  const read=controlId=>{const el=$(controlId);return el?String(el.value||''):''};
+  const sort=read('actSort');
+  return {item:read('actItem').trim().toLowerCase(),
+    type:read('actType'),staff:read('actStaff'),from:read('actFrom'),to:read('actTo'),
+    sort:ACTIVITY_SORTS_V267.some(option=>option.key===sort)?sort:ACTIVITY_SORT_DEFAULT_V267};
+}
+/* Client-side over the COMPLETE feed. Every reader behind this timeline pages the whole
+   history with fetchAllRows before the six sources are merged, so nothing is left on the
+   server for a filter to miss; `histShown` only controls how much of the result is painted. */
+function activityFilteredRowsV267(history,state){
+  const s=state||activityFilterStateV267();
+  const from=activityRangeBoundV267(s.from),to=activityRangeBoundV267(s.to,{end:true});
+  const kept=(history||[]).filter(h=>{
+    /* V270: matched against activityItemTextV267 — the same text the ITEM cell prints — so a
+       search can never hide a row that visibly contains the words the owner typed. */
+    if(s.item&&!activityItemTextV267(h).toLowerCase().includes(s.item))return false;
+    if(s.type&&activityTypeOfV267(h)!==s.type)return false;
+    if(s.staff===ACTIVITY_STAFF_NONE_V267){if(h.staff)return false}
+    else if(s.staff&&h.staff!==s.staff)return false;
+    if(from!=null||to!=null){
+      const at=Date.parse(h.t||'');
+      if(!Number.isFinite(at))return false;
+      if(from!=null&&at<from)return false;
+      if(to!=null&&at>to)return false;
+    }
+    return true;
+  });
+  const direction=s.sort.endsWith('_asc')?1:-1;
+  const key=s.sort.replace(/_(asc|desc)$/,'');
+  return kept.map((row,index)=>({row,index})).sort((a,b)=>{
+    let comparison=0;
+    if(key==='amount'){
+      const av=activityAmountCentsV267(a.row),bv=activityAmountCentsV267(b.row);
+      /* Rows with no money sink to the bottom in BOTH directions rather than being ranked
+         as if they were zero-value transactions. */
+      if(av==null&&bv!=null)return 1;
+      if(bv==null&&av!=null)return -1;
+      comparison=(av==null&&bv==null)?0:av-bv;
+    }else if(key==='staff'){
+      const av=a.row.staff||'',bv=b.row.staff||'';
+      if(!av&&bv)return 1;
+      if(!bv&&av)return -1;
+      comparison=av.localeCompare(bv);
+    }else comparison=String(a.row.t||'').localeCompare(String(b.row.t||''));
+    return comparison?comparison*direction:a.index-b.index;
+  }).map(entry=>entry.row);
+}
+function clearActivityFiltersV267(){
+  ['actItem','actType','actStaff','actFrom','actTo'].forEach(controlId=>{const el=$(controlId);if(el)el.value=''});
+  const sort=$('actSort');
+  if(sort)sort.value=ACTIVITY_SORT_DEFAULT_V267;
+}
+/* Controls that live INSIDE the redrawn table body, so they are rewired on every redraw. */
+function bindActivityRowControlsV267(redraw){
+  document.querySelectorAll('[data-act-sort]').forEach(button=>{
+    button.onclick=()=>{const sort=$('actSort');if(sort)sort.value=button.dataset.actSort;redraw()};
+  });
+  /* A reference is only ever rendered as a button when its counterpart row is actually
+     painted, so this can never offer navigation that goes nowhere. */
+  document.querySelectorAll('[data-act-jump]').forEach(button=>{
+    button.onclick=()=>{
+      const target=document.getElementById(button.dataset.actJump);
+      if(!target)return;
+      target.scrollIntoView({block:'center',behavior:'smooth'});
+      target.classList.add('c360-act-flash-v267');
+      target.focus({preventScroll:true});
+      setTimeout(()=>{if(target.isConnected)target.classList.remove('c360-act-flash-v267')},2200);
+    };
+  });
+  const clearFromEmpty=$('actClearEmpty');
+  if(clearFromEmpty)clearFromEmpty.onclick=()=>{clearActivityFiltersV267();redraw()};
 }
 /* Renders the first n entries of the unified Customer 360 timeline.
    V252 (owner): the stacked pictogram list is now a TABLE — DATE / TYPE / ITEM / AMOUNT / STAFF.
@@ -11122,19 +11448,55 @@ async function clientDetail(id){
    its data-reverse-kind/data-reverse-id hooks so bindReversalButtons still works unchanged.
    The wrap scrolls horizontally on a narrow phone rather than breaking the page. */
 function renderHistPage(history,n){
-  const rows=history.slice(0,n);
-  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
+  /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
+     survived. Doing it the other way round would let a filter report "nothing" while matching
+     rows sat one page below. An empty result is two different facts and says which. */
+  if(!history.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
+  const stateV267=activityFilterStateV267();
+  const filteredV267=activityFilteredRowsV267(history,stateV267);
+  if(!filteredV267.length) return CUI.emptyState({iconName:'search',title:'No activity matches these filters',
+    body:'This customer does have history — the filters above are hiding all of it. Clear them to see the full record.',
+    actionHtml:'<button class="btn ghost sm" id="actClearEmpty">Clear filters</button>'});
+  const rows=filteredV267.slice(0,n);
+  /* The counterpart of a reversal is looked up across the WHOLE feed, not just this page, so a
+     reference can be described even when its partner row is not currently painted. */
+  const saleRowsByIdV267=new Map();
+  history.forEach(row=>{if(row.kind==='sale'&&row.id)saleRowsByIdV267.set(String(row.id),row)});
+  const paintedRowIdsV267=new Set(rows.filter(row=>row.kind==='sale'&&row.id).map(row=>`c360-act-sale-${row.id}`));
+  /* V267 (owner circled three raw UUIDs: "what is this?"). A UUID is not something a shop owner
+     can act on. The reference now describes the counterpart row in its own terms — what it was
+     and when — and becomes a jump only when that row is on screen. When the counterpart cannot
+     be resolved at all (an older row outside this customer's visible sales, or one hidden from
+     this role by branch scope) it says so plainly rather than falling back to the id. The
+     audit wording is untouched: this is still unmistakably a reversal. */
+  const counterpartRefV267=(token,tone,counterpartId,missingText)=>{
+    const other=counterpartId?saleRowsByIdV267.get(String(counterpartId)):null;
+    const description=other
+      ?`${esc(activityItemTextV267(other))} · ${esc(activityWhenTextV267(other.t))}`
+      :esc(missingText);
+    const anchor=other?`c360-act-sale-${other.id}`:'';
+    const body=anchor&&paintedRowIdsV267.has(anchor)
+      ?`<button type="button" class="c360-act-ref-v267" data-act-jump="${anchor}">${description}</button>`
+      :`<span class="c360-act-ref-v267">${description}</span>`;
+    return `<span class="pill ${tone}"><span data-workspace-i18n>${token}</span> ${body}</span>`;
+  };
+  const sortHeadV267=(key,label)=>{
+    const active=stateV267.sort.startsWith(key+'_');
+    const ascending=active&&stateV267.sort.endsWith('_asc');
+    const next=active&&!ascending?`${key}_asc`:`${key}_desc`;
+    return `<th aria-sort="${active?(ascending?'ascending':'descending'):'none'}"><button type="button" class="c360-act-sort-v267" data-act-sort="${next}" aria-label="Sort by ${label}, ${next.endsWith('_asc')?'ascending':'descending'}">${label}<span class="c360-act-caret-v267" aria-hidden="true">${active?(ascending?'▲':'▼'):'↕'}</span></button></th>`;
+  };
   const DASH_V252='—';
   const cellsV252=h=>{
     if(h.kind==='sale'){
       const isRev=!!h.is_reversal;
-      const relation=isRev?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(h.original_sale_id||'')}</span></span>`
-        :h.reversal_sale_id?`<span class="pill off"><span data-workspace-i18n>reversed →</span> <span data-merchant-content>${esc(h.reversal_sale_id)}</span></span>`:'';
+      const relation=isRev?counterpartRefV267('reversal of','no',h.original_sale_id,'an earlier sale that is not in this history')
+        :h.reversal_sale_id?counterpartRefV267('reversed →','off',h.reversal_sale_id,'a correction that is not in this history'):'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      const amount=Number((h.amount??h.amount_cents)??0);
+      const amount=Number(activityAmountCentsV267(h)||0);
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
-        type:isRev?'Reversal':'Sale',
+        type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
         notes:[relation,
           h.note?esc(h.note):'',
@@ -11147,10 +11509,11 @@ function renderHistPage(history,n){
       const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      return {tone:'reward',icon:'redeem',type:'Reward',
+      const redemptionAmountV267=activityAmountCentsV267(h);
+      return {tone:'reward',icon:'redeem',type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc(h.reward_name||'Loyalty reward')}</span>`,
         notes:[relation,`${Number(h.points_spent||0)} points spent`,action],
-        amount:h.credit_cents?money(Number(h.credit_cents)):'',staff:''};
+        amount:redemptionAmountV267!=null?money(redemptionAmountV267):'',staff:''};
     }
     if(h.kind==='grant'){
       const campaign=campaignEntitlementDisplayV99(h);
@@ -11186,10 +11549,10 @@ function renderHistPage(history,n){
       notes:[`<span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span>`],
       amount:'',staff:h.staff?esc(h.staff):''};
   };
-  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Amount</th><th>Staff</th></tr></thead><tbody>${rows.map(h=>{
+  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr>${sortHeadV267('date','Date')}<th>Type</th><th>Item</th>${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}</tr></thead><tbody>${rows.map(h=>{
     const cell=cellsV252(h);
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
-    return `<tr>
+    return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
       <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
       <td data-label="Item">${cell.item}${notes}</td>
@@ -12797,8 +13160,8 @@ function sgLedgerDateV154(iso){
   };
 }
 function saleRecordStatusV154(s,w={}){
-  if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row linked to ${s.reversal_of}.`};
-  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row reversed by ${w.reversal_sale_id}.`};
+  if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
+  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
   if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Corrected by ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}.`};
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
@@ -12827,40 +13190,70 @@ async function salesPage(){
   }
   const saleTeam=saleStaff||[];
   const signedInStaff=saleTeam.find(person=>person.user_id===S.user?.id);
+  /* V266 (owner, in red on the Sales page: "I tried to filter by dates & click apply but
+     cannot, please solve!!!"). The defaults are named once so Clear filters can restore the
+     dates too — it used to reset only the four non-date controls, so a range narrowed down to
+     nothing could not be undone by the button whose whole job is undoing filters. */
+  const salesDefaultToV266=sgDateInputValue(),salesDefaultFromV266=shiftSgDateInput(salesDefaultToV266,-29);
   M().innerHTML=`${salesHead}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
         <div class="sales-filter-row">
-          <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${shiftSgDateInput(sgDateInputValue(),-29)}"></div>
-          <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${sgDateInputValue()}"></div>
+          <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${salesDefaultFromV266}"></div>
+          <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${salesDefaultToV266}"></div>
           <div><label for="salesCustomer">Customer search</label><input id="salesCustomer" type="search" placeholder="Name"></div>
         </div>
         <div class="sales-filter-row secondary">
           <div><label for="salesStaff">Team member</label><select id="salesStaff"><option value="">All staff</option>${saleTeam.map(person=>`<option value="${person.id}">${esc(person.full_name||'Team member')}</option>`).join('')}</select></div>
-          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="membership">Membership</option></select></div>
+          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="gift_card">Gift card</option><option value="membership">Membership</option></select></div>
           <div><label for="salesPayment">Payment state</label><select id="salesPayment"><option value="">All states</option><option value="true">Paid</option><option value="false">Unpaid</option></select></div>
           <button class="btn sm" id="salesApply">Apply filters</button>
         </div>
-        <div><button class="btn ghost sm" id="salesClear">Clear filters</button></div>
+        <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" id="salesClear">Clear filters</button><span class="muted small" id="salesFilterSummary" role="status" aria-live="polite"></span></div>
       </div>
       <div id="recent" style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
+  const salesFilterNoteV266=(text,tone='')=>{
+    const note=$('salesFilterSummary');if(!note)return;
+    note.textContent=text;note.className=tone==='warn'?'small':'muted small';
+    note.style.color=tone==='warn'?'#C24135':'';
+  };
   async function loadRecent(){
-    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
     const from=$('salesFrom')?.value,to=$('salesTo')?.value,staff=$('salesStaff')?.value,type=$('salesType')?.value,paid=$('salesPayment')?.value;
-    if(from)query=query.gte('occurred_at',sgIso(from+'T00:00'));
-    if(to)query=query.lte('occurred_at',sgIso(to+'T23:59'));
+    if(from&&to&&from>to){salesFilterNoteV266('The From date is after the To date. Nothing was filtered.','warn');return}
+    const applyButton=$('salesApply');
+    if(applyButton)CUI.setButtonBusy(applyButton,{busy:true,label:'Applying…'});
+    try{
+    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
+    /* V266: the To boundary was built as `<date>T23:59`, which drops the final 59 seconds of
+       the chosen day — a sale recorded at 23:59:30 SGT fell outside a range that named its own
+       date. Singapore calendar days are half-open instants: [From 00:00 SGT, To+1 day 00:00 SGT). */
+    if(from)query=query.gte('occurred_at',sgDateBoundary(from,0));
+    if(to)query=query.lt('occurred_at',sgDateBoundary(to,1));
     /* V260: the per-page Branch filter was struck out — the top bar's branch scope
        (selectedBranchId) is the single source of truth for which branch the query covers. */
     if(selectedBranchId)query=query.eq('branch_id',selectedBranchId);
     if(staff)query=query.eq('staff_id',staff);
     if(type)query=query.eq('kind',type);
-    if(paid)query=query.eq('paid',paid==='true');
     const {data:sl,error}=await fetchAllRowsResult(()=>query.order('occurred_at',{ascending:false}).order('id',{ascending:false}));
-    if(error)return fail(error);
+    if(error){fail(error);salesFilterNoteV266('These filters could not be applied. The rows below are unchanged.','warn');return}
     const workflow=await loadReversalWorkflows(null,Math.max(100,(sl||[]).length)).catch(e=>{fail(e);return null});
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
     const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
-    const rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
+    let rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
+    /* V266: Payment state used to filter on `sales.paid`, a column that does not exist —
+       PostgREST answers 42703 and the WHOLE ledger read fails, so choosing Paid or Unpaid left
+       the previous rows sitting on screen and Apply looked dead. Settlement lives in
+       `payments`, one row per taking, so the state is derived from whether the sale is
+       referenced there. */
+    let paymentStateApplied=!paid;
+    if(paid){
+      const ids=rows.map(row=>row.id);
+      try{
+        const settled=new Set((ids.length?await fetchRowsByIds('payments','sale_id',ids,'sale_id'):[]).map(row=>row.sale_id));
+        rows=rows.filter(row=>settled.has(row.id)===(paid==='true'));
+        paymentStateApplied=true;
+      }catch(paymentError){fail(paymentError)}
+    }
     $('recent').innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Gross</th><th>Net</th><th></th></tr>
       ${rows.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
@@ -12875,11 +13268,30 @@ async function salesPage(){
         ...sale,customer_name:sale.clients?.full_name||'Walk-in'
       },loadRecent);
     });
+    /* V266: pressing Apply with a range that happens to contain the same sales used to change
+       nothing at all on screen, which reads as a broken button. State the range that is now in
+       force and how many rows it matched, next to the control that set it. */
+    const period=`${from?dashboardScheduleDayLabelV252(from):'the earliest sale'} to ${to?dashboardScheduleDayLabelV252(to):'the latest sale'}`;
+    salesFilterNoteV266(paymentStateApplied
+      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}`
+      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied`,
+      paymentStateApplied?'':'warn');
+    }finally{
+      if(applyButton?.isConnected)CUI.setButtonBusy(applyButton,{busy:false});
+    }
   }
-  ['salesApply','salesFrom','salesTo','salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
+  ['salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
+  /* V266: the dates are committed by Apply filters, not by every keystroke inside the date
+     input — a half-typed year would otherwise fire a query the owner never asked for. Editing
+     one says so, so the button visibly has something to do. */
+  ['salesFrom','salesTo'].forEach(id=>{const el=$(id);if(el)el.oninput=()=>salesFilterNoteV266('Dates changed — press Apply filters.')});
   $('salesApply').onclick=loadRecent;
   $('salesCustomer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();loadRecent()}};
-  $('salesClear').onclick=()=>{['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');loadRecent()};
+  $('salesClear').onclick=()=>{
+    ['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');
+    $('salesFrom').value=salesDefaultFromV266;$('salesTo').value=salesDefaultToV266;
+    loadRecent();
+  };
   loadRecent();
 }
 
@@ -13325,7 +13737,11 @@ async function bookingsPage(){
      behind the flag but still asked every sector the question, so an appointment business was
      offered a switch it can never truthfully turn on. The question now belongs to seated
      sectors only (INDUSTRIES keys), while the booking rules below it render for everyone. */
-  const seatingSectorV235=['fnb','other'].includes(String(S.biz.industry||'').toLowerCase());
+  /* V276: 'bar' joins the seated list. The helper text under this very switch already reads
+     "Turn this on for a cafe, restaurant or bar" — but 'bar' was not in the list, so the one
+     sector the copy names by hand never saw the switch, and with it lost Tables / capacity,
+     the when-you-are-full rule and auto-confirm. A bar has tables. */
+  const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
   routeMain.innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
@@ -14044,12 +14460,32 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(match)return match.name;
     return r.min_tier_threshold==null?'':`${r.min_tier_threshold}+ ${unit}`;
   };
+  /* V271 (owner circled two rewards both named "A thank-you on your next visits" — one live, one
+     already retired — and asked which to delete). Nothing is deleted: the retired one is already
+     invisible to customers, and removing a published reward destroys configuration a customer
+     record can still point at. The actual defect is that this list drew them identically. Two
+     facts now tell them apart: the retired one SAYS it is retired, and when two rewards share a
+     name each one says when it was added. */
+  const rewardStatusV271=(r)=>r?.active===false?{label:'Retired',tone:'off'}
+    :p?.active===false?{label:'Paused with programme',tone:'off'}
+    :rewardBoundary(r);
+  const rewardNameCountsV271=(rewards||[]).reduce((counts,r)=>{
+    const key=rewardLabel(r).toLowerCase();counts[key]=(counts[key]||0)+1;return counts;
+  },{});
+  const rewardIdentityLineV271=(r)=>{
+    const parts=[];
+    if(r?.active===false)parts.push('Retired — customers cannot see or claim this');
+    if(rewardNameCountsV271[rewardLabel(r).toLowerCase()]>1)
+      parts.push(r?.created_at?`Added ${walletDate(r.created_at,true)}`:'Added date not recorded');
+    return parts.length?`<div class="muted small" style="margin-top:4px">${esc(parts.join(' · '))}</div>`:'';
+  };
   const rewardRows=(label)=>`
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
-    ${rewards.length?rewards.map(r=>{const state=rewardBoundary(r);return `<div class="reward-item">
+    ${rewards.length?rewards.map(r=>{const state=rewardStatusV271(r);return `<div class="reward-item">
       <div class="meta"><div><b class="inline-status">${r.active?'':CUI.icon('retention',{size:15})}${esc(rewardLabel(r))}</b>
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
+        ${rewardIdentityLineV271(r)}
         ${r.claim_available_from||r.claim_available_until?`<div class="muted small" style="margin-top:4px">${r.claim_available_from?`Starts ${esc(walletDate(r.claim_available_from,true))}`:'Available now'}${r.claim_available_until?` · Ends ${esc(walletDate(r.claim_available_until,true))}`:''}</div>`:''}
         ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}
         ${rewardTierGateLabelV176(r)?`<div class="muted small" style="margin-top:4px">🔒 ${esc(rewardTierGateLabelV176(r))} and above</div>`:''}</div>
@@ -14345,6 +14781,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       return {label:'Fitness / Wellness',low:3,high:12,start:6};
     if(/f&b|cafe|café|food|restaurant|fn?b/.test(key))
       return {label:'F&B / Café',low:2,high:8,start:5};
+    /* V276: a bar is an F&B floor for give-back purposes — same ticket rhythm, same margin band.
+       Without this it fell to the anonymous "your sector" default and its wider 2-10% band. */
+    if(/^bar$|pub/.test(key))
+      return {label:'Bar / Pub',low:2,high:8,start:5};
     return {label:'your sector',low:2,high:10,start:5};
   };
   const growRecOpen=$('growRecOpen');
@@ -15358,16 +15798,16 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_per_cents,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until').eq('business_id',S.biz.id).order('sort')
+    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
   const productsRequest=S.myRole==='owner'
     ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
     :Promise.resolve(none);
   const referralsRequest=modules.includes('referrals')
-    ?sb.from('referral_programs').select('id,enabled,reward_cents,min_spend_cents').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('referral_programs').select('id,enabled,reward_cents,min_spend_cents,created_at').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const membershipsRequest=modules.includes('memberships')
-    ?sb.from('membership_plans').select('id,name,active').eq('business_id',S.biz.id).order('created_at',{ascending:false})
+    ?sb.from('membership_plans').select('id,name,active,created_at').eq('business_id',S.biz.id).order('created_at',{ascending:false})
     :Promise.resolve(none);
   const giftcardsRequest=modules.includes('giftcards')
     ?sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})
@@ -15385,7 +15825,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
   if(businessError)throw businessError;
   const currentVersion=business?.active_config_version_id||null;
   const retentionRequest=canWinback&&currentVersion
-    ?sb.from('retention_programs').select('id,name,active,goal_visits,period_days,starts_on').eq('business_id',S.biz.id)
+    ?sb.from('retention_programs').select('id,name,active,goal_visits,period_days,starts_on,created_at').eq('business_id',S.biz.id)
       .eq('current_config_version_id',currentVersion)
     :Promise.resolve(none);
   const birthdayRequest=canRewards&&currentVersion
@@ -15402,6 +15842,20 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     {data:birthday,error:birthdayError}]
     =await Promise.all([retentionRequest,draftRequest,birthdayRequest]);
   if(!isCurrent())return null;
+  /* V268 (owner: "why inside after edit does not updated"). Until now this overview fetched the
+     PUBLISHED catalogue plus the draft's header row only, so a saved edit had no representation
+     on this page at all — the list could not have shown a pending change even in principle.
+     Read the draft's own programme and reward values as well. They are never substituted for the
+     published ones; they only let a changed card say what it will become. Owner-gated (the RPC
+     raises 42501 otherwise) and fail-soft: a failed read leaves the page exactly as it was. */
+  const draftHeaderV268=draftError?null:(drafts||[])[0]||null;
+  let draftDetailV268=null,draftDetailErrorV268=null;
+  if(draftHeaderV268?.id&&canSetupGrow){
+    const {data:draftDetail,error:draftDetailError}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftHeaderV268.id});
+    if(!isCurrent())return null;
+    draftDetailErrorV268=draftDetailError||null;
+    draftDetailV268=draftDetailError?null:draftDetail||null;
+  }
   /* Overview reads are intentionally fail-soft. A failed optional-engine read must not hide the
      rest of Grow or be mistaken for an unconfigured programme; its row remains Unavailable. */
   return {
@@ -15418,7 +15872,9 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     giftcards:giftcardsError?null:{available:giftcardPreferences?.status==='available'
       &&typeof giftcardPreferences?.gift_card_sales_enabled==='boolean',
       enabled:giftcardPreferences?.gift_card_sales_enabled===true},
-    draft:draftError?null:(drafts||[])[0]||null,
+    draft:draftHeaderV268,
+    draftDetail:draftDetailV268,
+    draftDetailError:Boolean(draftDetailErrorV268),
     overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError),
       retention:Boolean(retentionError),referrals:Boolean(referralsError),memberships:Boolean(membershipsError),
       promotions:Boolean(promotionsError),
@@ -15689,6 +16145,92 @@ function promotionRpcErrorIsAmbiguousV104(error){
   if(error.code)return false;
   return /failed to fetch|network|load failed|timeout|timed out|connection|offline/i
     .test(String(error.message||error.error||error));
+}
+/* V280 (owner, live bar tenant: "promotions loading forever - cannot publish"). Three separate
+   defects sat behind that one sentence, and all three are fixed here rather than papered over.
+
+   1. NOTHING released the busy state on an unexpected throw. save() disabled the buttons, wrote
+      "Publishing…", and every later line assumed each await would RESOLVE. storage-js rethrows any
+      failure that is not a StorageError (a dropped connection during upload or remove is exactly
+      that), so a single throw skipped every re-enable path and left Publish disabled with the two
+      status lines frozen — forever, with no error anywhere. runSave is now wrapped, and every
+      storage call goes through withDeadlineV280, which turns a throw OR a stall into a normal
+      {error} the existing branches already handle.
+   2. The photo status line was never updated after the upload SUCCEEDED, so "Uploading promotion
+      photo…" stayed on screen through the whole finalize and any later failure looked like an
+      upload that never ended. It now says what is actually happening.
+   3. A 2 MB phone/AI-generated PNG was uploaded byte-for-byte. It is downscaled before upload, so
+      the request that used to sit there is small enough to finish, and an oversized file is
+      refused with a plain sentence BEFORE anything is uploaded. */
+const PROMOTION_MEDIA_MAX_BYTES_V280=10485760;
+const PROMOTION_MEDIA_TYPES_V280=Object.freeze(['image/png','image/jpeg','image/webp','image/gif']);
+/* A promotion photo is rendered in a card no wider than a phone screen; 1600px on the long edge is
+   already generous for a 2x display. GIFs are never touched — redrawing one to a canvas keeps the
+   first frame and silently destroys the animation the owner chose. */
+const PROMOTION_MEDIA_MAX_EDGE_V280=1600;
+const PROMOTION_MEDIA_DOWNSCALE_ABOVE_BYTES_V280=1048576;
+const PROMOTION_STORAGE_TIMEOUT_MS_V280=45000;
+function promotionPhotoRefusalV280(file){
+  if(!file)return '';
+  if(!PROMOTION_MEDIA_TYPES_V280.includes(file.type))return 'That file type cannot be used. Choose a PNG, JPG, WebP or GIF.';
+  if(Number(file.size||0)>PROMOTION_MEDIA_MAX_BYTES_V280){
+    return `That photo is ${(Number(file.size||0)/1048576).toFixed(1)} MB. The limit is 10 MB — choose a smaller photo.`;
+  }
+  return '';
+}
+/* Every storage call in this editor is bounded. The underlying request may still be in flight when
+   the deadline fires; that is deliberate — releasing the owner's screen matters more than the
+   orphaned object, which the v95 cleanup queue already exists to collect. */
+const withDeadlineV280=(work,ms,timeoutMessage)=>new Promise(resolve=>{
+  let settled=false;
+  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(value)};
+  const timer=setTimeout(()=>{
+    if(settled)return;settled=true;resolve({data:null,error:new Error(timeoutMessage)});
+  },ms);
+  Promise.resolve(work).then(finish,error=>finish({data:null,error}));
+});
+async function downscalePromotionPhotoV280(file){
+  if(!file||file.type==='image/gif')return file;
+  if(Number(file.size||0)<=PROMOTION_MEDIA_DOWNSCALE_ABOVE_BYTES_V280)return file;
+  if(typeof createImageBitmap!=='function'||typeof document==='undefined')return file;
+  let bitmap=null;
+  try{bitmap=await createImageBitmap(file)}catch(_error){return file}
+  try{
+    const longest=Math.max(Number(bitmap.width||0),Number(bitmap.height||0));
+    if(!longest)return file;
+    const scale=longest>PROMOTION_MEDIA_MAX_EDGE_V280?PROMOTION_MEDIA_MAX_EDGE_V280/longest:1,
+      width=Math.max(1,Math.round(bitmap.width*scale)),
+      height=Math.max(1,Math.round(bitmap.height*scale)),
+      canvas=document.createElement('canvas');
+    canvas.width=width;canvas.height=height;
+    const context=canvas.getContext('2d');
+    if(!context)return file;
+    /* A transparent PNG re-encoded as JPEG would render its transparency as black. */
+    context.fillStyle='#ffffff';context.fillRect(0,0,width,height);
+    context.drawImage(bitmap,0,0,width,height);
+    const blob=await new Promise(resolve=>{
+      try{canvas.toBlob(resolve,'image/jpeg',0.86)}catch(_error){resolve(null)}
+    });
+    if(!blob||blob.size>=Number(file.size||0))return file;
+    const base=String(file.name||'promotion').replace(/\.[^.]+$/,'')||'promotion';
+    return new File([blob],`${base}.jpg`,{type:'image/jpeg',lastModified:Date.now()});
+  }finally{try{bitmap.close?.()}catch(_error){}}
+}
+/* V280 (owner: "cannot publish"). The FIRST publish of a newly created promotion could never
+   succeed. business_create_promotion_draft_v155 returns the v104 receipt — content_version 1 —
+   and only then calls app.save_promotion_scope_v155, which writes the branch scope onto the same
+   row and bumps it to 2. The editor then finalized with the version it was handed and Postgres
+   answered promotion_version_conflict, every single time, for every new offer with a photo.
+   The migration makes the wrapper report the version it actually left behind; this is the client
+   half, which re-reads the promotion and retries ONCE with the true versions. It is worth having
+   on its own: any concurrent edit produces the same conflict, and re-reading is the honest
+   response to "your copy of the version is stale". The retry mints a NEW attempt key because the
+   arguments changed, and it is only ever reached after a definitive rollback, so it cannot
+   double-apply. */
+function promotionVersionConflictV280(error){
+  if(!error)return false;
+  const code=String(error.code||''),message=String(error.message||error.error||'');
+  return code==='40001'||/promotion_version_conflict|promotion_copy_version_conflict|promotion_target_media_version_conflict/.test(message);
 }
 /* V186 (owner: "i dont see the published marketing content - live sync"). The offer WAS
    published — and scheduled to start two days later — but every owner-facing label said only
@@ -16033,6 +16575,18 @@ async function promotionsPage(selectedPromotionId=null){
     workingPromotion=promotionEditorItemV104(result.data?.item||result.data||{id:workingPromotionId});
     return {data:workingPromotion,error:null};
   };
+  /* V280: the only honest answer to "your version is stale" is to go and read the real one. */
+  const refreshPromotionV280=async promotionId=>{
+    const reread=await withDeadlineV280(
+      sb.rpc('business_get_promotion_editor_v155',{p_business:businessId}),
+      PROMOTION_RPC_TIMEOUT_MS_V186,
+      'Re-reading this promotion took too long.'
+    );
+    if(reread.error)return null;
+    const items=Array.isArray(reread.data?.items)?reread.data.items:[],
+      found=items.find(item=>String(item?.id||item?.promotion_id||'')===String(promotionId));
+    return found?promotionEditorItemV104(found):null;
+  };
   const exactTargetMediaVersion=(item,branchId)=>{
     const exact=promotionScopeMediaV104(item,branchId,{allowGlobalFallback:false});
     return Number(exact?.version||exact?.media_version||exact?.target_media_version||0);
@@ -16057,19 +16611,23 @@ async function promotionsPage(selectedPromotionId=null){
   const clearFinalizedObjects=async(result,pending)=>{
     const oldPath=result?.previous_object_path||null;
     if(oldPath&&oldPath!==pending?.objectPath){
-      await NestlyMediaSyncV95.removeOrQueue({
+      /* V280: housekeeping must never be able to hold the owner's screen. */
+      await withDeadlineV280(NestlyMediaSyncV95.removeOrQueue({
         storage:sb.storage,client:sb,businessId,objectPath:oldPath,
         reason:'superseded v104 promotion photo'
-      });
+      }),PROMOTION_STORAGE_TIMEOUT_MS_V280,'Old photo cleanup did not finish in time.');
     }
   };
   const cleanFailedUpload=async pending=>{
     if(!pending?.objectPath)return {status:'not_required'};
-    return NestlyMediaSyncV95.removeOrQueue({
+    /* V280: this ran on the definitive-failure path with no deadline and no guard. storage-js
+       rethrows anything that is not a StorageError, so a dropped connection here threw straight
+       through save() and froze the editor on "Publishing…" instead of showing the real failure. */
+    return withDeadlineV280(NestlyMediaSyncV95.removeOrQueue({
       storage:sb.storage,client:sb,businessId,
       objectPath:pending.objectPath,
       reason:'v104 promotion photo after definitive finalization failure'
-    });
+    }),PROMOTION_STORAGE_TIMEOUT_MS_V280,'Photo cleanup did not finish in time.');
   };
   const runPendingFinalize=async pending=>{
     const result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
@@ -16078,36 +16636,63 @@ async function promotionsPage(selectedPromotionId=null){
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
       return result;
     }
-    if(!promotionRpcErrorIsAmbiguousV104(result.error)){
+    /* V280: a version conflict is RETRYABLE with re-read versions, and the photo it refers to is
+       the same photo that retry will attach. Deleting it here is what turned a recoverable
+       conflict into an offer that could never be published. */
+    if(!promotionRpcErrorIsAmbiguousV104(result.error)
+       &&!promotionVersionConflictV280(result.error)){
       await cleanFailedUpload(pending);
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
     }
     return result;
   };
   const uploadPromotionPhoto=async({file,alt,promotionId})=>{
+    /* V280: shrink first. The object path extension and the declared mime type are both taken from
+       the file we actually send, because app.v95_storage_object_is_publishable() checks that the
+       path suffix, the declared mime type and the stored object all agree. */
+    const sending=await downscalePromotionPhotoV280(file);
     let dimensions;
-    try{dimensions=await imageDimensionsV95(file)}
+    try{dimensions=await imageDimensionsV95(sending)}
     catch(error){return {error,fileInfo:null}}
-    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type],
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[sending.type],
       objectPath=`${businessId}/offer/${crypto.randomUUID()}.${extension}`,
-      uploaded=await sb.storage.from('business-public').upload(
-        objectPath,file,{contentType:file.type,upsert:false}
+      uploaded=await withDeadlineV280(
+        sb.storage.from('business-public').upload(
+          objectPath,sending,{contentType:sending.type,upsert:false}
+        ),
+        PROMOTION_STORAGE_TIMEOUT_MS_V280,
+        'The photo upload did not finish in time. Check your connection and try again.'
       );
     if(uploaded.error)return {error:uploaded.error,fileInfo:null};
     return {error:null,fileInfo:{
-      objectPath,mimeType:file.type,width:dimensions.width,height:dimensions.height,alt
+      objectPath,mimeType:sending.type,width:dimensions.width,height:dimensions.height,alt
     }};
   };
   const completionMessage=pending=>pending?.operation==='unpublish'
     ?'Promotion unpublished'
     :pending?.publish?'Promotion published':'Promotion draft saved';
-  const save=async(publish,{unpublish=false}={})=>{
+  const runSave=async(publish,{unpublish=false}={})=>{
     if(pendingFinalize){
       const status=field('promotionSaveStatus');
       const pending=pendingFinalize;
       status.textContent='Confirming the previous save…';
       const resumed=await runPendingFinalize(pending);
       if(!isPromotionCurrent())return;
+      if(resumed.error&&promotionVersionConflictV280(resumed.error)){
+        /* V280: a HELD receipt whose expected versions are stale can never succeed, however many
+           times it is replayed — and this branch runs first on every press and after every
+           reload, so keeping it is precisely how "cannot publish" became permanent. Release it
+           (and the photo it points at, which is now attached to nothing) so the next press takes
+           the normal path, which re-reads the promotion before it finalizes. */
+        pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+        await cleanFailedUpload(pending);
+        if(!isPromotionCurrent())return;
+        [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')]
+          .filter(Boolean).forEach(button=>{button.disabled=false});
+        status.textContent='This promotion changed since that save was interrupted. Your edits are still here — choose the photo again and press Publish.';
+        field('promotionImageStatus').textContent='Choose the photo again before publishing.';
+        return;
+      }
       if(resumed.error){
         /* V186: the resume branch left every control disabled, so a stalled save locked the
            owner out of the editor entirely — in this tab and, because pendingFinalize is
@@ -16135,7 +16720,12 @@ async function promotionsPage(selectedPromotionId=null){
     if(!draft.name||!draft.description)return toast('Polish or write the headline and customer message.');
     if(!draft.starts_at||!draft.ends_at||new Date(draft.ends_at)<=new Date(draft.starts_at))return toast('Choose a valid start and end date.');
     if(!PROMOTION_COPY_POLICY_V104.ctas[draft.ctaKind]||!draft.ctaLabel)return toast('Choose a clear customer action.');
-    if(file&&(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760))return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
+    const photoRefusalV280=promotionPhotoRefusalV280(file);
+    if(photoRefusalV280){
+      const refusedStatus=field('promotionImageStatus');
+      if(refusedStatus)refusedStatus.textContent=photoRefusalV280;
+      return toast(photoRefusalV280);
+    }
     if(file&&!alt)return toast('Add a photo description.');
     const status=field('promotionSaveStatus'),buttons=[field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')].filter(Boolean);
     buttons.forEach(button=>button.disabled=true);
@@ -16159,25 +16749,66 @@ async function promotionsPage(selectedPromotionId=null){
       if(file){
         if(isPromotionCurrent())field('promotionImageStatus').textContent='Uploading promotion photo…';
         const uploaded=await uploadPromotionPhoto({file,alt,promotionId:workingPromotionId});
+        if(!isPromotionCurrent())return;
         if(uploaded.error){
-          if(!isPromotionCurrent())return;
-          buttons.forEach(button=>button.disabled=false);
-          status.textContent='Your draft is safe. The photo needs another try.';
-          field('promotionImageStatus').textContent='Photo was not saved. Your draft is safe; try again.';
-          return fail(uploaded.error);
+          /* V280: publishing genuinely needs a photo, so a failed upload still stops it — but a
+             DRAFT save must not lose the owner's words because a photo would not upload. */
+          if(publish){
+            buttons.forEach(button=>button.disabled=false);
+            status.textContent='Your draft is safe. The photo needs another try.';
+            const publishPhotoFailureV280=`Photo was not saved: ${ownerErrorText(uploaded.error)} Your words are safe — press Save draft, or try the photo again.`;
+            field('promotionImageStatus').textContent=publishPhotoFailureV280;
+            return fail(uploaded.error);
+          }
+          const draftPhotoFailureV280=`Photo was not saved: ${ownerErrorText(uploaded.error)} This draft was saved without it.`;
+          field('promotionImageStatus').textContent=draftPhotoFailureV280;
+        }else{
+          fileInfo=uploaded.fileInfo;
+          /* V280: this line used to stay on "Uploading promotion photo…" for the whole finalize,
+             so a later failure looked like an upload that never ended. */
+          field('promotionImageStatus').textContent='Photo uploaded. Saving the promotion…';
         }
-        fileInfo=uploaded.fileInfo;
       }
-      const attemptKey=crypto.randomUUID(),
-        args=finalizeArgs({draft,publish,promotion:workingPromotion,fileInfo,attemptKey});
-      pendingFinalize={
-        businessId,promotionId:workingPromotionId,publish,
-        operation:unpublish?'unpublish':publish?'publish':'draft',
-        objectPath:fileInfo?.objectPath||null,args,attemptKey,
-        fingerprint:JSON.stringify(args)
+      const buildPendingFinalizeV280=(promotion,attemptKey)=>{
+        const args=finalizeArgs({draft,publish,promotion,fileInfo,attemptKey});
+        return {
+          businessId,promotionId:workingPromotionId,publish,
+          operation:unpublish?'unpublish':publish?'publish':'draft',
+          objectPath:fileInfo?.objectPath||null,args,attemptKey,
+          fingerprint:JSON.stringify(args)
+        };
       };
+      pendingFinalize=buildPendingFinalizeV280(workingPromotion,crypto.randomUUID());
       writeSessionValue(pendingStorageKey,pendingFinalize);
-      const finalized=await runPendingFinalize(pendingFinalize);
+      let finalized=await runPendingFinalize(pendingFinalize);
+      if(finalized.error&&promotionVersionConflictV280(finalized.error)){
+        if(!isPromotionCurrent())return;
+        status.textContent='Checking the latest version of this promotion…';
+        const refreshed=await refreshPromotionV280(workingPromotionId);
+        if(!isPromotionCurrent())return;
+        if(refreshed){
+          workingPromotion=refreshed;
+          /* A new attempt key: the arguments changed, and the first attempt definitively rolled
+             back, so replaying the old key would only raise promotion_attempt_key_reused. */
+          pendingFinalize=buildPendingFinalizeV280(refreshed,crypto.randomUUID());
+          writeSessionValue(pendingStorageKey,pendingFinalize);
+          status.textContent=unpublish?'Unpublishing…':publish?'Publishing…':'Saving draft…';
+          finalized=await runPendingFinalize(pendingFinalize);
+        }
+      }
+      if(finalized.error&&promotionVersionConflictV280(finalized.error)){
+        /* Two conflicts in a row means this promotion is being changed somewhere else. Release the
+           held receipt — keeping it would lock the editor into replaying a request that cannot
+           succeed, which is exactly how "cannot publish" became permanent. */
+        const abandoned=pendingFinalize;
+        pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+        await cleanFailedUpload(abandoned);
+        if(!isPromotionCurrent())return;
+        buttons.forEach(button=>button.disabled=false);
+        status.textContent='This promotion was changed somewhere else while you were editing. Reopen it to see the latest version, then publish again.';
+        field('promotionImageStatus').textContent='Choose the photo again after reopening the promotion.';
+        return;
+      }
       if(finalized.error){
         if(!isPromotionCurrent())return;
         buttons.forEach(button=>button.disabled=false);
@@ -16196,6 +16827,26 @@ async function promotionsPage(selectedPromotionId=null){
     const savedId=saveResult?.promotion_id||saveResult?.item?.id||workingPromotionId;
     toast(unpublish?'Promotion unpublished':publish?'Promotion published':'Promotion draft saved');
     promotionsPage(savedId);
+  };
+  /* V280: the busy state is released on EVERY path, including one nobody predicted. runSave
+     disables the buttons before its first await; anything that throws after that point used to
+     leave Publish disabled and "Publishing…" on screen with no error, for as long as the owner
+     was willing to wait. */
+  const save=async(publish,options={})=>{
+    try{return await runSave(publish,options)}
+    catch(error){
+      if(!isPromotionCurrent())return;
+      [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')]
+        .filter(Boolean).forEach(button=>{button.disabled=false});
+      const status=field('promotionSaveStatus');
+      const unexpectedFailureV280=`This did not finish: ${ownerErrorText(error)} Nothing was lost — press again.`;
+      if(status)status.textContent=unexpectedFailureV280;
+      const imageStatus=field('promotionImageStatus');
+      if(imageStatus&&/^(Uploading promotion photo|Photo uploaded)/.test(imageStatus.textContent||'')){
+        imageStatus.textContent='The photo did not finish. Your draft is safe; choose it again and retry.';
+      }
+      return fail(error);
+    }
   };
   if(field('promotionSave'))field('promotionSave').onclick=()=>save(false);
   field('promotionPublish').onclick=()=>save(true);
@@ -16259,6 +16910,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       .then(r=>r.error?null:(r.data||[])).catch(()=>null)
     :[];
   if(!isGrowCurrent())return;
+  /* V271: the two reads the Overview and History tables need and nothing else can supply.
+     business_programme_usage_v271 is the only honest source for "how many customers used this" —
+     a DISTINCT-customer count cannot be expressed through PostgREST, and paging the whole
+     points_ledger into the browser to count it there would silently under-count the moment a page
+     limit clipped the result. The earliest published config version is when this firm's programme
+     configuration first reached a customer, which is the point system's real start date.
+     Both are fail-soft and NEITHER is ever replaced by a zero — see growCountCellV271. */
+  const growProgrammeReadsV271=await Promise.all([
+    canRewards?sb.rpc('business_programme_usage_v271',{p_business:S.biz.id})
+      .then(result=>result.error?null:(result.data||null)).catch(()=>null):Promise.resolve(null),
+    canRewards?sb.from('firm_config_versions').select('published_at').eq('business_id',S.biz.id)
+      .not('published_at','is',null).order('published_at',{ascending:true}).limit(1)
+      .then(result=>result.error?null:((result.data||[])[0]?.published_at||null)).catch(()=>null)
+      :Promise.resolve(null)
+  ]);
+  if(!isGrowCurrent())return;
+  const growUsageV271=growProgrammeReadsV271[0];
+  const growFirstPublishedV271=growProgrammeReadsV271[1];
   const pointsModeV229=S.biz.points_mode||null;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
@@ -16266,9 +16935,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      paused programme makes eight rows say "Programme paused" while none of them says how to fix
      it — and publishing a config does NOT turn the programme on. Say it once, on the row that
      owns the switch, and name the action. */
-  const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
-    ?rewardJourney.earning.label
-    :`Paused — customers earn nothing and no reward below is claimable. Open Edit to turn it on. Configured as ${rewardJourney.earning?.label||'no earning rule'}`;
+  /* V271 (owner marked up the Point system row: "paused" struck from the heading, the sentence
+     the whole "…turn it on / Configured as…" sentence struck with "remove wording", and
+     "Current Setting: SGD 1 spent → 1 points" written underneath with a circled Edit). The row now
+     carries the one fact an owner opened it to read — what a customer gets per dollar — and says
+     whether it is running exactly once, in the status pill. rewardJourney.earning.label is
+     deliberately NOT reused: it hardcodes "SGD", which is simply wrong on any tenant whose
+     currency is not SGD, and the number must come from the configured value, never a literal. */
+  const growCurrencyV271=S.biz?.currency||'SGD';
+  const growEarnUnitV271=(value,unit)=>`${value} ${Number(value)===1?(unit==='stamps'?'stamp':'point'):(unit==='stamps'?'stamps':'points')}`;
+  const growEarnRateTextV271=earning=>{
+    if(!earning)return '';
+    if(earning.model==='stamps')return `${growCurrencyV271} ${(Math.max(0,Number(earning.rate)||0)/100).toFixed(2)} spent → 1 stamp`;
+    return `${growCurrencyV271} 1 spent → ${growEarnUnitV271(Math.max(0,Number(earning.rate)||0),earning.unit)}`;
+  };
+  const earningOverviewCopy=`Current setting: ${growEarnRateTextV271(rewardJourney.earning)}`;
   const rewardsOverviewIncomplete=Object.values(snapshot.overviewErrors||{}).some(Boolean);
   const growAsOfDate=Number.isFinite(Date.parse(snapshot.asOf||''))
     ?sgDateInputValue(new Date(snapshot.asOf)):sgDateInputValue();
@@ -16370,10 +17051,68 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      in-page tab strip is gone because the sidebar already offers exactly these two
      destinations — having both was the duplicated navigation the owner flagged. The
      'available' and 'settings' hashes still resolve so existing links do not break. */
-  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
+  /* V271 (owner drew three destinations under Programmes: "Programmes Overview / Programmes List /
+     Programmes History"). 'overview' and 'history' are genuinely different SURFACES, not filters of
+     the list — one is a columnar at-a-glance table of what is running, the other is what has
+     stopped — which is why they earn a strip the V180 filter tabs did not. The older 'ongoing',
+     'available' and 'settings' hashes still resolve so no existing link or history entry breaks. */
+  const programmeView=['overview','history','ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
   /* V229: the Ongoing / To set up views are flat lists; a drilled topic only makes sense from
      the tile overview, so arriving via those views clears it. */
   if(programmeView!=='list')growTopicV229='';
+  /* V268 (owner circled four reward cards: "why inside after edit does not updated"). V198 put a
+     banner at the top of the page, but the banner cannot say WHICH card the owner just edited, so
+     a person who typed a new number still reads the old one as a lost edit. The published value
+     therefore stays exactly where it was — customers' current reality is the one thing this list
+     must never blur — and the pending value is added BESIDE it, only on the cards whose draft
+     genuinely differs. Marking every card would make the marker worthless. */
+  const growDraftDetailV268=snapshot.draftDetail||null;
+  const growDraftDetailErrorV268=Boolean(snapshot.draftDetailError);
+  const growRewardLabelV268=row=>String(row?.customer_name||row?.name||'Reward').trim();
+  const growPendingRewardsV268=new Map();
+  const growPendingNewRewardsV268=[];
+  if(growDraftDetailV268){
+    const publishedByIdV268=new Map((snapshot.rewards||[]).map(reward=>[String(reward.id),reward]));
+    (Array.isArray(growDraftDetailV268.rewards)?growDraftDetailV268.rewards:[]).forEach(draftReward=>{
+      const key=String(draftReward.reward_id||draftReward.id||'');
+      const live=publishedByIdV268.get(key);
+      if(!live){
+        /* A reward the draft creates does not exist for customers at all, so it gets its own
+           card marked as not live rather than a pending line on somebody else's card. */
+        if(draftReward.active!==false)growPendingNewRewardsV268.push({
+          name:growRewardLabelV268(draftReward),cost:Math.max(0,Number(draftReward.cost_points||0))});
+        return;
+      }
+      const changes=[];
+      if(growRewardLabelV268(draftReward)!==growRewardLabelV268(live))
+        changes.push({label:'Name',live:growRewardLabelV268(live),pending:growRewardLabelV268(draftReward)});
+      if(Number(draftReward.cost_points||0)!==Number(live.cost_points||0))
+        changes.push({label:'Cost',live:`${Math.max(0,Number(live.cost_points||0))} ${rewardJourney.unit}`,
+          pending:`${Math.max(0,Number(draftReward.cost_points||0))} ${rewardJourney.unit}`});
+      if((draftReward.active!==false)!==(live.active!==false))
+        changes.push({label:'Offered',live:live.active!==false?'Yes':'No',pending:draftReward.active!==false?'Yes':'No'});
+      if(changes.length)growPendingRewardsV268.set(key,changes);
+    });
+  }
+  const growPendingEarningV268=(()=>{
+    const draft=growDraftDetailV268?.program||null,live=snapshot.loyalty||null;
+    if(!draft||!live)return [];
+    const changes=[];
+    if(String(draft.loyalty_model||'')!==String(live.loyalty_model||''))
+      changes.push({label:'Model',live:String(live.loyalty_model||'points'),pending:String(draft.loyalty_model||'points')});
+    if(Number(draft.earn_points_per_dollar||0)!==Number(live.earn_points_per_dollar||0))
+      changes.push({label:'Points per SGD 1',live:String(Number(live.earn_points_per_dollar||0)),
+        pending:String(Number(draft.earn_points_per_dollar||0))});
+    if(Number(draft.stamp_per_cents||0)!==Number(live.stamp_per_cents||0))
+      changes.push({label:'Spend per stamp',live:money(Number(live.stamp_per_cents||0)),
+        pending:money(Number(draft.stamp_per_cents||0))});
+    if((draft.active===true)!==(live.active===true))
+      changes.push({label:'Programme',live:live.active===true?'Active':'Paused',pending:draft.active===true?'Active':'Paused'});
+    return changes;
+  })();
+  /* Live value struck through, pending value in bold after the arrow: both readable, neither
+     replacing the other, and the block wraps to one item per line at 390px. */
+  const growPendingBlockV268=changes=>!changes||!changes.length?'':`<span class="grow-pending-v268" data-grow-pending-v268><span class="pill new grow-pending-pill-v268">Edited · not live yet</span>${changes.map(change=>`<span class="grow-pending-line-v268">${esc(change.label)}: <s data-merchant-content>${esc(change.live)}</s> → <b data-merchant-content>${esc(change.pending)}</b></span>`).join('')}</span>`;
   /* V198 (owner: "edited name inside but not shown"). This list is deliberately the PUBLISHED
      programme — it answers "what can my customers use right now", so a reward renamed in an open
      draft must keep its live name here or the list would promise something no customer can see.
@@ -16381,7 +17120,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      Say the edit is saved, say it is not live, and put the publish step one tap away. */
   const growDraftPendingId=snapshot.draft?.id||null;
   const growUnpublishedMarkerV198=growDraftPendingId&&canRewards
-    ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
+    ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
      Reward milestones live INSIDE Point system — the overview never floods. */
@@ -16420,11 +17159,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       summary:[activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:'',giftCardsLive?'gift cards on':''].filter(Boolean).join(' · ')||'Plans and gift cards'},
   ];
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
+  /* V268 (owner drew the hierarchy: category name, then its items with their set-up status).
+     Drilling in already showed the category name and its items — what was missing was WHERE the
+     reader is. "All programmes" sat alone on the right of the heading, so at 390px it read as a
+     stray action rather than the level above. The same trail now renders for every category, and
+     it keeps the one back control (id and handler unchanged) instead of adding a second. */
+  const growBreadcrumbV268=topic=>!topic?'':`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button><span aria-hidden="true">/</span><span class="grow-breadcrumb-current-v268">${esc(topic.title)}</span></nav>`;
   const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
   /* V235: the Stamp card tile is a third VIEW of the point engine, not a third section — it
      drills into the same rows, so nothing is duplicated and no tile is a dead end. */
   const growTopicSectionV235=growActiveTopicV229?.key==='stamps'?'points':(growActiveTopicV229?.key||null);
-  const topicOnV229=key=>growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229;
+  /* V271: Overview and History replace the category list rather than sitting above it — showing
+     both would put the same programme on the page twice under two different shapes. */
+  const growCategoryViewV271=!['overview','history'].includes(programmeView);
+  const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
      what is reaching customers now and what still needs the owner. 'on' is the one tone that
@@ -16469,8 +17217,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     /* V235 (owner: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as
        two half-truths). All three models are named, exactly one carries the Live mark, and the
        change itself happens in one place — the editor's segmented toggle. */
-    return `<div class="points-mode-chosen-v229">${showLiveModelsV250?`<span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span>`:''}${locked?'':editorAction('rewards','Change model','lm')}</div>`;
+    /* V271 (owner struck "Change model" and wrote "delete"). It opened the rewards editor focused
+       on 'lm' — the identical destination the Point system row's own Edit already opens — and the
+       four-way model toggle lives inside that editor (data-loyalty-model-v235). So the capability
+       keeps its entry point; this button was a second door onto the same one. A firm that has
+       never chosen a model still gets the cards above, which are that choice. */
+    if(!showLiveModelsV250)return '';
+    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span></div>`;
   };
+  /* Computed once so the row is not rendered as an empty shell when the chooser returns nothing. */
+  const growPointsChooserRowV271=growPointsModeChooserV229({showLiveModelsV250:false});
   /* V250 (owner drew reward boxes over this list — "Free Facial / 5 points", "Free Moisturiser /
      150 points", "Free xxx / xx points", plus a "+" — and crossed out the numbered rows, the
      "Add another reward" row and the "Start from a template" row). A reward is the thing a
@@ -16482,32 +17238,155 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      and the dashed "+" card fires the identical 'add' action the struck row fired. Templates
      were the only door into rewardTemplatesForSectorV172, so that flow survives as a secondary
      link under the grid — the row went, the capability did not. */
+  /* V271 (owner: a reward that is off only because the whole programme is paused, and a reward the
+     owner deliberately retired, both showed the identical grey "Paused"). They are undone by
+     different actions — one by turning the programme back on, the other by re-publishing the
+     reward — so they get different words. A live reward is untouched. */
   const rewardCardStatusV250=milestone=>milestone.availableToCustomers?['Live','on']
     :milestone.availability==='not_started'?['Scheduled','off']
-    :milestone.availability==='ended'?['Ended','off']:['Paused','off'];
-  const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId})=>{
-    const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>`;
+    :milestone.availability==='ended'?['Ended','off']
+    :milestone.availability==='programme_paused'?['Paused with programme','off']:['Paused','off'];
+  const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId,pending=null})=>{
+    const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>${growPendingBlockV268(pending)}`;
     return canSetupGrow
       ?`<button type="button" class="reward-card-v250" data-programme-kind="redeemable" data-rewards-overview-edit="${esc(editKind)}"${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="reward-card-open-v250">Edit →</span></button>`
       :`<article class="reward-card-v250" data-programme-kind="redeemable"${editKind==='catalogue'?' data-reward-milestone':''}${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="grow-programme-access">Read only</span></article>`;
   };
   const rewardCardsV250=[
     ...(rewardJourney.classicReward?[{name:rewardJourney.classicReward.name,cost:rewardJourney.classicReward.threshold,unit:rewardJourney.classicReward.unit,
-      status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
+      status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused with programme',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
     ...rewardJourney.milestones.map(milestone=>{
       const [status,tone]=rewardCardStatusV250(milestone);
-      return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id};
+      return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id,
+        pending:growPendingRewardsV268.get(String(milestone.id))||null};
     }),
     ...rewardJourney.archivedRewards.map(reward=>({name:reward.name,cost:reward.threshold,unit:reward.unit,
-      status:'Paused',tone:'off',editKind:'catalogue',rewardId:reward.id}))
+      status:'Retired',tone:'off',editKind:'catalogue',rewardId:reward.id,
+      pending:growPendingRewardsV268.get(String(reward.id))||null}))
   ];
   const rewardCardGridV250=`<div class="reward-card-grid-v250" data-reward-card-grid-v250>
       ${rewardCardsV250.map(rewardCardHtmlV250).join('')}
+      ${growPendingNewRewardsV268.map(reward=>`<article class="reward-card-v250 reward-card-pending-new-v268" data-programme-kind="redeemable" data-grow-pending-new-v268><span class="pill new">Not live yet</span><b class="reward-card-name-v250" data-merchant-content>${esc(reward.name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${reward.cost} ${rewardJourney.unit}`)}</span><span class="grow-pending-line-v268">Customers see this once you publish.</span></article>`).join('')}
       ${canSetupGrow?`<button type="button" class="reward-card-v250 reward-card-add-v250" data-programme-kind="redeemable" data-rewards-overview-edit="add"><span class="reward-card-plus-v250" aria-hidden="true">+</span><b class="reward-card-name-v250">Add reward</b></button>`:''}
     </div>
     ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}
     ${canSetupGrow?`<p class="reward-card-templates-v250"><button type="button" class="btn ghost sm" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel">${CUI.icon('star',{size:16})}<span>Start from a template</span></button></p>
     <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}`;
+  /* ===== V271 Programmes Overview and History =====
+     Owner, on Overview: "for programme overview, i want a simple glance (column) to see which
+     ongoing programmes is live including details (start date, type, how many programmes used by
+     clients, etc)". On History: "here are expired programmes launched before".
+
+     The honesty rule this table lives or dies by: a cell is SOURCED or it is ABSENT. A count that
+     could not be read renders "Not available"; a count nothing in the schema records renders
+     "Not tracked". Neither ever renders 0, because a zero here reads as a measurement, and a wrong
+     measurement of "how many of my customers used this" is worse than an admitted gap.
+
+     Not tracked, deliberately: promotion usage (a promotion is presentation — business_customer_
+     content_v95 — and nothing records a customer redeeming one), gift-card usage (the stored
+     purchaser is the BUYER, usually buying for someone else), and the welcome offer's start date
+     (business_welcome_offers_v215 keeps updated_at, which is the last edit, not the launch). */
+  const growUsageMapV271=(list,idKey)=>new Map((Array.isArray(list)?list:[])
+    .map(row=>[String(row?.[idKey]),row?.customers==null?null:Number(row.customers)]));
+  const growRewardUsageV271=growUsageMapV271(growUsageV271?.rewards,'reward_id');
+  const growRetentionUsageV271=growUsageMapV271(growUsageV271?.retention,'program_id');
+  const growPlanUsageV271=growUsageMapV271(growUsageV271?.memberships,'plan_id');
+  const growCountCellV271=value=>value==null
+    ?`<span class="muted">${growUsageV271?'Not tracked':'Not available'}</span>`
+    :esc(String(Number(value)));
+  const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
+    ?esc(promotionDateTextV104(value)):'<span class="muted">Not tracked</span>';
+  const growProgrammeEntriesV271=(()=>{
+    const entries=[];
+    const milestoneById=new Map();
+    rewardJourney.milestones.forEach(item=>milestoneById.set(String(item.id),item));
+    if(rewardJourney.earning)entries.push({name:'Point system',type:'Point system',
+      started:growFirstPublishedV271,ended:null,
+      state:rewardJourney.earning.availableToCustomers?'live':'paused',
+      customers:growUsageV271?(growUsageV271.point_system?.customers??null):null,
+      detail:growEarnRateTextV271(rewardJourney.earning)});
+    (snapshot.rewards||[]).forEach(reward=>{
+      const milestone=milestoneById.get(String(reward.id));
+      const state=reward.active===false?'retired'
+        :milestone?.availability==='ended'?'ended'
+        :milestone?.availability==='not_started'?'scheduled'
+        :milestone?.availableToCustomers?'live':'paused';
+      entries.push({name:reward.customer_name||reward.name||'Reward',type:'Reward',
+        started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
+        customers:growRewardUsageV271.get(String(reward.id))??null,
+        detail:`${Math.max(0,Number(reward.cost_points)||0)} ${rewardJourney.unit}`});
+    });
+    (snapshot.retention||[]).forEach(program=>{
+      const overview=retentionOverviewState(program);
+      entries.push({name:program.name||'Bring-back reward',type:'Bring-back',
+        started:program.starts_on||program.created_at||null,ended:null,
+        state:program.active===false?'retired':overview.status==='Live'?'live':'scheduled',
+        customers:growRetentionUsageV271.get(String(program.id))??null,
+        detail:`${Math.max(0,Number(program.goal_visits)||0)} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days)||0)} days`});
+    });
+    if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',
+      started:growUsageV271?.birthday?.started_at||null,ended:null,
+      state:rewardJourney.birthday.active?'live':'paused',
+      customers:growUsageV271?(growUsageV271.birthday?.customers??null):null,
+      detail:rewardJourney.birthday.value});
+    if(welcomeOfferStatusV215?.configured)entries.push({name:'Welcome offer',type:'Welcome offer',
+      started:null,ended:null,
+      state:welcomeOfferStatusV215.active===true&&welcomeOfferStatusV215.item_available!==false?'live':'paused',
+      customers:growUsageV271?(growUsageV271.welcome?.customers??null):null,
+      detail:welcomeOfferStatusV215.reward_label||''});
+    (snapshot.promotions||[]).forEach(promotion=>{
+      const ended=Number.isFinite(Date.parse(promotion?.ends_at||''))&&Date.parse(promotion.ends_at)<=Date.now();
+      entries.push({name:promotion?.name||'Promotion',type:'Promotion',
+        started:promotion?.starts_at||null,ended:promotion?.ends_at||null,
+        state:ended?'ended':promotion?.active===true?'live':'draft',
+        customers:null,detail:promotion?.tagline||''});
+    });
+    if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',
+      started:snapshot.referral.created_at||null,ended:null,
+      state:snapshot.referral.enabled===true?'live':'paused',
+      customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
+      detail:snapshot.referral.reward_cents?`${money(snapshot.referral.reward_cents)} to the referrer`:''});
+    (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
+      type:'Membership',started:plan?.created_at||null,ended:null,
+      state:plan?.active===false?'retired':'live',
+      customers:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
+    if(snapshot.giftcards?.available)entries.push({name:'Gift cards',type:'Gift cards',
+      started:null,ended:null,state:snapshot.giftcards.enabled?'live':'paused',
+      customers:null,detail:''});
+    return entries;
+  })();
+  const growOverviewRowsV271=growProgrammeEntriesV271.filter(entry=>entry.state==='live');
+  /* "Expired programmes launched before" = a programme that ran and no longer does. Two ways that
+     happens and they are named separately, because one is a date passing and the other is a
+     decision the owner made: an end date that is now in the past, or a retired/withdrawn row. A
+     merely PAUSED programme is neither — it is still on the list, one switch from running — so it
+     is deliberately absent from History rather than filed as if it were over. */
+  const growHistoryRowsV271=growProgrammeEntriesV271.filter(entry=>entry.state==='ended'||entry.state==='retired');
+  const growTableV271=({label,columns,rows,empty})=>rows.length
+    ?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="${esc(label)}"><table class="cui-table" data-responsive="true"><thead><tr>${columns.map(column=>`<th>${esc(column[0])}</th>`).join('')}</tr></thead><tbody>
+      ${rows.map(row=>`<tr>${columns.map(column=>`<td data-label="${esc(column[0])}">${column[1](row)}</td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>`
+    :`<div class="empty" role="status">${empty}</div>`;
+  const growOverviewTableV271=growTableV271({label:'Ongoing programmes',rows:growOverviewRowsV271,
+    empty:'<b>Nothing is running yet.</b><p class="muted small" style="margin-top:6px">Open the <a href="#/grow">Programmes list</a> — every programme there comes with a suggested starting point.</p>',
+    columns:[['Programme',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
+      ['Type',row=>esc(row.type)],
+      ['Started',row=>growDateCellV271(row.started)],
+      ['Customers used',row=>growCountCellV271(row.customers)],
+      ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
+  const growHistoryTableV271=growTableV271({label:'Programme history',rows:growHistoryRowsV271,
+    empty:'<b>Nothing has ended yet.</b><p class="muted small" style="margin-top:6px">Programmes appear here once they pass their end date or you retire them.</p>',
+    columns:[['Programme',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
+      ['Type',row=>esc(row.type)],
+      ['Ran from',row=>growDateCellV271(row.started)],
+      ['Ran until',row=>growDateCellV271(row.ended)],
+      ['Why it stopped',row=>esc(row.state==='ended'?'Reached its end date':'Retired by you')]]});
+  /* One strip, three destinations, each with its own hash so it is linkable and back-button-safe.
+     It reuses the house sub-module strip rather than reviving the V173-era one, which V173/V180
+     removed because it duplicated the sidebar's own sub-rows. These three are not sidebar rows —
+     V250 flattened Programmes to a single rail link — and they are not filters of one list. */
+  const growViewTabActiveV271=programmeView==='overview'?'overview':programmeView==='history'?'history':'list';
+  const growViewTabsV271=growActiveTopicV229?'':`<div class="v150-segment section-subtabs-v200" role="group" aria-label="Programme views">${[['overview','Overview','#/grow/overview'],['list','List','#/grow'],['history','History','#/grow/history']].map(([key,label,href])=>`<button type="button" data-grow-view-v271="${esc(href)}" aria-pressed="${growViewTabActiveV271===key?'true':'false'}">${esc(label)}</button>`).join('')}</div>`;
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -16516,10 +17395,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Programmes</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      ${growViewTabsV271}
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growTilesHtmlV229:''}
+      ${programmeView==='overview'?growOverviewTableV271:''}
+      ${programmeView==='history'?growHistoryTableV271:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
            rewards, Add another reward and Start from a template onto the Point system row).
@@ -16527,11 +17409,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            so the point scheme reads as one thing. Rewards that have nothing to do with a
            points balance — the welcome offer for a first visit, a birthday benefit, a
            bring-back for someone who has drifted — are their own group. -->
-      <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
-        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229({showLiveModelsV250:false})}</div>`:''}
+      <div class="programme-category" data-programme-category-v268="points"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
+        ${growActiveTopicV229&&growPointsChooserRowV271?`<div class="grow-programme-row points-mode-row-v229">${growPointsChooserRowV271}</div>`:''}
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
-          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
@@ -16539,8 +17421,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         `}
       </div></div>
       `:''}
-      ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
-        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>
+      ${topicOnV229('tiers')?`<div class="programme-category" data-programme-category-v268="tiers"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
+        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>`:''}
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
           :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
@@ -16548,7 +17430,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}
       ${topicOnV229('lifestyle')?`
-      <div class="programme-category"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="lifestyle"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
         ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
           <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
@@ -16559,17 +17441,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       </div></div>
       `:''}
       ${topicOnV229('promotions')?`
-      <div class="programme-category"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="promotions"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
         ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
       </div></div>
       `:''}
       ${topicOnV229('referrals')?`
-      <div class="programme-category"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
       </div></div>
       `:''}
       ${topicOnV229('recurring')?`
-      <div class="programme-category"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
       </div></div>      `:''}
@@ -16632,7 +17514,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            whose pill said "live" and hidden everything. The tone class is the actual status
            signal (programmeStatus passes 'on' only for a running programme), so match that
            first and keep the text check as a fallback for any row built outside that helper. */
-        const pill=row.querySelector('.pill');
+        const pill=row.querySelector('.pill:not(.grow-pending-pill-v268)');
         const status=String(pill?.textContent||'').toLowerCase();
         const isOngoing=pill?.classList.contains('on')||status.includes('ongoing')||status.includes('live')||status.includes('active');
         const show=programmeView==='ongoing'?isOngoing:!isOngoing;
@@ -16674,7 +17556,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       const kind=row.dataset.programmeKind;
       const suggestion=suggestions[kind];
       if(!suggestion)return;
-      const pill=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
+      const pill=String(row.querySelector('.pill:not(.grow-pending-pill-v268)')?.textContent||'').toLowerCase();
       if(!pill.includes('not set up')||row.hidden)return;
       if(row.nextElementSibling?.classList?.contains('programme-suggest'))return;
       row.insertAdjacentHTML('afterend',`<div class="programme-suggest" data-suggest-kind="${esc(kind)}"><span>✨ Suggested: ${suggestion.text}</span><button type="button" class="btn sm" data-suggest-use="${esc(kind)}">Use suggestion</button></div>`);
@@ -16744,6 +17626,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         {name:'10% off your next visit',desc:'10% off next time.',budget:tenPct||500}]
     };
     sets.facial=sets.salon;sets.massage=sets.salon;
+    /* V276: a bar's starting rewards are the F&B set — "Free drink" is the single most obvious
+       reward a bar can offer, and the generic fallback ("Free item", "S$5 off") read like a
+       shop's. Same list, no new copy to keep in step. */
+    sets.bar=sets.fnb;
     return sets[industry]||sets.other;
   };
   const surfaceDefinition={
@@ -17064,6 +17950,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));
+  document.querySelectorAll('[data-grow-view-v271]').forEach(button=>button.onclick=()=>
+    nav(button.dataset.growViewV271));
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -17160,7 +18048,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      V172: #/grow/ongoing|available|settings put the TAB name in the hashParam slot — those
      are views of this overview, not engine deep-links, and must never mount a surface
      (mounting built {surface:'overview'} and crashed on the surface dictionary). */
-  const hashParamIsProgrammeView=['ongoing','available','settings'].includes(String(hashParam||''));
+  const hashParamIsProgrammeView=['overview','history','ongoing','available','settings'].includes(String(hashParam||''));
   if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
@@ -20030,7 +20918,21 @@ async function appointmentsPage(){
   });
   const staffOpts=(sel,id)=>`${canSeeAll?`<option value="all" ${sel==='all'?'selected':''}>Everyone</option>`:''}`+
     branchStaff(id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(staffLabel(s))}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
-  const apptHeaderActions=canWrite?`<button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button>`:'';
+  /* V269 (owner: "need to add some buttons to see appointment requests by customer, when customer
+     book for appointment, need some place to accept / decline"). The place to accept or decline
+     already existed — Bookings → Booking requests, backed by staff_decide_booking_request_v73 —
+     but nothing on the calendar said requests were waiting, so the person watching the calendar
+     never learned there was anything to answer. This is a signpost, not a second decision surface:
+     one counted button that hands off to the one page that owns the decision, so there is still
+     exactly one accept path and one decline path.
+     Read access to Bookings is the gate, because seeing that N requests are waiting is a read;
+     whether this person may actually decide them is enforced on the Bookings page and again in
+     the RPC (confirm needs appointments write, decline needs bookings write). */
+  const canSeeBookingRequestsV269=canReadModule('bookings');
+  const bookingRequestsActionV269=canSeeBookingRequestsV269
+    ?`<button class="btn ghost" type="button" id="apptBookingRequestsV269" aria-label="Booking requests">${CUI.icon('bookings',{size:18})} Booking requests<span class="pill new" id="apptBookingRequestsCountV269" hidden></span></button>`
+    :'';
+  const apptHeaderActions=`${bookingRequestsActionV269}${canWrite?`<button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button>`:''}`;
   routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'',iconName:'appointments',actions:apptHeaderActions,canWrite,moduleLabel:'Appointment scheduling'})}</div>
     ${!visibleBranches.length?CUI.card({title:'No appointment access',description:'This account has no active branch where Appointments is enabled.'}):`
     <div class="appointment-layout" id="appointmentLayout">
@@ -20069,6 +20971,34 @@ async function appointmentsPage(){
         <div id="calendarSelection"></div><div id="alist" style="margin-top:12px"><p class="muted small">Loading calendar…</p></div>
       </section>
     </div>`}`;
+  /* V269: the count is fetched after paint so a slow or failing count never delays the calendar,
+     which is what this page is actually for. The button is always usable — an unreadable count
+     degrades to "no number", never to a missing way in, and never to a fabricated zero. */
+  const bookingRequestsButtonV269=$('apptBookingRequestsV269');
+  if(bookingRequestsButtonV269){
+    bookingRequestsButtonV269.onclick=()=>nav('#/bookings');
+    (async()=>{
+      const {count,error}=await sb.from('booking_requests').select('id',{count:'exact',head:true})
+        .eq('business_id',S.biz.id).in('status',[...STAFF_BOOKING_DECISION_STATUSES]);
+      if(!isCurrent())return;
+      const badge=$('apptBookingRequestsCountV269');
+      if(!badge?.isConnected)return;
+      if(error){
+        bookingRequestsButtonV269.title='Waiting requests could not be counted. Open Bookings to see them.';
+        bookingRequestsButtonV269.setAttribute('aria-label','Booking requests — count unavailable');
+        return;
+      }
+      const waiting=Number(count||0);
+      if(!waiting){
+        bookingRequestsButtonV269.title='No booking requests are waiting.';
+        bookingRequestsButtonV269.setAttribute('aria-label','Booking requests — none waiting');
+        return;
+      }
+      badge.textContent=String(waiting);badge.hidden=false;
+      bookingRequestsButtonV269.title=`${waiting} booking ${waiting===1?'request is':'requests are'} waiting for a decision.`;
+      bookingRequestsButtonV269.setAttribute('aria-label',`Booking requests — ${waiting} waiting`);
+    })();
+  }
   if(!visibleBranches.length)return;
   const appointmentLayout=$('appointmentLayout'),appointmentFormCard=$('appointmentFormCard');
   function closeNewAppointmentForm(){
@@ -20897,6 +21827,1239 @@ async function appointmentsPage(){
    "Book instead" resolve to the sole positive terminal 'booked'; "waited" is a duration
    (now − created_at, timezone-independent); today's cohort is bounded by the SGT day start.
    Deep-links reuse the shipped consume-once vars (pendingTillPhone / pendingApptClientId). */
+/* ---------- V275 · bottle keep (bar sector only) ----------
+   Owner brief 2026-08-11: a bar parks the customer's leftover bottle, tracks how full it is and
+   how long it may be kept, and the customer sees it inside the business's page in the customer
+   app. Owner amendment 4 makes this a SaaS module EXCLUSIVE to industry='bar'. Everything in
+   this section re-checks that sector before it renders, and the RPCs behind it refuse a non-bar
+   tenant with 42501 regardless of what the client does.
+   Low-literacy rules (CLAUDE.md): pictogram status, <=3-word labels, big tap targets, numbers
+   over words. A bartender reads "50%" and a half-filled bar faster than "half full". */
+/* V279 (owner walkthrough item 9): every status carries its OWN colour, and the same colour is
+   used on the list rows, the bottle card and the Dashboard. A bartender scanning a shelf reads
+   colour before words, so a status that is amber on one screen and grey on another is a status
+   that gets misread at 1am. */
+const BOTTLE_STATUS_V275=Object.freeze({
+  stored:{label:'Stored',icon:'inventory',tone:'#2E7D5B'},
+  called:{label:'Called',icon:'bell',tone:'#B4761F'},
+  at_table:{label:'At table',icon:'till',tone:'#2F6FB3'},
+  /* V279 (owner rulings 10 and 13): pressing Retrieved means the bottle went out with the
+     customer, and that is the END of it. It is TERMINAL, exactly like finished — which is why the
+     separate Finish control is gone. Two buttons for one physical event is how a shelf list starts
+     disagreeing with the shelf. */
+  retrieved:{label:'Retrieved',icon:'export',tone:'#6B6560'},
+  finished:{label:'Finished',icon:'check',tone:'#6B6560'},
+  expired:{label:'Expired',icon:'info',tone:'#B3453A'},
+  transferred:{label:'Moved',icon:'forward',tone:'#6B6560'},
+  removed:{label:'Removed',icon:'close',tone:'#6B6560'}
+});
+/* V279 (owner walkthrough item 4): the four smart buttons the owner asked for, 100 first because
+   an unopened bottle is the common case. A number input sits beside them for the in-between pours
+   and for a genuinely empty bottle, so a bartender never has to fight a slider on a wet phone. */
+const BOTTLE_FILL_PRESETS_V275=Object.freeze([[100,'100%'],[75,'75%'],[50,'50%'],[25,'25%']]);
+const BOTTLE_EXPIRING_DAYS_V275=7;
+/* V278 (owner brief, from the reference bar in production use).
+   THE FLOOR TRANSITION MATRIX, mirrored from app.bar_status_transition_allowed_v278. This copy
+   exists only to decide which buttons to DRAW; the server refuses an illegal move whatever the
+   browser offers, which is why the two may safely be written twice rather than threaded through
+   another round trip. 'retrieved' is a one-way door out of the floor states: a bottle that went
+   out with the customer comes back to STORAGE before it can be called or carried again. */
+const BOTTLE_TRANSITIONS_V279=Object.freeze({
+  stored:Object.freeze(['called','at_table','retrieved']),
+  called:Object.freeze(['stored','at_table','retrieved']),
+  at_table:Object.freeze(['stored','called','retrieved']),
+  /* V279: nothing leaves 'retrieved'. The one-way door is a property of the matrix, mirrored from
+     app.bar_status_transition_allowed_v279, not of which buttons happen to be drawn. */
+  retrieved:Object.freeze([])
+});
+/* The three states a bottle is in while the bar is physically holding it. Retrieved is no longer
+   one of them — the bottle has left the building — so it is these three that fill the shelf, count
+   against the storage capacity, and answer the Storage tab. */
+const BOTTLE_STORAGE_STATUSES_V279=Object.freeze(['stored','called','at_table']);
+/* V279 (owner walkthrough item 11): three tabs, not eight. Storage is one idea to a bartender, and
+   splitting it across Stored / Called / At table made answering one question take three taps. */
+const BOTTLE_TABS_V279=Object.freeze([
+  Object.freeze(['storage','Storage','inventory']),
+  Object.freeze(['retrieved','Retrieved','export']),
+  Object.freeze(['expired','Expired','info'])
+]);
+/* Auto reads the customer's tier keep-days and falls back to the business number; Custom is a
+   date the bar agreed; No expiry is a real answer for a regular's own bottle. */
+const BOTTLE_EXPIRY_MODES_V278=Object.freeze([
+  ['auto','Auto — use the keep window'],['custom','Keep until a date'],['none','No expiry']
+]);
+/* Stored per park. WhatsApp and email SENDING are deferred platform-wide; recording the answer
+   now means the later sweep does not have to ask the customer again. */
+const BOTTLE_NOTIFY_CHANNELS_V278=Object.freeze([
+  ['none','No reminder'],['whatsapp','WhatsApp'],['email','Email']
+]);
+function bottleNotifyLabelV278(channel){
+  const found=BOTTLE_NOTIFY_CHANNELS_V278.find(([value])=>value===String(channel||'none'));
+  return found?found[1]:'No reminder';
+}
+function bottleExpiryModeLabelV278(mode){
+  const found=BOTTLE_EXPIRY_MODES_V278.find(([value])=>value===String(mode||'auto'));
+  return found?found[1]:'Auto — use the keep window';
+}
+/* The tier badge (owner brief item 8). Read-only and fail-soft: the server returns a blank name
+   whenever tiers are absent, unreached or mid-publish, and a blank name renders nothing at all
+   rather than an empty pill that looks like a bug. */
+function bottleTierPillV278(name){
+  const label=String(name||'').trim();
+  if(!label)return '';
+  return `<span class="pill">${CUI.icon('crown',{size:15})} ${esc(label)}</span>`;
+}
+/* The SGT calendar date to prefill an "keep until" input with. expires_at is the INSTANT the
+   bottle stops being kept, and for a custom date that instant is midnight at the START of the
+   following day — so the day a human chose is the day before it. Prefilling the raw date would
+   quietly advance every edited bottle by one day. */
+function bottleDateInputV278(value){
+  if(!value)return '';
+  const at=new Date(value);
+  if(Number.isNaN(at.getTime()))return '';
+  const text=sgt(new Date(at.getTime()-60000).toISOString());
+  return text?String(text).slice(0,10):'';
+}
+
+/* V279 (owner walkthrough item 4), in the owner's own words: red below a quarter, orange below a
+   half, yellow while it is still more gone than not, light green once it is mostly there, and full
+   green only for a bottle nobody has poured from. Each entry is [exclusive ceiling, colour, name].
+   ONE table, consulted by the one bar renderer, so the list rows, the bottle card and the
+   customer's own wallet cannot disagree about what "half" looks like. */
+const BOTTLE_FILL_BANDS_V279=Object.freeze([
+  Object.freeze([25,'#B3453A','red']),
+  Object.freeze([50,'#C2701A','orange']),
+  Object.freeze([75,'#A8951C','yellow']),
+  Object.freeze([100,'#6FAE7C','light green']),
+  Object.freeze([101,'#2E7D5B','green'])
+]);
+function bottleFillToneV279(percent){
+  const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
+  const band=BOTTLE_FILL_BANDS_V279.find(([ceiling])=>value<ceiling);
+  return band?band[1]:'#2E7D5B';
+}
+function bottleFillBarV275(percent){
+  const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
+  const tone=bottleFillToneV279(value);
+  return `<span class="bottle-fill" role="img" aria-label="${value}% left" style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
+}
+function bottleDaysLabelV275(days){
+  /* V278: a bottle may now have NO expiry, and the server sends null for it. Number(null) is 0,
+     which would have rendered "Last day" on a bottle that never expires — the exact opposite of
+     the truth, on the number a bartender acts on. */
+  if(days===null||days===undefined||days==='')return 'No expiry';
+  const value=Number(days);
+  if(!Number.isFinite(value))return '';
+  if(value<0)return 'Overdue';
+  if(value===0)return 'Last day';
+  return `${value} day${value===1?'':'s'} left`;
+}
+function bottleStatusPillV275(status){
+  const meta=BOTTLE_STATUS_V275[status]||{label:String(status||'').replaceAll('_',' '),icon:'info',tone:'#6B6560'};
+  /* The colour is carried on the pill's own text and border rather than as a filled block: a
+     solid colour swatch beside a solid fill bar reads as two competing signals on a phone. */
+  return `<span class="pill" style="color:${meta.tone||'#6B6560'};border-color:${meta.tone||'#6B6560'}">${CUI.icon(meta.icon,{size:15})} ${esc(meta.label)}</span>`;
+}
+/* V279 (owner walkthrough item 8): "Bought on" defaults to TODAY in SINGAPORE, never to the
+   browser's idea of today. A bar open past midnight on a device set to another zone would
+   otherwise pre-fill yesterday on every bottle it took in after 4pm UTC. */
+const sgtTodayV279=()=>String(sgt(new Date().toISOString())||'').slice(0,10);
+/* V279 (owner walkthrough item 7). The customer identity a bar counter actually holds is the one
+   the till uses — the phone number — so a scanned member code only has to carry that. This reads
+   whatever the code contains and resolves it to the customer the till's own lookup would have
+   found: an exact customer id if the code carries one, otherwise the last eight digits matched
+   against the phone. Anything it cannot resolve is handed back to the search box.
+   FEATURE-DETECTED, and absent when unsupported: BarcodeDetector is not in every browser, and a
+   Scan button that opens a camera which can never decode anything is a worse affordance than no
+   button at all. */
+const bottleScanSupportedV279=()=>typeof window!=='undefined'
+  &&typeof window.BarcodeDetector==='function'
+  &&!!navigator.mediaDevices?.getUserMedia;
+function resolveScannedCustomerV279(raw,list){
+  const text=String(raw||'').trim();
+  if(!text)return null;
+  const rows=Array.isArray(list)?list:[];
+  const uuid=text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if(uuid){
+    const byId=rows.find(client=>String(client?.id||'').toLowerCase()===uuid[0].toLowerCase());
+    if(byId)return byId;
+  }
+  const digits=text.replace(/\D/g,'');
+  if(digits.length>=8){
+    const tail=digits.slice(-8);
+    const byPhone=rows.find(client=>String(client?.phone||'').replace(/\D/g,'').endsWith(tail));
+    if(byPhone)return byPhone;
+  }
+  return null;
+}
+/* Resolves to the decoded string, or to null when the bartender closes it, the camera cannot be
+   opened, or the browser cannot decode. Never throws: a scanner is a shortcut past the search box,
+   and a shortcut that can break the dialog it lives in is not worth having. */
+function openBottleQrScanV279(){
+  return new Promise(resolve=>{
+    if(!bottleScanSupportedV279())return resolve(null);
+    const overlay=document.createElement('div');
+    overlay.className='modal';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-label','Scan the customer code');overlay.tabIndex=-1;
+    overlay.innerHTML=`<div class="modal-card" style="width:min(420px,100%)">
+      <div class="row"><h2 style="margin:0;font-size:17px">Scan customer code</h2><span class="spacer"></span>
+        <button type="button" class="btn ghost sm" id="bottleScanCloseV279">Close</button></div>
+      <div class="scanner-frame" style="margin-top:14px"><video class="scanner-video" id="bottleScanVideoV279" playsinline muted aria-label="Camera preview for the customer code"></video></div>
+      <p class="muted small" id="bottleScanStatusV279" role="status" aria-live="polite" style="margin-top:12px">Point the camera at the customer's code.</p></div>`;
+    document.body.append(overlay);
+    let stream=null,timer=0,done=false,deactivate=null;
+    const finish=value=>{
+      if(done)return;
+      done=true;
+      if(timer)clearInterval(timer);
+      if(stream)stream.getTracks().forEach(track=>track.stop());
+      const close=deactivate;deactivate=null;
+      if(close)close({restoreFocus:true});else overlay.remove();
+      resolve(value);
+    };
+    deactivate=CUI.activateDialog(overlay,{onClose:()=>finish(null),initialFocus:'#bottleScanCloseV279'});
+    overlay.querySelector('#bottleScanCloseV279').onclick=()=>finish(null);
+    overlay.onclick=event=>{if(event.target===overlay)finish(null)};
+    void (async()=>{
+      const status=overlay.querySelector('#bottleScanStatusV279');
+      const video=overlay.querySelector('#bottleScanVideoV279');
+      let detector=null;
+      try{
+        detector=new window.BarcodeDetector({formats:['qr_code']});
+        stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      }catch{
+        if(status)status.textContent='The camera could not be opened. Search for the customer instead.';
+        return;
+      }
+      if(done||!overlay.isConnected){stream.getTracks().forEach(track=>track.stop());return}
+      video.srcObject=stream;
+      try{await video.play()}catch{}
+      timer=setInterval(()=>{
+        if(done)return;
+        void detector.detect(video).then(codes=>{
+          const value=String(codes?.[0]?.rawValue||'').trim();
+          if(value)finish(value);
+        }).catch(()=>{});
+      },350);
+    })();
+  });
+}
+function bottleNameV275(bottle){
+  return String(bottle?.label||'').trim()||'Bottle';
+}
+/* The one card a non-bar tenant ever sees on these routes. It is a plain answer, not an error
+   and not a bounce: a converted tenant with a bookmarked link must be told why, once. */
+function bottlesUnavailableCardV275(title){
+  const host=M();if(!host)return;
+  host.innerHTML=CUI.pageHeader({title,iconName:'bottle',canWrite:false,moduleLabel:title})
+    +CUI.emptyState({iconName:'bottle',title:'Not available for this business type',
+      body:'Bottle keep is built for bars. This workspace is set up for a different kind of business, so there is nothing to keep here.',
+      actionHtml:'<a class="btn ghost sm" href="#/dashboard">Back to dashboard</a>'});
+}
+function bottlesDeniedCardV275(title){
+  const host=M();if(!host)return;
+  host.innerHTML=CUI.pageHeader({title,iconName:'bottle',canWrite:false,moduleLabel:title})
+    +CUI.emptyState({iconName:'bottle',title:'You do not have access to bottles',
+      body:'Ask the owner to give you access to the Bottles module.',
+      actionHtml:'<a class="btn ghost sm" href="#/dashboard">Back to dashboard</a>'});
+}
+
+/* Operations setup → Bottle keep. Two owner decisions and nothing else: how long a bottle is
+   kept (owner amendment 2 — ONE number, adjustable per business) and where bottles live
+   (amendment 3 — the bar defines its own list). */
+async function bottleSetupPageV275(){
+  disposeCurrentRoute();
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  if(!isBarSectorV275())return bottlesUnavailableCardV275('Bottle keep');
+  if(S.myRole!=='owner')return bottlesDeniedCardV275('Bottle keep');
+  routeMain.innerHTML=CUI.loadingState({title:'Bottle keep',iconName:'bottle',body:'Loading your keep window…'});
+  /* V278: the keep window and the shelf list still come from V275's reader. The tier windows and
+     the bottle catalogue are a SECOND, independent read, so a bar with no loyalty tiers and no
+     products still gets exactly the page it had before rather than an error. */
+  const bottleKeepReadsV278=await Promise.all([
+    sb.rpc('bar_get_setup_v275',{p_business:S.biz.id}),
+    sb.rpc('bar_get_bottle_setup_v278',{p_business:S.biz.id})
+  ]);
+  /* Named rather than destructured: the undeclared-identifier guard (V200 regression) reads
+     `const <name>=` declarations, and an array pattern would hide these two from it. */
+  const setupResultV278=bottleKeepReadsV278[0];
+  const extraResultV278=bottleKeepReadsV278[1];
+  const {data,error}=setupResultV278;
+  if(!isCurrent())return;
+  if(error){
+    routeMain.innerHTML=CUI.errorState({title:'Bottle keep unavailable',message:ownerErrorText(error)||'Please try again.'});
+    const retry=$('routeRetry');if(retry)retry.onclick=()=>bottleSetupPageV275().catch(fail);
+    return;
+  }
+  /* Locations are edited in memory and saved as ONE declarative list, because the server treats
+     a name that disappears from the list as "deactivate", never "delete" — a bottle still points
+     at its shelf and must keep a nameable answer to "where is it". */
+  let locations=(Array.isArray(data?.locations)?data.locations:[])
+    .filter(location=>location?.active!==false)
+    .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
+  /* V278 state. Keep-days are held as STRINGS while being edited: '' is a meaningful value here
+     ("this tier has no override") and Number('') is 0, which the server would rightly refuse. */
+  const readTiersV278=payload=>(Array.isArray(payload?.tiers)?payload.tiers:[]).map(tier=>({
+    tier_id:tier.tier_id,name:String(tier.name||'Tier'),threshold:Number(tier.threshold)||0,
+    keep_days:tier.keep_days===null||tier.keep_days===undefined?'':String(tier.keep_days)}));
+  const readCatalogueV278=payload=>(Array.isArray(payload?.products)?payload.products:[]).map(product=>({
+    id:product.id,name:String(product.name||''),
+    size_ml:product.size_ml===null||product.size_ml===undefined?'':String(product.size_ml),
+    price_cents:Number(product.price_cents)||0}));
+  let tiersV278=readTiersV278(extraResultV278.data);
+  let catalogueV278=readCatalogueV278(extraResultV278.data);
+  const extraUnavailableV278=!!extraResultV278.error;
+  routeMain.innerHTML=CUI.pageHeader({title:'Bottle keep',
+    subtitle:'How long you keep a bottle, and where you put it.',iconName:'bottle',
+    canWrite:true,moduleLabel:'Bottle keep'})
+    /* V279 (owner walkthrough item 3): Storage places is the FIRST card. Everything else on this
+       page is a number the defaults already answer; the shelf list is the one thing that must be
+       filled in before a bottle can be found again, and burying it under the keep window is why a
+       live bar reached V278 with no shelves and a Move control that could not move anything. */
+    +`<section class="card">
+      <div class="cui-card-head"><h2>Storage places</h2><p>Add your shelves — e.g. Shelf A, Chiller 2. Staff pick one when they park a bottle, and it is how anyone finds it again.</p></div>
+      <div class="row"><label class="sr-only" for="bkNewLoc">New storage place</label>
+        <input id="bkNewLoc" maxlength="60" autocomplete="off" placeholder="e.g. Shelf A">
+        <button class="btn sm" id="bkAddLoc" type="button">${CUI.icon('add',{size:17})}<span>Add</span></button></div>
+      <div id="bkLocList" style="margin-top:14px"></div>
+    </section>
+    <section class="card" style="margin-top:16px">
+      <div class="cui-card-head"><h2>Keep window</h2><p>How many days a parked bottle stays the customer's before it expires. 30 days is standard.</p></div>
+      <label for="bkDays">Days</label>
+      <input id="bkDays" type="number" min="1" max="365" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(data?.keep_days)||30))}">
+      <p class="muted small" style="margin-top:-2px">Every bottle parked from now on uses this number. Bottles already on the shelf keep the date they were given.</p>
+      <label for="bkCapacity" style="margin-top:14px">Storage capacity</label>
+      <input id="bkCapacity" type="number" min="1" max="10000" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(data?.storage_capacity)||500))}">
+      <p class="muted small" style="margin-top:-2px">How many bottles you can physically hold. Parking is refused once the shelves are full, so nobody takes a bottle you have nowhere to put. ${esc(String(Number(data?.in_storage)||0))} in storage right now.</p>
+    </section>
+    <section class="card" style="margin-top:16px">
+      <div class="cui-card-head"><h2>Tier keep windows</h2><p>Give your best customers longer. A tier left blank uses the keep window above.</p></div>
+      <div id="bkTierList"></div>
+      <div class="row" style="margin-top:14px"><button class="btn sm" id="bkTierSave" type="button">Save tier windows</button>
+        <span class="muted small" id="bkTierStatus" role="status" aria-live="polite"></span></div>
+      <div id="bkTierErr"></div>
+    </section>
+    <section class="card" style="margin-top:16px">
+      <div class="cui-card-head"><h2>Bottle catalogue</h2><p>The bottles you sell and how big they are. Staff pick one when parking and the size comes with it — nobody types it.</p></div>
+      <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:2 1 170px"><label for="bkNewBottleName">Bottle</label><input id="bkNewBottleName" maxlength="120" autocomplete="off" placeholder="e.g. Hibiki 12"></div>
+        <div style="flex:1 1 90px"><label for="bkNewBottleMl">Size (ml)</label><input id="bkNewBottleMl" type="number" min="100" max="5000" inputmode="numeric" placeholder="700"></div>
+        <div style="flex:1 1 90px"><label for="bkNewBottlePrice">Price</label><input id="bkNewBottlePrice" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+        <button class="btn sm" id="bkAddBottle" type="button">${CUI.icon('add',{size:17})}<span>Add bottle</span></button>
+      </div>
+      <div id="bkBottleList" style="margin-top:14px"></div>
+      <div id="bkBottleErr"></div>
+    </section>
+    <div class="row" style="margin-top:18px"><button class="btn" id="bkSave" type="button">Save bottle keep</button>
+      <span class="muted small" id="bkStatus" role="status" aria-live="polite"></span></div>
+    <div id="bkErr"></div>`;
+
+  function paintLocations(){
+    const host=$('bkLocList');if(!host)return;
+    if(!locations.length){
+      host.innerHTML=CUI.emptyState({iconName:'inventory',title:'No storage places yet',
+        body:'Add at least one so staff can say where a bottle is.'});
+      return;
+    }
+    host.innerHTML=locations.map((location,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(location.name)}</b>
+      ${location.in_use?'<span class="muted small">In use</span>':''}
+      <button class="btn ghost sm" type="button" data-remove-location="${index}" aria-label="Remove ${esc(location.name)}"><span aria-hidden="true">×</span></button>
+    </div>`).join('');
+    host.querySelectorAll('[data-remove-location]').forEach(button=>button.onclick=()=>{
+      const index=Number(button.dataset.removeLocation);
+      const removed=locations[index];
+      if(removed?.in_use&&!confirm(`${removed.name} still holds bottles. Remove it from the list? Bottles already there keep the name, staff just cannot pick it again.`))return;
+      locations=locations.filter((_,position)=>position!==index);
+      paintLocations();
+    });
+  }
+  paintLocations();
+
+  /* V278 tier windows. The list is declarative like the shelf list: whatever is on screen is what
+     the business has, and a cleared box DELETES that tier's override rather than leaving a number
+     nobody can see still governing the Auto date. */
+  function paintTiersV278(){
+    const host=$('bkTierList');if(!host)return;
+    if(extraUnavailableV278){
+      host.innerHTML='<p class="muted small">Tier windows could not be loaded. The keep window above still applies to everyone.</p>';
+      return;
+    }
+    if(!tiersV278.length){
+      host.innerHTML=CUI.emptyState({iconName:'crown',title:'No tiers yet',
+        body:'Set up spending tiers in Programmes, then come back to give each one its own keep window.',
+        actionHtml:'<a class="btn ghost sm" href="#/loyalty">Open Programmes</a>'});
+      return;
+    }
+    const fallback=String(Number($('bkDays')?.value)||30);
+    host.innerHTML=tiersV278.map((tier,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(tier.name)}</b>
+      <label class="sr-only" for="bkTierDays${index}">Keep days for ${esc(tier.name)}</label>
+      <input id="bkTierDays${index}" type="number" min="1" max="365" inputmode="numeric" style="max-width:110px" placeholder="${esc(fallback)}" value="${esc(tier.keep_days)}" data-tier-days="${index}">
+      <span class="muted small">days</span>
+    </div>`).join('');
+    host.querySelectorAll('[data-tier-days]').forEach(input=>input.oninput=()=>{
+      tiersV278[Number(input.dataset.tierDays)].keep_days=input.value.trim();
+    });
+  }
+  paintTiersV278();
+
+  function paintCatalogueV278(){
+    const host=$('bkBottleList');if(!host)return;
+    if(extraUnavailableV278){
+      host.innerHTML='<p class="muted small">The bottle catalogue could not be loaded. Staff can still type a bottle name when parking.</p>';
+      return;
+    }
+    if(!catalogueV278.length){
+      host.innerHTML=CUI.emptyState({iconName:'bottle',title:'No products yet',
+        body:'Add a bottle above and staff can pick it when parking.'});
+      return;
+    }
+    host.innerHTML=catalogueV278.map((product,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(product.name)}</b>
+      ${product.size_ml?'<span class="pill">Bottle</span>':''}
+      <label class="sr-only" for="bkBottleMl${index}">Size in millilitres for ${esc(product.name)}</label>
+      <input id="bkBottleMl${index}" type="number" min="100" max="5000" inputmode="numeric" style="max-width:110px" placeholder="Not a bottle" value="${esc(product.size_ml)}" data-bottle-ml="${index}">
+      <button class="btn ghost sm" type="button" data-bottle-save="${index}">Save</button>
+    </div>`).join('');
+    host.querySelectorAll('[data-bottle-ml]').forEach(input=>input.oninput=()=>{
+      catalogueV278[Number(input.dataset.bottleMl)].size_ml=input.value.trim();
+    });
+    host.querySelectorAll('[data-bottle-save]').forEach(button=>button.onclick=async()=>{
+      const product=catalogueV278[Number(button.dataset.bottleSave)];
+      const errorHost=$('bkBottleErr');
+      if(errorHost)errorHost.innerHTML='';
+      const size=product.size_ml===''?null:Number(product.size_ml);
+      if(size!==null&&(!Number.isInteger(size)||size<100||size>5000)){
+        if(errorHost)errorHost.innerHTML='<div class="err">A bottle is between 100ml and 5000ml. Clear the box if it is not a bottle.</div>';
+        return;
+      }
+      CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
+      const {data:saved,error:saveError}=await sb.rpc('bar_save_bottle_product_v278',{
+        p_business:S.biz.id,p_product:product.id,p_name:null,p_size_ml:size,p_price_cents:null});
+      if(!isCurrent()||!button.isConnected)return;
+      CUI.setButtonBusy(button,{busy:false});
+      if(saveError){
+        if($('bkBottleErr'))$('bkBottleErr').innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'That bottle could not be saved.')}</div>`;
+        return;
+      }
+      catalogueV278=readCatalogueV278(saved);
+      paintCatalogueV278();
+      toast(size===null?'No longer a bottle':'Bottle saved');
+    });
+  }
+  paintCatalogueV278();
+
+  $('bkTierSave').onclick=async()=>{
+    const errorHost=$('bkTierErr'),status=$('bkTierStatus'),save=$('bkTierSave');
+    errorHost.innerHTML='';
+    for(const tier of tiersV278){
+      if(tier.keep_days==='')continue;
+      const days=Number(tier.keep_days);
+      if(!Number.isInteger(days)||days<1||days>365){
+        errorHost.innerHTML=`<div class="err">${esc(tier.name)} needs a whole number between 1 and 365 days, or an empty box.</div>`;
+        return;
+      }
+    }
+    CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
+    const {data:saved,error:saveError}=await sb.rpc('bar_save_tier_keep_days_v278',{
+      p_business:S.biz.id,
+      p_tiers:tiersV278.map(tier=>({tier_id:tier.tier_id,keep_days:tier.keep_days===''?null:Number(tier.keep_days)}))
+    });
+    if(!isCurrent()||!save.isConnected)return;
+    CUI.setButtonBusy(save,{busy:false});
+    if(saveError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'Tier windows could not be saved.')}</div>`;
+      return;
+    }
+    tiersV278=readTiersV278(saved);
+    paintTiersV278();
+    if(status)status.textContent='Saved.';
+    toast('Tier windows saved');
+  };
+
+  $('bkAddBottle').onclick=async()=>{
+    const errorHost=$('bkBottleErr'),save=$('bkAddBottle');
+    errorHost.innerHTML='';
+    const name=$('bkNewBottleName').value.trim();
+    const size=Number($('bkNewBottleMl').value);
+    const priceText=$('bkNewBottlePrice').value.trim();
+    if(name.length<2){errorHost.innerHTML='<div class="err">Name the bottle first.</div>';return}
+    if(!Number.isInteger(size)||size<100||size>5000){
+      errorHost.innerHTML='<div class="err">Give the size in millilitres, between 100 and 5000.</div>';
+      return;
+    }
+    CUI.setButtonBusy(save,{busy:true,label:'Adding…'});
+    const {data:saved,error:saveError}=await sb.rpc('bar_save_bottle_product_v278',{
+      p_business:S.biz.id,p_product:null,p_name:name,p_size_ml:size,
+      p_price_cents:priceText?Math.round(parseFloat(priceText)*100):0});
+    if(!isCurrent()||!save.isConnected)return;
+    CUI.setButtonBusy(save,{busy:false});
+    if(saveError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'That bottle could not be added.')}</div>`;
+      return;
+    }
+    catalogueV278=readCatalogueV278(saved);
+    paintCatalogueV278();
+    ['bkNewBottleName','bkNewBottleMl','bkNewBottlePrice'].forEach(id=>{if($(id))$(id).value=''});
+    $('bkNewBottleName').focus();
+    toast('Bottle added');
+  };
+
+  const addLocation=()=>{
+    const input=$('bkNewLoc');if(!input)return;
+    const name=input.value.trim();
+    if(!name)return toast('Type a name first');
+    if(name.length>60)return toast('Keep the name under 60 characters');
+    if(locations.some(location=>location.name.toLocaleLowerCase()===name.toLocaleLowerCase()))return toast('That place is already on the list');
+    locations.push({id:null,name,in_use:false});
+    input.value='';input.focus();paintLocations();
+  };
+  $('bkAddLoc').onclick=addLocation;
+  $('bkNewLoc').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();addLocation()}};
+  $('bkSave').onclick=async()=>{
+    const days=Number($('bkDays').value);
+    const capacity=Number($('bkCapacity').value);
+    const errorHost=$('bkErr'),status=$('bkStatus'),save=$('bkSave');
+    errorHost.innerHTML='';
+    if(!Number.isInteger(days)||days<1||days>365){
+      errorHost.innerHTML='<div class="err">The keep window must be a whole number between 1 and 365 days.</div>';
+      return;
+    }
+    if(!Number.isInteger(capacity)||capacity<1||capacity>10000){
+      errorHost.innerHTML='<div class="err">Storage capacity must be a whole number between 1 and 10000 bottles.</div>';
+      return;
+    }
+    CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
+    /* V279 supersedes bar_save_setup_v275 here. The capacity arrives on a NEW function name rather
+       than as a fourth parameter on the old one, because a second overload differing only in arity
+       is exactly the shape that makes PostgREST's resolution ambiguous — the lesson V278 already
+       paid for. bar_save_setup_v275 stays deployed and callable. */
+    const {data:saved,error:saveError}=await sb.rpc('bar_save_setup_v279',{
+      p_business:S.biz.id,p_keep_days:days,p_storage_capacity:capacity,
+      p_locations:locations.map(location=>({id:location.id,name:location.name}))
+    });
+    if(!isCurrent()||!save.isConnected)return;
+    CUI.setButtonBusy(save,{busy:false});
+    if(saveError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'Bottle keep could not be saved.')}</div>`;
+      return;
+    }
+    locations=(Array.isArray(saved?.locations)?saved.locations:[])
+      .filter(location=>location?.active!==false)
+      .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
+    paintLocations();
+    if(status)status.textContent='Saved.';
+    toast('Bottle keep saved');
+  };
+}
+
+/* Serve & sell → Bottles. The shelf, as the bar sees it during service. */
+async function bottlesPage(){
+  disposeCurrentRoute();
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  if(!isBarSectorV275())return bottlesUnavailableCardV275('Bottles');
+  if(S.myRole!=='owner'&&!canReadModule('bottles'))return bottlesDeniedCardV275('Bottles');
+  routeMain.innerHTML=CUI.loadingState({title:'Bottles',iconName:'bottle',body:'Loading the shelf…'});
+  const branchId=selectedBranchId||null;
+  /* One idempotency key per in-flight intention, exactly like the appointments blocked-time
+     dialog: a double tap replays the same key and the server answers duplicate_ignored, and the
+     key is released only once the write has actually landed. */
+  const bottleAttemptKeys=new Map();
+  const attemptKey=fingerprint=>{
+    if(!bottleAttemptKeys.has(fingerprint))bottleAttemptKeys.set(fingerprint,crypto.randomUUID());
+    return bottleAttemptKeys.get(fingerprint);
+  };
+  const [listResult,setupResult,clientsResult,productsResult]=await Promise.all([
+    sb.rpc('list_bar_bottles_v275',{p_business:S.biz.id,p_branch:branchId,p_status:null,
+      p_search:null,p_expiring_days:null,p_bottle:null,p_limit:200}),
+    sb.rpc('bar_get_setup_v275',{p_business:S.biz.id}),
+    fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone',{count:'exact'})
+      .eq('business_id',S.biz.id).order('full_name').order('id')),
+    fetchAllRowsResult(()=>sb.from('products').select('id,name,size_ml',{count:'exact'})
+      .eq('business_id',S.biz.id).eq('active',true).order('name').order('id'))
+  ]);
+  if(!isCurrent())return;
+  if(listResult.error){
+    routeMain.innerHTML=CUI.errorState({title:'Bottles unavailable',message:ownerErrorText(listResult.error)||'Please try again.'});
+    const retry=$('routeRetry');if(retry)retry.onclick=()=>bottlesPage().catch(fail);
+    return;
+  }
+  const canWrite=listResult.data?.can_write===true;
+  const keepDays=Number(listResult.data?.keep_days)||30;
+  const clients=clientsResult.error?[]:(clientsResult.data||[]);
+  /* A bar without the Products module still parks bottles: the catalogue picker simply falls
+     back to a typed name rather than blocking the whole screen. */
+  const products=productsResult.error?[]:(productsResult.data||[]);
+  /* V278: a bottle in the catalogue is a product WITH a size. The park picker offers only those,
+     because the entire point of the catalogue is that the millilitres stop being typed at 1am. */
+  const bottleProductsV278=products.filter(product=>Number(product.size_ml)>0);
+  const locations=(setupResult.error?[]:(setupResult.data?.locations||[])).filter(location=>location?.active!==false);
+  let snapshot=listResult.data;
+  let filters={status:'storage',search:'',expiring:false};
+  let closeBottleDialog=null;
+  const listGate=createLatestRequestGate(isCurrent);
+
+  const clientLabel=client=>`${String(client?.full_name||'Customer').trim()||'Customer'} · ${String(client?.phone||'').trim()||'no phone'}`;
+  const clientMatches=(client,query)=>{
+    const needle=String(query||'').trim().toLocaleLowerCase();
+    if(!needle)return true;
+    const digits=needle.replace(/\D/g,'');
+    const text=[client?.full_name,client?.phone].filter(Boolean).join(' ').toLocaleLowerCase();
+    return text.includes(needle)||(digits.length>=3&&String(client?.phone||'').replace(/\D/g,'').includes(digits));
+  };
+
+  routeMain.innerHTML=CUI.pageHeader({title:'Bottles',
+    subtitle:'Every bottle your customers left with you.',iconName:'bottle',
+    canWrite,moduleLabel:'Bottles',
+    actions:canWrite?`<button class="btn" id="bottlePark" type="button">${CUI.icon('add',{size:17})}<span>Park bottle</span></button>`:''})
+    +`<div class="kpis" id="bottleCounts" style="margin-bottom:16px"></div>
+    <section class="card">
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <label class="sr-only" for="bottleSearch">Search bottles</label>
+        <input id="bottleSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name, phone or PK-code" style="flex:1 1 200px">
+        <div class="row" role="group" aria-label="Show" id="bottleTabsV279" style="gap:6px;flex-wrap:wrap">
+          ${BOTTLE_TABS_V279.map(([value,label,iconName])=>`<button type="button" class="btn${value==='storage'?'':' ghost'} sm" data-bottle-tab="${esc(value)}" aria-pressed="${value==='storage'?'true':'false'}" style="min-height:42px">${CUI.icon(iconName,{size:16})}<span>${esc(label)}</span></button>`).join('')}
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="bottleExpiring" style="width:auto"> Expiring soon</label>
+      </div>
+      <div id="bottleList" style="margin-top:14px">${CUI.skeletonGrid({cards:3,lines:2})}</div>
+    </section>`;
+
+  function paintCounts(){
+    const host=$('bottleCounts');if(!host)return;
+    const counts=snapshot?.counts||{};
+    /* V279 item 12: the headline is the gauge the owner asked for — how much of the shelf is gone
+       — because the number that stops a bartender is the one they see before they take a bottle,
+       not the refusal they meet after. The capacity comes from the same read that ENFORCES it. */
+    const capacity=Number(snapshot?.storage_capacity)||0;
+    const inStorage=Number(snapshot?.in_storage ?? counts.in_storage)||0;
+    const tile=(label,value,iconName,tone)=>`<div class="card kpi"><div class="l">${CUI.icon(iconName,{size:14})} ${esc(label)}</div><div class="v" style="color:${tone}">${esc(String(value))}</div></div>`;
+    host.innerHTML=tile('In storage',capacity?`${inStorage} / ${capacity}`:String(inStorage),'inventory',BOTTLE_STATUS_V275.stored.tone)
+      +tile('Called',Number(counts.called||0),'bell',BOTTLE_STATUS_V275.called.tone)
+      +tile('At table',Number(counts.at_table||0),'till',BOTTLE_STATUS_V275.at_table.tone)
+      +tile('Retrieved',Number(counts.retrieved||0),'export',BOTTLE_STATUS_V275.retrieved.tone)
+      +tile('Expiring soon',Number(counts.expiring_soon||0),'info',BOTTLE_STATUS_V275.expired.tone);
+  }
+  function paintList(){
+    const host=$('bottleList');if(!host)return;
+    const items=Array.isArray(snapshot?.items)?snapshot.items:[];
+    if(!items.length){
+      /* V279: the Storage tab is the DEFAULT, so a truthy filters.status no longer means "the
+         bartender narrowed something down". Judging it as a filter would have told every empty bar
+         to clear filters it never set. */
+      const narrowed=!!filters.search||filters.status!=='storage'||filters.expiring;
+      host.innerHTML=CUI.emptyState({iconName:'bottle',title:'No bottles here',
+        body:narrowed
+          ?'Nothing matches that. Go back to Storage to see the whole shelf.'
+          :`Park a bottle and it is kept for ${keepDays} days.`,
+        actionHtml:canWrite&&!narrowed
+          ?'<button class="btn sm" type="button" data-park-empty>Park bottle</button>':''});
+      const parkEmpty=host.querySelector('[data-park-empty]');
+      if(parkEmpty)parkEmpty.onclick=()=>openParkDialog();
+      return;
+    }
+    host.innerHTML=items.map(item=>{
+      const days=Number(item.days_left);
+      const soon=item.days_left!==null&&item.days_left!==undefined&&Number.isFinite(days)
+        &&days<=BOTTLE_EXPIRING_DAYS_V275&&BOTTLE_STORAGE_STATUSES_V279.includes(item.status);
+      return `<button type="button" class="card bottle-row" data-bottle="${esc(item.id)}" style="display:flex;gap:12px;align-items:center;width:100%;text-align:left;margin-bottom:10px;padding:14px;min-height:64px;${soon?'border-color:#B4761F':''}">
+        <span style="flex:1 1 auto;min-width:0">
+          <b style="display:block;overflow-wrap:anywhere">${esc(bottleNameV275(item))}</b>
+          <span class="muted small" style="display:block;margin-top:3px">${esc(item.serial_code||'')}${item.size_ml?` · ${Number(item.size_ml)}ml`:''} · ${esc(String(item.client_name||'Customer'))}</span>
+          <span style="display:flex;align-items:center;gap:9px;margin-top:7px">${bottleFillBarV275(item.fill_percent)}<span class="small"><b>${Math.max(0,Math.min(100,Math.round(Number(item.fill_percent)||0)))}%</b></span></span>
+        </span>
+        <span style="flex:0 0 auto;text-align:right">
+          ${bottleStatusPillV275(item.status)}${bottleTierPillV278(item.tier_name)}
+          <span class="small" style="display:block;margin-top:6px;${soon?'color:#B4761F;font-weight:600':'color:var(--muted)'}">${esc(bottleDaysLabelV275(item.days_left))}</span>
+          ${item.storage_location_name?`<span class="muted small" style="display:block;margin-top:3px">${CUI.icon('inventory',{size:14})} ${esc(item.storage_location_name)}</span>`:''}
+        </span>
+      </button>`;
+    }).join('');
+    host.querySelectorAll('[data-bottle]').forEach(row=>row.onclick=()=>openBottleDetail(row.dataset.bottle));
+  }
+  async function reload(){
+    const host=$('bottleList');
+    if(host)host.setAttribute('aria-busy','true');
+    const isLatest=listGate.begin();
+    const {data,error}=await sb.rpc('list_bar_bottles_v275',{
+      p_business:S.biz.id,p_branch:branchId,
+      p_status:filters.status||'storage',p_search:filters.search||null,
+      p_expiring_days:filters.expiring?BOTTLE_EXPIRING_DAYS_V275:null,
+      p_bottle:null,p_limit:200});
+    if(!isLatest())return;
+    if(host)host.setAttribute('aria-busy','false');
+    if(error){
+      if(host)host.innerHTML=`<div class="err">${esc(ownerErrorText(error)||'The shelf could not be refreshed.')}</div>`;
+      return;
+    }
+    snapshot=data;paintCounts();paintList();
+  }
+  paintCounts();paintList();
+
+  let searchTimer=0;
+  $('bottleSearch').oninput=()=>{
+    filters.search=$('bottleSearch').value.trim();
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(()=>{if(isCurrent())reload()},250);
+  };
+  const paintTabsV279=()=>{
+    routeMain.querySelectorAll('[data-bottle-tab]').forEach(button=>{
+      const on=button.dataset.bottleTab===filters.status;
+      button.setAttribute('aria-pressed',on?'true':'false');
+      button.classList.toggle('ghost',!on);
+    });
+  };
+  routeMain.querySelectorAll('[data-bottle-tab]').forEach(button=>button.onclick=()=>{
+    filters.status=button.dataset.bottleTab;paintTabsV279();reload();
+  });
+  $('bottleExpiring').onchange=()=>{filters.expiring=$('bottleExpiring').checked;reload()};
+  if($('bottlePark'))$('bottlePark').onclick=()=>openParkDialog();
+
+  function closeDialog({restoreFocus=true}={}){
+    if(!closeBottleDialog)return;
+    const close=closeBottleDialog;closeBottleDialog=null;close({restoreFocus});
+  }
+
+  /* Park. The 30-second flow the owner walked through: who (searched, or scanned), what, where,
+     how full, how many — and the expiry the bar's own keep window produces, shown before the
+     button is pressed so nobody has to trust it. Re-entry is GONE (owner: "what is the purpose of
+     re-entry? please remove it"); the server keeps the column for bottles parked before today and
+     writes nothing to it ever again. */
+  function openParkDialog(){
+    closeDialog();
+    const expiry=new Date(Date.now()+keepDays*864e5);
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','parkBottleTitle');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(560px,100%)">
+      <div class="row"><div><h2 id="parkBottleTitle">Park bottle</h2><p class="muted small" style="margin-top:4px">Kept for ${keepDays} days.</p></div><span class="spacer"></span>
+        <button type="button" class="btn ghost sm" id="parkClose" aria-label="Close park bottle">Close</button></div>
+      <form id="parkForm" style="margin-top:16px">
+        <label for="parkCustomerSearch">Customer</label>
+        <div class="row" style="gap:8px">
+          <input id="parkCustomerSearch" type="search" inputmode="search" autocomplete="off" placeholder="Search name or phone" aria-controls="parkClient" style="flex:1 1 150px">
+          ${bottleScanSupportedV279()?`<button type="button" class="btn ghost sm" id="parkScanV279" style="min-height:42px">${CUI.icon('scan',{size:16})}<span>Scan</span></button>`:''}
+        </div>
+        <select id="parkClient" required aria-label="Choose the customer"></select>
+        <p class="muted small" style="margin-top:-2px">New customer? <a href="#/clients">Add them in Customers</a> first.</p>
+        ${bottleProductsV278.length?`<label for="parkProduct">Bottle</label>
+        <select id="parkProduct"><option value="">Not on the list — type it</option>${bottleProductsV278.map(product=>`<option value="${esc(product.id)}">${esc(product.name)} · ${Number(product.size_ml)}ml</option>`).join('')}</select>`
+        :`<p class="muted small">No bottles in your catalogue yet, so the size has to be typed. ${S.myRole==='owner'?'<a href="#/bottlesetup">Add your bottles in Bottle keep</a>.':'Ask the owner to add them in Bottle keep.'}</p>`}
+        <label for="parkLabel">Bottle name</label>
+        <input id="parkLabel" maxlength="120" autocomplete="off" placeholder="e.g. Hibiki 12">
+        <div class="split">
+          <div><label for="parkSize">Size (ml)</label><input id="parkSize" type="number" min="1" max="20000" inputmode="numeric" placeholder="700"></div>
+          <div><label for="parkFill">How full (%)</label>
+            <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:6px">${BOTTLE_FILL_PRESETS_V275.map(([value,label])=>`<button type="button" class="btn ghost sm" data-park-fill="${value}" style="min-width:58px;min-height:38px">${esc(label)}</button>`).join('')}</div>
+            <input id="parkFill" type="number" min="0" max="100" inputmode="numeric" value="100">
+            <div id="parkFillBarV279" style="margin-top:6px">${bottleFillBarV275(100)}</div></div>
+        </div>
+        <label for="parkLocation">Where is it?</label>
+        <select id="parkLocation"><option value="">Not recorded</option>${locations.map(location=>`<option value="${esc(location.id)}">${esc(location.name)}</option>`).join('')}</select>
+        ${locations.length?'':`<p class="muted small" style="margin-top:-2px">No storage places yet — a bottle with no shelf is a bottle you will hunt for.</p>
+        ${S.myRole==='owner'?'<a class="btn ghost sm" id="parkAddShelfV279" href="#/bottlesetup" style="min-height:42px">Add your shelves</a>':'<p class="muted small">Ask the owner to add them in Bottle keep.</p>'}`}
+        <label for="parkQuantity">How many bottles</label>
+        <input id="parkQuantity" type="number" min="1" max="20" inputmode="numeric" value="1" style="max-width:120px">
+        <p class="muted small" style="margin-top:-2px">Same bottle, unopened. Each one gets its own tag, so they can be poured, moved and sent out separately.</p>
+        <label for="parkExpiryMode">Keep until</label>
+        <select id="parkExpiryMode">${BOTTLE_EXPIRY_MODES_V278.map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`).join('')}</select>
+        <div id="parkExpiryDateWrap" hidden><label for="parkExpiryDate">Date</label><input id="parkExpiryDate" type="date"></div>
+        <label for="parkNotify">Remind them by</label>
+        <select id="parkNotify">${BOTTLE_NOTIFY_CHANNELS_V278.map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`).join('')}</select>
+        <p class="muted small" style="margin-top:-2px">Saved with the bottle. WhatsApp and email are not switched on yet — until they are, Notify on the bottle reaches them inside the app.</p>
+        <div class="split">
+          <div><label for="parkPurchased">Bought on</label><input id="parkPurchased" type="date" value="${esc(sgtTodayV279())}"></div>
+          <div><label for="parkNote">Note</label><input id="parkNote" maxlength="500" autocomplete="off" placeholder="optional"></div>
+        </div>
+        <div class="imp-note small" id="parkExpiryPreview" style="margin-top:14px">Expires ${esc(sgt(expiry.toISOString())||'')} · ${keepDays} days</div>
+        <div id="parkError" role="alert"></div>
+        <div class="row" style="margin-top:16px"><span class="spacer"></span>
+          <button type="button" class="btn ghost" id="parkCancel">Cancel</button>
+          <button type="submit" class="btn" id="parkSave">Park bottle</button></div>
+      </form></div>`;
+    document.body.append(dialog);
+    closeBottleDialog=CUI.activateDialog(dialog,{onClose:()=>closeDialog(),initialFocus:'#parkCustomerSearch'});
+    $('parkClose').onclick=()=>closeDialog();
+    $('parkCancel').onclick=()=>closeDialog();
+    dialog.onclick=event=>{if(event.target===dialog)closeDialog()};
+
+    const renderClientOptions=(query='')=>{
+      const select=$('parkClient');if(!select)return;
+      const selected=select.value;
+      const matches=clients.filter(client=>clientMatches(client,query)).slice(0,200);
+      select.innerHTML=`<option value="">Choose a customer</option>`
+        +matches.map(client=>`<option value="${esc(client.id)}"${client.id===selected?' selected':''}>${esc(clientLabel(client))}</option>`).join('');
+      if(!matches.length)select.innerHTML=`<option value="">No customer matches that</option>`;
+    };
+    renderClientOptions();
+    $('parkCustomerSearch').oninput=()=>renderClientOptions($('parkCustomerSearch').value);
+    /* V279 item 7. The button only exists where BarcodeDetector does, so this handler is wired
+       only when there is something to wire. A code that resolves selects the customer outright; a
+       code that does not is dropped into the search box, which is exactly what the bartender would
+       have typed — failing soft to the field the button was a shortcut past. */
+    const scanButtonV279=$('parkScanV279');
+    if(scanButtonV279)scanButtonV279.onclick=async()=>{
+      const scanned=await openBottleQrScanV279();
+      if(!isCurrent()||!$('parkClient')||!scanned)return;
+      const match=resolveScannedCustomerV279(scanned,clients);
+      if(!match){
+        const digits=String(scanned).replace(/\D/g,'');
+        $('parkCustomerSearch').value=digits||String(scanned).slice(0,60);
+        renderClientOptions($('parkCustomerSearch').value);
+        toast('Code not recognised — search for them');
+        return;
+      }
+      $('parkCustomerSearch').value=String(match.full_name||'');
+      renderClientOptions($('parkCustomerSearch').value);
+      $('parkClient').value=match.id;
+      loadAutoKeepV278();
+    };
+    /* V279 item 4: the four smart buttons write the number, and the band beneath shows the colour
+       the bottle will carry from here on — the same renderer the rows and the card use. */
+    const paintParkFillV279=()=>{
+      const bar=$('parkFillBarV279');
+      if(bar)bar.innerHTML=bottleFillBarV275($('parkFill').value);
+    };
+    dialog.querySelectorAll('[data-park-fill]').forEach(button=>button.onclick=()=>{
+      $('parkFill').value=String(button.dataset.parkFill);
+      paintParkFillV279();
+    });
+    $('parkFill').oninput=paintParkFillV279;
+    /* V278 item 2: when the bottle comes from the catalogue the size is FILLED and LOCKED. A
+       typed 70 for a 700ml bottle is a fill percentage that is wrong for the rest of that
+       bottle's life, and it is the mistake the reference bar makes least often precisely because
+       its picker carries the size. Clearing the picker hands the field back. */
+    const syncBottleFromCatalogueV278=()=>{
+      const picker=$('parkProduct');if(!picker)return;
+      const size=$('parkSize'),label=$('parkLabel');
+      const chosen=bottleProductsV278.find(product=>product.id===picker.value);
+      if(chosen){
+        label.value=chosen.name;
+        size.value=String(Number(chosen.size_ml)||'');
+        size.readOnly=true;size.setAttribute('aria-readonly','true');
+      }else{
+        size.readOnly=false;size.removeAttribute('aria-readonly');
+      }
+    };
+    if($('parkProduct'))$('parkProduct').onchange=syncBottleFromCatalogueV278;
+
+    /* V278 item 1. Auto resolves the CUSTOMER's tier keep-days server-side, so the preview cannot
+       be right on one screen and wrong on another. Until a customer is chosen — and whenever the
+       read fails — the business's own keep window is the honest answer. */
+    let autoKeepV278={keep_days:keepDays,tier_name:''};
+    const paintParkExpiryV278=()=>{
+      const preview=$('parkExpiryPreview');if(!preview)return;
+      const mode=$('parkExpiryMode').value;
+      const dateWrap=$('parkExpiryDateWrap');
+      if(dateWrap)dateWrap.hidden=mode!=='custom';
+      if(mode==='none'){preview.textContent='No expiry — kept until you say otherwise.';return}
+      if(mode==='custom'){
+        const chosen=$('parkExpiryDate').value;
+        preview.textContent=chosen?`Kept until ${chosen}`:'Choose the date it is kept until.';
+        return;
+      }
+      const days=Number(autoKeepV278.keep_days)||keepDays;
+      const auto=new Date(Date.now()+days*864e5);
+      preview.textContent=`Expires ${sgt(auto.toISOString())||''} · ${days} days${autoKeepV278.tier_name?` · ${autoKeepV278.tier_name}`:''}`;
+    };
+    const loadAutoKeepV278=async()=>{
+      const clientId=$('parkClient')?$('parkClient').value:'';
+      if(!clientId){autoKeepV278={keep_days:keepDays,tier_name:''};paintParkExpiryV278();return}
+      const {data,error}=await sb.rpc('bar_client_keep_days_v278',{p_business:S.biz.id,p_client:clientId});
+      if(!isCurrent()||!$('parkExpiryPreview'))return;
+      autoKeepV278=error?{keep_days:keepDays,tier_name:''}
+        :{keep_days:Number(data?.keep_days)||keepDays,tier_name:String(data?.tier_name||'')};
+      paintParkExpiryV278();
+    };
+    $('parkClient').onchange=()=>{loadAutoKeepV278()};
+    $('parkExpiryMode').onchange=paintParkExpiryV278;
+    $('parkExpiryDate').onchange=paintParkExpiryV278;
+    paintParkExpiryV278();
+
+    $('parkForm').onsubmit=async event=>{
+      event.preventDefault();
+      const errorHost=$('parkError'),save=$('parkSave');
+      errorHost.innerHTML='';
+      const clientId=$('parkClient').value;
+      const productId=$('parkProduct')?$('parkProduct').value||null:null;
+      const label=$('parkLabel').value.trim();
+      const fill=Number($('parkFill').value);
+      const size=$('parkSize').value.trim()?Number($('parkSize').value):null;
+      const quantity=Number($('parkQuantity').value);
+      if(!clientId){errorHost.innerHTML='<div class="err">Choose a customer.</div>';return}
+      if(!label&&!productId){errorHost.innerHTML='<div class="err">Name the bottle, or pick it from the list.</div>';return}
+      if(!Number.isInteger(fill)||fill<0||fill>100){errorHost.innerHTML='<div class="err">How full must be a whole number from 0 to 100.</div>';return}
+      if(size!==null&&(!Number.isInteger(size)||size<1||size>20000)){errorHost.innerHTML='<div class="err">Size must be a whole number of millilitres.</div>';return}
+      if(!Number.isInteger(quantity)||quantity<1||quantity>20){errorHost.innerHTML='<div class="err">Park between 1 and 20 bottles at a time.</div>';return}
+      const expiryMode=$('parkExpiryMode').value;
+      const expiryDate=$('parkExpiryDate')?$('parkExpiryDate').value||null:null;
+      if(expiryMode==='custom'&&!expiryDate){errorHost.innerHTML='<div class="err">Choose the date the bottle is kept until.</div>';return}
+      const request={p_business:S.biz.id,p_client:clientId,p_label:label||null,p_product:productId||null,
+        p_size_ml:size,p_fill_percent:fill,p_storage_location:$('parkLocation').value||null,
+        p_branch:branchId,p_sale:null,
+        p_expiry_mode:expiryMode,p_expiry_date:expiryMode==='custom'?expiryDate:null,
+        p_notify_channel:$('parkNotify').value||'none',
+        p_note:$('parkNote').value.trim()||null,
+        p_purchased_on:$('parkPurchased').value||null,
+        p_quantity:quantity};
+      const key=attemptKey('park:'+JSON.stringify(request));
+      CUI.setButtonBusy(save,{busy:true,label:'Parking…'});
+      /* V279 supersedes park_bottle_v278 here, on a new NAME again for the same reason: an
+         overload differing only in arity makes PostgREST resolution ambiguous. The V275 and V278
+         park functions stay deployed and callable so a deploy in flight cannot break, and both now
+         hold the storage-capacity guard, so an older client cannot overfill the shelf either.
+         ONE key for the WHOLE batch: the server derives a per-bottle evidence key from it, so a
+         double tap returns the same N bottles rather than parking N more — and cannot park a
+         partial second batch, which a per-bottle key from here would have allowed. */
+      const {data,error}=await sb.rpc('park_bottles_v279',{...request,p_idempotency_key:key});
+      if(!isCurrent()||!save.isConnected)return;
+      CUI.setButtonBusy(save,{busy:false});
+      if(error){
+        errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(error)||'The bottle could not be parked.')}</div>`;
+        return;
+      }
+      bottleAttemptKeys.delete('park:'+JSON.stringify(request));
+      closeDialog();
+      const parked=Number(data?.count)||1;
+      toast(isReplayResult(data)?'Already parked'
+        :parked>1?`Parked ${parked} bottles`
+        :`Parked ${data?.bottle?.serial_code||''}`.trim());
+      await reload();
+    };
+  }
+
+  /* Bottle detail. Everything a bartender does to a bottle in one sheet, with the event history
+     underneath — the record that answers "my bottle was fuller than that". */
+  async function openBottleDetail(bottleId){
+    closeDialog();
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','bottleDetailTitle');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(560px,100%)"><div id="bottleDetailBody">
+      <h2 id="bottleDetailTitle">Bottle</h2><div style="margin-top:14px">${CUI.skeletonGrid({cards:2,lines:3})}</div></div></div>`;
+    document.body.append(dialog);
+    closeBottleDialog=CUI.activateDialog(dialog,{onClose:()=>closeDialog(),initialFocus:'#bottleDetailBody'});
+    dialog.onclick=event=>{if(event.target===dialog)closeDialog()};
+    const detailCurrent=()=>isCurrent()&&dialog.isConnected;
+
+    async function paintDetail(){
+      const {data,error}=await sb.rpc('list_bar_bottles_v275',{p_business:S.biz.id,p_branch:null,
+        p_status:null,p_search:null,p_expiring_days:null,p_bottle:bottleId,p_limit:1});
+      if(!detailCurrent())return;
+      const host=$('bottleDetailBody');if(!host)return;
+      if(error){
+        host.innerHTML=`<div class="row"><h2 id="bottleDetailTitle">Bottle</h2><span class="spacer"></span><button type="button" class="btn ghost sm" data-bottle-close>Close</button></div>
+          <div class="err" style="margin-top:12px">${esc(ownerErrorText(error)||'This bottle could not be loaded.')}</div>`;
+        host.querySelector('[data-bottle-close]').onclick=()=>closeDialog();
+        return;
+      }
+      const bottle=data?.bottle||{};
+      const events=Array.isArray(data?.events)?data.events:[];
+      /* V279: 'retrieved' is terminal, so a retrieved bottle is not live and offers no actions at
+         all — the same as finished. The record stays readable underneath. */
+      const live=BOTTLE_STORAGE_STATUSES_V279.includes(bottle.status);
+      const nextStatusesV279=BOTTLE_TRANSITIONS_V279[bottle.status]||[];
+      const mayWrite=canWrite&&data?.can_write!==false;
+      const fill=Math.max(0,Math.min(100,Math.round(Number(bottle.fill_percent)||0)));
+      host.innerHTML=`<div class="row"><div><h2 id="bottleDetailTitle">${esc(bottleNameV275(bottle))}</h2>
+          <p class="muted small" style="margin-top:4px">${esc(bottle.serial_code||'')}${bottle.size_ml?` · ${Number(bottle.size_ml)}ml`:''} · ${esc(String(bottle.client_name||'Customer'))}${bottle.client_phone?` · ${esc(bottle.client_phone)}`:''}</p></div>
+        <span class="spacer"></span><button type="button" class="btn ghost sm" data-bottle-close aria-label="Close bottle">Close</button></div>
+        <div class="row" style="margin-top:14px;gap:10px;flex-wrap:wrap">${bottleStatusPillV275(bottle.status)}
+          ${bottleTierPillV278(bottle.tier_name)}
+          <span class="pill">${CUI.icon('bell',{size:15})} ${esc(bottleDaysLabelV275(bottle.days_left))}</span>
+          ${bottle.purchased_on?`<span class="pill">${CUI.icon('sales',{size:15})} Bought ${esc(String(bottle.purchased_on))}</span>`:''}
+          <span class="pill">${CUI.icon('appointments',{size:15})} ${esc(bottleExpiryModeLabelV278(bottle.expiry_mode))}</span>
+          <span class="pill">${CUI.icon('bell',{size:15})} ${esc(bottleNotifyLabelV278(bottle.notify_channel))}</span>
+          ${bottle.storage_location_name?`<span class="pill">${CUI.icon('inventory',{size:15})} ${esc(bottle.storage_location_name)}</span>`:''}</div>
+        <div style="margin-top:14px;display:flex;align-items:center;gap:10px">${bottleFillBarV275(fill)}<b>${fill}%</b></div>
+        ${mayWrite&&live?`<div class="cui-card-head" style="margin-top:18px"><h3 style="margin:0;font-size:15px">How full</h3></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">${BOTTLE_FILL_PRESETS_V275.map(([value,label])=>`<button type="button" class="btn ghost sm" data-fill="${value}" style="min-width:64px;min-height:42px"${value===fill?' aria-pressed="true"':''}>${esc(label)}</button>`).join('')}
+          <input type="number" id="bottleFillInput" min="0" max="100" inputmode="numeric" value="${fill}" style="max-width:88px" aria-label="Exact fill percent">
+          <button type="button" class="btn sm" data-fill-exact>Set</button></div>
+        <div class="cui-card-head" style="margin-top:18px"><h3 style="margin:0;font-size:15px">Where is it</h3></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          ${nextStatusesV279.includes('stored')?`<button type="button" class="btn ghost sm" data-status="stored" style="min-height:42px">${CUI.icon('inventory',{size:16})}<span>To storage</span></button>`:''}
+          ${nextStatusesV279.includes('called')?`<button type="button" class="btn ghost sm" data-status="called" style="min-height:42px">${CUI.icon('bell',{size:16})}<span>Called</span></button>`:''}
+          ${nextStatusesV279.includes('at_table')?`<button type="button" class="btn ghost sm" data-status="at_table" style="min-height:42px">${CUI.icon('till',{size:16})}<span>At table</span></button>`:''}
+        </div>
+        <div class="cui-card-head" style="margin-top:18px"><h3 style="margin:0;font-size:15px">Keep it longer, move it, send it out</h3></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn ghost sm" data-extend style="min-height:42px">${CUI.icon('retention',{size:16})}<span>Extend ${keepDays}d</span></button>
+          <button type="button" class="btn ghost sm" data-expiry style="min-height:42px">${CUI.icon('appointments',{size:16})}<span>Edit expiry</span></button>
+          <button type="button" class="btn ghost sm" data-move style="min-height:42px">${CUI.icon('branch',{size:16})}<span>Move</span></button>
+          <button type="button" class="btn ghost sm" data-note style="min-height:42px">${CUI.icon('edit',{size:16})}<span>Add note</span></button>
+          <button type="button" class="btn ghost sm" data-purchase style="min-height:42px">${CUI.icon('sales',{size:16})}<span>Bought on</span></button>
+          <button type="button" class="btn ghost sm" data-notify style="min-height:42px">${CUI.icon('bell',{size:16})}<span>Remind customer</span></button>
+          <button type="button" class="btn ghost sm" data-transfer style="min-height:42px">${CUI.icon('forward',{size:16})}<span>Transfer</span></button>
+          <button type="button" class="btn ghost sm" data-retrieve style="min-height:42px">${CUI.icon('export',{size:16})}<span>Retrieved</span></button>
+        </div>
+        <p class="muted small" style="margin-top:8px">Remind customer puts a message in their Peekaa app — WhatsApp and email are not switched on yet. Retrieved means the bottle went out with them, and closes it for good.</p>
+        <div id="bottleExpiryPanel" hidden style="margin-top:12px">
+          <label for="bottleExpiryMode">Keep until</label>
+          <select id="bottleExpiryMode">${BOTTLE_EXPIRY_MODES_V278.map(([value,label])=>`<option value="${esc(value)}"${value===String(bottle.expiry_mode||'auto')?' selected':''}>${esc(label)}</option>`).join('')}</select>
+          <div id="bottleExpiryDateWrap"><label for="bottleExpiryDate">Date</label><input id="bottleExpiryDate" type="date" value="${esc(bottleDateInputV278(bottle.expires_at))}"></div>
+          <p class="muted small" id="bottleExpiryHint" style="margin-top:-2px">Auto uses ${Number(data?.auto_keep_days)||keepDays} days for this customer.</p>
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-expiry-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-expiry-confirm>Save expiry</button></div>
+        </div>
+        <div id="bottleMovePanel" hidden style="margin-top:12px">
+          ${locations.length?`<label for="bottleMoveLocation">Move to</label>
+          <select id="bottleMoveLocation"><option value="">Not recorded</option>${locations.map(location=>`<option value="${esc(location.id)}"${location.id===bottle.storage_location_id?' selected':''}>${esc(location.name)}</option>`).join('')}</select>
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-move-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-move-confirm>Move bottle</button></div>`
+          :`<p class="muted small">Move puts the bottle on a different shelf — and this bar has no shelves on its list yet, so there is nowhere to move it to.</p>
+          <div class="row" style="margin-top:10px">${S.myRole==='owner'?'<a class="btn sm" href="#/bottlesetup" data-move-setup>Add your shelves</a>':'<span class="muted small">Ask the owner to add them in Bottle keep.</span>'}<span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-move-cancel>Close</button></div>`}
+        </div>
+        <div id="bottleNotePanel" hidden style="margin-top:12px">
+          <label for="bottleNoteText">Note</label>
+          <input id="bottleNoteText" maxlength="500" autocomplete="off" placeholder="e.g. Left the cap at the bar">
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-note-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-note-confirm>Add note</button></div>
+        </div>
+        <div id="bottlePurchasePanel" hidden style="margin-top:12px">
+          <label for="bottlePurchaseDate">Bought on</label>
+          <input id="bottlePurchaseDate" type="date" value="${esc(String(bottle.purchased_on||''))}">
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-purchase-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-purchase-confirm>Save date</button></div>
+        </div>
+        <div id="bottleTransferPanel" hidden style="margin-top:12px">
+          <label for="bottleTransferSearch">Transfer to</label>
+          <input id="bottleTransferSearch" type="search" inputmode="search" autocomplete="off" placeholder="Search name or phone">
+          <select id="bottleTransferClient" aria-label="Customer to transfer to"></select>
+          <div class="row" style="margin-top:10px"><span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-transfer-cancel>Cancel</button>
+            <button type="button" class="btn sm" data-transfer-confirm>Transfer bottle</button></div>
+        </div>`:''}
+        <div id="bottleActionError" role="alert"></div>
+        <div class="cui-card-head" style="margin-top:20px"><h3 style="margin:0;font-size:15px">History</h3><p>Every change to this bottle, oldest at the bottom.</p></div>
+        <div style="display:grid;gap:6px;margin-top:8px">${events.length?events.map(event=>`<p class="muted small">${esc(sgt(event.occurred_at)||'')} · ${esc(bottleEventTextV275(event))}${event.actor_name?` · ${esc(event.actor_name)}`:''}</p>`).join(''):'<p class="muted small">Nothing recorded yet.</p>'}</div>`;
+      host.querySelector('[data-bottle-close]').onclick=()=>closeDialog();
+      if(!(mayWrite&&live))return;
+
+      /* Each action hands in its OWN literal sb.rpc(...) call rather than an RPC name, because
+         the PS-0 writer discovery matches rpc('<literal>') — a name threaded through a variable
+         would have hidden five write sites from the audit whose whole job is to guarantee that
+         no writer reaches production uncurated. */
+      const runAction=async(button,fingerprint,call,successText)=>{
+        const errorHost=$('bottleActionError');
+        if(errorHost)errorHost.innerHTML='';
+        const key=attemptKey(fingerprint);
+        CUI.setButtonBusy(button,{busy:true,label:'Working…'});
+        const {data:result,error:actionError}=await call(key);
+        if(!detailCurrent()||!button.isConnected)return;
+        CUI.setButtonBusy(button,{busy:false});
+        if(actionError){
+          const target=$('bottleActionError');
+          if(target)target.innerHTML=`<div class="err">${esc(ownerErrorText(actionError)||'That change could not be saved.')}</div>`;
+          return;
+        }
+        bottleAttemptKeys.delete(fingerprint);
+        toast(isReplayResult(result)?'Already done':successText);
+        await paintDetail();
+        await reload();
+      };
+
+      host.querySelectorAll('[data-fill]').forEach(button=>button.onclick=()=>runAction(button,
+        `fill:${bottleId}:${button.dataset.fill}`,
+        key=>sb.rpc('set_bottle_fill_v275',{p_business:S.biz.id,p_bottle:bottleId,
+          p_fill_percent:Number(button.dataset.fill),p_idempotency_key:key}),'Fill updated'));
+      const exactButton=host.querySelector('[data-fill-exact]');
+      if(exactButton)exactButton.onclick=()=>{
+        const value=Number($('bottleFillInput').value);
+        if(!Number.isInteger(value)||value<0||value>100){
+          $('bottleActionError').innerHTML='<div class="err">How full must be a whole number from 0 to 100.</div>';
+          return;
+        }
+        runAction(exactButton,`fill:${bottleId}:${value}`,
+          key=>sb.rpc('set_bottle_fill_v275',{p_business:S.biz.id,p_bottle:bottleId,
+            p_fill_percent:value,p_idempotency_key:key}),'Fill updated');
+      };
+      host.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>runAction(button,
+        `status:${bottleId}:${button.dataset.status}`,
+        key=>sb.rpc('set_bottle_status_v275',{p_business:S.biz.id,p_bottle:bottleId,
+          p_status:button.dataset.status,p_idempotency_key:key}),'Bottle moved'));
+      const extendButton=host.querySelector('[data-extend]');
+      if(extendButton)extendButton.onclick=()=>runAction(extendButton,
+        `extend:${bottleId}:${bottle.expires_at||''}`,
+        key=>sb.rpc('extend_bottle_v275',{p_business:S.biz.id,p_bottle:bottleId,
+          p_expires_at:null,p_idempotency_key:key}),`Kept ${keepDays} more days`);
+      /* V279 (owner rulings 10 and 13). Retrieved IS the ending — the bottle went out with the
+         customer — so it is the terminal control and there is no separate Finish beside it. The
+         server refuses every transition out of 'retrieved', so this confirm is a courtesy rather
+         than the rule. finish_bottle_v275 stays deployed for anything still holding it, but this
+         screen no longer offers two buttons for one physical event. */
+      const retrieveButton=host.querySelector('[data-retrieve]');
+      if(retrieveButton)retrieveButton.onclick=()=>{
+        if(!confirm(`Mark ${bottleNameV275(bottle)} as retrieved? It has gone out with the customer, so it leaves the shelf and their app for good.`))return;
+        runAction(retrieveButton,`status:${bottleId}:retrieved`,
+          key=>sb.rpc('set_bottle_status_v275',{p_business:S.biz.id,p_bottle:bottleId,
+            p_status:'retrieved',p_idempotency_key:key}),'Bottle retrieved');
+      };
+      const transferButton=host.querySelector('[data-transfer]');
+      const transferPanel=$('bottleTransferPanel');
+      const renderTransferOptions=(query='')=>{
+        const select=$('bottleTransferClient');if(!select)return;
+        const matches=clients.filter(client=>client.id!==bottle.client_id&&clientMatches(client,query)).slice(0,200);
+        select.innerHTML=matches.length
+          ?`<option value="">Choose a customer</option>`+matches.map(client=>`<option value="${esc(client.id)}">${esc(clientLabel(client))}</option>`).join('')
+          :`<option value="">No customer matches that</option>`;
+      };
+      const transferCancel=host.querySelector('[data-transfer-cancel]');
+      const transferConfirm=host.querySelector('[data-transfer-confirm]');
+      if(transferConfirm)transferConfirm.onclick=()=>{
+        const target=$('bottleTransferClient').value;
+        if(!target){
+          $('bottleActionError').innerHTML='<div class="err">Choose who the bottle goes to.</div>';
+          return;
+        }
+        runAction(transferConfirm,`transfer:${bottleId}:${target}`,
+          key=>sb.rpc('transfer_bottle_v275',{p_business:S.biz.id,p_bottle:bottleId,
+            p_client:target,p_idempotency_key:key}),'Bottle transferred');
+      };
+
+      /* V278 card actions. One panel open at a time: five stacked forms on a phone-sized sheet is
+         how a bartender edits the wrong field. */
+      const V278_PANELS=['bottleExpiryPanel','bottleMovePanel','bottleNotePanel','bottlePurchasePanel','bottleTransferPanel'];
+      const openPanelV278=(id,focusId)=>{
+        V278_PANELS.forEach(panel=>{const node=$(panel);if(node)node.hidden=panel!==id});
+        const focus=focusId?$(focusId):null;
+        if(focus)focus.focus();
+      };
+      const closePanelsV278=()=>V278_PANELS.forEach(panel=>{const node=$(panel);if(node)node.hidden=true});
+      if(transferButton&&transferPanel)transferButton.onclick=()=>{
+        openPanelV278('bottleTransferPanel','bottleTransferSearch');
+        renderTransferOptions();
+        $('bottleTransferSearch').oninput=()=>renderTransferOptions($('bottleTransferSearch').value);
+      };
+      if(transferCancel)transferCancel.onclick=()=>closePanelsV278();
+
+      const expiryButton=host.querySelector('[data-expiry]');
+      const paintExpiryPanelV278=()=>{
+        const wrap=$('bottleExpiryDateWrap'),hint=$('bottleExpiryHint');
+        const mode=$('bottleExpiryMode')?$('bottleExpiryMode').value:'auto';
+        if(wrap)wrap.hidden=mode!=='custom';
+        if(hint)hint.textContent=mode==='none'
+          ?'The bottle is kept until you say otherwise.'
+          :mode==='custom'?'The bottle is kept until the end of the date you choose.'
+          :`Auto uses ${Number(data?.auto_keep_days)||keepDays} days for this customer.`;
+      };
+      if(expiryButton)expiryButton.onclick=()=>{
+        openPanelV278('bottleExpiryPanel','bottleExpiryMode');
+        if($('bottleExpiryMode'))$('bottleExpiryMode').onchange=paintExpiryPanelV278;
+        paintExpiryPanelV278();
+      };
+      const expiryCancel=host.querySelector('[data-expiry-cancel]');
+      if(expiryCancel)expiryCancel.onclick=()=>closePanelsV278();
+      const expiryConfirm=host.querySelector('[data-expiry-confirm]');
+      if(expiryConfirm)expiryConfirm.onclick=()=>{
+        const mode=$('bottleExpiryMode').value;
+        const date=$('bottleExpiryDate')?$('bottleExpiryDate').value||null:null;
+        if(mode==='custom'&&!date){
+          $('bottleActionError').innerHTML='<div class="err">Choose the date the bottle is kept until.</div>';
+          return;
+        }
+        runAction(expiryConfirm,`expiry:${bottleId}:${mode}:${date||''}`,
+          key=>sb.rpc('set_bottle_expiry_v278',{p_business:S.biz.id,p_bottle:bottleId,
+            p_expiry_mode:mode,p_expiry_date:mode==='custom'?date:null,p_idempotency_key:key}),
+          'Expiry updated');
+      };
+
+      const moveButton=host.querySelector('[data-move]');
+      if(moveButton)moveButton.onclick=()=>openPanelV278('bottleMovePanel',
+        locations.length?'bottleMoveLocation':null);
+      const moveCancel=host.querySelector('[data-move-cancel]');
+      if(moveCancel)moveCancel.onclick=()=>closePanelsV278();
+      const moveConfirm=host.querySelector('[data-move-confirm]');
+      if(moveConfirm)moveConfirm.onclick=()=>{
+        const picker=$('bottleMoveLocation');
+        const target=picker?picker.value||null:null;
+        /* V279: submitting the place the bottle is already on wrote a "moved to the same shelf"
+           event and changed nothing visible — which is precisely what the owner reported as "Move
+           does not work". Say so instead of recording a move that did not happen. */
+        if((target||null)===(bottle.storage_location_id||null)){
+          $('bottleActionError').innerHTML='<div class="err">That is where it already is. Pick a different place.</div>';
+          return;
+        }
+        runAction(moveConfirm,`move:${bottleId}:${target||''}`,
+          key=>sb.rpc('move_bottle_v278',{p_business:S.biz.id,p_bottle:bottleId,
+            p_storage_location:target,p_idempotency_key:key}),'Bottle moved');
+      };
+
+      const noteButton=host.querySelector('[data-note]');
+      if(noteButton)noteButton.onclick=()=>openPanelV278('bottleNotePanel','bottleNoteText');
+      const noteCancel=host.querySelector('[data-note-cancel]');
+      if(noteCancel)noteCancel.onclick=()=>closePanelsV278();
+      const noteConfirm=host.querySelector('[data-note-confirm]');
+      if(noteConfirm)noteConfirm.onclick=()=>{
+        const text=$('bottleNoteText').value.trim();
+        if(!text){
+          $('bottleActionError').innerHTML='<div class="err">Type the note first.</div>';
+          return;
+        }
+        runAction(noteConfirm,`note:${bottleId}:${text}`,
+          key=>sb.rpc('add_bottle_note_v278',{p_business:S.biz.id,p_bottle:bottleId,
+            p_note:text,p_idempotency_key:key}),'Note added');
+      };
+
+      const purchaseButton=host.querySelector('[data-purchase]');
+      if(purchaseButton)purchaseButton.onclick=()=>openPanelV278('bottlePurchasePanel','bottlePurchaseDate');
+      const purchaseCancel=host.querySelector('[data-purchase-cancel]');
+      if(purchaseCancel)purchaseCancel.onclick=()=>closePanelsV278();
+      const purchaseConfirm=host.querySelector('[data-purchase-confirm]');
+      if(purchaseConfirm)purchaseConfirm.onclick=()=>{
+        const date=$('bottlePurchaseDate').value||null;
+        runAction(purchaseConfirm,`purchase:${bottleId}:${date||''}`,
+          key=>sb.rpc('set_bottle_purchased_on_v278',{p_business:S.biz.id,p_bottle:bottleId,
+            p_purchased_on:date,p_idempotency_key:key}),'Purchase date saved');
+      };
+
+      /* Remind customer (V279 label; the RPC is unchanged) writes an IN-APP inbox event and says
+         which of the four things actually happened, because "Reminder sent" to a customer with no
+         app is the kind of comfortable lie this module exists to avoid. */
+      const notifyButton=host.querySelector('[data-notify]');
+      if(notifyButton)notifyButton.onclick=()=>runAction(notifyButton,`notify:${bottleId}:${bottle.expires_at||''}`,
+        key=>sb.rpc('notify_bottle_v278',{p_business:S.biz.id,p_bottle:bottleId,
+          p_idempotency_key:key}),'Reminder recorded');
+    }
+    await paintDetail();
+  }
+}
+
+/* The event log speaks the bar's language, not the schema's. */
+function bottleEventTextV275(event){
+  const detail=event?.detail||{};
+  switch(event?.kind){
+    case 'park':return `Parked${detail.fill_percent===undefined?'':` at ${Number(detail.fill_percent)}%`}${detail.note?` · ${String(detail.note)}`:''}`;
+    case 'fill':return `Fill ${Number(detail.from)}% → ${Number(detail.to)}%`;
+    case 'status':{
+      const to=BOTTLE_STATUS_V275[detail.to]?.label||String(detail.to||'');
+      const from=BOTTLE_STATUS_V275[detail.from]?.label||String(detail.from||'');
+      return `${from} → ${to}`;
+    }
+    case 'extend':return detail.to?`Kept until ${sgt(detail.to)||''}`:'Expiry removed — kept indefinitely';
+    case 'transfer':return 'Transferred to another customer';
+    case 'finish':return 'Finished';
+    case 'expire':return 'Expired';
+    /* V278: what a Notify actually did. "Reminder sent" when nothing could be sent is the kind of
+       comfortable lie an evidence log exists to prevent. */
+    case 'reminder':return detail.delivery==='in_app'?'Reminder sent to their app'
+      :detail.delivery==='already_notified'?'Reminder already waiting in their app'
+      :detail.delivery==='opted_out'?'Reminder not sent — they turned reminders off'
+      :'Reminder not sent — no customer app yet';
+    case 'note':return `Note: ${String(detail.note||'')}`;
+    case 'move':return `Moved ${detail.from_name?`from ${detail.from_name} `:''}to ${detail.to_name||'no place recorded'}`;
+    case 'purchase':return detail.to?`Bought on ${String(detail.to)}`:'Purchase date cleared';
+    default:return String(event?.kind||'Change');
+  }
+}
+
 async function waitlistPage(){
   disposeCurrentRoute(); // safe re-entry (autoRefreshIfRelevant re-invokes this outside renderShell)
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -21476,6 +23639,27 @@ async function packagesPage(){
    live yet). is_default is shown as a read-only badge, never editable from this page: which
    branch is "default" is wired into the v11a BEFORE INSERT trigger that backfills
    sales.branch_id for the 5 unmodified sales writers, so flipping it isn't a cosmetic choice. */
+/* V280 (owner, live bar tenant: "why when add branch = pay for 2 branch? i only added 1 new branch
+   - the older one is manual payment"). Every branch screen showed a flat list, so a firm with its
+   own main branch plus one purchased branch simply read as "two branches" — and the Stripe page
+   then asked for two units of the plan without anything in Peekaa ever having said so. The counts
+   are stated wherever branches are shown or bought: what you have, what your plan already covers,
+   and what you are actually paying for. */
+function branchBillingCountsV280(list){
+  const rows=Array.isArray(list)?list:[];
+  return {
+    total:rows.length,
+    included:rows.filter(branch=>branch.billing_state==='included').length,
+    billable:rows.filter(branch=>branch.billing_state==='pending_payment'||branch.billing_state==='active').length,
+    lapsed:rows.filter(branch=>branch.billing_state==='suspended').length
+  };
+}
+function branchBillingSentenceV280(counts){
+  const total=Number(counts?.total||0),included=Number(counts?.included||0),
+    billable=Number(counts?.billable||0),lapsed=Number(counts?.lapsed||0);
+  return `${total} ${total===1?'branch':'branches'} · ${included} included in your plan · ${billable} billable`
+    +(lapsed?` · ${lapsed} payment lapsed`:'');
+}
 async function branchesPage(){
   M().innerHTML=`<div class="topbar"><div><h1>Branches</h1></div>
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
@@ -21499,7 +23683,9 @@ async function branchesPage(){
            ${branchList.filter(item=>item.active).map(item=>`<option value="${esc(item.id)}"${item.is_default?' selected':''}>${esc(item.name)}</option>`).join('')}
          </select>
          <p class="muted small" style="margin-top:6px">Copies opening hours, which services it offers, who works there, and any loyalty settings that branch overrides. Prices and products are already shared across every branch.</p>
-         <div class="imp-note" style="margin-top:14px"><b>An extra branch is charged like another shop.</b> The exact amount and billing date are shown on the secure payment page before anything is charged. The branch stays switched off until that payment confirms.</div>`}
+         <div class="imp-note" style="margin-top:14px"><b>An extra branch is charged like another shop.</b>
+           <p class="small" style="margin-top:6px">${esc(branchBillingSentenceV280(branchBillingCountsV280(branchList)))}. Your plan already covers your main branch, so adding this one takes you to ${branchBillingCountsV280(branchList).billable+1} billable ${branchBillingCountsV280(branchList).billable+1===1?'branch':'branches'} — you are never charged again for the branch your plan includes.</p>
+           <p class="small" style="margin-top:6px">The exact amount and billing date are shown on the secure payment page before anything is charged. The branch stays switched off until that payment confirms.</p></div>`}
       <div class="row" style="margin-top:16px"><button class="btn" id="brSave">${b?'Save changes':'Create branch'}</button>
       <button class="btn ghost sm" id="brCancel">Cancel</button></div>`;
     $('brCancel').onclick=()=>{$('brForm').style.display='none';};
@@ -21562,7 +23748,8 @@ async function branchesPage(){
     if(sbErr) return fail(sbErr);
     const assigned={};(sbRows||[]).forEach(r=>{(assigned[r.branch_id]=assigned[r.branch_id]||new Set()).add(r.staff_id)});
     const awaiting=branchList.filter(b=>b.billing_state==='pending_payment').length;
-    $('brList').innerHTML=(awaiting?`<div class="imp-note" style="margin-bottom:12px" role="status">${awaiting===1?'One branch is':`${awaiting} branches are`} saved but switched off until payment confirms. Nothing at ${awaiting===1?'it':'them'} can take a booking or a sale yet.</div>`:'')+branchList.map(b=>{
+    const branchCountsV280=branchBillingCountsV280(branchList);
+    $('brList').innerHTML=`<p class="muted small" style="margin:0 0 12px" role="status">${esc(branchBillingSentenceV280(branchCountsV280))}</p>`+(awaiting?`<div class="imp-note" style="margin-bottom:12px" role="status">${awaiting===1?'One branch is':`${awaiting} branches are`} saved but switched off until payment confirms. Nothing at ${awaiting===1?'it':'them'} can take a booking or a sale yet.</div>`:'')+branchList.map(b=>{
       const aset=assigned[b.id]||new Set();
       return `<div class="card" style="margin-bottom:12px">
         <div class="row" style="flex-wrap:wrap">
@@ -21921,14 +24108,18 @@ async function reportsPage(){
     canSeeReturningAnswer&&{detailsId:'returningDetails',bodyId:'returningBody',tone:'retention',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.',emptyBody:'Select this card, then run the report for this period.'},
     canReadModule('staffperf')&&{href:'#/staffperf',tone:'team',icon:'staff',title:'Team performance',body:'Staff activity and performance.'}
   ].filter(Boolean);
+  /* V272: the owner bracketed the control bar up to just under the subtitle and wrote "put top
+     here" — the period and the Run report button decide what every card below shows, so they
+     are read first. The markup moved; the ids, handlers and the report bodies did not. */
   M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div>
-    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<details class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.detailsId}"><summary><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></summary>
-      <div class="grid reports-grid" id="${item.bodyId}"><div class="card">${CUI.emptyState({iconName:item.icon,title:'Choose a report category',body:item.emptyBody})}</div></div></details>`).join('')}</div>
     <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
-      <span id="branchWrap"></span><button class="btn sm" id="rgo">Run report</button>
-      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div></div>`;
+      <button class="btn sm" id="rgo">Run report</button>
+      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div>
+      <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
+    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<details class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.detailsId}"><summary><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></summary>
+      <div class="grid reports-grid" id="${item.bodyId}"><div class="card">${CUI.emptyState({iconName:item.icon,title:'Choose a report category',body:item.emptyBody})}</div></div></details>`).join('')}</div>`;
   const runAnswer=runner=>runner().catch(error=>{if(isCurrent())fail(error)});
   let lastScope=null;
   const answerRange=()=>{
@@ -22232,7 +24423,14 @@ async function reportsPage(){
     $('rcsv').disabled=false;
     toast('CSV downloaded');
   };
-  refreshBranchFilter(()=>{invalidateAnswers();runOpenAnswers().catch(error=>{if(isCurrent())fail(error)})},isCurrent);
+  /* V272: the owner struck out the per-page branch select ("remove this"). The top bar already
+     carries the single branch scope for the workspace — the same removal V260 made on the Daily
+     report and the Sales ledger — and answerRange() above already reads selectedBranchId, so the
+     figures keep scoping correctly. Changing the top-bar branch re-enters this page through
+     route() (hydrateProfileBranchSelectorV158), which re-renders it with the new scope, so no
+     local re-fetch trigger is needed. The truth the removed notice carried is not dropped with
+     it: see renderReportScopeNoteV272. */
+  renderReportScopeNoteV272(isCurrent);
 }
 
 /* ---------- get started (first-run setup guide) ---------- */
@@ -22256,13 +24454,25 @@ async function setupPage(){
     <div class="card" id="sp_progress" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     <div id="sp_steps" class="grid"></div>`;
   const bid=S.biz.id;
-  const [{data:sv,error:e1},{data:pr,error:e2},{data:lp,error:e3},{data:st,error:e4},{data:cl,error:e5},{data:rwd,error:e6}]=await Promise.all([
+  /* V276 (owner, on a real bar tenant: "i dont see the full suite of modules ready for
+     production"). The first-run list told a bar to add services, publish loyalty and add a
+     customer, and never once mentioned the module the bar was sold. The probe is the same RPC
+     the Bottles page uses, so it inherits that module's own authorisation; it is issued ONLY for
+     a bar tenant that can read bottles, and its error is deliberately not folded into the guide's
+     error gate — a bottle probe that fails must leave one step showing "not done", never blank
+     the other six. */
+  const showBottleStepV276=isBarSectorV275()&&(S.myRole==='owner'||canReadModule('bottles'));
+  const [{data:sv,error:e1},{data:pr,error:e2},{data:lp,error:e3},{data:st,error:e4},{data:cl,error:e5},{data:rwd,error:e6},{data:bottleProbe}]=await Promise.all([
     sb.from('services').select('id').eq('business_id',bid).eq('active',true).limit(1),
     sb.from('products').select('id').eq('business_id',bid).eq('active',true).limit(1),
     sb.from('loyalty_programs').select('id').eq('business_id',bid).eq('active',true).eq('configuration_status','published').limit(1),
     sb.from('staff').select('id').eq('business_id',bid).eq('active',true).limit(2),
     sb.from('clients').select('id').eq('business_id',bid).limit(1),
-    sb.from('loyalty_rewards').select('id').eq('business_id',bid).eq('active',true).limit(1)
+    sb.from('loyalty_rewards').select('id').eq('business_id',bid).eq('active',true).limit(1),
+    showBottleStepV276
+      ?sb.rpc('list_bar_bottles_v275',{p_business:bid,p_branch:null,p_status:'all',p_search:null,
+        p_expiring_days:null,p_bottle:null,p_limit:1})
+      :Promise.resolve({data:null,error:null})
   ]);
   if(!isCurrent())return;
   const err=e1||e2||e3||e4||e5||e6;
@@ -22278,6 +24488,10 @@ async function setupPage(){
     {id:'services',em:'🛠️',title:'Add your services or products',
       why:'This is what customers see and book — nothing else works until there\'s at least one.',
       done:(sv||[]).length>0||(pr||[]).length>0,link:'#/services',cta:'Add a service or product →'},
+    ...(showBottleStepV276?[{id:'bottles',em:'🍾',title:'Park your first bottle',
+      why:'Bottle keep is the reason a regular comes back for the rest of it — park one and the customer sees it in their own app.',
+      done:(Array.isArray(bottleProbe?.items)?bottleProbe.items:[]).length>0,
+      link:'#/bottles',cta:'Park a bottle →'}]:[]),
     {id:'loyalty',em:'🎁',title:'Publish loyalty earning settings',
       why:'An active published earning programme is available. Add and publish reward milestones separately in Grow.',
       done:canReadModule('loyalty')&&(lp||[]).length>0,link:'#/loyalty',cta:'Review loyalty →'},
@@ -22857,7 +25071,7 @@ async function dailyReportPage(){
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
         ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th>Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
-            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(r.reversal_of)}</span></span>`:'<span class="pill ok">original</span>'}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
+            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
     if(!rows.length) return;
     try{await loadChartLibrary()}catch{if(isLatest())$('drBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified report totals and rows remain available.</div>');return}
@@ -23480,12 +25694,17 @@ async function loadCustomerProgrammePresentationEditorV95(){
   };
 }
 
+/* V269 (owner, the first three Settings tabs circled: "delete these from settings, all put inside
+   under Customer Interface"). V243/V259 moved the panels but left labelled pointer tabs behind so
+   an owner who knew the old address would not find a hole. The owner has now read those pointers
+   and asked for them to go, so the tabs, the panels and the pointer card are all deleted. A deep
+   link to one of them is redirected to the surface that owns it instead of opening a blank tab. */
+const SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269=['workspace','programme','fields','data'];
 async function settingsPage(){
   const requestedSettingsTab=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('tab');
-  /* V209: 'data' was the Import & sign-up tab, now folded into 'fields' (Customer interface).
-     Old ?tab=data links still land somewhere sensible rather than on a dead tab. */
-  if(requestedSettingsTab==='data')requestedSettingsTab='fields';
-  if(['workspace','programme','modules','catalogue','team','fields'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
+  if(SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269.includes(requestedSettingsTab))return nav('#/customer-interface');
+  if(['modules','catalogue','team'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
+  if(!['modules','catalogue','team'].includes(settingsActiveTab))settingsActiveTab='modules';
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
   /* V243: the customer field definitions moved out with the Customer interface panel — this page
      no longer renders them, so it no longer reads them. */
@@ -23497,34 +25716,13 @@ async function settingsPage(){
     .map(k=>MODULES[k]?.[1]||k).join(', ');
   M().innerHTML=`<div class="settings-page"><div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
-      <button type="button" class="settings-tab" role="tab" id="settab-workspace" aria-controls="setpanel-workspace" aria-selected="true" data-settab="workspace">Workspace &amp; brand</button>
-      ${S.myRole==='owner'?'<button type="button" class="settings-tab" role="tab" id="settab-programme" aria-controls="setpanel-programme" aria-selected="false" tabindex="-1" data-settab="programme">Customer programme</button>':''}
-      <!-- V209 (owner annotations): "Import & sign-up" struck out, and an arrow from "Customer
-           fields & privacy" reading "should be here under new tab Customer Interface". Everything
-           the CUSTOMER meets — the sign-up QR they scan and the fields they are asked for — now
-           sits behind one tab named for them, instead of being filed under an operations word
-           ("Import") that describes what the owner does rather than what the customer sees.
-           V228 (owner drew arrows from Workspace & brand, Customer programme and Customer
-           interface onto one spot, captioned "Put new tab here · Customer Interface"): it now
-           sits BESIDE the other customer-facing tabs instead of last, after the operations ones.
-           Everything the customer meets is reachable without crossing Modules, Checkout and
-           Team to get there.
-           V243: both customer-facing tabs now live in the Customer Interface module in the main
-           menu. The LABELS stay here on purpose — an owner who learned where these live must not
-           find the tab simply gone — but each panel is a one-line pointer, never a second copy of
-           the form. -->
-      <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer interface</button>
-      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
+      <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
+           They are sections of the Customer Interface module now; see customerInterfacePageV243. -->
+      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="true" data-settab="modules">Modules &amp; plan</button>
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
     </div>
-    <section class="settings-panel" id="setpanel-workspace" role="tabpanel" aria-labelledby="settab-workspace" tabindex="-1">
-      ${settingsMovedToCustomerInterfaceCardV243('Workspace &amp; brand')}
-    </section>
-    ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-programme" role="tabpanel" aria-labelledby="settab-programme" tabindex="-1" hidden>
-      ${settingsMovedToCustomerInterfaceCardV243('Customer programme')}
-    </section>`:''}
-    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1" hidden><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
+    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1"><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
       <p class="muted small" style="margin:6px 0 10px">Your sector sets a sensible default — a cafe starts with products only, a massage shop with services only, a salon with both. Change it here if your shop is different.</p>
       <label class="row sales-mix-row"><input type="checkbox" id="sellsServices" style="width:auto" ${(S.biz.enabled_modules||[]).includes('services')?'checked':''}> <span><b>Services</b><br><span class="muted small">Bookable treatments, classes or appointments.</span></span></label>
       <label class="row sales-mix-row"><input type="checkbox" id="sellsProducts" style="width:auto" ${(S.biz.enabled_modules||[]).includes('inventory')?'checked':''}> <span><b>Products</b><br><span class="muted small">Physical items you stock and sell.</span></span></label>
@@ -23550,10 +25748,7 @@ async function settingsPage(){
       <p class="muted small" style="margin:4px 0 8px">Reusable module sets — save one from a staff member's "Modules" panel below, then apply it to others. Example: Staff A → Dashboard + Customers. Staff B → Inventory only.</p>
       <div id="tplList">${CUI.skeletonGrid({cards:1,lines:3})}</div>
     </div>
-</section>
-    <section class="settings-panel" id="setpanel-fields" role="tabpanel" aria-labelledby="settab-fields" tabindex="-1" hidden>
-    ${settingsMovedToCustomerInterfaceCardV243('Customer interface')}
-    </section></div>`;
+</section></div>`;
   M().querySelector('.settings-page')?.setAttribute('data-workspace-i18n','');
   /* Tabbed sections (ARIA tablist): every field stays in the DOM at once — only the active
      panel is shown — so each Save button keeps reading exactly the inputs it always did, no
@@ -23588,9 +25783,9 @@ async function settingsPage(){
   /* V259: loadWorkspaceLogoEditorV96() moved out with the Workspace & brand panel — the host
      element it fills now lives in the Customer Interface module, and wireWorkspaceBrandV259()
      is what calls it. */
-  if(S.myRole==='owner'){
-    loadCustomerProgrammePresentationEditorV95();
-  }
+  /* V269: loadCustomerProgrammePresentationEditorV95() left with its host element — the editor
+     is rendered and wired by customerInterfacePageV243 now, and calling it here would have been
+     a load against a card that no longer exists on this page. */
   /* Checkout Catalogue is deliberately separate from Inventory: it only controls whether an
      existing service/product may be selected at checkout. Stock, suppliers, quantities and cost
      data are never loaded or rendered here. All reads and writes are owner-gated RPC contracts. */
@@ -24239,6 +26434,13 @@ async function loadBillingConfig(){
   const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};
   const writeBillingAttempt=attempt=>{try{sessionStorage.setItem(billingAttemptSlot,JSON.stringify(attempt))}catch{}};
   const clearBillingAttempt=key=>{try{const current=readBillingAttempt();if(!current||current.key===key)sessionStorage.removeItem(billingAttemptSlot)}catch{}};
+  /* V280: the amount on this card is ONE unit of the plan. A firm that has bought an extra branch
+     is charged another unit for it, and this card never said so — which is how a single added
+     branch turned into a Stripe page the owner read as "pay for 2 branches". Fail-soft: if the
+     count cannot be read the sentence is simply omitted, never guessed. */
+  const branchRowsV280=await sb.from('branches').select('billing_state').eq('business_id',S.biz.id)
+    .then(result=>result.error?null:(result.data||[])).catch(()=>null);
+  const branchCountsV280=branchRowsV280?branchBillingCountsV280(branchRowsV280):null;
   const renderPlan=()=>{
     const plan=byCadence[selectedCadence];
     if(!plan){
@@ -24271,6 +26473,7 @@ async function loadBillingConfig(){
       <p class="muted small" style="margin-top:7px">1,000 customer profiles included. Each additional 1,000 is ${money(plan.capacity_block_amount_cents)} per ${cadenceLabel}. ${currentCustomers.toLocaleString('en-SG')} profiles currently stored. Capacity can be increased later.</p>
       <div class="card" style="margin-top:16px;background:var(--sand)"><div class="row"><div><span class="muted small">Amount due</span><div style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums">${money(total)} <span class="muted small">/ ${cadenceLabel}</span></div><div class="muted small">${equivalent} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity</div><div class="muted small" style="margin-top:6px">GST not charged · SGD 0.00</div></div></div></div>
       <div class="row" style="margin-top:14px;align-items:flex-start"><span class="pill ok">Staff access included</span><p class="muted small" style="margin:2px 0 0">Use a unique login and least-privilege role for every team member. Staff count never changes this plan's price.</p></div>
+      <p class="muted small" style="margin-top:10px">This price covers your company including its main branch. ${branchCountsV280?`You have ${esc(branchBillingSentenceV280(branchCountsV280))}. `:''}Each extra branch is charged as another unit of this plan, on top of the amount above.</p>
       <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:700">What is included</summary><ul class="small" style="columns:2;column-width:240px">${includedModules.map(module=>`<li>${esc(module)}</li>`).join('')}</ul><p class="muted small"><strong>Template-assisted promotion wording</strong> helps reword factual offer content; the owner reviews and publishes it. It does not use generative AI or invent prices, dates or claims.</p></details>
       <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Not included in this price</summary><ul class="small">${exclusions.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details>
       <p class="muted small" style="margin-top:14px">${guarantee}</p>
@@ -24572,11 +26775,6 @@ function wireWorkspaceBrandV259(){
     toast('Saved');route();
   };
 }
-function settingsMovedToCustomerInterfaceCardV243(label){
-  return `<div class="card"><b>${esc(label)}</b>
-      <p class="muted small" style="margin:6px 0 12px">Moved to Customer Interface in the main menu.</p>
-      <a class="btn sm" href="#/customer-interface">Open Customer Interface</a></div>`;
-}
 /* The public page a customer meets before joining. Relative to this document, so it is the same
    origin on every deploy (production, preview, or a native WebView) without a hard-coded host. */
 function customerInterfacePreviewUrlV243(){
@@ -24614,6 +26812,13 @@ function wireCustomerInterfacePreviewV243(){
       if(blocked)blocked.hidden=painted;
     },5000);
   };
+}
+/* V269 (owner drew the target shape: Customer Interface → Workspace & Brand / Customer Programme
+   / Interface). The three panels already lived on this page in that order; what was missing was
+   any label saying which is which, so an owner arriving from the deleted Settings tabs could not
+   tell where the thing they used to open had landed. Headings only — no panel moved. */
+function customerInterfaceSectionHeadingV269(id,label,hint){
+  return `<h2 class="customer-interface-section-v269" id="${esc(id)}" style="margin:26px 0 0;font-size:1.05rem">${esc(label)}<span class="muted small" style="display:block;font-weight:400;margin-top:4px">${esc(hint)}</span></h2>`;
 }
 function customerInterfaceSectionsHtmlV243(fieldDefs){
   return `<div class="customer-interface-sections-v243">
@@ -24729,8 +26934,11 @@ async function customerInterfacePageV243(){
   if(fieldDefsError) return fail(fieldDefsError);
   M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>Customer Interface</h1><p class="muted small">Everything a customer sees and uses</p></div></div>
     ${customerInterfacePreviewCardHtmlV243()}
-    ${canEditCustomerInterface?workspaceBrandPanelHtmlV259():''}
-    ${canEditCustomerInterface?`<div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
+    ${canEditCustomerInterface?`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Workspace & brand','Your name, logo, colour and the policy your customers read.')}
+    ${workspaceBrandPanelHtmlV259()}
+    ${customerInterfaceSectionHeadingV269('ciSectionProgrammeV269','Customer programme','How your points, tiers and rewards are presented in the customer wallet.')}
+    <div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
+    ${customerInterfaceSectionHeadingV269('ciSectionInterfaceV269','Interface','Sign-up, the fields you ask customers for, and what they may do in their app.')}
     ${customerInterfaceSectionsHtmlV243(fieldDefs)}`:'<div class="card" style="margin-top:16px"><p class="muted small">Only the owner can change what customers see.</p></div>'}
   </div>`;
   wireCustomerInterfacePreviewV243();

@@ -90,7 +90,9 @@ function renderPage(offer) {
     .filter(Boolean).join(' · ').slice(0, 200) || `An offer from ${business || 'a Peekaa business'}.`;
   const image = absoluteMediaUrl(offer.image_url);
   const logo = absoluteMediaUrl(offer.business_logo_url);
-  const appUrl = `${CANONICAL_ORIGIN}/#/b/${encodeURIComponent(String(offer.business_slug || ''))}`;
+  /* v274 put a marketing landing on "/" (edge middleware) with a script that forwards hash
+   * routes to /app. Linking /app directly skips that bounce — one hop, not two. */
+  const appUrl = `${CANONICAL_ORIGIN}/app#/b/${encodeURIComponent(String(offer.business_slug || ''))}`;
   const pageUrl = `${CANONICAL_ORIGIN}/o/${encodeURIComponent(String(offer.offer_id || ''))}`;
 
   return `<!DOCTYPE html>

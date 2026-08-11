@@ -301,7 +301,11 @@ test('Reports loads only the answers the user opened', () => {
   assert.match(reports,/const runOpenAnswers=\(\)=>Promise\.all\(answerLoaders/);
   assert.match(reports,/\.filter\(\(\[id\]\)=>\$\(id\)\?\.open\)/);
   assert.doesNotMatch(reports,/runAll\(|Promise\.all\(\[runMoney\(\),runBusy\(\),runReturning\(\)\]\)/);
-  assert.match(reports,/refreshBranchFilter\(\(\)=>\{invalidateAnswers\(\);runOpenAnswers\(\)/);
+  /* V272 owner instruction ("remove this", on the per-page branch select): the branch filter no
+     longer re-triggers the open answers — Run report is the trigger, and the top-bar branch scope
+     re-enters the page through route(). The lazy-load guarantee this test guards is unchanged. */
+  assert.doesNotMatch(reports,/refreshBranchFilter\(/);
+  assert.match(reports,/\$\('rgo'\)\.onclick=\(\)=>\{invalidateAnswers\(\);runOpenAnswers\(\)/);
 
   const money=reports.slice(reports.indexOf('async function runMoney()'),reports.indexOf('const appointmentSummary='));
   assert.match(money,/get_reports_summary/);

@@ -34,7 +34,11 @@ test("the button's visibility gate matches the destination route's own access gu
   assert.match(wiring,/if\(canReadModule\('sales'\)&&\$\('tViewSalesHistoryV253'\)\)/);
   // The route guard that protects a typed #/sales hash reduces to canReadModule(pageKey) for
   // any ordinary (non owner-only) module — 'sales' is one, so this is the same condition.
-  assert.match(app,/if\(MODULES\[pageKey\]&&!OWNER_ONLY_MODULES\.has\(pageKey\)&&pageKey!=='dashboard'\s*\n\s*&&!canReadModule\(pageKey\)\)\{/);
+  /* V275 inserted one exemption line between these two: the bar-only bottle surfaces answer with
+     their own "not available for this business type" card instead of bouncing to the dashboard.
+     'sales' is not one of them, so the condition this test cares about is byte-for-byte the same
+     for the /sales route. */
+  assert.match(app,/if\(MODULES\[pageKey\]&&!OWNER_ONLY_MODULES\.has\(pageKey\)&&pageKey!=='dashboard'\s*\n(?:\s*&&!BOTTLE_SURFACES_V275\.has\(pageKey\)\s*\n)?\s*&&!canReadModule\(pageKey\)\)\{/);
   assert.ok(!app.includes("OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','sales'"),
     'sales must not be owner-only, or the route guard and this button\'s gate would diverge');
 });

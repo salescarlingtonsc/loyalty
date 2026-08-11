@@ -13,6 +13,7 @@ test('release artifact contract contains the public pages and offline fallback',
     'data-request.html',
     'index.html',
     'join.html',
+    'landing.html',
     'offline.html',
     'privacy.html',
     'terms.html'

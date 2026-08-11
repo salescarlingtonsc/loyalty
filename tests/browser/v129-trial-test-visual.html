@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="565f6c72466d72361c947b374c61fbc8c4443a26633cc1951d83019440c28f1b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="69e30fcf8f07acef34a839f3c76001b537ad72dd599fbc56d09c0646c14c5424"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -239,6 +239,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-controls-v252{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 10px}
 .dashboard-schedule-tabs-v252{display:flex;gap:6px}
 .dashboard-schedule-controls-v252 input[type="date"]{max-width:190px}
+.dashboard-schedule-scope-v266{flex-basis:100%;line-height:1.45}
+.performance-heading{flex-wrap:wrap}
+.performance-panel{margin-top:18px}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
@@ -1009,6 +1012,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .reward-card-v250[hidden]{display:none!important}
 .reward-card-empty-v250{padding:0 14px 14px}
 .reward-card-templates-v250{margin:0;padding:0 14px 14px}
+/* V268 (owner: "why inside after edit does not updated"). The pending value is ADDED under the
+   published one, never in place of it: struck-through live value, arrow, bold pending value. One
+   change per line so a two-column 150px card at 390px still wraps cleanly, and no new colours. */
+.grow-pending-v268{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;margin-top:2px}
+.grow-pending-line-v268{font-size:.78rem;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+.grow-pending-line-v268 b{color:var(--ink)}
+.grow-pending-line-v268 s{opacity:.85}
+.reward-card-pending-new-v268{border-style:dashed}
+/* The trail above a drilled-in category: where you are, and one tap back to the level above. */
+.grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
+.grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1202,6 +1216,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-act-note-v252 .btn{margin-top:3px}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
+/* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
+   raw UUID. The reference is a button only when its counterpart row is on screen; otherwise it
+   renders as plain text with no affordance, because there is nowhere to go. */
+.c360-act-sort-v267{display:inline-flex;align-items:center;gap:5px;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.c360-act-caret-v267{opacity:.6;font-size:.8em}
+.c360-act-ref-v267{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;overflow-wrap:anywhere}
+button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.c360-act-flash-v267{animation:c360ActFlashV267 2.2s ease-out}
+@keyframes c360ActFlashV267{0%,55%{background:#FFF3D6}100%{background:transparent}}
+@media(prefers-reduced-motion:reduce){.c360-act-flash-v267{animation:none;outline:2px solid var(--coral);outline-offset:-2px}}
+.c360-activity-filters-v267{align-items:flex-end;row-gap:10px}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
@@ -1831,7 +1856,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 565f6c72466d72361c947b374c61fbc8c4443a26633cc1951d83019440c28f1b</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 69e30fcf8f07acef34a839f3c76001b537ad72dd599fbc56d09c0646c14c5424</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -1846,6 +1871,8 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     referrals:'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 8h6M20 5v6',
     memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
     giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
+    /* V275: bottle keep is a bar-only module; a bottle needs a bottle, not a borrowed box. */
+    bottle:'M10 2h4v3.6l2.4 3.6c.4.6.6 1.3.6 2V21a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V11.2c0-.7.2-1.4.6-2L10 5.6zM7 15h10',
     star:'m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.77 6.4 20.91l1.07-6.24-4.53-4.42 6.26-.91L12 3Z',
     /* v264: a real share glyph — the standard three linked nodes. 'export' was being used for
        the share button and read as "download", which is a different promise. 'chat' gives the
@@ -3061,9 +3088,25 @@ async function clientsPage(){
       :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
     </div>`:'';
   const activitySources=[canReadSales&&'sales and visits',canReadAppointments&&'appointments',canReadLoyalty&&'reward redemptions',canReadRetention&&'retention rewards',canReadMemberships&&'memberships',canReadPackages&&'packages'].filter(Boolean);
+  /* V267: the Type and Team member menus are built from the rows THIS customer actually has,
+     through the same activityTypeOfV267 the cells use, so the menu can never offer a type the
+     table cannot show or drift from the renderer. */
+  const activityTypeOptionsV267=[...new Set(history.map(activityTypeOfV267))].sort();
+  const activityStaffOptionsV267=[...new Set(history.map(h=>h.staff).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const activityHasUnassignedV267=history.some(h=>!h.staff);
+  const activityFiltersV267=`<div class="v150-filterbar c360-activity-filters-v267" role="group" aria-label="Filter activity history" style="margin-top:12px">
+    <div style="flex:1 1 190px;min-width:min(100%,190px)"><label for="actItem">Item</label><input type="search" id="actItem" inputmode="search" autocomplete="off" placeholder="Search item"></div>
+    <div style="flex:1 1 160px;min-width:min(100%,160px)"><label for="actType">Type</label><select id="actType"><option value="">All types</option>${activityTypeOptionsV267.map(type=>`<option value="${esc(type)}">${esc(type)}</option>`).join('')}</select></div>
+    <div style="flex:1 1 175px;min-width:min(100%,175px)"><label for="actStaff">Team member</label><select id="actStaff"><option value="">All team members</option>${activityStaffOptionsV267.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('')}${activityHasUnassignedV267?`<option value="${ACTIVITY_STAFF_NONE_V267}">No team member</option>`:''}</select></div>
+    <div style="flex:1 1 150px;min-width:min(100%,150px)"><label for="actFrom">From</label><input type="date" id="actFrom"></div>
+    <div style="flex:1 1 150px;min-width:min(100%,150px)"><label for="actTo">To</label><input type="date" id="actTo"></div>
+    <div style="flex:1 1 195px;min-width:min(100%,195px)"><label for="actSort">Sort by</label><select id="actSort">${ACTIVITY_SORTS_V267.map(option=>`<option value="${option.key}"${option.key===ACTIVITY_SORT_DEFAULT_V267?' selected':''}>${esc(option.label)}</option>`).join('')}</select></div>
+    <button class="btn ghost sm" id="actClear">Clear filters</button>
+  </div>`;
   const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b>
+    ${activityFiltersV267}
     <div id="histBody">${renderHistPage(history,histShown)}</div>
-    ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
+    <div id="histMoreWrap" style="text-align:center;margin-top:10px${history.length>histShown?'':';display:none'}"><button class="btn ghost sm" id="histMore">Show earlier</button></div>
     </div>`:'';
   const profileScopeLabel=isProfileAdmin
     ?'complete business-wide access'
@@ -3324,15 +3367,161 @@ async function clientsPage(){
     if(error){consentButton.disabled=false;return fail(error)}
     toast(to?'Consent recorded':'Consent withdrawn — recorded');clientDetail(id);
   };
-  const histMore=$('histMore');
-  if(histMore) histMore.onclick=()=>{
-    histShown+=50;
+  /* V267: paging, filtering and sorting all go through ONE redraw, so the Show earlier control
+     and the table can never disagree about how many rows the current filter actually left. */
+  const redrawActivityV267=()=>{
+    const body=$('histBody');
+    if(!body)return;
     $('histBody').innerHTML=renderHistPage(history,histShown);
+    const moreWrap=$('histMoreWrap');
+    if(moreWrap)moreWrap.style.display=activityFilteredRowsV267(history).length>histShown?'':'none';
     bindReversalButtons(()=>clientDetail(id));
-    if(histShown>=history.length) histMore.parentElement.style.display='none';
+    bindActivityRowControlsV267(redrawActivityV267);
   };
+  bindActivityRowControlsV267(redrawActivityV267);
+  const histMore=$('histMore');
+  if(histMore) histMore.onclick=()=>{histShown+=50;redrawActivityV267()};
+  /* Changing a filter returns to the first page: keeping an offset from the previous filter
+     would show an owner the middle of a result set and hide its first rows. */
+  ['actItem','actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
+    const control=$(controlId);
+    if(control)control.onchange=()=>{histShown=50;redrawActivityV267()};
+  });
+  const clearActivity=$('actClear');
+  if(clearActivity)clearActivity.onclick=()=>{clearActivityFiltersV267();histShown=50;redrawActivityV267()};
   if($('c360ExpiryRetry'))$('c360ExpiryRetry').onclick=()=>clientDetail(id);
   bindReversalButtons(()=>clientDetail(id));
+}
+/* V267 (owner, circling three raw UUIDs in Activity history: "what is this?", and separately
+   "i want a drop down filter i can filter what i want to see" with sort arrows drawn beside
+   AMOUNT and STAFF). These helpers are the SINGLE source for what a row's Type is, what money
+   it carries and how it is described, so the filter menus, the sort comparators and the
+   rendered cells cannot drift apart as new row kinds are added to the feed. */
+const ACTIVITY_STAFF_NONE_V267='__no_staff__';
+const ACTIVITY_SORT_DEFAULT_V267='date_desc';
+const ACTIVITY_SORTS_V267=[
+  {key:'date_desc',label:'Date — newest first'},
+  {key:'date_asc',label:'Date — oldest first'},
+  {key:'amount_desc',label:'Amount — highest first'},
+  {key:'amount_asc',label:'Amount — lowest first'},
+  {key:'staff_asc',label:'Team member — A to Z'},
+  {key:'staff_desc',label:'Team member — Z to A'}
+];
+function activityTypeOfV267(h){
+  if(!h)return 'Appointment';
+  if(h.kind==='sale')return h.is_reversal?'Reversal':'Sale';
+  if(h.kind==='redemption')return 'Reward';
+  if(h.kind==='grant')return 'Retention';
+  if(h.kind==='membership')return 'Membership';
+  if(h.kind==='package')return 'Package';
+  return 'Appointment';
+}
+/* Returns cents for a row that really carries money, and null for one that does not. Null is
+   not zero: an appointment with no money must never rank alongside a genuine SGD 0.00 sale. */
+function activityAmountCentsV267(h){
+  if(!h)return null;
+  if(h.kind==='sale')return Number((h.amount??h.amount_cents)??0);
+  if(h.kind==='redemption')return h.credit_cents?Number(h.credit_cents):null;
+  if(h.kind==='grant'){
+    if(campaignEntitlementDisplayV99(h).pending)return null;
+    return h.fulfillment_kind==='credit'?Number(h.reward_value||0):null;
+  }
+  return null;
+}
+/* Singapore time, like every other date on this surface. The end bound covers the whole day:
+   sgIso() only carries minutes, so an inclusive "to" built from it would drop a 23:59:30 sale
+   from a range that ends on that sale's own date. */
+function activityRangeBoundV267(value,{end=false}={}){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||'')))return null;
+  const at=Date.parse(end?`${value}T23:59:59.999+08:00`:sgIso(`${value}T00:00`));
+  return Number.isFinite(at)?at:null;
+}
+function activityWhenTextV267(iso){
+  if(!iso)return '';
+  const at=new Date(iso);
+  if(Number.isNaN(at.getTime()))return '';
+  return new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',
+    hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(at);
+}
+/* The human description of a sale row, used both in its own ITEM cell and when another row has
+   to refer to it. Never an id: the owner cannot act on a UUID. */
+function activityItemTextV267(h){
+  const note=String((h&&h.note)||'').trim();
+  const text=note||String((h&&h.saleKind)||'sale').replace(/_/g,' ');
+  return text.length>64?text.slice(0,61)+'…':text;
+}
+function activityFilterStateV267(){
+  const read=controlId=>{const el=$(controlId);return el?String(el.value||''):''};
+  const sort=read('actSort');
+  return {item:read('actItem').trim().toLowerCase(),
+    type:read('actType'),staff:read('actStaff'),from:read('actFrom'),to:read('actTo'),
+    sort:ACTIVITY_SORTS_V267.some(option=>option.key===sort)?sort:ACTIVITY_SORT_DEFAULT_V267};
+}
+/* Client-side over the COMPLETE feed. Every reader behind this timeline pages the whole
+   history with fetchAllRows before the six sources are merged, so nothing is left on the
+   server for a filter to miss; `histShown` only controls how much of the result is painted. */
+function activityFilteredRowsV267(history,state){
+  const s=state||activityFilterStateV267();
+  const from=activityRangeBoundV267(s.from),to=activityRangeBoundV267(s.to,{end:true});
+  const kept=(history||[]).filter(h=>{
+    /* V270: matched against activityItemTextV267 — the same text the ITEM cell prints — so a
+       search can never hide a row that visibly contains the words the owner typed. */
+    if(s.item&&!activityItemTextV267(h).toLowerCase().includes(s.item))return false;
+    if(s.type&&activityTypeOfV267(h)!==s.type)return false;
+    if(s.staff===ACTIVITY_STAFF_NONE_V267){if(h.staff)return false}
+    else if(s.staff&&h.staff!==s.staff)return false;
+    if(from!=null||to!=null){
+      const at=Date.parse(h.t||'');
+      if(!Number.isFinite(at))return false;
+      if(from!=null&&at<from)return false;
+      if(to!=null&&at>to)return false;
+    }
+    return true;
+  });
+  const direction=s.sort.endsWith('_asc')?1:-1;
+  const key=s.sort.replace(/_(asc|desc)$/,'');
+  return kept.map((row,index)=>({row,index})).sort((a,b)=>{
+    let comparison=0;
+    if(key==='amount'){
+      const av=activityAmountCentsV267(a.row),bv=activityAmountCentsV267(b.row);
+      /* Rows with no money sink to the bottom in BOTH directions rather than being ranked
+         as if they were zero-value transactions. */
+      if(av==null&&bv!=null)return 1;
+      if(bv==null&&av!=null)return -1;
+      comparison=(av==null&&bv==null)?0:av-bv;
+    }else if(key==='staff'){
+      const av=a.row.staff||'',bv=b.row.staff||'';
+      if(!av&&bv)return 1;
+      if(!bv&&av)return -1;
+      comparison=av.localeCompare(bv);
+    }else comparison=String(a.row.t||'').localeCompare(String(b.row.t||''));
+    return comparison?comparison*direction:a.index-b.index;
+  }).map(entry=>entry.row);
+}
+function clearActivityFiltersV267(){
+  ['actItem','actType','actStaff','actFrom','actTo'].forEach(controlId=>{const el=$(controlId);if(el)el.value=''});
+  const sort=$('actSort');
+  if(sort)sort.value=ACTIVITY_SORT_DEFAULT_V267;
+}
+/* Controls that live INSIDE the redrawn table body, so they are rewired on every redraw. */
+function bindActivityRowControlsV267(redraw){
+  document.querySelectorAll('[data-act-sort]').forEach(button=>{
+    button.onclick=()=>{const sort=$('actSort');if(sort)sort.value=button.dataset.actSort;redraw()};
+  });
+  /* A reference is only ever rendered as a button when its counterpart row is actually
+     painted, so this can never offer navigation that goes nowhere. */
+  document.querySelectorAll('[data-act-jump]').forEach(button=>{
+    button.onclick=()=>{
+      const target=document.getElementById(button.dataset.actJump);
+      if(!target)return;
+      target.scrollIntoView({block:'center',behavior:'smooth'});
+      target.classList.add('c360-act-flash-v267');
+      target.focus({preventScroll:true});
+      setTimeout(()=>{if(target.isConnected)target.classList.remove('c360-act-flash-v267')},2200);
+    };
+  });
+  const clearFromEmpty=$('actClearEmpty');
+  if(clearFromEmpty)clearFromEmpty.onclick=()=>{clearActivityFiltersV267();redraw()};
 }
 /* Renders the first n entries of the unified Customer 360 timeline.
    V252 (owner): the stacked pictogram list is now a TABLE — DATE / TYPE / ITEM / AMOUNT / STAFF.
@@ -3345,19 +3534,55 @@ async function clientsPage(){
    its data-reverse-kind/data-reverse-id hooks so bindReversalButtons still works unchanged.
    The wrap scrolls horizontally on a narrow phone rather than breaking the page. */
 function renderHistPage(history,n){
-  const rows=history.slice(0,n);
-  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
+  /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
+     survived. Doing it the other way round would let a filter report "nothing" while matching
+     rows sat one page below. An empty result is two different facts and says which. */
+  if(!history.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
+  const stateV267=activityFilterStateV267();
+  const filteredV267=activityFilteredRowsV267(history,stateV267);
+  if(!filteredV267.length) return CUI.emptyState({iconName:'search',title:'No activity matches these filters',
+    body:'This customer does have history — the filters above are hiding all of it. Clear them to see the full record.',
+    actionHtml:'<button class="btn ghost sm" id="actClearEmpty">Clear filters</button>'});
+  const rows=filteredV267.slice(0,n);
+  /* The counterpart of a reversal is looked up across the WHOLE feed, not just this page, so a
+     reference can be described even when its partner row is not currently painted. */
+  const saleRowsByIdV267=new Map();
+  history.forEach(row=>{if(row.kind==='sale'&&row.id)saleRowsByIdV267.set(String(row.id),row)});
+  const paintedRowIdsV267=new Set(rows.filter(row=>row.kind==='sale'&&row.id).map(row=>`c360-act-sale-${row.id}`));
+  /* V267 (owner circled three raw UUIDs: "what is this?"). A UUID is not something a shop owner
+     can act on. The reference now describes the counterpart row in its own terms — what it was
+     and when — and becomes a jump only when that row is on screen. When the counterpart cannot
+     be resolved at all (an older row outside this customer's visible sales, or one hidden from
+     this role by branch scope) it says so plainly rather than falling back to the id. The
+     audit wording is untouched: this is still unmistakably a reversal. */
+  const counterpartRefV267=(token,tone,counterpartId,missingText)=>{
+    const other=counterpartId?saleRowsByIdV267.get(String(counterpartId)):null;
+    const description=other
+      ?`${esc(activityItemTextV267(other))} · ${esc(activityWhenTextV267(other.t))}`
+      :esc(missingText);
+    const anchor=other?`c360-act-sale-${other.id}`:'';
+    const body=anchor&&paintedRowIdsV267.has(anchor)
+      ?`<button type="button" class="c360-act-ref-v267" data-act-jump="${anchor}">${description}</button>`
+      :`<span class="c360-act-ref-v267">${description}</span>`;
+    return `<span class="pill ${tone}"><span data-workspace-i18n>${token}</span> ${body}</span>`;
+  };
+  const sortHeadV267=(key,label)=>{
+    const active=stateV267.sort.startsWith(key+'_');
+    const ascending=active&&stateV267.sort.endsWith('_asc');
+    const next=active&&!ascending?`${key}_asc`:`${key}_desc`;
+    return `<th aria-sort="${active?(ascending?'ascending':'descending'):'none'}"><button type="button" class="c360-act-sort-v267" data-act-sort="${next}" aria-label="Sort by ${label}, ${next.endsWith('_asc')?'ascending':'descending'}">${label}<span class="c360-act-caret-v267" aria-hidden="true">${active?(ascending?'▲':'▼'):'↕'}</span></button></th>`;
+  };
   const DASH_V252='—';
   const cellsV252=h=>{
     if(h.kind==='sale'){
       const isRev=!!h.is_reversal;
-      const relation=isRev?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(h.original_sale_id||'')}</span></span>`
-        :h.reversal_sale_id?`<span class="pill off"><span data-workspace-i18n>reversed →</span> <span data-merchant-content>${esc(h.reversal_sale_id)}</span></span>`:'';
+      const relation=isRev?counterpartRefV267('reversal of','no',h.original_sale_id,'an earlier sale that is not in this history')
+        :h.reversal_sale_id?counterpartRefV267('reversed →','off',h.reversal_sale_id,'a correction that is not in this history'):'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      const amount=Number((h.amount??h.amount_cents)??0);
+      const amount=Number(activityAmountCentsV267(h)||0);
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
-        type:isRev?'Reversal':'Sale',
+        type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
         notes:[relation,
           h.note?esc(h.note):'',
@@ -3370,10 +3595,11 @@ function renderHistPage(history,n){
       const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      return {tone:'reward',icon:'redeem',type:'Reward',
+      const redemptionAmountV267=activityAmountCentsV267(h);
+      return {tone:'reward',icon:'redeem',type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc(h.reward_name||'Loyalty reward')}</span>`,
         notes:[relation,`${Number(h.points_spent||0)} points spent`,action],
-        amount:h.credit_cents?money(Number(h.credit_cents)):'',staff:''};
+        amount:redemptionAmountV267!=null?money(redemptionAmountV267):'',staff:''};
     }
     if(h.kind==='grant'){
       const campaign=campaignEntitlementDisplayV99(h);
@@ -3409,10 +3635,10 @@ function renderHistPage(history,n){
       notes:[`<span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span>`],
       amount:'',staff:h.staff?esc(h.staff):''};
   };
-  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Amount</th><th>Staff</th></tr></thead><tbody>${rows.map(h=>{
+  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr>${sortHeadV267('date','Date')}<th>Type</th><th>Item</th>${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}</tr></thead><tbody>${rows.map(h=>{
     const cell=cellsV252(h);
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
-    return `<tr>
+    return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
       <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
       <td data-label="Item">${cell.item}${notes}</td>
@@ -5020,8 +5246,8 @@ function sgLedgerDateV154(iso){
   };
 }
 function saleRecordStatusV154(s,w={}){
-  if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row linked to ${s.reversal_of}.`};
-  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row reversed by ${w.reversal_sale_id}.`};
+  if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
+  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
   if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Corrected by ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}.`};
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
@@ -5050,40 +5276,70 @@ async function salesPage(){
   }
   const saleTeam=saleStaff||[];
   const signedInStaff=saleTeam.find(person=>person.user_id===S.user?.id);
+  /* V266 (owner, in red on the Sales page: "I tried to filter by dates & click apply but
+     cannot, please solve!!!"). The defaults are named once so Clear filters can restore the
+     dates too — it used to reset only the four non-date controls, so a range narrowed down to
+     nothing could not be undone by the button whose whole job is undoing filters. */
+  const salesDefaultToV266=sgDateInputValue(),salesDefaultFromV266=shiftSgDateInput(salesDefaultToV266,-29);
   M().innerHTML=`${salesHead}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
         <div class="sales-filter-row">
-          <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${shiftSgDateInput(sgDateInputValue(),-29)}"></div>
-          <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${sgDateInputValue()}"></div>
+          <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${salesDefaultFromV266}"></div>
+          <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${salesDefaultToV266}"></div>
           <div><label for="salesCustomer">Customer search</label><input id="salesCustomer" type="search" placeholder="Name"></div>
         </div>
         <div class="sales-filter-row secondary">
           <div><label for="salesStaff">Team member</label><select id="salesStaff"><option value="">All staff</option>${saleTeam.map(person=>`<option value="${person.id}">${esc(person.full_name||'Team member')}</option>`).join('')}</select></div>
-          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="membership">Membership</option></select></div>
+          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="gift_card">Gift card</option><option value="membership">Membership</option></select></div>
           <div><label for="salesPayment">Payment state</label><select id="salesPayment"><option value="">All states</option><option value="true">Paid</option><option value="false">Unpaid</option></select></div>
           <button class="btn sm" id="salesApply">Apply filters</button>
         </div>
-        <div><button class="btn ghost sm" id="salesClear">Clear filters</button></div>
+        <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" id="salesClear">Clear filters</button><span class="muted small" id="salesFilterSummary" role="status" aria-live="polite"></span></div>
       </div>
       <div id="recent" style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
+  const salesFilterNoteV266=(text,tone='')=>{
+    const note=$('salesFilterSummary');if(!note)return;
+    note.textContent=text;note.className=tone==='warn'?'small':'muted small';
+    note.style.color=tone==='warn'?'#C24135':'';
+  };
   async function loadRecent(){
-    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
     const from=$('salesFrom')?.value,to=$('salesTo')?.value,staff=$('salesStaff')?.value,type=$('salesType')?.value,paid=$('salesPayment')?.value;
-    if(from)query=query.gte('occurred_at',sgIso(from+'T00:00'));
-    if(to)query=query.lte('occurred_at',sgIso(to+'T23:59'));
+    if(from&&to&&from>to){salesFilterNoteV266('The From date is after the To date. Nothing was filtered.','warn');return}
+    const applyButton=$('salesApply');
+    if(applyButton)CUI.setButtonBusy(applyButton,{busy:true,label:'Applying…'});
+    try{
+    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
+    /* V266: the To boundary was built as `<date>T23:59`, which drops the final 59 seconds of
+       the chosen day — a sale recorded at 23:59:30 SGT fell outside a range that named its own
+       date. Singapore calendar days are half-open instants: [From 00:00 SGT, To+1 day 00:00 SGT). */
+    if(from)query=query.gte('occurred_at',sgDateBoundary(from,0));
+    if(to)query=query.lt('occurred_at',sgDateBoundary(to,1));
     /* V260: the per-page Branch filter was struck out — the top bar's branch scope
        (selectedBranchId) is the single source of truth for which branch the query covers. */
     if(selectedBranchId)query=query.eq('branch_id',selectedBranchId);
     if(staff)query=query.eq('staff_id',staff);
     if(type)query=query.eq('kind',type);
-    if(paid)query=query.eq('paid',paid==='true');
     const {data:sl,error}=await fetchAllRowsResult(()=>query.order('occurred_at',{ascending:false}).order('id',{ascending:false}));
-    if(error)return fail(error);
+    if(error){fail(error);salesFilterNoteV266('These filters could not be applied. The rows below are unchanged.','warn');return}
     const workflow=await loadReversalWorkflows(null,Math.max(100,(sl||[]).length)).catch(e=>{fail(e);return null});
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
     const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
-    const rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
+    let rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
+    /* V266: Payment state used to filter on `sales.paid`, a column that does not exist —
+       PostgREST answers 42703 and the WHOLE ledger read fails, so choosing Paid or Unpaid left
+       the previous rows sitting on screen and Apply looked dead. Settlement lives in
+       `payments`, one row per taking, so the state is derived from whether the sale is
+       referenced there. */
+    let paymentStateApplied=!paid;
+    if(paid){
+      const ids=rows.map(row=>row.id);
+      try{
+        const settled=new Set((ids.length?await fetchRowsByIds('payments','sale_id',ids,'sale_id'):[]).map(row=>row.sale_id));
+        rows=rows.filter(row=>settled.has(row.id)===(paid==='true'));
+        paymentStateApplied=true;
+      }catch(paymentError){fail(paymentError)}
+    }
     $('recent').innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Gross</th><th>Net</th><th></th></tr>
       ${rows.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
@@ -5098,11 +5354,30 @@ async function salesPage(){
         ...sale,customer_name:sale.clients?.full_name||'Walk-in'
       },loadRecent);
     });
+    /* V266: pressing Apply with a range that happens to contain the same sales used to change
+       nothing at all on screen, which reads as a broken button. State the range that is now in
+       force and how many rows it matched, next to the control that set it. */
+    const period=`${from?dashboardScheduleDayLabelV252(from):'the earliest sale'} to ${to?dashboardScheduleDayLabelV252(to):'the latest sale'}`;
+    salesFilterNoteV266(paymentStateApplied
+      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}`
+      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied`,
+      paymentStateApplied?'':'warn');
+    }finally{
+      if(applyButton?.isConnected)CUI.setButtonBusy(applyButton,{busy:false});
+    }
   }
-  ['salesApply','salesFrom','salesTo','salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
+  ['salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
+  /* V266: the dates are committed by Apply filters, not by every keystroke inside the date
+     input — a half-typed year would otherwise fire a query the owner never asked for. Editing
+     one says so, so the button visibly has something to do. */
+  ['salesFrom','salesTo'].forEach(id=>{const el=$(id);if(el)el.oninput=()=>salesFilterNoteV266('Dates changed — press Apply filters.')});
   $('salesApply').onclick=loadRecent;
   $('salesCustomer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();loadRecent()}};
-  $('salesClear').onclick=()=>{['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');loadRecent()};
+  $('salesClear').onclick=()=>{
+    ['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');
+    $('salesFrom').value=salesDefaultFromV266;$('salesTo').value=salesDefaultToV266;
+    loadRecent();
+  };
   loadRecent();
 }
 
@@ -5548,7 +5823,11 @@ async function bookingsPage(){
      behind the flag but still asked every sector the question, so an appointment business was
      offered a switch it can never truthfully turn on. The question now belongs to seated
      sectors only (INDUSTRIES keys), while the booking rules below it render for everyone. */
-  const seatingSectorV235=['fnb','other'].includes(String(S.biz.industry||'').toLowerCase());
+  /* V276: 'bar' joins the seated list. The helper text under this very switch already reads
+     "Turn this on for a cafe, restaurant or bar" — but 'bar' was not in the list, so the one
+     sector the copy names by hand never saw the switch, and with it lost Tables / capacity,
+     the when-you-are-full rule and auto-confirm. A bar has tables. */
+  const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
   routeMain.innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
@@ -6267,12 +6546,32 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(match)return match.name;
     return r.min_tier_threshold==null?'':`${r.min_tier_threshold}+ ${unit}`;
   };
+  /* V271 (owner circled two rewards both named "A thank-you on your next visits" — one live, one
+     already retired — and asked which to delete). Nothing is deleted: the retired one is already
+     invisible to customers, and removing a published reward destroys configuration a customer
+     record can still point at. The actual defect is that this list drew them identically. Two
+     facts now tell them apart: the retired one SAYS it is retired, and when two rewards share a
+     name each one says when it was added. */
+  const rewardStatusV271=(r)=>r?.active===false?{label:'Retired',tone:'off'}
+    :p?.active===false?{label:'Paused with programme',tone:'off'}
+    :rewardBoundary(r);
+  const rewardNameCountsV271=(rewards||[]).reduce((counts,r)=>{
+    const key=rewardLabel(r).toLowerCase();counts[key]=(counts[key]||0)+1;return counts;
+  },{});
+  const rewardIdentityLineV271=(r)=>{
+    const parts=[];
+    if(r?.active===false)parts.push('Retired — customers cannot see or claim this');
+    if(rewardNameCountsV271[rewardLabel(r).toLowerCase()]>1)
+      parts.push(r?.created_at?`Added ${walletDate(r.created_at,true)}`:'Added date not recorded');
+    return parts.length?`<div class="muted small" style="margin-top:4px">${esc(parts.join(' · '))}</div>`:'';
+  };
   const rewardRows=(label)=>`
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
-    ${rewards.length?rewards.map(r=>{const state=rewardBoundary(r);return `<div class="reward-item">
+    ${rewards.length?rewards.map(r=>{const state=rewardStatusV271(r);return `<div class="reward-item">
       <div class="meta"><div><b class="inline-status">${r.active?'':CUI.icon('retention',{size:15})}${esc(rewardLabel(r))}</b>
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
+        ${rewardIdentityLineV271(r)}
         ${r.claim_available_from||r.claim_available_until?`<div class="muted small" style="margin-top:4px">${r.claim_available_from?`Starts ${esc(walletDate(r.claim_available_from,true))}`:'Available now'}${r.claim_available_until?` · Ends ${esc(walletDate(r.claim_available_until,true))}`:''}</div>`:''}
         ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}
         ${rewardTierGateLabelV176(r)?`<div class="muted small" style="margin-top:4px">🔒 ${esc(rewardTierGateLabelV176(r))} and above</div>`:''}</div>
@@ -6568,6 +6867,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       return {label:'Fitness / Wellness',low:3,high:12,start:6};
     if(/f&b|cafe|café|food|restaurant|fn?b/.test(key))
       return {label:'F&B / Café',low:2,high:8,start:5};
+    /* V276: a bar is an F&B floor for give-back purposes — same ticket rhythm, same margin band.
+       Without this it fell to the anonymous "your sector" default and its wider 2-10% band. */
+    if(/^bar$|pub/.test(key))
+      return {label:'Bar / Pub',low:2,high:8,start:5};
     return {label:'your sector',low:2,high:10,start:5};
   };
   const growRecOpen=$('growRecOpen');
@@ -7581,16 +7884,16 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_per_cents,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until').eq('business_id',S.biz.id).order('sort')
+    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
   const productsRequest=S.myRole==='owner'
     ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
     :Promise.resolve(none);
   const referralsRequest=modules.includes('referrals')
-    ?sb.from('referral_programs').select('id,enabled,reward_cents,min_spend_cents').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('referral_programs').select('id,enabled,reward_cents,min_spend_cents,created_at').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const membershipsRequest=modules.includes('memberships')
-    ?sb.from('membership_plans').select('id,name,active').eq('business_id',S.biz.id).order('created_at',{ascending:false})
+    ?sb.from('membership_plans').select('id,name,active,created_at').eq('business_id',S.biz.id).order('created_at',{ascending:false})
     :Promise.resolve(none);
   const giftcardsRequest=modules.includes('giftcards')
     ?sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})
@@ -7608,7 +7911,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
   if(businessError)throw businessError;
   const currentVersion=business?.active_config_version_id||null;
   const retentionRequest=canWinback&&currentVersion
-    ?sb.from('retention_programs').select('id,name,active,goal_visits,period_days,starts_on').eq('business_id',S.biz.id)
+    ?sb.from('retention_programs').select('id,name,active,goal_visits,period_days,starts_on,created_at').eq('business_id',S.biz.id)
       .eq('current_config_version_id',currentVersion)
     :Promise.resolve(none);
   const birthdayRequest=canRewards&&currentVersion
@@ -7625,6 +7928,20 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     {data:birthday,error:birthdayError}]
     =await Promise.all([retentionRequest,draftRequest,birthdayRequest]);
   if(!isCurrent())return null;
+  /* V268 (owner: "why inside after edit does not updated"). Until now this overview fetched the
+     PUBLISHED catalogue plus the draft's header row only, so a saved edit had no representation
+     on this page at all — the list could not have shown a pending change even in principle.
+     Read the draft's own programme and reward values as well. They are never substituted for the
+     published ones; they only let a changed card say what it will become. Owner-gated (the RPC
+     raises 42501 otherwise) and fail-soft: a failed read leaves the page exactly as it was. */
+  const draftHeaderV268=draftError?null:(drafts||[])[0]||null;
+  let draftDetailV268=null,draftDetailErrorV268=null;
+  if(draftHeaderV268?.id&&canSetupGrow){
+    const {data:draftDetail,error:draftDetailError}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftHeaderV268.id});
+    if(!isCurrent())return null;
+    draftDetailErrorV268=draftDetailError||null;
+    draftDetailV268=draftDetailError?null:draftDetail||null;
+  }
   /* Overview reads are intentionally fail-soft. A failed optional-engine read must not hide the
      rest of Grow or be mistaken for an unconfigured programme; its row remains Unavailable. */
   return {
@@ -7641,7 +7958,9 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     giftcards:giftcardsError?null:{available:giftcardPreferences?.status==='available'
       &&typeof giftcardPreferences?.gift_card_sales_enabled==='boolean',
       enabled:giftcardPreferences?.gift_card_sales_enabled===true},
-    draft:draftError?null:(drafts||[])[0]||null,
+    draft:draftHeaderV268,
+    draftDetail:draftDetailV268,
+    draftDetailError:Boolean(draftDetailErrorV268),
     overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError),
       retention:Boolean(retentionError),referrals:Boolean(referralsError),memberships:Boolean(membershipsError),
       promotions:Boolean(promotionsError),
@@ -7912,6 +8231,92 @@ function promotionRpcErrorIsAmbiguousV104(error){
   if(error.code)return false;
   return /failed to fetch|network|load failed|timeout|timed out|connection|offline/i
     .test(String(error.message||error.error||error));
+}
+/* V280 (owner, live bar tenant: "promotions loading forever - cannot publish"). Three separate
+   defects sat behind that one sentence, and all three are fixed here rather than papered over.
+
+   1. NOTHING released the busy state on an unexpected throw. save() disabled the buttons, wrote
+      "Publishing…", and every later line assumed each await would RESOLVE. storage-js rethrows any
+      failure that is not a StorageError (a dropped connection during upload or remove is exactly
+      that), so a single throw skipped every re-enable path and left Publish disabled with the two
+      status lines frozen — forever, with no error anywhere. runSave is now wrapped, and every
+      storage call goes through withDeadlineV280, which turns a throw OR a stall into a normal
+      {error} the existing branches already handle.
+   2. The photo status line was never updated after the upload SUCCEEDED, so "Uploading promotion
+      photo…" stayed on screen through the whole finalize and any later failure looked like an
+      upload that never ended. It now says what is actually happening.
+   3. A 2 MB phone/AI-generated PNG was uploaded byte-for-byte. It is downscaled before upload, so
+      the request that used to sit there is small enough to finish, and an oversized file is
+      refused with a plain sentence BEFORE anything is uploaded. */
+const PROMOTION_MEDIA_MAX_BYTES_V280=10485760;
+const PROMOTION_MEDIA_TYPES_V280=Object.freeze(['image/png','image/jpeg','image/webp','image/gif']);
+/* A promotion photo is rendered in a card no wider than a phone screen; 1600px on the long edge is
+   already generous for a 2x display. GIFs are never touched — redrawing one to a canvas keeps the
+   first frame and silently destroys the animation the owner chose. */
+const PROMOTION_MEDIA_MAX_EDGE_V280=1600;
+const PROMOTION_MEDIA_DOWNSCALE_ABOVE_BYTES_V280=1048576;
+const PROMOTION_STORAGE_TIMEOUT_MS_V280=45000;
+function promotionPhotoRefusalV280(file){
+  if(!file)return '';
+  if(!PROMOTION_MEDIA_TYPES_V280.includes(file.type))return 'That file type cannot be used. Choose a PNG, JPG, WebP or GIF.';
+  if(Number(file.size||0)>PROMOTION_MEDIA_MAX_BYTES_V280){
+    return `That photo is ${(Number(file.size||0)/1048576).toFixed(1)} MB. The limit is 10 MB — choose a smaller photo.`;
+  }
+  return '';
+}
+/* Every storage call in this editor is bounded. The underlying request may still be in flight when
+   the deadline fires; that is deliberate — releasing the owner's screen matters more than the
+   orphaned object, which the v95 cleanup queue already exists to collect. */
+const withDeadlineV280=(work,ms,timeoutMessage)=>new Promise(resolve=>{
+  let settled=false;
+  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(value)};
+  const timer=setTimeout(()=>{
+    if(settled)return;settled=true;resolve({data:null,error:new Error(timeoutMessage)});
+  },ms);
+  Promise.resolve(work).then(finish,error=>finish({data:null,error}));
+});
+async function downscalePromotionPhotoV280(file){
+  if(!file||file.type==='image/gif')return file;
+  if(Number(file.size||0)<=PROMOTION_MEDIA_DOWNSCALE_ABOVE_BYTES_V280)return file;
+  if(typeof createImageBitmap!=='function'||typeof document==='undefined')return file;
+  let bitmap=null;
+  try{bitmap=await createImageBitmap(file)}catch(_error){return file}
+  try{
+    const longest=Math.max(Number(bitmap.width||0),Number(bitmap.height||0));
+    if(!longest)return file;
+    const scale=longest>PROMOTION_MEDIA_MAX_EDGE_V280?PROMOTION_MEDIA_MAX_EDGE_V280/longest:1,
+      width=Math.max(1,Math.round(bitmap.width*scale)),
+      height=Math.max(1,Math.round(bitmap.height*scale)),
+      canvas=document.createElement('canvas');
+    canvas.width=width;canvas.height=height;
+    const context=canvas.getContext('2d');
+    if(!context)return file;
+    /* A transparent PNG re-encoded as JPEG would render its transparency as black. */
+    context.fillStyle='#ffffff';context.fillRect(0,0,width,height);
+    context.drawImage(bitmap,0,0,width,height);
+    const blob=await new Promise(resolve=>{
+      try{canvas.toBlob(resolve,'image/jpeg',0.86)}catch(_error){resolve(null)}
+    });
+    if(!blob||blob.size>=Number(file.size||0))return file;
+    const base=String(file.name||'promotion').replace(/\.[^.]+$/,'')||'promotion';
+    return new File([blob],`${base}.jpg`,{type:'image/jpeg',lastModified:Date.now()});
+  }finally{try{bitmap.close?.()}catch(_error){}}
+}
+/* V280 (owner: "cannot publish"). The FIRST publish of a newly created promotion could never
+   succeed. business_create_promotion_draft_v155 returns the v104 receipt — content_version 1 —
+   and only then calls app.save_promotion_scope_v155, which writes the branch scope onto the same
+   row and bumps it to 2. The editor then finalized with the version it was handed and Postgres
+   answered promotion_version_conflict, every single time, for every new offer with a photo.
+   The migration makes the wrapper report the version it actually left behind; this is the client
+   half, which re-reads the promotion and retries ONCE with the true versions. It is worth having
+   on its own: any concurrent edit produces the same conflict, and re-reading is the honest
+   response to "your copy of the version is stale". The retry mints a NEW attempt key because the
+   arguments changed, and it is only ever reached after a definitive rollback, so it cannot
+   double-apply. */
+function promotionVersionConflictV280(error){
+  if(!error)return false;
+  const code=String(error.code||''),message=String(error.message||error.error||'');
+  return code==='40001'||/promotion_version_conflict|promotion_copy_version_conflict|promotion_target_media_version_conflict/.test(message);
 }
 /* V186 (owner: "i dont see the published marketing content - live sync"). The offer WAS
    published — and scheduled to start two days later — but every owner-facing label said only
@@ -8256,6 +8661,18 @@ async function promotionsPage(selectedPromotionId=null){
     workingPromotion=promotionEditorItemV104(result.data?.item||result.data||{id:workingPromotionId});
     return {data:workingPromotion,error:null};
   };
+  /* V280: the only honest answer to "your version is stale" is to go and read the real one. */
+  const refreshPromotionV280=async promotionId=>{
+    const reread=await withDeadlineV280(
+      sb.rpc('business_get_promotion_editor_v155',{p_business:businessId}),
+      PROMOTION_RPC_TIMEOUT_MS_V186,
+      'Re-reading this promotion took too long.'
+    );
+    if(reread.error)return null;
+    const items=Array.isArray(reread.data?.items)?reread.data.items:[],
+      found=items.find(item=>String(item?.id||item?.promotion_id||'')===String(promotionId));
+    return found?promotionEditorItemV104(found):null;
+  };
   const exactTargetMediaVersion=(item,branchId)=>{
     const exact=promotionScopeMediaV104(item,branchId,{allowGlobalFallback:false});
     return Number(exact?.version||exact?.media_version||exact?.target_media_version||0);
@@ -8280,19 +8697,23 @@ async function promotionsPage(selectedPromotionId=null){
   const clearFinalizedObjects=async(result,pending)=>{
     const oldPath=result?.previous_object_path||null;
     if(oldPath&&oldPath!==pending?.objectPath){
-      await NestlyMediaSyncV95.removeOrQueue({
+      /* V280: housekeeping must never be able to hold the owner's screen. */
+      await withDeadlineV280(NestlyMediaSyncV95.removeOrQueue({
         storage:sb.storage,client:sb,businessId,objectPath:oldPath,
         reason:'superseded v104 promotion photo'
-      });
+      }),PROMOTION_STORAGE_TIMEOUT_MS_V280,'Old photo cleanup did not finish in time.');
     }
   };
   const cleanFailedUpload=async pending=>{
     if(!pending?.objectPath)return {status:'not_required'};
-    return NestlyMediaSyncV95.removeOrQueue({
+    /* V280: this ran on the definitive-failure path with no deadline and no guard. storage-js
+       rethrows anything that is not a StorageError, so a dropped connection here threw straight
+       through save() and froze the editor on "Publishing…" instead of showing the real failure. */
+    return withDeadlineV280(NestlyMediaSyncV95.removeOrQueue({
       storage:sb.storage,client:sb,businessId,
       objectPath:pending.objectPath,
       reason:'v104 promotion photo after definitive finalization failure'
-    });
+    }),PROMOTION_STORAGE_TIMEOUT_MS_V280,'Photo cleanup did not finish in time.');
   };
   const runPendingFinalize=async pending=>{
     const result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
@@ -8301,36 +8722,63 @@ async function promotionsPage(selectedPromotionId=null){
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
       return result;
     }
-    if(!promotionRpcErrorIsAmbiguousV104(result.error)){
+    /* V280: a version conflict is RETRYABLE with re-read versions, and the photo it refers to is
+       the same photo that retry will attach. Deleting it here is what turned a recoverable
+       conflict into an offer that could never be published. */
+    if(!promotionRpcErrorIsAmbiguousV104(result.error)
+       &&!promotionVersionConflictV280(result.error)){
       await cleanFailedUpload(pending);
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
     }
     return result;
   };
   const uploadPromotionPhoto=async({file,alt,promotionId})=>{
+    /* V280: shrink first. The object path extension and the declared mime type are both taken from
+       the file we actually send, because app.v95_storage_object_is_publishable() checks that the
+       path suffix, the declared mime type and the stored object all agree. */
+    const sending=await downscalePromotionPhotoV280(file);
     let dimensions;
-    try{dimensions=await imageDimensionsV95(file)}
+    try{dimensions=await imageDimensionsV95(sending)}
     catch(error){return {error,fileInfo:null}}
-    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type],
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[sending.type],
       objectPath=`${businessId}/offer/${crypto.randomUUID()}.${extension}`,
-      uploaded=await sb.storage.from('business-public').upload(
-        objectPath,file,{contentType:file.type,upsert:false}
+      uploaded=await withDeadlineV280(
+        sb.storage.from('business-public').upload(
+          objectPath,sending,{contentType:sending.type,upsert:false}
+        ),
+        PROMOTION_STORAGE_TIMEOUT_MS_V280,
+        'The photo upload did not finish in time. Check your connection and try again.'
       );
     if(uploaded.error)return {error:uploaded.error,fileInfo:null};
     return {error:null,fileInfo:{
-      objectPath,mimeType:file.type,width:dimensions.width,height:dimensions.height,alt
+      objectPath,mimeType:sending.type,width:dimensions.width,height:dimensions.height,alt
     }};
   };
   const completionMessage=pending=>pending?.operation==='unpublish'
     ?'Promotion unpublished'
     :pending?.publish?'Promotion published':'Promotion draft saved';
-  const save=async(publish,{unpublish=false}={})=>{
+  const runSave=async(publish,{unpublish=false}={})=>{
     if(pendingFinalize){
       const status=field('promotionSaveStatus');
       const pending=pendingFinalize;
       status.textContent='Confirming the previous save…';
       const resumed=await runPendingFinalize(pending);
       if(!isPromotionCurrent())return;
+      if(resumed.error&&promotionVersionConflictV280(resumed.error)){
+        /* V280: a HELD receipt whose expected versions are stale can never succeed, however many
+           times it is replayed — and this branch runs first on every press and after every
+           reload, so keeping it is precisely how "cannot publish" became permanent. Release it
+           (and the photo it points at, which is now attached to nothing) so the next press takes
+           the normal path, which re-reads the promotion before it finalizes. */
+        pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+        await cleanFailedUpload(pending);
+        if(!isPromotionCurrent())return;
+        [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')]
+          .filter(Boolean).forEach(button=>{button.disabled=false});
+        status.textContent='This promotion changed since that save was interrupted. Your edits are still here — choose the photo again and press Publish.';
+        field('promotionImageStatus').textContent='Choose the photo again before publishing.';
+        return;
+      }
       if(resumed.error){
         /* V186: the resume branch left every control disabled, so a stalled save locked the
            owner out of the editor entirely — in this tab and, because pendingFinalize is
@@ -8358,7 +8806,12 @@ async function promotionsPage(selectedPromotionId=null){
     if(!draft.name||!draft.description)return toast('Polish or write the headline and customer message.');
     if(!draft.starts_at||!draft.ends_at||new Date(draft.ends_at)<=new Date(draft.starts_at))return toast('Choose a valid start and end date.');
     if(!PROMOTION_COPY_POLICY_V104.ctas[draft.ctaKind]||!draft.ctaLabel)return toast('Choose a clear customer action.');
-    if(file&&(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760))return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
+    const photoRefusalV280=promotionPhotoRefusalV280(file);
+    if(photoRefusalV280){
+      const refusedStatus=field('promotionImageStatus');
+      if(refusedStatus)refusedStatus.textContent=photoRefusalV280;
+      return toast(photoRefusalV280);
+    }
     if(file&&!alt)return toast('Add a photo description.');
     const status=field('promotionSaveStatus'),buttons=[field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')].filter(Boolean);
     buttons.forEach(button=>button.disabled=true);
@@ -8382,25 +8835,66 @@ async function promotionsPage(selectedPromotionId=null){
       if(file){
         if(isPromotionCurrent())field('promotionImageStatus').textContent='Uploading promotion photo…';
         const uploaded=await uploadPromotionPhoto({file,alt,promotionId:workingPromotionId});
+        if(!isPromotionCurrent())return;
         if(uploaded.error){
-          if(!isPromotionCurrent())return;
-          buttons.forEach(button=>button.disabled=false);
-          status.textContent='Your draft is safe. The photo needs another try.';
-          field('promotionImageStatus').textContent='Photo was not saved. Your draft is safe; try again.';
-          return fail(uploaded.error);
+          /* V280: publishing genuinely needs a photo, so a failed upload still stops it — but a
+             DRAFT save must not lose the owner's words because a photo would not upload. */
+          if(publish){
+            buttons.forEach(button=>button.disabled=false);
+            status.textContent='Your draft is safe. The photo needs another try.';
+            const publishPhotoFailureV280=`Photo was not saved: ${ownerErrorText(uploaded.error)} Your words are safe — press Save draft, or try the photo again.`;
+            field('promotionImageStatus').textContent=publishPhotoFailureV280;
+            return fail(uploaded.error);
+          }
+          const draftPhotoFailureV280=`Photo was not saved: ${ownerErrorText(uploaded.error)} This draft was saved without it.`;
+          field('promotionImageStatus').textContent=draftPhotoFailureV280;
+        }else{
+          fileInfo=uploaded.fileInfo;
+          /* V280: this line used to stay on "Uploading promotion photo…" for the whole finalize,
+             so a later failure looked like an upload that never ended. */
+          field('promotionImageStatus').textContent='Photo uploaded. Saving the promotion…';
         }
-        fileInfo=uploaded.fileInfo;
       }
-      const attemptKey=crypto.randomUUID(),
-        args=finalizeArgs({draft,publish,promotion:workingPromotion,fileInfo,attemptKey});
-      pendingFinalize={
-        businessId,promotionId:workingPromotionId,publish,
-        operation:unpublish?'unpublish':publish?'publish':'draft',
-        objectPath:fileInfo?.objectPath||null,args,attemptKey,
-        fingerprint:JSON.stringify(args)
+      const buildPendingFinalizeV280=(promotion,attemptKey)=>{
+        const args=finalizeArgs({draft,publish,promotion,fileInfo,attemptKey});
+        return {
+          businessId,promotionId:workingPromotionId,publish,
+          operation:unpublish?'unpublish':publish?'publish':'draft',
+          objectPath:fileInfo?.objectPath||null,args,attemptKey,
+          fingerprint:JSON.stringify(args)
+        };
       };
+      pendingFinalize=buildPendingFinalizeV280(workingPromotion,crypto.randomUUID());
       writeSessionValue(pendingStorageKey,pendingFinalize);
-      const finalized=await runPendingFinalize(pendingFinalize);
+      let finalized=await runPendingFinalize(pendingFinalize);
+      if(finalized.error&&promotionVersionConflictV280(finalized.error)){
+        if(!isPromotionCurrent())return;
+        status.textContent='Checking the latest version of this promotion…';
+        const refreshed=await refreshPromotionV280(workingPromotionId);
+        if(!isPromotionCurrent())return;
+        if(refreshed){
+          workingPromotion=refreshed;
+          /* A new attempt key: the arguments changed, and the first attempt definitively rolled
+             back, so replaying the old key would only raise promotion_attempt_key_reused. */
+          pendingFinalize=buildPendingFinalizeV280(refreshed,crypto.randomUUID());
+          writeSessionValue(pendingStorageKey,pendingFinalize);
+          status.textContent=unpublish?'Unpublishing…':publish?'Publishing…':'Saving draft…';
+          finalized=await runPendingFinalize(pendingFinalize);
+        }
+      }
+      if(finalized.error&&promotionVersionConflictV280(finalized.error)){
+        /* Two conflicts in a row means this promotion is being changed somewhere else. Release the
+           held receipt — keeping it would lock the editor into replaying a request that cannot
+           succeed, which is exactly how "cannot publish" became permanent. */
+        const abandoned=pendingFinalize;
+        pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+        await cleanFailedUpload(abandoned);
+        if(!isPromotionCurrent())return;
+        buttons.forEach(button=>button.disabled=false);
+        status.textContent='This promotion was changed somewhere else while you were editing. Reopen it to see the latest version, then publish again.';
+        field('promotionImageStatus').textContent='Choose the photo again after reopening the promotion.';
+        return;
+      }
       if(finalized.error){
         if(!isPromotionCurrent())return;
         buttons.forEach(button=>button.disabled=false);
@@ -8419,6 +8913,26 @@ async function promotionsPage(selectedPromotionId=null){
     const savedId=saveResult?.promotion_id||saveResult?.item?.id||workingPromotionId;
     toast(unpublish?'Promotion unpublished':publish?'Promotion published':'Promotion draft saved');
     promotionsPage(savedId);
+  };
+  /* V280: the busy state is released on EVERY path, including one nobody predicted. runSave
+     disables the buttons before its first await; anything that throws after that point used to
+     leave Publish disabled and "Publishing…" on screen with no error, for as long as the owner
+     was willing to wait. */
+  const save=async(publish,options={})=>{
+    try{return await runSave(publish,options)}
+    catch(error){
+      if(!isPromotionCurrent())return;
+      [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')]
+        .filter(Boolean).forEach(button=>{button.disabled=false});
+      const status=field('promotionSaveStatus');
+      const unexpectedFailureV280=`This did not finish: ${ownerErrorText(error)} Nothing was lost — press again.`;
+      if(status)status.textContent=unexpectedFailureV280;
+      const imageStatus=field('promotionImageStatus');
+      if(imageStatus&&/^(Uploading promotion photo|Photo uploaded)/.test(imageStatus.textContent||'')){
+        imageStatus.textContent='The photo did not finish. Your draft is safe; choose it again and retry.';
+      }
+      return fail(error);
+    }
   };
   if(field('promotionSave'))field('promotionSave').onclick=()=>save(false);
   field('promotionPublish').onclick=()=>save(true);
@@ -8482,6 +8996,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       .then(r=>r.error?null:(r.data||[])).catch(()=>null)
     :[];
   if(!isGrowCurrent())return;
+  /* V271: the two reads the Overview and History tables need and nothing else can supply.
+     business_programme_usage_v271 is the only honest source for "how many customers used this" —
+     a DISTINCT-customer count cannot be expressed through PostgREST, and paging the whole
+     points_ledger into the browser to count it there would silently under-count the moment a page
+     limit clipped the result. The earliest published config version is when this firm's programme
+     configuration first reached a customer, which is the point system's real start date.
+     Both are fail-soft and NEITHER is ever replaced by a zero — see growCountCellV271. */
+  const growProgrammeReadsV271=await Promise.all([
+    canRewards?sb.rpc('business_programme_usage_v271',{p_business:S.biz.id})
+      .then(result=>result.error?null:(result.data||null)).catch(()=>null):Promise.resolve(null),
+    canRewards?sb.from('firm_config_versions').select('published_at').eq('business_id',S.biz.id)
+      .not('published_at','is',null).order('published_at',{ascending:true}).limit(1)
+      .then(result=>result.error?null:((result.data||[])[0]?.published_at||null)).catch(()=>null)
+      :Promise.resolve(null)
+  ]);
+  if(!isGrowCurrent())return;
+  const growUsageV271=growProgrammeReadsV271[0];
+  const growFirstPublishedV271=growProgrammeReadsV271[1];
   const pointsModeV229=S.biz.points_mode||null;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
@@ -8489,9 +9021,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      paused programme makes eight rows say "Programme paused" while none of them says how to fix
      it — and publishing a config does NOT turn the programme on. Say it once, on the row that
      owns the switch, and name the action. */
-  const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
-    ?rewardJourney.earning.label
-    :`Paused — customers earn nothing and no reward below is claimable. Open Edit to turn it on. Configured as ${rewardJourney.earning?.label||'no earning rule'}`;
+  /* V271 (owner marked up the Point system row: "paused" struck from the heading, the sentence
+     the whole "…turn it on / Configured as…" sentence struck with "remove wording", and
+     "Current Setting: SGD 1 spent → 1 points" written underneath with a circled Edit). The row now
+     carries the one fact an owner opened it to read — what a customer gets per dollar — and says
+     whether it is running exactly once, in the status pill. rewardJourney.earning.label is
+     deliberately NOT reused: it hardcodes "SGD", which is simply wrong on any tenant whose
+     currency is not SGD, and the number must come from the configured value, never a literal. */
+  const growCurrencyV271=S.biz?.currency||'SGD';
+  const growEarnUnitV271=(value,unit)=>`${value} ${Number(value)===1?(unit==='stamps'?'stamp':'point'):(unit==='stamps'?'stamps':'points')}`;
+  const growEarnRateTextV271=earning=>{
+    if(!earning)return '';
+    if(earning.model==='stamps')return `${growCurrencyV271} ${(Math.max(0,Number(earning.rate)||0)/100).toFixed(2)} spent → 1 stamp`;
+    return `${growCurrencyV271} 1 spent → ${growEarnUnitV271(Math.max(0,Number(earning.rate)||0),earning.unit)}`;
+  };
+  const earningOverviewCopy=`Current setting: ${growEarnRateTextV271(rewardJourney.earning)}`;
   const rewardsOverviewIncomplete=Object.values(snapshot.overviewErrors||{}).some(Boolean);
   const growAsOfDate=Number.isFinite(Date.parse(snapshot.asOf||''))
     ?sgDateInputValue(new Date(snapshot.asOf)):sgDateInputValue();
@@ -8593,10 +9137,68 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      in-page tab strip is gone because the sidebar already offers exactly these two
      destinations — having both was the duplicated navigation the owner flagged. The
      'available' and 'settings' hashes still resolve so existing links do not break. */
-  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
+  /* V271 (owner drew three destinations under Programmes: "Programmes Overview / Programmes List /
+     Programmes History"). 'overview' and 'history' are genuinely different SURFACES, not filters of
+     the list — one is a columnar at-a-glance table of what is running, the other is what has
+     stopped — which is why they earn a strip the V180 filter tabs did not. The older 'ongoing',
+     'available' and 'settings' hashes still resolve so no existing link or history entry breaks. */
+  const programmeView=['overview','history','ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
   /* V229: the Ongoing / To set up views are flat lists; a drilled topic only makes sense from
      the tile overview, so arriving via those views clears it. */
   if(programmeView!=='list')growTopicV229='';
+  /* V268 (owner circled four reward cards: "why inside after edit does not updated"). V198 put a
+     banner at the top of the page, but the banner cannot say WHICH card the owner just edited, so
+     a person who typed a new number still reads the old one as a lost edit. The published value
+     therefore stays exactly where it was — customers' current reality is the one thing this list
+     must never blur — and the pending value is added BESIDE it, only on the cards whose draft
+     genuinely differs. Marking every card would make the marker worthless. */
+  const growDraftDetailV268=snapshot.draftDetail||null;
+  const growDraftDetailErrorV268=Boolean(snapshot.draftDetailError);
+  const growRewardLabelV268=row=>String(row?.customer_name||row?.name||'Reward').trim();
+  const growPendingRewardsV268=new Map();
+  const growPendingNewRewardsV268=[];
+  if(growDraftDetailV268){
+    const publishedByIdV268=new Map((snapshot.rewards||[]).map(reward=>[String(reward.id),reward]));
+    (Array.isArray(growDraftDetailV268.rewards)?growDraftDetailV268.rewards:[]).forEach(draftReward=>{
+      const key=String(draftReward.reward_id||draftReward.id||'');
+      const live=publishedByIdV268.get(key);
+      if(!live){
+        /* A reward the draft creates does not exist for customers at all, so it gets its own
+           card marked as not live rather than a pending line on somebody else's card. */
+        if(draftReward.active!==false)growPendingNewRewardsV268.push({
+          name:growRewardLabelV268(draftReward),cost:Math.max(0,Number(draftReward.cost_points||0))});
+        return;
+      }
+      const changes=[];
+      if(growRewardLabelV268(draftReward)!==growRewardLabelV268(live))
+        changes.push({label:'Name',live:growRewardLabelV268(live),pending:growRewardLabelV268(draftReward)});
+      if(Number(draftReward.cost_points||0)!==Number(live.cost_points||0))
+        changes.push({label:'Cost',live:`${Math.max(0,Number(live.cost_points||0))} ${rewardJourney.unit}`,
+          pending:`${Math.max(0,Number(draftReward.cost_points||0))} ${rewardJourney.unit}`});
+      if((draftReward.active!==false)!==(live.active!==false))
+        changes.push({label:'Offered',live:live.active!==false?'Yes':'No',pending:draftReward.active!==false?'Yes':'No'});
+      if(changes.length)growPendingRewardsV268.set(key,changes);
+    });
+  }
+  const growPendingEarningV268=(()=>{
+    const draft=growDraftDetailV268?.program||null,live=snapshot.loyalty||null;
+    if(!draft||!live)return [];
+    const changes=[];
+    if(String(draft.loyalty_model||'')!==String(live.loyalty_model||''))
+      changes.push({label:'Model',live:String(live.loyalty_model||'points'),pending:String(draft.loyalty_model||'points')});
+    if(Number(draft.earn_points_per_dollar||0)!==Number(live.earn_points_per_dollar||0))
+      changes.push({label:'Points per SGD 1',live:String(Number(live.earn_points_per_dollar||0)),
+        pending:String(Number(draft.earn_points_per_dollar||0))});
+    if(Number(draft.stamp_per_cents||0)!==Number(live.stamp_per_cents||0))
+      changes.push({label:'Spend per stamp',live:money(Number(live.stamp_per_cents||0)),
+        pending:money(Number(draft.stamp_per_cents||0))});
+    if((draft.active===true)!==(live.active===true))
+      changes.push({label:'Programme',live:live.active===true?'Active':'Paused',pending:draft.active===true?'Active':'Paused'});
+    return changes;
+  })();
+  /* Live value struck through, pending value in bold after the arrow: both readable, neither
+     replacing the other, and the block wraps to one item per line at 390px. */
+  const growPendingBlockV268=changes=>!changes||!changes.length?'':`<span class="grow-pending-v268" data-grow-pending-v268><span class="pill new grow-pending-pill-v268">Edited · not live yet</span>${changes.map(change=>`<span class="grow-pending-line-v268">${esc(change.label)}: <s data-merchant-content>${esc(change.live)}</s> → <b data-merchant-content>${esc(change.pending)}</b></span>`).join('')}</span>`;
   /* V198 (owner: "edited name inside but not shown"). This list is deliberately the PUBLISHED
      programme — it answers "what can my customers use right now", so a reward renamed in an open
      draft must keep its live name here or the list would promise something no customer can see.
@@ -8604,7 +9206,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      Say the edit is saved, say it is not live, and put the publish step one tap away. */
   const growDraftPendingId=snapshot.draft?.id||null;
   const growUnpublishedMarkerV198=growDraftPendingId&&canRewards
-    ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
+    ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
      Reward milestones live INSIDE Point system — the overview never floods. */
@@ -8643,11 +9245,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       summary:[activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:'',giftCardsLive?'gift cards on':''].filter(Boolean).join(' · ')||'Plans and gift cards'},
   ];
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
+  /* V268 (owner drew the hierarchy: category name, then its items with their set-up status).
+     Drilling in already showed the category name and its items — what was missing was WHERE the
+     reader is. "All programmes" sat alone on the right of the heading, so at 390px it read as a
+     stray action rather than the level above. The same trail now renders for every category, and
+     it keeps the one back control (id and handler unchanged) instead of adding a second. */
+  const growBreadcrumbV268=topic=>!topic?'':`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button><span aria-hidden="true">/</span><span class="grow-breadcrumb-current-v268">${esc(topic.title)}</span></nav>`;
   const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
   /* V235: the Stamp card tile is a third VIEW of the point engine, not a third section — it
      drills into the same rows, so nothing is duplicated and no tile is a dead end. */
   const growTopicSectionV235=growActiveTopicV229?.key==='stamps'?'points':(growActiveTopicV229?.key||null);
-  const topicOnV229=key=>growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229;
+  /* V271: Overview and History replace the category list rather than sitting above it — showing
+     both would put the same programme on the page twice under two different shapes. */
+  const growCategoryViewV271=!['overview','history'].includes(programmeView);
+  const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
      what is reaching customers now and what still needs the owner. 'on' is the one tone that
@@ -8692,8 +9303,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     /* V235 (owner: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as
        two half-truths). All three models are named, exactly one carries the Live mark, and the
        change itself happens in one place — the editor's segmented toggle. */
-    return `<div class="points-mode-chosen-v229">${showLiveModelsV250?`<span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span>`:''}${locked?'':editorAction('rewards','Change model','lm')}</div>`;
+    /* V271 (owner struck "Change model" and wrote "delete"). It opened the rewards editor focused
+       on 'lm' — the identical destination the Point system row's own Edit already opens — and the
+       four-way model toggle lives inside that editor (data-loyalty-model-v235). So the capability
+       keeps its entry point; this button was a second door onto the same one. A firm that has
+       never chosen a model still gets the cards above, which are that choice. */
+    if(!showLiveModelsV250)return '';
+    return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span></div>`;
   };
+  /* Computed once so the row is not rendered as an empty shell when the chooser returns nothing. */
+  const growPointsChooserRowV271=growPointsModeChooserV229({showLiveModelsV250:false});
   /* V250 (owner drew reward boxes over this list — "Free Facial / 5 points", "Free Moisturiser /
      150 points", "Free xxx / xx points", plus a "+" — and crossed out the numbered rows, the
      "Add another reward" row and the "Start from a template" row). A reward is the thing a
@@ -8705,32 +9324,155 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      and the dashed "+" card fires the identical 'add' action the struck row fired. Templates
      were the only door into rewardTemplatesForSectorV172, so that flow survives as a secondary
      link under the grid — the row went, the capability did not. */
+  /* V271 (owner: a reward that is off only because the whole programme is paused, and a reward the
+     owner deliberately retired, both showed the identical grey "Paused"). They are undone by
+     different actions — one by turning the programme back on, the other by re-publishing the
+     reward — so they get different words. A live reward is untouched. */
   const rewardCardStatusV250=milestone=>milestone.availableToCustomers?['Live','on']
     :milestone.availability==='not_started'?['Scheduled','off']
-    :milestone.availability==='ended'?['Ended','off']:['Paused','off'];
-  const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId})=>{
-    const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>`;
+    :milestone.availability==='ended'?['Ended','off']
+    :milestone.availability==='programme_paused'?['Paused with programme','off']:['Paused','off'];
+  const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId,pending=null})=>{
+    const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>${growPendingBlockV268(pending)}`;
     return canSetupGrow
       ?`<button type="button" class="reward-card-v250" data-programme-kind="redeemable" data-rewards-overview-edit="${esc(editKind)}"${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="reward-card-open-v250">Edit →</span></button>`
       :`<article class="reward-card-v250" data-programme-kind="redeemable"${editKind==='catalogue'?' data-reward-milestone':''}${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="grow-programme-access">Read only</span></article>`;
   };
   const rewardCardsV250=[
     ...(rewardJourney.classicReward?[{name:rewardJourney.classicReward.name,cost:rewardJourney.classicReward.threshold,unit:rewardJourney.classicReward.unit,
-      status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
+      status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused with programme',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
     ...rewardJourney.milestones.map(milestone=>{
       const [status,tone]=rewardCardStatusV250(milestone);
-      return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id};
+      return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id,
+        pending:growPendingRewardsV268.get(String(milestone.id))||null};
     }),
     ...rewardJourney.archivedRewards.map(reward=>({name:reward.name,cost:reward.threshold,unit:reward.unit,
-      status:'Paused',tone:'off',editKind:'catalogue',rewardId:reward.id}))
+      status:'Retired',tone:'off',editKind:'catalogue',rewardId:reward.id,
+      pending:growPendingRewardsV268.get(String(reward.id))||null}))
   ];
   const rewardCardGridV250=`<div class="reward-card-grid-v250" data-reward-card-grid-v250>
       ${rewardCardsV250.map(rewardCardHtmlV250).join('')}
+      ${growPendingNewRewardsV268.map(reward=>`<article class="reward-card-v250 reward-card-pending-new-v268" data-programme-kind="redeemable" data-grow-pending-new-v268><span class="pill new">Not live yet</span><b class="reward-card-name-v250" data-merchant-content>${esc(reward.name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${reward.cost} ${rewardJourney.unit}`)}</span><span class="grow-pending-line-v268">Customers see this once you publish.</span></article>`).join('')}
       ${canSetupGrow?`<button type="button" class="reward-card-v250 reward-card-add-v250" data-programme-kind="redeemable" data-rewards-overview-edit="add"><span class="reward-card-plus-v250" aria-hidden="true">+</span><b class="reward-card-name-v250">Add reward</b></button>`:''}
     </div>
     ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}
     ${canSetupGrow?`<p class="reward-card-templates-v250"><button type="button" class="btn ghost sm" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel">${CUI.icon('star',{size:16})}<span>Start from a template</span></button></p>
     <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}`;
+  /* ===== V271 Programmes Overview and History =====
+     Owner, on Overview: "for programme overview, i want a simple glance (column) to see which
+     ongoing programmes is live including details (start date, type, how many programmes used by
+     clients, etc)". On History: "here are expired programmes launched before".
+
+     The honesty rule this table lives or dies by: a cell is SOURCED or it is ABSENT. A count that
+     could not be read renders "Not available"; a count nothing in the schema records renders
+     "Not tracked". Neither ever renders 0, because a zero here reads as a measurement, and a wrong
+     measurement of "how many of my customers used this" is worse than an admitted gap.
+
+     Not tracked, deliberately: promotion usage (a promotion is presentation — business_customer_
+     content_v95 — and nothing records a customer redeeming one), gift-card usage (the stored
+     purchaser is the BUYER, usually buying for someone else), and the welcome offer's start date
+     (business_welcome_offers_v215 keeps updated_at, which is the last edit, not the launch). */
+  const growUsageMapV271=(list,idKey)=>new Map((Array.isArray(list)?list:[])
+    .map(row=>[String(row?.[idKey]),row?.customers==null?null:Number(row.customers)]));
+  const growRewardUsageV271=growUsageMapV271(growUsageV271?.rewards,'reward_id');
+  const growRetentionUsageV271=growUsageMapV271(growUsageV271?.retention,'program_id');
+  const growPlanUsageV271=growUsageMapV271(growUsageV271?.memberships,'plan_id');
+  const growCountCellV271=value=>value==null
+    ?`<span class="muted">${growUsageV271?'Not tracked':'Not available'}</span>`
+    :esc(String(Number(value)));
+  const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
+    ?esc(promotionDateTextV104(value)):'<span class="muted">Not tracked</span>';
+  const growProgrammeEntriesV271=(()=>{
+    const entries=[];
+    const milestoneById=new Map();
+    rewardJourney.milestones.forEach(item=>milestoneById.set(String(item.id),item));
+    if(rewardJourney.earning)entries.push({name:'Point system',type:'Point system',
+      started:growFirstPublishedV271,ended:null,
+      state:rewardJourney.earning.availableToCustomers?'live':'paused',
+      customers:growUsageV271?(growUsageV271.point_system?.customers??null):null,
+      detail:growEarnRateTextV271(rewardJourney.earning)});
+    (snapshot.rewards||[]).forEach(reward=>{
+      const milestone=milestoneById.get(String(reward.id));
+      const state=reward.active===false?'retired'
+        :milestone?.availability==='ended'?'ended'
+        :milestone?.availability==='not_started'?'scheduled'
+        :milestone?.availableToCustomers?'live':'paused';
+      entries.push({name:reward.customer_name||reward.name||'Reward',type:'Reward',
+        started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
+        customers:growRewardUsageV271.get(String(reward.id))??null,
+        detail:`${Math.max(0,Number(reward.cost_points)||0)} ${rewardJourney.unit}`});
+    });
+    (snapshot.retention||[]).forEach(program=>{
+      const overview=retentionOverviewState(program);
+      entries.push({name:program.name||'Bring-back reward',type:'Bring-back',
+        started:program.starts_on||program.created_at||null,ended:null,
+        state:program.active===false?'retired':overview.status==='Live'?'live':'scheduled',
+        customers:growRetentionUsageV271.get(String(program.id))??null,
+        detail:`${Math.max(0,Number(program.goal_visits)||0)} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days)||0)} days`});
+    });
+    if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',
+      started:growUsageV271?.birthday?.started_at||null,ended:null,
+      state:rewardJourney.birthday.active?'live':'paused',
+      customers:growUsageV271?(growUsageV271.birthday?.customers??null):null,
+      detail:rewardJourney.birthday.value});
+    if(welcomeOfferStatusV215?.configured)entries.push({name:'Welcome offer',type:'Welcome offer',
+      started:null,ended:null,
+      state:welcomeOfferStatusV215.active===true&&welcomeOfferStatusV215.item_available!==false?'live':'paused',
+      customers:growUsageV271?(growUsageV271.welcome?.customers??null):null,
+      detail:welcomeOfferStatusV215.reward_label||''});
+    (snapshot.promotions||[]).forEach(promotion=>{
+      const ended=Number.isFinite(Date.parse(promotion?.ends_at||''))&&Date.parse(promotion.ends_at)<=Date.now();
+      entries.push({name:promotion?.name||'Promotion',type:'Promotion',
+        started:promotion?.starts_at||null,ended:promotion?.ends_at||null,
+        state:ended?'ended':promotion?.active===true?'live':'draft',
+        customers:null,detail:promotion?.tagline||''});
+    });
+    if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',
+      started:snapshot.referral.created_at||null,ended:null,
+      state:snapshot.referral.enabled===true?'live':'paused',
+      customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
+      detail:snapshot.referral.reward_cents?`${money(snapshot.referral.reward_cents)} to the referrer`:''});
+    (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
+      type:'Membership',started:plan?.created_at||null,ended:null,
+      state:plan?.active===false?'retired':'live',
+      customers:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
+    if(snapshot.giftcards?.available)entries.push({name:'Gift cards',type:'Gift cards',
+      started:null,ended:null,state:snapshot.giftcards.enabled?'live':'paused',
+      customers:null,detail:''});
+    return entries;
+  })();
+  const growOverviewRowsV271=growProgrammeEntriesV271.filter(entry=>entry.state==='live');
+  /* "Expired programmes launched before" = a programme that ran and no longer does. Two ways that
+     happens and they are named separately, because one is a date passing and the other is a
+     decision the owner made: an end date that is now in the past, or a retired/withdrawn row. A
+     merely PAUSED programme is neither — it is still on the list, one switch from running — so it
+     is deliberately absent from History rather than filed as if it were over. */
+  const growHistoryRowsV271=growProgrammeEntriesV271.filter(entry=>entry.state==='ended'||entry.state==='retired');
+  const growTableV271=({label,columns,rows,empty})=>rows.length
+    ?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="${esc(label)}"><table class="cui-table" data-responsive="true"><thead><tr>${columns.map(column=>`<th>${esc(column[0])}</th>`).join('')}</tr></thead><tbody>
+      ${rows.map(row=>`<tr>${columns.map(column=>`<td data-label="${esc(column[0])}">${column[1](row)}</td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>`
+    :`<div class="empty" role="status">${empty}</div>`;
+  const growOverviewTableV271=growTableV271({label:'Ongoing programmes',rows:growOverviewRowsV271,
+    empty:'<b>Nothing is running yet.</b><p class="muted small" style="margin-top:6px">Open the <a href="#/grow">Programmes list</a> — every programme there comes with a suggested starting point.</p>',
+    columns:[['Programme',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
+      ['Type',row=>esc(row.type)],
+      ['Started',row=>growDateCellV271(row.started)],
+      ['Customers used',row=>growCountCellV271(row.customers)],
+      ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
+  const growHistoryTableV271=growTableV271({label:'Programme history',rows:growHistoryRowsV271,
+    empty:'<b>Nothing has ended yet.</b><p class="muted small" style="margin-top:6px">Programmes appear here once they pass their end date or you retire them.</p>',
+    columns:[['Programme',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
+      ['Type',row=>esc(row.type)],
+      ['Ran from',row=>growDateCellV271(row.started)],
+      ['Ran until',row=>growDateCellV271(row.ended)],
+      ['Why it stopped',row=>esc(row.state==='ended'?'Reached its end date':'Retired by you')]]});
+  /* One strip, three destinations, each with its own hash so it is linkable and back-button-safe.
+     It reuses the house sub-module strip rather than reviving the V173-era one, which V173/V180
+     removed because it duplicated the sidebar's own sub-rows. These three are not sidebar rows —
+     V250 flattened Programmes to a single rail link — and they are not filters of one list. */
+  const growViewTabActiveV271=programmeView==='overview'?'overview':programmeView==='history'?'history':'list';
+  const growViewTabsV271=growActiveTopicV229?'':`<div class="v150-segment section-subtabs-v200" role="group" aria-label="Programme views">${[['overview','Overview','#/grow/overview'],['list','List','#/grow'],['history','History','#/grow/history']].map(([key,label,href])=>`<button type="button" data-grow-view-v271="${esc(href)}" aria-pressed="${growViewTabActiveV271===key?'true':'false'}">${esc(label)}</button>`).join('')}</div>`;
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -8739,10 +9481,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Programmes</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      ${growViewTabsV271}
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growTilesHtmlV229:''}
+      ${programmeView==='overview'?growOverviewTableV271:''}
+      ${programmeView==='history'?growHistoryTableV271:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
            rewards, Add another reward and Start from a template onto the Point system row).
@@ -8750,11 +9495,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            so the point scheme reads as one thing. Rewards that have nothing to do with a
            points balance — the welcome offer for a first visit, a birthday benefit, a
            bring-back for someone who has drifted — are their own group. -->
-      <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
-        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229({showLiveModelsV250:false})}</div>`:''}
+      <div class="programme-category" data-programme-category-v268="points"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
+        ${growActiveTopicV229&&growPointsChooserRowV271?`<div class="grow-programme-row points-mode-row-v229">${growPointsChooserRowV271}</div>`:''}
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
-          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
@@ -8762,8 +9507,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         `}
       </div></div>
       `:''}
-      ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
-        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>
+      ${topicOnV229('tiers')?`<div class="programme-category" data-programme-category-v268="tiers"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
+        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>`:''}
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
           :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
@@ -8771,7 +9516,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}
       ${topicOnV229('lifestyle')?`
-      <div class="programme-category"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="lifestyle"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
         ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
           <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
@@ -8782,17 +9527,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       </div></div>
       `:''}
       ${topicOnV229('promotions')?`
-      <div class="programme-category"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="promotions"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
         ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
       </div></div>
       `:''}
       ${topicOnV229('referrals')?`
-      <div class="programme-category"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
       </div></div>
       `:''}
       ${topicOnV229('recurring')?`
-      <div class="programme-category"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
+      <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
       </div></div>      `:''}
@@ -8855,7 +9600,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            whose pill said "live" and hidden everything. The tone class is the actual status
            signal (programmeStatus passes 'on' only for a running programme), so match that
            first and keep the text check as a fallback for any row built outside that helper. */
-        const pill=row.querySelector('.pill');
+        const pill=row.querySelector('.pill:not(.grow-pending-pill-v268)');
         const status=String(pill?.textContent||'').toLowerCase();
         const isOngoing=pill?.classList.contains('on')||status.includes('ongoing')||status.includes('live')||status.includes('active');
         const show=programmeView==='ongoing'?isOngoing:!isOngoing;
@@ -8897,7 +9642,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       const kind=row.dataset.programmeKind;
       const suggestion=suggestions[kind];
       if(!suggestion)return;
-      const pill=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
+      const pill=String(row.querySelector('.pill:not(.grow-pending-pill-v268)')?.textContent||'').toLowerCase();
       if(!pill.includes('not set up')||row.hidden)return;
       if(row.nextElementSibling?.classList?.contains('programme-suggest'))return;
       row.insertAdjacentHTML('afterend',`<div class="programme-suggest" data-suggest-kind="${esc(kind)}"><span>✨ Suggested: ${suggestion.text}</span><button type="button" class="btn sm" data-suggest-use="${esc(kind)}">Use suggestion</button></div>`);
@@ -8967,6 +9712,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         {name:'10% off your next visit',desc:'10% off next time.',budget:tenPct||500}]
     };
     sets.facial=sets.salon;sets.massage=sets.salon;
+    /* V276: a bar's starting rewards are the F&B set — "Free drink" is the single most obvious
+       reward a bar can offer, and the generic fallback ("Free item", "S$5 off") read like a
+       shop's. Same list, no new copy to keep in step. */
+    sets.bar=sets.fnb;
     return sets[industry]||sets.other;
   };
   const surfaceDefinition={
@@ -9287,6 +10036,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));
+  document.querySelectorAll('[data-grow-view-v271]').forEach(button=>button.onclick=()=>
+    nav(button.dataset.growViewV271));
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -9383,7 +10134,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      V172: #/grow/ongoing|available|settings put the TAB name in the hashParam slot — those
      are views of this overview, not engine deep-links, and must never mount a surface
      (mounting built {surface:'overview'} and crashed on the surface dictionary). */
-  const hashParamIsProgrammeView=['ongoing','available','settings'].includes(String(hashParam||''));
+  const hashParamIsProgrammeView=['overview','history','ongoing','available','settings'].includes(String(hashParam||''));
   if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
@@ -11731,19 +12482,55 @@ async function svRunTopupFlow({branches,state,testOnly}){
   render();
 }
   function renderHistPage(history,n){
-  const rows=history.slice(0,n);
-  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
+  /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
+     survived. Doing it the other way round would let a filter report "nothing" while matching
+     rows sat one page below. An empty result is two different facts and says which. */
+  if(!history.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
+  const stateV267=activityFilterStateV267();
+  const filteredV267=activityFilteredRowsV267(history,stateV267);
+  if(!filteredV267.length) return CUI.emptyState({iconName:'search',title:'No activity matches these filters',
+    body:'This customer does have history — the filters above are hiding all of it. Clear them to see the full record.',
+    actionHtml:'<button class="btn ghost sm" id="actClearEmpty">Clear filters</button>'});
+  const rows=filteredV267.slice(0,n);
+  /* The counterpart of a reversal is looked up across the WHOLE feed, not just this page, so a
+     reference can be described even when its partner row is not currently painted. */
+  const saleRowsByIdV267=new Map();
+  history.forEach(row=>{if(row.kind==='sale'&&row.id)saleRowsByIdV267.set(String(row.id),row)});
+  const paintedRowIdsV267=new Set(rows.filter(row=>row.kind==='sale'&&row.id).map(row=>`c360-act-sale-${row.id}`));
+  /* V267 (owner circled three raw UUIDs: "what is this?"). A UUID is not something a shop owner
+     can act on. The reference now describes the counterpart row in its own terms — what it was
+     and when — and becomes a jump only when that row is on screen. When the counterpart cannot
+     be resolved at all (an older row outside this customer's visible sales, or one hidden from
+     this role by branch scope) it says so plainly rather than falling back to the id. The
+     audit wording is untouched: this is still unmistakably a reversal. */
+  const counterpartRefV267=(token,tone,counterpartId,missingText)=>{
+    const other=counterpartId?saleRowsByIdV267.get(String(counterpartId)):null;
+    const description=other
+      ?`${esc(activityItemTextV267(other))} · ${esc(activityWhenTextV267(other.t))}`
+      :esc(missingText);
+    const anchor=other?`c360-act-sale-${other.id}`:'';
+    const body=anchor&&paintedRowIdsV267.has(anchor)
+      ?`<button type="button" class="c360-act-ref-v267" data-act-jump="${anchor}">${description}</button>`
+      :`<span class="c360-act-ref-v267">${description}</span>`;
+    return `<span class="pill ${tone}"><span data-workspace-i18n>${token}</span> ${body}</span>`;
+  };
+  const sortHeadV267=(key,label)=>{
+    const active=stateV267.sort.startsWith(key+'_');
+    const ascending=active&&stateV267.sort.endsWith('_asc');
+    const next=active&&!ascending?`${key}_asc`:`${key}_desc`;
+    return `<th aria-sort="${active?(ascending?'ascending':'descending'):'none'}"><button type="button" class="c360-act-sort-v267" data-act-sort="${next}" aria-label="Sort by ${label}, ${next.endsWith('_asc')?'ascending':'descending'}">${label}<span class="c360-act-caret-v267" aria-hidden="true">${active?(ascending?'▲':'▼'):'↕'}</span></button></th>`;
+  };
   const DASH_V252='—';
   const cellsV252=h=>{
     if(h.kind==='sale'){
       const isRev=!!h.is_reversal;
-      const relation=isRev?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(h.original_sale_id||'')}</span></span>`
-        :h.reversal_sale_id?`<span class="pill off"><span data-workspace-i18n>reversed →</span> <span data-merchant-content>${esc(h.reversal_sale_id)}</span></span>`:'';
+      const relation=isRev?counterpartRefV267('reversal of','no',h.original_sale_id,'an earlier sale that is not in this history')
+        :h.reversal_sale_id?counterpartRefV267('reversed →','off',h.reversal_sale_id,'a correction that is not in this history'):'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      const amount=Number((h.amount??h.amount_cents)??0);
+      const amount=Number(activityAmountCentsV267(h)||0);
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
-        type:isRev?'Reversal':'Sale',
+        type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
         notes:[relation,
           h.note?esc(h.note):'',
@@ -11756,10 +12543,11 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-      return {tone:'reward',icon:'redeem',type:'Reward',
+      const redemptionAmountV267=activityAmountCentsV267(h);
+      return {tone:'reward',icon:'redeem',type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc(h.reward_name||'Loyalty reward')}</span>`,
         notes:[relation,`${Number(h.points_spent||0)} points spent`,action],
-        amount:h.credit_cents?money(Number(h.credit_cents)):'',staff:''};
+        amount:redemptionAmountV267!=null?money(redemptionAmountV267):'',staff:''};
     }
     if(h.kind==='grant'){
       const campaign=campaignEntitlementDisplayV99(h);
@@ -11795,10 +12583,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
       notes:[`<span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span>`],
       amount:'',staff:h.staff?esc(h.staff):''};
   };
-  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Amount</th><th>Staff</th></tr></thead><tbody>${rows.map(h=>{
+  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr>${sortHeadV267('date','Date')}<th>Type</th><th>Item</th>${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}</tr></thead><tbody>${rows.map(h=>{
     const cell=cellsV252(h);
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
-    return `<tr>
+    return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
       <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
       <td data-label="Item">${cell.item}${notes}</td>
@@ -13399,6 +14187,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'565f6c72466d72361c947b374c61fbc8c4443a26633cc1951d83019440c28f1b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'69e30fcf8f07acef34a839f3c76001b537ad72dd599fbc56d09c0646c14c5424',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

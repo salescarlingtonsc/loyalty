@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="7a7352b60eaa3e064f236f0461ebeb48365951a9e65339c86cc0683c9dd14608">
+<meta name="v104-production-source-sha256" content="ede2adbd25915643ae6e7a0bff293d5573611667506a9ee01f11234766e0cd9d">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -246,6 +246,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-controls-v252{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 10px}
 .dashboard-schedule-tabs-v252{display:flex;gap:6px}
 .dashboard-schedule-controls-v252 input[type="date"]{max-width:190px}
+.dashboard-schedule-scope-v266{flex-basis:100%;line-height:1.45}
+.performance-heading{flex-wrap:wrap}
+.performance-panel{margin-top:18px}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
@@ -1016,6 +1019,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .reward-card-v250[hidden]{display:none!important}
 .reward-card-empty-v250{padding:0 14px 14px}
 .reward-card-templates-v250{margin:0;padding:0 14px 14px}
+/* V268 (owner: "why inside after edit does not updated"). The pending value is ADDED under the
+   published one, never in place of it: struck-through live value, arrow, bold pending value. One
+   change per line so a two-column 150px card at 390px still wraps cleanly, and no new colours. */
+.grow-pending-v268{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;margin-top:2px}
+.grow-pending-line-v268{font-size:.78rem;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+.grow-pending-line-v268 b{color:var(--ink)}
+.grow-pending-line-v268 s{opacity:.85}
+.reward-card-pending-new-v268{border-style:dashed}
+/* The trail above a drilled-in category: where you are, and one tap back to the level above. */
+.grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
+.grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1209,6 +1223,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-act-note-v252 .btn{margin-top:3px}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
+/* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
+   raw UUID. The reference is a button only when its counterpart row is on screen; otherwise it
+   renders as plain text with no affordance, because there is nowhere to go. */
+.c360-act-sort-v267{display:inline-flex;align-items:center;gap:5px;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.c360-act-caret-v267{opacity:.6;font-size:.8em}
+.c360-act-ref-v267{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;overflow-wrap:anywhere}
+button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.c360-act-flash-v267{animation:c360ActFlashV267 2.2s ease-out}
+@keyframes c360ActFlashV267{0%,55%{background:#FFF3D6}100%{background:transparent}}
+@media(prefers-reduced-motion:reduce){.c360-act-flash-v267{animation:none;outline:2px solid var(--coral);outline-offset:-2px}}
+.c360-activity-filters-v267{align-items:flex-end;row-gap:10px}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
@@ -1842,7 +1867,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 7a7352b60eaa3e064f236f0461ebeb48365951a9e65339c86cc0683c9dd14608</p>
+  <p class="v104-provenance">Local production-render harness · source ede2adbd25915643ae6e7a0bff293d5573611667506a9ee01f11234766e0cd9d</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -1854,7 +1879,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="7a7352b60eaa3e064f236f0461ebeb48365951a9e65339c86cc0683c9dd14608";
+const PRODUCTION_SOURCE_SHA256="ede2adbd25915643ae6e7a0bff293d5573611667506a9ee01f11234766e0cd9d";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

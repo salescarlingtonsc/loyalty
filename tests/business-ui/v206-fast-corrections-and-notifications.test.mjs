@@ -46,8 +46,14 @@ test('the sales list says what you go there to do', () => {
    decision that was made deliberately, and a sales list is money history. Reverted. The label
    carries the discoverability fix on its own, and moving the page stays the owner's call. */
 test('the deliberate separation between doing and reviewing is intact', () => {
-  assert.match(app, /label:'Serve & sell',items:\['till','appointments','bookings','waitlist'\]/);
-  assert.match(app, /label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf'\]/);
+  /* V275: the Serve & sell group gained a bar-only "Bottles" row (bottle keep is a SaaS module
+     exclusive to industry='bar' and is stripped from the resolved module list for every other
+     sector before the rail is built). The doing-vs-reviewing separation this test guards is
+     unchanged: Bottles is something staff DO during service, not money history. */
+  assert.match(app, /label:'Serve & sell',items:\['till','appointments',(?:'bottles',)?'bookings','waitlist'\]/);
+  /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
+     this group; the doing-vs-reviewing separation this test guards is unchanged. */
+  assert.match(app, /label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]/);
   const groups = app.match(/const NAVGROUPS=\[[\s\S]*?\n\];/)[0];
   assert.equal((groups.match(/'sales'/g) || []).length, 1, 'one entry, never duplicated');
 });

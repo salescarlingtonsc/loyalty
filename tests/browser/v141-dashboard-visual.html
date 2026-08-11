@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="48c815252cd21a22e04b9598451a803966d44216535662f65fd617b9099bed25"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="1cfedc6cbe4ab661510c494366d74aa609941600f8470204e3e19ca5f86b1e44"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -240,6 +240,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-controls-v252{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 10px}
 .dashboard-schedule-tabs-v252{display:flex;gap:6px}
 .dashboard-schedule-controls-v252 input[type="date"]{max-width:190px}
+.dashboard-schedule-scope-v266{flex-basis:100%;line-height:1.45}
+.performance-heading{flex-wrap:wrap}
+.performance-panel{margin-top:18px}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
@@ -1010,6 +1013,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .reward-card-v250[hidden]{display:none!important}
 .reward-card-empty-v250{padding:0 14px 14px}
 .reward-card-templates-v250{margin:0;padding:0 14px 14px}
+/* V268 (owner: "why inside after edit does not updated"). The pending value is ADDED under the
+   published one, never in place of it: struck-through live value, arrow, bold pending value. One
+   change per line so a two-column 150px card at 390px still wraps cleanly, and no new colours. */
+.grow-pending-v268{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;margin-top:2px}
+.grow-pending-line-v268{font-size:.78rem;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+.grow-pending-line-v268 b{color:var(--ink)}
+.grow-pending-line-v268 s{opacity:.85}
+.reward-card-pending-new-v268{border-style:dashed}
+/* The trail above a drilled-in category: where you are, and one tap back to the level above. */
+.grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
+.grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1203,6 +1217,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-act-note-v252 .btn{margin-top:3px}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
+/* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
+   raw UUID. The reference is a button only when its counterpart row is on screen; otherwise it
+   renders as plain text with no affordance, because there is nowhere to go. */
+.c360-act-sort-v267{display:inline-flex;align-items:center;gap:5px;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.c360-act-caret-v267{opacity:.6;font-size:.8em}
+.c360-act-ref-v267{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;overflow-wrap:anywhere}
+button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.c360-act-flash-v267{animation:c360ActFlashV267 2.2s ease-out}
+@keyframes c360ActFlashV267{0%,55%{background:#FFF3D6}100%{background:transparent}}
+@media(prefers-reduced-motion:reduce){.c360-act-flash-v267{animation:none;outline:2px solid var(--coral);outline-offset:-2px}}
+.c360-activity-filters-v267{align-items:flex-end;row-gap:10px}
 @media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
@@ -1845,6 +1870,8 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     referrals:'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 8h6M20 5v6',
     memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
     giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
+    /* V275: bottle keep is a bar-only module; a bottle needs a bottle, not a borrowed box. */
+    bottle:'M10 2h4v3.6l2.4 3.6c.4.6.6 1.3.6 2V21a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V11.2c0-.7.2-1.4.6-2L10 5.6zM7 15h10',
     star:'m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.77 6.4 20.91l1.07-6.24-4.53-4.42 6.26-.91L12 3Z',
     /* v264: a real share glyph — the standard three linked nodes. 'export' was being used for
        the share button and read as "download", which is a different promise. 'chat' gives the
@@ -2287,6 +2314,35 @@ function branchScopeUnavailableReasonV217(branch){
     ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
     :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
 }
+/* V272: removing the Business Insights branch select also removed the only place that said an
+   unpaid or switched-off branch is LEFT OUT of these figures. A consolidated total nobody can
+   scope is the failure this page exists to avoid, and the top bar deliberately carries no such
+   pill (V224), so the fact is restated once, next to the figures, in the owner's own terms. */
+function reportScopeNoteTextV272(branches=[]){
+  const usable=activeBranchesForScopeV217(branches);
+  const current=selectedBranchId?usable.find(branch=>branch.id===selectedBranchId):null;
+  const covered=current
+    ?`${current.name||'the branch selected at the top'} only`
+    :usable.length>1
+      ?`all ${usable.length} branches you can report on (${usable.map(branch=>branch.name||'Branch').join(', ')})`
+      :(usable[0]?.name||'this business');
+  const withheld=(branches||[]).filter(branch=>branch&&branch.active===false)
+    .map(branchScopeUnavailableReasonV217).filter(Boolean);
+  return `Figures below cover ${covered}. ${withheld.join(' ')}`.trim();
+}
+async function renderReportScopeNoteV272(isCurrent=()=>true,targetId='reportScopeNoteV272'){
+  const host=$(targetId);
+  if(!host)return;
+  let branches=[];
+  try{({branches}=await visibleBranchesForCurrentUser())}
+  catch(error){
+    console.error(error);
+    if(isCurrent()&&$(targetId)===host)host.textContent='The branches these figures cover could not be confirmed.';
+    return;
+  }
+  if(!isCurrent()||$(targetId)!==host)return;
+  host.textContent=reportScopeNoteTextV272(branches);
+}
 /* V217: the server's scope codes are precise but unreadable. An owner should never be shown
    `foreign_or_inactive_branch_scope` — they should be told which branch is unavailable and why,
    which after this change should not happen at all, since the pickers no longer offer one. */
@@ -2433,11 +2489,17 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         </div>
         <label class="sr-only" for="dashboardScheduleDate">Schedule date</label>
         <input type="date" id="dashboardScheduleDate" value="${today}">
+        <!-- V266 (owner drew arrows from this date chip down to the Performance figures and
+             wrote "by right based on this date, there are no numbers"). The figures were right
+             for the range chosen at the top of the page; this day picker is a different
+             control that happens to sit above them. Say so, at the picker. -->
+        <span class="muted small dashboard-schedule-scope-v266">Changes the bookings shown here only, not the Performance figures below.</span>
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
+    <div id="dashboardBottlesV278"></div>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
-      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
+      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
       <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
     <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
@@ -2483,6 +2545,8 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     if(status)status.innerHTML='';
     if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'reports',title:'Date range changed',body:'Apply the new range to refresh these figures.'})}</div>`;
+    const pendingPeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
+    if(pendingPeriod)pendingPeriod.textContent='Date range changed — press Apply.';
     if(loyalty)loyalty.innerHTML='';
     if(insights)insights.innerHTML='';
     if(charts)charts.innerHTML='';
@@ -2499,6 +2563,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
+  loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
@@ -2583,6 +2648,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
+    /* V266: the period is written from the range the RPC was actually answered for, next to the
+       numbers, so the Today-schedule date above can never be mistaken for the driver. */
+    const performancePeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
+    if(performancePeriod)performancePeriod.textContent=`${dashboardScheduleDayLabelV252(from)} to ${dashboardScheduleDayLabelV252(to)}`;
     if(!kpis||!charts)return;
     status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const previousSummary=previousResponse.error?null:previousResponse.data;
@@ -2687,6 +2756,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'48c815252cd21a22e04b9598451a803966d44216535662f65fd617b9099bed25',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'1cfedc6cbe4ab661510c494366d74aa609941600f8470204e3e19ca5f86b1e44',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

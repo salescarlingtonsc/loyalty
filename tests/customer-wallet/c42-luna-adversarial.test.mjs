@@ -136,7 +136,8 @@ test('Luna C42: staff email/password authentication remains a separate path', ()
   assert.match(auth, /sb\.auth\.signUp\(\{email,password,options:\{captchaToken\}\}\)/);
   assert.match(auth, /sb\.auth\.signInWithPassword\(\{email,password,options:\{captchaToken\}\}\)/);
   assert.match(auth, /href="\/business" aria-current="page"/);
-  assert.match(auth, /href="\/"/);
+  /* V274: bare "/" serves the marketing landing now, so the customer-app link says /app. */
+  assert.match(auth, /href="\/app"/);
   assert.match(auth, /I’m a customer/);
   assert.match(app, /if\(cleanPath==='\/business'\)return '#\/business'/);
   assert.doesNotMatch(auth, /signInWithOtp/i,

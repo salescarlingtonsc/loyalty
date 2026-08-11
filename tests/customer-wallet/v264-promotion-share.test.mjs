@@ -278,7 +278,7 @@ test('the /o/ route is wired in both the deployed rewrites and the template they
 });
 
 test('the RPC behind the page mirrors the customer promotion list, and only that', async () => {
-  const migration268 = await read('db/migrations/20260812_nestly_v268_offer_share_page.sql');
+  const migration268 = await read('db/migrations/20260810_nestly_v268_offer_share_page.sql');
   // the same visibility conditions as customer_get_promotions_v155 — one definition of "visible"
   for (const condition of ['content.active', "content.content_type = 'offer'",
     'content.ends_at > now()', 'asset.customer_visible', 'media.url is not null']) {
