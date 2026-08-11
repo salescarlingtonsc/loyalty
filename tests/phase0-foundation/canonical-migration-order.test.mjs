@@ -99,7 +99,7 @@ test('checked-in canonical plan preserves 45 trusted catalog versions then 216 u
   assert.equal(result.status, 0, result.stderr);
 });
 
-test('materializer creates one byte-preserving 273-file chain and deterministic manifests', async (t) => {
+test('materializer creates one byte-preserving 275-file chain and deterministic manifests', async (t) => {
   const { root, plan } = await fixture(t);
   await addRecoveryEvidence(root, plan);
   const materialized = run(root, '--materialize');
@@ -109,14 +109,14 @@ test('materializer creates one byte-preserving 273-file chain and deterministic 
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 228); // V275
-  assert.equal(manifest.itemCount, 273); // V275
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 273); // V275
+  assert.equal(manifest.pendingCount, 230); // V277
+  assert.equal(manifest.itemCount, 275); // V277
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 275); // V277
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v275_bar_bottle_keep' // V275
+    'nestly_v277_activation_seeds_loyalty' // V277
   );
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);

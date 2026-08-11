@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 228,
-  "itemCount": 273,
+  "pendingCount": 230,
+  "itemCount": 275,
   "items": [
     {
       "order": 1,
@@ -2737,6 +2737,26 @@
       "path": "supabase/migrations/20260811000100_nestly_v275_bar_bottle_keep.sql",
       "octetLength": 49790,
       "sha256": "75825ddda39e5c7d5bea2c903b97f5785da2ff1705508c59d36278a0f9228501",
+      "provenance": "local-source"
+    },
+    {
+      "order": 274,
+      "kind": "pending",
+      "version": "20260811000200",
+      "name": "nestly_v276_bar_sector_polish",
+      "path": "supabase/migrations/20260811000200_nestly_v276_bar_sector_polish.sql",
+      "octetLength": 6023,
+      "sha256": "d03bfc87af7d415699d8b11f19e7556b18aec31d684075bcfef8a2fa2aa73b64",
+      "provenance": "local-source"
+    },
+    {
+      "order": 275,
+      "kind": "pending",
+      "version": "20260811000300",
+      "name": "nestly_v277_activation_seeds_loyalty",
+      "path": "supabase/migrations/20260811000300_nestly_v277_activation_seeds_loyalty.sql",
+      "octetLength": 18899,
+      "sha256": "f2d84b9ded20198bdacc87353e25e4007ef27e24ad6a51eae4fb4a8f6ea8005f",
       "provenance": "local-source"
     }
   ]

@@ -72,7 +72,10 @@ test('(c) the add-tier fields are hidden behind a reveal button', () => {
 });
 
 test('(d) the table-seating question is sector-gated, and booking rules survive', () => {
-  assert.match(bookings, /const seatingSectorV235=\['fnb','other'\]\.includes\(String\(S\.biz\.industry\|\|''\)\.toLowerCase\(\)\);/);
+  /* V276 retarget: 'bar' joined the seated sectors — the copy under the switch already named a
+     bar, but the list did not, so the one sector it names by hand never saw the control. The
+     gating shape this test exists to pin is unchanged. */
+  assert.match(bookings, /const seatingSectorV235=\['fnb','bar','other'\]\.includes\(String\(S\.biz\.industry\|\|''\)\.toLowerCase\(\)\);/);
   assert.match(bookings, /const seatsGuestsV235=seatingSectorV235&&S\.biz\.takes_table_reservations===true;/);
   // The toggle itself only renders for a seated sector...
   assert.match(bookings, /\$\{seatingSectorV235\?`<label[^`]*id="setTakesTablesV223"/s);

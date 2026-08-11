@@ -15,7 +15,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 
 test('V246 an F&B business does not advertise Appointments in the rail', () => {
-  assert.match(app, /const sectorHidesAppointmentsV246=String\(S\.biz\?\.industry\|\|''\)==='fnb';/);
+  /* V276 retarget: the rule survives, it just stopped being a bare string comparison. V276
+     turned it into a named sector set so a bar — which serves the way a cafe does — inherits it.
+     The assertion still proves what V246 proved: 'fnb' hides Appointments in the rail. */
+  assert.match(app, /const sectorHidesAppointmentsV246=sectorHidesAppointmentsV276\(\);/);
+  assert.match(app, /const SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276=new Set\(\['fnb','bar'\]\);/);
   assert.match(app, /\(m==='appointments'&&!sectorHidesAppointmentsV246&&enabled\.includes\(m\)\)/);
   // Every other module keeps its exact old rule.
   assert.match(app, /\(m!=='waitlist'&&m!=='appointments'&&enabled\.includes\(m\)\)/);

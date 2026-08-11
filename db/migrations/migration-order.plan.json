@@ -1647,6 +1647,18 @@
       "path": "db/migrations/20260811_nestly_v275_bar_bottle_keep.sql",
       "semanticVersion": "v275",
       "proposedDeployVersion": "20260811000100"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v276_bar_sector_polish.sql",
+      "semanticVersion": "v276",
+      "proposedDeployVersion": "20260811000200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v277_activation_seeds_loyalty.sql",
+      "semanticVersion": "v277",
+      "proposedDeployVersion": "20260811000300"
     }
   ]
 }

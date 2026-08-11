@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 272,
-  "executableCount": 258,
+  "itemCount": 274,
+  "executableCount": 260,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -401,6 +401,15 @@
         "db/migrations/20260810_nestly_v267_summary_business_logo.sql",
         "db/migrations/20260810_nestly_v271_programme_overview.sql",
         "db/migrations/20260810_nestly_v273_usage_null_when_never_set_up.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260811",
+      "count": 3,
+      "paths": [
+        "db/migrations/20260811_nestly_v275_bar_bottle_keep.sql",
+        "db/migrations/20260811_nestly_v276_bar_sector_polish.sql",
+        "db/migrations/20260811_nestly_v277_activation_seeds_loyalty.sql"
       ]
     }
   ],
@@ -2580,6 +2589,22 @@
       "semanticVersion": "v275",
       "proposedDeployVersion": "20260811000100",
       "sha256": "75825ddda39e5c7d5bea2c903b97f5785da2ff1705508c59d36278a0f9228501"
+    },
+    {
+      "order": 273,
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v276_bar_sector_polish.sql",
+      "semanticVersion": "v276",
+      "proposedDeployVersion": "20260811000200",
+      "sha256": "d03bfc87af7d415699d8b11f19e7556b18aec31d684075bcfef8a2fa2aa73b64"
+    },
+    {
+      "order": 274,
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v277_activation_seeds_loyalty.sql",
+      "semanticVersion": "v277",
+      "proposedDeployVersion": "20260811000300",
+      "sha256": "f2d84b9ded20198bdacc87353e25e4007ef27e24ad6a51eae4fb4a8f6ea8005f"
     }
   ]
 }

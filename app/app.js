@@ -496,6 +496,20 @@ const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','
    is load-bearing for access control. */
 const isBarSectorV275=()=>String(S.biz?.industry||'').toLowerCase()==='bar';
 const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
+/* V276 (owner, 2026-08-11, looking at a real bar tenant: "i dont see the full suite of modules
+   ready for production"). V246 recorded the owner's ruling that the SECTOR decides the serving
+   model — an F&B floor seats parties at tables (Bookings + Waitlist) while a service sector books
+   a person's time (Appointments) — but it wrote that ruling as one string comparison against
+   'fnb'. A bar serves exactly the way a cafe does, so V275's new sector inherited an Appointments
+   module nobody behind a bar will ever open. The rule is a named set now, so the next seated
+   sector is one entry rather than another hand-written comparison.
+   Route behaviour is deliberately unchanged: #/appointments stays reachable for a deep link, a
+   historical appointment or a Customer 360 hand-off. What stops is the ADVERTISING of it — the
+   rail, the app-bar action and the mobile dock — because a control that opens a module the
+   sector does not use is the same "why is this here?" the owner already ruled on once. */
+const SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276=new Set(['fnb','bar']);
+const sectorHidesAppointmentsV276=()=>
+  SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276.has(String(S.biz?.industry||'').toLowerCase());
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -8017,7 +8031,7 @@ function navHtml(page,idPrefix='nav'){
      Nav-level only, deliberately: the route stays reachable, so an F&B tenant with historical
      appointments, a deep link or a Customer 360 hand-off is never stranded — the irrelevant
      module just stops being advertised. */
-  const sectorHidesAppointmentsV246=String(S.biz?.industry||'')==='fnb';
+  const sectorHidesAppointmentsV246=sectorHidesAppointmentsV276();
   const navModuleVisible=m=>m==='dashboard'
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
@@ -8066,7 +8080,7 @@ function staffMobileActionsHtml(page){
     clientsReadable:canReadModule('clients'),
     loyaltyWritable:canWriteModule('loyalty')
   });
-  const canViewAppts=canReadModule('appointments');
+  const canViewAppts=canReadModule('appointments')&&!sectorHidesAppointmentsV276();
   if(canQuickEarn)items.push(`<button type="button" class="staff-mobile-action ${active==='till'?'act':''}" id="staffMobileQuickEarn" aria-label="Record sale">${CUI.icon('till',{size:20})}<span data-workspace-i18n>Record sale</span></button>`);
   if(canScanRedemption)items.push(`<button type="button" class="staff-mobile-action" id="staffMobileScan" aria-label="Scan redemption QR">${CUI.icon('scan',{size:20})}<span data-workspace-i18n>Scan QR</span></button>`);
   if(canViewAppts)items.push(`<button type="button" class="staff-mobile-action ${active==='appointments'?'act':''}" id="staffMobileAppointments" aria-label="Appointments">${CUI.icon('appointments',{size:20})}<span data-workspace-i18n>Appointments</span></button>`);
@@ -8101,7 +8115,7 @@ function wireStaffMobileActions(){
 function globalActionsHtml(){
   const canFindCustomer=canReadModule('clients')||canReadModule('till');
   const canQuickEarn=canReadModule('till')&&canReadModule('clients')&&hasRoleCapability('create_sales');
-  const canViewAppts=canReadModule('appointments');
+  const canViewAppts=canReadModule('appointments')&&!sectorHidesAppointmentsV276();
   const canNewAppt=canWriteModule('appointments');
   return `<div class="global-actions">
     ${canFindCustomer?`<div class="global-search" role="search">
@@ -13680,7 +13694,11 @@ async function bookingsPage(){
      behind the flag but still asked every sector the question, so an appointment business was
      offered a switch it can never truthfully turn on. The question now belongs to seated
      sectors only (INDUSTRIES keys), while the booking rules below it render for everyone. */
-  const seatingSectorV235=['fnb','other'].includes(String(S.biz.industry||'').toLowerCase());
+  /* V276: 'bar' joins the seated list. The helper text under this very switch already reads
+     "Turn this on for a cafe, restaurant or bar" — but 'bar' was not in the list, so the one
+     sector the copy names by hand never saw the switch, and with it lost Tables / capacity,
+     the when-you-are-full rule and auto-confirm. A bar has tables. */
+  const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
   routeMain.innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
@@ -14720,6 +14738,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       return {label:'Fitness / Wellness',low:3,high:12,start:6};
     if(/f&b|cafe|café|food|restaurant|fn?b/.test(key))
       return {label:'F&B / Café',low:2,high:8,start:5};
+    /* V276: a bar is an F&B floor for give-back purposes — same ticket rhythm, same margin band.
+       Without this it fell to the anonymous "your sector" default and its wider 2-10% band. */
+    if(/^bar$|pub/.test(key))
+      return {label:'Bar / Pub',low:2,high:8,start:5};
     return {label:'your sector',low:2,high:10,start:5};
   };
   const growRecOpen=$('growRecOpen');
@@ -17366,6 +17388,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         {name:'10% off your next visit',desc:'10% off next time.',budget:tenPct||500}]
     };
     sets.facial=sets.salon;sets.massage=sets.salon;
+    /* V276: a bar's starting rewards are the F&B set — "Free drink" is the single most obvious
+       reward a bar can offer, and the generic fallback ("Free item", "S$5 off") read like a
+       shop's. Same list, no new copy to keep in step. */
+    sets.bar=sets.fnb;
     return sets[industry]||sets.other;
   };
   const surfaceDefinition={
@@ -23518,13 +23544,25 @@ async function setupPage(){
     <div class="card" id="sp_progress" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     <div id="sp_steps" class="grid"></div>`;
   const bid=S.biz.id;
-  const [{data:sv,error:e1},{data:pr,error:e2},{data:lp,error:e3},{data:st,error:e4},{data:cl,error:e5},{data:rwd,error:e6}]=await Promise.all([
+  /* V276 (owner, on a real bar tenant: "i dont see the full suite of modules ready for
+     production"). The first-run list told a bar to add services, publish loyalty and add a
+     customer, and never once mentioned the module the bar was sold. The probe is the same RPC
+     the Bottles page uses, so it inherits that module's own authorisation; it is issued ONLY for
+     a bar tenant that can read bottles, and its error is deliberately not folded into the guide's
+     error gate — a bottle probe that fails must leave one step showing "not done", never blank
+     the other six. */
+  const showBottleStepV276=isBarSectorV275()&&(S.myRole==='owner'||canReadModule('bottles'));
+  const [{data:sv,error:e1},{data:pr,error:e2},{data:lp,error:e3},{data:st,error:e4},{data:cl,error:e5},{data:rwd,error:e6},{data:bottleProbe}]=await Promise.all([
     sb.from('services').select('id').eq('business_id',bid).eq('active',true).limit(1),
     sb.from('products').select('id').eq('business_id',bid).eq('active',true).limit(1),
     sb.from('loyalty_programs').select('id').eq('business_id',bid).eq('active',true).eq('configuration_status','published').limit(1),
     sb.from('staff').select('id').eq('business_id',bid).eq('active',true).limit(2),
     sb.from('clients').select('id').eq('business_id',bid).limit(1),
-    sb.from('loyalty_rewards').select('id').eq('business_id',bid).eq('active',true).limit(1)
+    sb.from('loyalty_rewards').select('id').eq('business_id',bid).eq('active',true).limit(1),
+    showBottleStepV276
+      ?sb.rpc('list_bar_bottles_v275',{p_business:bid,p_branch:null,p_status:'all',p_search:null,
+        p_expiring_days:null,p_bottle:null,p_limit:1})
+      :Promise.resolve({data:null,error:null})
   ]);
   if(!isCurrent())return;
   const err=e1||e2||e3||e4||e5||e6;
@@ -23540,6 +23578,10 @@ async function setupPage(){
     {id:'services',em:'🛠️',title:'Add your services or products',
       why:'This is what customers see and book — nothing else works until there\'s at least one.',
       done:(sv||[]).length>0||(pr||[]).length>0,link:'#/services',cta:'Add a service or product →'},
+    ...(showBottleStepV276?[{id:'bottles',em:'🍾',title:'Park your first bottle',
+      why:'Bottle keep is the reason a regular comes back for the rest of it — park one and the customer sees it in their own app.',
+      done:(Array.isArray(bottleProbe?.items)?bottleProbe.items:[]).length>0,
+      link:'#/bottles',cta:'Park a bottle →'}]:[]),
     {id:'loyalty',em:'🎁',title:'Publish loyalty earning settings',
       why:'An active published earning programme is available. Add and publish reward milestones separately in Grow.',
       done:canReadModule('loyalty')&&(lp||[]).length>0,link:'#/loyalty',cta:'Review loyalty →'},

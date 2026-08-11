@@ -1642,6 +1642,18 @@
       "version": "20260811000100",
       "name": "nestly_v275_bar_bottle_keep",
       "sourcePath": "db/migrations/20260811_nestly_v275_bar_bottle_keep.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260811000200",
+      "name": "nestly_v276_bar_sector_polish",
+      "sourcePath": "db/migrations/20260811_nestly_v276_bar_sector_polish.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260811000300",
+      "name": "nestly_v277_activation_seeds_loyalty",
+      "sourcePath": "db/migrations/20260811_nestly_v277_activation_seeds_loyalty.sql"
     }
   ]
 }
