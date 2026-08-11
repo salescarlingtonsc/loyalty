@@ -972,7 +972,7 @@
       'This application was approved before Peekaa activated workspaces automatically, so no workspace was created and the owner cannot sign in yet. Activate workspace finishes it.':'此申请在 Peekaa 自动启用工作区之前获批，因此尚未创建工作区，负责人还无法登录。点击启用工作区即可完成。',
       'This firm':'此企业',
       'This owner account is already assigned to a workspace.':'此负责人账号已分配给某个工作区。',
-      'This permanently removes {name}\\u2019s name, email, phone and profile history, and marks them do-not-contact. It cannot be undone.':'这会永久删除 {name} 的姓名、邮箱、电话和资料历史，并标记为请勿联系。此操作无法撤销。',
+      'This permanently removes {name}’s name, email, phone and profile history, and marks them do-not-contact. It cannot be undone.':'这会永久删除 {name} 的姓名、邮箱、电话和资料历史，并标记为请勿联系。此操作无法撤销。',
       'Use Approve, Reject or Pending for each signup. Approval records the admin decision; workspace access still requires business details and verified payment or manual billing.':'请为每个注册选择批准、拒绝或待定。批准只记录管理员决定；使用工作区仍需填写商户资料，并完成付款验证或人工计费。',
       'Visit at':'到访时间',
       'Visit owner':'到访负责人',
@@ -1313,7 +1313,7 @@
       'This application was approved before Peekaa activated workspaces automatically, so no workspace was created and the owner cannot sign in yet. Activate workspace finishes it.':'Permohonan ini diluluskan sebelum Peekaa mengaktifkan ruang kerja secara automatik, jadi tiada ruang kerja dicipta dan pemilik belum boleh log masuk. Aktifkan ruang kerja untuk menyelesaikannya.',
       'This firm':'Firma ini',
       'This owner account is already assigned to a workspace.':'Akaun pemilik ini telah pun ditugaskan kepada satu ruang kerja.',
-      'This permanently removes {name}\\u2019s name, email, phone and profile history, and marks them do-not-contact. It cannot be undone.':'Ini memadam secara kekal nama, e-mel, telefon dan sejarah profil {name}, serta menandakan jangan hubungi. Ia tidak boleh dibatalkan.',
+      'This permanently removes {name}’s name, email, phone and profile history, and marks them do-not-contact. It cannot be undone.':'Ini memadam secara kekal nama, e-mel, telefon dan sejarah profil {name}, serta menandakan jangan hubungi. Ia tidak boleh dibatalkan.',
       'Use Approve, Reject or Pending for each signup. Approval records the admin decision; workspace access still requires business details and verified payment or manual billing.':'Gunakan Lulus, Tolak atau Menunggu bagi setiap pendaftaran. Kelulusan merekodkan keputusan pentadbir; akses ruang kerja masih memerlukan butiran perniagaan dan pembayaran yang disahkan atau pengebilan manual.',
       'Visit at':'Lawatan pada',
       'Visit owner':'Pemilik lawatan',
@@ -4443,20 +4443,22 @@
           }
         };
       });
-      body.querySelector('[data-catalogue-intelligence]')?.addEventListener('click',async event=>{
-        const button=event.currentTarget,enable=button.dataset.catalogueIntelligence==='enable';
-        if(!globalObject.confirm(pt('{action} item-level intelligence for {firm}?',{
-          action:pt(enable?'Enable':'Disable'),firm:firm.name
-        })))return;
-        button.disabled=true;
-        try{
-          await rpc(sb,'platform_set_catalogue_intelligence_v94',{
-            p_business:firmId(firm),p_enabled:enable,
-            p_reason:enable?'Enabled for catalogue-first sales and monthly advisory reporting.':'Disabled by super-admin.',
-            p_expected_version:asObject(control.catalogue_intelligence).version??null
-          });
-          await refreshControls();CUI.announce(pt('Item-level intelligence is now {status}.',{status:pt(enable?'enabled':'disabled')}));
-        }catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Setting could not be updated.'),{assertive:true})}
+      body.querySelector('[data-catalogue-intelligence]')?.addEventListener('click',event=>{
+        const enable=event.currentTarget.dataset.catalogueIntelligence==='enable';
+        previewThenConfirm({
+          title:pt('{action} item-level intelligence for {firm}?',{action:pt(enable?'Enable':'Disable'),firm:firm.name}),
+          preview:{firm:firm.name,item_level_intelligence:enable?'enable':'disable'},
+          CUI,
+          onConfirm:async controls=>{
+            await rpc(sb,'platform_set_catalogue_intelligence_v94',{
+              p_business:firmId(firm),p_enabled:enable,
+              p_reason:enable?'Enabled for catalogue-first sales and monthly advisory reporting.':'Disabled by super-admin.',
+              p_expected_version:asObject(control.catalogue_intelligence).version??null
+            });
+            controls.close();
+            await refreshControls();CUI.announce(pt('Item-level intelligence is now {status}.',{status:pt(enable?'enabled':'disabled')}));
+          }
+        });
       });
     };
     Promise.all([
@@ -6377,18 +6379,22 @@
       <div class="platform-route-note"><div><b>${escapeHtml(pt("Guarded rollback"))}</b><p class="small">${escapeHtml(pt("Unused, unedited inserts are moved to Lost with immutable import provenance retained. Reviewed merge links are detached. The backend refuses reversal after later use or edits."))}</p><label for="platformImportRollbackReason">${escapeHtml(pt("Rollback reason"))}</label><input id="platformImportRollbackReason" data-import-rollback-reason><button type="button" class="btn danger sm" data-import-rollback>${escapeHtml(pt("Rollback this batch"))}</button></div></div>
     </section>`;
     controls.submit.hidden=true;
-    controls.overlay.querySelector('[data-import-rollback]').onclick=async event=>{
+    controls.overlay.querySelector('[data-import-rollback]').onclick=()=>{
       const reason=controls.overlay.querySelector('[data-import-rollback-reason]').value.trim();
       if(reason.length<2){controls.errorHost.innerHTML=`<div class="err">${escapeHtml(pt("Enter a rollback reason."))}</div>`;return}
-      if(!globalObject.confirm(pt('Rollback this import batch? Eligible inserts will be tombstoned as Lost and immutable audit provenance will remain.')))return;
-      event.currentTarget.disabled=true;
-      try{
-        const result=await rpc(activeContext.sb,'platform_reverse_prospect_import_v86',{p_batch:batch,p_reason:reason});
-        controls.close();await renderOnboarding(activeContext);
-        activeContext.CUI.announce(pt('Import reversed: {insertCount} insert records tombstoned and {mergeCount} merge links detached. Audit provenance was preserved.',{
-          insertCount:Number(result.reversed_insert_rows||0),mergeCount:Number(result.unlinked_merge_rows||0)
-        }));
-      }catch(error){controls.errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'Import rollback could not be completed.'))}</div>`;event.currentTarget.disabled=false}
+      controls.errorHost.innerHTML='';
+      previewThenConfirm({
+        title:pt('Rollback this import batch? Eligible inserts will be tombstoned as Lost and immutable audit provenance will remain.'),
+        preview:{batch_id:batch,reason},
+        CUI:context.CUI,
+        onConfirm:async confirmControls=>{
+          const result=await rpc(activeContext.sb,'platform_reverse_prospect_import_v86',{p_batch:batch,p_reason:reason});
+          confirmControls.close();controls.close();await renderOnboarding(activeContext);
+          activeContext.CUI.announce(pt('Import reversed: {insertCount} insert records tombstoned and {mergeCount} merge links detached. Audit provenance was preserved.',{
+            insertCount:Number(result.reversed_insert_rows||0),mergeCount:Number(result.unlinked_merge_rows||0)
+          }));
+        }
+      });
     };
   }
   function parseTableText(text) {
@@ -7120,7 +7126,7 @@
     const name=contact.full_name||pt('this contact');
     modal({
       title:'Erase personal data',submitLabel:'Erase personal data',CUI,
-      body:`<p class="small">${escapeHtml(pt('This permanently removes {name}\u2019s name, email, phone and profile history, and marks them do-not-contact. It cannot be undone.',{name}))}</p>
+      body:`<p class="small">${escapeHtml(pt('This permanently removes {name}’s name, email, phone and profile history, and marks them do-not-contact. It cannot be undone.',{name}))}</p>
         <p class="small muted">${escapeHtml(pt('The contact row, the firm and the audit trail remain, so the record of the erasure itself survives.'))}</p>
         ${CUI.field({id:'eraseReason',label:'Why is this being erased?',control:'textarea',required:true,attributes:'name="reason" rows="3"',hint:'Recorded in the audit log \u2014 for example, a PDPA erasure request.'})}`,
       onSubmit:async(form,controls)=>{
