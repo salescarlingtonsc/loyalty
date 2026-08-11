@@ -28,7 +28,8 @@ test('root is customer-first and business sign-in is a separate clean entry path
   const auth=section("function renderAuth(mode='in',{admin=false}={})",'function validNewPassword');
   assert.match(auth,/class="entry-path-switch" aria-label="Account type"/);
   assert.match(auth,/href="\/business" aria-current="page"/);
-  assert.match(auth,/href="\/"/);
+  /* V274: bare "/" serves the marketing landing now, so the customer-app link says /app. */
+  assert.match(auth,/href="\/app"/);
   assert.match(auth,/<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessAuthTitle">/);
   assert.match(auth,/<h1 id="businessAuthTitle"[^>]*>\$\{admin\?'Super admin sign in':mode==='in'\?'Sign in':'Create your account'\}<\/h1>/);
 
@@ -38,8 +39,17 @@ test('root is customer-first and business sign-in is a separate clean entry path
   assert.match(routing,/if\(!S\.user\)return renderAuth\('in',\{admin:/);
   assert.doesNotMatch(app,/function renderEntryChoice\(/);
 
-  assert.deepEqual(manifest.shortcuts.map(({url})=>url),['/','/business']);
+  /* V274: the Customer home shortcut says /app for the same reason as the links above. */
+  assert.deepEqual(manifest.shortcuts.map(({url})=>url),['/app','/business']);
+  /* V274: "/" now serves the marketing landing page. The app keeps every entry it had —
+     installed PWAs via the ?source=pwa guard, and everyone else via /app, which
+     entryRouteForLocation resolves to '#/' exactly as bare "/" used to. */
+  /* V274 follow-up: the first deploy proved a "/" rewrite can never fire — Vercel resolves the
+     filesystem before rewrites, and index.html always won. "/" is owned by app/middleware.js
+     (edge middleware runs before the filesystem), which falls OPEN to the app on any failure.
+     The two dead "/" rewrites are gone rather than left as misleading config. */
   const expectedRewrites=[
+    {source:'/app',destination:'/index.html'},
     {source:'/business',destination:'/index.html'},
     {source:'/admin',destination:'/index.html'}
   ];

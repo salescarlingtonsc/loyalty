@@ -26,6 +26,10 @@
   ],
   "rewrites": [
     {
+      "source": "/app",
+      "destination": "/index.html"
+    },
+    {
       "source": "/business",
       "destination": "/index.html"
     },

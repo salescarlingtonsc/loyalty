@@ -356,7 +356,11 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
-  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started']};
+  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started'],
+  /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar
+     sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
+     that lives in Operations setup, never an entitlement a staff member can be granted. */
+  bottles:['bottle','Bottles'],bottlesetup:['bottle','Bottle keep']};
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
@@ -372,7 +376,8 @@ const ROLE_CAPABILITIES={
    has one deny-list to fill instead of two hard-coded checks. */
 const HIDDEN_BUSINESS_SURFACES=new Set([]);
 const FINANCE_MODULES=new Set(['expenses','pnl','staffperf']);
-const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup']);
+const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup']);
+const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -393,7 +398,7 @@ let pendingOpenApptFormV217=false;
 /* V229 (owner: "i need a clean overview before zooming in"). Which Programmes topic is drilled
    into, '' = the tile overview. In-session only, consumed by growPage. */
 let growTopicV229='';
-let settingsActiveTab='workspace';
+let settingsActiveTab='modules';
 let profileOpen=false;
 let routeDispose=()=>{};
 let activeCustomerRedemptionCleanup=()=>{};
@@ -693,7 +698,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';growTopicV229='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -1375,7 +1380,13 @@ async function route(){
       toast('Waitlist works with Bookings. Turn on Bookings first.');
       return nav('#/dashboard');
     }
+    /* V275: the bottle surfaces are exempt from the generic bounce. A non-bar tenant that
+       follows a bookmarked #/bottles link gets a plain "not available for this business type"
+       card from the page itself; being thrown to the dashboard with a toast reads as a broken
+       app rather than as an answer. The page re-checks the sector and the module before it
+       renders anything, and the RPCs refuse independently. */
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)&&pageKey!=='dashboard'
+       &&!BOTTLE_SURFACES_V275.has(pageKey)
        &&!canReadModule(pageKey)){
       toast('You don\'t have access to that.');
       return nav('#/dashboard');
@@ -2644,7 +2655,7 @@ function renderAuth(mode='in',{admin=false}={}){
   }
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessAuthTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
+    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/app">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
     ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
@@ -3145,8 +3156,11 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* Owner: "recent appointment - how recent?" — the number now states its own window. */
   recentInWindow:Object.freeze({en:'{count} in last {window}','zh-CN':'过去{window}内 {count} 个',ms:'{count} dalam {window} lalu'}),
   recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
-  reversalOf:Object.freeze({en:'Reversal of {id}','zh-CN':'冲销自 {id}',ms:'Pembalikan bagi {id}'}),
-  usedSessionReversedBy:Object.freeze({en:'Used session → reversed by {id}','zh-CN':'已用次数 → 由 {id} 冲销',ms:'Sesi digunakan → dibalikkan oleh {id}'}),
+  /* V267: the id is gone from these two. A staff member reading the session-correction table
+     cannot do anything with a UUID, and the owner asked "what is this?" the first time they
+     met one. The relationship is what matters and the counterpart row is in the same table. */
+  reversalOf:Object.freeze({en:'Reversal of an earlier session use','zh-CN':'冲销较早的次数使用','ms':'Pembalikan penggunaan sesi terdahulu'}),
+  usedSessionReversedBy:Object.freeze({en:'Used session → later reversed','zh-CN':'已用次数 → 之后已冲销','ms':'Sesi digunakan → dibalikkan kemudian'}),
   preparingExport:Object.freeze({en:'Preparing {current} of {total}…','zh-CN':'正在准备第 {current}／{total} 条…',ms:'Menyediakan {current} daripada {total}…'}),
   imageCleanupPending:Object.freeze({en:'{count} previous image cleanup item is still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
   imageCleanupsPending:Object.freeze({en:'{count} previous image cleanup items are still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
@@ -3566,6 +3580,39 @@ async function svRunTopupFlow({branches,state,testOnly}){
   render();
 }
 
+/* V279 (owner walkthrough item 4), in the owner's own words: red below a quarter, orange below a
+   half, yellow while it is still more gone than not, light green once it is mostly there, and full
+   green only for a bottle nobody has poured from. Each entry is [exclusive ceiling, colour, name].
+   ONE table, consulted by the one bar renderer, so the list rows, the bottle card and the
+   customer's own wallet cannot disagree about what "half" looks like. */
+const BOTTLE_FILL_BANDS_V279=Object.freeze([
+  Object.freeze([25,'#B3453A','red']),
+  Object.freeze([50,'#C2701A','orange']),
+  Object.freeze([75,'#A8951C','yellow']),
+  Object.freeze([100,'#6FAE7C','light green']),
+  Object.freeze([101,'#2E7D5B','green'])
+]);
+function bottleFillToneV279(percent){
+  const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
+  const band=BOTTLE_FILL_BANDS_V279.find(([ceiling])=>value<ceiling);
+  return band?band[1]:'#2E7D5B';
+}
+function bottleFillBarV275(percent){
+  const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
+  const tone=bottleFillToneV279(value);
+  return `<span class="bottle-fill" role="img" aria-label="${value}% left" style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
+}
+function bottleDaysLabelV275(days){
+  /* V278: a bottle may now have NO expiry, and the server sends null for it. Number(null) is 0,
+     which would have rendered "Last day" on a bottle that never expires — the exact opposite of
+     the truth, on the number a bartender acts on. */
+  if(days===null||days===undefined||days==='')return 'No expiry';
+  const value=Number(days);
+  if(!Number.isFinite(value))return '';
+  if(value<0)return 'Overdue';
+  if(value===0)return 'Last day';
+  return `${value} day${value===1?'':'s'} left`;
+}
 /* ---------- V142 merchant-owned customer payments ---------- */
 async function loadMerchantPaymentsV142(){
   const wrap=$('merchantPaymentsWrapV142');if(!wrap||!S.biz?.id)return;

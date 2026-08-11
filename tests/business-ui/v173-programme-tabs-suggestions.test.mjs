@@ -24,6 +24,10 @@ test('the hidden attribute actually hides programme rows (tab filter is real)', 
    these same destinations, and carrying both was the duplicated navigation the owner
    flagged. What this test protects — that each VIEW says plainly what it shows — now lives
    on the headings the views render. */
+/* V271: the owner asked for three DESTINATIONS under Programmes — Overview, List, History. They
+   are separate surfaces (a live at-a-glance table, the list, and what has ended), not filters of
+   one list, and V250 had already flattened the sidebar to a single Programmes link, so the strip
+   duplicates nothing. It carries its own class, which is why the V173/V180 line below still holds. */
 test('each programme view says plainly what it shows', () => {
   assert.doesNotMatch(app, /class="programme-tabs"/);
   /* V224: the owner struck out the blurb under this heading as redundant — the heading
@@ -81,7 +85,7 @@ test('suggestion rows are queried from outerMain, not document', () => {
 
 test('V180: bare #/grow is the full list, and every old hash still resolves', () => {
   assert.match(app, /\?String\(hashParam\):'list';/, 'bare #/grow must land on the full list');
-  assert.match(app, /\['ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/,
+  assert.match(app, /\['overview','history','ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/,
     'removing a nav entry must not break its deep link');
   assert.match(app, /id="growSecondarySettings"/, 'advanced settings section must remain on-page');
   assert.match(app, /Nothing is running yet\./, 'Running must explain itself when empty');

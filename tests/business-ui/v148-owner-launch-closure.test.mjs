@@ -10,7 +10,10 @@ test('team access is discoverable and distinguishes roster-only from signed-in a
      Staff Members is in the sidebar, and two doors to one page is the duplicated navigation the
      owner flagged at V180. What this test protects — that team access is REACHABLE and that the
      two kinds of teammate are told apart — still holds, on the sidebar route. */
-  assert.match(source,/items:\['staffmembers','branches','services','inventory','packages'\]/);
+  /* V275: the Operations setup group gained a bar-only "Bottle keep" row. This assertion guards
+     that the setup surfaces live HERE rather than in the account menu, not that the group is
+     frozen, so the new row is admitted explicitly and everything it protects still holds. */
+  assert.match(source,/items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?\]/);
   assert.match(source,/Add staff without app access/);
   assert.match(source,/No app access/);
   assert.match(source,/Invite pending/);

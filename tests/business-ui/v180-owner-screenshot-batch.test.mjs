@@ -31,7 +31,9 @@ test('programmes nav is one destination, and old hashes still resolve', () => {
   assert.ok(!app.includes("['#/grow/ongoing'"), 'the Ongoing programmes row was struck out');
   assert.ok(!app.includes("['#/grow/available'"), 'the Pending setup row was struck out');
   // Deep links must not 404 just because the nav entry is gone.
-  assert.ok(app.includes("['ongoing','available','settings'].includes(String(hashParam||''))"),
+  // V271 added the owner's 'overview' and 'history' views to the same list; the three older
+  // hashes are still in it, which is what this assertion has always been protecting.
+  assert.ok(app.includes("['overview','history','ongoing','available','settings'].includes(String(hashParam||''))"),
     'the removed hashes must still resolve to their views');
   assert.ok(!app.includes('class="programme-tabs"'), 'in-page tabs duplicated the sidebar');
 });
@@ -76,7 +78,9 @@ test('staff performance shows two money cards, and the grid matches', () => {
 });
 
 test('reports read as money in, money out, result, then why', () => {
-  assert.ok(app.includes("items:['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf']"),
+  // V272 owner instruction ("delete this tab cause here have already"): Staff performance is no
+  // longer a nav entry, so the order this test guards now ends at Customer intelligence.
+  assert.ok(app.includes("items:['dailyreport','sales','expenses','pnl','reports','customerintel']"),
     'reports nav order not applied');
 });
 

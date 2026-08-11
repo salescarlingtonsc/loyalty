@@ -1629,6 +1629,60 @@
       "path": "db/migrations/20260810_nestly_v267_salesforce_crm_scope.sql",
       "semanticVersion": "v267",
       "proposedDeployVersion": "20260810000200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260810_nestly_v267_summary_business_logo.sql",
+      "semanticVersion": "v267",
+      "proposedDeployVersion": "20260810000300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260810_nestly_v271_programme_overview.sql",
+      "semanticVersion": "v271",
+      "proposedDeployVersion": "20260810000400"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260810_nestly_v273_usage_null_when_never_set_up.sql",
+      "semanticVersion": "v273",
+      "proposedDeployVersion": "20260810000500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v275_bar_bottle_keep.sql",
+      "semanticVersion": "v275",
+      "proposedDeployVersion": "20260811000100"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v276_bar_sector_polish.sql",
+      "semanticVersion": "v276",
+      "proposedDeployVersion": "20260811000200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v277_activation_seeds_loyalty.sql",
+      "semanticVersion": "v277",
+      "proposedDeployVersion": "20260811000300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v278_bottle_keep_parity.sql",
+      "semanticVersion": "v278",
+      "proposedDeployVersion": "20260811000400"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v279_bottle_owner_walkthrough.sql",
+      "semanticVersion": "v279",
+      "proposedDeployVersion": "20260811000500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260811_nestly_v280_branch_billing_units_and_promotion_version.sql",
+      "semanticVersion": "v280",
+      "proposedDeployVersion": "20260811000600"
     }
   ]
 }

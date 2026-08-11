@@ -31,7 +31,7 @@ function section(start, end) {
 const clientDetail = section('async function clientDetail(id){', 'function renderHistPage(history,n){');
 const settings = section('async function settingsPage(){', '/* ---------- billing (read-only) ---------- */');
 const brandPanel = section('function workspaceBrandPanelHtmlV259(){', 'function wireWorkspaceBrandV259(){');
-const brandWiring = section('function wireWorkspaceBrandV259(){', 'function settingsMovedToCustomerInterfaceCardV243(');
+const brandWiring = section('function wireWorkspaceBrandV259(){', '/* The public page a customer meets before joining.');
 const interfacePage = section('async function customerInterfacePageV243()', '/* ---------- phone country-code picker');
 
 /* ------------------------------------------------------- (1a) the number is a real control */
@@ -109,7 +109,9 @@ test('V259 the dialog explains the 0 on the card instead of contradicting it', (
 /* ---------------------------------------- (2) Workspace & brand moved, whole and only once */
 
 test('V259 the Workspace & brand form lives in the Customer Interface module', () => {
-  assert.match(interfacePage, /\$\{canEditCustomerInterface\?workspaceBrandPanelHtmlV259\(\):''\}/);
+  // V269 wrapped the three panels in named sections; the owner gate is now the one ternary
+  // around all three, so the panel call itself is no longer individually guarded.
+  assert.match(interfacePage, /\$\{workspaceBrandPanelHtmlV259\(\)\}/);
   assert.match(interfacePage, /wireWorkspaceBrandV259\(\);/);
   // brand/identity first, then the customer programme, then sign-up QR and app actions
   const order = ['workspaceBrandPanelHtmlV259()', 'customerProgrammeEditorV95', 'customerInterfaceSectionsHtmlV243('];
@@ -134,10 +136,12 @@ test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
   assert.match(brandWiring, /legal_name:legalName,registration_number:registrationNumber\}\)\.eq\('id',S\.biz\.id\)/);
 });
 
-test('V259 Settings keeps the tab and shows a pointer, never a second copy', () => {
-  assert.match(settings, /data-settab="workspace">Workspace &amp; brand<\/button>/,
-    'a tab that vanishes reads as a lost feature');
-  assert.match(settings, /\$\{settingsMovedToCustomerInterfaceCardV243\('Workspace &amp; brand'\)\}/);
+/* V269 SUPERSEDES the pointer half of this test: the owner read the pointer card and told us to
+   delete it along with the tab. What still matters — and is what this test was really guarding —
+   is that Settings never grows a second copy of the form. */
+test('V269 Settings carries neither the tab nor a second copy of the form', () => {
+  assert.doesNotMatch(settings, /data-settab="workspace"/);
+  assert.doesNotMatch(settings, /settingsMovedToCustomerInterfaceCardV243/);
   assert.doesNotMatch(settings, /id="bsave"|id="bru"|<label for="bc">/);
   // the loader moved with its host; only the explanatory comment still names it here
   assert.doesNotMatch(settings, /^\s*loadWorkspaceLogoEditorV96\(\);/m);

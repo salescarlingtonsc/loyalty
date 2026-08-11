@@ -107,7 +107,8 @@ test('C42 phone claim is slug-led, exact-one, generic, rate-limited, and cannot 
 test('customer authentication defaults to password while signup and recovery alone use OTP', () => {
   const customerRoute = block(app, /let customerRegistrationState=[\s\S]*?async function renderCustomerClaim\(/i);
   const auth = block(app, /function renderAuth\([\s\S]*?function validNewPassword\(/i);
-  assert.match(auth, /href="\/"/);
+  /* V274: bare "/" serves the marketing landing now, so the customer-app link says /app. */
+  assert.match(auth, /href="\/app"/);
   assert.match(auth, /I’m a customer/);
   assert.match(app, /h==='#\/'\|\|h==='#\/customer'\|\|h==='#\/customer\/register'\|\|h\.startsWith\('#\/customer\?'\)/);
   assert.match(app, /href="\/business">Business sign in<\/a>/);

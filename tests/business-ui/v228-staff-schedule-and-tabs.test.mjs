@@ -53,10 +53,12 @@ test('V228 the shared weekday row is defined once, not duplicated', () => {
   assert.equal((app.match(/const V183_DAYS=/g) || []).length, 1);
 });
 
-test('V228 Customer interface sits with the other customer-facing tabs', () => {
-  const start = app.indexOf('class="settings-tabs"');
+/* V269 SUPERSEDES the V228 ordering: the owner deleted the three customer-facing tabs from
+   Settings altogether, so "they come first" no longer has anything to order. What survives is
+   that Settings is now purely the operations tabs. */
+test('V269 Settings keeps only the operations tabs', () => {
+  const start = app.indexOf('class="settings-tabs" data-workspace-i18n');
   const strip = app.slice(start, app.indexOf('</div>', app.indexOf('settab-team', start)));
   const order = [...strip.matchAll(/data-settab="([a-z]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['workspace', 'programme', 'fields', 'modules', 'catalogue', 'team'],
-    'the customer-facing tabs come before the operations ones');
+  assert.deepEqual(order, ['modules', 'catalogue', 'team']);
 });

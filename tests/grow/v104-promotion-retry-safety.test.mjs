@@ -25,7 +25,12 @@ test('a 504 after commit keeps the exact finalization receipt and photo for repl
   assert.equal(classify(afterCommitGatewayError),true);
   assert.equal(classify({status:503,message:'Service unavailable'}),true);
   assert.equal(classify({status:429,message:'Too many requests'}),true);
-  assert.match(page,/if\(!promotionRpcErrorIsAmbiguousV104\(result\.error\)\)\{[\s\S]*cleanFailedUpload\(pending\)[\s\S]*writeSessionValue\(pendingStorageKey,null\)/);
+  /* V280 retarget: the guarantee is unchanged — an AMBIGUOUS failure must never delete the photo
+     or the receipt, because Postgres may have committed. What changed is that a version conflict
+     joined that set: it is definitively rolled back, but it is retryable with re-read versions and
+     the retry needs the SAME uploaded photo. Deleting it there is what made a stale version an
+     offer that could never be published. */
+  assert.match(page,/if\(!promotionRpcErrorIsAmbiguousV104\(result\.error\)\s*&&!promotionVersionConflictV280\(result\.error\)\)\{[\s\S]*cleanFailedUpload\(pending\)[\s\S]*writeSessionValue\(pendingStorageKey,null\)/);
   assert.match(page,/The save outcome is still unconfirmed\. Check your connection, then press again\./);
 });
 
@@ -62,7 +67,12 @@ test('a delayed save response cannot repaint a route after its Promotions page i
   assert.equal(rendered,false);
   assert.match(page,/isPromotionCurrent=\(\)=>S\.biz\?\.id===businessId&&promotionPageCurrentV104\(pageRoot,host\)/);
   assert.match(page,/const created=await ensureDraft\(draft\);\s*if\(created\.error\)\{\s*if\(!isPromotionCurrent\(\)\)return/);
-  assert.match(page,/const finalized=await runPendingFinalize\(pendingFinalize\);\s*if\(finalized\.error\)\{\s*if\(!isPromotionCurrent\(\)\)return/);
+  /* V280 retarget: `const finalized` became `let finalized` so a version conflict can be re-read
+     and retried once. The staleness guard this test protects is asserted on the same await, and
+     on the conflict retry that now sits between it and the error branch. */
+  assert.match(page,/let finalized=await runPendingFinalize\(pendingFinalize\);/);
+  assert.match(page,/const refreshed=await refreshPromotionV280\(workingPromotionId\);\s*if\(!isPromotionCurrent\(\)\)return;/);
+  assert.match(page,/if\(finalized\.error\)\{\s*if\(!isPromotionCurrent\(\)\)return;/);
   assert.match(page,/if\(!isPromotionCurrent\(\)\)return;\s*const savedId=/);
 });
 

@@ -45,7 +45,7 @@
     {
       "name": "Customer home",
       "short_name": "Customer",
-      "url": "/"
+      "url": "/app"
     },
     {
       "name": "Business sign in",
