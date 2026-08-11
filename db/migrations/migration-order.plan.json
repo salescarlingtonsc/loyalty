@@ -1701,6 +1701,12 @@
       "path": "db/migrations/20260812_nestly_v282_promotion_finalize_conflict_fastfail.sql",
       "semanticVersion": "v282",
       "proposedDeployVersion": "20260812000200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260812_nestly_v283_customer_claim_execute_grants.sql",
+      "semanticVersion": "v283",
+      "proposedDeployVersion": "20260812000300"
     }
   ]
 }
