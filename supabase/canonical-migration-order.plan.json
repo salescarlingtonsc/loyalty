@@ -1618,6 +1618,12 @@
       "version": "20260810000100",
       "name": "nestly_v265_marketing_consent_scope",
       "sourcePath": "db/migrations/20260810_nestly_v265_marketing_consent_scope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260810000200",
+      "name": "nestly_v267_salesforce_crm_scope",
+      "sourcePath": "db/migrations/20260810_nestly_v267_salesforce_crm_scope.sql"
     }
   ]
 }

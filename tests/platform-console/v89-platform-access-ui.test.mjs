@@ -182,7 +182,12 @@ test('custom admin with onboarding write access gets a named consultant assignme
   const access=api.normalizePlatformAccess({
     role:'admin',scope:'all',module_perms:{onboarding:'rw',firms:'r'}
   });
-  assert.equal(api.canAssignScopedProspect({access,canWrite:api.canWriteModule(access,'onboarding')}),true);
+  // Owner rule (2026-08-10): only the super admin assigns firms. An admin's
+  // button would be dead against platform_assign_prospect_v89's gate.
+  assert.equal(api.canAssignScopedProspect({access,canWrite:api.canWriteModule(access,'onboarding')}),false);
+  assert.equal(api.canAssignScopedProspect({
+    access:api.normalizePlatformAccess({role:'super_admin',scope:'all',module_perms:{'*':'rw'}}),
+    canWrite:true}),true);
   assert.deepEqual(
     Array.from(api.scopedConsultantOptions([
       {assigned_consultant_id:'consultant-b',consultant_name:'Zoe Tan'},

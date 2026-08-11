@@ -6641,8 +6641,8 @@
         <summary class="btn ghost sm">${CUI.icon('settings',{size:16})}<span>${escapeHtml(pt('More actions'))}</span></summary>
         <div class="platform-action-disclosure-menu">
           ${primary.email?`<a class="btn ghost sm" href="mailto:${escapeHtml(primary.email)}">${CUI.icon('empty',{size:16})}<span>${escapeHtml(pt("Email"))}</span></a>`:''}
-          ${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Edit firm"))}</span></button>
-          <button type="button" class="btn ghost sm" data-assign-prospect>${CUI.icon('staff',{size:16})}<span>${escapeHtml(pt("Change owner"))}</span></button>`}
+          ${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Edit firm"))}</span></button>`}
+          ${converted||!isSuperAdmin?'':`<button type="button" class="btn ghost sm" data-assign-prospect>${CUI.icon('staff',{size:16})}<span>${escapeHtml(pt("Change owner"))}</span></button>`}
           <button type="button" class="btn ghost sm" data-add-task>${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Add follow-up task"))}</span></button>
           <button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload document"))}</span></button>
           <button type="button" class="btn ghost sm" data-add-npu>${escapeHtml(pt("Record not proceeding"))}</button>
@@ -8372,10 +8372,18 @@
         if(globalObject.history?.replaceState)globalObject.history.replaceState(null,'',crmHash(next));
         renderCrm({...context,hash:crmHash(next)},next);
       });
+      /* Two drawers exist for a reason: the full one reads through
+         platform_get_prospect_detail_v76, which only an admin or super admin
+         may call. A consultant clicking their own card must land on the scoped
+         drawer (platform_get_my_prospect_v89) or every card on their board
+         opens an error. */
+      const scopedReader=context.access?.role==='sales_staff';
       main.querySelectorAll('[data-prospect]').forEach(card=>{
         card.onclick=()=>{
           const item=items.find(entry=>String(entry.id||entry.prospect_id)===card.dataset.prospect);
-          if(item)openProspectDetail(item,{...context,prospectCloseHash:crmHash(active)});
+          if(!item)return;
+          if(scopedReader)openScopedProspect(item,context,[],{onClose:()=>renderCrm(context,active)});
+          else openProspectDetail(item,{...context,prospectCloseHash:crmHash(active)});
         };
       });
       /* Reuse the Firms drawer's request modal rather than posting a request
@@ -9874,9 +9882,11 @@
     return`#/platform/reports${[...params].length?`?${params.toString()}`:''}`;
   }
 
+  /* Owner rule (2026-08-10): ONLY the super admin assigns firms to
+     consultants. The DB enforces it in platform_assign_prospect_v89/_v76;
+     this just keeps dead buttons off every other role's screen. */
   function canAssignScopedProspect(context) {
-    return context?.canWrite===true&&context?.access?.role==='admin'
-      &&context?.access?.scope==='all';
+    return context?.canWrite===true&&context?.access?.role==='super_admin';
   }
 
   function scopedConsultantOptions(rows=[]) {
