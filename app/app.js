@@ -4967,13 +4967,21 @@ const CUSTOMER_SHARE_CHANNELS_V264=Object.freeze([
     href:({url})=>`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
 ]);
 /* The link a stranger receives must open something they can actually use without an account.
-   The business's public booking page is that surface today; it is the canonical origin, never
-   whatever host this app happens to be running on. */
-function customerShareUrlV264(business={}){
+   v268: an offer with an id now shares /o/<id> — the server-rendered page whose Open Graph tags
+   let WhatsApp and Facebook preview the offer's own artwork and "Peekaa × firm" (crawlers never
+   run JavaScript, so the SPA's hash routes all previewed as generic branding). That page walks a
+   human on into the business's public page, which remains the direct link for anything without
+   an offer id. Either way it is the canonical origin, never whatever host this app happens to be
+   running on — and a business with no public page still shares nothing, because the offer page
+   would have nowhere to send a visitor. */
+function customerShareUrlV264(business={},offer={}){
   const slug=String(business?.slug||'').trim();
   if(!slug)return '';
-  try{return NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`)}
-  catch{return ''}
+  const offerId=String(offer?.id||'').trim();
+  try{
+    if(offerId)return NestlyNativeBridge.publicUrl(`/o/${encodeURIComponent(offerId)}`);
+    return NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`);
+  }catch{return ''}
 }
 /* The message carries the offer, because the destination page cannot show it yet. Name, business
    and validity — merchant-authored text, passed through as the merchant wrote it. */
@@ -5066,7 +5074,7 @@ function showCustomerShareSheetV264({text,url,business={},onChannel=()=>{}}){
 }
 async function shareCustomerOfferV264(item,business){
   const shop=business||item?.business||{};
-  const url=customerShareUrlV264(shop);
+  const url=customerShareUrlV264(shop,item);
   if(!url)return toast('This business has no public page to share yet.');
   const text=customerShareTextV264(item,shop),brand=customerShareCoBrandV267(shop);
   const businessId=String(shop?.id||'');

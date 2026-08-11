@@ -40,6 +40,10 @@ test('root is customer-first and business sign-in is a separate clean entry path
 
   assert.deepEqual(manifest.shortcuts.map(({url})=>url),['/','/business']);
   const expectedRewrites=[
+    /* v268: /o/<offer-id> is the server-rendered shared-offer page — the ONE route that must
+       NOT fall through to the SPA shell, because link-preview crawlers never run JavaScript
+       and can only read tags a server actually sent. */
+    {source:'/o/:id',destination:'/api/offer-share?id=:id'},
     {source:'/business',destination:'/index.html'},
     {source:'/admin',destination:'/index.html'}
   ];

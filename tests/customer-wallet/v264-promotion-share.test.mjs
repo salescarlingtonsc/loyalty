@@ -53,20 +53,28 @@ const BUSINESS = { id: 'b1', name: 'Cubbly', slug: 'kopi-tiam-tyeh' };
 
 /* -------------------------------------------------------------------- the link and the message */
 
-test('the shared link is the canonical public page, not the current host', () => {
+test('the shared link is the canonical public origin, not the current host', () => {
+  /* v268: an offer with an id shares the server-rendered offer page, which is what lets
+     WhatsApp/Facebook preview the artwork — their crawlers never run JavaScript, so a hash
+     route can only ever preview as generic branding. Without an offer id the business's
+     public page remains the link. */
+  assert.equal(api.url(BUSINESS, OFFER), 'https://www.peekaa.asia/o/o1');
   assert.equal(api.url(BUSINESS), 'https://www.peekaa.asia/#/b/kopi-tiam-tyeh');
 });
 
 test('a business with no public page is not shared at all', () => {
   assert.equal(api.url({}), '');
   assert.equal(api.url({ slug: '   ' }), '');
+  // even with an offer id — the offer page would have nowhere to send a visitor
+  assert.equal(api.url({}, OFFER), '');
   assert.match(dispatchSource, /if\(!url\)return toast\('This business has no public page to share yet\.'\)/,
     'the customer is told why, rather than handed a broken link');
 });
 
-test('a slug is URL-encoded on the way into the link', () => {
+test('slugs and offer ids are URL-encoded on the way into the link', () => {
   assert.match(api.url({ slug: 'a b/c' }), /a%20b%2Fc/);
   assert.doesNotMatch(api.url({ slug: 'a b/c' }), /a b\/c/);
+  assert.match(api.url(BUSINESS, { id: 'x/../y' }), /x%2F\.\.%2Fy/);
 });
 
 test('the message carries the offer, because the destination cannot show it yet', () => {
@@ -83,14 +91,14 @@ test('the message carries the offer, because the destination cannot show it yet'
 test('every channel drawn is one a tap genuinely reaches', () => {
   const keys = api.channels.map((channel) => channel.key);
   assert.deepEqual(keys, ['whatsapp', 'telegram', 'facebook']);
-  const text = api.text(OFFER, BUSINESS), url = api.url(BUSINESS);
+  const text = api.text(OFFER, BUSINESS), url = api.url(BUSINESS, OFFER);
   const hrefs = Object.fromEntries(api.channels.map((c) => [c.key, c.href({ text, url })]));
   assert.match(hrefs.whatsapp, /^https:\/\/wa\.me\/\?text=/);
   assert.match(hrefs.telegram, /^https:\/\/t\.me\/share\/url\?url=/);
   assert.match(hrefs.facebook, /^https:\/\/www\.facebook\.com\/sharer\/sharer\.php\?u=/);
   // the link must survive as a link, not be mangled into the text
   for (const href of Object.values(hrefs)) {
-    assert.match(href, /kopi-tiam-tyeh/);
+    assert.match(href, /%2Fo%2Fo1|\/o\/o1/);
     assert.doesNotMatch(href, / /, 'every parameter is encoded');
   }
 });
@@ -235,4 +243,50 @@ test('the firm logo the lockup needs is actually returned by the programme RPC',
   assert.match(summary, /and logo\.customer_visible/,
     'an asset the firm has not published to customers must never reach a stranger');
   assert.match(summary, /revoke all on function public\.customer_get_business_summary\(text\) from public, anon;/);
+});
+
+/* ------------------------------------------------------------------- v268 the public offer page */
+
+/* v268 (owner): "yes please build the public offer page." The crawler a chat app sends to unfurl
+   a link never runs JavaScript and never authenticates — so the preview can only come from a
+   server-rendered page. These tests pin the parts that keep it honest. */
+
+test('the offer page function serves per-offer Open Graph and redirects humans into the app', async () => {
+  const fn = await read('app/api/offer-share.js');
+  assert.match(fn, /og:title/);
+  assert.match(fn, /og:image/);
+  assert.match(fn, /Peekaa × \$\{business\}/);
+  assert.match(fn, /object-fit:contain/, 'merchant artwork is never cropped — words are baked into EDMs');
+  assert.match(fn, /window\.location\.replace/, 'humans continue into the app; crawlers stop at the tags');
+  assert.doesNotMatch(fn, /user-agent/i, 'no crawler sniffing — the split falls out of who executes script');
+  // a dead or unknown link redirects home rather than 404ing the recipient
+  assert.match(fn, /if \(!UUID\.test\(id\)\) return redirect\(response, CANONICAL_ORIGIN \+ '\/'\)/);
+  assert.match(fn, /if \(!offer \|\| !offer\.business_slug\) return redirect\(response, CANONICAL_ORIGIN \+ '\/'\)/);
+  // only our own storage paths may become og:image — never a pass-through of arbitrary URLs
+  assert.match(fn, /startsWith\('\/storage\/v1\/object\/public\/'\)/);
+  // authenticated-user tokens must never appear; the page runs on the publishable key alone
+  assert.doesNotMatch(fn, /service_role|SERVICE_ROLE/i);
+});
+
+test('the /o/ route is wired in both the deployed rewrites and the template they are generated from', async () => {
+  for (const file of ['app/vercel.json', 'config/runtime/vercel.template.json']) {
+    const config = JSON.parse(await read(file));
+    const rewrite = config.rewrites.find((r) => r.source === '/o/:id');
+    assert.ok(rewrite, `${file} must route /o/<id> to the offer page`);
+    assert.equal(rewrite.destination, '/api/offer-share?id=:id');
+  }
+});
+
+test('the RPC behind the page mirrors the customer promotion list, and only that', async () => {
+  const migration268 = await read('db/migrations/20260812_nestly_v268_offer_share_page.sql');
+  // the same visibility conditions as customer_get_promotions_v155 — one definition of "visible"
+  for (const condition of ['content.active', "content.content_type = 'offer'",
+    'content.ends_at > now()', 'asset.customer_visible', 'media.url is not null']) {
+    assert.ok(migration268.includes(condition), `visibility must require: ${condition}`);
+  }
+  assert.match(migration268, /grant execute on function public\.offer_share_page_v268\(uuid\) to anon/,
+    'the caller is a link-preview crawler; it cannot authenticate — deliberate and documented');
+  assert.match(migration268, /stable/, 'read-only');
+  assert.doesNotMatch(migration268, /phone|email|points_ledger|credit_ledger|customer_links/,
+    'nothing but broadcast marketing content leaves through this function');
 });

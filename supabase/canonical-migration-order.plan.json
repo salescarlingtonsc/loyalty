@@ -1624,6 +1624,12 @@
       "version": "20260810000300",
       "name": "nestly_v267_summary_business_logo",
       "sourcePath": "db/migrations/20260810_nestly_v267_summary_business_logo.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812000100",
+      "name": "nestly_v268_offer_share_page",
+      "sourcePath": "db/migrations/20260812_nestly_v268_offer_share_page.sql"
     }
   ]
 }
