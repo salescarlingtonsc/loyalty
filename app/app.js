@@ -9658,8 +9658,10 @@ function renderShell(page){
      only which function that key maps to is new, so the module route-guard above this
      function needs no changes at all. */
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
-    grow:(hashParam,routedFocus)=>growPage('overview',hashParam,routedFocus),
-    bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus),retention:(hashParam,routedFocus)=>growPage('winback',hashParam,routedFocus),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam),storedvalue:hashParam=>growPage('storedvalue',hashParam),referrals:referralsPage,
+    /* V288: every ROUTE entry into Programmes is marked as such, so a stale tile drill from an
+       earlier visit cannot survive a fresh navigation. */
+    grow:(hashParam,routedFocus)=>growPage('overview',hashParam,routedFocus,{fromRouteV288:true}),
+    bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus,{fromRouteV288:true}),retention:(hashParam,routedFocus)=>growPage('winback',hashParam,routedFocus,{fromRouteV288:true}),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam,null,{fromRouteV288:true}),storedvalue:hashParam=>growPage('storedvalue',hashParam,null,{fromRouteV288:true}),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
@@ -10329,7 +10331,11 @@ async function dashboard(){
        links to their own bucket. */
     inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 to 59 complete Singapore days ago. Tapping this tile opens exactly this group. Customers quiet for 60 days or more are reported separately in Merchant insights.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
   };
-  let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
+  /* V288: seeded from the branch the top bar is ALREADY showing. It used to start at null, and
+     the Today-schedule glance below is fetched at first paint from this value — so a workspace
+     scoped to one branch opened on a business-wide schedule count, then quietly shrank the first
+     time the owner touched a day tab. The first number on the page must be the scoped one. */
+  let appliedDashboardScopeV141={from:d30,to:today,branchId:selectedBranchId||null,branchName:'All permitted branches'};
   /* V287: openDashboardMetricDetailV141 lived here. V225 turned every KPI tile into a direct
      link to its report ("once clicked, straight away go to sales"), which left this modal
      reachable only through an `else` branch that required a metric definition WITHOUT a route —
@@ -10443,13 +10449,22 @@ async function dashboard(){
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
+    const previousScheduleBranchV288=appliedDashboardScopeV141.branchId;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
+    /* V288: nothing re-invoked the schedule loader after the real branch was resolved, so the
+       glance kept whatever scope first paint guessed until a day tab was pressed. Re-fetch only
+       when the resolved branch actually differs, and keep the day currently on screen. */
+    if(previousScheduleBranchV288!==appliedDashboardScopeV141.branchId){
+      loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,scheduleDateInputV252?.value||null);
+    }
     /* V266: the period is written from the range the RPC was actually answered for, next to the
        numbers, so the Today-schedule date above can never be mistaken for the driver. */
     const performancePeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
     if(performancePeriod)performancePeriod.textContent=workspaceTemplateTextV97('performancePeriodRange',{from:dashboardScheduleDayLabelV252(from),to:dashboardScheduleDayLabelV252(to)});
     if(!kpis||!charts)return;
-    status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
+    /* V288: the banner used to watch the 30–59 read only, so a lone 60+ failure had no retry
+       anywhere on the page — the count it feeds simply went quiet. Both reads share one retry. */
+    status.innerHTML=customerMetricsAvailable&&(inactiveResponse.error||inactive60Response.error)?`<div class="err" role="status">Inactive customer counts could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const previousSummary=previousResponse.error?null:previousResponse.data;
     const revenueChange=percentageChangeV153(d.revenue_cents,previousSummary?.revenue_cents);
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
@@ -10479,7 +10494,10 @@ async function dashboard(){
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       const route=dashboardMetricDefinitionsV141[key]?.route;
-      if(key==='inactive')pendingCustomerInactivity=30;
+      /* V288: the pending drill now carries the BUCKET KEY the destination understands, not a
+         day number the Customers page had to re-guess. The tile counts 30–59 (V287), so it
+         asks for 30–59; Merchant insights counts 60+, so it asks for 60+. */
+      if(key==='inactive')pendingCustomerInactivity='30_59';
       if(route)nav(route);
     });
     if(loyalty){
@@ -10506,9 +10524,13 @@ async function dashboard(){
       loyalty.setAttribute('aria-busy','false');
     }
     if(insights){
-      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
+      /* V288: a FAILED 60+ read used to be substituted with a literal 0, which the business-health
+         row then printed as "0 inactive 60+ days · Stable" — the most reassuring sentence on the
+         page, produced by the absence of an answer. null travels instead, and every reader below
+         states that it could not be read. */
+      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?null:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
       insights.setAttribute('aria-busy','false');
-      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=Number(link.dataset.insightInactive)||60}));
+      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=link.dataset.insightInactive||'60_plus'}));
       /* V214: the quiet-branch card offers a way back out of the branch it is scoped to,
          so the owner can see immediately that the business as a whole is not quiet. */
       insights.querySelectorAll('[data-insight-scope-all-v214]').forEach(button=>button.addEventListener('click',()=>{
@@ -10631,13 +10653,19 @@ function classifyInactiveCustomersV153(customers){
   const buckets={
     '30_59':{label:'Inactive 30–59 days',definition:'No valid visit for 30 to 59 complete Singapore days.',customers:[]},
     '60_89':{label:'Inactive 60–89 days',definition:'No valid visit for 60 to 89 complete Singapore days.',customers:[]},
-    '90_plus':{label:'Inactive 90+ days / never visited',definition:'No valid visit for at least 90 complete Singapore days, or no valid visit on record.',customers:[]}
+    '90_plus':{label:'Inactive 90+ days / never visited',definition:'No valid visit for at least 90 complete Singapore days, or no valid visit on record.',customers:[]},
+    /* V288: an OVERLAPPING aggregate, deliberately not a fifth exclusive group. Merchant
+       insights counts the 60+ audience with one RPC (inactive_60_plus) and used to link into
+       60–89, silently dropping everyone 90+ — the number the owner tapped and the list they
+       landed on could not agree. This is the destination that matches that number. */
+    '60_plus':{label:'Inactive 60+ days',definition:'No valid visit for at least 60 complete Singapore days.',customers:[]}
   };
   (customers||[]).forEach(customer=>{
     const never=!customer.last_visit_at,days=Number(customer.days_since_last_visit);
     if(!never&&days>=30&&days<=59)buckets['30_59'].customers.push(customer);
     else if(!never&&days>=60&&days<=89)buckets['60_89'].customers.push(customer);
     else if(never||days>=90)buckets['90_plus'].customers.push(customer);
+    if(!never&&days>=60)buckets['60_plus'].customers.push(customer);
   });
   return buckets;
 }
@@ -10701,8 +10729,11 @@ function businessHealthSummaryV153({current,previous,inactive60Total,from,to}){
   const status=(label,value,detail)=>`<div class="health-row"><b>${esc(label)}</b><span>${esc(value)} · ${esc(detail)}</span></div>`;
   const revenueStatus=revenueChange===null?'Not enough data':revenueChange>MIN_INSIGHT_REVENUE_CHANGE_PCT_V153?'Improving':revenueChange<-MIN_INSIGHT_REVENUE_CHANGE_PCT_V153?'Needs attention':'Stable';
   const visitsStatus=visitsChange===null?'Not enough data':visitsChange>10?'Improving':visitsChange<-10?'Needs attention':'Stable';
-  const retentionStatus=Number(inactive60Total)>0?'Needs attention':'Stable';
-  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:18})}</span><div><p class="eyebrow">Business health summary</p><h3>Business health</h3></div></div><div class="business-health-list">${status('Revenue',revenueStatus,revenueChange===null?'More data needed':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visits',visitsStatus,visitsChange===null?'More data needed':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,`${Number(inactive60Total)||0} inactive 60+ days`)}</div></article>`;
+  /* V288: null means the 60+ audience count could not be read. It is neither "Stable" nor a
+     zero — both are claims about customers this page never received an answer about. */
+  const retentionUnreadV288=inactive60Total===null||inactive60Total===undefined;
+  const retentionStatus=retentionUnreadV288?'Could not be read':Number(inactive60Total)>0?'Needs attention':'Stable';
+  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:18})}</span><div><p class="eyebrow">Business health summary</p><h3>Business health</h3></div></div><div class="business-health-list">${status('Revenue',revenueStatus,revenueChange===null?'More data needed':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visits',visitsStatus,visitsChange===null?'More data needed':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,retentionUnreadV288?'Retry the inactive customer count above':`${Number(inactive60Total)||0} inactive 60+ days`)}</div></article>`;
 }
 function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,previousFrom,previousTo,branchId,branchName}){
   const scope=insightScopeLabelV153(branchId,branchName);
@@ -10715,13 +10746,13 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
       title:revenueChange>0?'Revenue is increasing':'Revenue is lower',
       explanation:`Revenue ${revenueChange>0?'increased':'decreased'} by ${Math.abs(revenueChange)}% compared with the previous equivalent period.`,
       why:revenueChange>0?'Review which services and days contributed most.':'Review inactive customers and recent visit trends.',
-      actions:[{label:'View sales report',href:'#/reports',variant:'ghost'},{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'}]
+      actions:[{label:'View sales report',href:'#/reports',variant:'ghost'},{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_plus"'}]
     });
   }else if((Number(previous?.revenue_cents)||0)===0&&(Number(current?.revenue_cents)||0)>0){
     insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Sales were recorded this period. Keep recording activity to unlock a reliable trend.',why:'',actions:[]});
   }
   if(Number(inactive60Total)>0){
-    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:`${customerCountTextV154(inactive60Total)} not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
+    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:`${customerCountTextV154(inactive60Total)} not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_plus"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
   }
   const weekdayValues=(current?.visits_by_weekday||[]).map(Number);
   const busiest=Math.max(0,...weekdayValues);
@@ -10751,7 +10782,7 @@ async function clientsPage(){
       </div>
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -10767,7 +10798,16 @@ async function clientsPage(){
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
   const CLIENT_PAGE_SIZE=100;
   let clientPage=0;
-  let clientInactiveBucket=pendingCustomerInactivity?(pendingCustomerInactivity>=90?'90_plus':pendingCustomerInactivity>=60?'60_89':'30_59'):null;
+  /* V288: the caller now names the bucket it counted, so this page stops re-deriving one from a
+     day number. Legacy numeric values (30/60/90) are still honoured for any older caller. */
+  const pendingInactiveBucketV288=key=>{
+    const raw=String(key||'');
+    if(['30_59','60_89','60_plus','90_plus','never'].includes(raw))return raw;
+    const days=Number(raw);
+    if(!Number.isFinite(days))return null;
+    return days>=90?'90_plus':days>=60?'60_plus':'30_59';
+  };
+  let clientInactiveBucket=pendingCustomerInactivity?pendingInactiveBucketV288(pendingCustomerInactivity):null;
   pendingCustomerInactivity=null;
   /* A name handed in from the global app-bar search pre-fills and runs the existing name search
      (same query, no new call). Consumed once so a later visit starts clean. */
@@ -10791,6 +10831,9 @@ async function clientsPage(){
     const days=Number(c.days_since_last_visit);
     if(bucket==='30_59')return !never&&days>=30&&days<=59;
     if(bucket==='60_89')return !never&&days>=60&&days<=89;
+    /* V288: the 60+ audience Merchant insights counts. Every inactivity filter on this page is
+       resolved from the directory rows above, so this destination needs no server bucket. */
+    if(bucket==='60_plus')return !never&&days>=60;
     if(bucket==='90_plus')return !never&&days>=90;
     if(bucket==='never')return never;
     return true;
@@ -17409,7 +17452,13 @@ async function promotionsPage(selectedPromotionId=null){
   }
   routeDispose=()=>{if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl)};
 }
-async function growPage(routedSurface,hashParam,routedFocus=null){
+async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false}={}){
+  /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
+     pushing no hash — so the topic outlived the page. An owner who drilled into Points, went to
+     the Dashboard and pressed Programmes in the rail landed back inside Points, with the rail
+     saying Programmes. Only the ROUTER clears it: in-page re-renders (a save, a retry, the mode
+     switch) must keep the owner where they are. */
+  if(fromRouteV288)growTopicV229='';
   const directFocusTokens=new Set(['earning','classic','birthday','add','bringback','new']);
   if(!routedFocus&&directFocusTokens.has(hashParam)){routedFocus=hashParam;hashParam=null}
   const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
@@ -17868,11 +17917,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       state:welcomeOfferStatusV215.active===true&&welcomeOfferStatusV215.item_available!==false?'live':'paused',
       customers:growUsageV271?(growUsageV271.welcome?.customers??null):null,
       detail:welcomeOfferStatusV215.reward_label||''});
+    /* V288: this row used to read ends_at and never starts_at, so a published promotion dated to
+       start next week was listed under "Ongoing programmes" with a Started date in the future.
+       promotionLifecycleV186 is the predicate the rest of the app already publishes against
+       (it is what the Promotions list and the save status line print), and 'scheduled' is a
+       state the sibling bring-back and reward entries here already carry. A never-published draft
+       whose end date has passed is now a draft rather than History, because it never ran. */
     (snapshot.promotions||[]).forEach(promotion=>{
-      const ended=Number.isFinite(Date.parse(promotion?.ends_at||''))&&Date.parse(promotion.ends_at)<=Date.now();
+      const lifecycle=promotionLifecycleV186(promotion);
       entries.push({name:promotion?.name||'Promotion',type:'Promotion',
-        started:promotion?.starts_at||null,ended:promotion?.ends_at||null,
-        state:ended?'ended':promotion?.active===true?'live':'draft',
+        started:promotion?.starts_at||null,ended:lifecycle.state==='ended'?(promotion?.ends_at||null):null,
+        state:lifecycle.state,
         customers:null,detail:promotion?.tagline||''});
     });
     if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',

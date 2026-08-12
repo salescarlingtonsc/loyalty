@@ -75,7 +75,8 @@ test('V141 dashboard load failures stay in context and can be retried',()=>{
   assert.match(dashboard,/id="dashboardStatus" aria-live="polite"/);
   assert.match(dashboard,/Performance data could not be loaded\./);
   assert.match(dashboard,/dashboardReportRetry/);
-  assert.match(dashboard,/Inactive customer count could not be loaded\./);
+  /* V288: one banner now covers BOTH inactive reads (30-59 and 60+), so the copy is plural. */
+  assert.match(dashboard,/Inactive customer counts could not be loaded\./);
   assert.match(dashboard,/dashboardInactiveRetry/);
   assert.doesNotMatch(dashboard,/Services and goods detail could not be loaded\./);
 });

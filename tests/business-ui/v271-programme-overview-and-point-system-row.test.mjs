@@ -203,7 +203,10 @@ test('V271 (b) History is what STOPPED — a paused programme is not filed as ex
   const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
   assert.match(entries, /reward\.active===false\?'retired'/);
   assert.match(entries, /milestone\?\.availability==='ended'\?'ended'/);
-  assert.match(entries, /const ended=Number\.isFinite\(Date\.parse\(promotion\?\.ends_at\|\|''\)\)&&Date\.parse\(promotion\.ends_at\)<=Date\.now\(\)/);
+  /* V288: the inline derivation read ends_at and never starts_at, so a future-dated published
+     promotion was filed as Ongoing. The shared lifecycle predicate owns this now. */
+  assert.match(entries, /const lifecycle=promotionLifecycleV186\(promotion\);/);
+  assert.match(entries, /state:lifecycle\.state,/);
 });
 
 test('V271 (b) the new server read is curated in the PS0 writer registry', () => {

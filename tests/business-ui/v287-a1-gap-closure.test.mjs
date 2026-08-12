@@ -129,13 +129,16 @@ test('V287 MAJOR: the Inactive customers tile counts the same group it drills th
   assert.doesNotMatch(dashboard, /Number\(inactive60Response\.data\?\.matching_customers\)\|\|0\)\)/);
   assert.match(dashboard, /const inactiveTotal=inactiveResponse\.error\?'Unavailable':String\(Number\(inactiveResponse\.data\?\.total\)\|\|0\);/);
   assert.match(dashboard, /p_inactive_bucket:'30_59'/);
-  assert.match(dashboard, /if\(key==='inactive'\)pendingCustomerInactivity=30;/);
+  /* V288: the drill carries the bucket key itself rather than a day number. */
+  assert.match(dashboard, /if\(key==='inactive'\)pendingCustomerInactivity='30_59';/);
   // ...and it says so, both on the tile and in its definition.
   assert.match(dashboard, /hint:'Last visit 30–59 days ago'/);
   assert.match(dashboard, /Customers whose last valid visit was 30 to 59 complete Singapore days ago/);
   // 60+ customers are still reported, by the card that links to their own bucket.
-  assert.match(dashboard, /inactive60Total:inactive60Response\.error\?0:Number\(inactive60Response\.data\?\.matching_customers\)\|\|0/);
-  assert.match(app, /data-insight-inactive="60_89"/);
+  /* V288: an unread 60+ count travels as null, never as 0, and the card links to the 60+
+     audience it actually counted. */
+  assert.match(dashboard, /inactive60Total:inactive60Response\.error\?null:Number\(inactive60Response\.data\?\.matching_customers\)\|\|0/);
+  assert.match(app, /data-insight-inactive="60_plus"/);
 });
 
 /* ------------------------------------------------------------------ MAJOR 9 (part) */
