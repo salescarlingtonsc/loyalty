@@ -180,9 +180,14 @@ test('V281 both self-service surfaces run the one executor, so the two copies ca
   const calls = app.match(/driveSelfServeCheckoutV281\(/g) || [];
   assert.equal(calls.length, 3,
     'one definition plus exactly two call sites: the workspace-control screen and the onboarding screen');
+  /* V286: the workspace-control screen no longer has its own payment markup at all — it
+     delegates to renderSelfServePaymentPendingV286, which is where that button now lives.
+     One executor, and now one screen behind it too. */
   assert.match(app,
-    /\$\('businessControlPay'\)\.onclick=\(\)=>driveSelfServeCheckoutV281\(/,
-    'the workspace-control payment screen must use the shared executor');
+    /\$\('selfServePay'\)\.onclick=\(\)=>driveSelfServeCheckoutV281\(/,
+    'the single payment-pending screen must use the shared executor');
+  assert.match(app, /renderSelfServePaymentPendingV286\(onboarding\);/,
+    'the workspace-control branch must delegate rather than keep a second copy');
   assert.match(app,
     /const finishCheckout=\(onboarding,statusNode,button\)=>\s*\n?\s*driveSelfServeCheckoutV281\(onboarding,statusNode,button\);/,
     'the onboarding screen must use the shared executor');

@@ -88,6 +88,56 @@ async function driveSelfServeCheckoutV281(onboarding,statusNode,button){
   if(statusNode)statusNode.textContent=outcome.message;
   return outcome;
 }
+/* V286: ONE owner of the self-serve "payment confirmation pending" screen.
+   Two drifted copies existed. renderOnboard's copy understood the contract Stripe actually
+   returns to — `/business#/onboarding/payment?status=processing|canceled` (see
+   supabase/functions/stripe-billing-command success_url/cancel_url) — and polled for verified
+   activation. renderBusinessWorkspaceControl's copy did not read the status param at all.
+   Only the SECOND was reachable: start_self_serve_business_v130 creates an ACTIVE owner staff
+   row, so get_my_personas resolves a workspace and route() never falls through to renderOnboard.
+   A paying owner returning from Stripe was therefore shown "Payment confirmation pending" under
+   a "Complete secure payment" button — asked to pay a second time for the payment they had just
+   made. The drifted duplicate is collapsed here the way V281 collapsed the checkout executors,
+   and route() now resolves #/onboarding/payment BEFORE persona resolution so the return route
+   reaches this renderer regardless of the staff row. */
+const SELF_SERVE_RETURN_PROCESSING_V286=Object.freeze(['success','paid','processing','complete','completed']);
+function selfServePaymentReturnStateV286(){
+  const hashState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
+  const searchState=new URLSearchParams(location.search||'').get('status');
+  const state=String(hashState||searchState||'');
+  return {
+    canceled:state==='canceled'||state==='cancelled',
+    processing:SELF_SERVE_RETURN_PROCESSING_V286.includes(state)
+  };
+}
+/* V286 (with S5): a workspace that has just been paid for and opened lands on the first-run
+   setup guide, not on an empty dashboard. Activation happens once, so this is once. */
+function selfServeActivatedRouteV286(slug){
+  return `#/workspace/${encodeURIComponent(String(slug||''))}/setup`;
+}
+function renderSelfServePaymentPendingV286(onboarding){
+  const setupEpoch=++businessSetupRenderEpoch;
+  if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
+  const {canceled,processing}=selfServePaymentReturnStateV286();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  wireBusinessSetupAccount();wireAccountDeletionButton();
+  $('selfServePay').onclick=()=>driveSelfServeCheckoutV281(onboarding,$('selfServePayStatus'),$('selfServePay'));
+  $('onboardRetry').onclick=route;
+  if(!processing)return;
+  let attempts=0;
+  const poll=async()=>{
+    if(setupEpoch!==businessSetupRenderEpoch)return;
+    attempts+=1;
+    const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
+    if(setupEpoch!==businessSetupRenderEpoch)return;
+    const next=current.data?.onboarding;
+    if(next?.status==='active'){nav(selfServeActivatedRouteV286(next.business_slug));return}
+    const status=$('selfServePayStatus');
+    if(status)status.textContent=attempts<15?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+    if(attempts<15)setTimeout(poll,2000);
+  };
+  setTimeout(poll,1200);
+}
 function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
@@ -98,14 +148,9 @@ function renderBusinessWorkspaceControl(control={}){
       if(!onboarding||onboarding.status!=='payment_pending'){
         renderBusinessWorkspaceControl({...control,_selfServeChecked:true});return;
       }
-      if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Peekaa opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      $('businessControlPay').onclick=()=>driveSelfServeCheckoutV281(
-        onboarding,$('businessControlPayStatus'),$('businessControlPay')
-      );
-      $('businessControlRetry').onclick=route;
-      $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-      wireAccountDeletionButton();
+      /* V286: one owner for this state. This branch used to carry its own copy of the screen,
+         blind to the ?status= the Stripe return lands with. */
+      renderSelfServePaymentPendingV286(onboarding);
     });
     return;
   }
@@ -225,7 +270,23 @@ async function renderApprovedBusinessActivation(inviteToken,isCurrent=()=>true){
     }
     sessionStorage.removeItem(`nestly-activation-${inviteToken}`);
     history.replaceState(null,'','/business');
-    nav(`#/workspace/${encodeURIComponent(data.business_slug||slug)}/dashboard`);
+    /* V286: a workspace opened by an admin after manual payment lands on the first-run guide,
+       the same as the Stripe self-serve path. */
+    nav(selfServeActivatedRouteV286(data.business_slug||slug));
   };
 }
 
+/* ---------- onboarding ---------- */
+let businessSetupRenderEpoch=0;
+function businessSetupAccountHtml(signOutId='out'){
+  const email=String(S.user?.email||'Email unavailable');
+  return `<div class="business-session-context" aria-label="Current business account"><div><span>Signed in as</span><strong>${esc(email)}</strong></div><button class="btn ghost sm" type="button" id="${esc(signOutId)}">Sign out</button></div>`;
+}
+function wireBusinessSetupAccount(signOutId='out'){
+  const button=$(signOutId);if(!button)return;
+  button.onclick=async()=>{
+    ++businessSetupRenderEpoch;killChannels();
+    await sb.auth.signOut({scope:'local'});
+    resetClientSessionState();location.hash='#/';renderAuth('in');
+  };
+}

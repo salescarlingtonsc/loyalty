@@ -77,7 +77,10 @@ test('every mountTurnstile() failure/expiry/timeout callback un-hides the Retry 
 
 test('the success callback checks the generation guard before writing the token', () => {
   assert.match(mountTurnstile, /const live=\(\)=>!destroyed&&mine===generation;/);
-  assert.match(mountTurnstile, /callback:\(token\)=>\{if\(!live\(\)\)return;stopStall\(\);onToken\(token\);retryEl\.hidden=true;setPassed\(true\)\}/);
+  /* V286: the same callback now also records that a token arrived and clears the 12s
+     "Taking long? Reload to retry." line. The guard order this test is about is unchanged:
+     live() first, then stopStall(), and onToken() still only ever receives a real token. */
+  assert.match(mountTurnstile, /callback:\(token\)=>\{if\(!live\(\)\)return;stopStall\(\);tokenSeenV286=true;stopSlowNoteV286\(\);onToken\(token\);retryEl\.hidden=true;setPassed\(true\)\}/);
   // every widget callback opens on the same live() guard — a stale generation's token, error, or
   // expiry must never reach the CURRENT render's DOM or the current onToken().
   const callbackGuardCount = (mountTurnstile.match(/if\(!live\(\)\)return/g) || []).length;
@@ -85,7 +88,9 @@ test('the success callback checks the generation guard before writing the token'
 });
 
 test('destroy() bumps the generation and stops the stall watchdog', () => {
-  assert.match(mountTurnstile, /const destroy=\(\)=>\{\n\s*if\(destroyed\)return;\n\s*destroyed=true;generation\+=1;stopStall\(\);\n\s*retryEl\.onclick=null;removeWidget\(\);mountedTurnstileControls\.delete\(control\);\n\s*\};/);
+  /* V286: destroy() also cancels the slow-fallback timer, so a torn-down widget cannot paint
+     its "Taking long?" line onto whatever screen replaced it. */
+  assert.match(mountTurnstile, /const destroy=\(\)=>\{\n\s*if\(destroyed\)return;\n\s*destroyed=true;generation\+=1;stopStall\(\);stopSlowNoteV286\(\);\n\s*retryEl\.onclick=null;removeWidget\(\);mountedTurnstileControls\.delete\(control\);\n\s*\};/);
 });
 
 test('armStall() is keyed to TURNSTILE_SOLVE_TIMEOUT_MS, not a re-declared literal', () => {

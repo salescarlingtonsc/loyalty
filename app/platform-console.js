@@ -977,6 +977,25 @@
       'Visit at':'到访时间',
       'Visit owner':'到访负责人',
       'What activation does':'启用会做什么',
+      /* V286: confirm-and-type-the-reason copy for the console decisions that used to commit
+         on a single click. */
+      'Workspace access remains closed for this account. The person must apply again before access can be approved.':'此账户的工作区权限仍然关闭。该用户必须重新提交申请，权限才能获得批准。',
+      'Type the reason for this rejection ({min} characters or more). It is recorded exactly as written.':'请输入本次拒绝的理由（至少 {min} 个字符）。系统将原样记录您输入的内容。',
+      'Reason for rejection':'拒绝理由',
+      'This text is stored as the recorded decision reason. Nothing is written on your behalf.':'此文字将作为已记录的决定理由保存。系统不会代您填写任何内容。',
+      'What verification does':'核实后的结果',
+      'Marks this manual payment verified and lets the subscription proceed. The recorder and the verifier must be different authorised administrators.':'将此人工付款标记为已核实，并让订阅继续。记录人与核实人必须是不同的授权管理员。',
+      'I opened the evidence and it matches this payment.':'我已查看证据，且与此笔付款相符。',
+      'Confirm you checked the evidence first.':'请先确认您已查看证据。',
+      'Leaves the invoice unpaid and the workspace closed. The business must submit payment again before access opens.':'发票将保持未付款状态，工作区保持关闭。企业必须重新提交付款，权限才会开启。',
+      'What resending does':'重新发送的结果',
+      'Queues the same immutable document to the same recipient again. No new document number is created, and the customer may receive a duplicate.':'将同一份不可变文件再次排入队列，发送给同一收件人。不会生成新的文件编号，客户可能会收到重复文件。',
+      'I want to send this document to the customer again.':'我要将此文件再次发送给客户。',
+      'Confirm the resend first.':'请先确认重新发送。',
+      'Verify manual payment':'核实人工付款','Verify payment':'核实付款',
+      'Reject manual payment':'拒绝人工付款','Reject payment':'拒绝付款',
+      'Resend billing document':'重新发送账单文件','Queue resend':'排入重新发送队列',
+      'Reject account signup':'拒绝账户注册','Reject signup':'拒绝注册',
       'Why':'原因',
       'Why are these the same firm?':'为什么这是同一家企业？',
       'Why is this being archived?':'为什么要归档？',
@@ -1318,6 +1337,25 @@
       'Visit at':'Lawatan pada',
       'Visit owner':'Pemilik lawatan',
       'What activation does':'Apa yang dilakukan pengaktifan',
+      /* V286: confirm-and-type-the-reason copy for the console decisions that used to commit
+         on a single click. */
+      'Workspace access remains closed for this account. The person must apply again before access can be approved.':'Akses ruang kerja bagi akaun ini kekal tertutup. Orang tersebut mesti memohon semula sebelum akses boleh diluluskan.',
+      'Type the reason for this rejection ({min} characters or more). It is recorded exactly as written.':'Taipkan sebab penolakan ini ({min} aksara atau lebih). Ia direkodkan tepat seperti yang ditulis.',
+      'Reason for rejection':'Sebab penolakan',
+      'This text is stored as the recorded decision reason. Nothing is written on your behalf.':'Teks ini disimpan sebagai sebab keputusan yang direkodkan. Tiada apa-apa ditulis bagi pihak anda.',
+      'What verification does':'Kesan pengesahan',
+      'Marks this manual payment verified and lets the subscription proceed. The recorder and the verifier must be different authorised administrators.':'Menandakan pembayaran manual ini sebagai disahkan dan membenarkan langganan diteruskan. Perekod dan pengesah mestilah pentadbir sah yang berbeza.',
+      'I opened the evidence and it matches this payment.':'Saya telah membuka bukti dan ia sepadan dengan pembayaran ini.',
+      'Confirm you checked the evidence first.':'Sahkan bahawa anda telah menyemak bukti terlebih dahulu.',
+      'Leaves the invoice unpaid and the workspace closed. The business must submit payment again before access opens.':'Invois kekal belum dibayar dan ruang kerja kekal tertutup. Perniagaan mesti menghantar pembayaran semula sebelum akses dibuka.',
+      'What resending does':'Kesan penghantaran semula',
+      'Queues the same immutable document to the same recipient again. No new document number is created, and the customer may receive a duplicate.':'Menyusun semula dokumen tidak boleh ubah yang sama kepada penerima yang sama. Tiada nombor dokumen baharu dicipta, dan pelanggan mungkin menerima salinan berganda.',
+      'I want to send this document to the customer again.':'Saya mahu menghantar dokumen ini kepada pelanggan sekali lagi.',
+      'Confirm the resend first.':'Sahkan penghantaran semula terlebih dahulu.',
+      'Verify manual payment':'Sahkan pembayaran manual','Verify payment':'Sahkan pembayaran',
+      'Reject manual payment':'Tolak pembayaran manual','Reject payment':'Tolak pembayaran',
+      'Resend billing document':'Hantar semula dokumen bil','Queue resend':'Baris gilir hantar semula',
+      'Reject account signup':'Tolak pendaftaran akaun','Reject signup':'Tolak pendaftaran',
       'Why':'Sebab',
       'Why are these the same firm?':'Mengapa ini firma yang sama?',
       'Why is this being archived?':'Mengapa ini diarkibkan?',
@@ -5985,24 +6023,48 @@
       </div>
     </section>`;
   }
+  /* V286: rejecting a signup closed a person's access from a single click, and stored a note the
+     operator never wrote. It now takes the same confirm-and-type-the-reason path as every other
+     rejection in this console; Approve and Pending keep their one-click behaviour because neither
+     removes access. */
+  function accountSignupRejectModalV286(context,userId,contactLabel,onDone){
+    const {CUI,sb}=context,attemptKey=idempotencyKey();
+    modal({title:'Reject account signup',submitLabel:'Reject signup',CUI,
+      body:`<div class="card"><b>${escapeHtml(contactLabel||pt('Contact unavailable'))}</b></div>
+        <div class="platform-route-note platform-status-note"><b>${escapeHtml(pt('What rejection does'))}</b>
+          <p class="small">${escapeHtml(pt('Workspace access remains closed for this account. The person must apply again before access can be approved.'))}</p></div>
+        ${rejectionReasonFieldV286('v286AccountSignupReason','Explain why this signup is being rejected')}`,
+      onSubmit:async(form,controls)=>{
+        const reason=typedRejectionReasonV286(form);
+        await rpc(sb,'platform_record_account_signup_triage_v164',{
+          p_user:userId,p_status:'archived',p_note:reason,p_idempotency_key:attemptKey
+        });
+        controls.close();CUI.announce(pt('Admin decision saved.'));
+        await onDone();
+      }});
+  }
   function wireAccountSignupQueue(context){
     const {main,sb,CUI,filters}=context;
     main.querySelectorAll('[data-account-signup-triage]').forEach(button=>{
       button.onclick=async()=>{
         const status=button.dataset.accountSignupTriage,user=button.dataset.user;
         if(!user||!status)return;
+        const refresh=()=>renderOnboarding({...context,filters});
+        if(status==='archived'){
+          const contactLabel=button.closest('.platform-action-item')?.querySelector('b')?.textContent||'';
+          accountSignupRejectModalV286(context,user,contactLabel,refresh);
+          return;
+        }
         const note=status==='contacted'
           ?pt('Approved by platform admin. Workspace access still requires business details and verified payment or manual billing.')
-          :status==='follow_up'
-            ?pt('Pending admin decision. Workspace access remains closed.')
-            :pt('Rejected by platform admin. Workspace access remains closed.');
+          :pt('Pending admin decision. Workspace access remains closed.');
         button.disabled=true;
         try{
           await rpc(sb,'platform_record_account_signup_triage_v164',{
             p_user:user,p_status:status,p_note:note,p_idempotency_key:idempotencyKey()
           });
           CUI.announce(pt('Admin decision saved.'));
-          await renderOnboarding({...context,filters});
+          await refresh();
         }catch(error){
           button.disabled=false;
           CUI.announce(platformErrorMessage(error,'Account signup triage could not be saved.'),{assertive:true});
@@ -9262,6 +9324,80 @@
 
   async function openManualEvidence(payment,context) {const result=await context.sb.functions.invoke('subscription-document-dispatch',{body:{action:'manual_evidence_read',payment_id:payment.id}});if(result.error||!result.data?.signed_url)throw result.error||new Error(pt('Evidence link unavailable.'));globalObject.open(result.data.signed_url,'_blank','noopener')}
 
+  /* V286: money and access decisions in this console fired from a single click on a row.
+     Manual payment Verify and Reject, the account-signup Reject and the billing-document Resend
+     all committed on mousedown with no confirmation — and the rejection reason recorded against a
+     manual payment was a CONSTANT the operator never wrote ("Rejected by verifier after evidence
+     review"), so the audit trail asserted a review that may never have happened. Each of these now
+     goes through the same confirm modal the business-application decision already used
+     (businessApplicationDecisionModal): a rejection cannot be submitted without a typed reason,
+     and the reason stored is the one the operator typed. Verify keeps the lighter checkbox
+     confirmation used by previewThenConfirm, because it is not an accusation — it is an assertion
+     that the operator opened the evidence. */
+  const V286_MIN_REASON_LENGTH=12;
+  function typedRejectionReasonV286(form){
+    const reason=String(form.get('reason')||'').trim();
+    if(reason.length<V286_MIN_REASON_LENGTH){
+      throw new Error(pt('Type the reason for this rejection ({min} characters or more). It is recorded exactly as written.',{min:V286_MIN_REASON_LENGTH}));
+    }
+    return reason;
+  }
+  function rejectionReasonFieldV286(fieldId,placeholder){
+    return `<label for="${escapeHtml(fieldId)}">${escapeHtml(pt('Reason for rejection'))}</label>
+      <textarea id="${escapeHtml(fieldId)}" name="reason" rows="4" required minlength="${V286_MIN_REASON_LENGTH}" placeholder="${escapeHtml(pt(placeholder))}"></textarea>
+      <p class="muted small" style="margin-top:6px">${escapeHtml(pt('This text is stored as the recorded decision reason. Nothing is written on your behalf.'))}</p>`;
+  }
+  function manualPaymentSummaryV286(payment){
+    return `<div class="card"><b>${escapeHtml(payment.document_number||'')}</b><p class="muted small" style="margin-top:5px">${escapeHtml(payment.payment_reference||'')} · ${escapeHtml(currency(payment.amount_cents))}</p></div>`;
+  }
+  function manualPaymentVerifyModalV286(payment,context){
+    const {CUI,sb}=context,attemptKey=idempotencyKey();
+    modal({title:'Verify manual payment',submitLabel:'Verify payment',CUI,
+      body:`${manualPaymentSummaryV286(payment)}
+        <div class="platform-route-note platform-status-note"><b>${escapeHtml(pt('What verification does'))}</b>
+          <p class="small">${escapeHtml(pt('Marks this manual payment verified and lets the subscription proceed. The recorder and the verifier must be different authorised administrators.'))}</p></div>
+        <label class="row" style="align-items:flex-start;margin-top:14px;color:var(--ink)"><input name="confirmed" type="checkbox" value="yes" required style="width:20px;min-width:20px;min-height:20px"><span>${escapeHtml(pt('I opened the evidence and it matches this payment.'))}</span></label>`,
+      onSubmit:async(form,controls)=>{
+        if(form.get('confirmed')!=='yes')throw new Error(pt('Confirm you checked the evidence first.'));
+        await rpc(sb,'platform_verify_manual_payment_v156',{
+          p_payment:payment.id,p_decision:'verified',p_reason:null,p_idempotency_key:attemptKey
+        });
+        controls.close();CUI.announce(pt('Manual payment {status}.',{status:platformStatus('verified')}));
+        await renderSubscriptionOperations(context);
+      }});
+  }
+  function manualPaymentRejectModalV286(payment,context){
+    const {CUI,sb}=context,attemptKey=idempotencyKey();
+    modal({title:'Reject manual payment',submitLabel:'Reject payment',CUI,
+      body:`${manualPaymentSummaryV286(payment)}
+        <div class="platform-route-note platform-status-note"><b>${escapeHtml(pt('What rejection does'))}</b>
+          <p class="small">${escapeHtml(pt('Leaves the invoice unpaid and the workspace closed. The business must submit payment again before access opens.'))}</p></div>
+        ${rejectionReasonFieldV286('v286ManualPaymentReason','Explain what the evidence did not show')}`,
+      onSubmit:async(form,controls)=>{
+        const reason=typedRejectionReasonV286(form);
+        await rpc(sb,'platform_verify_manual_payment_v156',{
+          p_payment:payment.id,p_decision:'rejected',p_reason:reason,p_idempotency_key:attemptKey
+        });
+        controls.close();CUI.announce(pt('Manual payment {status}.',{status:platformStatus('rejected')}));
+        await renderSubscriptionOperations(context);
+      }});
+  }
+  function documentResendModalV286(delivery,context){
+    const {CUI,sb}=context,attemptKey=idempotencyKey();
+    modal({title:'Resend billing document',submitLabel:'Queue resend',CUI,
+      body:`<div class="card"><b>${escapeHtml(platformStatus(delivery.delivery_type))}</b><p class="muted small" style="margin-top:5px">${escapeHtml(platformStatus(delivery.status))}${delivery.failure_reason?` · ${escapeHtml(delivery.failure_reason)}`:''}</p></div>
+        <div class="platform-route-note platform-status-note"><b>${escapeHtml(pt('What resending does'))}</b>
+          <p class="small">${escapeHtml(pt('Queues the same immutable document to the same recipient again. No new document number is created, and the customer may receive a duplicate.'))}</p></div>
+        <label class="row" style="align-items:flex-start;margin-top:14px;color:var(--ink)"><input name="confirmed" type="checkbox" value="yes" required style="width:20px;min-width:20px;min-height:20px"><span>${escapeHtml(pt('I want to send this document to the customer again.'))}</span></label>`,
+      onSubmit:async(form,controls)=>{
+        if(form.get('confirmed')!=='yes')throw new Error(pt('Confirm the resend first.'));
+        await rpc(sb,'platform_queue_document_resend_v156',{
+          p_delivery:delivery.id,p_idempotency_key:attemptKey
+        });
+        controls.close();CUI.announce('Document delivery queued.');
+        await renderSubscriptionOperations(context);
+      }});
+  }
   async function renderSubscriptionOperations(context,filters={}) {
     const {main,CUI,sb}=context;
     const search=(filters.search??platformRouteParam(context.hash,'search'))||null;
@@ -9295,8 +9431,11 @@
       main.querySelectorAll('[data-open-v156-document]').forEach(button=>button.onclick=()=>openSubscriptionDocument(button.dataset.openV156Document,button,context));
       main.querySelectorAll('[data-v156-evidence]').forEach(button=>{const payment=payments.find(item=>item.id===button.dataset.v156Evidence);button.onclick=async()=>{button.disabled=true;try{await openManualEvidence(payment,context)}catch(error){CUI.announce(platformErrorMessage(error,'Evidence link unavailable.'),{assertive:true})}finally{button.disabled=false}}});
       main.querySelectorAll('[data-v156-complete-task]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await rpc(sb,'platform_complete_subscription_task_v156',{p_task:button.dataset.v156CompleteTask,p_resolution:'Completed by platform operator',p_idempotency_key:idempotencyKey()});CUI.announce('Follow-up task completed.');await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Task completion failed.'),{assertive:true})}});
-      main.querySelectorAll('[data-v156-verify],[data-v156-reject]').forEach(button=>button.onclick=async()=>{button.disabled=true;const decision=button.hasAttribute('data-v156-verify')?'verified':'rejected',paymentId=button.dataset.v156Verify||button.dataset.v156Reject;try{await rpc(sb,'platform_verify_manual_payment_v156',{p_payment:paymentId,p_decision:decision,p_reason:decision==='rejected'?'Rejected by verifier after evidence review':null,p_idempotency_key:idempotencyKey()});CUI.announce(pt('Manual payment {status}.',{status:platformStatus(decision)}));await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Payment verification failed.'),{assertive:true})}});
-      main.querySelectorAll('[data-v156-resend]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await rpc(sb,'platform_queue_document_resend_v156',{p_delivery:button.dataset.v156Resend,p_idempotency_key:idempotencyKey()});CUI.announce('Document delivery queued.');await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Document resend failed.'),{assertive:true})}});
+      /* V286: confirm-then-commit. See the modal helpers above renderSubscriptionOperations. */
+      main.querySelectorAll('[data-v156-verify]').forEach(button=>{const payment=payments.find(item=>item.id===button.dataset.v156Verify);if(payment)button.onclick=()=>manualPaymentVerifyModalV286(payment,context)});
+      main.querySelectorAll('[data-v156-reject]').forEach(button=>{const payment=payments.find(item=>item.id===button.dataset.v156Reject);if(payment)button.onclick=()=>manualPaymentRejectModalV286(payment,context)});
+      const deliveries=asArray(payload.deliveries);
+      main.querySelectorAll('[data-v156-resend]').forEach(button=>{const delivery=deliveries.find(item=>item.id===button.dataset.v156Resend);if(delivery)button.onclick=()=>documentResendModalV286(delivery,context)});
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Subscription operations')}
   }

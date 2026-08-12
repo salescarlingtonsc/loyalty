@@ -205,6 +205,12 @@ const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
    wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
    SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
 const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
+/* V286: every primary button on an auth screen is disabled until Turnstile hands back a
+   token. When the widget is merely slow — not wedged, so none of the error callbacks fire —
+   the screen offers no way out for 20s. This is the shorter, honest line: after 12s without a
+   token the user is told the one thing that actually helps. It never re-enables a button and
+   never bypasses the check. */
+const TURNSTILE_SLOW_FALLBACK_MS_V286=12000;
 const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
 function loadTurnstile(){
   const ready=turnstileApiReady();
@@ -246,6 +252,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Security check could not connect. Please retry, or check your browser and network settings.',
       load:'Security check could not load. Check your connection and try again.',
       continue:'Complete the security check to continue.',
+      slowFallback:'Taking long? Reload to retry.',
       interactive:'Tick “Verify you are human” above to continue.',
       showPassword:'Show password',hidePassword:'Hide password',
       passkey:'Sign in with Face ID, Touch ID or passkey',passkeyTitle:'Use Face ID, Touch ID or passkey'
@@ -256,6 +263,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'无法连接安全验证。请重试，或检查浏览器及网络设置。',
       load:'无法加载安全验证。请检查网络连接后重试。',
       continue:'请完成安全验证以继续。',
+      slowFallback:'时间过长？请重新加载页面重试。',
       interactive:'请勾选上方的“确认您是真人”以继续。',
       showPassword:'显示密码',hidePassword:'隐藏密码',
       passkey:'使用面容 ID、触控 ID 或通行密钥登录',passkeyTitle:'使用面容 ID、触控 ID 或通行密钥'
@@ -266,6 +274,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Semakan keselamatan tidak dapat disambungkan. Cuba lagi atau semak tetapan pelayar dan rangkaian anda.',
       load:'Semakan keselamatan tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
       continue:'Lengkapkan semakan keselamatan untuk meneruskan.',
+      slowFallback:'Mengambil masa lama? Muat semula untuk mencuba lagi.',
       interactive:'Tandakan “Verify you are human” di atas untuk meneruskan.',
       showPassword:'Tunjukkan kata laluan',hidePassword:'Sembunyikan kata laluan',
       passkey:'Log masuk dengan Face ID, Touch ID atau kunci laluan',passkeyTitle:'Gunakan Face ID, Touch ID atau kunci laluan'
@@ -276,6 +285,18 @@ const authSecurityCopy=(locale,key)=>{
 async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
   const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
   const security=key=>authSecurityCopy(locale,key);
+  let tokenSeenV286=false;
+  const slowNoteV286=document.createElement('p');
+  slowNoteV286.className='challenge-status';
+  slowNoteV286.id=`${status}-slow-note`;
+  slowNoteV286.hidden=true;
+  slowNoteV286.textContent=security('slowFallback');
+  statusEl.insertAdjacentElement('afterend',slowNoteV286);
+  const slowTimerV286=setTimeout(()=>{
+    if(destroyed||tokenSeenV286)return;
+    slowNoteV286.hidden=false;
+  },TURNSTILE_SLOW_FALLBACK_MS_V286);
+  const stopSlowNoteV286=()=>{clearTimeout(slowTimerV286);slowNoteV286.hidden=true};
   /* A passed check should be invisible: red status text and a "Retry" link after
      success read as failure. The block only surfaces while loading or on error. */
   const setPassed=passed=>{
@@ -328,7 +349,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       removeWidget();
       if(!live()){stopStall();return}
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(!live())return;stopStall();onToken(token);retryEl.hidden=true;setPassed(true)},
+        callback:(token)=>{if(!live())return;stopStall();tokenSeenV286=true;stopSlowNoteV286();onToken(token);retryEl.hidden=true;setPassed(true)},
         /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
            security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
            and the passkey button looked broken while the app was simply waiting for a tick. */
@@ -348,7 +369,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
   const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
   const destroy=()=>{
     if(destroyed)return;
-    destroyed=true;generation+=1;stopStall();
+    destroyed=true;generation+=1;stopStall();stopSlowNoteV286();
     retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
   };
   const control={reset,destroy};
@@ -2097,6 +2118,11 @@ async function route(){
         }
       });
     }
+    /* V286: the Stripe self-serve return route, resolved before any persona lookup.
+       start_self_serve_business_v130 has already created an active owner staff row by the time
+       Stripe redirects here, so every persona-aware branch below would have swallowed this
+       route and shown the paying owner a "Complete secure payment" button. */
+    if(String(h).split('?')[0]==='#/onboarding/payment')return renderOnboard();
     if(h==='#/business'){
       if(staffInviteCodeV151)return renderBusinessStaffInviteAcceptV151(staffInviteCodeV151);
       const approvedInvite=String(location.search||'').match(/(?:^\?|&)invite=([0-9a-f]{64})(?:&|$)/i)?.[1]?.toLowerCase()||'';
@@ -6827,6 +6853,56 @@ async function driveSelfServeCheckoutV281(onboarding,statusNode,button){
   if(statusNode)statusNode.textContent=outcome.message;
   return outcome;
 }
+/* V286: ONE owner of the self-serve "payment confirmation pending" screen.
+   Two drifted copies existed. renderOnboard's copy understood the contract Stripe actually
+   returns to — `/business#/onboarding/payment?status=processing|canceled` (see
+   supabase/functions/stripe-billing-command success_url/cancel_url) — and polled for verified
+   activation. renderBusinessWorkspaceControl's copy did not read the status param at all.
+   Only the SECOND was reachable: start_self_serve_business_v130 creates an ACTIVE owner staff
+   row, so get_my_personas resolves a workspace and route() never falls through to renderOnboard.
+   A paying owner returning from Stripe was therefore shown "Payment confirmation pending" under
+   a "Complete secure payment" button — asked to pay a second time for the payment they had just
+   made. The drifted duplicate is collapsed here the way V281 collapsed the checkout executors,
+   and route() now resolves #/onboarding/payment BEFORE persona resolution so the return route
+   reaches this renderer regardless of the staff row. */
+const SELF_SERVE_RETURN_PROCESSING_V286=Object.freeze(['success','paid','processing','complete','completed']);
+function selfServePaymentReturnStateV286(){
+  const hashState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
+  const searchState=new URLSearchParams(location.search||'').get('status');
+  const state=String(hashState||searchState||'');
+  return {
+    canceled:state==='canceled'||state==='cancelled',
+    processing:SELF_SERVE_RETURN_PROCESSING_V286.includes(state)
+  };
+}
+/* V286 (with S5): a workspace that has just been paid for and opened lands on the first-run
+   setup guide, not on an empty dashboard. Activation happens once, so this is once. */
+function selfServeActivatedRouteV286(slug){
+  return `#/workspace/${encodeURIComponent(String(slug||''))}/setup`;
+}
+function renderSelfServePaymentPendingV286(onboarding){
+  const setupEpoch=++businessSetupRenderEpoch;
+  if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
+  const {canceled,processing}=selfServePaymentReturnStateV286();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  wireBusinessSetupAccount();wireAccountDeletionButton();
+  $('selfServePay').onclick=()=>driveSelfServeCheckoutV281(onboarding,$('selfServePayStatus'),$('selfServePay'));
+  $('onboardRetry').onclick=route;
+  if(!processing)return;
+  let attempts=0;
+  const poll=async()=>{
+    if(setupEpoch!==businessSetupRenderEpoch)return;
+    attempts+=1;
+    const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
+    if(setupEpoch!==businessSetupRenderEpoch)return;
+    const next=current.data?.onboarding;
+    if(next?.status==='active'){nav(selfServeActivatedRouteV286(next.business_slug));return}
+    const status=$('selfServePayStatus');
+    if(status)status.textContent=attempts<15?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+    if(attempts<15)setTimeout(poll,2000);
+  };
+  setTimeout(poll,1200);
+}
 function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
@@ -6837,14 +6913,9 @@ function renderBusinessWorkspaceControl(control={}){
       if(!onboarding||onboarding.status!=='payment_pending'){
         renderBusinessWorkspaceControl({...control,_selfServeChecked:true});return;
       }
-      if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Peekaa opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      $('businessControlPay').onclick=()=>driveSelfServeCheckoutV281(
-        onboarding,$('businessControlPayStatus'),$('businessControlPay')
-      );
-      $('businessControlRetry').onclick=route;
-      $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-      wireAccountDeletionButton();
+      /* V286: one owner for this state. This branch used to carry its own copy of the screen,
+         blind to the ?status= the Stripe return lands with. */
+      renderSelfServePaymentPendingV286(onboarding);
     });
     return;
   }
@@ -7356,8 +7427,10 @@ function renderBusinessApplication(){
       $('businessApplicationError').innerHTML=`<div class="err">${esc(a.passwordRule)}</div>`;return;
     }
     $('businessApplicationSubmit').disabled=true;
+    /* V286: the confirmation link used to carry ?selfserve=1 and nothing anywhere read it.
+       A parameter that means nothing is worse than no parameter: it reads as a routing contract
+       that does not exist. /business already resolves the right screen from the session. */
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
-    returnUrl.searchParams.set('selfserve','1');
     const {data,error}=await sb.auth.signUp({
       email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
         data:{account_type:'business_owner',preferred_locale:locale}}
@@ -7447,7 +7520,9 @@ async function renderApprovedBusinessActivation(inviteToken,isCurrent=()=>true){
     }
     sessionStorage.removeItem(`nestly-activation-${inviteToken}`);
     history.replaceState(null,'','/business');
-    nav(`#/workspace/${encodeURIComponent(data.business_slug||slug)}/dashboard`);
+    /* V286: a workspace opened by an admin after manual payment lands on the first-run guide,
+       the same as the Stripe self-serve path. */
+    nav(selfServeActivatedRouteV286(data.business_slug||slug));
   };
 }
 
@@ -7823,30 +7898,7 @@ function renderOnboard(){
       nav(`#/workspace/${encodeURIComponent(onboarding.business_slug)}/dashboard`);return;
     }
     if(onboarding?.status==='payment_pending'){
-      const hashState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
-      const searchState=new URLSearchParams(location.search||'').get('status');
-      const paymentState=hashState||searchState||'';
-      const canceled=paymentState==='canceled'||paymentState==='cancelled';
-      const processing=['success','paid','processing','complete','completed'].includes(paymentState);
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      wireBusinessSetupAccount();wireAccountDeletionButton();
-      $('selfServePay').onclick=()=>finishCheckout(onboarding,$('selfServePayStatus'),$('selfServePay'));
-      $('onboardRetry').onclick=route;
-      if(processing){
-        let attempts=0;
-        const poll=async()=>{
-          if(setupEpoch!==businessSetupRenderEpoch)return;
-          attempts+=1;
-          const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
-          if(setupEpoch!==businessSetupRenderEpoch)return;
-          const next=current.data?.onboarding;
-          if(next?.status==='active'){nav(`#/workspace/${encodeURIComponent(next.business_slug)}/dashboard`);return}
-          const status=$('selfServePayStatus');
-          if(status)status.textContent=attempts<15?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
-          if(attempts<15)setTimeout(poll,2000);
-        };
-        setTimeout(poll,1200);
-      }
+      renderSelfServePaymentPendingV286(onboarding);
       return;
     }
     const plans=Array.isArray(state.data.plans)?state.data.plans:[];
@@ -24653,18 +24705,20 @@ async function reportsPage(){
 }
 
 /* ---------- get started (first-run setup guide) ---------- */
-/* v170: the guide keeps two owner choices for the browser session only — "don't show this
-   again" and "I run this on my own". Session-scoped on purpose: no server field exists for
-   either, and a lie that survives the session is worse than a note the owner can undo. */
+/* v170: the guide keeps two owner choices — "don't show this again" and "I run this on my own".
+   V286: those choices now live in localStorage, not sessionStorage. Session scope meant an owner
+   who dismissed the guide was shown it again on the next visit — every visit — which is not what
+   "don't show this again" says. There is still no server field for either, so the choice is
+   per-browser and the guide is always reachable again from Get started. */
 const SETUP_GUIDE_HIDDEN_V170='nestly-v170-setup-guide-hidden';
 const SETUP_SOLO_OWNER_V170='nestly-v170-solo-owner';
-const setupFlagOn=key=>{try{return sessionStorage.getItem(key)==='1'}catch{return false}};
-const setSetupFlag=(key,on)=>{try{if(on)sessionStorage.setItem(key,'1');else sessionStorage.removeItem(key)}catch{}};
+const setupFlagOn=key=>{try{return localStorage.getItem(key)==='1'}catch{return false}};
+const setSetupFlag=(key,on)=>{try{if(on)localStorage.setItem(key,'1');else localStorage.removeItem(key)}catch{}};
 async function setupPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   if(setupFlagOn(SETUP_GUIDE_HIDDEN_V170)){
-    M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">Setup guide hidden for this session.</p></div></div>
-      <div class="card"><div class="row"><span class="muted small">Setup guide hidden for this session.</span><span class="spacer"></span>
+    M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">Setup guide hidden on this device.</p></div></div>
+      <div class="card"><div class="row"><span class="muted small">Setup guide hidden on this device. Show it again whenever you want.</span><span class="spacer"></span>
         <button class="btn sm" id="sp_show">Show guide</button></div></div>`;
     $('sp_show').onclick=()=>{setSetupFlag(SETUP_GUIDE_HIDDEN_V170,false);setupPage()};
     return;

@@ -666,20 +666,6 @@ function staffInviteLinkV151(code){
   url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
   return url.toString();
 }
-/* ---------- onboarding ---------- */
-let businessSetupRenderEpoch=0;
-function businessSetupAccountHtml(signOutId='out'){
-  const email=String(S.user?.email||'Email unavailable');
-  return `<div class="business-session-context" aria-label="Current business account"><div><span>Signed in as</span><strong>${esc(email)}</strong></div><button class="btn ghost sm" type="button" id="${esc(signOutId)}">Sign out</button></div>`;
-}
-function wireBusinessSetupAccount(signOutId='out'){
-  const button=$(signOutId);if(!button)return;
-  button.onclick=async()=>{
-    ++businessSetupRenderEpoch;killChannels();
-    await sb.auth.signOut({scope:'local'});
-    resetClientSessionState();location.hash='#/';renderAuth('in');
-  };
-}
 /* V169: when the main setup form is on the same screen it has already collected the owner
    name, business name, sector and UEN. Re-asking for all of it underneath the Stripe form
    made owners fill the same details twice and left them unsure which path they were on.
@@ -788,30 +774,7 @@ function renderOnboard(){
       nav(`#/workspace/${encodeURIComponent(onboarding.business_slug)}/dashboard`);return;
     }
     if(onboarding?.status==='payment_pending'){
-      const hashState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
-      const searchState=new URLSearchParams(location.search||'').get('status');
-      const paymentState=hashState||searchState||'';
-      const canceled=paymentState==='canceled'||paymentState==='cancelled';
-      const processing=['success','paid','processing','complete','completed'].includes(paymentState);
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      wireBusinessSetupAccount();wireAccountDeletionButton();
-      $('selfServePay').onclick=()=>finishCheckout(onboarding,$('selfServePayStatus'),$('selfServePay'));
-      $('onboardRetry').onclick=route;
-      if(processing){
-        let attempts=0;
-        const poll=async()=>{
-          if(setupEpoch!==businessSetupRenderEpoch)return;
-          attempts+=1;
-          const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
-          if(setupEpoch!==businessSetupRenderEpoch)return;
-          const next=current.data?.onboarding;
-          if(next?.status==='active'){nav(`#/workspace/${encodeURIComponent(next.business_slug)}/dashboard`);return}
-          const status=$('selfServePayStatus');
-          if(status)status.textContent=attempts<15?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
-          if(attempts<15)setTimeout(poll,2000);
-        };
-        setTimeout(poll,1200);
-      }
+      renderSelfServePaymentPendingV286(onboarding);
       return;
     }
     const plans=Array.isArray(state.data.plans)?state.data.plans:[];
@@ -16513,18 +16476,20 @@ async function reportsPage(){
 }
 
 /* ---------- get started (first-run setup guide) ---------- */
-/* v170: the guide keeps two owner choices for the browser session only — "don't show this
-   again" and "I run this on my own". Session-scoped on purpose: no server field exists for
-   either, and a lie that survives the session is worse than a note the owner can undo. */
+/* v170: the guide keeps two owner choices — "don't show this again" and "I run this on my own".
+   V286: those choices now live in localStorage, not sessionStorage. Session scope meant an owner
+   who dismissed the guide was shown it again on the next visit — every visit — which is not what
+   "don't show this again" says. There is still no server field for either, so the choice is
+   per-browser and the guide is always reachable again from Get started. */
 const SETUP_GUIDE_HIDDEN_V170='nestly-v170-setup-guide-hidden';
 const SETUP_SOLO_OWNER_V170='nestly-v170-solo-owner';
-const setupFlagOn=key=>{try{return sessionStorage.getItem(key)==='1'}catch{return false}};
-const setSetupFlag=(key,on)=>{try{if(on)sessionStorage.setItem(key,'1');else sessionStorage.removeItem(key)}catch{}};
+const setupFlagOn=key=>{try{return localStorage.getItem(key)==='1'}catch{return false}};
+const setSetupFlag=(key,on)=>{try{if(on)localStorage.setItem(key,'1');else localStorage.removeItem(key)}catch{}};
 async function setupPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   if(setupFlagOn(SETUP_GUIDE_HIDDEN_V170)){
-    M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">Setup guide hidden for this session.</p></div></div>
-      <div class="card"><div class="row"><span class="muted small">Setup guide hidden for this session.</span><span class="spacer"></span>
+    M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">Setup guide hidden on this device.</p></div></div>
+      <div class="card"><div class="row"><span class="muted small">Setup guide hidden on this device. Show it again whenever you want.</span><span class="spacer"></span>
         <button class="btn sm" id="sp_show">Show guide</button></div></div>`;
     $('sp_show').onclick=()=>{setSetupFlag(SETUP_GUIDE_HIDDEN_V170,false);setupPage()};
     return;

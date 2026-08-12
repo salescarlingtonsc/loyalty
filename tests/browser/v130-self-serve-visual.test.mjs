@@ -14,6 +14,8 @@ test('V130 browser fixture executes current production signup, setup and payment
   assert.match(fixture,/function renderBusinessApplication\(\)/);
   assert.match(fixture,/function renderOnboard\(\)/);
   assert.match(fixture,/function renderBusinessWorkspaceControl\(/);
+  /* V286: and the one renderer both of those now delegate the payment-pending state to. */
+  assert.match(fixture,/function renderSelfServePaymentPendingV286\(/);
   assert.match(fixture,/function accountDeletionCardHtml\(\)/);
   assert.match(fixture,/provider-confirmed payment/);
 });

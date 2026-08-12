@@ -182,6 +182,12 @@ const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
    wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
    SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
 const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
+/* V286: every primary button on an auth screen is disabled until Turnstile hands back a
+   token. When the widget is merely slow — not wedged, so none of the error callbacks fire —
+   the screen offers no way out for 20s. This is the shorter, honest line: after 12s without a
+   token the user is told the one thing that actually helps. It never re-enables a button and
+   never bypasses the check. */
+const TURNSTILE_SLOW_FALLBACK_MS_V286=12000;
 const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
 function loadTurnstile(){
   const ready=turnstileApiReady();
@@ -223,6 +229,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Security check could not connect. Please retry, or check your browser and network settings.',
       load:'Security check could not load. Check your connection and try again.',
       continue:'Complete the security check to continue.',
+      slowFallback:'Taking long? Reload to retry.',
       interactive:'Tick “Verify you are human” above to continue.',
       showPassword:'Show password',hidePassword:'Hide password',
       passkey:'Sign in with Face ID, Touch ID or passkey',passkeyTitle:'Use Face ID, Touch ID or passkey'
@@ -233,6 +240,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'无法连接安全验证。请重试，或检查浏览器及网络设置。',
       load:'无法加载安全验证。请检查网络连接后重试。',
       continue:'请完成安全验证以继续。',
+      slowFallback:'时间过长？请重新加载页面重试。',
       interactive:'请勾选上方的“确认您是真人”以继续。',
       showPassword:'显示密码',hidePassword:'隐藏密码',
       passkey:'使用面容 ID、触控 ID 或通行密钥登录',passkeyTitle:'使用面容 ID、触控 ID 或通行密钥'
@@ -243,6 +251,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Semakan keselamatan tidak dapat disambungkan. Cuba lagi atau semak tetapan pelayar dan rangkaian anda.',
       load:'Semakan keselamatan tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
       continue:'Lengkapkan semakan keselamatan untuk meneruskan.',
+      slowFallback:'Mengambil masa lama? Muat semula untuk mencuba lagi.',
       interactive:'Tandakan “Verify you are human” di atas untuk meneruskan.',
       showPassword:'Tunjukkan kata laluan',hidePassword:'Sembunyikan kata laluan',
       passkey:'Log masuk dengan Face ID, Touch ID atau kunci laluan',passkeyTitle:'Gunakan Face ID, Touch ID atau kunci laluan'
@@ -253,6 +262,18 @@ const authSecurityCopy=(locale,key)=>{
 async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
   const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
   const security=key=>authSecurityCopy(locale,key);
+  let tokenSeenV286=false;
+  const slowNoteV286=document.createElement('p');
+  slowNoteV286.className='challenge-status';
+  slowNoteV286.id=`${status}-slow-note`;
+  slowNoteV286.hidden=true;
+  slowNoteV286.textContent=security('slowFallback');
+  statusEl.insertAdjacentElement('afterend',slowNoteV286);
+  const slowTimerV286=setTimeout(()=>{
+    if(destroyed||tokenSeenV286)return;
+    slowNoteV286.hidden=false;
+  },TURNSTILE_SLOW_FALLBACK_MS_V286);
+  const stopSlowNoteV286=()=>{clearTimeout(slowTimerV286);slowNoteV286.hidden=true};
   /* A passed check should be invisible: red status text and a "Retry" link after
      success read as failure. The block only surfaces while loading or on error. */
   const setPassed=passed=>{
@@ -305,7 +326,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       removeWidget();
       if(!live()){stopStall();return}
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(!live())return;stopStall();onToken(token);retryEl.hidden=true;setPassed(true)},
+        callback:(token)=>{if(!live())return;stopStall();tokenSeenV286=true;stopSlowNoteV286();onToken(token);retryEl.hidden=true;setPassed(true)},
         /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
            security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
            and the passkey button looked broken while the app was simply waiting for a tick. */
@@ -325,7 +346,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
   const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
   const destroy=()=>{
     if(destroyed)return;
-    destroyed=true;generation+=1;stopStall();
+    destroyed=true;generation+=1;stopStall();stopSlowNoteV286();
     retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
   };
   const control={reset,destroy};
@@ -1155,6 +1176,11 @@ async function route(){
         }
       });
     }
+    /* V286: the Stripe self-serve return route, resolved before any persona lookup.
+       start_self_serve_business_v130 has already created an active owner staff row by the time
+       Stripe redirects here, so every persona-aware branch below would have swallowed this
+       route and shown the paying owner a "Complete secure payment" button. */
+    if(String(h).split('?')[0]==='#/onboarding/payment')return renderOnboard();
     if(h==='#/business'){
       if(staffInviteCodeV151)return renderBusinessStaffInviteAcceptV151(staffInviteCodeV151);
       const approvedInvite=String(location.search||'').match(/(?:^\?|&)invite=([0-9a-f]{64})(?:&|$)/i)?.[1]?.toLowerCase()||'';
@@ -2589,8 +2615,10 @@ function renderBusinessApplication(){
       $('businessApplicationError').innerHTML=`<div class="err">${esc(a.passwordRule)}</div>`;return;
     }
     $('businessApplicationSubmit').disabled=true;
+    /* V286: the confirmation link used to carry ?selfserve=1 and nothing anywhere read it.
+       A parameter that means nothing is worse than no parameter: it reads as a routing contract
+       that does not exist. /business already resolves the right screen from the session. */
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
-    returnUrl.searchParams.set('selfserve','1');
     const {data,error}=await sb.auth.signUp({
       email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
         data:{account_type:'business_owner',preferred_locale:locale}}

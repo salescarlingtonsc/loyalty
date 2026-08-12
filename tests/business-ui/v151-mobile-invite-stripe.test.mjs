@@ -97,12 +97,16 @@ test('V151 staff invite migration enforces email restriction and one-time server
 });
 
 test('V151 Stripe return polls provider-confirmed self-service status and never trusts success URL alone', () => {
-  assert.match(onboard, /Setting up your Peekaa workspace/);
-  assert.match(onboard, /paymentState/);
-  assert.match(onboard, /get_self_serve_checkout_v130/);
-  assert.match(onboard, /if\(next\?\.status==='active'\)/);
-  assert.match(onboard, /Checkout success pages do not unlock access; provider-confirmed payment does/);
-  assert.match(onboard, /Stripe confirmation is still processing/);
+  /* V286: the poll and the ?status= reading moved out of renderOnboard into the single
+     payment-pending renderer, because renderOnboard was not the screen the Stripe return
+     actually reached. The contract this test is about is unchanged; only its address is. */
+  const pending = section('function renderSelfServePaymentPendingV286(', 'function renderBusinessWorkspaceControl(');
+  assert.match(pending, /Setting up your Peekaa workspace/);
+  assert.match(pending, /selfServePaymentReturnStateV286\(\)/);
+  assert.match(pending, /get_self_serve_checkout_v130/);
+  assert.match(pending, /if\(next\?\.status==='active'\)/);
+  assert.match(pending, /Checkout success pages do not unlock access; provider-confirmed payment does/);
+  assert.match(pending, /Stripe confirmation is still processing/);
   /* V281: the checkout request moved into the shared runSelfServeCheckoutV281 executor. The
      poll this test is about is unchanged and still lives in renderOnboard. */
   assert.match(onboard, /driveSelfServeCheckoutV281\(onboarding,statusNode,button\)/);

@@ -143,6 +143,8 @@ test('new self-service firms remain locked until provider-confirmed payment',()=
   assert.match(onboard,/driveSelfServeCheckoutV281\(onboarding,statusNode,button\)/);
   assert.match(section('async function runSelfServeCheckoutV281(','function renderBusinessWorkspaceControl('),
     /request_self_serve_checkout_v130/);
-  assert.match(onboard,/remains locked until Stripe confirms the first paid invoice/);
+  /* V286: the locked-until-payment copy moved to the single payment-pending renderer. */
+  assert.match(section('function renderSelfServePaymentPendingV286(','function renderBusinessWorkspaceControl('),
+    /remains locked until Stripe confirms the first paid invoice/);
   assert.doesNotMatch(onboard,/create_business|p_modules|Workspace ready/);
 });

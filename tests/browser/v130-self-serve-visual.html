@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="5ab436fe674c11ff30113f9a5ed19b98dcb5cb62e8fe316b387c91e28f4ee87d"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="cbded74c437f9b6dabc9b020ac9b826c5cb4fb6b0be0b0ca8e2b4e29fc21b89d"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2018,8 +2018,10 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
       $('businessApplicationError').innerHTML=`<div class="err">${esc(a.passwordRule)}</div>`;return;
     }
     $('businessApplicationSubmit').disabled=true;
+    /* V286: the confirmation link used to carry ?selfserve=1 and nothing anywhere read it.
+       A parameter that means nothing is worse than no parameter: it reads as a routing contract
+       that does not exist. /business already resolves the right screen from the session. */
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
-    returnUrl.searchParams.set('selfserve','1');
     const {data,error}=await sb.auth.signUp({
       email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
         data:{account_type:'business_owner',preferred_locale:locale}}
@@ -2225,30 +2227,7 @@ async function wireAccountDeletionButton(){
       nav(`#/workspace/${encodeURIComponent(onboarding.business_slug)}/dashboard`);return;
     }
     if(onboarding?.status==='payment_pending'){
-      const hashState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
-      const searchState=new URLSearchParams(location.search||'').get('status');
-      const paymentState=hashState||searchState||'';
-      const canceled=paymentState==='canceled'||paymentState==='cancelled';
-      const processing=['success','paid','processing','complete','completed'].includes(paymentState);
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      wireBusinessSetupAccount();wireAccountDeletionButton();
-      $('selfServePay').onclick=()=>finishCheckout(onboarding,$('selfServePayStatus'),$('selfServePay'));
-      $('onboardRetry').onclick=route;
-      if(processing){
-        let attempts=0;
-        const poll=async()=>{
-          if(setupEpoch!==businessSetupRenderEpoch)return;
-          attempts+=1;
-          const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
-          if(setupEpoch!==businessSetupRenderEpoch)return;
-          const next=current.data?.onboarding;
-          if(next?.status==='active'){nav(`#/workspace/${encodeURIComponent(next.business_slug)}/dashboard`);return}
-          const status=$('selfServePayStatus');
-          if(status)status.textContent=attempts<15?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
-          if(attempts<15)setTimeout(poll,2000);
-        };
-        setTimeout(poll,1200);
-      }
+      renderSelfServePaymentPendingV286(onboarding);
       return;
     }
     const plans=Array.isArray(state.data.plans)?state.data.plans:[];
@@ -2307,6 +2286,44 @@ async function wireAccountDeletionButton(){
     $('out').onclick=async()=>{killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();route()};
   })();
 }
+  const SELF_SERVE_RETURN_PROCESSING_V286=Object.freeze(['success','paid','processing','complete','completed']);
+function selfServePaymentReturnStateV286(){
+  const hashState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
+  const searchState=new URLSearchParams(location.search||'').get('status');
+  const state=String(hashState||searchState||'');
+  return {
+    canceled:state==='canceled'||state==='cancelled',
+    processing:SELF_SERVE_RETURN_PROCESSING_V286.includes(state)
+  };
+}
+/* V286 (with S5): a workspace that has just been paid for and opened lands on the first-run
+   setup guide, not on an empty dashboard. Activation happens once, so this is once. */
+function selfServeActivatedRouteV286(slug){
+  return `#/workspace/${encodeURIComponent(String(slug||''))}/setup`;
+}
+function renderSelfServePaymentPendingV286(onboarding){
+  const setupEpoch=++businessSetupRenderEpoch;
+  if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
+  const {canceled,processing}=selfServePaymentReturnStateV286();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  wireBusinessSetupAccount();wireAccountDeletionButton();
+  $('selfServePay').onclick=()=>driveSelfServeCheckoutV281(onboarding,$('selfServePayStatus'),$('selfServePay'));
+  $('onboardRetry').onclick=route;
+  if(!processing)return;
+  let attempts=0;
+  const poll=async()=>{
+    if(setupEpoch!==businessSetupRenderEpoch)return;
+    attempts+=1;
+    const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
+    if(setupEpoch!==businessSetupRenderEpoch)return;
+    const next=current.data?.onboarding;
+    if(next?.status==='active'){nav(selfServeActivatedRouteV286(next.business_slug));return}
+    const status=$('selfServePayStatus');
+    if(status)status.textContent=attempts<15?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+    if(attempts<15)setTimeout(poll,2000);
+  };
+  setTimeout(poll,1200);
+}
   function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
@@ -2317,14 +2334,9 @@ async function wireAccountDeletionButton(){
       if(!onboarding||onboarding.status!=='payment_pending'){
         renderBusinessWorkspaceControl({...control,_selfServeChecked:true});return;
       }
-      if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Peekaa opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      $('businessControlPay').onclick=()=>driveSelfServeCheckoutV281(
-        onboarding,$('businessControlPayStatus'),$('businessControlPay')
-      );
-      $('businessControlRetry').onclick=route;
-      $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-      wireAccountDeletionButton();
+      /* V286: one owner for this state. This branch used to carry its own copy of the screen,
+         blind to the ?status= the Stripe return lands with. */
+      renderSelfServePaymentPendingV286(onboarding);
     });
     return;
   }

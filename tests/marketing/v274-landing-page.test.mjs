@@ -579,16 +579,27 @@ test('every internal link resolves to a real file, a real rewrite or a real anch
         `${href} does not exist in app/`);
       continue;
     }
-    assert.ok(rewriteSources.has(href), `${href} is not served by any rewrite in app/vercel.json`);
+    /* V286: acquisition CTAs now carry ?signup=1 so "Get started" and "Log in" stop being the
+       same URL. A rewrite matches the PATH, so the query is compared against nothing. */
+    const path = href.split('?')[0];
+    assert.ok(rewriteSources.has(path), `${href} is not served by any rewrite in app/vercel.json`);
   }
 });
 
+/* V286: retargeted, not deleted. "Get started" and "Log in" used to be the SAME url — a
+   prospective customer clicking the page's main CTA landed on a sign-in form asking for a
+   password they had never set. Acquisition CTAs now carry ?signup=1 (route() answers that with
+   renderBusinessSignupChoice); the header "Log in" deliberately still does not. */
 test('both primary calls to action point at the firm auth surface', () => {
-  const ctas = [...landing.matchAll(/<a\b[^>]*\bhref=["']\/business["'][^>]*>([\s\S]*?)<\/a>/gi)]
-    .map((m) => m[1].replace(/<[^>]+>/g, '').trim());
-  assert.ok(ctas.some((label) => /get started/i.test(label)), 'a "Get started" CTA must target /business');
-  assert.ok(ctas.some((label) => /log in/i.test(label)), 'a "Log in" CTA must target /business');
-  assert.ok(ctas.length >= 4, 'the CTA should repeat down the page, not appear once');
+  const labels = (re) => [...landing.matchAll(re)].map((m) => m[1].replace(/<[^>]+>/g, '').trim());
+  const signup = labels(/<a\b[^>]*\bhref=["']\/business\?signup=1["'][^>]*>([\s\S]*?)<\/a>/gi);
+  const signin = labels(/<a\b[^>]*\bhref=["']\/business["'][^>]*>([\s\S]*?)<\/a>/gi);
+  assert.ok(signup.some((label) => /get started/i.test(label)),
+    'a "Get started" CTA must target /business?signup=1');
+  assert.ok(signin.some((label) => /log in/i.test(label)), 'a "Log in" CTA must target /business');
+  assert.ok(signup.length >= 4, 'the signup CTA should repeat down the page, not appear once');
+  assert.ok(!signin.some((label) => /get started/i.test(label)),
+    'no "Get started" CTA may still point at the bare sign-in url');
 });
 
 test('the firm auth surface really does offer both sign-in and sign-up', async () => {
