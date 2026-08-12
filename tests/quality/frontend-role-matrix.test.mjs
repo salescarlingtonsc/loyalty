@@ -115,7 +115,10 @@ test('global appointment, setup, and booking decision controls match their mutat
   assert.match(global,/canNewAppt\?'New appointment':'View calendar'/);
   assert.match(route,/pageKey==='setup'&&S\.myRole!=='owner'/);
   assert.match(profile,/S\.myRole==='owner'\?`<a href="#\/setup"/);
-  assert.match(bookings,/const canConvertBooking=canWriteModule\('appointments'\)/);
+  /* V288 (audit A2 HIGH 1): RETARGETED, not deleted. Confirming a booking request is a
+     BOOKINGS right — the fnb and bar sectors hold no appointments module at all, so gating
+     confirmation on it left them able only to decline their own public page's requests. */
+  assert.match(bookings,/const canConvertBooking=canWriteModule\('bookings'\)/);
   assert.match(bookings,/const canDeclineBooking=canWriteModule\('bookings'\)/);
   assert.match(bookings,/const canDecideChange=canWriteModule\('appointments'\)/);
   assert.match(bookings,/Only the owner can change this setting/);

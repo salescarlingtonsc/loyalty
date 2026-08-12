@@ -1847,8 +1847,26 @@
    "rpc": "bar_save_bottle_product_v278",
    "resolves_to": "bar_save_bottle_product_v278/5",
    "rows_written": "public.products (INSERT of a quick-added bottle, or UPDATE of size_ml on an existing product)",
-   "call_site_finding": "OK - owner-only, behind the V275 industry gate. p_product null creates a product (name + size + price); a supplied p_product only ever writes size_ml, so marking or unmarking a bottle can never silently rewrite the name or the price of something the bar sells. Size is bounded 100..5000ml by both the RPC and a table check. products is not a VALUE_TABLE and no stock, sale or ledger row is touched.",
+   "call_site_finding": "OK - owner-only, behind the V275 industry gate. p_product null creates a product (name + size + price); a supplied p_product only ever writes size_ml, so marking or unmarking a bottle can never silently rewrite the name or the price of something the bar sells. Size is bounded 100..5000ml by both the RPC and a table check. products is not a VALUE_TABLE and no stock, sale or ledger row is touched. V288: the browser now uses this function only for the ADD path. Its update branch demonstrably DROPS the name and price it accepts, which made a mistyped catalogue row uncorrectable; the edit path moved to bar_save_bottle_product_v288 on a new NAME rather than a changed body, so a deploy in flight cannot break and PostgREST resolution stays unambiguous.",
    "kernel_migratability": "non-value - catalogue metadata. The bottle's PURCHASE is still an ordinary sale written by the till."
+  },
+  {
+   "id": "browser.rpc:app/app.js:bar_save_bottle_product_v288",
+   "surface": "browser_rpc_binding",
+   "rpc": "bar_save_bottle_product_v288",
+   "resolves_to": "bar_save_bottle_product_v288/5",
+   "rows_written": "public.products (INSERT of a quick-added bottle, or UPDATE of size_ml, name and retail_price_cents on an existing product)",
+   "call_site_finding": "OK - owner-only, behind the V275 industry gate, same shape and same bounds as bar_save_bottle_product_v278 with ONE difference: the UPDATE branch applies the name and price it is handed instead of silently dropping them, which is what made a mistyped catalogue row uncorrectable. A null name or price still means leave the stored value alone, so this cannot blank a name by omission; size stays genuinely nullable because clearing it means 'not a bottle'. Bounds are unchanged (100..5000ml, price 0..int4max, name up to 120 characters). products is not a VALUE_TABLE and no stock, sale or ledger row is touched.",
+   "kernel_migratability": "non-value - catalogue metadata. The bottle's PURCHASE is still an ordinary sale written by the till."
+  },
+  {
+   "id": "browser.rpc:app/app.js:remove_bottle_v288",
+   "surface": "browser_rpc_binding",
+   "rpc": "remove_bottle_v288",
+   "resolves_to": "remove_bottle_v288/3",
+   "rows_written": "public.bar_bottles.status ('removed') + append-only public.bar_bottle_events ('status', with from, to and reason)",
+   "call_site_finding": "OK - the honest exit for a bottle that should never have been on the list (a wrong tag, a duplicate, one thrown away). Before V288 the only terminal control was 'retrieved', which ASSERTS the customer walked out with the bottle, so a mis-park had to be recorded as a physical event that did not happen. The bar gate runs first, then the staff write gate, then the idempotency key; the row is locked FOR UPDATE and only stored/called/at_table/expired may be removed, so a bottle that has already ended is not re-ended. Deliberately a NEW function rather than a widening of set_bottle_status_v275: app.bar_status_transition_allowed_v279 still states that retrieved is a one-way door, and that statement stays true.",
+   "kernel_migratability": "non-value - closes the custody record of a physical bottle. No credit, points or spendable value moves in either direction."
   },
   {
    "id": "browser.rpc:app/app.js:set_bottle_expiry_v278",

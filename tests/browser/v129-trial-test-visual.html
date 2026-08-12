@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="005c68b0020431a0b368c4e64872360b3e2d64a1818259f2ae308bc134ec730e"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="f85e74f73148849cc90d27c2e639713edbf04d4ab18699c1651631ac0b170cd9"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1144,6 +1144,11 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .calendar-day{position:relative;border-right:1px solid var(--hair);background-image:linear-gradient(to bottom,transparent calc(100% - 1px),var(--line) 0);background-size:100% var(--calendar-hour-height,64px);background-repeat:repeat-y}
 .calendar-day.is-today{background-color:#FFFBF8}
 .calendar-day:last-child{border-right:0}
+/* V288 (audit A2, MEDIUM 7): a cancelled or no-show appointment is drawn behind the live
+   column at full width and struck through. It must stay READABLE — staff still ask "who
+   cancelled?" — but it must not look like an occupied slot. */
+.calendar-event.appointment-inactive-v288,.day-timeline-event.appointment-inactive-v288{opacity:.5;z-index:1;border-style:dashed;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--event-color) 9%,#fff) 0 6px,#0000 6px 12px)}
+.calendar-event.appointment-inactive-v288 b,.day-timeline-event.appointment-inactive-v288 b{text-decoration:line-through}
 .calendar-event{position:absolute;left:4px;right:4px;display:block;width:calc(100% - 8px);min-height:44px;overflow:hidden;padding:6px 7px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 13%,#fff);color:var(--ink);text-align:left;font-size:11px;line-height:1.28;z-index:2}
 .calendar-event:hover,.calendar-event:focus-visible{box-shadow:var(--shadow);z-index:3}.calendar-event b,.calendar-event-time{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event-time{font-variant-numeric:tabular-nums;font-weight:650;margin-top:2px}
 .calendar-blocked-window{position:absolute;left:4px;right:4px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:44px;overflow:hidden;padding:5px 6px;border:1px solid #C9B9B5;border-left:4px solid #7B6D69;border-radius:7px;background:repeating-linear-gradient(135deg,#F2EFED,#F2EFED 8px,#E7E1DE 8px,#E7E1DE 16px);color:#403936;font-size:10.5px;line-height:1.2}.calendar-blocked-window span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-blocked-window button{flex:0 0 auto;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--red);font-weight:750;cursor:pointer}
@@ -1872,7 +1877,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 005c68b0020431a0b368c4e64872360b3e2d64a1818259f2ae308bc134ec730e</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · f85e74f73148849cc90d27c2e639713edbf04d4ab18699c1651631ac0b170cd9</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -2979,7 +2984,9 @@ async function clientsPage(){
   const localMobile=digitsPhone.length===10&&digitsPhone.startsWith('65')?digitsPhone.slice(2):digitsPhone.slice(-8);
   const hasTillPhone=/^[89]\d{7}$/.test(localMobile);
   const canQuickEarn=canReadModule('till')&&canReadModule('clients')&&hasRoleCapability('create_sales')&&hasTillPhone;
-  const canBookAppt=canWriteModule('appointments');
+  /* V288 (audit A2, MEDIUM 8): a cafe or bar has no appointments module, so "New appointment"
+     on a customer profile opened a surface the sector does not use. Same predicate as the nav. */
+  const canBookAppt=canWriteModule('appointments')&&!sectorHidesAppointmentsV276();
   const goQuickEarn=()=>{pendingTillPhone=localMobile;nav('#/till')};
   const goNewAppt=()=>{pendingApptClientId=id;nav('#/appointments')};
   /* Status badges — every one is derived from data already fetched above (no persona table read). */
@@ -5936,11 +5943,20 @@ function sectionTabsV200(root,{key='',label='Sections'}={}){
   setTab(initial,{remember:false});
   return {strip,panels,setTab};
 }
+/* V288 (audit A2, HIGH 3): the guard token is compared against the CURRENT render's token, not
+   against a bare '1'. A realtime booking INSERT re-runs bookingsPage(), which resets
+   routeMain.innerHTML — but dataset lives on the element and survives that reset, so a plain
+   '1' made every refresh after the first skip the enhancement entirely: the tabs vanished and
+   whatever the owner had typed into Booking settings went with them. bookingsPage() stamps a
+   fresh token on every render, so the enhancement runs exactly once per render. */
+let bookingsShellTokenV288=0;
+/* The tab the owner was last on, so an auto-refresh does not throw them back to Requests. */
+let bookingsActiveTabV288='requests';
 function enhanceBookingsTabsV195(root){
-  if(!root||root.dataset.bookingsTabsV195==='1')return;
+  if(!root||root.dataset.bookingsTabsV195!==String(bookingsShellTokenV288))return;
   const requests=root.querySelector('#blist');
   if(!requests)return;
-  root.dataset.bookingsTabsV195='1';
+  root.dataset.bookingsTabsV195='done';
   const tabs=document.createElement('div');
   tabs.className='v150-segment';
   tabs.setAttribute('role','tablist');
@@ -5959,13 +5975,17 @@ function enhanceBookingsTabsV195(root){
   settingsPanel.hidden=true;
   /* The portal-link card stays above the tabs: it is the one thing an owner copies from either
      view, and burying it inside a tab would make it findable only by accident. */
-  const portalCard=root.querySelector('#cp')?.closest('.card,section');
+  /* V288 (audit A2, HIGH 2): the nodes that stay above the tabs are MARKED, not inferred.
+     `#cp` lives in the .topbar, so closest('.card,section') returned null — the portal card was
+     never recognised, and because the page heading and the change-requests card are plain DIVs
+     they were swept into the hidden settings panel. On first paint the owner saw no h1, no
+     portal link and no change requests. data-bookings-shell says which is which. */
   requests.before(tabs);
   tabs.after(requestsPanel,settingsPanel);
   const settingsNodes=[];
   Array.from(root.children).forEach(child=>{
     if(child===tabs||child===requestsPanel||child===settingsPanel)return;
-    if(child===portalCard||child.contains(tabs))return;
+    if(child.hasAttribute('data-bookings-shell')||child.contains(tabs))return;
     if(child===requests||child.contains(requests))return;
     if(child.tagName==='DIV'||child.tagName==='SECTION')settingsNodes.push(child);
   });
@@ -5973,6 +5993,7 @@ function enhanceBookingsTabsV195(root){
   settingsNodes.forEach(node=>settingsPanel.appendChild(node));
   const setTab=name=>{
     const showRequests=name==='requests';
+    bookingsActiveTabV288=showRequests?'requests':'settings';
     requestsPanel.hidden=!showRequests;
     settingsPanel.hidden=showRequests;
     tabs.querySelector('#bookingsTabRequests').setAttribute('aria-selected',String(showRequests));
@@ -5982,7 +6003,9 @@ function enhanceBookingsTabsV195(root){
   };
   tabs.querySelector('#bookingsTabRequests').onclick=()=>setTab('requests');
   tabs.querySelector('#bookingsTabSettings').onclick=()=>setTab('settings');
-  setTab('requests');
+  /* V288: restore the tab the owner was on. A realtime insert must not yank a half-filled
+     Booking settings form off screen. */
+  setTab(bookingsActiveTabV288==='settings'?'settings':'requests');
 }
 /* V228: lifted out of bookingsPage so the Staff page can render the same weekday rows.
    The owner asked for the staff schedule to live with the staff, and duplicating this
@@ -6001,7 +6024,15 @@ async function bookingsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const portal=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
   const isOwner=S.myRole==='owner';
-  const canConvertBooking=canWriteModule('appointments');
+  /* V288 (audit A2 HIGH 1, beachhead blocker). Confirming a booking request was gated on
+     APPOINTMENTS write, but the F&B and bar sectors are not entitled to the appointments module
+     at all — so a cafe or bar owner could only ever DECLINE the requests their own public page
+     produced. The request lives in Bookings, so Bookings write is the right the decision belongs
+     to; the convert path still creates an appointment record, which survives sector-hiding by
+     design (#/appointments stays routable, only its advertising is hidden — see
+     sectorHidesAppointmentsV276). The server keeps its own boundary and its refusal is rendered
+     verbatim in the row notice, so widening the button can never widen the permission. */
+  const canConvertBooking=canWriteModule('bookings');
   const canDeclineBooking=canWriteModule('bookings');
   const canDecideChange=canWriteModule('appointments');
   const decisionNotices=new Map(),pendingDecisions=new Set();
@@ -6019,12 +6050,12 @@ async function bookingsPage(){
      the when-you-are-full rule and auto-confirm. A bar has tables. */
   const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
-  routeMain.innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
+  routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
-    <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
+    <div class="card" data-bookings-shell="portal" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
       <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
-    <div class="card" style="margin-bottom:16px"><b>Change requests</b>
+    <div class="card" data-bookings-shell="changes" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
       ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>`
@@ -6086,6 +6117,9 @@ async function bookingsPage(){
      act on requests — was buried in the middle of configuration they set once.
      Split in the DOM rather than in the template: the markup is one large string shared with the
      load paths, and every id keeps working exactly as before. Same approach the Staff page uses. */
+  /* V288: a fresh token per render, read by the enhancement's guard above. */
+  bookingsShellTokenV288+=1;
+  routeMain.dataset.bookingsTabsV195=String(bookingsShellTokenV288);
   enhanceBookingsTabsV195(M());
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
   if(isOwner)$('aac').onchange=async()=>{
@@ -6099,15 +6133,22 @@ async function bookingsPage(){
   async function load(){
     const {data:br,error}=await sb.from('booking_requests').select('*, services(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
     if(!isCurrent())return;
-    if(error) return fail(error);
     const list=$('blist');if(!list?.isConnected)return;
+    /* V288 (audit A2, MEDIUM 19): a failed read used to raise a toast and leave the card on
+       "Loading…" for ever. Say what happened, in the card, with a way back. */
+    if(error){
+      list.innerHTML=`<div class="cui-empty">${CUI.icon('bookings',{size:38})}<h2>Booking requests unavailable</h2><p>${esc(error.message||'Your booking requests could not be loaded.')}</p><button type="button" class="btn ghost" id="bookingListRetryV288">Try again</button></div>`;
+      const retry=$('bookingListRetryV288');
+      if(retry)retry.onclick=()=>{list.innerHTML='<div class="empty">Loading…</div>';load()};
+      return;
+    }
     list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
       ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:15})} ${esc(b.phone)}</a>`
         : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}</td><td data-label="Party">${b.party_size||'—'}</td>
-      <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}">${esc(b.status)}</span></td>
+      <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}"><span data-workspace-i18n>${esc(statusLabelV288(b.status))}</span></span></td>
       <td data-label="Actions">${actionable?`${canConvertBooking?`<button class="btn sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''}>Confirm</button>`:''}
       ${canDeclineBooking?`<button class="btn ghost sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','decline')" ${pendingDecisions.has(b.id)?'disabled':''}>Decline</button>`:''}`:'<span class="muted small">No action needed</span>'}
       ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div>`
@@ -6118,11 +6159,17 @@ async function bookingsPage(){
     const {data:cr,error}=await sb.from('change_requests').select('*, appointments(starts_at, clients(full_name))')
       .eq('business_id',S.biz.id).eq('status','pending').order('created_at');
     if(!isCurrent())return;
-    if(error) return fail(error);
     const list=$('crlist');if(!list?.isConnected)return;
+    /* V288 (audit A2, MEDIUM 19): same treatment for change requests. */
+    if(error){
+      list.innerHTML=`<div class="err" role="alert">${esc(error.message||'Change requests could not be loaded.')} <button type="button" class="btn ghost sm" id="changeRequestRetryV288">Try again</button></div>`;
+      const retry=$('changeRequestRetryV288');
+      if(retry)retry.onclick=()=>{list.innerHTML='<div class="empty">Loading…</div>';loadCr()};
+      return;
+    }
     list.innerHTML=(cr&&cr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Change requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Requested</th><th>Customer</th><th>Kind</th><th>Current time</th><th>Proposed</th><th>Note</th><th></th></tr></thead><tbody>
       ${cr.map(c=>`<tr><td data-label="Requested">${sgt(c.created_at)||'—'}</td><td data-label="Customer"><b>${esc(c.appointments?.clients?.full_name||'—')}</b></td>
-      <td data-label="Kind"><span class="pill ${c.kind==='cancel'?'no':'new'}">${c.kind}</span></td>
+      <td data-label="Kind"><span class="pill ${c.kind==='cancel'?'no':'new'}">${esc(c.kind==='cancel'?'Cancel':c.kind==='reschedule'?'Reschedule':statusLabelV288(c.kind))}</span></td>
       <td data-label="Current time">${sgt(c.appointments?.starts_at)||'—'}</td>
       <td data-label="Proposed">${sgt(c.proposed_at)||'—'}</td>
       <td class="small" data-label="Note">${esc(c.note||'—')}</td>
@@ -6813,7 +6860,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       ${tierDuplicateDiscountV235(t)?'<p class="loyalty-flag-v235" style="margin-top:8px">Two discounts are listed — customers see both. Keep the one you mean.</p>':''}
       ${t.effective_from||t.expires_at?`<p class="muted small" style="margin-top:6px">${t.effective_from?`Starts ${esc(walletDate(t.effective_from,true))}`:'Starts now'}${t.expires_at?` · Ends ${esc(walletDate(t.expires_at,true))}`:''}</p>`:''}</div><span class="spacer"></span><span class="pill ${state.tone}">${state.label}</span>
       ${canManageLoyalty?`<button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit tier</button>
-      <button class="btn ghost sm trDel" aria-label="Pause tier" data-id="${t.tier_id||t.id}">✕</button>`:''}</div></div>`}).join('')
+      <button class="btn ghost sm trDel" data-id="${t.tier_id||t.id}" data-tier-name="${esc(t.name||'')}" title="Pause this tier — nothing is deleted"><span data-workspace-i18n>Pause</span></button>`:''}</div></div>`}).join('')
       :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
     ${canManageLoyalty&&!tiers.length?'<button class="btn ghost sm" id="trDefaults" type="button" style="margin-top:10px">Add recommended tiers · Gold, Platinum &amp; Diamond</button><p class="muted small" id="trDefaultsStatus" role="status" aria-live="polite" style="margin-top:6px">Creates three editable tier drafts. Nothing is published.</p>':''}
     ${canManageLoyalty?`<button class="btn ghost sm" id="trFormToggleV235" type="button" aria-expanded="false" aria-controls="trFormV235" style="margin-top:12px">+ Add tier</button>
@@ -7506,7 +7553,20 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       syncPointsFromBudget();
     }
     $('rwSave').onclick=()=>saveReward(false);
-    const archive=$('rwArchive');if(archive)archive.onclick=()=>saveReward(true);
+    /* V288 (audit A2, MEDIUM 11): Archive took a customer-facing reward away with one tap and
+       no confirmation at all, while far smaller actions on this same page ask first. It now uses
+       the shared deliberate-confirmation dialog and names the reward being archived. */
+    const archive=$('rwArchive');
+    if(archive)archive.onclick=async()=>{
+      const archiveName=$('rwCustomerName')?.value.trim()||rewardLabel(editorReward)||'this reward';
+      const confirmed=await confirmDeliberateV288({
+        title:'Archive this reward?',
+        body:`\u201C${archiveName}\u201D stops being offered to customers.`,
+        summaryHtml:'<b>What archiving does</b><p class="small" style="margin-top:5px">The reward is switched off and disappears from the customer app. Rewards customers have already claimed are untouched, and the reward stays in your history \u2014 you can switch it back on later. Nothing changes for customers until this draft is published.</p>',
+        acknowledgement:'I understand customers will no longer see this reward.',
+        confirmLabel:'Archive reward',danger:true});
+      if(confirmed)saveReward(true);
+    };
   }
   /* V238 (owner: "i cannot edit the reward"). #rwEditor sits BELOW the whole reward list, so
      pressing Edit rendered a form far off screen and read as a dead button. Same move as V236:
@@ -7917,11 +7977,25 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     fillTier(tier);
     openTierDialogV236(tier?.name?`Edit tier — ${tier.name}`:'Edit tier',b);
   });
+  /* V288 (audit A2, MEDIUM 12). The control was a bare ✕ that read as "delete this tier" but
+     actually set active=false — a pause. Nothing is deleted here and nothing new is invented:
+     the same write, now with the label, the confirmation and the toast that make it honest. */
   document.querySelectorAll('.trDel').forEach(b=>b.onclick=async()=>{
     const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
-    if(tier)await saveTier({id:tier.tier_id||tier.id,name:tier.name,threshold:tier.threshold,
+    if(!tier)return;
+    const confirmed=await confirmDeliberateV288({
+      title:'Pause this tier?',
+      body:`\u201C${tier.name||'This tier'}\u201D stops being awarded to customers.`,
+      summaryHtml:'<b>Pause, not delete</b><p class="small" style="margin-top:5px">The tier is switched off and customers stop reaching it. Nothing is deleted \u2014 its name, threshold and benefits are kept, and you can switch it back on by editing it. Customers who already hold it keep what they hold. Nothing changes until this draft is published.</p>',
+      acknowledgement:'I understand this tier stops being awarded.',
+      confirmLabel:'Pause tier',danger:true});
+    if(!confirmed)return;
+    await saveTier({id:tier.tier_id||tier.id,name:tier.name,threshold:tier.threshold,
       points_multiplier:tier.points_multiplier,perk_note:tier.perk_note,sort:tier.sort||0,active:false,
       effective_from:tier.effective_from||null,expires_at:tier.expires_at||null});
+    /* V288: a fixed sentence, not an interpolated one — the workspace localizer classifies
+       toast copy, and the tier's own name is already on the row the owner just acted on. */
+    toast('Tier paused — nothing was deleted');
   });
 }
 
@@ -11516,13 +11590,17 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
        control cannot be duplicated by id or left wired to nothing. */
     const publishDiffHtml=String($('growPublishDiffBody')?.innerHTML||'')
       .replace(/<button[\s\S]*?<\/button>/gi,'');
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div>${publishDiffHtml?`<section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml}</div></section>`:''}<div class="imp-note"><b>Server-confirmed advanced-action safety</b><p class="muted small" style="margin-top:4px">${live} running action${live===1?'':'s'} · ${shadow} shadow-only · ${unbuilt} unavailable. This check does not display ordinary reward, earning, birthday or bring-back field changes.</p></div><div style="margin-top:10px">${ruleBlocks}</div>${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}<div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">Safety check complete. The programme numbers changing are listed above. Type PUBLISH to make them live for customers.</div><label for="growPubType" class="sr-only">Type PUBLISH to confirm</label><input id="growPubType" autocomplete="off" placeholder="PUBLISH" style="margin-top:8px"><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div>${publishDiffHtml?`<section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml}</div></section>`:''}<div class="imp-note"><b>Server-confirmed advanced-action safety</b><p class="muted small" style="margin-top:4px">${live} running action${live===1?'':'s'} · ${shadow} shadow-only · ${unbuilt} unavailable. This check does not display ordinary reward, earning, birthday or bring-back field changes.</p></div><div style="margin-top:10px">${ruleBlocks}</div>${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}<div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">Safety check complete. The programme numbers changing are listed above. Tick the box to make them live for customers.</div><label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
     let deactivate;const close=()=>{if(deactivate)deactivate();else $('growPubModal')?.remove()};
     deactivate=CUI.activateDialog($('growPubModal'),{onClose:close,initialFocus:'#growPubType'});
     $('growPubClose').onclick=$('growPubCancel').onclick=close;
-    $('growPubType').oninput=event=>{$('growPubConfirm').disabled=(event.target.value||'')!=='PUBLISH'};
+    /* V288 (audit A2, LOW 22): the gate was "type PUBLISH". CLAUDE.md's own low-literacy-first
+       rule says this workforce may not read English, and a Chinese or Malay speaker could not
+       even guess the word. A checkbox is exactly as deliberate — it cannot be pressed by
+       accident, it is one extra intentional act — and it translates. */
+    $('growPubType').onchange=event=>{$('growPubConfirm').disabled=event.target.checked!==true};
     $('growPubConfirm').onclick=async()=>{
-      if(($('growPubType').value||'')!=='PUBLISH')return;
+      if($('growPubType').checked!==true)return;
       const confirmButton=$('growPubConfirm');confirmButton.disabled=true;confirmButton.setAttribute('aria-busy','true');
       const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
       if(!isCurrent())return;
@@ -12136,8 +12214,8 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
         <span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">${studioEffectStateChip(e.state_after_publish)}${e.financial?'<span class="studio-tag fin">changes money</span>':''}${e.customer_facing?'<span class="studio-tag cust">customer sees it</span>':''}</span></div>`).join('')||'<div class="muted small" style="padding:5px 0">No actions on this rule.</div>'}
     </div>`).join(''):'<p class="muted small">This draft has no rules to publish.</p>';
     const confirmBlock=`<div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">${workspaceTemplateHtmlV97(needConfirm?'publishConfirmationSensitive':'publishConfirmationStandard')}</div>
-      <label for="studioPubType" class="sr-only">Type PUBLISH to confirm</label>
-      <input id="studioPubType" autocomplete="off" placeholder="PUBLISH" style="margin-top:8px">`;
+      <label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px">
+        <input type="checkbox" id="studioPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label>`;
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="studioPubModal" role="dialog" aria-modal="true" aria-labelledby="studioPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px">
       <div class="row"><div><h2 id="studioPubTitle">Review before publishing</h2><p class="muted small">${workspaceTemplateHtmlV97('publishDraftVersion',{version:draft.version_no})}</p></div><span class="spacer"></span><button class="btn ghost sm" id="studioPubClose" type="button">Close</button></div>
       ${summary}
@@ -12150,12 +12228,13 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
     const close=()=>{if(deactivate)deactivate();else $('studioPubModal')?.remove();};
     deactivate=CUI.activateDialog($('studioPubModal'),{onClose:close,initialFocus:'#studioPubType'});
     $('studioPubClose').onclick=$('studioPubCancel').onclick=close;
-    if($('studioPubType'))$('studioPubType').oninput=e=>{
-      $('studioPubConfirm').disabled=(e.target.value||'')!=='PUBLISH';
+    /* V288 (audit A2, LOW 22): see the matching change in the Grow publish flow. */
+    if($('studioPubType'))$('studioPubType').onchange=e=>{
+      $('studioPubConfirm').disabled=e.target.checked!==true;
     };
     $('studioPubConfirm').onclick=async()=>{
-      if(($('studioPubType').value||'')!=='PUBLISH'){
-        $('studioPubErr').innerHTML='<div class="err">Type PUBLISH to confirm.</div>';return;
+      if($('studioPubType').checked!==true){
+        $('studioPubErr').innerHTML='<div class="err">Tick the box to confirm.</div>';return;
       }
       const cbtn=$('studioPubConfirm');cbtn.disabled=true;cbtn.setAttribute('aria-busy','true');
       const {error}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
@@ -14457,6 +14536,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'005c68b0020431a0b368c4e64872360b3e2d64a1818259f2ae308bc134ec730e',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'f85e74f73148849cc90d27c2e639713edbf04d4ab18699c1651631ac0b170cd9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

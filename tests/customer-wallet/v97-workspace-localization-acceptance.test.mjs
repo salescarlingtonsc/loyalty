@@ -479,7 +479,10 @@ test('v97 checkout and responsive tables localize interface parts while preservi
   assert.match(checkout,/workspaceTemplateTextV97\(!enabled\?'catalogueEnabled':'catalogueDisabled'\)/);
   assert.match(appointments,/data-label="Date & time"/);
   assert.match(appointments,/<span data-workspace-i18n>min<\/span>/);
-  assert.match(appointments,/<span class="pill \$\{[^}]+\}">\$\{esc\(a\.status\.replace/);
+  /* V288 (audit A2 LOW 23): RETARGETED, not deleted. `a.status.replace('_',' ')` put the raw
+     database value on screen ("no show", "booked"); statusLabelV288 is the one friendly-label
+     table, and its output is still marked for the workspace localizer. */
+  assert.match(appointments,/<span class="pill \$\{[^}]+\}"><span data-workspace-i18n>\$\{esc\(statusLabelV288\(a\.status\)\)\}<\/span><\/span>/);
   assert.match(appointments,/>Details<\/button>/);
   assert.match(appointments,/>Amend<\/button>/);
   for(const source of ['booked','completed','cancelled','no show','Available in Record sale','Hidden from Record sale','Not offered at this branch']){

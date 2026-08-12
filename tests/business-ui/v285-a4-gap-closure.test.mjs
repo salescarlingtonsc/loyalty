@@ -228,7 +228,7 @@ test('an expense can be corrected in place, and the immovable fields stay immova
 test('the bottle catalogue name and price are editable, and null still means unchanged', () => {
   assert.match(app, /data-bottle-name="\$\{index\}"/);
   assert.match(app, /data-bottle-price="\$\{index\}"/);
-  assert.match(app, /p_business:S\.biz\.id,p_product:product\.id,p_name:editedName,p_size_ml:size,p_price_cents:editedPrice/);
+  assert.match(app, /p_business:S\.biz\.id,p_product:product\.id,p_name:editedName,p_size_ml:size,p_price_cents:priceCents/);
   const fn = migration.match(/create or replace function public\.bar_save_bottle_product_v278\([\s\S]*?\n\$\$;/)[0];
   assert.match(fn, /name = coalesce\(v_name, product\.name\)/);
   assert.match(fn, /retail_price_cents = coalesce\(p_price_cents, product\.retail_price_cents\)/);
