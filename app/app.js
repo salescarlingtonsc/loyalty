@@ -7726,11 +7726,11 @@ function renderBusinessDemoRequest(){
     <div id="businessDemoRequestError" role="alert"></div>
     <button class="btn" id="businessDemoRequestSubmit" style="width:100%;margin-top:18px">Send demo request</button>
     <button class="btn ghost" id="businessDemoRequestBack" style="width:100%;margin-top:10px">Back</button>
-    <p class="muted small" id="businessDemoRequestStatus" role="status" aria-live="polite" style="margin-top:8px">This opens your email app with the demo details. It does not create a Peekaa login.</p>
+    <p class="muted small" id="businessDemoRequestStatus" role="status" aria-live="polite" style="margin-top:8px">Peekaa records this request and a consultant will contact you. It does not create a Peekaa login.</p>
     ${legalLinks()}</section></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
   $('businessDemoRequestBack').onclick=()=>renderBusinessSignupChoice();
-  $('businessDemoRequestSubmit').onclick=()=>{
+  $('businessDemoRequestSubmit').onclick=async()=>{
     const name=String($('demoContactName')?.value||'').trim();
     const business=String($('demoBusinessName')?.value||'').trim();
     const email=String($('demoContactEmail')?.value||'').trim();
@@ -7742,22 +7742,21 @@ function renderBusinessDemoRequest(){
       return;
     }
     $('businessDemoRequestError').innerHTML='';
-    const subject='Peekaa demo request';
-    const body=[
-      'Please contact me for a Peekaa demo.',
-      '',
-      `Name: ${name}`,
-      `Business: ${business}`,
-      `Email: ${email}`,
-      `Mobile: ${phone}`,
-      `Sector: ${sector||'-'}`,
-      '',
-      `Notes: ${notes||'-'}`,
-      '',
-      'I understand this is a demo request only. No Peekaa account, workspace, login, Stripe Checkout, or Super Admin approval is created from this request.'
-    ].join('\n');
-    $('businessDemoRequestStatus').textContent='Opening your email app…';
-    window.location.href=`mailto:admin.peekaa@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const button=$('businessDemoRequestSubmit');
+    button.disabled=true;
+    $('businessDemoRequestStatus').textContent='Sending your demo request…';
+    try{
+      const {error}=await sb.rpc('submit_demo_request_v292',{
+        p_contact_name:name,p_business_name:business,p_contact_email:email,
+        p_contact_phone:phone,p_sector:sector||null,p_note:notes||null
+      });
+      if(error)throw error;
+      $('businessDemoRequestStatus').textContent='Sent. A Peekaa consultant will contact you. No account, workspace, login, Stripe Checkout or charge was created.';
+    }catch(_error){
+      button.disabled=false;
+      $('businessDemoRequestStatus').textContent='';
+      $('businessDemoRequestError').innerHTML='<div class="err">We could not send that demo request. Check your name, business name, email and mobile number, then try again.</div>';
+    }
   };
 }
 function renderStaffInviteAuthV151(mode='in',initialCode=''){

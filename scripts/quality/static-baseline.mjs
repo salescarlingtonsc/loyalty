@@ -402,7 +402,12 @@ export async function checkPublicPageForms(root = repoRoot) {
   assert.ok(consentTag, 'join page must retain the PDPA marketing consent checkbox.');
   assert.doesNotMatch(consentTag, /\bchecked\b/i, 'PDPA marketing consent checkbox must not be pre-checked.');
   assertTagContains(join, /<button\b[^>]*id=["']submitBtn["'][^>]*type=["']submit["'][^>]*disabled[^>]*>/, 'join page must retain a disabled-by-default submit button.');
-  assertTagContains(join, /\^\[3689\]\\d\{7\}\$/, 'join page must retain Singapore mobile-number validation.');
+  // V292 retarget (audit G9): this pin used to name /^[3689]\d{7}$/, the GATEWAY's rule, which
+  // also admits 3xx VoIP and 6xx fixed-line numbers. The field is labelled "Mobile number" and
+  // the customer app matches members on /^[89]\d{7}$/, so a landline joiner became a member the
+  // wallet could never find. The pin now names the tighter CLIENT rule; the gateway is unchanged
+  // and stays the more permissive of the two, which is the correct direction for a client guard.
+  assertTagContains(join, /\^\[89\]\\d\{7\}\$/, 'join page must retain Singapore mobile-number validation.');
 
   // App templates and controls now live in app/app.js; scan it together with the
   // shell markup so the required-control contract still covers the whole page.

@@ -630,7 +630,6 @@
       'PDF, CSV, XLSX, PNG, JPEG, WebP or ZIP · maximum 25 MB.':'支持 PDF、CSV、XLSX、PNG、JPEG、WebP 或 ZIP；最大 25 MB。',
       'Publishing changes the default module template for future firm assignments. Previous versions stay available for audit.':'发布会更改未来企业分配的默认模块模板；旧版本仍保留供审计。',
       'Search is applied on the server across the complete directory, so it remains usable as the platform grows.':'搜索在服务器端覆盖完整目录，因此平台扩展后仍可正常使用。',
-      'Showing the newest 100 applications. Narrow the search to find another application.':'正在显示最新 100 个申请，请缩小搜索范围查找其他申请。',
       'The evidence checklist is created during transactional account conversion.':'证据检查清单会在事务性账户转换过程中创建。',
       'The latest returned run has no exception items.':'最新返回的运行没有异常项目。',
       'The secure owner invitation is shown once after approval. Copy it before closing.':'批准后安全负责人邀请只显示一次，请在关闭前复制。',
@@ -722,7 +721,6 @@
       'PDF, CSV, XLSX, PNG, JPEG, WebP or ZIP · maximum 25 MB.':'PDF, CSV, XLSX, PNG, JPEG, WebP atau ZIP · maksimum 25 MB.',
       'Publishing changes the default module template for future firm assignments. Previous versions stay available for audit.':'Penerbitan mengubah templat modul lalai untuk tugasan firma akan datang. Versi terdahulu kekal untuk audit.',
       'Search is applied on the server across the complete directory, so it remains usable as the platform grows.':'Carian digunakan pada pelayan merentas direktori lengkap, jadi ia kekal berguna apabila platform berkembang.',
-      'Showing the newest 100 applications. Narrow the search to find another application.':'Menunjukkan 100 permohonan terbaharu. Kecilkan carian untuk mencari permohonan lain.',
       'The evidence checklist is created during transactional account conversion.':'Senarai semak bukti dicipta semasa penukaran akaun bertransaksi.',
       'The latest returned run has no exception items.':'Larian terkini yang dikembalikan tiada item pengecualian.',
       'The secure owner invitation is shown once after approval. Copy it before closing.':'Jemputan pemilik selamat dipaparkan sekali selepas kelulusan. Salin sebelum menutup.',
@@ -2875,6 +2873,66 @@
       'Acknowledgement recorded.':'Pengakuan direkodkan.'
     })
   });
+  const PLATFORM_COPY_V292=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Showing the first {count}. This list has no cursor or total, so more records may exist.':'仅显示前 {count} 条。此列表没有游标也没有总数，因此可能还有更多记录。',
+      'This is the largest window this reader accepts. Narrow the filters to reach the rest.':'这已是该读取接口允许的最大范围。请缩小筛选条件以查看其余记录。',
+      'Load 50 more':'再加载 50 条',
+      'Open a single firm from the exception queue to reach a billing record that is not listed.':'请从异常队列中打开单个企业，以查看未列出的账单记录。',
+      'Search for the business by name to reach a subscription that is not listed.':'请按企业名称搜索，以查看未列出的订阅。',
+      'Show all {count}':'显示全部 {count} 条',
+      'Show fewer':'收起',
+      'Demo requests':'演示申请','Demos':'演示',
+      'Demo requests unavailable':'演示申请不可用',
+      'Loading demo requests…':'正在加载演示申请…',
+      'Prospects who asked for a Peekaa demo. Contact them, then record what happened.':'申请 Peekaa 演示的潜在客户。联系他们后请记录结果。',
+      'Awaiting contact':'待联系','Total requests':'申请总数',
+      'Requested {date}':'申请时间 {date}','Contacted {date}':'联系时间 {date}',
+      'Mark contacted':'标记为已联系','Archive request':'归档申请','Reopen request':'重新打开申请',
+      'Record demo outcome':'记录演示结果','Save outcome':'保存结果',
+      'What happened?':'发生了什么？',
+      'Record what you told the prospect, so the next person does not repeat the call.':'请记录你向潜在客户说明的内容，避免下一位同事重复致电。',
+      'No demo requests yet':'尚无演示申请',
+      'A demo request appears here the moment a prospect sends one from the website.':'潜在客户从网站提交申请后，该申请会立即显示在此处。',
+      'Demo request updated.':'演示申请已更新。',
+      'All statuses':'所有状态',
+      'Search name, business, email or phone':'搜索姓名、企业、电邮或电话',
+      'Demo request queue':'演示申请队列',
+      'Every request, newest first. Marking one contacted records who acted and when.':'所有申请按时间倒序排列。标记为已联系会记录操作人及时间。',
+      'Interest':'关注内容','Sector not given':'未填写行业',
+      'Showing {shown} of {count}.':'已显示 {count} 条中的 {shown} 条。',
+      'New':'新申请','Contacted':'已联系','Archived':'已归档'
+    }),
+    ms:Object.freeze({
+      'Showing the first {count}. This list has no cursor or total, so more records may exist.':'Memaparkan {count} rekod pertama sahaja. Senarai ini tiada kursor atau jumlah keseluruhan, jadi mungkin ada lagi rekod.',
+      'This is the largest window this reader accepts. Narrow the filters to reach the rest.':'Ini tetingkap terbesar yang diterima pembaca ini. Persempitkan penapis untuk mencapai selebihnya.',
+      'Load 50 more':'Muatkan 50 lagi',
+      'Open a single firm from the exception queue to reach a billing record that is not listed.':'Buka satu firma daripada baris gilir pengecualian untuk mencapai rekod pengebilan yang tidak disenaraikan.',
+      'Search for the business by name to reach a subscription that is not listed.':'Cari perniagaan mengikut nama untuk mencapai langganan yang tidak disenaraikan.',
+      'Show all {count}':'Tunjuk semua {count}',
+      'Show fewer':'Tunjuk kurang',
+      'Demo requests':'Permintaan demo','Demos':'Demo',
+      'Demo requests unavailable':'Permintaan demo tidak tersedia',
+      'Loading demo requests…':'Memuatkan permintaan demo…',
+      'Prospects who asked for a Peekaa demo. Contact them, then record what happened.':'Prospek yang meminta demo Peekaa. Hubungi mereka, kemudian rekod apa yang berlaku.',
+      'Awaiting contact':'Menunggu dihubungi','Total requests':'Jumlah permintaan',
+      'Requested {date}':'Diminta {date}','Contacted {date}':'Dihubungi {date}',
+      'Mark contacted':'Tandakan dihubungi','Archive request':'Arkibkan permintaan','Reopen request':'Buka semula permintaan',
+      'Record demo outcome':'Rekod hasil demo','Save outcome':'Simpan hasil',
+      'What happened?':'Apa yang berlaku?',
+      'Record what you told the prospect, so the next person does not repeat the call.':'Rekod apa yang anda beritahu prospek, supaya orang seterusnya tidak mengulangi panggilan itu.',
+      'No demo requests yet':'Belum ada permintaan demo',
+      'A demo request appears here the moment a prospect sends one from the website.':'Permintaan demo muncul di sini sebaik sahaja prospek menghantarnya dari laman web.',
+      'Demo request updated.':'Permintaan demo dikemas kini.',
+      'All statuses':'Semua status',
+      'Search name, business, email or phone':'Cari nama, perniagaan, e-mel atau telefon',
+      'Demo request queue':'Baris gilir permintaan demo',
+      'Every request, newest first. Marking one contacted records who acted and when.':'Setiap permintaan, terbaharu dahulu. Menandakan satu sebagai dihubungi merekodkan siapa bertindak dan bila.',
+      'Interest':'Minat','Sector not given':'Sektor tidak dinyatakan',
+      'Showing {shown} of {count}.':'Memaparkan {shown} daripada {count}.',
+      'New':'Baharu','Contacted':'Dihubungi','Archived':'Diarkibkan'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -2890,6 +2948,7 @@
       ??PLATFORM_COPY_V177[platformLocale]?.[key]
       ??PLATFORM_COPY_V255[platformLocale]?.[key]
       ??PLATFORM_COPY_V282[platformLocale]?.[key]
+      ??PLATFORM_COPY_V292[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -2978,6 +3037,10 @@
        the DB gate (app.v89_platform_can('onboarding','r')) is the same one, so
        a new key here would let the two drift apart. */
     {key:'crm',moduleKey:'onboarding',label:'CRM',shortLabel:'CRM',hash:'#/platform/crm',icon:'customers'},
+    /* V292: super-admin only and deliberately without a moduleKey, like the partner
+       register. A demo request is an unqualified prospect who has no tenant, so no
+       tenant-scoped grant can be the thing that opens it. */
+    {key:'demo-requests',label:'Demo requests',shortLabel:'Demos',hash:'#/platform/demo-requests',icon:'customers',superAdminOnly:true},
     {key:'customer-lifecycle',moduleKey:'billing',label:'Customer lifecycle',shortLabel:'Customers',hash:'#/platform/customer-lifecycle',icon:'branch'},
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
     {key:'companies',label:'Companies',shortLabel:'Companies',hash:'#/platform/companies',icon:'branch',superAdminOnly:true},
@@ -3194,7 +3257,7 @@
        rail. Putting CRM first made the Sales header point at CRM while the word
        "CRM" appeared nowhere. Onboarding stays the home it has always been, and
        CRM appears as a named child. */
-    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm'])}),
+    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm','demo-requests'])}),
     Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms','companies'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports','marketing'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
@@ -5884,6 +5947,8 @@
   async function renderOnboarding(context,filters=defaultOnboardingFilters()) {
     const {main,CUI,sb,generation,isCurrent}=context;
     const prior=context.onboardingLoadMore?asObject(context.onboardingPage):null;
+    const applicationLimit=Math.min(
+      BUSINESS_APPLICATION_CEILING,Math.max(1,Number(context.applicationLimit)||100));
     const previousScroll=prior?Number(globalObject.scrollY||0):null;
     main.innerHTML=loading(CUI,'Onboarding',prior?'Loading the next 50 firms…':'Loading the SME pipeline…','setup');
     try{
@@ -5900,15 +5965,19 @@
         /* V169: also pull status='approved'. Applications approved before V167 shipped direct
            activation never became a workspace, and filtering to 'submitted' hid them entirely,
            so an owner could be told "approved" while admin had no way to see or finish it. */
+        /* V292: the reader publishes `truncated` and accepts up to 250, so the window
+           grows on the server's own word rather than the queue ending at 100 with a
+           sentence that offered no way forward. */
         prior?.applicationQueue?Promise.resolve(prior.applicationQueue):context.access?.role==='super_admin'
           ?Promise.all([
-            rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:filters.search||null,p_limit:100}),
-            rpc(sb,'platform_list_business_applications_v95',{p_status:'approved',p_search:filters.search||null,p_limit:100})
+            rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:filters.search||null,p_limit:applicationLimit}),
+            rpc(sb,'platform_list_business_applications_v95',{p_status:'approved',p_search:filters.search||null,p_limit:applicationLimit})
           ]).then(([submitted,approved])=>({
             applications:asArray(submitted,['applications']).concat(asArray(approved,['applications'])),
-            truncated:Boolean(submitted?.truncated||approved?.truncated)
+            truncated:Boolean(submitted?.truncated||approved?.truncated),
+            limit:applicationLimit
           }))
-          :Promise.resolve({applications:[]}),
+          :Promise.resolve({applications:[],limit:applicationLimit}),
         prior?.accountSignupQueue?Promise.resolve(prior.accountSignupQueue):context.access?.role==='super_admin'
           ?rpc(sb,'platform_list_account_signups_v160',{p_search:filters.search||null,p_limit:100})
           :Promise.resolve({items:[]})
@@ -5954,6 +6023,12 @@
           :businessApplicationQueueHtml(applicationQueue,CUI,items)}`;
         if(tab==='signups')wireAccountSignupQueue({...context,filters});
         else wireBusinessApplicationQueue({...context,applicationQueue,filters});
+        const applicationsMore=main.querySelector('#platformApplicationsLoadMore');
+        if(applicationsMore)applicationsMore.onclick=()=>renderOnboarding({
+          ...context,
+          applicationLimit:Math.min(BUSINESS_APPLICATION_CEILING,applicationLimit+PLATFORM_WINDOW_STEP),
+          onboardingLoadMore:false,onboardingPage:null
+        },filters);
       }
       pageState.attentionSummary=prior?.attentionSummary||directory.attention_summary;
       main.querySelectorAll('[data-onboarding-tab]').forEach(button=>button.onclick=()=>{
@@ -5988,12 +6063,18 @@
       }
     }catch(error){showError(main,error,CUI,'Onboarding')}
   }
+  /* V292: this used to end in `.slice(0,8)`, and NOTHING in the console could
+     reach the ninth website signup -- not a button, not a filter, not a search.
+     Worse, the same sliced array fed the Signups tab BADGE, so a queue of forty
+     reported eight. The cap is now a display preview with a real reveal, and the
+     badge counts every row the filters actually matched. */
+  const PAYMENT_MANAGED_SIGNUP_PREVIEW=8;
   function paymentManagedSignupItems(items){
     return asArray(items).filter(item=>item?.business_id&&(
       item._has_prospect_detail===false
       ||['website','self_service','existing_business'].includes(String(item.source_type||'').toLowerCase())
       ||['incomplete','trialing','active','past_due','unpaid','paused','canceled'].includes(String(item.subscription_status||'').toLowerCase())
-    )).slice(0,8);
+    ));
   }
   function accountSignupQueueHtml(payload,CUI){
     const rows=asArray(payload,['items']);
@@ -6045,6 +6126,18 @@
   }
   function wireAccountSignupQueue(context){
     const {main,sb,CUI,filters}=context;
+    /* V292: a local reveal rather than a re-render. Nothing further is fetched --
+       every matching row is already in the DOM -- so the ninth signup is one click
+       away and the operator does not lose their place in the queue. */
+    const showAll=main.querySelector('#platformSignupsShowAll');
+    if(showAll)showAll.onclick=()=>{
+      const expanded=showAll.dataset.signupExpanded==='true';
+      main.querySelectorAll('[data-signup-overflow]').forEach(row=>{row.hidden=expanded});
+      showAll.dataset.signupExpanded=expanded?'false':'true';
+      showAll.textContent=expanded
+        ?pt('Show all {count}',{count:main.querySelectorAll('[data-signup-overflow]').length+PAYMENT_MANAGED_SIGNUP_PREVIEW})
+        :pt('Show fewer');
+    };
     main.querySelectorAll('[data-account-signup-triage]').forEach(button=>{
       button.onclick=async()=>{
         const status=button.dataset.accountSignupTriage,user=button.dataset.user;
@@ -6079,16 +6172,18 @@
         <div class="row"><div><b>${escapeHtml(pt('Website signups and paid workspaces'))}</b>
           <p class="small">${escapeHtml(pt('Self-service signups are payment-managed. Their names, payment state and workspace state appear here; approve/reject is intentionally unavailable for this Stripe-controlled path.'))}</p></div>
           <span class="spacer"></span><span class="pill">${rows.length} ${escapeHtml(pt('shown'))}</span></div>
-        <div class="platform-card-list" style="margin-top:12px">${rows.map(item=>`<div class="platform-action-item">
+        <div class="platform-card-list" style="margin-top:12px">${rows.map((item,index)=>`<div class="platform-action-item"${index>=PAYMENT_MANAGED_SIGNUP_PREVIEW?' data-signup-overflow hidden':''}>
           <div><b>${escapeHtml(prospectCompany(item))}</b>
             <p class="muted small">${escapeHtml([prospectContact(item),item.primary_contact_email,item.primary_contact_phone].filter(Boolean).join(' · ')||pt('Billing contact not recorded'))}</p>
             <p class="muted small">${escapeHtml(pt('Subscription'))}: ${escapeHtml(platformStatus(item.subscription_status||'not_recorded'))} · ${escapeHtml(pt('Onboarding'))}: ${escapeHtml(platformStatus(item.onboarding_status||'not_started'))}</p></div>
           <div class="platform-actions"><a class="btn ghost sm" href="#/platform/firms">${escapeHtml(pt('Open firm directory'))}</a>
             <a class="btn ghost sm" href="#/platform/billing?business=${encodeURIComponent(String(item.business_id||''))}">${escapeHtml(pt('Open billing'))}</a></div>
         </div>`).join('')||`<p class="muted small">${escapeHtml(pt('No payment-managed website signups are visible in the current filters. Clear filters or search by business name.'))}</p>`}</div>
+        ${rows.length>PAYMENT_MANAGED_SIGNUP_PREVIEW?`<div class="platform-load-more"><button type="button" class="btn ghost" id="platformSignupsShowAll" data-signup-expanded="false">${escapeHtml(pt('Show all {count}',{count:rows.length}))}</button></div>`:''}
       </div>
     </section>`;
   }
+  const BUSINESS_APPLICATION_CEILING=250;
   function businessApplicationQueueHtml(payload,CUI,firmItems=[]){
     const applications=asArray(payload,['applications']);
     return `<section class="card" id="platformBusinessApplicationQueue" style="margin-bottom:18px">
@@ -6106,7 +6201,10 @@
         ${application.status==='approved'?`<div class="platform-route-note platform-status-note" style="margin-top:10px"><b>${escapeHtml(pt('Approved but not activated'))}</b>
           <p class="small">${escapeHtml(pt('This application was approved before Peekaa activated workspaces automatically, so no workspace was created and the owner cannot sign in yet. Activate workspace finishes it.'))}</p></div>`:''}
       </article>`).join('')||CUI.emptyState({iconName:'setup',title:'No assisted applications awaiting review',body:'Paid website signups do not wait here; Stripe confirmation activates their workspace automatically.'})}</div>
-        ${payload?.truncated?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("Showing the newest 100 applications. Narrow the search to find another application."))}</p>`:''}
+        ${platformWindowHtml(platformWindowState({
+          loaded:applications.length,limit:Number(payload?.limit)||100,
+          ceiling:BUSINESS_APPLICATION_CEILING,reported:payload?.truncated===true
+        }),{buttonId:'platformApplicationsLoadMore'})}
     </section>`;
   }
   function wireBusinessApplicationQueue(context){
@@ -8910,17 +9008,31 @@
       CUI.focusRoute(main);
     }
   }
-  async function renderMarketingUsage(context,range=null) {
+  /* V292: both v255 readers publish has_more and both accept a larger limit than
+     the console was asking for (engagement up to 1000, demand up to 200), so the
+     old "More months exist / narrow the range" note was advice where a button
+     would do. Growing the window re-asks the server; nothing is sliced locally. */
+  const MARKETING_ENGAGEMENT_CEILING=1000;
+  const MARKETING_DEMAND_CEILING=200;
+  async function renderMarketingUsage(context,range=null,windows=null) {
     const {main,CUI,sb}=context;
     const active=range||marketingMonthRange();
+    const engagementLimit=Math.min(MARKETING_ENGAGEMENT_CEILING,Math.max(1,Number(windows?.engagement)||100));
+    const demandLimit=Math.min(MARKETING_DEMAND_CEILING,Math.max(1,Number(windows?.demand)||50));
     main.innerHTML=loading(CUI,'Marketing usage','Loading marketing engagement across every firm…','retention');
     try{
       const [engagement,demand]=(await Promise.all([
-        rpc(sb,'platform_engagement_monthly_v255',{p_from:active.from,p_to:active.to,p_businesses:null,p_limit:100}),
-        rpc(sb,'platform_explore_demand_v255',{p_from:active.from,p_to:active.to,p_limit:50})
+        rpc(sb,'platform_engagement_monthly_v255',{p_from:active.from,p_to:active.to,p_businesses:null,p_limit:engagementLimit}),
+        rpc(sb,'platform_explore_demand_v255',{p_from:active.from,p_to:active.to,p_limit:demandLimit})
       ])).map(asObject);
       const summary=asObject(engagement.summary),businesses=asArray(engagement.businesses),monthlyTrend=asArray(engagement.monthly_trend);
       const demandItems=asArray(demand.items);
+      const engagementWindow=platformWindowState({
+        loaded:businesses.length,limit:engagementLimit,
+        ceiling:MARKETING_ENGAGEMENT_CEILING,reported:engagement.has_more===true});
+      const demandWindow=platformWindowState({
+        loaded:demandItems.length,limit:demandLimit,
+        ceiling:MARKETING_DEMAND_CEILING,reported:demand.has_more===true});
       main.innerHTML=`${CUI.pageHeader({title:'Marketing usage',subtitle:'Campaign reach and push delivery across every firm, month by month.',iconName:'retention'})}
         <section class="card"><form id="marketingRangeV256" class="platform-filter-grid"><label>${escapeHtml(pt('From'))}<input type="date" name="from" value="${escapeHtml(active.from)}" required></label><label>${escapeHtml(pt('To'))}<input type="date" name="to" value="${escapeHtml(active.to)}" required></label><button class="btn" type="submit">${escapeHtml(pt('Apply'))}</button></form></section>
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Marketing usage summary'))}">${[
@@ -8930,16 +9042,22 @@
           ['Push sent',Number(summary.push_sent||0),'reports']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>
         ${businesses.length
-          ? CUI.card({title:'Marketing usage by firm',description:'Every firm and month in the selected range.',body:CUI.table({caption:'Marketing usage',headers:['Business','Month','Customers','Campaigns','Push sent'],rows:marketingUsageRows(businesses,CUI)})})
+          ? CUI.card({title:'Marketing usage by firm',description:'Every firm and month in the selected range.',body:`${CUI.table({caption:'Marketing usage',headers:['Business','Month','Customers','Campaigns','Push sent'],rows:marketingUsageRows(businesses,CUI)})}${platformWindowHtml(engagementWindow,{buttonId:'marketingUsageLoadMore'})}`})
           : CUI.emptyState({iconName:'retention',title:'No marketing usage in this range',body:'Widen the date range to see campaign and push activity.'})}
         ${monthlyTrend.length
           ? CUI.card({title:'Monthly trend',description:'Platform-wide totals by month.',body:CUI.table({caption:'Marketing monthly trend',headers:['Month','Businesses','Customers','Campaigns','Push sent'],rows:marketingTrendRowsV256(monthlyTrend)})})
           : ''}
         ${CUI.card({title:'Explore demand',description:'What customers search for, shaped to protect identity.',body:demandItems.length
-            ? CUI.table({caption:'Explore demand',headers:['Search shape','Searches','Customers'],rows:marketingDemandRowsV256(demandItems)})
+            ? `${CUI.table({caption:'Explore demand',headers:['Search shape','Searches','Customers'],rows:marketingDemandRowsV256(demandItems)})}${platformWindowHtml(demandWindow,{buttonId:'marketingDemandLoadMore'})}`
             : CUI.emptyState({iconName:'reports',title:'No search activity in this range',body:'Search shapes will appear here once customers use Explore.'})})}
         ${Number(demand.suppressed_buckets||0)>0?localizedRouteNoteHtml('Rare search shapes are hidden','Shapes with too few searches are suppressed to protect customer privacy.'):''}
-        ${engagement.has_more?localizedRouteNoteHtml('More months exist','Narrow the range to see the rest.'):''}`;
+`;
+      const engagementMore=main.querySelector('#marketingUsageLoadMore');
+      if(engagementMore)engagementMore.onclick=()=>renderMarketingUsage(context,active,{
+        engagement:engagementWindow.nextLimit,demand:demandLimit});
+      const demandMore=main.querySelector('#marketingDemandLoadMore');
+      if(demandMore)demandMore.onclick=()=>renderMarketingUsage(context,active,{
+        engagement:engagementLimit,demand:demandWindow.nextLimit});
       main.querySelector('#marketingRangeV256').onsubmit=event=>{
         event.preventDefault();
         const form=new FormData(event.currentTarget);
@@ -9044,15 +9162,137 @@
       CUI.announce('Acknowledgement recorded.');
     }});
   }
-  async function renderPartnerObligations(context) {
+  /* ===== V292 (audit S8): the demo request queue =====
+     "Request a demo" was a `mailto:` link. It recorded nothing, and on a device
+     with no configured mail client -- a fresh Android phone, an iPhone with Mail
+     removed, any in-app browser -- it silently did nothing at all while the page
+     said "Opening your email app...". Prospects believed they had asked for a
+     demo and had not. submit_demo_request_v292 now records the request; this is
+     where it is worked.
+     Note the shape difference from every other list on this route: this reader
+     was built WITH pagination, so it returns a real total and a real offset. The
+     queue therefore says "50 of 214" and accumulates genuine server pages, rather
+     than growing a limit and guessing. */
+  function demoRequestQueueHtml(items,CUI,canWrite=false) {
+    if(!items.length)return CUI.emptyState({
+      iconName:'customers',title:'No demo requests yet',
+      body:'A demo request appears here the moment a prospect sends one from the website.'});
+    return items.map(request=>{
+      const state=String(request.status||'new').toLowerCase();
+      const contact=[request.contact_email,request.contact_phone].filter(Boolean).join(' \u00b7 ');
+      const tone=state==='contacted'?'ok':state==='archived'?'new':'no';
+      const actions=canWrite?`${state==='contacted'?'':`<button type="button" class="btn sm" data-demo-contacted="${escapeHtml(request.id)}">${escapeHtml(pt('Mark contacted'))}</button>`}${state==='archived'
+        ?`<button type="button" class="btn ghost sm" data-demo-reopen="${escapeHtml(request.id)}">${escapeHtml(pt('Reopen request'))}</button>`
+        :`<button type="button" class="btn danger sm" data-demo-archive="${escapeHtml(request.id)}">${escapeHtml(pt('Archive request'))}</button>`}`:'';
+      return `<article class="platform-action-item" data-demo-request="${escapeHtml(request.id)}">
+        <div><b>${escapeHtml(request.business_name)}</b>
+          <p class="muted small">${escapeHtml(request.contact_name)}${contact?` \u00b7 ${escapeHtml(contact)}`:''}</p>
+          <p class="muted small">${escapeHtml(request.sector||pt('Sector not given'))} \u00b7 ${escapeHtml(pt('Requested {date}',{date:dateTime(request.created_at)}))}${request.contacted_at?` \u00b7 ${escapeHtml(pt('Contacted {date}',{date:dateTime(request.contacted_at)}))}`:''}</p>
+          ${request.note?`<p class="small">${escapeHtml(request.note)}</p>`:''}
+          ${request.triage_note?`<p class="muted small">${escapeHtml(request.triage_note)}</p>`:''}</div>
+        <div class="platform-actions">${CUI.status(platformStatus(state),tone)}${actions}</div>
+      </article>`;
+    }).join('');
+  }
+  function demoRequestOutcomeModal(context,request,onDone) {
+    const {CUI,sb}=context;
+    modal({title:'Record demo outcome',submitLabel:'Save outcome',CUI,
+      body:`<div class="platform-form-grid"><div class="wide">${CUI.field({
+        id:'demoRequestOutcomeNote',label:'What happened?',control:'textarea',required:true,
+        hint:'Record what you told the prospect, so the next person does not repeat the call.',
+        attributes:'name="note" minlength="2" maxlength="500" rows="3"'})}</div></div>`,
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_mark_demo_request_v292',{
+          p_request:request.id,p_status:'contacted',p_note:form.get('note')});
+        controls.close();await onDone();CUI.announce('Demo request updated.');
+      }});
+  }
+  async function renderDemoRequests(context,view={}) {
     const {main,CUI,sb}=context;
     const canWrite=context.canWrite===true;
+    const status=String(view.status??platformRouteParam(context.hash,'status')??'');
+    const search=String(view.search??platformRouteParam(context.hash,'search')??'');
+    const carried=asArray(view.loaded);
+    main.innerHTML=loading(CUI,'Demo requests','Loading demo requests\u2026','customers');
+    try{
+      const payload=asObject(await rpc(sb,'platform_list_demo_requests_v292',{
+        p_status:status||null,p_search:search||null,
+        p_limit:PLATFORM_WINDOW_STEP,p_offset:carried.length
+      }));
+      const items=carried.concat(asArray(payload.items));
+      const total=Number(payload.total_count??items.length);
+      const awaiting=Number(payload.new_count||0);
+      const hasMore=items.length<total;
+      const refresh=()=>renderDemoRequests(context,{status,search});
+      main.innerHTML=`${CUI.pageHeader({title:'Demo requests',
+        subtitle:'Prospects who asked for a Peekaa demo. Contact them, then record what happened.',
+        iconName:'customers'})}
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Demo request queue'))}">${[
+          ['Awaiting contact',awaiting,'info'],['Total requests',total,'customers']
+        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>
+        <section class="card"><form id="demoRequestFilters" class="platform-filter-grid">
+          <label class="cui-field"><span class="field-label">${escapeHtml(pt('Status'))}</span><select name="status"><option value="">${escapeHtml(pt('All statuses'))}</option>${['new','contacted','archived'].map(value=>`<option value="${value}"${status===value?' selected':''}>${escapeHtml(platformStatus(value))}</option>`).join('')}</select></label>
+          <label class="cui-field"><span class="field-label">${escapeHtml(pt('Search name, business, email or phone'))}</span><input name="search" value="${escapeHtml(search)}" autocomplete="off"></label>
+          <div class="platform-actions"><button class="btn" type="submit">${escapeHtml(pt('Apply filters'))}</button><button class="btn ghost" type="button" id="demoRequestClear">${escapeHtml(pt('Clear filters'))}</button></div>
+        </form></section>
+        ${CUI.card({title:'Demo request queue',description:'Every request, newest first. Marking one contacted records who acted and when.',
+          body:`${demoRequestQueueHtml(items,CUI,canWrite)}${items.length?`<div class="platform-load-more"><p class="muted small">${escapeHtml(pt('Showing {shown} of {count}.',{shown:items.length,count:total}))}</p>${hasMore?`<button type="button" class="btn ghost" id="demoRequestLoadMore">${escapeHtml(pt('Load 50 more'))}</button>`:''}</div>`:''}`})}`;
+      const form=main.querySelector('#demoRequestFilters');
+      if(form)form.onsubmit=event=>{
+        event.preventDefault();
+        const data=new FormData(form);
+        renderDemoRequests(context,{status:String(data.get('status')||''),search:String(data.get('search')||'')});
+      };
+      const clear=main.querySelector('#demoRequestClear');
+      if(clear)clear.onclick=()=>renderDemoRequests(context,{status:'',search:''});
+      const more=main.querySelector('#demoRequestLoadMore');
+      if(more)more.onclick=()=>renderDemoRequests(context,{status,search,loaded:items});
+      main.querySelectorAll('[data-demo-contacted]').forEach(button=>{
+        const request=items.find(entry=>String(entry.id)===button.dataset.demoContacted);
+        if(request)button.onclick=()=>demoRequestOutcomeModal(context,request,refresh);
+      });
+      main.querySelectorAll('[data-demo-archive]').forEach(button=>button.onclick=async()=>{
+        button.disabled=true;
+        try{
+          await rpc(sb,'platform_mark_demo_request_v292',{p_request:button.dataset.demoArchive,p_status:'archived',p_note:null});
+          CUI.announce('Demo request updated.');await refresh();
+        }catch(error){
+          button.disabled=false;
+          CUI.announce(platformErrorMessage(error,'Please try again.'),{assertive:true});
+        }
+      });
+      main.querySelectorAll('[data-demo-reopen]').forEach(button=>button.onclick=async()=>{
+        button.disabled=true;
+        try{
+          await rpc(sb,'platform_mark_demo_request_v292',{p_request:button.dataset.demoReopen,p_status:'new',p_note:null});
+          CUI.announce('Demo request updated.');await refresh();
+        }catch(error){
+          button.disabled=false;
+          CUI.announce(platformErrorMessage(error,'Please try again.'),{assertive:true});
+        }
+      });
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Demo requests')}
+  }
+
+  /* V292: one limit governs all three registers this reader returns, it publishes
+     no total, and it accepts up to 500. The window therefore grows on evidence --
+     any one of the three lists coming back exactly full -- rather than the console
+     asserting that 200 disclosures is all there has ever been. */
+  const PARTNER_OBLIGATION_CEILING=500;
+  async function renderPartnerObligations(context,limit=200) {
+    const {main,CUI,sb}=context;
+    const canWrite=context.canWrite===true;
+    const windowLimit=Math.min(PARTNER_OBLIGATION_CEILING,Math.max(1,Number(limit)||200));
     main.innerHTML=loading(CUI,'Partner obligations','Loading the partner register…','setup');
     try{
-      const payload=asObject(await rpc(sb,'platform_list_partner_obligations_v282',{p_limit:200}));
+      const payload=asObject(await rpc(sb,'platform_list_partner_obligations_v282',{p_limit:windowLimit}));
       const partners=asArray(payload.partners);
       const disclosures=asArray(payload.disclosures);
       const suppressions=asArray(payload.suppressions);
+      const partnerWindow=platformWindowState({
+        loaded:Math.max(partners.length,disclosures.length,suppressions.length),
+        limit:windowLimit,ceiling:PARTNER_OBLIGATION_CEILING});
       main.innerHTML=`${CUI.pageHeader({title:'Partner obligations',subtitle:'Which partner received which customer, and every suppression instruction issued.',iconName:'setup'})}
         ${localizedRouteNoteHtml('No data leaves this console','Peekaa distributes nothing from here. This is the evidence layer the customer consent already promises.')}
         ${canWrite?`<div class="platform-actions"><button type="button" class="btn" id="partnerAdd">${escapeHtml(pt('Add partner'))}</button></div>`:''}
@@ -9064,7 +9304,10 @@
           : CUI.emptyState({iconName:'reports',title:'No disclosures recorded',body:'Nothing has been shared with a partner. This ledger fills only when a disclosure is actually made.'})})}
         ${CUI.card({title:'Suppression instructions',description:'Every instruction issued to a partner, and whether the partner confirmed it.',body:suppressions.length
           ? CUI.table({caption:'Suppression instructions',headers:['Issued','Partner','Reason','Scope','Acknowledged'],rows:partnerSuppressionRows(suppressions,canWrite)})
-          : CUI.emptyState({iconName:'reports',title:'No suppression instructions issued',body:'An instruction appears here the moment one is issued to a partner.'})})}`;
+          : CUI.emptyState({iconName:'reports',title:'No suppression instructions issued',body:'An instruction appears here the moment one is issued to a partner.'})})}
+        ${platformWindowHtml(partnerWindow,{buttonId:'partnerObligationsLoadMore'})}`;
+      const partnerMore=main.querySelector('#partnerObligationsLoadMore');
+      if(partnerMore)partnerMore.onclick=()=>renderPartnerObligations(context,partnerWindow.nextLimit);
       const add=main.querySelector('#partnerAdd');
       if(add)add.onclick=()=>partnerSaveModal(context,null);
       main.querySelectorAll('[data-partner-edit]').forEach(button=>button.onclick=()=>{
@@ -9221,6 +9464,51 @@
   }
 
 
+  /* ===== V292 (audit S4): honest windows over the flat-limit platform readers =====
+     Billing, Subscription operations, Marketing usage, Partner obligations and the
+     business-application queue each called an RPC with a bare `p_limit` and then
+     rendered whatever came back. None of those readers returns a cursor and most
+     return no total, so a list that came back exactly full was indistinguishable
+     from a list that was complete: the operator saw 250 firms and was told nothing
+     at all about the 251st. Two honest shapes replace that silence, and which one
+     applies is decided by the SERVER's own limit ceiling rather than by taste:
+       * growable - the reader accepts a larger limit than we asked for, so
+         "Load 50 more" re-asks the server for a bigger window. It costs one extra
+         read per press and is offered only where there is evidence more rows
+         exist: the reader's own has_more/truncated flag where it publishes one,
+         otherwise a page that came back exactly full.
+       * capped - the reader is ALREADY at the largest limit it will accept
+         (billing 250, subscription operations 500, account signups 100), so there
+         is no honest button to draw. The list then says how many rows it is
+         showing and what to do instead, and never implies it is complete.
+     Raising those three server ceilings is a database change and is deliberately
+     NOT smuggled in here. */
+  const PLATFORM_WINDOW_STEP=50;
+  function platformWindowState({loaded=0,limit=0,ceiling=0,reported=null}={}) {
+    const rows=Number(loaded)||0;
+    const window=Number(limit)||0;
+    const cap=Math.max(Number(ceiling)||0,window);
+    const more=reported===null?window>0&&rows>=window:reported===true;
+    const canGrow=more&&window<cap;
+    return Object.freeze({
+      loaded:rows,limit:window,ceiling:cap,more,canGrow,capped:more&&!canGrow,
+      nextLimit:Math.min(cap,window+PLATFORM_WINDOW_STEP)
+    });
+  }
+  function platformWindowHtml(windowState,{buttonId='',cappedAdvice=''}={}) {
+    if(!windowState||!windowState.more)return '';
+    const shown=escapeHtml(pt(
+      'Showing the first {count}. This list has no cursor or total, so more records may exist.',
+      {count:windowState.loaded}));
+    const advice=windowState.canGrow
+      ?''
+      :` ${escapeHtml(pt(cappedAdvice||'This is the largest window this reader accepts. Narrow the filters to reach the rest.'))}`;
+    const button=windowState.canGrow&&buttonId
+      ?`<button type="button" class="btn ghost" id="${escapeHtml(buttonId)}">${escapeHtml(pt('Load 50 more'))}</button>`
+      :'';
+    return `<div class="platform-load-more" data-platform-window="${windowState.canGrow?'growable':'capped'}"><p class="muted small">${shown}${advice}</p>${button}</div>`;
+  }
+
   async function renderBilling(context) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Billing','Loading platform billing truth…','reports');
@@ -9231,6 +9519,10 @@
       ]);
       const rows=asArray(billingPayload);
       const catalog=asArray(catalogPayload);
+      /* V292: platform_get_billing_v125 delegates to v89, which refuses any limit
+         above 250. There is no larger honest window to offer, so the list says so
+         instead of ending in silence at row 250. */
+      const billingWindow=platformWindowState({loaded:rows.length,limit:250,ceiling:250});
       const exceptions=rows.filter(row=>row.status==='past_due'||row.payment_status==='past_due'||Number(row.failed_event_count||0)>0);
       const totals=rows.reduce((value,row)=>({
         total:value.total+Number(row.period_total_cents||0),overdue:value.overdue+(row.status==='past_due'?1:0),
@@ -9243,7 +9535,8 @@
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
         ${CUI.card({title:'Stripe price catalogue',description:'V125 bills customer capacity, never staff access. Peekaa is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per +1,000 customers','Customers included','Price tax mode','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create matching monthly and annual Stripe Price versions with exclusive tax behavior before opening checkout.'})})}
         ${CUI.card({title:'Billing exception queue',description:exceptions.length?pt('{count} firms require payment follow-up.',{count:exceptions.length}):'No overdue or failed firm billing records.',body:exceptions.length?exceptions.map(row=>`<div class="platform-action-item"><div><button type="button" class="platform-link-button" data-billing-firm="${escapeHtml(row.business_id)}"><b>${escapeHtml(row.business_name)}</b></button><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(pt('next payment {date}',{date:dateTime(row.next_payment_at)}))}</p></div>${CUI.status(pt('{count} failed',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):localizedEmptyHtml('Payments and provider status are currently reconciled.')})}
-        ${billingFirmCardHtml(rows,CUI)}`;
+        ${billingFirmCardHtml(rows,CUI)}
+        ${platformWindowHtml(billingWindow,{cappedAdvice:'Open a single firm from the exception queue to reach a billing record that is not listed.'})}`;
       main.querySelector('#platformNewBillingPrice').onclick=()=>billingPriceModal(context);
       main.querySelectorAll('[data-billing-firm]').forEach(button=>button.onclick=()=>openBillingDetail(button.dataset.billingFirm,context));
       CUI.focusRoute(main);
@@ -9293,7 +9586,8 @@
       const cards=items=>items.map(row=>`<article class="card platform-prospect-card"><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(platformStatus(row.canonical_status))} · ${escapeHtml(platformStatus(row.billing_interval||'subscription'))}</p><p class="small">${escapeHtml(pt('Paid through'))}: ${escapeHtml(dateTime(row.paid_through))}<br>${escapeHtml(pt('Next renewal'))}: ${escapeHtml(dateTime(row.next_renewal))}</p><p class="muted small platform-break">${escapeHtml(row.billing_email||pt('Billing contact missing'))}</p><a class="btn ghost sm" href="#/platform/subscription-operations?search=${encodeURIComponent(row.business_name)}">${escapeHtml(pt('Open operations'))}</a></article>`).join('');
       main.innerHTML=`${CUI.pageHeader({title:'Customer lifecycle',subtitle:'System-derived subscription and onboarding truth. These lanes cannot be changed by dragging.',iconName:'branch',actions:`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Customer lifecycle view'))}"><button class="btn ghost" data-lifecycle-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button class="btn ghost" data-lifecycle-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>`})}
         <div class="platform-kanban platform-kanban-responsive" ${view==='kanban'?'':'hidden'} aria-label="${escapeHtml(pt('System-derived customer lifecycle'))}">${lanes.map(([key,label])=>{const items=rows.filter(row=>lifecycleLane(row)===key);return`<section class="platform-kanban-column"><div class="platform-kanban-head"><h2>${escapeHtml(pt(label))}</h2><span>${escapeHtml(items.length)}</span></div>${cards(items)||`<p class="muted small">${escapeHtml(pt('No customers'))}</p>`}</section>`}).join('')}</div>
-        <section class="platform-prospect-list" ${view==='list'?'':'hidden'}><div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,false)}</div></section>`;
+        <section class="platform-prospect-list" ${view==='list'?'':'hidden'}><div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,false)}</div></section>
+        ${platformWindowHtml(platformWindowState({loaded:rows.length,limit:500,ceiling:500}),{cappedAdvice:'Search for the business by name to reach a subscription that is not listed.'})}`;
       main.querySelectorAll('[data-lifecycle-view]').forEach(button=>button.onclick=()=>renderCustomerLifecycle(context,button.dataset.lifecycleView));CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Customer lifecycle')}
   }
@@ -9405,6 +9699,11 @@
     main.innerHTML=loading(CUI,'Subscription operations','Loading subscriptions, documents and payment follow-up…','reports');
     try{
       const payload=asObject(await rpc(sb,'platform_get_subscription_operations_v156',{p_search:search,p_status:status,p_limit:500}));
+      /* V292: 500 is this reader's hard ceiling, and every filter below the search
+         box is applied in the BROWSER over that window -- so a filter that matches
+         nothing may simply mean the matching subscription was never fetched. Say
+         so rather than draw an empty table. */
+      const subscriptionWindow=platformWindowState({loaded:asArray(payload.subscriptions).length,limit:500,ceiling:500});
       const summary=asObject(payload.summary),profile=asObject(payload.profile),rawRows=asArray(payload.subscriptions),local={interval:filters.interval||'',renewal:filters.renewal||'',payment:filters.payment||'',owner:filters.owner||'',document:filters.document||'',lifecycle:filters.lifecycle||'',sort:filters.sort||'next_renewal'};
       const renewalDays=value=>value?Math.ceil((new Date(value).getTime()-Date.now())/86400000):null;
       const rows=rawRows.filter(row=>(!local.interval||row.billing_interval===local.interval)&&(!local.payment||row.latest_invoice_status===local.payment)&&(!local.owner||row.crm_owner===local.owner)&&(!local.document||row.document_delivery_status===local.document)&&(!local.lifecycle||lifecycleLane(row)===local.lifecycle)&&(!local.renewal||(renewalDays(row.next_renewal)!==null&&renewalDays(row.next_renewal)>=0&&renewalDays(row.next_renewal)<=Number(local.renewal)))).sort((a,b)=>local.sort==='business_name'?String(a.business_name).localeCompare(String(b.business_name)):local.sort==='latest_payment'?new Date(b.latest_payment_at||0)-new Date(a.latest_payment_at||0):local.sort==='start_date'?new Date(b.subscription_created_at||0)-new Date(a.subscription_created_at||0):local.sort==='subscription_value'?Number(b.latest_amount_paid_cents||0)-Number(a.latest_amount_paid_cents||0):local.sort==='days_overdue'?renewalDays(a.next_renewal)-renewalDays(b.next_renewal):new Date(a.next_renewal||8640000000000000)-new Date(b.next_renewal||8640000000000000));
@@ -9416,7 +9715,8 @@
           <form id="v156SubscriptionFilters" class="platform-filter-grid"><label class="cui-field"><span class="field-label">${escapeHtml(pt('Search business'))}</span><input name="search" value="${escapeHtml(search||'')}" autocomplete="off"></label><label class="cui-field"><span class="field-label">${escapeHtml(pt('Subscription status'))}</span><select name="status"><option value="">${escapeHtml(pt('All'))}</option>${['trialing','active','incomplete','past_due','unpaid','paused','canceled'].map(value=>`<option value="${value}"${status===value?' selected':''}>${escapeHtml(platformStatus(value))}</option>`).join('')}</select></label>
           ${[['interval','Billing interval',['','monthly','quarterly','half_yearly','annual']],['renewal','Renewal window',['','7','14','30']],['payment','Payment status',['','open','paid','void','uncollectible']],['document','Document delivery',['','queued','processing','provider_accepted','delivered','retryable_failed','permanent_failed']],['lifecycle','Lifecycle',['','payment_received','onboarding','active','renewal_approaching','payment_action_required','past_due','cancel_at_period_end','cancelled']],['sort','Sort',['next_renewal','days_overdue','business_name','start_date','latest_payment','subscription_value']]].map(([name,label,values])=>`<label class="cui-field"><span class="field-label">${escapeHtml(pt(label))}</span><select name="${name}">${values.map(value=>`<option value="${value}"${local[name]===value?' selected':''}>${escapeHtml(value?platformStatus(value):pt('All'))}</option>`).join('')}</select></label>`).join('')}
           <label class="cui-field"><span class="field-label">${escapeHtml(pt('CRM owner'))}</span><select name="owner"><option value="">${escapeHtml(pt('All'))}</option>${[...new Set(rawRows.map(row=>row.crm_owner).filter(Boolean))].map(value=>`<option value="${escapeHtml(value)}"${local.owner===value?' selected':''}>${escapeHtml(value)}</option>`).join('')}</select></label><div class="platform-actions"><button class="btn" type="submit">${escapeHtml(pt('Apply filters'))}</button><button class="btn ghost" type="button" id="v156ClearFilters">${escapeHtml(pt('Clear filters'))}</button></div></form>
-          <div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,context.canWrite)}</div></section>
+          <div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,context.canWrite)}</div>
+          ${platformWindowHtml(subscriptionWindow,{cappedAdvice:'Search for the business by name to reach a subscription that is not listed.'})}</section>
         ${CUI.card({title:'Billing documents',description:'Stripe mirrors are created only from verified paid invoices. Manual invoices require private evidence and independent verification.',body:asArray(payload.documents).length?asArray(payload.documents).map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.document_number)}</b><p class="muted small">${escapeHtml(platformStatus(document.document_type))} · ${escapeHtml(platformStatus(document.status))} · ${escapeHtml(currency(document.total_cents))}</p></div><div class="platform-actions">${document.pdf_ready?`<button type="button" class="btn ghost sm" data-open-v156-document="${escapeHtml(document.id)}">${escapeHtml(pt('Open'))}</button>`:''}${context.canWrite&&document.document_type==='invoice'&&!document.provider_invoice_id&&document.status==='open'?`<button type="button" class="btn ghost sm" data-v156-record-payment="${escapeHtml(document.id)}">${escapeHtml(pt('Record payment'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No subscription documents have been issued.')})}
         ${CUI.card({title:'Manual payment verification',description:'The recorder and verifier must be different authorised administrators.',body:asArray(payload.manual_payments).length?asArray(payload.manual_payments).map(payment=>`<div class="platform-action-item"><div><b>${escapeHtml(payment.document_number)}</b><p class="muted small">${escapeHtml(payment.payment_reference)} · ${escapeHtml(currency(payment.amount_cents))} · ${escapeHtml(platformStatus(payment.status))}</p></div><div class="platform-actions"><button type="button" class="btn ghost sm" data-v156-evidence="${escapeHtml(payment.id)}">${escapeHtml(pt('Evidence'))}</button>${context.access?.role==='super_admin'&&payment.status==='pending_verification'?`<button type="button" class="btn sm" data-v156-verify="${escapeHtml(payment.id)}">${escapeHtml(pt('Verify'))}</button><button type="button" class="btn danger sm" data-v156-reject="${escapeHtml(payment.id)}">${escapeHtml(pt('Reject'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No manual payments await verification.')})}
         ${CUI.card({title:'Payment and renewal follow-up',description:'Tasks are deduplicated by subscription, event and reminder window, then resolved after verified recovery.',body:asArray(payload.tasks).length?asArray(payload.tasks).map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title)}</b><p class="muted small">${escapeHtml(platformStatus(task.task_type))} · ${escapeHtml(dateTime(task.due_at))}</p></div><div class="platform-actions">${CUI.status(platformStatus(task.priority),task.priority==='urgent'?'no':'new')}${context.canWrite?`<button type="button" class="btn ghost sm" data-v156-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt('Complete'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No subscription follow-up tasks are open.')})}
@@ -10979,6 +11279,7 @@
     if(!task&&activeKey==='sectors')task=renderSectors(context);
     if(!task&&activeKey==='automation')task=renderAutomation(context);
     if(!task&&activeKey==='partners')task=renderPartnerObligations(context);
+    if(!task&&activeKey==='demo-requests')task=renderDemoRequests(context);
     if(!task){
       main.innerHTML=disconnectedRouteHtml(activeKey,CUI);CUI.focusRoute(main);
     }else await task;
@@ -11007,6 +11308,7 @@
     companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
     renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
     renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
+    renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
     receiptRows,receiptUnreadableReason
   });
   if (typeof module !== 'undefined' && module.exports) {
@@ -11031,6 +11333,7 @@
       companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
       renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
       renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
+      renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
       receiptRows,receiptUnreadableReason
     };
   }

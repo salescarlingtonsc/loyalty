@@ -100,7 +100,7 @@ test('platform console exposes the required namespaced routes', async () => {
   assert.equal(consoleApi.routeKey('#/platform/commissions'),'commissions');
   assert.deepEqual(
     Array.from(consoleApi.routes,route=>route.label),
-    ['Today','Onboarding','CRM','Customer lifecycle','Firms','Companies','Reports','Marketing usage','Billing','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Partner obligations','Platform access'] // V282
+    ['Today','Onboarding','CRM','Demo requests','Customer lifecycle','Firms','Companies','Reports','Marketing usage','Billing','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Partner obligations','Platform access'] // V282
   );
 });
 

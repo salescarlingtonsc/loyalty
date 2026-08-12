@@ -1744,6 +1744,12 @@
       "version": "20260812001000",
       "name": "nestly_v290_server_debt_closure",
       "sourcePath": "db/migrations/20260812_nestly_v290_server_debt_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812001100",
+      "name": "nestly_v292_demo_requests",
+      "sourcePath": "db/migrations/20260812_nestly_v292_demo_requests.sql"
     }
   ]
 }
