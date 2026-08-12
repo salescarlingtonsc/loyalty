@@ -92,3 +92,29 @@ Bookings badge staleness (no cancel control exists on that page to stale it); si
 error-swallowing (supabase-js clears local session regardless); the points-model silent write.
 
 25 minor/polish findings are retained in the session audit data.
+
+---
+
+## Addendum (v286–v289, same day): the remaining-gap list above is CLOSED
+
+Nine parallel surface owners re-verified every remaining finding before touching it and fixed
+all that reproduced; three items were found already fixed at HEAD (till staff picker — v287;
+the dashboard inactive tile — v287; imageless share — v285) and were pinned instead. One item
+was structurally out of client scope and got its own migration: **v289** (applied to production,
+verified) makes `internal_public_booking_change` enforce `appointment_changes_enabled`
+server-side for reschedules — cancel deliberately stays ungated, because refusing a
+cancellation only manufactures a no-show.
+
+Deliberately not "fixed": the scanner/join English copy (the customer surface is EN-only by
+product state — a pin now fails the day a second locale lands), the session-only sound
+preference (a product decision), and the index.html chunk preloader's pathname blind spot
+(inline HTML script, flagged with its covering test named).
+
+Post-closure scores: Bookings 6.5 → 8 (change/cancel on the page, deadlines, honest partial
+failures, SGT), Home 7 → 8, Profile 7 → 8, Till 7 → 8, Dashboard/Grow 7 → 8, Share 7.5 → 8,
+Scanner 7.5 → 8. **Overall: 8/10.** The remaining distance to 9+ is feature depth (customer-side
+withdrawal of un-actioned booking *requests* needs new server surface; per-offer share pages
+with live state), not defects.
+
+Suite at close: 2708/2708. Every fix pinned by a v286+ test; fixtures and evidence recaptured
+from merged sources; live build 30275c83cf7a serves byte-identical chunks containing every fix.
