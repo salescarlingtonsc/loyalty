@@ -1239,6 +1239,9 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
     const business=card?.business||{};
     const group=ensure(business.slug,business.name);
     group.bookingEnabled=card?.booking_enabled===true||card?.booking?.enabled===true;
+    /* v291: the chooser groups businesses the way the owner described choosing them —
+       "hair cut / cafés & restaurants / other sectors". */
+    if(!group.industry)group.industry=String(business.industry||'');
     /* v286: carried through so the Bookings page can offer the same Change control the wallet
        offers, under the same per-business permission. Absent or unreadable stays false. */
     group.appointmentChangesEnabled=card?.appointment_changes_enabled===true;
@@ -1374,6 +1377,32 @@ function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to
       &&inWindow(item.starts_at))
   })).filter(group=>group.tabRequests.length||group.tabAppointments.length);
 }
+/* v291 (owner: "when press into bookings why it does not show me which business i want to
+   choose?" and "why it only shows me 1 company for booking?"): the page now opens with the
+   choice itself — EVERY joined business, not only the one with booking switched on. A bookable
+   business books in one tap; the rest are shown with the honest reason ("No online booking
+   yet") and a path to their programme page, because hiding them read as "the app only has one
+   company". Once the customer has joined more than one sector, the chips group under sector
+   headings. */
+function customerBookingChooserV291(groups=[]){
+  const businesses=groups.filter(group=>group.business_slug);
+  if(!businesses.length)return '';
+  const chip=group=>group.bookingEnabled
+    ?`<button class="customer-booking-chip" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${customerBookingBusinessLogoV195(group)}<span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">Book now</span></span></button>`
+    :`<a class="customer-booking-chip customer-booking-chip--quiet" href="#/wallet/${encodeURIComponent(group.business_slug)}">${customerBookingBusinessLogoV195(group)}<span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">No online booking yet</span></span></a>`;
+  const industries=[...new Set(businesses.map(group=>String(group.industry||'').trim()).filter(Boolean))];
+  if(industries.length>1){
+    const bySector=new Map();
+    for(const group of businesses){
+      const key=String(group.industry||'').trim()||'Other';
+      if(!bySector.has(key))bySector.set(key,[]);
+      bySector.get(key).push(group);
+    }
+    return `<section class="card customer-booking-chooser"><h2>Book with</h2>
+      ${[...bySector.entries()].map(([sector,members])=>`<h3 class="customer-booking-sector" data-merchant-content>${esc(sector)}</h3><div class="customer-booking-chips">${members.map(chip).join('')}</div>`).join('')}</section>`;
+  }
+  return `<section class="card customer-booking-chooser"><h2>Book with</h2><div class="customer-booking-chips">${businesses.map(chip).join('')}</div></section>`;
+}
 function customerBookingEmptyMarkupV183(tab='bookings',emptyCopy='',groups=[]){
   const label=(CUSTOMER_BOOKING_TABS_V178.find(([name])=>name===tab)||[])[1]||'Bookings';
   const bookable=tab==='bookings'
@@ -1475,13 +1504,14 @@ async function renderCustomerBookings(){
            gap is the difference between "something broke" and "your appointments are missing". -->
       <ul class="muted small" style="margin:8px 0 0 18px">${partialMessages.map(message=>`<li>${esc(message)}</li>`).join('')}</ul></div>`:''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
+    ${currentBookingTab==='bookings'?customerBookingChooserV291(allGroups):''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
     ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">Withdraw</button>`:''}</div>`).join('')}`:''}
       ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
     </section>`).join('')}</div>`
-      :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,allGroups)}
+      :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
     const applyRange=(next,focusId)=>{

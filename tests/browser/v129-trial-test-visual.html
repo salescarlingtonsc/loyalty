@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="f85e74f73148849cc90d27c2e639713edbf04d4ab18699c1651631ac0b170cd9"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="f0c083a3a215d9a17fea97bc0df44ff25a1de11d8925c5817d35735d63407b7d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1427,11 +1427,24 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 @keyframes customer-reward-pop{0%{transform:scale(.96);opacity:.65}70%{transform:scale(1.015)}100%{transform:scale(1);opacity:1}}
 .customer-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .customer-booking-filter{display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
-.customer-booking-filter input[type="date"]{min-height:44px;min-width:0;padding:0 2px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
+.customer-booking-filter input[type="date"]{min-height:44px;min-width:0;width:auto;flex:1 1 0;max-width:126px;padding:0 2px;border:0;background:none;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 .customer-booking-filter input[type="date"]:focus{outline:none}
 .customer-booking-filter>span[aria-hidden]{color:var(--muted)}
-@media(max-width:520px){.customer-booking-filter{flex-wrap:wrap;border-radius:16px;padding:6px 10px}}
+/* v291 (owner: "why the big chunk of box takes up so much space, please reduce it to one
+   liner"): the filter never wraps — on a phone it takes its own full-width row under the title
+   but stays one 44px line: icon · from – to · Clear. */
+@media(max-width:520px){.customer-page-head{flex-wrap:wrap}.customer-booking-filter{width:100%;flex-wrap:nowrap;border-radius:999px;padding:0 10px}}
 .customer-booking-filter:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+/* v291 · the Book-with chooser: every joined business, sector-grouped once there is >1 sector */
+.customer-booking-chooser h2{font-size:1.05rem}
+.customer-booking-sector{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 0}
+.customer-booking-chips{display:flex;gap:10px;overflow-x:auto;padding:10px 2px 4px;-webkit-overflow-scrolling:touch}
+.customer-booking-chip{display:flex;align-items:center;gap:10px;flex:0 0 auto;min-height:56px;max-width:240px;padding:8px 14px 8px 8px;border:1px solid var(--control-border);border-radius:16px;background:var(--card);color:var(--ink);text-align:left}
+.customer-booking-chip:hover{border-color:var(--coral)}
+.customer-booking-chip-copy{display:flex;flex-direction:column;min-width:0}
+.customer-booking-chip-copy b{font-size:13.5px;overflow-wrap:anywhere}
+.customer-booking-chip--quiet{opacity:.82}
+.customer-booking-chip--quiet:hover{opacity:1}
 .customer-booking-logo{flex:none;width:40px;height:40px;border-radius:12px;object-fit:cover;background:var(--tint)}
 .customer-booking-logo--fallback{display:flex;align-items:center;justify-content:center;color:var(--coral);font-weight:700}
 
@@ -1877,7 +1890,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · f85e74f73148849cc90d27c2e639713edbf04d4ab18699c1651631ac0b170cd9</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · f0c083a3a215d9a17fea97bc0df44ff25a1de11d8925c5817d35735d63407b7d</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -14536,6 +14549,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'f85e74f73148849cc90d27c2e639713edbf04d4ab18699c1651631ac0b170cd9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'f0c083a3a215d9a17fea97bc0df44ff25a1de11d8925c5817d35735d63407b7d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
