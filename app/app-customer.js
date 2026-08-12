@@ -794,7 +794,11 @@ async function resolveCustomerRegistrationDestination(isRouteCurrent=()=>true,or
   const isCurrent=()=>isRouteCurrent()&&(!origin||origin.isConnected);
   if(customerRegistrationDestinationPriority(pendingCustomerJoinToken,pendingCustomerBusinessSlug)==='join'){
     if(!isCurrent())return 'stale';
-    nav('#/join');return 'navigated';
+    /* v281 audit: setting location.hash to its current value fires no hashchange, so from the
+       registration screens (already at #/join) this was a silent no-op that stranded the new
+       account on a dead "Creating your account…" button. Re-route explicitly. */
+    if(location.hash==='#/join')route();else nav('#/join');
+    return 'navigated';
   }
   const {data:personas,error:personasError}=await sb.rpc('get_my_personas');
   if(!isCurrent())return 'stale';

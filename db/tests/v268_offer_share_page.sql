@@ -3,8 +3,9 @@
 -- Runs inside one transaction and rolls back. Proves, against REAL tenant rows:
 --   * a customer-visible offer resolves with the fields the page renders (name, artwork,
 --     business identity, the co-brand's logo);
---   * every visibility condition is load-bearing: deactivating the offer, expiring it, or
---     unpublishing its artwork each kills the share page at that same moment;
+--   * every visibility condition is load-bearing: deactivating or expiring the offer kills the
+--     share page at that same moment, while unpublishing artwork keeps it shareable WITHOUT the
+--     image (v285, the v172/v173 imageless parity rule);
 --   * an unknown id returns NULL — the page redirects a recipient, never 404s them;
 --   * anon holds EXECUTE (the caller is a link-preview crawler that cannot authenticate) and
 --     the function is STABLE — a read that can never write.
@@ -60,11 +61,17 @@ begin
   end if;
   update public.business_customer_content_v95 set ends_at = now() + interval '1 day' where id = v_offer;
 
-  -- and so does unpublishing the artwork (the customer list requires it; this page must agree)
+  -- v285: unpublishing the artwork does NOT kill the page — v172/v173 removed the artwork
+  -- requirement from every customer surface, so an imageless offer still shares, just without
+  -- an og:image (the page falls back to a summary card).
   update public.business_media_assets_v95 set customer_visible = false
    where asset_kind = 'offer' and entity_id = v_offer;
-  if public.offer_share_page_v268(v_offer) is not null then
-    raise exception 'v268: an offer with unpublished artwork must not resolve';
+  v_page := public.offer_share_page_v268(v_offer);
+  if v_page is null then
+    raise exception 'v285: an imageless offer is visible in the app and must still share';
+  end if;
+  if v_page->>'image_url' is not null then
+    raise exception 'v285: unpublished artwork must not leak through the share page';
   end if;
 
   if public.offer_share_page_v268('00000000-0000-0000-0000-000000000000'::uuid) is not null then

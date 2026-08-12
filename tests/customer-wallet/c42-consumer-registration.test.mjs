@@ -153,7 +153,7 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.match(customerRoute, /customer_register_verified_phone/);
   assert.match(app, /customer_join_business_from_qr_v89/);
   assert.match(customerRoute, /data\?\.outcome!=='registered'/);
-  assert.match(customerRoute, /customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*nav\('#\/join'\);return 'navigated'/);
+  assert.match(customerRoute, /customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);[\s\S]{0,20}?return 'navigated'/); /* v281: same-hash-safe */
   assert.match(customerRoute, /nav\(takePendingCustomerDestination\('#\/wallet'\)\)/);
   assert.match(customerRoute, /if\(S\.user\)[\s\S]*customer_get_profile[\s\S]*profile\?\.profile!==null[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;/i);
   assert.doesNotMatch(customerRoute, /[🎉🎁📱]/u);

@@ -251,13 +251,15 @@ test('the firm logo the lockup needs is actually returned by the programme RPC',
    a link never runs JavaScript and never authenticates — so the preview can only come from a
    server-rendered page. These tests pin the parts that keep it honest. */
 
-test('the offer page function serves per-offer Open Graph and redirects humans into the app', async () => {
+test('the offer page function serves per-offer Open Graph and lets humans continue into the app', async () => {
   const fn = await read('app/api/offer-share.js');
   assert.match(fn, /og:title/);
   assert.match(fn, /og:image/);
   assert.match(fn, /Peekaa × \$\{business\}/);
   assert.match(fn, /object-fit:contain/, 'merchant artwork is never cropped — words are baked into EDMs');
-  assert.match(fn, /window\.location\.replace/, 'humans continue into the app; crawlers stop at the tags');
+  assert.doesNotMatch(fn, /setTimeout\(function\(\)\{window\.location\.replace/,
+    'v281: no auto-redirect — the page IS the offer; the button carries the reader on');
+  assert.match(fn, /View this offer/);
   assert.doesNotMatch(fn, /user-agent/i, 'no crawler sniffing — the split falls out of who executes script');
   // a dead or unknown link redirects home rather than 404ing the recipient
   assert.match(fn, /if \(!UUID\.test\(id\)\) return redirect\(response, CANONICAL_ORIGIN \+ '\/'\)/);
@@ -277,16 +279,20 @@ test('the /o/ route is wired in both the deployed rewrites and the template they
   }
 });
 
-test('the RPC behind the page mirrors the customer promotion list, and only that', async () => {
-  const migration268 = await read('db/migrations/20260810_nestly_v268_offer_share_page.sql');
-  // the same visibility conditions as customer_get_promotions_v155 — one definition of "visible"
+test('the RPC behind the page mirrors the CURRENT customer visibility rule, and only that', async () => {
+  /* v285 supersedes v268's read: v172/v173 removed the artwork requirement from every customer
+     surface ("the two surfaces must always agree"), so an imageless offer must share too. */
+  const migration285 = await read('db/migrations/20260812_nestly_v285_offer_share_imageless_parity.sql');
   for (const condition of ['content.active', "content.content_type = 'offer'",
-    'content.ends_at > now()', 'asset.customer_visible', 'media.url is not null']) {
-    assert.ok(migration268.includes(condition), `visibility must require: ${condition}`);
+    'content.ends_at > now()', 'asset.customer_visible']) {
+    assert.ok(migration285.includes(condition), `visibility must require: ${condition}`);
   }
+  assert.ok(!migration285.includes('media.url is not null'),
+    'v172/v173 parity: a published imageless offer is visible in the app and must share');
+  const migration268 = await read('db/migrations/20260810_nestly_v268_offer_share_page.sql');
   assert.match(migration268, /grant execute on function public\.offer_share_page_v268\(uuid\) to anon/,
     'the caller is a link-preview crawler; it cannot authenticate — deliberate and documented');
-  assert.match(migration268, /stable/, 'read-only');
-  assert.doesNotMatch(migration268, /phone|email|points_ledger|credit_ledger|customer_links/,
+  assert.match(migration285, /stable/, 'read-only');
+  assert.doesNotMatch(migration285, /phone|email|points_ledger|credit_ledger|customer_links/,
     'nothing but broadcast marketing content leaves through this function');
 });

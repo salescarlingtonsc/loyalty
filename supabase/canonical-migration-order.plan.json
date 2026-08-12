@@ -1708,6 +1708,12 @@
       "version": "20260812000400",
       "name": "nestly_v284_comms_foundation",
       "sourcePath": "db/migrations/20260812_nestly_v284_comms_foundation.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812000500",
+      "name": "nestly_v285_offer_share_imageless_parity",
+      "sourcePath": "db/migrations/20260812_nestly_v285_offer_share_imageless_parity.sql"
     }
   ]
 }

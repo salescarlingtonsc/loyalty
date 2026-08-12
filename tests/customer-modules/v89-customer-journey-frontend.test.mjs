@@ -49,7 +49,7 @@ test('customer can scan a business-issued QR from first use and from persistent 
   assert.match(scanner,/openCustomerJoinScanner/);
   assert.match(scanner,/getUserMedia\(\{video:\{facingMode:\{ideal:'environment'\}\}/);
   assert.match(scanner,/id="customerJoinScannerImage" type="file" accept="image\/\*"/);
-  assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);close\(\{restoreFocus:false\}\);nav\('#\/join'\)/);
+  assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);close\(\{restoreFocus:false\}\);[\s\S]{0,300}?if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/); /* v281: same-hash nav() fires nothing; a rescan from #\/join must re-route */
   assert.match(app,/function renderCustomerFirstProgrammeQuest/);
   assert.match(app,/firstQuest:'Your first rewards'/);
   assert.match(app,/id="customerFirstScan"/);

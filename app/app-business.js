@@ -4192,9 +4192,12 @@ async function tillPage(){
   }
   function resetToStart(){
     clearCheckoutState();
-    // A walk-in catalogue carries no customer entitlements — drop it so the next real customer's
-    // packages/vouchers are fetched fresh instead of inheriting the walk-in (empty) snapshot.
-    if(walkin){catalog=null;catalogError=null;}
+    /* v281 audit: the catalogue snapshot carries the LOOKED-UP CUSTOMER's entitlements
+       (packages, vouchers, welcome offer) alongside the branch items. Dropping it only for
+       walk-ins meant serving customer A and then customer B offered B customer A's packages —
+       and could consume A's sessions on B's sale. Every return to the phone step now drops the
+       whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
+    catalog=null;catalogError=null;
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;draw();
   }
@@ -4204,7 +4207,7 @@ async function tillPage(){
   function backToPhoneStep(){
     if(checkoutError){toast('Finish or retry the unfinished items first');return}
     clearCheckoutState();
-    if(walkin){catalog=null;catalogError=null;}
+    catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];draw();
   }
   function draw(){

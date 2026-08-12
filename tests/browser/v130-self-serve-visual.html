@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="d98122ceb4cd838eb0a7512c5deba05c7f6a9006b3408e8ef74ff2ee95410d34"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="5ab436fe674c11ff30113f9a5ed19b98dcb5cb62e8fe316b387c91e28f4ee87d"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1459,6 +1459,10 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-category{display:grid;gap:10px}.customer-programme-category-head{display:flex;align-items:center;gap:8px}
 .customer-programme-category-head h2{font-size:16px}.customer-programme-category-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .customer-programme-card{display:block;min-height:44px}
+/* v281 audit: an author display declaration beats the UA sheet's [hidden]{display:none}, so the
+   My Rewards search was "hiding" tiles that stayed fully visible. */
+.customer-programme-card[hidden]{display:none!important}
+.customer-programme-category[hidden]{display:none!important}
 .customer-programme-card-v95{position:relative;overflow:hidden;min-height:152px;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease)}
 .customer-programme-card-v95:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .customer-programme-card-v95:focus-visible{border-color:var(--merchant-accent,var(--coral))}

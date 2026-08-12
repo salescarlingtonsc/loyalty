@@ -330,7 +330,8 @@ test('the deep link to every registered console route resolves', () => {
 test('the migration is registered in both plans under one coordinate', () => {
   const plan = JSON.parse(read('db/migrations/migration-order.plan.json'));
   const canonical = JSON.parse(read('supabase/canonical-migration-order.plan.json'));
-  assert.deepEqual(plan.items.at(-1), {
+  /* v285 landed after this migration, so "last item" is no longer v284 — pin by identity. */
+  assert.deepEqual(plan.items.find((item) => item.semanticVersion === 'v284'), {
     kind: 'executable',
     path: 'db/migrations/20260812_nestly_v284_comms_foundation.sql',
     /* V284 rename: a concurrent session took the v282/v283 names on main; the file is
@@ -338,7 +339,7 @@ test('the migration is registered in both plans under one coordinate', () => {
     semanticVersion: 'v284',
     proposedDeployVersion: '20260812000400'
   });
-  assert.deepEqual(canonical.items.at(-1), {
+  assert.deepEqual(canonical.items.find((item) => item.name === 'nestly_v284_comms_foundation'), {
     kind: 'pending',
     version: '20260812000400',
     name: 'nestly_v284_comms_foundation',

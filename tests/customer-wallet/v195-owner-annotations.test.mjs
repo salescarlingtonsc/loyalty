@@ -425,3 +425,18 @@ test('the mode comes from the server, so the surface and the redemption gate can
   assert.match(appJs, /capabilities:programmeCapabilities/);
   assert.doesNotMatch(appJs, /points_mode==='tiers'\?[^\n]*S\.biz/, 'the customer must not read a workspace value');
 });
+
+/* ------------------------------------------------------------------- v281 audit blocker pins */
+
+test('the My Rewards search can actually hide things — [hidden] beats the display classes', () => {
+  /* An author display declaration beats the UA sheet's [hidden]{display:none}; without these two
+     rules the v195 search set the attribute and hid nothing. */
+  assert.match(indexHtml, /\.customer-programme-card\[hidden\]\{display:none!important\}/);
+  assert.match(indexHtml, /\.customer-programme-category\[hidden\]\{display:none!important\}/);
+});
+
+test('reaching #/join from #/join re-routes — same-hash nav() fires no hashchange', () => {
+  /* Two real dead-ends: registration success (already at #/join) and rescanning from the
+     expired-QR screen (also at #/join). Both must explicitly route(). */
+  assert.equal((appJs.match(/if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/g) || []).length, 2);
+});

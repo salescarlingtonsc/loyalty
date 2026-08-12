@@ -1641,7 +1641,11 @@ function openCustomerJoinScanner(){
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
     if(!token){status.textContent='That is not an active Peekaa business QR. Ask the business to generate its latest join QR.';return false}
-    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});nav('#/join');return true;
+    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});
+    /* v281 audit: a rescan from the expired-QR screen is ALREADY at #/join — same-hash nav()
+       fires nothing, so the new token was remembered and never submitted. */
+    if(location.hash==='#/join')route();else nav('#/join');
+    return true;
   };
   const decode=(source,width,height)=>{
     if(typeof globalThis.jsQR!=='function'||!context||!width||!height)return '';

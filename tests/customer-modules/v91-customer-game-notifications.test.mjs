@@ -53,6 +53,6 @@ test('scanner releases its dialog trap and restores focus unless route navigatio
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app,/dialogCleanup=CUI\.activateDialog/);
   assert.match(app,/dialogCleanup\(\{restoreFocus\}\)/);
-  assert.match(app,/close\(\{restoreFocus:false\}\);nav\('#\/join'\)/);
+  assert.match(app,/close\(\{restoreFocus:false\}\);[\s\S]{0,300}?if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/);
   assert.match(app,/activeCustomerJoinScannerCleanup\(\{restoreFocus:false\}\)/);
 });

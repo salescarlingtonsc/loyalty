@@ -103,6 +103,11 @@ test('quick sale uses the atomic RPC and browser code cannot mutate financial ev
   assert.match(till,/saleIdem=null/,'changing the sale invalidates the key');
   assert.match(till,/sb\.rpc\('record_cart_sale',\{p_business:S\.biz\.id,p_client:[\s\S]{0,200}?p_idempotency_key:finaliseKey,[\s\S]{0,120}?p_evaluation_id:evalResult\.evaluation_id,p_paid:true\}/,'the cart flow finalises through ONE atomic RPC');
   assert.match(till,/writeAttemptKey\(FINALISE_SLOT,evalFingerprint\(\)\)/);
+  /* v281 audit: the catalogue snapshot carries the looked-up customer's entitlements, so it is
+     dropped on EVERY return to the phone step — a walk-in-only reset let customer B redeem
+     customer A's packages. */
+  assert.doesNotMatch(till,/if\(walkin\)\{catalog=null/);
+  assert.match(till,/function resetToStart\(\)\{[\s\S]{0,900}?catalog=null;catalogError=null;/);
   const salesLedger=app.match(/async function salesPage\(\)\{[\s\S]*?\/\* ---------- services ---------- \*\//)?.[0]||'';
   assert.doesNotMatch(salesLedger,/sb\.rpc\('record_/,'the sales ledger is read-only');
   assert.match(salesLedger,/href="#\/till"/,'recording routes to the till');

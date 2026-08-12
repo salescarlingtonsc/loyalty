@@ -2931,7 +2931,11 @@ async function resolveCustomerRegistrationDestination(isRouteCurrent=()=>true,or
   const isCurrent=()=>isRouteCurrent()&&(!origin||origin.isConnected);
   if(customerRegistrationDestinationPriority(pendingCustomerJoinToken,pendingCustomerBusinessSlug)==='join'){
     if(!isCurrent())return 'stale';
-    nav('#/join');return 'navigated';
+    /* v281 audit: setting location.hash to its current value fires no hashchange, so from the
+       registration screens (already at #/join) this was a silent no-op that stranded the new
+       account on a dead "Creating your account…" button. Re-route explicitly. */
+    if(location.hash==='#/join')route();else nav('#/join');
+    return 'navigated';
   }
   const {data:personas,error:personasError}=await sb.rpc('get_my_personas');
   if(!isCurrent())return 'stale';
@@ -3278,7 +3282,11 @@ function openCustomerJoinScanner(){
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
     if(!token){status.textContent='That is not an active Peekaa business QR. Ask the business to generate its latest join QR.';return false}
-    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});nav('#/join');return true;
+    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});
+    /* v281 audit: a rescan from the expired-QR screen is ALREADY at #/join — same-hash nav()
+       fires nothing, so the new token was remembered and never submitted. */
+    if(location.hash==='#/join')route();else nav('#/join');
+    return true;
   };
   const decode=(source,width,height)=>{
     if(typeof globalThis.jsQR!=='function'||!context||!width||!height)return '';
@@ -11967,9 +11975,12 @@ async function tillPage(){
   }
   function resetToStart(){
     clearCheckoutState();
-    // A walk-in catalogue carries no customer entitlements — drop it so the next real customer's
-    // packages/vouchers are fetched fresh instead of inheriting the walk-in (empty) snapshot.
-    if(walkin){catalog=null;catalogError=null;}
+    /* v281 audit: the catalogue snapshot carries the LOOKED-UP CUSTOMER's entitlements
+       (packages, vouchers, welcome offer) alongside the branch items. Dropping it only for
+       walk-ins meant serving customer A and then customer B offered B customer A's packages —
+       and could consume A's sessions on B's sale. Every return to the phone step now drops the
+       whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
+    catalog=null;catalogError=null;
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;draw();
   }
@@ -11979,7 +11990,7 @@ async function tillPage(){
   function backToPhoneStep(){
     if(checkoutError){toast('Finish or retry the unfinished items first');return}
     clearCheckoutState();
-    if(walkin){catalog=null;catalogError=null;}
+    catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];draw();
   }
   function draw(){
