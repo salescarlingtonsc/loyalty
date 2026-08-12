@@ -27282,6 +27282,87 @@ async function customerIntelligencePage(){
 }
 
 /* ---------- reports ---------- */
+/* V297 (owner markup on Business Insights, 2026-08-12: "please make business insights more
+   interesting & easier to understand" / "i want to know if my business is improving?").
+   Every tab opened with a wall of exact figures and no comparison, so nothing on the page
+   answered the only question the owner actually asked. The three helpers below are that answer,
+   and they are deliberately conservative about it: a verdict is only printed when the previous
+   equal-length window is a period this business could really have traded in, and a comparison
+   that cannot be made honestly says so rather than inventing a 0% or an infinity. */
+
+/* Is the previous equal-length window a period this business could have records in at all?
+   A business whose own record starts inside (or after) that window has no comparable earlier
+   period — printing "down 100%" against dates that predate the company would be a fabricated
+   verdict, which is exactly what must never appear here. */
+function reportPriorWindowV297(scope){
+  const started=String(S.biz?.created_at||'');
+  const startedDay=Number.isFinite(Date.parse(started))?sgDateInputValue(new Date(started)):null;
+  if(startedDay&&startedDay>scope.priorFrom)
+    return {comparable:false,reason:`this business only has records from ${startedDay}`};
+  return {comparable:true,reason:''};
+}
+
+/* The band that opens every tab: the one number that matters, the change against the previous
+   equal-length window, and a plain sentence. `current`/`previous` are the UNDERLYING values
+   (cents, hours, counts) so the maths is done on the real figures and only the display is
+   rounded; `valueText`/`previousText` are how the calling tab wants them printed.
+   Direction is carried three ways on purpose — arrow, colour class and the word itself — because
+   an owner reading it at a glance and a screen reader reading it aloud need different cues. */
+function reportVerdictBandV297({label,valueText,current,previous,previousText='',days=0,
+  available=true,unavailableReason='',zeroBaselineText='nothing was recorded in the previous period',note=''}={}){
+  const periodWords=`the previous ${days} day${days===1?'':'s'}`;
+  const currentValue=Number(current),previousValue=Number(previous);
+  let tone='none',arrow='',word='',sentence='';
+  if(!available||!Number.isFinite(previousValue)||!Number.isFinite(currentValue)){
+    /* No fabricated baseline. The figure above still stands on its own. */
+    sentence=`No comparable earlier period${unavailableReason?` — ${unavailableReason}`:''}.`;
+  }else if(previousValue===0&&currentValue===0){
+    tone='flat';arrow='▬';word='unchanged';
+    sentence=`Unchanged — nothing recorded in this period or in ${periodWords}.`;
+  }else if(previousValue===0){
+    /* A percentage from a zero baseline is not a percentage. Say what happened instead. */
+    tone='up';arrow='▲';word='up';
+    sentence=`Up on ${periodWords} — ${zeroBaselineText}, so there is no percentage to show.`;
+  }else{
+    const change=(currentValue-previousValue)/Math.abs(previousValue)*100;
+    const rounded=Math.abs(change)<0.05?0:change;
+    tone=rounded>0?'up':rounded<0?'down':'flat';
+    arrow=rounded>0?'▲':rounded<0?'▼':'▬';
+    word=rounded>0?'up':rounded<0?'down':'level';
+    sentence=rounded===0
+      ?`Level with ${periodWords}${previousText?` (${previousText})`:''}.`
+      :`${rounded>0?'Up':'Down'} ${Math.abs(rounded).toFixed(1)}% on ${periodWords}${previousText?` (${previousText})`:''}.`;
+  }
+  return `<section class="report-verdict-v297 report-verdict-${tone}-v297" data-report-verdict-v297="${esc(tone)}" role="status" aria-live="polite">
+    <p class="report-verdict-label-v297">${esc(label)}</p>
+    <p class="report-verdict-value-v297">${esc(valueText)}</p>
+    <p class="report-verdict-change-v297">${arrow?`<span class="report-verdict-arrow-v297" aria-hidden="true">${arrow}</span>`:''}<span data-report-verdict-sentence-v297="${esc(word)}">${esc(sentence)}</span></p>
+    ${note?`<p class="muted small report-verdict-note-v297">${esc(note)}</p>`:''}
+  </section>`;
+}
+
+/* V297: parts of a whole read as a proportion, and a column of exact figures does not. This is a
+   plain CSS bar built from the very numbers in the table beside it — no charting dependency and
+   no network fetch, both of which the app's CSP forbids anyway. Negative or zero parts are left
+   out of the bar (a reversal is not a share of anything) while the table above keeps them. */
+const REPORT_SHARE_COLOURS_V297=['#C24135','#1F6B48','#1F5199','#8A5A12','#7A2E9D','#6B6673'];
+function reportShareBarV297(entries,{format=value=>String(value)}={}){
+  const usable=(entries||[]).filter(([,value])=>Number(value)>0);
+  const sum=usable.reduce((total,[,value])=>total+Number(value||0),0);
+  if(usable.length<2||sum<=0)return '';
+  const share=value=>Number(value)/sum*100;
+  const colour=index=>REPORT_SHARE_COLOURS_V297[index%REPORT_SHARE_COLOURS_V297.length];
+  return `<div class="report-share-v297">
+    ${/* V297: the bar's label and each segment's tooltip are built from the business's own sale
+         kinds and its own figures, so they are merchant content — marked the way every other
+         data-derived accessibility string in the workspace is, so the locale switcher never
+         rewrites a tenant's own words. */''}
+    <div class="report-share-bar-v297" data-merchant-content role="img" aria-label="${esc(`Share of the total: ${usable.map(([label,value])=>`${label} ${Math.round(share(value))} percent`).join(', ')}`)}">
+      ${usable.map(([label,value],index)=>`<span style="width:${share(value).toFixed(2)}%;background:${colour(index)}" data-merchant-content title="${esc(label)}"></span>`).join('')}
+    </div>
+    <ul class="report-share-legend-v297">${usable.map(([label,value],index)=>`<li><span class="report-share-dot-v297" aria-hidden="true" style="background:${colour(index)}"></span>${esc(label)} · <b>${esc(format(value))}</b> · ${Math.round(share(value))}%</li>`).join('')}</ul>
+  </div>`;
+}
 async function reportsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const moneyGate=createLatestRequestGate(isCurrent);
@@ -27353,6 +27434,17 @@ async function reportsPage(){
     target.innerHTML=CUI.skeletonGrid({cards:4,lines:4});
     exportButton.hidden=true;exportButton.disabled=true;
     let response;
+    /* V297 (owner: "i want to know if my business is improving?"). The SAME report read, one
+       period-length earlier, is started BEFORE the current one is awaited, so the comparison
+       costs no extra wait and needs no new server work. It is failure-tolerant by design: a
+       prior window that cannot be read degrades to "No comparable earlier period", never to a
+       zero an owner would read as a real collapse. p_branch is identical on both calls, so the
+       two figures are scoped alike — the band says which dates and which scope it compared. */
+    const priorWindowV297=reportPriorWindowV297(scope);
+    const priorMoneyV297=priorWindowV297.comparable
+      ?Promise.resolve(sb.rpc('get_reports_summary',{p_business:S.biz.id,p_from:scope.priorFrom,p_to:scope.priorTo,p_branch:scope.branchId}))
+        .then(result=>result,error=>({data:null,error}))
+      :Promise.resolve({data:null,error:{message:priorWindowV297.reason}});
     try{response=await sb.rpc('get_reports_summary',{p_business:S.biz.id,p_from:scope.from,p_to:scope.to,p_branch:scope.branchId})}
     catch(error){
       if(isLatest()){
@@ -27380,25 +27472,59 @@ async function reportsPage(){
     const netRevenue=Number(reconciliation.net_revenue_cents||0);
     exportButton.hidden=d.availability?.sales_export!==true;
     exportButton.disabled=exportButton.hidden;
+    /* V297: awaited only now — the request has been in flight since before the current read, so
+       this resolves immediately in the normal case and never doubles the wait. */
+    const priorMoneyResultV297=await priorMoneyV297;
+    if(!isLatest())return;
+    const currentRevenueTotalV297=Object.values(byKind).reduce((total,value)=>total+Number(value||0),0);
+    const priorMoneyDataV297=priorMoneyResultV297?.error?null:priorMoneyResultV297?.data;
+    /* A missing payload means the earlier read did not answer; an EMPTY payload means it answered
+       "nothing happened". The two must not collapse into the same number. */
+    const priorRevenueTotalV297=priorMoneyDataV297&&typeof priorMoneyDataV297==='object'
+      ?Object.values(priorMoneyDataV297.revenue_by_kind||{}).reduce((total,value)=>total+Number(value||0),0)
+      :null;
+    const moneyVerdictV297=reportVerdictBandV297({
+      label:'Money in · selected period',
+      valueText:money(currentRevenueTotalV297),
+      current:currentRevenueTotalV297,previous:priorRevenueTotalV297,
+      previousText:priorRevenueTotalV297===null?'':money(priorRevenueTotalV297),
+      days:scope.days,available:priorRevenueTotalV297!==null,
+      unavailableReason:priorWindowV297.comparable
+        ?'the same report could not be read for those earlier dates'
+        :priorWindowV297.reason,
+      zeroBaselineText:'there was no revenue in the previous period',
+      note:`${priorRevenueTotalV297!==null?`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope as the figures below. `:''}These are sale ledger amounts, not verified payment or cash-collection totals.`
+    });
     target.innerHTML=`
+      ${moneyVerdictV297}
       <div class="card"><b>Revenue by type</b><table style="margin-top:8px">
         ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td style="text-align:right"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
         <tr><td><b>Net total</b></td><td style="text-align:right"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table>
+        ${/* V297: the mix is the point of this card and a column of figures does not show it. */''}
+        ${reportShareBarV297(Object.entries(byKind).map(([k,v])=>[k.replace('_',' '),v]),{format:money})}
+        <p class="muted small" style="margin-top:8px">What you sold, split by type. The bar shows the mix at a glance; the figures above it are the exact amounts.</p>
         ${Object.keys(nonRevByKind).length?`<p class="muted small" style="margin-top:8px">Non-revenue sale amounts recorded: ${Object.entries(nonRevByKind).map(([k,v])=>`<b>${money(v)}</b> ${k.replace('_',' ')}`).join(', ')}. These are sale ledger amounts, not verified payment or cash-collection totals.</p>`:''}</div>
       <div class="card"><b>Reversal reconciliation</b><table style="margin-top:8px">
         <tr><td>Compensating rows</td><td style="text-align:right"><b>${reversalRows}</b></td></tr>
         <tr><td>Revenue reversed</td><td style="text-align:right"><b>−${money(reversedCents)}</b></td></tr>
         <tr><td>Net revenue from immutable rows</td><td style="text-align:right"><b>${money(netRevenue)}</b></td></tr></table>
+        ${/* V297: "Reversal reconciliation" and "compensating row" are accounting words. One plain
+             line says what they are and why the net is not the gross. */''}
+        <p class="muted small" style="margin-top:8px">In plain words: a compensating row is a correction that cancels an earlier sale instead of deleting it, so the money comes back out of the total. That is why the net is lower than the gross.</p>
         <p class="muted small" style="margin-top:8px">Originals remain on record. Negative reversal rows link back to them and reduce the net.</p></div>
       ${loyaltyAvailable?`<div class="card"><b>Loyalty flow (business-wide, selected period)</b><table style="margin-top:8px">
         <tr><td>Points earned</td><td style="text-align:right"><b>${pt.earn||0}</b></td></tr>
         <tr><td>Points redeemed</td><td style="text-align:right"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
         <tr><td>Points expired</td><td style="text-align:right"><b>${Math.abs(pt.expire||0)}</b></td></tr>
-        <tr><td>Manual adjustments</td><td style="text-align:right"><b>${pt.adjust||0}</b></td></tr></table></div>`:
+        <tr><td>Manual adjustments</td><td style="text-align:right"><b>${pt.adjust||0}</b></td></tr></table>
+        ${/* V297: 78,232 points earned means nothing without knowing which way each row points. */''}
+        <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned minus redeemed and expired is what customers are still holding — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
         '<div class="card"><b>Loyalty flow</b><p class="muted small" style="margin-top:8px">Unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</p></div>'}
       <div class="card"><b>Liabilities (business-wide, now)</b><table style="margin-top:8px">
         <tr><td>Customer credit outstanding</td><td style="text-align:right"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr>
         <tr><td>Gift cards unredeemed</td><td style="text-align:right"><b>${giftCardsAvailable?money(gcOut):'Unavailable'}</b></td></tr></table>
+        ${/* V297: "Liabilities" is the one card an owner is most likely to misread as takings. */''}
+        <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet, and gift cards they have not redeemed yet. It is not an expense today, but it is a claim on future takings.</p>
         <p class="muted small" style="margin-top:8px">Available balances are current business-wide obligations and do not change when a historical period or branch is selected. Unavailable means complete business-wide authority could not be confirmed; no zero is inferred.</p></div>
       ${membershipsAvailable?`<div class="card"><b>Memberships</b><table style="margin-top:8px">
         <tr><td>Active members (business-wide, now)</td><td style="text-align:right"><b>${actMs}</b></td></tr>
@@ -27525,7 +27651,28 @@ async function reportsPage(){
       if(!isLatest())return;
       const current=appointmentSummary(currentRows),prior=appointmentSummary(priorRows);
       const utilization=capacity.known&&capacity.hours>0?current.serviceHours/capacity.hours*100:null;
-      target.innerHTML=`<div class="card"><b>Booked work</b><div class="metric" style="margin-top:8px">${current.serviceHours.toFixed(1)} hours</div>
+      /* V297 (owner: "i want to know if my business is improving?"). The previous equal-length
+         window was ALREADY fetched here — branch-scoped identically to the current one — and was
+         only ever printed as a footnote under the Booked work figure. The verdict band is that
+         same pair of numbers, read as an answer instead of as trivia. Utilisation is written out
+         as the word "percent" so the band's only "%" is a real period-on-period change. */
+      const busyWindowV297=reportPriorWindowV297(scope);
+      const busyNoteV297=[
+        capacity.known&&utilization!==null?`Utilisation: ${utilization.toFixed(1)} percent of the branch-open team hours scheduled in this period.`:'',
+        busyWindowV297.comparable?`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`:''
+      ].filter(Boolean).join(' ');
+      const busyVerdictV297=reportVerdictBandV297({
+        label:'Booked work · selected period',
+        valueText:`${current.serviceHours.toFixed(1)} booked hours`,
+        current:current.serviceHours,
+        previous:busyWindowV297.comparable?prior.serviceHours:null,
+        previousText:`${prior.serviceHours.toFixed(1)} hours`,
+        days:scope.days,available:busyWindowV297.comparable,
+        unavailableReason:busyWindowV297.reason,
+        zeroBaselineText:'nothing was booked in the previous period',
+        note:busyNoteV297
+      });
+      target.innerHTML=`${busyVerdictV297}<div class="card"><b>Booked work</b><div class="metric" style="margin-top:8px">${current.serviceHours.toFixed(1)} hours</div>
           <p class="muted small">${current.total} appointments in this period · ${prior.serviceHours.toFixed(1)} booked hours in the previous ${scope.days}-day period.</p></div>
         <div class="card"><b>Appointment outcomes</b><table style="margin-top:8px">
           <tr><td>Booked</td><td style="text-align:right"><b>${current.booked}</b></td></tr>
@@ -27574,7 +27721,25 @@ async function reportsPage(){
     const cm=c.metrics,pm=p.usable?p.metrics:null;
     const pct=value=>value===null||value===undefined?'—':`${Number(value).toFixed(1)}%`;
     const previousReturning=pm?Number(pm.existing_returning_customers||0):'—';
-    target.innerHTML=`<div class="card"><b>Returning customers</b><div class="metric" style="margin-top:8px">${Number(cm.existing_returning_customers||0)}</div>
+    /* V297: the previous-period lifecycle read already happens above (same RPC, window shifted
+       back one period-length, identical p_branch). An unusable earlier projection is NOT a zero —
+       it means the earlier window has nothing comparable in it, and the band must say so. */
+    const returningWindowV297=reportPriorWindowV297(scope);
+    const priorReturningV297=returningWindowV297.comparable&&pm?Number(pm.existing_returning_customers||0):null;
+    const returningVerdictV297=reportVerdictBandV297({
+      label:'Returning customers · selected period',
+      valueText:`${Number(cm.existing_returning_customers||0)} returning customers`,
+      current:Number(cm.existing_returning_customers||0),
+      previous:priorReturningV297,
+      previousText:priorReturningV297===null?'':`${priorReturningV297} returning`,
+      days:scope.days,available:priorReturningV297!==null,
+      unavailableReason:returningWindowV297.comparable
+        ?'no identified customer purchases exist in those earlier dates'
+        :returningWindowV297.reason,
+      zeroBaselineText:'nobody returned in the previous period',
+      note:priorReturningV297===null?'':`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`
+    });
+    target.innerHTML=`${returningVerdictV297}<div class="card"><b>Returning customers</b><div class="metric" style="margin-top:8px">${Number(cm.existing_returning_customers||0)}</div>
         <p class="muted small">${pct(cm.existing_customer_share_pct)} of identified customers in this period · ${previousReturning} in the previous ${scope.days}-day period.</p>
         <p class="muted small">Identity coverage: ${c.identifiedTransactions} of ${c.eligibleTransactions} eligible recorded purchases${c.identifiedTransactionPct===null?'':` (${pct(c.identifiedTransactionPct)})`}.</p></div>
       <div class="card"><b>New and reactivated</b><table style="margin-top:8px">
@@ -27588,6 +27753,14 @@ async function reportsPage(){
      panel and lazily runs its report (once per range, like the old open-card behaviour); From/To
      + Run report + Export above apply to the open tab. Default tab: Sales & Revenue. */
   const reportRunnersV294={money:runMoney,busy:runBusy,returning:runReturning};
+  /* V297 gap sweep: the Export sales CSV button lives above the tab bar and is fed entirely by
+     the Sales & Revenue read (lastScope plus its sales_export availability). Pressing Run report
+     while another tab was open therefore left the export hidden for that range — the button is
+     shared, so its source has to run for every range regardless of which tab is being read. */
+  const ensureMoneyRanV297=()=>{
+    if(reportTabsRunV294.has('money'))return;
+    reportTabsRunV294.add('money');runAnswer(runMoney);
+  };
   const reportTabsV294=[...routeMain.querySelectorAll('[data-report-tab-v294]')];
   const selectReportTabV294=key=>{
     if(!reportRunnersV294[key])return;
@@ -27597,6 +27770,7 @@ async function reportsPage(){
       const panel=document.getElementById(tab.getAttribute('aria-controls'));
       if(panel)panel.hidden=!on;
     });
+    ensureMoneyRanV297();
     if(!reportTabsRunV294.has(key)){reportTabsRunV294.add(key);runAnswer(reportRunnersV294[key])}
   };
   reportTabsV294.forEach(tab=>tab.onclick=()=>selectReportTabV294(tab.dataset.reportTabV294));
@@ -27605,7 +27779,8 @@ async function reportsPage(){
   $('rgo').onclick=()=>{
     invalidateAnswers();
     const key=activeReportTabV294();
-    if(key){reportTabsRunV294.add(key);runAnswer(reportRunnersV294[key])}
+    ensureMoneyRanV297();
+    if(key&&!reportTabsRunV294.has(key)){reportTabsRunV294.add(key);runAnswer(reportRunnersV294[key])}
   };
   if(reportTabsV294.length)selectReportTabV294(reportTabsV294[0].dataset.reportTabV294);
   $('rcsv').onclick=async()=>{
@@ -27771,6 +27946,10 @@ async function staffPerfPage(drillId){
       <button class="btn sm" id="staffPerfFilterApply">Apply filters</button>
       <button class="btn ghost sm" id="staffPerfFilterClear">Clear filters</button>
     </div>
+    ${/* V297 (owner markup 2026-08-12): the Team Performance tab of Business Insights opens this
+         page, so it gets the same opening verdict the other three tabs now carry — one headline
+         number and how it moved against the previous equal-length period. */''}
+    <div class="report-verdict-host-v297" id="staffPerfVerdictV297"></div>
     <div class="staff-rank-summary" id="staffRankSummary" aria-live="polite"></div>
     <div class="staff-rank-basis" id="staffRankBasis"></div>
     <div class="card" id="pbody">${CUI.tableSkeleton({rows:5,columns:5})}</div>`;
@@ -27780,6 +27959,8 @@ async function staffPerfPage(drillId){
   });
   const invalidate=()=>{
     requestGate.invalidate();
+    /* V297: a verdict left standing over a range that no longer applies is worse than no verdict. */
+    const verdict=$('staffPerfVerdictV297');if(verdict)verdict.innerHTML='';
     const body=$('pbody');if(body)body.innerHTML=CUI.emptyState({iconName:'staff',title:'Date range changed',body:'Apply the new range to refresh staff performance.'});
   };
   $('pf').onchange=$('pt').onchange=invalidate;
@@ -27803,9 +27984,18 @@ async function staffPerfPage(drillId){
     if(!range.ok){$('pbody').innerHTML=CUI.emptyState({iconName:'reports',title:'Choose a valid date range',body:range.reason});return}
     const from=sgDateBoundary(fromDate),toExclusive=sgDateBoundary(toDate,1);
     $('pbody').innerHTML=CUI.tableSkeleton({rows:5,columns:5});
+    const staffVerdictHostV297=$('staffPerfVerdictV297');
+    if(staffVerdictHostV297)staffVerdictHostV297.innerHTML='';
+    /* V297: the same commission read, one period-length earlier, in the SAME Promise.all — so the
+       comparison adds no round trip and no server work. It resolves to null rather than rejecting:
+       a previous window we cannot read must leave the current figures standing with "No comparable
+       earlier period", not fail the whole page. */
+    const priorFromDateV297=shiftSgDateInput(fromDate,-range.days),priorToDateV297=shiftSgDateInput(fromDate,-1);
+    const priorWindowV297=reportPriorWindowV297({priorFrom:priorFromDateV297});
     let scopeResult,sc,staffResult;
+    let priorCommissionV297=null;
     try{
-      [scopeResult,sc,staffResult]=await Promise.all([
+      [scopeResult,sc,staffResult,priorCommissionV297]=await Promise.all([
         sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:selectedBranchId||null,p_module:'staffperf'}),
         /* V285: this table carries branch_id and the page ignored it, so a workspace scoped to
            one branch at the top bar still ranked the whole business — the one figure an owner
@@ -27818,7 +28008,17 @@ async function staffPerfPage(drillId){
           return (selectedBranchId?commissionQueryV285.eq('branch_id',selectedBranchId):commissionQueryV285)
             .order('occurred_at').order('sale_id');
         }),
-        sb.from('staff').select('id,full_name').eq('business_id',S.biz.id).order('full_name')
+        sb.from('staff').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
+        priorWindowV297.comparable
+          ?fetchAllRows(()=>{
+              const priorQueryV297=sb.from('sale_commission')
+                .select('sale_id,staff_id,kind,occurred_at,amount_cents,commission_cents,counts_as_revenue',{count:'exact'})
+                .eq('business_id',S.biz.id)
+                .gte('occurred_at',sgDateBoundary(priorFromDateV297)).lt('occurred_at',sgDateBoundary(priorToDateV297,1));
+              return (selectedBranchId?priorQueryV297.eq('branch_id',selectedBranchId):priorQueryV297)
+                .order('occurred_at').order('sale_id');
+            }).then(rows=>rows,()=>null)
+          :Promise.resolve(null)
       ]);
     }catch(error){
       if(!isLatest())return;
@@ -27831,6 +28031,22 @@ async function staffPerfPage(drillId){
     if(scopeResult?.error){$('pbody').innerHTML=CUI.emptyState({iconName:'settings',title:'Staff performance unavailable',body:'Staff performance is unavailable because its module or Sales access is not complete across every active branch.'});return}
     if(staffResult.error)return fail(staffResult.error);
     const {names,byStaff:agg,keys,totals}=staffPerformanceAggregation(sc,staffResult.data||[]);
+    /* V297: rendered BEFORE the "no staff sales" return, so a quiet period still opens with the
+       headline and its comparison rather than with an empty table and no answer. */
+    const priorTotalsV297=priorCommissionV297?staffPerformanceAggregation(priorCommissionV297,staffResult.data||[]).totals:null;
+    if(staffVerdictHostV297)staffVerdictHostV297.innerHTML=reportVerdictBandV297({
+      label:'Attributed revenue · selected period',
+      valueText:money(totals.revenue),
+      current:Number(totals.revenue||0),
+      previous:priorTotalsV297?Number(priorTotalsV297.revenue||0):null,
+      previousText:priorTotalsV297?money(priorTotalsV297.revenue):'',
+      days:range.days,available:Boolean(priorTotalsV297),
+      unavailableReason:priorWindowV297.comparable
+        ?'the same commission records could not be read for those earlier dates'
+        :priorWindowV297.reason,
+      zeroBaselineText:'no revenue was attributed to the team in the previous period',
+      note:`${priorTotalsV297?`Compared with ${priorFromDateV297} to ${priorToDateV297} on the same branch scope. `:''}Signed commission in this period: ${money(totals.commission)}. Revenue excludes rows whose immutable sale policy marks them non-revenue.`
+    });
     if(!keys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No staff sales in this range',body:'Staff performance appears after sales are recorded with an assigned team member.'});return}
     const sortMap={
       revenue:{key:'revenue',label:'attributed revenue'},

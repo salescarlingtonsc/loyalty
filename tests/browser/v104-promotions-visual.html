@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="c37bce2fc908661d01a8b292213db79a7229173815a56c1463217aff2d95d334">
+<meta name="v104-production-source-sha256" content="6a3fc491b3d1af62bc5d40f7d6c9df487ccf81ae7c4313fb01f31d5b1cd444b8">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1232,6 +1232,33 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .report-tabbar-v294{margin-bottom:16px}
 .report-tabbar-v294 button{display:inline-flex;align-items:center;gap:7px}
 .report-panel-v294[hidden]{display:none}
+/* V297 (owner markup on Business Insights, 2026-08-12: "please make business insights more
+   interesting & easier to understand" / "i want to know if my business is improving?"). Two
+   additions: the verdict band that opens every report tab, and a CSS-only proportional bar under
+   Revenue by type. No charting library and no remote asset — the app's CSP forbids both, and the
+   mix only needs to be readable, not plotted. */
+.report-verdict-host-v297{margin-bottom:16px}
+.report-verdict-host-v297:empty{display:none;margin-bottom:0}
+.reports-grid>.report-verdict-v297{grid-column:1/-1}
+.report-verdict-v297{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--muted);
+  border-radius:var(--r);box-shadow:var(--shadow);padding:16px 20px;min-width:0;max-width:100%}
+.report-verdict-label-v297{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:750}
+.report-verdict-value-v297{font-size:1.85rem;font-weight:750;line-height:1.15;margin-top:6px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.report-verdict-change-v297{display:flex;align-items:baseline;gap:7px;margin-top:6px;font-size:14px;font-weight:650;line-height:1.45;color:var(--ink2)}
+.report-verdict-arrow-v297{font-size:15px;line-height:1;flex:0 0 auto}
+.report-verdict-note-v297{margin-top:8px;line-height:1.45}
+.report-verdict-up-v297{border-left-color:var(--green)}
+.report-verdict-up-v297 .report-verdict-change-v297{color:var(--green)}
+.report-verdict-down-v297{border-left-color:var(--red)}
+.report-verdict-down-v297 .report-verdict-change-v297{color:var(--red)}
+.report-verdict-flat-v297{border-left-color:var(--amber)}
+.report-share-v297{margin-top:12px}
+.report-share-bar-v297{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--line)}
+.report-share-bar-v297>span{display:block;height:100%}
+.report-share-legend-v297{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+.report-share-legend-v297 li{display:flex;align-items:center;gap:6px}
+.report-share-dot-v297{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+@media(max-width:720px){.report-verdict-value-v297{font-size:1.55rem}}
 .customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
 .customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
 .customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
@@ -1944,7 +1971,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source c37bce2fc908661d01a8b292213db79a7229173815a56c1463217aff2d95d334</p>
+  <p class="v104-provenance">Local production-render harness · source 6a3fc491b3d1af62bc5d40f7d6c9df487ccf81ae7c4313fb01f31d5b1cd444b8</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -1956,7 +1983,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="c37bce2fc908661d01a8b292213db79a7229173815a56c1463217aff2d95d334";
+const PRODUCTION_SOURCE_SHA256="6a3fc491b3d1af62bc5d40f7d6c9df487ccf81ae7c4313fb01f31d5b1cd444b8";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

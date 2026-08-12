@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ec9b4438fda36a9b263a65a88d52e7161d4c05edddc3c289675f992f8984f0d6"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1e899d8ffc9995a305f4e2f3d177d136d053e0f944d4fdbd1f110a9d5d54617d"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1224,6 +1224,33 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .report-tabbar-v294{margin-bottom:16px}
 .report-tabbar-v294 button{display:inline-flex;align-items:center;gap:7px}
 .report-panel-v294[hidden]{display:none}
+/* V297 (owner markup on Business Insights, 2026-08-12: "please make business insights more
+   interesting & easier to understand" / "i want to know if my business is improving?"). Two
+   additions: the verdict band that opens every report tab, and a CSS-only proportional bar under
+   Revenue by type. No charting library and no remote asset — the app's CSP forbids both, and the
+   mix only needs to be readable, not plotted. */
+.report-verdict-host-v297{margin-bottom:16px}
+.report-verdict-host-v297:empty{display:none;margin-bottom:0}
+.reports-grid>.report-verdict-v297{grid-column:1/-1}
+.report-verdict-v297{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--muted);
+  border-radius:var(--r);box-shadow:var(--shadow);padding:16px 20px;min-width:0;max-width:100%}
+.report-verdict-label-v297{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:750}
+.report-verdict-value-v297{font-size:1.85rem;font-weight:750;line-height:1.15;margin-top:6px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.report-verdict-change-v297{display:flex;align-items:baseline;gap:7px;margin-top:6px;font-size:14px;font-weight:650;line-height:1.45;color:var(--ink2)}
+.report-verdict-arrow-v297{font-size:15px;line-height:1;flex:0 0 auto}
+.report-verdict-note-v297{margin-top:8px;line-height:1.45}
+.report-verdict-up-v297{border-left-color:var(--green)}
+.report-verdict-up-v297 .report-verdict-change-v297{color:var(--green)}
+.report-verdict-down-v297{border-left-color:var(--red)}
+.report-verdict-down-v297 .report-verdict-change-v297{color:var(--red)}
+.report-verdict-flat-v297{border-left-color:var(--amber)}
+.report-share-v297{margin-top:12px}
+.report-share-bar-v297{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--line)}
+.report-share-bar-v297>span{display:block;height:100%}
+.report-share-legend-v297{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+.report-share-legend-v297 li{display:flex;align-items:center;gap:6px}
+.report-share-dot-v297{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+@media(max-width:720px){.report-verdict-value-v297{font-size:1.55rem}}
 .customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
 .customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
 .customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
