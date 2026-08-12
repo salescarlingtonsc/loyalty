@@ -7379,8 +7379,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      record can still point at. The actual defect is that this list drew them identically. Two
      facts now tell them apart: the retired one SAYS it is retired, and when two rewards share a
      name each one says when it was added. */
+  /* V293 (owner walkthrough 2026-08-12): a freshly created reward under a paused programme
+     read as retired — the pill said "Paused with programme" (owner heard: this reward is off)
+     and the grey retired glyph was drawn for ANY reward whose `active` field was merely absent
+     (get_loyalty_reward_draft rows may omit it). Only an explicit active===false is retired;
+     a paused programme names the PROGRAMME as the paused thing. */
   const rewardStatusV271=(r)=>r?.active===false?{label:'Retired',tone:'off'}
-    :p?.active===false?{label:'Paused with programme',tone:'off'}
+    :p?.active===false?{label:'Programme paused',tone:'off'}
     :rewardBoundary(r);
   const rewardNameCountsV271=(rewards||[]).reduce((counts,r)=>{
     const key=rewardLabel(r).toLowerCase();counts[key]=(counts[key]||0)+1;return counts;
@@ -7394,9 +7399,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   };
   const rewardRows=(label)=>`
     <b style="display:block;margin-top:18px">${label}</b>
+    ${p?.active===false?'<p class="muted small" id="rwPausedHelpV293" style="margin-top:6px">Rewards below are ready — they show to customers again when you resume the programme.</p>':''}
     <div class="reward-list" id="rwList">
     ${rewards.length?rewards.map(r=>{const state=rewardStatusV271(r);return `<div class="reward-item">
-      <div class="meta"><div><b class="inline-status">${r.active?'':CUI.icon('retention',{size:15})}${esc(rewardLabel(r))}</b>
+      <div class="meta"><div><b class="inline-status">${r.active===false?CUI.icon('retention',{size:15}):''}${esc(rewardLabel(r))}</b>
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
         ${rewardIdentityLineV271(r)}
         ${r.claim_available_from||r.claim_available_until?`<div class="muted small" style="margin-top:4px">${r.claim_available_from?`Starts ${esc(walletDate(r.claim_available_from,true))}`:'Available now'}${r.claim_available_until?` · Ends ${esc(walletDate(r.claim_available_until,true))}`:''}</div>`:''}
@@ -7582,9 +7588,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ?`<label for="lsp">Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
           <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>
           <p class="muted small" style="margin-top:4px">Stack several milestones below — e.g. 3 stamps = free drink, 8 stamps = $5 credit or a "10% off" benefit. Each is its own reward with its own stamp cost.</p>`
-        :`<label for="le">Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>`}
+        :`<label for="le">Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>
+          <p class="muted small" style="margin-top:4px">How fast customers earn. This is generosity, not a cost — the cost comes from what rewards you give.</p>`}
       ${model==='stamps'||model==='classic'?'':`<label for="lpc">Cost per point (${S.biz.currency||'SGD'})</label><input id="lpc" type="number" min="0.001" step="0.001" value="${(programmePointCostCentsV262/100).toFixed(3)}"${loyaltyControlDisabled}>
-        <p class="muted small" style="margin-top:4px">What one point costs your business. Every reward uses this to work out its point price.</p>`}
+        <p class="muted small" style="margin-top:4px">What one point is worth when redeemed. Used to price every reward.</p>`}
       ${model==='classic'
         ?`<label for="lr">Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
           <label for="lc">Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}"${loyaltyControlDisabled}>
@@ -8060,6 +8067,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   if(loyaltyReviewPublish)loyaltyReviewPublish.onclick=()=>openProtectedGrowPublishReview(draftVersionId);
   const finishGrowEditorV139=()=>editorIntent?nav('#/grow'):nav('#/loyalty');
   const isExactRewardIntentV139=editorIntent?.kind==='reward'||editorIntent?.kind==='add';
+  /* V293 (owner walkthrough 2026-08-12): an add/reward intent lives in the HASH, so it re-arms
+     on every render of this route. Finishing a save while the intent hash was still current
+     re-opened a blank "New reward" over the owner's own work ("nothing was created"), and
+     closing the pruned page (V139 removes #rwList/#rwAdd) stranded them on a catalogue with no
+     list and no Add button. Spending the intent = navigating to the same loyalty page with the
+     focus segment stripped, so the full catalogue renders with the saved reward in the list. */
+  const spendRewardIntentV293=()=>nav(draftVersionId?`#/loyalty/${draftVersionId}`:'#/loyalty');
   let editorReward=null;
   function openRewardEditor(reward){
     editorReward=reward;
@@ -8069,28 +8083,38 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       branch:new Set(eligibility.branch[stableRewardId]||[]),
       service:new Set(eligibility.service[stableRewardId]||[]),
       product:new Set(eligibility.product[stableRewardId]||[])};
+    /* V293 (owner report 2026-08-12: "dont need so many steps to create a rewards"). The
+       minimal path is TWO decisions — what the reward is, and what it costs you: pick or name
+       it, give the budget, the points price derives itself, Create. Every other control keeps
+       its id and handler but moves under More options, where its default already does the
+       right thing: no description, manual fulfilment, no expiry, unlimited uses, everyone
+       eligible, always available, active. Nothing is removed — only demoted. */
     $('rwEditor').innerHTML=`<div class="reward-editor">
       <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Done</button></div>
       <div class="field-grid">
         <div class="full"><label for="rwCatalogueSource">Start from a product or service</label><select id="rwCatalogueSource"><option value="">Custom reward</option>${rewardCatalogueSources.map(item=>`<option value="${esc(item.type+'|'+item.id)}">${esc(item.type==='product'?'Product':'Service')} · ${esc(item.name)}</option>`).join('')}</select><div id="rwCatalogueEconomics" class="muted small" style="margin-top:6px">Choose an existing product or service to fill the reward, or keep Custom reward.</div></div>
         <div class="full"><label>Reward name customers see *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"><p class="muted small help">This is the title in the customer reward catalogue.</p></div>
-        <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
-        <div><label>${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4"></div>
         <div><label>Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
+        <div><label>${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4">${model==='stamps'?'':'<p class="muted small help" id="rwCostDerivedHelpV293">Auto-calculated from your cost budget — type here to override.</p>'}</div>
         ${model==='stamps'?'':`<div><label>Cost per point</label><output id="rwPointCostV262" style="display:block;margin-top:4px;font-weight:600">${esc(pointCostLabelV262(currentPointCostCentsV262()))}</output><p class="muted small help">Set once for the whole programme. <button class="btn ghost sm" id="rwPointCostEditV262" type="button">Change in Point system</button></p></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
-        <div><label>Fulfilment</label><select id="rwKind"><option value="manual_item" ${rewardKind(r)==='manual_item'?'selected':''}>Manual item or benefit</option><option value="credit" ${rewardKind(r)==='credit'?'selected':''}>Store credit</option></select></div>
-        <div id="rwCreditWrap"><label>Store credit value (${S.biz.currency||'SGD'})</label><input id="rwCredit" type="number" min="0" step="0.01" value="${((r.credit_cents||0)/100).toFixed(2)}" placeholder="e.g. 3.00"></div>
-        <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
-        <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
-        ${tiers.length?`<div><label for="rwMinTier">Who can redeem this</label><select id="rwMinTier">
-          <option value="">Everyone</option>
-          ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${esc(t.name)} and above (from ${t.threshold})</option>`).join('')}
-        </select><p class="muted small help">Members below the tier still see this reward, locked, with the tier they need. That is what makes climbing worth it.</p></div>`:''}
-        <div><label>Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
-        <div><label>Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
       </div>
       <details><summary>More options</summary>
-        <div class="field-grid" style="margin-top:4px"><div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
+        <div class="field-grid" style="margin-top:4px">
+          <div class="full" style="margin-top:6px"><b>Reward details</b></div>
+          <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
+          <div><label>Fulfilment</label><select id="rwKind"><option value="manual_item" ${rewardKind(r)==='manual_item'?'selected':''}>Manual item or benefit</option><option value="credit" ${rewardKind(r)==='credit'?'selected':''}>Store credit</option></select></div>
+          <div id="rwCreditWrap"><label>Store credit value (${S.biz.currency||'SGD'})</label><input id="rwCredit" type="number" min="0" step="0.01" value="${((r.credit_cents||0)/100).toFixed(2)}" placeholder="e.g. 3.00"></div>
+          <div class="full" style="margin-top:6px"><b>Limits and timing</b></div>
+          <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
+          <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+          ${tiers.length?`<div><label for="rwMinTier">Who can redeem this</label><select id="rwMinTier">
+            <option value="">Everyone</option>
+            ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${esc(t.name)} and above (from ${t.threshold})</option>`).join('')}
+          </select><p class="muted small help">Members below the tier still see this reward, locked, with the tier they need. That is what makes climbing worth it.</p></div>`:''}
+          <div><label>Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
+          <div><label>Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
+          <div class="full" style="margin-top:6px"><b>Team and visibility</b></div>
+          <div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
         </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwActive" type="checkbox" style="width:auto" ${r.active!==false?'checked':''}> Available for customers</label>
         <p class="muted small help">Archived rewards stay in history and cannot be newly redeemed.</p>
@@ -8111,12 +8135,18 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const kind=$('rwKind'),creditWrap=$('rwCreditWrap');
     const syncKind=()=>{creditWrap.style.display=kind.value==='credit'?'block':'none';if(kind.value!=='credit')$('rwCredit').value='0'};
     kind.onchange=syncKind;syncKind();
+    /* V293 (owner report 2026-08-12: "isn't it auto populated since i know what points needed
+       for redemptions"): the budget→points sync silently overwrote a Points cost the owner had
+       just typed, so the required field looked possessed. Typing points directly now pauses the
+       sync; editing the budget (or picking a catalogue item) resumes it and recomputes. */
+    let rwCostManualV293=false;
     const syncPointsFromBudget=()=>{
       if(model==='stamps')return;
       const budget=parseFloat($('rwEstimate').value),pointCostCents=currentPointCostCentsV262();
       const pointCostOut=$('rwPointCostV262');
       if(pointCostOut)pointCostOut.textContent=pointCostLabelV262(pointCostCents);
       if(!(budget>0)||!(pointCostCents>0)){$('rwPointsMath').textContent='Enter the company cost budget to calculate the required whole points.';return}
+      if(rwCostManualV293)return;
       const points=Math.max(1,Math.ceil((budget*100)/pointCostCents));$('rwCost').value=String(points);
       $('rwPointsMath').innerHTML=`<b>${points} points</b><br><span class="small">${esc(money(Math.round(budget*100)))} ÷ ${esc(pointCostLabelV262(pointCostCents))} per point, rounded up.</span>`;
     };
@@ -8125,11 +8155,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       if(!item){$('rwCatalogueEconomics').textContent='Custom reward — enter the customer name and company cost yourself.';return}
       $('rwCatalogueEconomics').innerHTML=`<b>${esc(item.name)}</b> · selling price ${esc(money(item.sellingCents))} · company cost ${item.costCents==null?'not set — enter it below':esc(money(item.costCents))}. Every field remains editable.`;
       $('rwCustomerName').value=item.name;$('rwDescription').value=`Free ${item.name}`;$('rwInternalName').value=item.name;
-      if(item.costCents!=null)$('rwEstimate').value=(item.costCents/100).toFixed(2);syncPointsFromBudget();
+      if(item.costCents!=null){$('rwEstimate').value=(item.costCents/100).toFixed(2);rwCostManualV293=false}syncPointsFromBudget();
     };
     $('rwCatalogueSource').onchange=syncCatalogueSource;
     if(model!=='stamps'){
-      $('rwEstimate').addEventListener('input',syncPointsFromBudget);
+      /* V293: a budget edit is the owner asking for the maths again — it lifts the manual
+         override before recomputing; typing in Points cost sets it. */
+      $('rwEstimate').addEventListener('input',()=>{rwCostManualV293=false;syncPointsFromBudget()});
+      $('rwCost').addEventListener('input',()=>{rwCostManualV293=true});
       /* V262: the pointer has to be true. When the Point system control is on the page the
          button goes to it; when this editor was opened alone (V139 prunes the siblings) there
          is nothing to jump to, so it names the place in words instead of faking navigation. */
@@ -8196,7 +8229,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     /* The editor node is moved home BEFORE the deactivator removes the dialog. restoreFocus is
        false because every caller that wants focus back names the opener itself. */
     const deactivate=rewardDialogDeactivateV238;rewardDialogDeactivateV238=null;
-    if(deactivate)deactivate({restoreFocus:false});else dialog.remove();
+    /* V293: under an exact reward/add intent EVERY close is followed by an intent-spending
+       navigation (below for Done/Close, in saveReward for a save), and the deactivator's
+       deferred history.back() unwind would race that hash assignment — the traversal lands
+       back ON the intent URL after the new hash was pushed, which re-arms the blank
+       New-reward dialog. handOffHistory leaves the dialog's entry alone; the navigation that
+       follows immediately supersedes it. */
+    if(deactivate)deactivate({restoreFocus:false,handOffHistory:isExactRewardIntentV139});else dialog.remove();
+    /* V293: under an exact reward/add intent the page behind this dialog was pruned to the
+       editor alone, so restoring into it is the owner's screenshotted dead end (no list, no
+       Add, no Edit). Closing without saving spends the intent and lands on the full page. */
+    if(restore&&isExactRewardIntentV139)spendRewardIntentV293();
   }
   async function saveReward(archive){
     const customerName=$('rwCustomerName').value.trim();
@@ -8247,7 +8290,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       openProtectedGrowPublishReview(versionId);return;
     }
     toast('Draft reward saved');
-    finishGrowEditorV139();
+    /* V293: one save = you see the thing you made — land on the full catalogue, never back
+       inside a re-armed New-reward intent and never a hop away on the Grow overview. */
+    spendRewardIntentV293();
   }
   const ra=$('rwAdd');
   if(ra) ra.onclick=()=>{openRewardEditor(null);openRewardDialogV238('New reward',ra)};

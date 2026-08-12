@@ -32,7 +32,9 @@ test('the Point system editor carries the cost-per-point control', () => {
   assert.match(editor, /<label for="lpc">Cost per point \(\$\{S\.biz\.currency\|\|'SGD'\}\)<\/label>/);
   assert.match(editor, /<input id="lpc" type="number" min="0\.001" step="0\.001"/);
   // One short help line, in the repo's low-literacy-first register.
-  assert.match(editor, /What one point costs your business\. Every reward uses this to work out its point price\./);
+  /* V293 (owner confused the three numbers, 2026-08-12): the help line now says what the knob
+     IS — the redemption value of a point — rather than repeating "cost" three ways. */
+  assert.match(editor, /What one point is worth when redeemed\. Used to price every reward\./);
   // Stamps have no points, and fixed redeem derives the value from the two numbers it already
   // asks for — a third editable field there could only contradict them.
   assert.match(editor, /\$\{model==='stamps'\|\|model==='classic'\?'':`<label for="lpc">/);
@@ -88,7 +90,10 @@ test('both surfaces read one value through one reader', () => {
 
 test('the required-points maths still recomputes live as the budget is typed', () => {
   const rewardEditor = section('function openRewardEditor(reward){', 'function openRewardDialogV238(');
-  assert.match(rewardEditor, /\$\('rwEstimate'\)\.addEventListener\('input',syncPointsFromBudget\);/);
+  /* V293: typing the budget still recomputes live, but it first lifts the manual override an
+     owner sets by typing Points cost directly — the sync no longer overwrites typed points. */
+  assert.match(rewardEditor, /\$\('rwEstimate'\)\.addEventListener\('input',\(\)=>\{rwCostManualV293=false;syncPointsFromBudget\(\)\}\);/);
+  assert.match(rewardEditor, /\$\('rwCost'\)\.addEventListener\('input',\(\)=>\{rwCostManualV293=true\}\);/);
   assert.match(rewardEditor, /const points=Math\.max\(1,Math\.ceil\(\(budget\*100\)\/pointCostCents\)\);\$\('rwCost'\)\.value=String\(points\);/);
   assert.match(rewardEditor, /<b>\$\{points\} points<\/b>/);
   // The note is only ever printed once the maths is defined.

@@ -42,9 +42,12 @@ test('the reward dialog uses the shared dialog helper for focus, Escape and Back
   assert.doesNotMatch(open, /\$\('rwCustomerName'\)\?\.focus/, 'initial focus belongs to activateDialog now');
   const close = between('function closeRewardDialogV238', 'async function saveReward(');
   assert.match(close, /const deactivate=rewardDialogDeactivateV238;rewardDialogDeactivateV238=null;/);
-  assert.match(close, /if\(deactivate\)deactivate\(\{restoreFocus:false\}\);else dialog\.remove\(\)/);
+  /* V293: closing under an exact reward/add intent hands the dialog's history entry off
+     instead of unwinding it — the deferred history.back() raced the intent-spending hash
+     navigation and re-armed the blank New-reward dialog. Same deactivator contract otherwise. */
+  assert.match(close, /if\(deactivate\)deactivate\(\{restoreFocus:false,handOffHistory:isExactRewardIntentV139\}\);else dialog\.remove\(\)/);
   // the editor node must go home BEFORE the deactivator removes the dialog
-  assert.ok(close.indexOf('home.after(editor)') < close.indexOf('deactivate({restoreFocus:false})'));
+  assert.ok(close.indexOf('home.after(editor)') < close.indexOf('deactivate({restoreFocus:false,handOffHistory:isExactRewardIntentV139})'));
 });
 
 test('the tier dialog uses the shared dialog helper too', () => {
