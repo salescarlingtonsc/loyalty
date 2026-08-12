@@ -5902,7 +5902,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${esc(business.name||presentation.name)}">
         <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
         <span class="customer-programme-compact-copy"><b>${esc(business.name||presentation.name)}</b>
-          <span class="muted small customer-programme-identity-hint">${hasTier&&currentTierLabel?`${esc(currentTierLabel)} · `:''}Address, phone and offers ›</span></span>
+          <span class="muted small customer-programme-identity-hint">${hasTier&&currentTierLabel?`${esc(currentTierLabel)} · `:''}<span class="customer-programme-identity-hint-long">Address, phone and offers ›</span><span class="customer-programme-identity-hint-short">Details ›</span></span></span>
       </button>
       ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
@@ -6254,6 +6254,16 @@ async function renderCustomerWallet(businessSlug=null){
      business with 42501 before they refuse anything else. */
   if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return renderCustomerNotJoinedV289(businessSlug);
   if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
+  /* v286 (audit: a wasted round trip that also cost a control). This customer_get_wallet read was
+     fetched and then never referenced, so with customer_actionable_wallet off programmeCards
+     stayed empty: the multi-business switcher above the header vanished (it bails under two
+     cards) and customerBusinessIdV103 lost its third fallback, leaving businessId null and
+     short-circuiting the actions, presentation, tier and promotion reads. Use the answer we
+     already paid for. */
+  if(!programmeCards.length&&!programmeResult.error){
+    programmeCards=Array.isArray(programmeResult.data)?programmeResult.data
+      :(Array.isArray(programmeResult.data?.cards)?programmeResult.data.cards:[]);
+  }
   const b=summary.business||{},loyalty=summary.loyalty||{},packages=summary.packages||{},membership=summary.membership||{};
   const businessId=customerBusinessIdV103({
     summaryBusiness:b,actionableCard,programmeCards,businessSlug
@@ -6531,6 +6541,13 @@ async function renderCustomerWallet(businessSlug=null){
     }):catalog.map(reward=>({...reward,redemption_kind:'catalog_reward',
       action_key:`catalog:${reward.id}`}));
     const redemptionEnabled=!actionsResult.error&&actionsResult.data?.redemption?.enabled===true;
+    /* v286 (audit: this section degraded invisibly). When the actions read fails — including the
+       businessId-unavailable case, which resolves to an error by construction — the catalog still
+       rendered under a lede promising a QR and every card still printed "Available at counter",
+       yet no redeem button was drawn. Every other section on this page names its own failure and
+       offers a retry; this one now does too, and no card claims an availability we could not
+       check. */
+    const redemptionUncheckedV286=!!actionsResult.error;
     if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards','No rewards are available right now.',businessSlug,'rewards',loadRewards,isWalletCurrent);
     const availability={
       available_at_counter:'Available at counter',
@@ -6549,12 +6566,18 @@ async function renderCustomerWallet(businessSlug=null){
       const label=r.tier_requirement?.tier_label;
       return label?`Reach ${label} to unlock this reward`:'Unlocks at a higher tier';
     };
+    /* v286: with redemption unchecked, "Available at counter" is a claim this page cannot stand
+       behind — the honest line is that we could not check. Every other status (tier-locked, short
+       of points, ended) comes from the catalog and the balance, so those stay true and unchanged. */
+    if(redemptionUncheckedV286)availability.available_at_counter='Redemption can’t be checked right now';
     host.setAttribute('aria-busy','false');
     const rewardUnit=loyalty.unit||'points',rewardBalance=Math.max(0,Number(loyalty.balance)||0);
     /* v195: this now renders inside the Reward points tab, which already prints the balance in
        full. The repeated balance and the three-step "how rewards work" strip went with the card
        the owner crossed out; one line of instruction survives, on the control it describes. */
-    host.innerHTML=`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
+    host.innerHTML=`${redemptionUncheckedV286
+      ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>Redemption can’t be checked right now</h2><p class="muted small">These rewards are shown for reference only — we could not reach this business’s redemption settings, so no QR can be issued yet.</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">Retry</button></div>`
+      :`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>`}
       <div class="wallet-rewards">${rewards.map(r=>{
       const ready=!!(r.action_key&&customerRewardCanRedeem(r,redemptionEnabled)),
         cost=Math.max(0,Number(r.cost_points)||0),gap=Math.max(0,cost-rewardBalance),
@@ -6570,6 +6593,7 @@ async function renderCustomerWallet(businessSlug=null){
       <div class="wallet-reward-actions">${ready
         ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:17})}<span>Show QR at counter</span></button>`
         :''}</div></article>`}).join('')}</div>`;
+    if($('walletRewardsRedemptionRetry'))$('walletRewardsRedemptionRetry').onclick=loadRewards;
     let redemptionAttempt=null;
     host.querySelectorAll('[data-customer-redeem]').forEach(button=>button.onclick=async()=>{
       const reward=rewards.find(item=>item.action_key===button.dataset.customerRedeem);
