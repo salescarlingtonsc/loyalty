@@ -3928,7 +3928,7 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
   const groups=new Map();
   const ensure=(slug,name='Business')=>{
     const key=String(slug||'');
-    if(!groups.has(key))groups.set(key,{business_slug:key,business_name:name||'Business',business_logo:'',bookingEnabled:false,requests:[],activeRequests:[],recentRequests:[],appointments:[]});
+    if(!groups.has(key))groups.set(key,{business_slug:key,business_name:name||'Business',business_logo:'',bookingEnabled:false,appointmentChangesEnabled:false,requests:[],activeRequests:[],recentRequests:[],appointments:[]});
     else if(name&&groups.get(key).business_name==='Business')groups.get(key).business_name=name;
     return groups.get(key);
   };
@@ -3936,6 +3936,9 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
     const business=card?.business||{};
     const group=ensure(business.slug,business.name);
     group.bookingEnabled=card?.booking_enabled===true||card?.booking?.enabled===true;
+    /* v286: carried through so the Bookings page can offer the same Change control the wallet
+       offers, under the same per-business permission. Absent or unreadable stays false. */
+    group.appointmentChangesEnabled=card?.appointment_changes_enabled===true;
     /* v195 (owner circled the bare name: "company photo"): a booking is easier to recognise by
        the shop's own mark than by reading a name. Falls back to the initial when a business has
        not uploaded a logo — never a placeholder image pretending to be theirs. */
@@ -3990,6 +3993,20 @@ function customerBookingAppointmentTabV178(appointment,now=Date.now()){
   const startsAt=Date.parse(appointment?.starts_at||'');
   if(Number.isFinite(startsAt)&&startsAt<=now)return 'history';
   return 'bookings';
+}
+/* v286 (audit): the page literally named "Bookings" gave an upcoming appointment nothing to press
+   — just a decorative status pill. The only cancel/reschedule control lived on the wallet detail
+   route behind "Open programme", which a customer has no reason to guess. This surfaces the SAME
+   control, the same customer_request_appointment_action call and the same two gates the wallet
+   uses (the platform customer_actions feature and the business's own appointment_changes setting).
+   Only an Ongoing, still-booked row qualifies: a past or cancelled one keeps "Book again". */
+function customerBookingChangeActionV286(group,appointment,featureEnabled=false){
+  return featureEnabled===true
+    &&group?.appointmentChangesEnabled===true
+    &&!!group?.business_slug
+    &&!!appointment?.appointment_id
+    &&String(appointment?.status||'')==='booked'
+    &&customerBookingAppointmentTabV178(appointment)==='bookings';
 }
 /* v183 (owner annotation, "0 requests · 0 appointments — no booking yet, should not show
    Cubbly"): a business with nothing booked is not a booking. Only records list here; the
@@ -4076,13 +4093,19 @@ async function renderCustomerBookings(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
   renderCustomerShell({active:'bookings',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your bookings…</p></div>'});
+  /* v286 (audit): this load ran three sequential stages — up to 4 + N + N calls — on raw sb.rpc,
+     which has no client-side timeout. One hung request left "Loading your bookings…" on screen
+     indefinitely with nothing to press; the only escape was a manual reload. Every read now goes
+     through customerRpc, the surface's own deadline helper, which turns a stall into an ordinary
+     {error:{code:'timeout'}} result — so a stalled feed lands in the retry state or in the
+     partial-failure notice below, both of which already exist and both of which say so. */
   const [walletResult,programmeResult,requestResult,selectorMediaResult]=await Promise.all([
-    sb.rpc('customer_get_wallet'),
-    sb.rpc('customer_list_programmes_v89'),
-    sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
+    customerRpc('customer_get_wallet'),
+    customerRpc('customer_list_programmes_v89'),
+    customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
     /* v195: the programme feeds carry no logo, so the same media projection My Rewards uses
        supplies it here. A failure costs the photo and nothing else — the initial is the fallback. */
-    sb.rpc('customer_get_programme_selector_media_v96')
+    customerRpc('customer_get_programme_selector_media_v96')
   ]);
   if(!isCurrent())return;
   const legacyProgrammes=walletResult.error?[]:(Array.isArray(walletResult.data)?walletResult.data:[]);
@@ -4095,18 +4118,20 @@ async function renderCustomerBookings(){
   const actionResults=await Promise.all(linkedProgrammes.map(async card=>{
     const business=card?.business||{};
     const response=business.id
-      ?await sb.rpc('customer_get_business_actions_v89',{p_business:business.id})
+      ?await customerRpc('customer_get_business_actions_v89',{p_business:business.id})
       :{data:null,error:{message:'Missing business identity'}};
     return {card,response};
   }));
   if(!isCurrent())return;
   const programmes=actionResults.map(({card,response})=>({
     ...card,booking_enabled:!response.error&&response.data?.booking?.enabled===true,
-    booking:response.error?{enabled:false}:response.data?.booking
+    booking:response.error?{enabled:false}:response.data?.booking,
+    /* v286: the same per-business permission the wallet reads, carried to the Bookings page. */
+    appointment_changes_enabled:!response.error&&response.data?.appointment_changes?.enabled===true
   }));
   const results=await Promise.all(programmes.map(async card=>{
     const slug=card?.business?.slug||'';
-    const response=await sb.rpc('customer_get_appointments_page',{p_business_slug:slug,p_cursor:{limit:20}});
+    const response=await customerRpc('customer_get_appointments_page',{p_business_slug:slug,p_cursor:{limit:20}});
     return {card,data:response.data,error:response.error};
   }));
   if(!isCurrent())return;
@@ -4115,6 +4140,7 @@ async function renderCustomerBookings(){
   if(walletResult.error&&programmeResult.error&&requestResult.error){
     return renderCustomerWalletRetry('Your booking requests and appointments are temporarily unavailable.',null,()=>renderCustomerBookings(),walletResult.error);
   }
+  const changesFeatureEnabled=context.features.customer_actions===true;
   let currentBookingTab='bookings',currentBookingRange={from:'',to:''};
   const paintBookings=()=>{
     if(!isCurrent()||!$('walletBody')?.isConnected)return;
@@ -4139,13 +4165,18 @@ async function renderCustomerBookings(){
     const activeRequestCount=requestItems.filter(isActiveCustomerBookingRequest).length;
     const hasMore=!!requestPayload?.next_cursor;
     $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingFilterMarkupV195(currentBookingRange)}</header>
-    ${partialMessages.length?'<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div></div>':''}
+    ${partialMessages.length?`<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div>
+      <!-- v286 (audit): these six sentences were computed and then thrown away — only
+           partialMessages.length was read. A customer whose appointment feed failed saw a list
+           quietly missing bookings under a notice that never said WHAT was missing. Naming the
+           gap is the difference between "something broke" and "your appointments are missing". -->
+      <ul class="muted small" style="margin:8px 0 0 18px">${partialMessages.map(message=>`<li>${esc(message)}</li>`).join('')}</ul></div>`:''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
     ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span></div>`).join('')}`:''}
-      ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
+      ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
     </section>`).join('')}</div>`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,allGroups)}
     </div>`;
@@ -4176,11 +4207,17 @@ async function renderCustomerBookings(){
       };
     });
     wireCustomerRepeatBookingV167($('walletBody'));
+    /* v286: no page-wide slug here — every Change button carries its own business. A sent request
+       repaints the page so the row reflects what the business will now see, rather than leaving a
+       control that looks untouched. */
+    wireWalletAppointmentActions('',{onDone:()=>renderCustomerBookings()});
     const more=$('customerBookingsMore');if(more)more.onclick=async()=>{
       const cursor=requestPayload?.next_cursor;
       if(!cursor||!isCurrent()||!more.isConnected)return;
       more.disabled=true;more.textContent='Loading…';
-      const next=await sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:cursor});
+      /* v286: the same deadline as the first page — a stalled "Load more" left the button on
+         "Loading…" for ever, which is the one state that cannot be retried. */
+      const next=await customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:cursor});
       if(!isCurrent()||!more.isConnected)return;
       if(next.error){requestLoadMoreError='More active requests could not be loaded. Try again.';paintBookings();return}
       const prior=Array.isArray(requestPayload?.items)?requestPayload.items:[];
@@ -4740,7 +4777,11 @@ function renderWalletAppointments(host,businessSlug,state,customerFeatures,{appo
   wireCustomerRepeatBookingV167(host);
 }
 
-function wireWalletAppointmentActions(businessSlug){
+/* v286: the Bookings page lists SEVERAL businesses at once, so the slug can no longer be a single
+   page-wide argument — each button carries its own in data-business-slug and the argument stays as
+   the single-business default (wallet, portal). onDone lets a surface repaint itself once the
+   request is in; the wallet keeps its existing toast-only behaviour. */
+function wireWalletAppointmentActions(businessSlug,{onDone=null}={}){
   document.querySelectorAll('.walletChange').forEach(button=>button.onclick=()=>{
     const modal=document.createElement('div');modal.className='modal customer-surface';modal.tabIndex=-1;
     modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','walletChangeTitle');
@@ -4760,11 +4801,12 @@ function wireWalletAppointmentActions(businessSlug){
       if(kind==='reschedule'&&!local)return toast('Choose a new time');
       $('walletChangeSend').disabled=true;
       const {error}=await sb.rpc('customer_request_appointment_action',{
-        p_business_slug:businessSlug,p_appointment:button.dataset.id,p_action:kind,
+        p_business_slug:button.dataset.businessSlug||businessSlug,p_appointment:button.dataset.id,p_action:kind,
         p_proposed_at:kind==='reschedule'?sgIso(local):null,
         p_note:$('walletChangeNote').value.trim()||null,p_idempotency_key:crypto.randomUUID()});
       if(error){$('walletChangeSend').disabled=false;return toast('The change could not be saved. Please try again.')}
       close();toast('Request sent to the business');
+      if(typeof onDone==='function')onDone();
     };
   });
 }
@@ -27800,13 +27842,36 @@ function customerBookingIdentitySummaryV167({profile=null,user=null}={}){
    with the same change/cancel request path the wallet uses. The guest management-code entry is
    demoted to a collapsed fallback — it is still the ONLY route for someone who booked without
    an account, so it is not removed. */
+/* v286 (audit): the portal drew the same Change control as the wallet but with NO capability
+   check, so a business that switched customer appointment changes OFF still received cancellation
+   and reschedule requests from anyone who reached its booking page while signed in — its own
+   setting was silently meaningless on this path. The flag lives on customer_get_business_actions_v89,
+   which is keyed by business id, so the programme list resolves the slug first. Fail CLOSED: an
+   unreadable capability hides the control rather than offering an action the business may have
+   withdrawn. (The server-side half of this finding — customer_request_appointment_action does not
+   check the flag either — needs a migration and is left to the migration owner.) */
+async function portalAppointmentChangesEnabledV286(slug){
+  try{
+    const {data,error}=await customerRpc('customer_list_programmes_v89');
+    if(error)return false;
+    const card=(Array.isArray(data?.programmes)?data.programmes:[]).find(item=>String(item?.business?.slug||'')===String(slug||''));
+    const businessId=String(card?.business?.id||'');
+    if(!businessId)return false;
+    const actions=await customerRpc('customer_get_business_actions_v89',{p_business:businessId});
+    return !actions.error&&actions.data?.appointment_changes?.enabled===true;
+  }catch(_error){return false}
+}
 async function loadPortalUpcomingBookingsV183(slug,isPortalCurrent=()=>true){
   const host=$('portalUpcoming');
   if(!host||!isPortalCurrent())return;
   host.innerHTML='<p class="muted small">Loading your bookings…</p>';
-  const [appointmentResult,requestResult]=await Promise.all([
-    Promise.resolve(sb.rpc('customer_get_appointments_page',{p_business_slug:slug,p_cursor:{limit:20}})).catch(error=>({data:null,error})),
-    Promise.resolve(sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null})).catch(error=>({data:null,error}))
+  const [appointmentResult,requestResult,changesEnabled]=await Promise.all([
+    /* v286: customerRpc carries the same 12s deadline the rest of the customer surface uses, so a
+       stalled read lands on the honest "could not be loaded" line below instead of leaving
+       "Loading your bookings…" on the page for ever. */
+    Promise.resolve(customerRpc('customer_get_appointments_page',{p_business_slug:slug,p_cursor:{limit:20}})).catch(error=>({data:null,error})),
+    Promise.resolve(customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null})).catch(error=>({data:null,error})),
+    portalAppointmentChangesEnabledV286(slug)
   ]);
   if(!isPortalCurrent()||!host.isConnected)return;
   if(appointmentResult.error&&requestResult.error){
@@ -27825,7 +27890,7 @@ async function loadPortalUpcomingBookingsV183(slug,isPortalCurrent=()=>true){
     return;
   }
   host.innerHTML=`${requests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · awaiting the business</p></div><span class="spacer"></span><span class="pill ${item.status==='waitlisted'?'new':'off'}">${esc(item.status==='waitlisted'?'Waitlisted':'Pending')}</span></div>`).join('')}
-    ${appointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true))}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'booked').replaceAll('_',' '))}</p></div><span class="spacer"></span>${String(item.status||'')==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(item.appointment_id)}">Change</button>`:''}</div>`).join('')}`;
+    ${appointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true))}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'booked').replaceAll('_',' '))}</p></div><span class="spacer"></span>${String(item.status||'')==='booked'?(changesEnabled?`<button class="btn ghost sm walletChange" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(slug)}">Change</button>`:'<span class="muted small">Contact the business to change this</span>'):''}</div>`).join('')}`;
   wireWalletAppointmentActions(slug);
 }
 async function renderPortal(slug){
@@ -27918,6 +27983,18 @@ async function renderPortal(slug){
   });
   const staffMember=id=>bookableStaff.find(member=>member?.id===id)||null;
   const staffName=()=>staffMember(selStaff)?.name||'';
+  /* v286 (audit): "Book again" fetched the previous team member's NAME and then wrote it into
+     a "teamName" input — an element that has never existed on this page, so the guard around it
+     swallowed it and the feature was dead. The roster is keyed by id, so the cached name is
+     resolved against the people this service can actually be booked with (case-insensitively, and
+     only when exactly one matches — two Jamies must not silently pick one). Setting selStaff is
+     what makes teamOptionsMarkup render them pre-selected and what pins the availability query to
+     that person, even though repeat booking opens on the time step. */
+  if(repeatPreference?.staffName&&staffChoice){
+    const wanted=String(repeatPreference.staffName).trim().toLowerCase();
+    const matches=staffForService().filter(member=>String(member?.name||'').trim().toLowerCase()===wanted);
+    if(matches.length===1)selStaff=matches[0].id;
+  }
   const availabilityKey=()=>JSON.stringify({service:selSvc||'',staff:selStaff||''});
   const slotLabel=iso=>{
     const at=new Date(iso);
@@ -28022,7 +28099,6 @@ async function renderPortal(slug){
           <div id="mlist" style="margin-top:12px"></div>
         </details>
       </div>${legalLinks()}</div>`;
-    if(repeatPreference?.staffName&&$('teamName'))$('teamName').value=repeatPreference.staffName;
     const buildSummary=()=>{
       const el=$('pfSummary');if(!el)return;
       const s=svcObj();
@@ -28200,14 +28276,40 @@ async function renderPortal(slug){
       catch(error){$('merr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('mfind').disabled=false;return}
       $('mfind').disabled=false;
       const when=data.starts_at||data.preferred_at;
-      $('mlist').innerHTML=`<div style="padding:10px 0"><b>${when?new Date(when).toLocaleString():'Time pending'}</b>
+      /* v286 (audit): this was the one time on the whole booking surface printed in the device's
+         zone — toLocaleString() with no timeZone. A traveller, or a phone set to the wrong zone,
+         read a different hour here than in the confirmation card and in Bookings, and could
+         reschedule against a time that never existed. walletDate() is the surface's own SGT
+         formatter, the same one every other date here already goes through. */
+      $('mlist').innerHTML=`<div style="padding:10px 0"><b>${esc(walletDate(when,true))||'Time pending'}</b>
         <div class="muted small">${esc(data.service_name||'general visit')} · ${esc(data.status||'pending')}</div></div>
         ${data.can_change?`<label>New preferred time</label><input type="datetime-local" id="mdt">
-        <div class="row" style="margin-top:10px"><button class="btn ghost sm" onclick="mCancel()">Request cancellation</button>
-        <button class="btn sm" onclick="mReschedule()">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
+        <div class="row" style="margin-top:10px"><button class="btn ghost sm" id="mcancel" onclick="mCancel()">Request cancellation</button>
+        <button class="btn sm" id="mresched" onclick="mReschedule()">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
     };
     showStep(repeatService?steps.indexOf('time'):0);
     if(manageToken) setTimeout(()=>$('mfind')?.click(),0);
+  };
+  /* v286 (audit): after a successful change the panel used to keep showing the OLD status and two
+     live buttons, and it cleared changeAttempt — so a second tap minted a fresh submission_id, the
+     gateway dedupe missed it, and the business received the same cancellation twice. Nothing was
+     disabled during the await either, so on a slow line the customer saw no change at all and
+     tapped again. Both buttons now go busy for the duration, the attempt key is KEPT so a replay
+     carries the same submission_id, and a success re-runs the lookup so the row repaints with the
+     status the server actually holds. */
+  const manageChangeBusyV286=busy=>{
+    for(const id of ['mcancel','mresched']){
+      const button=$(id);
+      if(!button)continue;
+      button.disabled=busy;
+      if(busy)button.setAttribute('aria-busy','true');else button.removeAttribute('aria-busy');
+    }
+  };
+  const manageChangeSettledV286=data=>{
+    toast(data&&data.status==='approved'?'Done — auto-approved':workspaceTranslationV97('Request saved for manual review — check the private link for its current status.'));
+    /* Repaint from the server rather than from what we hoped happened: the lookup is the only
+       honest source for the booking's new status, and it also re-evaluates can_change. */
+    $('mfind')?.click();
   };
   window.mCancel=async()=>{
     manageToken=($('mtoken')?.value||manageToken).trim();
@@ -28222,10 +28324,10 @@ async function renderPortal(slug){
     const key=JSON.stringify({kind:'cancel',proposed:null,note:null});
     if(!changeAttempt||changeAttempt.key!==key)changeAttempt={key,id:crypto.randomUUID()};
     let data;
+    manageChangeBusyV286(true);
     try{data=await publicGateway('manage-booking',{body:{action:'change',token:manageToken,submission_id:changeAttempt.id,kind:'cancel',proposed:null,note:null}})}
-    catch(error){return toast(error.message)}
-    changeAttempt=null;
-    toast(data&&data.status==='approved'?'Done — auto-approved':workspaceTranslationV97('Request saved for manual review — check the private link for its current status.'));
+    catch(error){manageChangeBusyV286(false);return toast(error.message)}
+    manageChangeSettledV286(data);
   };
   window.mReschedule=async()=>{
     manageToken=($('mtoken')?.value||manageToken).trim();
@@ -28235,10 +28337,10 @@ async function renderPortal(slug){
     const proposed=sgIso(val),key=JSON.stringify({kind:'reschedule',proposed,note:null});
     if(!changeAttempt||changeAttempt.key!==key)changeAttempt={key,id:crypto.randomUUID()};
     let data;
+    manageChangeBusyV286(true);
     try{data=await publicGateway('manage-booking',{body:{action:'change',token:manageToken,submission_id:changeAttempt.id,kind:'reschedule',proposed,note:null}})}
-    catch(error){return toast(error.message)}
-    changeAttempt=null;
-    toast(data&&data.status==='approved'?'Done — auto-approved':workspaceTranslationV97('Request saved for manual review — check the private link for its current status.'));
+    catch(error){manageChangeBusyV286(false);return toast(error.message)}
+    manageChangeSettledV286(data);
   };
   draw();
   /* Off the critical path: once personas resolve, inject a CUSTOMER-only "Open rewards" banner.
