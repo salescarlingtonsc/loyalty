@@ -85,8 +85,13 @@ test('the paging control still drives the same renderer', () => {
 test('the dashboard schedule card drops its subtitle and its second appointments button', () => {
   assert.ok(!app.includes('<h2>Bookings and appointments</h2>'), 'the subtitle line is struck out');
   assert.ok(!app.includes('>View bookings</a>'), 'the duplicate appointments button is struck out');
-  assert.ok(app.includes('<h2 class="eyebrow">Today schedule</h2>'),
+  /* V295 retarget (owner markup 2026-08-13: the heading said "Today schedule" above the words
+     "Nothing booked on 13 Aug 2026"). The heading is still there — it now carries an id and is
+     rewritten to name whichever day is on screen. */
+  assert.ok(app.includes('<h2 class="eyebrow" id="dashboardScheduleHeadingV295">Today schedule</h2>'),
     'the card keeps a heading — the eyebrow is promoted, not deleted');
+  assert.ok(app.includes("headingHostV295.textContent=dashboardScheduleHeadingTextV295(day)"),
+    'and that heading follows the day being shown');
   assert.ok(app.includes('<a class="btn secondary" href="#/appointments">Open calendar</a>'),
     'Open calendar is the surviving action');
 });

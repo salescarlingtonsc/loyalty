@@ -69,6 +69,15 @@ test('V177: the confirm modal shows the diff, not just the safety check', () => 
   assert.match(src, /What changes for customers/, 'modal needs the diff heading');
   assert.match(app, /replace\(\/<button\[\\s\\S\]\*\?<\\\/button>\/gi,''\)/,
     'buttons must be stripped from the embedded copy to avoid duplicate ids');
-  assert.match(app, /The programme numbers changing are listed above/,
-    'confirm copy must point at the visible diff, not at editors elsewhere');
+  /* V295 retarget (owner: "just be straight forward without all unnecessary details"). The
+     sentence this pinned only RESTATED the list rendered directly above it, so it is deleted
+     along with the safety-tally box. The rule it defended — the confirmation must show the diff
+     itself, not send the owner off to editors — is now pinned on the diff section being
+     unconditional inside the dialog, and on the acknowledgement naming those same changes. */
+  assert.match(src, /aria-label="What changes for customers"/,
+    'the diff section is part of the dialog itself, not a pointer elsewhere');
+  assert.match(app, /I have read the changes above and want customers to get them now\./,
+    'the acknowledgement refers to the changes shown, not to editors elsewhere');
+  assert.doesNotMatch(app, /reviewing each changed programme in its editor\.'[\s\S]{0,400}growPubModal/,
+    'the dialog must not defer to editors elsewhere');
 });

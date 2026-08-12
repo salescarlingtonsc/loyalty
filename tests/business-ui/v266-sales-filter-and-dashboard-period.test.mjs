@@ -110,10 +110,18 @@ test('V266/V294 B3 the Today-schedule day picker drives the Performance figures 
      the figures through the SAME #df/#dt + load() path the range pills use, and the helper
      states the new truth. */
   const block = dash();
-  assert.match(block, /Also sets the figures below to this day\./);
+  /* V295 retarget (owner markup 2026-08-13: "for date selected should reflect schedule &
+     Performance"): the link now runs BOTH ways — a period pill or Apply moves the schedule card
+     to that range's END day — so the helper says "linked", not "also sets". V294's direction is
+     asserted unchanged below; the second direction is asserted alongside it. */
+  assert.match(block, /Linked both ways with the figures below\./);
   assert.doesNotMatch(block, /Changes the bookings shown here only/);
   assert.match(block, /rangeFromV294\.value=date;rangeToV294\.value=date;/);
   assert.match(block, /button\.dataset\.d==='1'&&date===sgDateInputValue\(\)/);
+  assert.match(block, /applyScheduleDayV252\(dashboardRoot\.querySelector\('#dt'\)\.value,false\)/);
+  assert.match(block, /const appliedEndV295=dashboardRoot\.querySelector\('#dt'\)\.value;/);
+  assert.match(block, /const applyScheduleDayV252=\(date,syncRangeV295=true\)=>/);
+  assert.match(block, /if\(!syncRangeV295\)return;/);
   assert.match(block, /dashboard-schedule-scope-v266/);
   // The note wraps onto its own line at every width, including 390px.
   assert.match(html, /\.dashboard-schedule-scope-v266\{flex-basis:100%/);

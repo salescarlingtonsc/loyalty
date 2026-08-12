@@ -3878,6 +3878,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   scopePeriod:Object.freeze({en:'{branch} · {from} to {to}','zh-CN':'{branch} · {from} 至 {to}',ms:'{branch} · {from} hingga {to}'}),
   allBranchesPeriod:Object.freeze({en:'All permitted branches · {from} to {to}','zh-CN':'所有获准分店 · {from} 至 {to}',ms:'Semua cawangan yang dibenarkan · {from} hingga {to}'}),
   performancePeriodRange:Object.freeze({en:'{from} to {to}','zh-CN':'{from} 至 {to}',ms:'{from} hingga {to}'}),
+  /* V295: the Dashboard schedule card names the day it is showing, so the dated form is
+     interpolated copy and belongs in the reviewed inventory like every other one. */
+  scheduleHeadingDay:Object.freeze({en:'Schedule · {date}','zh-CN':'排程 · {date}',ms:'Jadual · {date}'}),
   pointCostDerived:Object.freeze({en:'Cost per point: {cost}. Every reward uses this to work out its point price.','zh-CN':'每积分成本：{cost}。每个奖励都以此计算其积分价格。',ms:'Kos setiap mata: {cost}. Setiap ganjaran menggunakannya untuk mengira harga matanya.'}),
   parkExpiryPreview:Object.freeze({en:'Expires {expires} · {days} days','zh-CN':'于 {expires} 到期 · {days} 天',ms:'Luput {expires} · {days} hari'}),
   parkExpiryPreviewTier:Object.freeze({en:'Expires {expires} · {days} days · {tier}','zh-CN':'于 {expires} 到期 · {days} 天 · {tier}',ms:'Luput {expires} · {days} hari · {tier}'}),
@@ -4038,7 +4041,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany','reversalOf',
   'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
-  'performancePeriodRange','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
+  'performancePeriodRange','scheduleHeadingDay','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
   'sortByAscending','sortByDescending','bottlePercentLeft',
   'bookingRequestWaiting','bookingRequestsWaitingMany','bookingRequestsBadge',
   'staffKeptHasRecord','staffKeptHasRecords',

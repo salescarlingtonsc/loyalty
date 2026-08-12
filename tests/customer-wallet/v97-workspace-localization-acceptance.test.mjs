@@ -297,7 +297,10 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      plus sortByAscending/sortByDescending for the v267 customer-360 sort control and
      bottlePercentLeft for the v275 fill bar and the three v269 booking-request
      button strings. */
-  assert.equal(keys.length,130,'mixed-interface interpolation inventory changed without review');
+  /* 130 -> 131: V295 adds scheduleHeadingDay — the Dashboard schedule card now names the day it
+     is showing ("Schedule · 13 Aug 2026"), which is interpolated workspace copy and so joins the
+     reviewed inventory with all three locales and matching placeholders. */
+  assert.equal(keys.length,131,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

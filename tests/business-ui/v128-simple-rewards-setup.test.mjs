@@ -18,6 +18,10 @@ const v288Evidence=readFileSync(new URL('../../docs/qa/evidence/V288-A2-GAP-CLOS
 /* V294: the owner-batch UI changes regenerated the fixture, so its provenance hash lives in the V294 evidence. */
 const v294Evidence=readFileSync(new URL('../../docs/qa/evidence/V294-OWNER-BATCH-ACCEPTANCE.md',import.meta.url),'utf8');
 const v295Evidence=readFileSync(new URL('../../docs/qa/evidence/V295-AUDIT-MEDIUM-CLOSURE.md',import.meta.url),'utf8');
+/* V295 (owner markup 2026-08-12/13): the shared production stylesheet moved with the Customer
+   360 and publish-gate fixes, so this fixture's source hash moved with it. The rule is unchanged
+   — the checked-in evidence must name the exact component the fixture was built from. */
+const v295FixesEvidence=readFileSync(new URL('../../docs/qa/evidence/V295-OWNER-FIXES-ACCEPTANCE.md',import.meta.url),'utf8');
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -113,5 +117,5 @@ test('server recommendation uses governed sectors and serializes stale tabs onto
 test('checked-in browser evidence identifies the exact extracted production component',()=>{
   const sourceHash=browserFixture.match(/name="production-source-sha256" content="([a-f0-9]{64})"/)?.[1];
   assert.ok(sourceHash,'generated browser fixture must carry its production source hash');
-  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}`,new RegExp(sourceHash));
+  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}\n${v295FixesEvidence}`,new RegExp(sourceHash));
 });

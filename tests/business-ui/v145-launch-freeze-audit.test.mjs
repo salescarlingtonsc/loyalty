@@ -647,14 +647,35 @@ test('launch-incomplete Stored value is unreachable and Studio remains managemen
   assert.match(publishGate, /growRewardPendingChangesV291/);
   assert.match(publishGate, /What changes for customers/);
   /* V291 retarget (not a deletion): the gate lists those changes now instead of deferring them,
-     so the pin follows to the sections that render them. */
-  assert.match(publishGate, /Rewards<\/h3>/);
-  assert.match(publishGate, /Birthday benefit<\/h3>/);
-  assert.match(publishGate, /Bring-back rules<\/h3>/);
+     so the pin follows to the sections that render them.
+     V295 retarget (owner: "i do not know what changed - just be straight forward without all
+     unnecessary details"): the three grouping headings became one flat list of concrete lines,
+     so the pins follow to the renderers that emit each change type. Nothing is dropped — reward,
+     birthday and bring-back changes are still all pushed onto the same list. */
+  assert.match(publishGate, /rewardDiffV291\.rewards\.changed\.forEach/);
+  assert.match(publishGate, /rewardDiffV291\.rewards\.added\.forEach/);
+  assert.match(publishGate, /rewardDiffV291\.rewards\.removed\.forEach/);
+  assert.match(publishGate, /rewardDiffV291\?\.birthday\?\.length/);
+  assert.match(publishGate, /rewardDiffV291\.retention\.changed\.forEach/);
+  assert.match(publishGate, /rewardDiffV291\.retention\.added\.forEach/);
+  assert.match(publishGate, /studio-change-list-v295/);
   assert.match(publishGate, /The welcome offer is not part of this draft/);
-  assert.match(publishGate, /No changes to earning or programme numbers in this draft/);
+  /* V295: three separate negatives became the single honest sentence. */
+  assert.match(publishGate, /Nothing changes for customers in this draft/);
+  assert.doesNotMatch(publishGate, /No changes to earning or programme numbers in this draft/);
   assert.match(publishGate, /Could not load the comparison/);
-  assert.match(publishGate, /Server-confirmed advanced-action safety/);
+  /* V295: the server-safety tally box and the "Safety check complete" paragraph are deleted —
+     both only restated the list above them. The paused warning, the needConfirm danger styling,
+     the acknowledgement checkbox and the disabled Publish button all stay, and are pinned here
+     so a later edit cannot quietly weaken the gate along with the ceremony. */
+  assert.doesNotMatch(publishGate, /Server-confirmed advanced-action safety/);
+  assert.doesNotMatch(publishGate, /Safety check complete/);
+  assert.doesNotMatch(publishGate, /This Grow draft has no advanced-rule changes/);
+  assert.match(publishGate, /This will publish PAUSED — customers earn nothing/);
+  assert.match(publishGate, /needConfirm\?'<div class="studio-emg-banner"/);
+  assert.match(publishGate, /class="btn \$\{needConfirm\?'danger':''\}" id="growPubConfirm"/);
+  assert.match(publishGate, /id="growPubType"/);
+  assert.match(publishGate, /id="growPubConfirm" type="button" disabled/);
   assert.doesNotMatch(publishGate, /Confirm the exact existing reward and bring-back changes/);
   assert.doesNotMatch(app,/coming soon|not implemented|under construction|demo data|sample data/i,
     'deployable application source must not advertise placeholder behavior');

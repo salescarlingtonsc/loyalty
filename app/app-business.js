@@ -2335,6 +2335,17 @@ let dashboardScheduleEpochV252=0;
 const dashboardScheduleDayLabelV252=day=>new Intl.DateTimeFormat('en-SG',{
   day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'
 }).format(new Date(sgDateBoundary(day)));
+/* V295 (owner markup 2026-08-13: the card read "Today schedule" above the sentence "Nothing
+   booked on 13 Aug 2026" — "should not be static, must follow selected date"). The heading is
+   what the owner called static, so it names the day actually on screen. Today and tomorrow keep
+   their spoken names because that is how the two tabs are labelled; every other day is stated
+   as a date, through the same SGT formatter the body already prints. */
+const dashboardScheduleHeadingTextV295=day=>{
+  const todayV295=sgDateInputValue();
+  if(day===todayV295)return 'Today schedule';
+  if(day===shiftSgDateInput(todayV295,1))return 'Tomorrow\u2019s schedule';
+  return workspaceTemplateTextV97('scheduleHeadingDay',{date:dashboardScheduleDayLabelV252(day)});
+};
 async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null){
   const host=root?.querySelector('#dashboardScheduleToday');
   const summary=root?.querySelector('#dashboardScheduleSummary');
@@ -2343,6 +2354,10 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   const day=dateV252||sgDateInputValue();
   const isTodayV252=day===sgDateInputValue();
   const dayLabelV252=dashboardScheduleDayLabelV252(day);
+  /* V295: written before the fetch. The heading is a property of the DAY, not of the answer, so
+     it must never lag behind the day the owner just picked while a read is in flight. */
+  const headingHostV295=root?.querySelector('#dashboardScheduleHeadingV295');
+  if(headingHostV295)headingHostV295.textContent=dashboardScheduleHeadingTextV295(day);
   const epochV252=++dashboardScheduleEpochV252;
   const isCurrentScheduleV252=()=>root.isConnected&&epochV252===dashboardScheduleEpochV252;
   host.innerHTML=isTodayV252
@@ -2431,11 +2446,11 @@ async function dashboard(){
         <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
       </div>
     </header>
-    <section class="card dashboard-schedule-glance" aria-label="Today schedule glance">
+    <section class="card dashboard-schedule-glance" aria-label="Schedule glance">
       <div class="dashboard-schedule-top">
         <div class="dashboard-schedule-copy">
           ${CUI.icon('appointments',{size:24})}
-          <div><h2 class="eyebrow">Today schedule</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
+          <div><h2 class="eyebrow" id="dashboardScheduleHeadingV295">Today schedule</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
         </div>
         <div class="dashboard-schedule-actions">
           <!-- V288 (audit A2, MEDIUM 8): sector-hiding is ONE predicate. The rail, the app-bar
@@ -2463,7 +2478,9 @@ async function dashboard(){
              circled this control with an arrow to the Performance period line: "I want date
              linked to data below") reverses that: picking a day here now ALSO retargets the
              Performance figures to that single day, so the helper states the new truth. -->
-        <span class="muted small dashboard-schedule-scope-v266">Also sets the figures below to this day.</span>
+        <!-- V295 (owner markup 2026-08-13): the link is two-way now — the period pills above
+             move this day as well — so the helper states that instead of only one direction. -->
+        <span class="muted small dashboard-schedule-scope-v266">Linked both ways with the figures below.</span>
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
@@ -2523,7 +2540,15 @@ async function dashboard(){
   };
   dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(b=>b.onclick=()=>{
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
-    dashboardRoot.querySelector('#df').value=shiftSgDateInput(sgDateInputValue(),-(Number(b.dataset.d)-1));dashboardRoot.querySelector('#dt').value=sgDateInputValue();load();
+    dashboardRoot.querySelector('#df').value=shiftSgDateInput(sgDateInputValue(),-(Number(b.dataset.d)-1));dashboardRoot.querySelector('#dt').value=sgDateInputValue();
+    /* V295 (owner markup 2026-08-13: "for date selected should reflect schedule & Performance").
+       V294 made the link one-way — a schedule day retargeted the figures, but a period pill left
+       the schedule card on whatever day it was already showing, so the two controls disagreed on
+       screen. The pill now moves the card to the range's END day (the most recent day in range;
+       for Today that is today itself). syncRangeV295=false because this handler already owns the
+       range and the load below — letting the applier write it back would fight the pill it just lit. */
+    applyScheduleDayV252(dashboardRoot.querySelector('#dt').value,false);
+    load();
   });
   /* V252: scoped to the Performance range pair. Unscoped, the new schedule date picker also
      cleared the 1d/7d/30d/90d selection and invalidated the KPI panel on every day change. */
@@ -2531,7 +2556,13 @@ async function dashboard(){
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>button.classList.remove('act'));
     invalidatePerformance();
   });
-  dashboardRoot.querySelector('#apply').onclick=()=>load();
+  dashboardRoot.querySelector('#apply').onclick=()=>{
+    /* V295: same rule for the From/To pair — Apply is the moment a custom range becomes the
+       period, so the schedule card follows it to that range's last day. */
+    const appliedEndV295=dashboardRoot.querySelector('#dt').value;
+    if(appliedEndV295)applyScheduleDayV252(appliedEndV295,false);
+    load();
+  };
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
@@ -2541,13 +2572,18 @@ async function dashboard(){
   const scheduleDateInputV252=dashboardRoot.querySelector('#dashboardScheduleDate');
   const scheduleTabsV252=[...dashboardRoot.querySelectorAll('[data-schedule-day-v252]')];
   const scheduleTabDateV252=tab=>shiftSgDateInput(sgDateInputValue(),Number(tab.dataset.scheduleDayV252)||0);
-  const applyScheduleDayV252=date=>{
+  /* V295: syncRangeV295 says which control started the move. true = the owner picked a day
+     here, so the period follows (the V294 behaviour below). false = the period pills or Apply
+     started it, so only the card, its tabs and its heading move — there is still exactly one
+     range state, and it is never written twice for one gesture. */
+  const applyScheduleDayV252=(date,syncRangeV295=true)=>{
     scheduleTabsV252.forEach(tab=>{
       const on=scheduleTabDateV252(tab)===date;
       tab.classList.toggle('act',on);tab.setAttribute('aria-pressed',on?'true':'false');
     });
     if(scheduleDateInputV252&&scheduleDateInputV252.value!==date)scheduleDateInputV252.value=date;
     loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,date);
+    if(!syncRangeV295)return;
     /* V294 (owner markup 2026-08-12: "I want date linked to data below"). A schedule-day pick
        ALSO sets the Performance figures to that single day. It writes through the same #df/#dt
        + load() path the global range pills use, so there is exactly one range state and the
@@ -3560,7 +3596,11 @@ async function clientDetail(id){
     /* V249: the deleted banner was the only place that told staff earning is CONDITIONAL when a
        customer has no visits yet. Peekaa must never imply points arrive automatically, so the
        same reviewed sentence (translations already carry it verbatim) stays on the page. */
-    +(canReadSales&&netVisits<=0?`<p class="muted small" style="margin:-10px 0 16px">Record an eligible first purchase; points are earned only when an active published loyalty programme applies.</p>`:'');
+    /* V295 (owner markup 2026-08-13: "there's an empty box and UI UX not aligned"). The -10px
+       top margin was written when .c360-badges still carried its own 16px bottom margin; V294's
+       .c360-top-main-v294 rule zeroed that, so the negative margin pulled this sentence UP THROUGH
+       the chip row and the "+ New customer" chip sat on top of the words. A stack, not an overlap. */
+    +(canReadSales&&netVisits<=0?`<p class="muted small" style="margin:0 0 16px">Record an eligible first purchase; points are earned only when an active published loyalty programme applies.</p>`:'');
   /* V249: the owner struck out the whole next-best-action suggestion banner. Nothing it offered
      was unique — its Redeem reward button only scrolled to the rewards card below (redemption
      still happens there, via the branch-scoped Record sale scanner), and every secondary entry
@@ -3790,7 +3830,12 @@ async function clientDetail(id){
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
     ${erasedBannerV291}
     ${editCustomerMarkup}
-    <div class="c360-top-v294"><div class="c360-top-main-v294">${badgesHtml}</div>${summaryCardV294}</div>
+    <!-- V295: .c360-top-v294 / .c360-top-main-v294 are gone. The left wrapper carried
+         flex:1 1 240px, which in the mobile column direction is a 240px BASIS HEIGHT — the empty
+         box the owner circled — and on desktop it left a ~250px void beside the taller summary
+         card. The chips and their sentence are a plain stack now; the summary card is a cell of
+         the content grid below, so no column ever starts on an empty box. -->
+    ${badgesHtml}
     ${staffProfileScopeNote}
     ${profileScopeNotice}
     ${correctionScopeNotice}
@@ -3798,11 +3843,15 @@ async function clientDetail(id){
       /* V249's rule survives the V294 restructure: absent numbers must be explained, never
          shown as zero, so a role without sales or loyalty access still gets the sentence. */
       :`<p class="muted small" role="note" style="margin:0 0 16px">Sales and reward figures are hidden because this role does not have access to those modules.</p>`}
-    <div class="split" style="margin-top:16px">
+    <div class="split c360-content-split-v295" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
         <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${programmesListV294}${rewardsMarkup}</div>
       </section>`:''}
+      ${/* V295: still the upper-right card V294 asked for — it is simply the grid's top-right
+           cell now instead of a flex sibling that dictated the height of an empty left column.
+           Contents are untouched: visits, lifetime spend, points (+ paused note and expiry line),
+           spendable credit, PDPA. */''}${summaryCardV294}
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
         ${referralMarkup}
         <p class="muted small" style="margin:14px 0 6px">Marketing consent (PDPA) — every change is recorded:</p>
@@ -12532,8 +12581,17 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     $('growPublishBack').onclick=()=>sessionStorage.removeItem(`nestly:grow-publish-review:${draftVersionId}`);return;
   }
   routeMain.innerHTML=`${CUI.pageHeader({title:'Publish Grow draft',subtitle:'Confirm the selected draft after reviewing each changed programme in its editor.',iconName:'loyalty',canWrite:true,moduleLabel:'Grow publishing'})}
-    <section class="card" id="growPublishDiffCard"><h2>What changes for customers</h2><p class="muted small" style="margin-top:6px">Draft v${Number(draft?.version_no||0)} compared with the programme customers earn on today.</p><div id="growPublishDiffBody" role="status" aria-live="polite" style="margin-top:12px"><p class="muted small">Loading what changes for customers…</p></div><div id="growPublishPauseV258" style="margin-top:12px"></div></section>
-    <section class="card"><h2>Draft v${Number(draft?.version_no||0)}</h2><p class="muted small" style="margin-top:6px">This page is the final publication gate. It lists every programme, reward, birthday and bring-back value this draft changes, and checks advanced-action safety below.</p><div id="growPublishStatus" role="status" aria-live="polite" style="margin-top:12px"></div><div class="row" style="margin-top:16px"><button class="btn" id="growPublishReview">Confirm &amp; publish</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></section>`;
+    <!-- V295 (owner: "this draft is so confusing, i do not know what changed"). The change list
+         is the first thing on the page now; the sentences ABOUT the comparison — what it is
+         compared against, what it excludes, what this gate does — are true and stay, but they
+         are machinery, so they fold away under one disclosure instead of framing the answer. -->
+    <section class="card" id="growPublishDiffCard"><h2>What changes for customers</h2><div id="growPublishDiffBody" role="status" aria-live="polite" style="margin-top:12px"><p class="muted small">Loading what changes for customers…</p></div><div id="growPublishPauseV258" style="margin-top:12px"></div>
+      <details class="studio-technical-v295" id="growPublishTechnicalV295"><summary>Technical detail</summary>
+        <p class="muted small" style="margin-top:8px">Draft v${Number(draft?.version_no||0)} compared with the programme customers earn on today.</p>
+        <p class="muted small" style="margin-top:6px">This page is the final publication gate. It lists every programme, reward, birthday and bring-back value this draft changes, and checks advanced-action safety before you confirm.</p>
+        <p class="muted small" style="margin-top:6px">The welcome offer is not part of this draft \u2014 it goes live when it is saved.</p>
+      </details></section>
+    <section class="card"><h2>Draft v${Number(draft?.version_no||0)}</h2><div id="growPublishStatus" role="status" aria-live="polite" style="margin-top:12px"></div><div class="row" style="margin-top:16px"><button class="btn" id="growPublishReview">Confirm &amp; publish</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></section>`;
   const reviewKey=`nestly:grow-publish-review:${draftVersionId}`;
   const back=$('growPublishBack');if(back)back.onclick=()=>sessionStorage.removeItem(reviewKey);
   /* V258 (owner item 6, "published points system, but still shows paused"). Publishing is NOT
@@ -12628,44 +12686,56 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     const rows=growPublishFieldRowsV170((liveResult.data||[])[0]||null,draftResult.data?.program||null);
     /* V291: one renderer for every changed thing, in the order an owner reads them. A section is
        only drawn when it has something to say; a section that could not be read says that. */
-    const changeBlockV291=(heading,changes)=>`<div class="studio-impact-rule"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b><span data-merchant-content>${esc(heading)}</span></b></div>${changes.map(change=>`<div class="studio-impact-eff"><span>${esc(change.label)}</span><span><s>${esc(change.live)}</s> → <b>${esc(change.pending)}</b></span></div>`).join('')}</div>`;
-    const rewardSectionsV291=[];
+    /* V295 (owner: "this draft is so confusing, i do not know what changed - just be straight
+       forward without all unnecessary details"). Same inputs, same completeness — every change
+       type V291 computed is still represented — but rendered as ONE plain list of concrete
+       lines instead of five headed sections. The grouping headings and the per-entity blocks
+       were structure describing structure; what the owner needs is the sentence "Free
+       Moisturiser: 150 points -> 1500 points". Reward, bring-back and birthday names are
+       merchant content and are never localized. */
+    const changeLinesV295=[];
+    const pushLineV295=(name,label,live,pending)=>changeLinesV295.push(
+      `<li>${name?`<b data-merchant-content>${esc(name)}</b> — `:''}${esc(label)}: <s>${esc(live)}</s> → <b>${esc(pending)}</b></li>`);
+    const pushPlainV295=(name,text)=>changeLinesV295.push(
+      `<li><b data-merchant-content>${esc(name)}</b> — ${esc(text)}</li>`);
+    rows.forEach(row=>pushLineV295('',row.label,row.before,row.after));
     if(rewardDiffV291?.rewards){
+      const unitLabelV295=String(draftResult.data?.program?.loyalty_model||'')==='stamps'?'stamps':'points';
       const draftRewardsById=new Map((Array.isArray(draftResult.data?.rewards)?draftResult.data.rewards:[])
         .map(reward=>[String(reward.reward_id||reward.id||''),reward]));
       rewardDiffV291.rewards.changed.forEach((changes,rewardId)=>{
         const reward=draftRewardsById.get(String(rewardId));
-        rewardSectionsV291.push(changeBlockV291(String(reward?.customer_name||reward?.name||'Reward').trim(),changes));
+        const name=String(reward?.customer_name||reward?.name||'Reward').trim();
+        changes.forEach(change=>pushLineV295(name,change.label,change.live,change.pending));
       });
-      rewardDiffV291.rewards.added.forEach(reward=>rewardSectionsV291.push(
-        changeBlockV291(reward.name,[{label:'New reward',live:'not offered',pending:`${reward.cost} ${String(draftResult.data?.program?.loyalty_model||'')==='stamps'?'stamps':'points'}`}])));
-      rewardDiffV291.rewards.removed.forEach(reward=>rewardSectionsV291.push(
-        changeBlockV291(reward.name,[{label:'Reward',live:'offered',pending:'removed from the draft'}])));
+      rewardDiffV291.rewards.added.forEach(reward=>
+        pushPlainV295(reward.name,`now offered for ${reward.cost} ${unitLabelV295}`));
+      rewardDiffV291.rewards.removed.forEach(reward=>
+        pushPlainV295(reward.name,'no longer offered'));
     }
-    const retentionSectionsV291=[];
+    if(rewardDiffV291?.birthday?.length)
+      rewardDiffV291.birthday.forEach(change=>pushLineV295('Birthday benefit',change.label,change.live,change.pending));
     if(rewardDiffV291?.retention){
-      rewardDiffV291.retention.changed.forEach(changes=>retentionSectionsV291.push(
-        changeBlockV291(changes.find(change=>change.label==='Name')?.pending||'Bring-back rule',changes)));
-      rewardDiffV291.retention.added.forEach(rule=>retentionSectionsV291.push(
-        changeBlockV291(rule.name,[{label:'New bring-back rule',live:'not running',pending:'starts when you publish'}])));
+      rewardDiffV291.retention.changed.forEach(changes=>{
+        const name=changes.find(change=>change.label==='Name')?.pending||'Bring-back rule';
+        changes.forEach(change=>pushLineV295(name,change.label,change.live,change.pending));
+      });
+      rewardDiffV291.retention.added.forEach(rule=>
+        pushPlainV295(rule.name,'new bring-back rule, starts when you publish'));
     }
-    const birthdaySectionV291=rewardDiffV291?.birthday?.length
-      ?changeBlockV291('Birthday benefit',rewardDiffV291.birthday):'';
     const unreadableV291=[
       rewardDiffV291&&!rewardDiffV291.rewards?'rewards':'',
       rewardDiffV291&&!rewardDiffV291.retention?'bring-back rules':'',
       rewardDiffV291&&!rewardDiffV291.birthday?'the birthday benefit':''
     ].filter(Boolean);
-    target.innerHTML=`${rows.length
-      ?`<div class="studio-impact-rule">${rows.map(row=>`<div class="studio-impact-eff"><span>${esc(row.label)}</span><span><s>${esc(row.before)}</s> → <b>${esc(row.after)}</b></span></div>`).join('')}</div>`
-      :'<p class="muted small">No changes to earning or programme numbers in this draft.</p>'}
-      ${rewardSectionsV291.length?`<h3 class="small" style="margin:14px 0 6px">Rewards</h3>${rewardSectionsV291.join('')}`:''}
-      ${birthdaySectionV291?`<h3 class="small" style="margin:14px 0 6px">Birthday benefit</h3>${birthdaySectionV291}`:''}
-      ${retentionSectionsV291.length?`<h3 class="small" style="margin:14px 0 6px">Bring-back rules</h3>${retentionSectionsV291.join('')}`:''}
-      ${(!rewardSectionsV291.length&&!birthdaySectionV291&&!retentionSectionsV291.length&&!unreadableV291.length)
-        ?'<p class="muted small" style="margin-top:10px">No reward, birthday or bring-back changes in this draft.</p>':''}
-      ${unreadableV291.length?`<p class="muted small" style="margin-top:10px">Changes to ${esc(unreadableV291.join(' and '))} could not be read, so they are not listed here. Review them in their editors before publishing.</p>`:''}
-      <p class="muted small" style="margin-top:10px">The welcome offer is not part of this draft \u2014 it goes live when it is saved.</p>`;
+    /* The one-sentence answer is only honest when everything WAS read. A draft with an unreadable
+       section is not a draft that changes nothing, so it says what it could not see instead. */
+    const unreadableLineV295=unreadableV291.length
+      ?`<p class="muted small"${changeLinesV295.length?' style="margin-top:10px"':''}>Changes to ${esc(unreadableV291.join(' and '))} could not be read, so they are not listed here. Review them in their editors before publishing.</p>`
+      :'';
+    target.innerHTML=changeLinesV295.length
+      ?`<ul class="studio-change-list-v295">${changeLinesV295.join('')}</ul>${unreadableLineV295}`
+      :(unreadableLineV295||'<p class="muted small">Nothing changes for customers in this draft.</p>');
   };
   /* The confirmation auto-opens below; it must not race the read that decides whether the
      paused warning belongs in it. */
@@ -12679,17 +12749,27 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     button.disabled=false;button.removeAttribute('aria-busy');status.innerHTML='';
     if(error){status.innerHTML=`<span class="err">${esc(error.code==='42501'?'Only the owner can publish.':(error.message||'Could not check what publishing would do.'))}</span>`;return}
     const rules=Array.isArray(impact?.rules)?impact.rules:[];
-    let live=0,shadow=0,unbuilt=0;
-    rules.forEach(rule=>(rule.effects||[]).forEach(effect=>{if(effect.state_after_publish==='live')live++;else if(effect.state_after_publish==='shadow')shadow++;else unbuilt++}));
+    /* V295: the live/shadow/unavailable tally is gone with the box that printed it. It was
+       derived entirely from `rules` below, which is rendered in full whenever it has anything
+       to say, so nothing the owner could act on was lost — only the arithmetic about it. */
     const needConfirm=impact?.requires_confirmation===true;
-    const ruleBlocks=rules.length?rules.map(rule=>`<div class="studio-impact-rule"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b>${studioStateChip(rule.aggregate_state_after_publish)}${rule.active===false?'<span class="pill off">Off</span>':''}</div>${(rule.effects||[]).map(effect=>`<div class="studio-impact-eff"><span>${esc(effectLabel(effect))}</span><span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">${studioEffectStateChip(effect.state_after_publish)}${effect.financial?'<span class="studio-tag fin">changes money</span>':''}${effect.customer_facing?'<span class="studio-tag cust">customer sees it</span>':''}</span></div>`).join('')||'<div class="muted small" style="padding:5px 0">No advanced actions in this draft.</div>'}</div>`).join(''):'<p class="muted small">This Grow draft has no advanced-rule changes.</p>';
+    /* V295: renders ONLY when the draft actually has an advanced rule. An empty list used to
+       print its own sentence announcing the absence — a third way of saying nothing changed. */
+    const ruleBlocks=rules.length?rules.map(rule=>`<div class="studio-impact-rule"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b>${studioStateChip(rule.aggregate_state_after_publish)}${rule.active===false?'<span class="pill off">Off</span>':''}</div>${(rule.effects||[]).map(effect=>`<div class="studio-impact-eff"><span>${esc(effectLabel(effect))}</span><span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">${studioEffectStateChip(effect.state_after_publish)}${effect.financial?'<span class="studio-tag fin">changes money</span>':''}${effect.customer_facing?'<span class="studio-tag cust">customer sees it</span>':''}</span></div>`).join('')||'<div class="muted small" style="padding:5px 0">No advanced actions in this draft.</div>'}</div>`).join(''):'';
     /* V177: the before/after diff lives on the page BEHIND this modal, so at the exact moment
        an owner types PUBLISH they cannot see what they are changing. Mirror the already-
        rendered comparison into the dialog. Buttons are stripped from the copy so a Retry
        control cannot be duplicated by id or left wired to nothing. */
     const publishDiffHtml=String($('growPublishDiffBody')?.innerHTML||'')
       .replace(/<button[\s\S]*?<\/button>/gi,'');
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div>${publishDiffHtml?`<section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml}</div></section>`:''}<div class="imp-note"><b>Server-confirmed advanced-action safety</b><p class="muted small" style="margin-top:4px">${live} running action${live===1?'':'s'} · ${shadow} shadow-only · ${unbuilt} unavailable. Ordinary reward, earning, birthday and bring-back changes are listed above.</p></div><div style="margin-top:10px">${ruleBlocks}</div>${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}<div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">Safety check complete. The programme numbers changing are listed above. Tick the box to make them live for customers.</div><label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
+    /* V295 (owner: "just be straight forward without all unnecessary details"). The dialog was
+       five stacked boxes to say nothing had changed: the change list, a server-safety tally, a
+       line announcing the absence of advanced-rule changes, and a closing paragraph that only
+       restated the list above it. What remains is the change list, advanced rules WHEN any exist,
+       and the two things that are genuinely a warning — publishing paused, and a draft that needs
+       confirmation. The acknowledgement checkbox and the disabled-until-ticked button are
+       untouched: they are the gate, not the ceremony. */
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div><section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml||'<p class="muted small">The change list could not be read on the page behind this dialog. Close, reload the review page and read it before publishing.</p>'}</div></section>${ruleBlocks?`<section class="imp-note" style="margin-bottom:12px" aria-label="Advanced rules"><b>Advanced rules this draft turns on</b><div style="margin-top:8px">${ruleBlocks}</div></section>`:''}${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}${needConfirm?'<div class="studio-emg-banner" role="note" style="margin-top:14px">This draft turns on a rule that moves money or reaches customers.</div>':''}<label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
     let deactivate;const close=()=>{if(deactivate)deactivate();else $('growPubModal')?.remove()};
     deactivate=CUI.activateDialog($('growPubModal'),{onClose:close,initialFocus:'#growPubType'});
     $('growPubClose').onclick=$('growPubCancel').onclick=close;

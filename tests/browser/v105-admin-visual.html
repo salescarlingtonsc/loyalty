@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="25d8de79984569da12028bf1b792ba2a4dd8107b040a2009f411ddb55def6b3e">
+<meta name="v105-production-component-sha256" content="f4cff0260204016c6845b934eb36bf2210ea1f30ef618f0c808094ceaa38e04e">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1194,25 +1194,37 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
 .customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
 /* V294 (owner sketch 2026-08-12): compact summary card at the upper right of the Customer 360
-   content area — visits, lifetime spend, points, credit, PDPA as dense rows; the status chips
-   keep the left of the same band. On narrow screens the card drops below the chips full-width. */
-.c360-top-v294{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
-.c360-top-main-v294{flex:1 1 240px;min-width:min(100%,220px)}
-.c360-top-main-v294 .c360-badges{margin-bottom:0}
-.c360-summary-card-v294{flex:0 1 360px;margin-left:auto;padding:12px 16px}
+   content area — visits, lifetime spend, points, credit, PDPA as dense rows.
+   V295 (owner markup 2026-08-13: "there's an empty box and UI UX not aligned"): the flex band
+   that held it is gone. .c360-top-main-v294 was flex:1 1 240px, which the mobile column direction
+   read as a 240px basis HEIGHT — a literal empty box under the chips — and on desktop the band's
+   height was set by this card, leaving a tall void in the left column. The card is a cell of the
+   content grid now, so it keeps the upper right and no column starts empty. */
+.c360-content-split-v295{align-items:start}
+.c360-summary-card-v294{align-self:start;padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
 .c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
 .c360-summary-value-v294{font-variant-numeric:tabular-nums;font-size:14px;text-align:right}
 .c360-summary-card-v294 .c360-points-expiry{margin-top:2px}
 .c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
-@media(max-width:760px){.c360-top-v294{flex-direction:column}.c360-summary-card-v294{flex:1 1 auto;width:100%;margin-left:0}}
+/* V295: 960px is where .split collapses to one column. The summary card is ordered first there,
+   so the figures stack ABOVE the programme list rather than floating between two cards. */
+@media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
 /* V294: Available Customer Programmes — one compact row per programme, honest Live/Paused pill. */
 .c360-programmes-v294{display:flex;flex-direction:column;margin-bottom:6px}
 .c360-programme-row-v294{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
 .c360-programme-row-v294:last-child{border-bottom:0}
 .c360-programme-row-v294 b{font-size:13.5px}
 .c360-programme-row-v294 p{margin-top:2px}
+/* V295 (owner: "i do not know what changed - just be straight forward"). The publish gate's
+   change list is one flat list of concrete before/after lines, and the sentences about HOW the
+   comparison is made collapse into a Technical detail disclosure below it. */
+.studio-change-list-v295{list-style:disc;margin:0;padding-left:20px}
+.studio-change-list-v295 li{padding:4px 0;font-size:13.5px;line-height:1.45;overflow-wrap:anywhere}
+.studio-change-list-v295 li s{color:var(--muted)}
+.studio-technical-v295{margin-top:14px;border-top:1px solid var(--hair);padding-top:10px}
+.studio-technical-v295>summary{cursor:pointer;font-weight:700;font-size:13px;min-height:34px;display:flex;align-items:center;color:var(--muted)}
 /* V294: retired/ended rewards live in a collapsed Reward history disclosure. */
 .reward-history-v294>summary{cursor:pointer;font-weight:700;font-size:13px;min-height:34px;display:flex;align-items:center}
 /* V294: Business Insights report tabs (the four cards became a tab bar). */
@@ -2640,7 +2652,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 25d8de799845</span>
+<span class="v105-provenance">v105 production-component harness · f4cff0260204</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2765,7 +2777,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'25d8de79984569da12028bf1b792ba2a4dd8107b040a2009f411ddb55def6b3e',
+  sourceHash:'f4cff0260204016c6845b934eb36bf2210ea1f30ef618f0c808094ceaa38e04e',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

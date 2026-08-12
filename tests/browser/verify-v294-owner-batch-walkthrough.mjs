@@ -6,7 +6,7 @@
  *
  * Steps (each asserts; the script exits non-zero naming the failing step):
  *   1. Dashboard: picking a schedule day ALSO sets the Performance figures to that day, and the
- *      helper copy states it ("Also sets the figures below to this day.").
+ *      helper copy states it (V295: "Linked both ways with the figures below.").
  *   2. Customers: exactly ONE "Show customers by last visit" control (duplicate bar removed),
  *      and the kept control carries the all_inactive bucket.
  *   3. Customer 360: upper-right summary card holds visits / lifetime spend / PDPA / points /
@@ -240,8 +240,10 @@ try{
   say('1. dashboard schedule day sets the Performance figures');
   await page.goto(`${ORIGIN}/index.html#/dashboard`,{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#dashboardPerformancePeriod',{timeout:20000});
-  assertTrue((await page.locator('.dashboard-schedule-scope-v266').innerText()).trim()==='Also sets the figures below to this day.',
-    'helper copy states the schedule day sets the figures below');
+  /* V295 retarget (not a weakening): the link runs BOTH ways now — the period pills move this
+     day too — so the helper says so. The V294 behaviour asserted below is unchanged. */
+  assertTrue((await page.locator('.dashboard-schedule-scope-v266').innerText()).trim()==='Linked both ways with the figures below.',
+    'helper copy states the schedule day and the figures below are linked');
   const tomorrowLabel=await page.evaluate(()=>new Intl.DateTimeFormat('en-SG',
     {day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(Date.now()+864e5)));
   await page.click('[data-schedule-day-v252="1"]');

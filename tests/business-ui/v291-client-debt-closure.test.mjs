@@ -257,9 +257,17 @@ test('V291 the publish gate renders the same diff it publishes, above its checkb
   assert.match(gate,/growRewardPendingChangesV291\(/);
   assert.match(gate,/growRetentionPendingChangesV291\(/);
   assert.match(gate,/growBirthdayPendingChangesV291\(/);
-  assert.match(gate,/Rewards<\/h3>/);
-  assert.match(gate,/Birthday benefit<\/h3>/);
-  assert.match(gate,/Bring-back rules<\/h3>/);
+  /* V295 retarget (owner: "i do not know what changed - just be straight forward"). The three
+     grouping headings became ONE flat list of concrete before/after lines. Completeness is what
+     V291 was defending, so the pins move to the three renderers that feed that list — every
+     reward, birthday and bring-back change still reaches it. */
+  assert.match(gate,/studio-change-list-v295/);
+  assert.match(gate,/rewardDiffV291\.rewards\.changed\.forEach\(\(changes,rewardId\)=>/);
+  assert.match(gate,/rewardDiffV291\.rewards\.added\.forEach\(reward=>/);
+  assert.match(gate,/rewardDiffV291\.rewards\.removed\.forEach\(reward=>/);
+  assert.match(gate,/rewardDiffV291\?\.birthday\?\.length\)\s*\n?\s*rewardDiffV291\.birthday\.forEach/);
+  assert.match(gate,/rewardDiffV291\.retention\.changed\.forEach\(changes=>/);
+  assert.match(gate,/rewardDiffV291\.retention\.added\.forEach\(rule=>/);
   // The old disclaimer is gone from both the page and the dialog.
   assert.doesNotMatch(gate,/does not summarise reward, birthday or bring-back field values/);
   assert.doesNotMatch(gate,/This check does not display ordinary reward/);

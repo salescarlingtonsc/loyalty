@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="044b6933228f7ec9ff0bf42a4eb730580c22843defeaa8b07938a169a79b12e8">
+<meta name="v104-production-source-sha256" content="c37bce2fc908661d01a8b292213db79a7229173815a56c1463217aff2d95d334">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1195,25 +1195,37 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
 .customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
 /* V294 (owner sketch 2026-08-12): compact summary card at the upper right of the Customer 360
-   content area — visits, lifetime spend, points, credit, PDPA as dense rows; the status chips
-   keep the left of the same band. On narrow screens the card drops below the chips full-width. */
-.c360-top-v294{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
-.c360-top-main-v294{flex:1 1 240px;min-width:min(100%,220px)}
-.c360-top-main-v294 .c360-badges{margin-bottom:0}
-.c360-summary-card-v294{flex:0 1 360px;margin-left:auto;padding:12px 16px}
+   content area — visits, lifetime spend, points, credit, PDPA as dense rows.
+   V295 (owner markup 2026-08-13: "there's an empty box and UI UX not aligned"): the flex band
+   that held it is gone. .c360-top-main-v294 was flex:1 1 240px, which the mobile column direction
+   read as a 240px basis HEIGHT — a literal empty box under the chips — and on desktop the band's
+   height was set by this card, leaving a tall void in the left column. The card is a cell of the
+   content grid now, so it keeps the upper right and no column starts empty. */
+.c360-content-split-v295{align-items:start}
+.c360-summary-card-v294{align-self:start;padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
 .c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
 .c360-summary-value-v294{font-variant-numeric:tabular-nums;font-size:14px;text-align:right}
 .c360-summary-card-v294 .c360-points-expiry{margin-top:2px}
 .c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
-@media(max-width:760px){.c360-top-v294{flex-direction:column}.c360-summary-card-v294{flex:1 1 auto;width:100%;margin-left:0}}
+/* V295: 960px is where .split collapses to one column. The summary card is ordered first there,
+   so the figures stack ABOVE the programme list rather than floating between two cards. */
+@media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
 /* V294: Available Customer Programmes — one compact row per programme, honest Live/Paused pill. */
 .c360-programmes-v294{display:flex;flex-direction:column;margin-bottom:6px}
 .c360-programme-row-v294{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
 .c360-programme-row-v294:last-child{border-bottom:0}
 .c360-programme-row-v294 b{font-size:13.5px}
 .c360-programme-row-v294 p{margin-top:2px}
+/* V295 (owner: "i do not know what changed - just be straight forward"). The publish gate's
+   change list is one flat list of concrete before/after lines, and the sentences about HOW the
+   comparison is made collapse into a Technical detail disclosure below it. */
+.studio-change-list-v295{list-style:disc;margin:0;padding-left:20px}
+.studio-change-list-v295 li{padding:4px 0;font-size:13.5px;line-height:1.45;overflow-wrap:anywhere}
+.studio-change-list-v295 li s{color:var(--muted)}
+.studio-technical-v295{margin-top:14px;border-top:1px solid var(--hair);padding-top:10px}
+.studio-technical-v295>summary{cursor:pointer;font-weight:700;font-size:13px;min-height:34px;display:flex;align-items:center;color:var(--muted)}
 /* V294: retired/ended rewards live in a collapsed Reward history disclosure. */
 .reward-history-v294>summary{cursor:pointer;font-weight:700;font-size:13px;min-height:34px;display:flex;align-items:center}
 /* V294: Business Insights report tabs (the four cards became a tab bar). */
@@ -1932,7 +1944,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 044b6933228f7ec9ff0bf42a4eb730580c22843defeaa8b07938a169a79b12e8</p>
+  <p class="v104-provenance">Local production-render harness · source c37bce2fc908661d01a8b292213db79a7229173815a56c1463217aff2d95d334</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -1944,7 +1956,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="044b6933228f7ec9ff0bf42a4eb730580c22843defeaa8b07938a169a79b12e8";
+const PRODUCTION_SOURCE_SHA256="c37bce2fc908661d01a8b292213db79a7229173815a56c1463217aff2d95d334";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
