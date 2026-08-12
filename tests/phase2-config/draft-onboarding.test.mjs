@@ -37,7 +37,11 @@ test('the owner sees draft state and explicitly publishes it', async () => {
   assert.match(app, /publishConfirmationSensitive/);
   assert.match(app, /publishConfirmationStandard/);
   assert.match(app, /id="studioPubConfirm" type="button" disabled/);
-  assert.match(app, /\(e\.target\.value\|\|''\)!=='PUBLISH'/);
+  /* V288 (audit A2 LOW 22): RETARGETED, not deleted. The deliberate act is still required —
+     it is a checkbox instead of transcribing the English word PUBLISH, which CLAUDE.md's
+     low-literacy-first rule made indefensible for a WPass/SPass workforce. The button stays
+     disabled until the acknowledgement is ticked. */
+  assert.match(app, /\$\('studioPubConfirm'\)\.disabled=e\.target\.checked!==true/);
   assert.match(app, /Grow draft saved — customers are still using the published programme/);
 });
 

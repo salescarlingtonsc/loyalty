@@ -1066,6 +1066,10 @@ function loadPlatformConsoleAssetsV184(){
   return platformConsoleAssetsPromiseV184;
 }
 /* ---------- routing ---------- */
+/* V288: the parameters of the route currently being rendered. route() fills this in as it
+   strips the query string off the hash, so a page can read `?view=list&preset=today` without
+   re-parsing location.hash (which may already have moved on). */
+let routeQueryParamsV288=new URLSearchParams('');
 function entryRouteForLocation(pathname=location.pathname,hash=location.hash){
   const requested=String(hash||'').trim();
   if(requested&&requested!=='#'&&requested!=='#/')return requested;
@@ -1224,6 +1228,15 @@ async function route(){
       if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
       return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
     }
+    /* V288 (audit A2, HIGH 4). Every workspace route was parsed straight out of the hash, so a
+       '?' became part of the page key: '#/appointments?view=list&preset=today' resolved to the
+       page 'appointments?view=list&preset=today', matched nothing, and fell back to the
+       dashboard. Every deep link with parameters was therefore silently dead. The query is
+       split off ONCE here — after the customer/claim/join branches above, which consume their
+       own parameters directly from `h` — and kept readable through routeParamV288(). The routes
+       reached below never depended on the '?' surviving: they are exact-match page keys. */
+    routeQueryParamsV288=new URLSearchParams(String(h).includes('?')?String(h).slice(String(h).indexOf('?')+1):'');
+    h=String(h).split('?')[0];
     let workspacePage=null,workspaceStaffPersona=null,resolvedWorkspaceControl=null;
     if(h.startsWith('#/workspace/')){
       const workspaceParts=h.slice(12).split('/');

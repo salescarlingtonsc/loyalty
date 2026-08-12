@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e4f5612280047e775441e33e1f369cf60915bd260369320aeb9d1cdcbd84eb64"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="a00888d6c804b643afdfc2d84a5a8c1f8d9e372e4c330afeb7012acdf69cc077"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1145,6 +1145,11 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .calendar-day{position:relative;border-right:1px solid var(--hair);background-image:linear-gradient(to bottom,transparent calc(100% - 1px),var(--line) 0);background-size:100% var(--calendar-hour-height,64px);background-repeat:repeat-y}
 .calendar-day.is-today{background-color:#FFFBF8}
 .calendar-day:last-child{border-right:0}
+/* V288 (audit A2, MEDIUM 7): a cancelled or no-show appointment is drawn behind the live
+   column at full width and struck through. It must stay READABLE — staff still ask "who
+   cancelled?" — but it must not look like an occupied slot. */
+.calendar-event.appointment-inactive-v288,.day-timeline-event.appointment-inactive-v288{opacity:.5;z-index:1;border-style:dashed;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--event-color) 9%,#fff) 0 6px,#0000 6px 12px)}
+.calendar-event.appointment-inactive-v288 b,.day-timeline-event.appointment-inactive-v288 b{text-decoration:line-through}
 .calendar-event{position:absolute;left:4px;right:4px;display:block;width:calc(100% - 8px);min-height:44px;overflow:hidden;padding:6px 7px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 13%,#fff);color:var(--ink);text-align:left;font-size:11px;line-height:1.28;z-index:2}
 .calendar-event:hover,.calendar-event:focus-visible{box-shadow:var(--shadow);z-index:3}.calendar-event b,.calendar-event-time{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event-time{font-variant-numeric:tabular-nums;font-weight:650;margin-top:2px}
 .calendar-blocked-window{position:absolute;left:4px;right:4px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:44px;overflow:hidden;padding:5px 6px;border:1px solid #C9B9B5;border-left:4px solid #7B6D69;border-radius:7px;background:repeating-linear-gradient(135deg,#F2EFED,#F2EFED 8px,#E7E1DE 8px,#E7E1DE 16px);color:#403936;font-size:10.5px;line-height:1.2}.calendar-blocked-window span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-blocked-window button{flex:0 0 auto;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--red);font-weight:750;cursor:pointer}
@@ -2485,7 +2490,14 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
           <div><h2 class="eyebrow">Today schedule</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
         </div>
         <div class="dashboard-schedule-actions">
-          <a class="btn secondary" href="#/appointments">Open calendar</a>
+          <!-- V288 (audit A2, MEDIUM 8): sector-hiding is ONE predicate. The rail, the app-bar
+               action and the mobile dock already consulted sectorHidesAppointmentsV276; this
+               button did not, so the sectors that have no appointments module were still handed
+               a front-door link to it from the first screen of the day. A seated sector is sent
+               to the surface its requests actually live on. -->
+          ${sectorHidesAppointmentsV276()
+            ?(canReadModule('bookings')?'<a class="btn secondary" href="#/bookings">Open bookings</a>':'')
+            :'<a class="btn secondary" href="#/appointments">Open calendar</a>'}
         </div>
       </div>
       <!-- V252 (owner screenshot): the subtitle line and the second appointments button are
@@ -2769,6 +2781,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'e4f5612280047e775441e33e1f369cf60915bd260369320aeb9d1cdcbd84eb64',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'a00888d6c804b643afdfc2d84a5a8c1f8d9e372e4c330afeb7012acdf69cc077',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

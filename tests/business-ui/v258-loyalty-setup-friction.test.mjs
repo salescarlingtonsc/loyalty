@@ -106,8 +106,11 @@ test('B: the confirmation cannot open before the paused state is known, and repe
   const dialog = review.slice(review.indexOf('growPubModal'));
   assert.match(dialog, /draftProgrammeActiveV258===false\?'<div class="studio-emg-banner" role="alert"/);
   assert.match(dialog, /This will publish PAUSED — customers earn nothing\./);
-  // Publishing still requires typing PUBLISH.
-  assert.match(dialog, /\$\('growPubType'\)\.value\|\|''\)!=='PUBLISH'/);
+  /* V288 (audit A2 LOW 22): RETARGETED, not deleted. The deliberate act is still required —
+     it is a checkbox instead of transcribing the English word PUBLISH, which CLAUDE.md's
+     low-literacy-first rule made indefensible for a WPass/SPass workforce. The button stays
+     disabled until the acknowledgement is ticked. */
+  assert.match(dialog, /\$\('growPubType'\)\.checked!==true/);
 });
 
 test('B: the paused cascade stays honest — a paused programme really is unclaimable', () => {

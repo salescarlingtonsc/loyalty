@@ -160,6 +160,8 @@ const sqlTestBySemanticVersion = new Map([
 ]);
 
 const sqlTestByMigrationName = new Map([
+  ['nestly_v285_a4_gap_closure', 'db/tests/v285_a4_gap_closure.sql'],
+  ['nestly_v288_a2_gap_closure', 'db/tests/v288_a2_gap_closure.sql'],
   ['nestly_v92_synthetic_reporting_isolation', 'db/tests/v92_synthetic_reporting_isolation.sql'],
   ['nestly_v92_customer_privacy_marketing_manifest', 'db/tests/v92_customer_privacy_marketing_manifest.sql'],
   ['nestly_v93_branch_scoped_merchant_redemption', 'db/tests/v93_synthetic_e2e_campaign.sql'],
@@ -754,7 +756,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 241); // +v285
+  assert.equal(pending.length, 242); // +v285
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

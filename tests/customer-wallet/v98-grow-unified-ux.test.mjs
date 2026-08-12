@@ -113,12 +113,16 @@ test('draft saves never publish and publication is a separate protected review',
   const protectedReview=html.slice(html.indexOf('async function openPublishFlow()'),html.indexOf('/* ============================ Stored value'));
   assert.match(protectedReview,/preview_publish_impact/);
   assert.match(protectedReview,/requires_confirmation/);
-  assert.match(protectedReview,/PUBLISH/);
+  /* V288 (audit A2 LOW 22): RETARGETED, not deleted. The deliberate act is still required —
+     it is a checkbox instead of transcribing the English word PUBLISH, which CLAUDE.md's
+     low-literacy-first rule made indefensible for a WPass/SPass workforce. The button stays
+     disabled until the acknowledgement is ticked. */
+  assert.match(protectedReview,/I have read the changes above and want customers to get them now\./);
   assert.match(protectedReview,/publish_loyalty_config/);
   assert.match(protectedReview,/id="studioPubConfirm" type="button" disabled/);
   assert.match(protectedReview,/initialFocus:'#studioPubType'/);
-  assert.match(protectedReview,/\(e\.target\.value\|\|''\)!=='PUBLISH'/);
-  assert.match(protectedReview,/\(\$\('studioPubType'\)\.value\|\|''\)!=='PUBLISH'/);
+  assert.match(protectedReview,/e\.target\.checked!==true/);
+  assert.match(protectedReview,/\$\('studioPubType'\)\.checked!==true/);
   assert.doesNotMatch(protectedReview,/if\(needConfirm&&\$\('studioPubType'\)\)/);
   assert.doesNotMatch(protectedReview,/trim\(\)\.toUpperCase\(\)!=='PUBLISH'/);
 });
