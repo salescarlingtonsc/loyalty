@@ -1761,6 +1761,12 @@
       "path": "db/migrations/20260812_nestly_v293_customer_intelligence_grants.sql",
       "semanticVersion": "v293",
       "proposedDeployVersion": "20260812001200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v300_growth_readbacks.sql",
+      "semanticVersion": "v300",
+      "proposedDeployVersion": "20260813000100"
     }
   ]
 }

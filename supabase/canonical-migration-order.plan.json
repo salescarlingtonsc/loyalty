@@ -1756,6 +1756,12 @@
       "version": "20260812001200",
       "name": "nestly_v293_customer_intelligence_grants",
       "sourcePath": "db/migrations/20260812_nestly_v293_customer_intelligence_grants.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260813000100",
+      "name": "nestly_v300_growth_readbacks",
+      "sourcePath": "db/migrations/20260813_nestly_v300_growth_readbacks.sql"
     }
   ]
 }
