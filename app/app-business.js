@@ -188,15 +188,23 @@ function redemptionPayloadFromQr(value,currentUrl=location.href){
   if(prefixed)return {kind:'classic',token:prefixed[1]};
   const growthPrefixed=raw.match(/^nestly:growth:([A-Za-z0-9_-]{20,512})$/i);
   if(growthPrefixed)return {kind:'growth',token:growthPrefixed[1]};
+  /* V290: a published promotion presented at the counter. It is a third kind rather than a reuse
+     of 'growth' because a growth offer is a targeted entitlement tied to a completed purchase,
+     while this one only records that a named customer showed a named public offer. */
+  const promotionPrefixed=raw.match(/^nestly:promotion:([A-Za-z0-9_-]{20,512})$/i);
+  if(promotionPrefixed)return {kind:'promotion',token:promotionPrefixed[1]};
   try{
     const url=new URL(raw,currentUrl);
     const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
     const growthToken=url.searchParams.get('growth_token')||hashParams.get('growth_token')||'';
-    const token=growthToken||url.searchParams.get('redemption')||url.searchParams.get('token')
+    const promotionToken=url.searchParams.get('promotion_token')||hashParams.get('promotion_token')||'';
+    const token=growthToken||promotionToken||url.searchParams.get('redemption')||url.searchParams.get('token')
       ||hashParams.get('redemption')||hashParams.get('token')||'';
     if(!/^[A-Za-z0-9_-]{20,512}$/.test(token))return {kind:'',token:''};
     const hashPath=(url.hash.split('?')[0]||'').toLowerCase();
-    const kind=growthToken||hashPath==='#/growth-redeem'?'growth':'classic';
+    const kind=promotionToken||hashPath==='#/promotion-redeem'
+      ?'promotion'
+      :growthToken||hashPath==='#/growth-redeem'?'growth':'classic';
     return {kind,token};
   }catch{return {kind:'',token:''}}
 }
@@ -206,6 +214,8 @@ function redemptionTokenFromQr(value,currentUrl=location.href){
 function merchantRedemptionReceiptView(data={}){
   const kind=data.redemption_kind==='growth_offer'
     ?'growth_offer'
+    :data.redemption_kind==='promotion_offer'
+    ?'promotion_offer'
     :data.redemption_kind==='classic_points'?'classic_points':'catalog_reward';
   const creditCents=Math.max(0,Number(data.credit_cents||0));
   const offerValueCents=Math.max(0,Number(data.value_cents||0));
@@ -215,7 +225,8 @@ function merchantRedemptionReceiptView(data={}){
     customerName:String(data.customer_name||'Customer'),
     rewardLabel:String(data.reward_label||(kind==='classic_points'
       ?'Points to store credit'
-      :kind==='growth_offer'?'Customer offer':'Reward')),
+      :kind==='growth_offer'?'Customer offer'
+      :kind==='promotion_offer'?'Offer':'Reward')),
     pointsSpent:Math.max(0,Number(data.points_spent||0)),
     creditCents,
     offerValueCents,
@@ -223,6 +234,8 @@ function merchantRedemptionReceiptView(data={}){
     operationId:String(data.operation_id||data.intent_id||data.entitlement_id||''),
     fulfilment:kind==='growth_offer'
       ?'This customer offer is now linked to the completed purchase. Provide the advertised benefit now if it was not already included in the sale.'
+      :kind==='promotion_offer'
+      ?'This offer is recorded as accepted for this customer. Apply the advertised benefit at the till — the scan records the acceptance, it does not calculate a discount.'
       :kind==='classic_points'
       ?`Store credit of ${money(creditCents)} has been added to the customer’s programme.`
       :'Provide the reward shown above to the customer now. The scan records the points redemption but does not hand over a physical item.'
@@ -234,7 +247,7 @@ function merchantRedemptionReceiptHtml(data={}){
     <dl class="receipt-detail" style="margin-top:16px">
       <div><dt>Customer</dt><dd>${esc(receipt.customerName)}</dd></div>
       <div><dt>Reward</dt><dd>${esc(receipt.rewardLabel)}</dd></div>
-      ${receipt.kind==='growth_offer'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
+      ${receipt.kind==='growth_offer'||receipt.kind==='promotion_offer'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
       ${receipt.creditCents?`<div><dt>Store credit</dt><dd>${esc(money(receipt.creditCents))}</dd></div>`:''}
       ${receipt.offerValueCents&&receipt.offerCurrency
         ?`<div><dt>Offer value</dt><dd>${esc(`${receipt.offerCurrency} ${(receipt.offerValueCents/100).toFixed(2)}`)}</dd></div>`
@@ -290,7 +303,7 @@ function openMerchantRedemptionScanner({
       status.textContent='This is a customer offer. Complete this customer’s purchase first, then use Redeem customer offer on the receipt.';
       return;
     }
-    if(payload.kind!=='growth'&&!branchId){
+    if(payload.kind==='classic'&&!branchId){
       status.textContent='Choose an accessible branch before confirming this reward.';
       return;
     }
@@ -299,7 +312,15 @@ function openMerchantRedemptionScanner({
       redemptionAttempt={fingerprint:attemptFingerprint,key:crypto.randomUUID()};
     }
     submitting=true;status.textContent='Confirming this redemption…';
-    const response=payload.kind==='growth'
+    /* V290: the same scanner now also accepts a published promotion. It is the existing
+       affordance rather than a second button — the counter should not have to know which of
+       three codes a customer is holding before deciding which control to press. */
+    const response=payload.kind==='promotion'
+      ?await sb.rpc('staff_redeem_promotion_intent_v290',{
+        p_business:businessId,p_token:token,p_branch:branchId||null,
+        p_idempotency_key:redemptionAttempt.key
+      })
+      :payload.kind==='growth'
       ?await sb.rpc('redeem_growth_offer_v108',{
         p_business:businessId,p_token:token,p_sale:saleId,p_idempotency_key:redemptionAttempt.key
       })
@@ -312,15 +333,30 @@ function openMerchantRedemptionScanner({
     submitting=false;
     if(error){status.textContent=error.code==='PGRST202'||error.code==='42883'
       ?'Redemption scanning needs the latest Peekaa service update.'
+      :payload.kind==='promotion'
+        ?'This offer could not be accepted. It may have expired, or it belongs to another business.'
       :payload.kind==='growth'
         ?'This offer could not be confirmed. Check that it belongs to this customer and purchase, and that it has not expired or already been used.'
         :'This redemption could not be confirmed. It may be expired, already used, or for another business.';return}
-    if(data?.status!=='completed'&&data?.status!=='redeemed'){
+    if(payload.kind==='promotion'&&data?.status==='already_redeemed'){
+      status.textContent=`This offer was already accepted${data.redeemed_at?` on ${new Date(data.redeemed_at).toLocaleString('en-SG',{timeZone:'Asia/Singapore'})}`:''}.`;
+      return;
+    }
+    const accepted=payload.kind==='promotion'
+      ?data?.status==='redeemed'||data?.status==='duplicate_ignored'
+      :data?.status==='completed'||data?.status==='redeemed';
+    if(!accepted){
       status.textContent=`Redemption was not completed (${String(data?.status||'unknown').replaceAll('_',' ')}).`;return;
     }
     redemptionAttempt=null;
     if(payload.kind==='growth'){
       data={...data,redemption_kind:'growth_offer',customer_name:customerName||'Customer'};
+    }
+    if(payload.kind==='promotion'){
+      data={...data,redemption_kind:'promotion_offer',
+        reward_label:data.promotion_name||'Offer',
+        customer_name:data.customer_name||customerName||'Customer',
+        operation_id:data.redemption_id||data.intent_id||''};
     }
     stopCamera();
     const panel=overlay.querySelector('.modal-card');
@@ -1661,25 +1697,15 @@ function renderShell(page){
      only which function that key maps to is new, so the module route-guard above this
      function needs no changes at all. */
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
-    /* V288: every ROUTE entry into Programmes is marked as such, so a stale tile drill from an
-       earlier visit cannot survive a fresh navigation. */
-    grow:(hashParam,routedFocus)=>growPage('overview',hashParam,routedFocus,{fromRouteV288:true}),
-    bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus,{fromRouteV288:true}),retention:(hashParam,routedFocus)=>growPage('winback',hashParam,routedFocus,{fromRouteV288:true}),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam,null,{fromRouteV288:true}),storedvalue:hashParam=>growPage('storedvalue',hashParam,null,{fromRouteV288:true}),referrals:referralsPage,
+    grow:(hashParam,routedFocus)=>growPage('overview',hashParam,routedFocus),
+    bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus),retention:(hashParam,routedFocus)=>growPage('winback',hashParam,routedFocus),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam),storedvalue:hashParam=>growPage('storedvalue',hashParam),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
     'customer-interface':customerInterfacePageV243};
-  /* V286: a hash with no page used to render the Dashboard while location.hash still read the
-     route that was asked for — the one refusal in the router that answered silently. A staff
-     member with a bookmark to a renamed module concluded the bookmark still worked. Every other
-     refusal above says so and corrects the URL; so does this one. */
-  const pageFn=page[0]?P[page[0]]:dashboard;
-  if(!pageFn){
-    toast('That page has moved.');
-    return nav('#/dashboard');
-  }
+  const pageFn=P[page[0]]||dashboard;
   const pageResult=pageFn(...page.slice(1));
   Promise.resolve(pageResult).catch(error=>{
     console.error(error);
@@ -2341,19 +2367,17 @@ async function dashboard(){
     new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',buttonLabel:'See new customers',scope:'business'},
     /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
        only, so the number an owner tapped and the list they landed on could never agree. The
-       server's staff_list_customers_v155 accepts exactly four buckets ('30_59','60_89',
-       '90_plus','never') and raises unsupported_inactivity_bucket for anything else, so an
-       "all inactive" destination is not expressible without a migration. The number is
-       therefore narrowed to match the destination, and the tile says which window it counts.
-       Customers 60+ days quiet are not lost: Merchant insights below still reports them and
-       links to their own bucket. */
-    inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 to 59 complete Singapore days ago. Tapping this tile opens exactly this group. Customers quiet for 60 days or more are reported separately in Merchant insights.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
+       server's staff_list_customers_v155 accepted exactly four buckets ('30_59','60_89',
+       '90_plus','never') and raised unsupported_inactivity_bucket for anything else, so an
+       "all inactive" destination was not expressible without a migration, and the number was
+       narrowed to match the destination.
+       V290 wrote that migration: 'all_inactive' is now an accepted bucket, so the tile counts
+       every customer quiet for 30 days or more and lands on exactly that group. The narrowing
+       is undone; the rule it enforced — the number and the destination must be the same set of
+       people — is what still holds. */
+    inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
   };
-  /* V288: seeded from the branch the top bar is ALREADY showing. It used to start at null, and
-     the Today-schedule glance below is fetched at first paint from this value — so a workspace
-     scoped to one branch opened on a business-wide schedule count, then quietly shrank the first
-     time the owner touched a day tab. The first number on the page must be the scoped one. */
-  let appliedDashboardScopeV141={from:d30,to:today,branchId:selectedBranchId||null,branchName:'All permitted branches'};
+  let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
   /* V287: openDashboardMetricDetailV141 lived here. V225 turned every KPI tile into a direct
      link to its report ("once clicked, straight away go to sales"), which left this modal
      reachable only through an `else` branch that required a metric definition WITHOUT a route —
@@ -2449,7 +2473,7 @@ async function dashboard(){
     try{[response,previousResponse,inactiveResponse,inactive60Response,redeemedResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:previousRange.previousFrom,p_to:previousRange.previousTo,...scopePayload}),
-      canReadModule('clients')?sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,p_inactive_bucket:'30_59',p_limit:1,p_offset:0,...scopePayload}):Promise.resolve({data:null,error:null}),
+      canReadModule('clients')?sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,p_inactive_bucket:'all_inactive',p_limit:1,p_offset:0,...scopePayload}):Promise.resolve({data:null,error:null}),
       canReadModule('clients')?sb.rpc('preview_campaign_audience_v155',{p_business:S.biz.id,p_audience_key:'inactive_60_plus',...scopePayload}):Promise.resolve({data:null,error:null}),
       loyaltyVisibleV170?fetchAllRowsResult(()=>sb.from('points_ledger').select('points',{count:'exact'}).eq('business_id',S.biz.id).eq('entry_type','redeem').gte('created_at',sgDateBoundary(from,0)).lt('created_at',sgDateBoundary(to,1)).order('id')):Promise.resolve({data:null,error:null})
     ])}
@@ -2467,22 +2491,13 @@ async function dashboard(){
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
-    const previousScheduleBranchV288=appliedDashboardScopeV141.branchId;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
-    /* V288: nothing re-invoked the schedule loader after the real branch was resolved, so the
-       glance kept whatever scope first paint guessed until a day tab was pressed. Re-fetch only
-       when the resolved branch actually differs, and keep the day currently on screen. */
-    if(previousScheduleBranchV288!==appliedDashboardScopeV141.branchId){
-      loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,scheduleDateInputV252?.value||null);
-    }
     /* V266: the period is written from the range the RPC was actually answered for, next to the
        numbers, so the Today-schedule date above can never be mistaken for the driver. */
     const performancePeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
     if(performancePeriod)performancePeriod.textContent=workspaceTemplateTextV97('performancePeriodRange',{from:dashboardScheduleDayLabelV252(from),to:dashboardScheduleDayLabelV252(to)});
     if(!kpis||!charts)return;
-    /* V288: the banner used to watch the 30–59 read only, so a lone 60+ failure had no retry
-       anywhere on the page — the count it feeds simply went quiet. Both reads share one retry. */
-    status.innerHTML=customerMetricsAvailable&&(inactiveResponse.error||inactive60Response.error)?`<div class="err" role="status">Inactive customer counts could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
+    status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const previousSummary=previousResponse.error?null:previousResponse.data;
     const revenueChange=percentageChangeV153(d.revenue_cents,previousSummary?.revenue_cents);
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
@@ -2495,10 +2510,13 @@ async function dashboard(){
       customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
-      /* V287: 30-59 only — the same bucket the tile navigates to. inactive60Response is still
-         fetched because Merchant insights and the business-health card below both read it. */
+      /* V287 narrowed this tile to 30-59 because "all inactive" was not a destination the
+         server could express, so the number and the list it opened could never agree. V290 adds
+         the all_inactive bucket to staff_list_customers_v155, so the tile counts every customer
+         quiet for 30 days or more again and lands on exactly those people. inactive60Response is
+         still fetched because Merchant insights and the business-health card below both read it. */
       const inactiveTotal=inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0);
-      metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30–59 days ago'});
+      metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30+ days ago'});
     }
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
@@ -2512,10 +2530,7 @@ async function dashboard(){
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       const route=dashboardMetricDefinitionsV141[key]?.route;
-      /* V288: the pending drill now carries the BUCKET KEY the destination understands, not a
-         day number the Customers page had to re-guess. The tile counts 30–59 (V287), so it
-         asks for 30–59; Merchant insights counts 60+, so it asks for 60+. */
-      if(key==='inactive')pendingCustomerInactivity='30_59';
+      if(key==='inactive')pendingCustomerInactivity='all_inactive';
       if(route)nav(route);
     });
     if(loyalty){
@@ -2542,13 +2557,9 @@ async function dashboard(){
       loyalty.setAttribute('aria-busy','false');
     }
     if(insights){
-      /* V288: a FAILED 60+ read used to be substituted with a literal 0, which the business-health
-         row then printed as "0 inactive 60+ days · Stable" — the most reassuring sentence on the
-         page, produced by the absence of an answer. null travels instead, and every reader below
-         states that it could not be read. */
-      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?null:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
+      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
       insights.setAttribute('aria-busy','false');
-      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=link.dataset.insightInactive||'60_plus'}));
+      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=Number(link.dataset.insightInactive)||60}));
       /* V214: the quiet-branch card offers a way back out of the branch it is scoped to,
          so the owner can see immediately that the business as a whole is not quiet. */
       insights.querySelectorAll('[data-insight-scope-all-v214]').forEach(button=>button.addEventListener('click',()=>{
@@ -2666,18 +2677,17 @@ function classifyInactiveCustomersV153(customers){
     '30_59':{label:'Inactive 30–59 days',definition:'No valid visit for 30 to 59 complete Singapore days.',customers:[]},
     '60_89':{label:'Inactive 60–89 days',definition:'No valid visit for 60 to 89 complete Singapore days.',customers:[]},
     '90_plus':{label:'Inactive 90+ days / never visited',definition:'No valid visit for at least 90 complete Singapore days, or no valid visit on record.',customers:[]},
-    /* V288: an OVERLAPPING aggregate, deliberately not a fifth exclusive group. Merchant
-       insights counts the 60+ audience with one RPC (inactive_60_plus) and used to link into
-       60–89, silently dropping everyone 90+ — the number the owner tapped and the list they
-       landed on could not agree. This is the destination that matches that number. */
-    '60_plus':{label:'Inactive 60+ days',definition:'No valid visit for at least 60 complete Singapore days.',customers:[]}
+    /* V290: the three windows above are mutually exclusive; this one deliberately is not. It is
+       the union the dashboard tile now counts, so the number on the tile and the audience the
+       owner can act on are the same set of people. */
+    'all_inactive':{label:'Inactive 30+ days',definition:'No valid visit for at least 30 complete Singapore days.',customers:[]}
   };
   (customers||[]).forEach(customer=>{
     const never=!customer.last_visit_at,days=Number(customer.days_since_last_visit);
     if(!never&&days>=30&&days<=59)buckets['30_59'].customers.push(customer);
     else if(!never&&days>=60&&days<=89)buckets['60_89'].customers.push(customer);
     else if(never||days>=90)buckets['90_plus'].customers.push(customer);
-    if(!never&&days>=60)buckets['60_plus'].customers.push(customer);
+    if(!never&&days>=30)buckets['all_inactive'].customers.push(customer);
   });
   return buckets;
 }
@@ -2741,11 +2751,8 @@ function businessHealthSummaryV153({current,previous,inactive60Total,from,to}){
   const status=(label,value,detail)=>`<div class="health-row"><b>${esc(label)}</b><span>${esc(value)} · ${esc(detail)}</span></div>`;
   const revenueStatus=revenueChange===null?'Not enough data':revenueChange>MIN_INSIGHT_REVENUE_CHANGE_PCT_V153?'Improving':revenueChange<-MIN_INSIGHT_REVENUE_CHANGE_PCT_V153?'Needs attention':'Stable';
   const visitsStatus=visitsChange===null?'Not enough data':visitsChange>10?'Improving':visitsChange<-10?'Needs attention':'Stable';
-  /* V288: null means the 60+ audience count could not be read. It is neither "Stable" nor a
-     zero — both are claims about customers this page never received an answer about. */
-  const retentionUnreadV288=inactive60Total===null||inactive60Total===undefined;
-  const retentionStatus=retentionUnreadV288?'Could not be read':Number(inactive60Total)>0?'Needs attention':'Stable';
-  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:18})}</span><div><p class="eyebrow">Business health summary</p><h3>Business health</h3></div></div><div class="business-health-list">${status('Revenue',revenueStatus,revenueChange===null?'More data needed':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visits',visitsStatus,visitsChange===null?'More data needed':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,retentionUnreadV288?'Retry the inactive customer count above':`${Number(inactive60Total)||0} inactive 60+ days`)}</div></article>`;
+  const retentionStatus=Number(inactive60Total)>0?'Needs attention':'Stable';
+  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:18})}</span><div><p class="eyebrow">Business health summary</p><h3>Business health</h3></div></div><div class="business-health-list">${status('Revenue',revenueStatus,revenueChange===null?'More data needed':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visits',visitsStatus,visitsChange===null?'More data needed':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,`${Number(inactive60Total)||0} inactive 60+ days`)}</div></article>`;
 }
 function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,previousFrom,previousTo,branchId,branchName}){
   const scope=insightScopeLabelV153(branchId,branchName);
@@ -2758,13 +2765,13 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
       title:revenueChange>0?'Revenue is increasing':'Revenue is lower',
       explanation:`Revenue ${revenueChange>0?'increased':'decreased'} by ${Math.abs(revenueChange)}% compared with the previous equivalent period.`,
       why:revenueChange>0?'Review which services and days contributed most.':'Review inactive customers and recent visit trends.',
-      actions:[{label:'View sales report',href:'#/reports',variant:'ghost'},{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_plus"'}]
+      actions:[{label:'View sales report',href:'#/reports',variant:'ghost'},{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'}]
     });
   }else if((Number(previous?.revenue_cents)||0)===0&&(Number(current?.revenue_cents)||0)>0){
     insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Sales were recorded this period. Keep recording activity to unlock a reliable trend.',why:'',actions:[]});
   }
   if(Number(inactive60Total)>0){
-    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:`${customerCountTextV154(inactive60Total)} not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_plus"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
+    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:`${customerCountTextV154(inactive60Total)} not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
   }
   const weekdayValues=(current?.visits_by_weekday||[]).map(Number);
   const busiest=Math.max(0,...weekdayValues);
@@ -2794,7 +2801,7 @@ async function clientsPage(){
       </div>
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -2810,16 +2817,13 @@ async function clientsPage(){
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
   const CLIENT_PAGE_SIZE=100;
   let clientPage=0;
-  /* V288: the caller now names the bucket it counted, so this page stops re-deriving one from a
-     day number. Legacy numeric values (30/60/90) are still honoured for any older caller. */
-  const pendingInactiveBucketV288=key=>{
-    const raw=String(key||'');
-    if(['30_59','60_89','60_plus','90_plus','never'].includes(raw))return raw;
-    const days=Number(raw);
-    if(!Number.isFinite(days))return null;
-    return days>=90?'90_plus':days>=60?'60_plus':'30_59';
-  };
-  let clientInactiveBucket=pendingCustomerInactivity?pendingInactiveBucketV288(pendingCustomerInactivity):null;
+  /* V290: a handoff may now name the bucket directly ('all_inactive' from the dashboard tile);
+     the numeric day handoffs from Merchant insights still map to their window. */
+  let clientInactiveBucket=pendingCustomerInactivity
+    ?(typeof pendingCustomerInactivity==='string'
+      ?pendingCustomerInactivity
+      :pendingCustomerInactivity>=90?'90_plus':pendingCustomerInactivity>=60?'60_89':'30_59')
+    :null;
   pendingCustomerInactivity=null;
   /* A name handed in from the global app-bar search pre-fills and runs the existing name search
      (same query, no new call). Consumed once so a later visit starts clean. */
@@ -2843,10 +2847,8 @@ async function clientsPage(){
     const days=Number(c.days_since_last_visit);
     if(bucket==='30_59')return !never&&days>=30&&days<=59;
     if(bucket==='60_89')return !never&&days>=60&&days<=89;
-    /* V288: the 60+ audience Merchant insights counts. Every inactivity filter on this page is
-       resolved from the directory rows above, so this destination needs no server bucket. */
-    if(bucket==='60_plus')return !never&&days>=60;
     if(bucket==='90_plus')return !never&&days>=90;
+    if(bucket==='all_inactive')return !never&&days>=30;
     if(bucket==='never')return never;
     return true;
   };
@@ -2861,17 +2863,31 @@ async function clientsPage(){
     else list.sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||'')));
     return list;
   };
+  /* V290: these three numbers used to be counted in the browser, which meant paging the ENTIRE
+     customer directory (2*ceil(N/100) RPCs) on every open of this page purely to fill three
+     cards. staff_customer_bucket_counts_v290 answers all of them in one call, under the same
+     authorisation and the same branch scope the list below uses, so the card and the list can
+     never disagree. The full directory is still fetched — but only when a bucket is SELECTED,
+     because the audience actions beneath genuinely need the rows they are about to export. */
   async function refreshInactiveCards(){
     const host=$('inactiveCards');if(!host)return;
     try{
-      const directory=await allCustomerDirectoryRows();
+      const {branches}=await visibleBranchesForCurrentUser();
       if(!isCustomersCurrent())return;
-      const counts={'30_59':0,'60_89':0,'90_plus':0};
-      directory.customers.forEach(c=>{if(customerBucketMatch(c,'30_59'))counts['30_59']++;else if(customerBucketMatch(c,'60_89'))counts['60_89']++;else if(customerBucketMatch(c,'90_plus'))counts['90_plus']++});
+      currentCustomerScopeBranches=branches||[];
+      const {data,error}=await sb.rpc('staff_customer_bucket_counts_v290',{
+        p_business:S.biz.id,p_search:null,...currentReportingScopePayloadV155(branches)
+      });
+      if(error)throw error;
+      if(!isCustomersCurrent())return;
+      const counts=data?.counts||{};
       host.querySelectorAll('[data-inactive-bucket]').forEach(btn=>{
-        btn.querySelector('b').textContent=String(counts[btn.dataset.inactiveBucket]||0);
+        btn.querySelector('b').textContent=String(Number(counts[btn.dataset.inactiveBucket])||0);
         btn.setAttribute('aria-pressed',String(clientInactiveBucket===btn.dataset.inactiveBucket));
       });
+      if(!clientInactiveBucket){renderSelectedAudienceActionsV154([],false);return}
+      const directory=await allCustomerDirectoryRows();
+      if(!isCustomersCurrent())return;
       renderSelectedAudienceActionsV154(directory.customers,directory.loyaltyAvailable);
     }catch(error){if(isCustomersCurrent())host.querySelectorAll('[data-inactive-bucket] b').forEach(b=>b.textContent='—')}
   }
@@ -4318,23 +4334,15 @@ async function tillPage(){
 
   /* Wipe every trace of a checkout attempt: timers, the evaluation, and the STABLE finalise key.
      Called on reset, on Back, and when toggling modes — a deliberate cancel per §2. */
-  /* V286: `abandon` marks a DELIBERATE end of this checkout (Back, reset, walk-in switch, branch
-     change, finalise). Dropping paynowAttempt alone killed the poll and the on-screen attempt but
-     left the sessionStorage PayNow request behind, so the next entry to Record sale resumed it —
-     re-creating the earlier customer's QR against an unrelated sale. A deliberate abandon drops the
-     stored request too. There is no provider cancel API (stripe-connect-command exposes only
-     create_paynow), so a LIVE attempt is never abandoned silently: backToPhoneStep refuses while
-     one is outstanding, and the branch picker is disabled by cartLocked(). */
-  function clearCheckoutState({abandon=false}={}){
+  function clearCheckoutState(){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
     if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
     evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
-    if(abandon)clearPaynowRequestV142();
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
-    clearCheckoutState({abandon:true});
+    clearCheckoutState();
     /* v281 audit: the catalogue snapshot carries the LOOKED-UP CUSTOMER's entitlements
        (packages, vouchers, welcome offer) alongside the branch items. Dropping it only for
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
@@ -4349,12 +4357,7 @@ async function tillPage(){
      cart was a walk-in, the customer-less catalogue snapshot. */
   function backToPhoneStep(){
     if(checkoutError){toast('Finish or retry the unfinished items first');return}
-    /* V286: Back used to abandon a live PayNow QR — the poll died, the attempt vanished from the
-       screen, and the customer still paid a sale the server then fulfilled, so the cashier took the
-       money twice. Nothing can cancel a Stripe PayNow attempt from here, so the only honest answer
-       is to refuse and keep the attempt (and its "Show QR" button) on screen until it settles. */
-    if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
-    clearCheckoutState({abandon:true});
+    clearCheckoutState();
     catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];draw();
   }
@@ -4370,7 +4373,7 @@ async function tillPage(){
   const canOfferWalkin=()=>canRecordSales&&catalogueSelectionEnabled&&!pendingTillRedemptionScan;
   function startWalkinSale(){
     if(!canOfferWalkin())return;
-    clearCheckoutState({abandon:true}); // V286: switching to a walk-in abandons any stored PayNow request
+    clearCheckoutState();
     cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
     catalog=null;catalogError=null; // never reuse a catalogue loaded with another customer's entitlements
@@ -4572,15 +4575,6 @@ async function tillPage(){
   async function loadCatalog(){
     if(catalog||catalogLoading) return;
     catalogLoading=true;catalogError=null;
-    /* V286: the ONE async path on this surface with no epoch guard. Switching branch (or customer)
-       while this fetch is in flight cleared catalog, but the redraw's loadCatalog() bounced off
-       catalogLoading — so when the old response landed it published the PREVIOUS branch's services,
-       products and the previous customer's entitlements under the new label, and nothing refetched.
-       Staff could then tap items business_get_checkout_catalogue_v94 deliberately withheld, and
-       evaluate_checkout rejected the sale with a generic price-check error. Capture what this fetch
-       is for and discard it if either changed; the bail redraws, and drawCartComposer's
-       `catalog===null` re-issues the load for the branch actually on screen. */
-    const forBranchV286=tillBranchId, forClientV286=cust?cust.client_id:null, forWalkinV286=walkin;
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
@@ -4609,8 +4603,6 @@ async function tillPage(){
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
-    // V286: stale response — the branch, the customer or the walk-in flag moved on while it was in flight.
-    if(tillBranchId!==forBranchV286||(cust?cust.client_id:null)!==forClientV286||walkin!==forWalkinV286){draw();return;}
     if(checkout.error||!checkout.data){
       catalogError=checkout.error?.message||'The checkout catalogue could not be loaded.';
       draw();return;
@@ -5169,7 +5161,7 @@ async function tillPage(){
       tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;
       /* A branch change invalidates every item and evaluation. Clear the cart, then ask the
          server for this branch's effective catalogue before another selection is possible. */
-      cart=[];catalog=null;catalogError=null;clearCheckoutState({abandon:true});
+      cart=[];catalog=null;catalogError=null;clearCheckoutState();
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
     /* V287: re-attributing re-renders so the selected teammate is visible on the control that
@@ -5544,7 +5536,7 @@ async function tillPage(){
       duplicate:r?r.duplicate:false,businessName:S.biz.name,
       branchName:accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'',
       paidAt:new Date().toISOString(),paymentReference:null};
-    checkoutError=null;clearCheckoutState({abandon:true});step=3;draw(); // V286: a finalised sale retires any stored PayNow request
+    checkoutError=null;clearCheckoutState();step=3;draw();
   }
   function drawStep3(){
     if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
@@ -5691,12 +5683,21 @@ function sgLedgerDateV154(iso){
 }
 function saleRecordStatusV154(s,w={}){
   if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
-  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
   /* V287: this was the last line in the Sales audit disclosure that dropped a bare UUID into
      prose. It follows the two V267 lines above: the id stays, because a reconciler inside this
      collapsed disclosure genuinely needs the key, but it is named as a record id instead of
-     reading like a person's name. */
-  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Original sale row, later corrected. Audit record id of the correction: ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}`};
+     reading like a person's name.
+     V290: it also moved ABOVE the Reversed branch, and the server finally sends the keys it
+     reads. A v84 amount correction ALWAYS writes a reversal row, so w.reversal_sale_id is set on
+     the corrected original — while Reversed was tested first, this branch could never be reached
+     even once the linkage arrived, and a correction went on reading as a cancellation. */
+  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by){
+    const ref=w.correction_sale_id||w.corrected_sale_id||s.corrected_by;
+    return w.corrected_sale_id&&!w.correction_sale_id
+      ?{label:'Correction',tone:'new',details:`Replacement sale row, written to correct an earlier amount. Audit record id of the sale it corrects: ${ref}`}
+      :{label:'Corrected',tone:'new',details:`Original sale row, later corrected. Audit record id of the correction: ${ref}`};
+  }
+  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
 async function salesPage(){
@@ -7880,9 +7881,6 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      pressing Edit rendered a form far off screen and read as a dead button. Same move as V236:
      the ONE editor node is moved into a dialog and moved back on close — there is no second
      copy of the reward form, so every handler bound by openRewardEditor travels with it. */
-  /* V286: the dialog lifecycle now belongs to CUI.activateDialog (focus trap + Escape +
-     Android Back), so the deactivator has to outlive open and be spent by close. */
-  let rewardDialogDeactivateV238=null;
   function openRewardDialogV238(title,opener){
     const editor=$('rwEditor');
     if(!editor||document.getElementById('rewardDialogV238'))return;
@@ -7899,11 +7897,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const close=()=>{closeRewardDialogV238(true);opener?.focus?.()};
     dialog.querySelector('#rewardDialogCloseV238').onclick=close;
     dialog.onclick=e=>{if(e.target===dialog)close()};
-    /* V286: hand-rolled Escape and focus are gone. activateDialog adds the focus trap Tab was
-       walking straight out of, and pushes the history entry that makes Android Back close the
-       editor instead of routing the page underneath it. */
-    rewardDialogDeactivateV238=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#rwCustomerName'});
+    dialog.onkeydown=e=>{if(e.key==='Escape')close()};
     const done=$('rwClose');if(done)done.onclick=close;
+    $('rwCustomerName')?.focus({preventScroll:true});
   }
   function closeRewardDialogV238(restore){
     const dialog=document.getElementById('rewardDialogV238');if(!dialog)return;
@@ -7911,10 +7907,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const home=document.getElementById('rewardDialogHomeV238');
     /* Restoring empties the editor: an inline form under the list is the bug this fixed. */
     if(editor&&home&&restore){home.after(editor);editor.innerHTML=''}
-    /* The editor node is moved home BEFORE the deactivator removes the dialog. restoreFocus is
-       false because every caller that wants focus back names the opener itself. */
-    const deactivate=rewardDialogDeactivateV238;rewardDialogDeactivateV238=null;
-    if(deactivate)deactivate({restoreFocus:false});else dialog.remove();
+    dialog.remove();
   }
   async function saveReward(archive){
     const customerName=$('rwCustomerName').value.trim();
@@ -8140,8 +8133,6 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      The ONE tier form node is moved into a dialog and moved back on close, so every wired
      handler and the perk_note source of truth stay untouched — this is a viewport change,
      not a second editor. */
-  /* V286: see openRewardDialogV238 — the deactivator outlives open and is spent by close. */
-  let tierDialogDeactivateV236=null;
   function openTierDialogV236(title,opener){
     const form=$('trFormV235');
     if(!form||document.getElementById('tierDialogV236'))return;
@@ -8163,10 +8154,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       closeTierDialogV236(true);opener?.focus?.()};
     dialog.querySelector('#tierDialogCloseV236').onclick=close;
     dialog.onclick=e=>{if(e.target===dialog)close()};
-    /* V286: activateDialog owns Escape, the focus trap and the Android Back entry. Back used to
-       pop the previous hash and route a different page while this editor kept floating over it
-       — and then fired the unsaved-changes confirm() over that unrelated page. */
-    tierDialogDeactivateV236=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#trName'});
+    dialog.onkeydown=e=>{if(e.key==='Escape')close()};
+    $('trName')?.focus({preventScroll:true});
   }
   function closeTierDialogV236(restore){
     const dialog=document.getElementById('tierDialogV236');if(!dialog)return;
@@ -8176,9 +8165,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       home.after(form);form.hidden=true;
       const toggle=$('trFormToggleV235');if(toggle)toggle.setAttribute('aria-expanded','false');
     }
-    /* The form node goes home BEFORE the deactivator removes the dialog. */
-    const deactivate=tierDialogDeactivateV236;tierDialogDeactivateV236=null;
-    if(deactivate)deactivate({restoreFocus:false});else dialog.remove();
+    dialog.remove();
   }
   ['trName','trTh','trMul','trFrom','trUntil'].forEach(id=>{
     const field=$(id);if(field)field.addEventListener('input',markTierDirtyV237);
@@ -8920,15 +8907,7 @@ function promotionPreviewMarkupV104(item,imageUrl='',business=null){
   /* A locally-picked file is a blob: URL that the storage allowlist rejects by design. Pass it
      as an explicit preview override so the owner sees the real photo before publishing. */
   const localPreview=/^blob:/i.test(String(imageUrl||''))?String(imageUrl):'';
-  /* v286: the studio preview is a PICTURE of the customer card, never a working one. It renders the
-     real card, so with CTA kind "Book now" it drew a live <a href="#/b/<slug>"> — a customer route —
-     and one tap took the merchant out of the workspace into the public booking wizard with every
-     unsaved field of the offer they were writing silently discarded. Share and "View details" were
-     inert here regardless, because their handlers are wired on the customer surfaces. Wrapping the
-     card is deliberate: the customer-facing markup must stay byte-identical, so the preview neuters
-     it from outside with `inert` (pointer, keyboard and assistive tech) plus pointer-events:none for
-     engines that predate the attribute. */
-  return `<div class="promotion-preview-card" inert style="pointer-events:none">${customerPromotionCardV104(preview,merchant,true,localPreview)}</div>`;
+  return customerPromotionCardV104(preview,merchant,true,localPreview);
 }
 function promotionPageCurrentV104(pageRoot,host){
   return Boolean(pageRoot?.isConnected&&host?.contains?.(pageRoot));
@@ -9549,13 +9528,7 @@ async function promotionsPage(selectedPromotionId=null){
   }
   routeDispose=()=>{if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl)};
 }
-async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false}={}){
-  /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
-     pushing no hash — so the topic outlived the page. An owner who drilled into Points, went to
-     the Dashboard and pressed Programmes in the rail landed back inside Points, with the rail
-     saying Programmes. Only the ROUTER clears it: in-page re-renders (a save, a retry, the mode
-     switch) must keep the owner where they are. */
-  if(fromRouteV288)growTopicV229='';
+async function growPage(routedSurface,hashParam,routedFocus=null){
   const directFocusTokens=new Set(['earning','classic','birthday','add','bringback','new']);
   if(!routedFocus&&directFocusTokens.has(hashParam)){routedFocus=hashParam;hashParam=null}
   const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
@@ -10014,17 +9987,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       state:welcomeOfferStatusV215.active===true&&welcomeOfferStatusV215.item_available!==false?'live':'paused',
       customers:growUsageV271?(growUsageV271.welcome?.customers??null):null,
       detail:welcomeOfferStatusV215.reward_label||''});
-    /* V288: this row used to read ends_at and never starts_at, so a published promotion dated to
-       start next week was listed under "Ongoing programmes" with a Started date in the future.
-       promotionLifecycleV186 is the predicate the rest of the app already publishes against
-       (it is what the Promotions list and the save status line print), and 'scheduled' is a
-       state the sibling bring-back and reward entries here already carry. A never-published draft
-       whose end date has passed is now a draft rather than History, because it never ran. */
     (snapshot.promotions||[]).forEach(promotion=>{
-      const lifecycle=promotionLifecycleV186(promotion);
+      const ended=Number.isFinite(Date.parse(promotion?.ends_at||''))&&Date.parse(promotion.ends_at)<=Date.now();
       entries.push({name:promotion?.name||'Promotion',type:'Promotion',
-        started:promotion?.starts_at||null,ended:lifecycle.state==='ended'?(promotion?.ends_at||null):null,
-        state:lifecycle.state,
+        started:promotion?.starts_at||null,ended:promotion?.ends_at||null,
+        state:ended?'ended':promotion?.active===true?'live':'draft',
         customers:null,detail:promotion?.tagline||''});
     });
     if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',
@@ -18864,7 +18831,7 @@ async function settingsPage(){
     if(saleCount.error||appointmentCount.error)return fail(saleCount.error||appointmentCount.error);
     const worked=Number(saleCount.count||0)+Number(appointmentCount.count||0);
     if(worked>0){
-      toast(workspaceTemplateTextV97(worked===1?'staffKeptHasRecord':'staffKeptHasRecords',{name,count:worked}));
+      toast(`${name} has ${worked} record${worked===1?'':'s'} of work here, so the record is kept. Use Deactivate to stop their access.`);
       return;
     }
     if(!confirm(`Last check: ${name} has never recorded a sale or an appointment. Delete the record for good?`))return;

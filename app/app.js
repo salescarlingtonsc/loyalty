@@ -1078,15 +1078,23 @@ function redemptionPayloadFromQr(value,currentUrl=location.href){
   if(prefixed)return {kind:'classic',token:prefixed[1]};
   const growthPrefixed=raw.match(/^nestly:growth:([A-Za-z0-9_-]{20,512})$/i);
   if(growthPrefixed)return {kind:'growth',token:growthPrefixed[1]};
+  /* V290: a published promotion presented at the counter. It is a third kind rather than a reuse
+     of 'growth' because a growth offer is a targeted entitlement tied to a completed purchase,
+     while this one only records that a named customer showed a named public offer. */
+  const promotionPrefixed=raw.match(/^nestly:promotion:([A-Za-z0-9_-]{20,512})$/i);
+  if(promotionPrefixed)return {kind:'promotion',token:promotionPrefixed[1]};
   try{
     const url=new URL(raw,currentUrl);
     const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
     const growthToken=url.searchParams.get('growth_token')||hashParams.get('growth_token')||'';
-    const token=growthToken||url.searchParams.get('redemption')||url.searchParams.get('token')
+    const promotionToken=url.searchParams.get('promotion_token')||hashParams.get('promotion_token')||'';
+    const token=growthToken||promotionToken||url.searchParams.get('redemption')||url.searchParams.get('token')
       ||hashParams.get('redemption')||hashParams.get('token')||'';
     if(!/^[A-Za-z0-9_-]{20,512}$/.test(token))return {kind:'',token:''};
     const hashPath=(url.hash.split('?')[0]||'').toLowerCase();
-    const kind=growthToken||hashPath==='#/growth-redeem'?'growth':'classic';
+    const kind=promotionToken||hashPath==='#/promotion-redeem'
+      ?'promotion'
+      :growthToken||hashPath==='#/growth-redeem'?'growth':'classic';
     return {kind,token};
   }catch{return {kind:'',token:''}}
 }
@@ -1097,6 +1105,8 @@ let activeMerchantScannerCleanup=()=>{};
 function merchantRedemptionReceiptView(data={}){
   const kind=data.redemption_kind==='growth_offer'
     ?'growth_offer'
+    :data.redemption_kind==='promotion_offer'
+    ?'promotion_offer'
     :data.redemption_kind==='classic_points'?'classic_points':'catalog_reward';
   const creditCents=Math.max(0,Number(data.credit_cents||0));
   const offerValueCents=Math.max(0,Number(data.value_cents||0));
@@ -1106,7 +1116,8 @@ function merchantRedemptionReceiptView(data={}){
     customerName:String(data.customer_name||'Customer'),
     rewardLabel:String(data.reward_label||(kind==='classic_points'
       ?'Points to store credit'
-      :kind==='growth_offer'?'Customer offer':'Reward')),
+      :kind==='growth_offer'?'Customer offer'
+      :kind==='promotion_offer'?'Offer':'Reward')),
     pointsSpent:Math.max(0,Number(data.points_spent||0)),
     creditCents,
     offerValueCents,
@@ -1114,6 +1125,8 @@ function merchantRedemptionReceiptView(data={}){
     operationId:String(data.operation_id||data.intent_id||data.entitlement_id||''),
     fulfilment:kind==='growth_offer'
       ?'This customer offer is now linked to the completed purchase. Provide the advertised benefit now if it was not already included in the sale.'
+      :kind==='promotion_offer'
+      ?'This offer is recorded as accepted for this customer. Apply the advertised benefit at the till — the scan records the acceptance, it does not calculate a discount.'
       :kind==='classic_points'
       ?`Store credit of ${money(creditCents)} has been added to the customer’s programme.`
       :'Provide the reward shown above to the customer now. The scan records the points redemption but does not hand over a physical item.'
@@ -1125,7 +1138,7 @@ function merchantRedemptionReceiptHtml(data={}){
     <dl class="receipt-detail" style="margin-top:16px">
       <div><dt>Customer</dt><dd>${esc(receipt.customerName)}</dd></div>
       <div><dt>Reward</dt><dd>${esc(receipt.rewardLabel)}</dd></div>
-      ${receipt.kind==='growth_offer'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
+      ${receipt.kind==='growth_offer'||receipt.kind==='promotion_offer'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
       ${receipt.creditCents?`<div><dt>Store credit</dt><dd>${esc(money(receipt.creditCents))}</dd></div>`:''}
       ${receipt.offerValueCents&&receipt.offerCurrency
         ?`<div><dt>Offer value</dt><dd>${esc(`${receipt.offerCurrency} ${(receipt.offerValueCents/100).toFixed(2)}`)}</dd></div>`
@@ -1215,7 +1228,7 @@ function openMerchantRedemptionScanner({
       status.textContent='This is a customer offer. Complete this customer’s purchase first, then use Redeem customer offer on the receipt.';
       return;
     }
-    if(payload.kind!=='growth'&&!branchId){
+    if(payload.kind==='classic'&&!branchId){
       status.textContent='Choose an accessible branch before confirming this reward.';
       return;
     }
@@ -1224,7 +1237,15 @@ function openMerchantRedemptionScanner({
       redemptionAttempt={fingerprint:attemptFingerprint,key:crypto.randomUUID()};
     }
     submitting=true;status.textContent='Confirming this redemption…';
-    const response=payload.kind==='growth'
+    /* V290: the same scanner now also accepts a published promotion. It is the existing
+       affordance rather than a second button — the counter should not have to know which of
+       three codes a customer is holding before deciding which control to press. */
+    const response=payload.kind==='promotion'
+      ?await sb.rpc('staff_redeem_promotion_intent_v290',{
+        p_business:businessId,p_token:token,p_branch:branchId||null,
+        p_idempotency_key:redemptionAttempt.key
+      })
+      :payload.kind==='growth'
       ?await sb.rpc('redeem_growth_offer_v108',{
         p_business:businessId,p_token:token,p_sale:saleId,p_idempotency_key:redemptionAttempt.key
       })
@@ -1237,15 +1258,30 @@ function openMerchantRedemptionScanner({
     submitting=false;
     if(error){status.textContent=error.code==='PGRST202'||error.code==='42883'
       ?'Redemption scanning needs the latest Peekaa service update.'
+      :payload.kind==='promotion'
+        ?'This offer could not be accepted. It may have expired, or it belongs to another business.'
       :payload.kind==='growth'
         ?'This offer could not be confirmed. Check that it belongs to this customer and purchase, and that it has not expired or already been used.'
         :'This redemption could not be confirmed. It may be expired, already used, or for another business.';return}
-    if(data?.status!=='completed'&&data?.status!=='redeemed'){
+    if(payload.kind==='promotion'&&data?.status==='already_redeemed'){
+      status.textContent=`This offer was already accepted${data.redeemed_at?` on ${new Date(data.redeemed_at).toLocaleString('en-SG',{timeZone:'Asia/Singapore'})}`:''}.`;
+      return;
+    }
+    const accepted=payload.kind==='promotion'
+      ?data?.status==='redeemed'||data?.status==='duplicate_ignored'
+      :data?.status==='completed'||data?.status==='redeemed';
+    if(!accepted){
       status.textContent=`Redemption was not completed (${String(data?.status||'unknown').replaceAll('_',' ')}).`;return;
     }
     redemptionAttempt=null;
     if(payload.kind==='growth'){
       data={...data,redemption_kind:'growth_offer',customer_name:customerName||'Customer'};
+    }
+    if(payload.kind==='promotion'){
+      data={...data,redemption_kind:'promotion_offer',
+        reward_label:data.promotion_name||'Offer',
+        customer_name:data.customer_name||customerName||'Customer',
+        operation_id:data.redemption_id||data.intent_id||''};
     }
     stopCamera();
     const panel=overlay.querySelector('.modal-card');
@@ -1354,6 +1390,39 @@ function showCustomerDecisionDialog({title,body,keepLabel='Keep',confirmLabel='C
     if(field)field.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();finish(confirmValue())}});
     dialog.addEventListener('click',event=>{if(event.target===dialog)finish(cancelValue())});
   });
+}
+/* V290: the promotion twin of showPendingRedemptionQr. Deliberately simpler — a promotion intent
+   moves no points and no credit, so there is nothing to cancel and nothing to reconcile: it is a
+   code that either gets scanned before it expires or does not. The QR carries the same
+   `nestly:promotion:` prefix the merchant scanner parses. */
+function showPendingPromotionQrV290({intent,businessName,promotionName}={}){
+  const token=String(intent?.qr_token||'');
+  if(!token)return;
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-redemption-modal';overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerPromotionQrTitle');
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerPromotionQrTitle">${esc(promotionName||'Offer')}</h2><p class="muted small" style="margin-top:5px">Show this code to ${esc(businessName||'the team')} at the counter.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPromotionQrClose" type="button" aria-label="Close offer code">${CUI.icon('close',{size:18})}</button></div>
+    <div class="redemption-qr" id="customerPromotionQr" aria-label="Offer code"></div>
+    <span class="pill new">Waiting for the counter</span>
+    <p class="muted small" id="customerPromotionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Nothing is used until the team scans this code.${intent?.expires_at?` <span>${esc(redemptionCountdownText(intent.expires_at))}</span>.`:''}</p>
+    <div class="row" style="margin-top:16px"><button class="btn ghost" id="customerPromotionQrDone" type="button">Close</button></div></section>`;
+  document.body.appendChild(overlay);
+  let deactivate=null;
+  const close=()=>{
+    if(deactivate){const cleanup=deactivate;deactivate=null;cleanup({restoreFocus:true})}
+    else overlay.remove();
+  };
+  void loadQrLibrary().then(()=>new QRCode(overlay.querySelector('#customerPromotionQr'),
+    {text:`nestly:promotion:${token}`,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}))
+    .catch(()=>{
+      const status=overlay.querySelector('#customerPromotionQrStatus');
+      if(status)status.insertAdjacentHTML('afterend',`<details style="margin-top:12px;text-align:left"><summary class="small">Show fallback code</summary><code class="growth-redemption-token">${esc(token)}</code></details>`);
+    });
+  overlay.querySelector('#customerPromotionQrClose').onclick=close;
+  overlay.querySelector('#customerPromotionQrDone').onclick=close;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerPromotionQrDone'});
 }
 function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}={}){
   const token=String(intent?.qr_token||'');
@@ -6534,10 +6603,40 @@ async function renderCustomerWallet(businessSlug=null){
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
-  document.querySelectorAll('[data-promotion-counter]').forEach(button=>button.onclick=()=>{
+  /* V290: "Show at counter" used to change its own label and nothing else — there was no code for
+     staff to check and no record that the offer was ever used. It now creates a short-lived
+     promotion intent and renders the same QR the reward path renders, so the counter can verify
+     it with the scanner it already has and the offer finally produces a number. */
+  const promotionIntentAttempts=new Map();
+  document.querySelectorAll('[data-promotion-counter]').forEach(button=>button.onclick=async()=>{
     const card=button.closest('[data-promotion-id]'),status=card?.querySelector('[data-promotion-status]');
-    if(status)status.textContent='Show this offer to the team at the counter.';
-    button.textContent='Ready to show';
+    const promotionId=String(card?.dataset.promotionId||'');
+    const shopId=businessId||b.id;
+    if(!promotionId||!shopId){
+      if(status)status.textContent='Show this offer to the team at the counter.';
+      button.textContent='Ready to show';return;
+    }
+    if(!promotionIntentAttempts.has(promotionId))promotionIntentAttempts.set(promotionId,crypto.randomUUID());
+    const label=button.textContent;
+    button.disabled=true;button.textContent='Preparing code…';
+    const {data:intent,error:intentError}=await sb.rpc('customer_create_promotion_intent_v290',{
+      p_business:shopId,p_promotion:promotionId,
+      p_idempotency_key:promotionIntentAttempts.get(promotionId)
+    });
+    if(!button.isConnected)return;
+    button.disabled=false;button.textContent=label;
+    if(intentError||intent?.status!=='pending'||!intent?.qr_token){
+      promotionIntentAttempts.delete(promotionId);
+      if(status)status.textContent=intentError?.code==='PGRST202'||intentError?.code==='42883'
+        ?'Show this offer to the team at the counter.'
+        :intent?.status==='redeemed'
+          ?'You have already used this offer.'
+          :'This offer could not be prepared right now. Show it to the team at the counter.';
+      return;
+    }
+    if(status)status.textContent='Show this code at the counter.';
+    const offerName=card?.querySelector('h3,h2,b')?.textContent||'Offer';
+    showPendingPromotionQrV290({intent,businessName:b.name,promotionName:offerName});
   });
   /* v286: one offer, one detail surface. The wallet used to open a second modal cloned from the
      card's own <template> — description, a small <dl>, Close and Done — while the SAME offer opened
@@ -10707,13 +10806,15 @@ async function dashboard(){
     new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',buttonLabel:'See new customers',scope:'business'},
     /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
        only, so the number an owner tapped and the list they landed on could never agree. The
-       server's staff_list_customers_v155 accepts exactly four buckets ('30_59','60_89',
-       '90_plus','never') and raises unsupported_inactivity_bucket for anything else, so an
-       "all inactive" destination is not expressible without a migration. The number is
-       therefore narrowed to match the destination, and the tile says which window it counts.
-       Customers 60+ days quiet are not lost: Merchant insights below still reports them and
-       links to their own bucket. */
-    inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 to 59 complete Singapore days ago. Tapping this tile opens exactly this group. Customers quiet for 60 days or more are reported separately in Merchant insights.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
+       server's staff_list_customers_v155 accepted exactly four buckets ('30_59','60_89',
+       '90_plus','never') and raised unsupported_inactivity_bucket for anything else, so an
+       "all inactive" destination was not expressible without a migration, and the number was
+       narrowed to match the destination.
+       V290 wrote that migration: 'all_inactive' is now an accepted bucket, so the tile counts
+       every customer quiet for 30 days or more and lands on exactly that group. The narrowing
+       is undone; the rule it enforced — the number and the destination must be the same set of
+       people — is what still holds. */
+    inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
   };
   /* V288: seeded from the branch the top bar is ALREADY showing. It used to start at null, and
      the Today-schedule glance below is fetched at first paint from this value — so a workspace
@@ -10815,7 +10916,7 @@ async function dashboard(){
     try{[response,previousResponse,inactiveResponse,inactive60Response,redeemedResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:previousRange.previousFrom,p_to:previousRange.previousTo,...scopePayload}),
-      canReadModule('clients')?sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,p_inactive_bucket:'30_59',p_limit:1,p_offset:0,...scopePayload}):Promise.resolve({data:null,error:null}),
+      canReadModule('clients')?sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,p_inactive_bucket:'all_inactive',p_limit:1,p_offset:0,...scopePayload}):Promise.resolve({data:null,error:null}),
       canReadModule('clients')?sb.rpc('preview_campaign_audience_v155',{p_business:S.biz.id,p_audience_key:'inactive_60_plus',...scopePayload}):Promise.resolve({data:null,error:null}),
       loyaltyVisibleV170?fetchAllRowsResult(()=>sb.from('points_ledger').select('points',{count:'exact'}).eq('business_id',S.biz.id).eq('entry_type','redeem').gte('created_at',sgDateBoundary(from,0)).lt('created_at',sgDateBoundary(to,1)).order('id')):Promise.resolve({data:null,error:null})
     ])}
@@ -10861,10 +10962,13 @@ async function dashboard(){
       customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
-      /* V287: 30-59 only — the same bucket the tile navigates to. inactive60Response is still
-         fetched because Merchant insights and the business-health card below both read it. */
+      /* V287 narrowed this tile to 30-59 because "all inactive" was not a destination the
+         server could express, so the number and the list it opened could never agree. V290 adds
+         the all_inactive bucket to staff_list_customers_v155, so the tile counts every customer
+         quiet for 30 days or more again and lands on exactly those people. inactive60Response is
+         still fetched because Merchant insights and the business-health card below both read it. */
       const inactiveTotal=inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0);
-      metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30–59 days ago'});
+      metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30+ days ago'});
     }
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
@@ -10882,6 +10986,7 @@ async function dashboard(){
          day number the Customers page had to re-guess. The tile counts 30–59 (V287), so it
          asks for 30–59; Merchant insights counts 60+, so it asks for 60+. */
       if(key==='inactive')pendingCustomerInactivity='30_59';
+      if(key==='inactive')pendingCustomerInactivity='all_inactive';
       if(route)nav(route);
     });
     if(loyalty){
@@ -11042,7 +11147,11 @@ function classifyInactiveCustomersV153(customers){
        insights counts the 60+ audience with one RPC (inactive_60_plus) and used to link into
        60–89, silently dropping everyone 90+ — the number the owner tapped and the list they
        landed on could not agree. This is the destination that matches that number. */
-    '60_plus':{label:'Inactive 60+ days',definition:'No valid visit for at least 60 complete Singapore days.',customers:[]}
+    '60_plus':{label:'Inactive 60+ days',definition:'No valid visit for at least 60 complete Singapore days.',customers:[]},
+    /* V290: the three windows above are mutually exclusive; this one deliberately is not. It is
+       the union the dashboard tile now counts, so the number on the tile and the audience the
+       owner can act on are the same set of people. */
+    'all_inactive':{label:'Inactive 30+ days',definition:'No valid visit for at least 30 complete Singapore days.',customers:[]}
   };
   (customers||[]).forEach(customer=>{
     const never=!customer.last_visit_at,days=Number(customer.days_since_last_visit);
@@ -11050,6 +11159,7 @@ function classifyInactiveCustomersV153(customers){
     else if(!never&&days>=60&&days<=89)buckets['60_89'].customers.push(customer);
     else if(never||days>=90)buckets['90_plus'].customers.push(customer);
     if(!never&&days>=60)buckets['60_plus'].customers.push(customer);
+    if(!never&&days>=30)buckets['all_inactive'].customers.push(customer);
   });
   return buckets;
 }
@@ -11167,6 +11277,7 @@ async function clientsPage(){
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
     <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -11186,11 +11297,13 @@ async function clientsPage(){
      day number. Legacy numeric values (30/60/90) are still honoured for any older caller. */
   const pendingInactiveBucketV288=key=>{
     const raw=String(key||'');
-    if(['30_59','60_89','60_plus','90_plus','never'].includes(raw))return raw;
+    if(['30_59','60_89','60_plus','90_plus','never','all_inactive'].includes(raw))return raw;
     const days=Number(raw);
     if(!Number.isFinite(days))return null;
     return days>=90?'90_plus':days>=60?'60_plus':'30_59';
   };
+  /* V290 folded into the V288 resolver: 'all_inactive' (the dashboard tile) is now a named
+     bucket the helper accepts; numeric day handoffs keep their windows. One declaration. */
   let clientInactiveBucket=pendingCustomerInactivity?pendingInactiveBucketV288(pendingCustomerInactivity):null;
   pendingCustomerInactivity=null;
   /* A name handed in from the global app-bar search pre-fills and runs the existing name search
@@ -11219,6 +11332,7 @@ async function clientsPage(){
        resolved from the directory rows above, so this destination needs no server bucket. */
     if(bucket==='60_plus')return !never&&days>=60;
     if(bucket==='90_plus')return !never&&days>=90;
+    if(bucket==='all_inactive')return !never&&days>=30;
     if(bucket==='never')return never;
     return true;
   };
@@ -11233,17 +11347,31 @@ async function clientsPage(){
     else list.sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||'')));
     return list;
   };
+  /* V290: these three numbers used to be counted in the browser, which meant paging the ENTIRE
+     customer directory (2*ceil(N/100) RPCs) on every open of this page purely to fill three
+     cards. staff_customer_bucket_counts_v290 answers all of them in one call, under the same
+     authorisation and the same branch scope the list below uses, so the card and the list can
+     never disagree. The full directory is still fetched — but only when a bucket is SELECTED,
+     because the audience actions beneath genuinely need the rows they are about to export. */
   async function refreshInactiveCards(){
     const host=$('inactiveCards');if(!host)return;
     try{
-      const directory=await allCustomerDirectoryRows();
+      const {branches}=await visibleBranchesForCurrentUser();
       if(!isCustomersCurrent())return;
-      const counts={'30_59':0,'60_89':0,'90_plus':0};
-      directory.customers.forEach(c=>{if(customerBucketMatch(c,'30_59'))counts['30_59']++;else if(customerBucketMatch(c,'60_89'))counts['60_89']++;else if(customerBucketMatch(c,'90_plus'))counts['90_plus']++});
+      currentCustomerScopeBranches=branches||[];
+      const {data,error}=await sb.rpc('staff_customer_bucket_counts_v290',{
+        p_business:S.biz.id,p_search:null,...currentReportingScopePayloadV155(branches)
+      });
+      if(error)throw error;
+      if(!isCustomersCurrent())return;
+      const counts=data?.counts||{};
       host.querySelectorAll('[data-inactive-bucket]').forEach(btn=>{
-        btn.querySelector('b').textContent=String(counts[btn.dataset.inactiveBucket]||0);
+        btn.querySelector('b').textContent=String(Number(counts[btn.dataset.inactiveBucket])||0);
         btn.setAttribute('aria-pressed',String(clientInactiveBucket===btn.dataset.inactiveBucket));
       });
+      if(!clientInactiveBucket){renderSelectedAudienceActionsV154([],false);return}
+      const directory=await allCustomerDirectoryRows();
+      if(!isCustomersCurrent())return;
       renderSelectedAudienceActionsV154(directory.customers,directory.loyaltyAvailable);
     }catch(error){if(isCustomersCurrent())host.querySelectorAll('[data-inactive-bucket] b').forEach(b=>b.textContent='—')}
   }
@@ -14063,12 +14191,21 @@ function sgLedgerDateV154(iso){
 }
 function saleRecordStatusV154(s,w={}){
   if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
-  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
   /* V287: this was the last line in the Sales audit disclosure that dropped a bare UUID into
      prose. It follows the two V267 lines above: the id stays, because a reconciler inside this
      collapsed disclosure genuinely needs the key, but it is named as a record id instead of
-     reading like a person's name. */
-  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Original sale row, later corrected. Audit record id of the correction: ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}`};
+     reading like a person's name.
+     V290: it also moved ABOVE the Reversed branch, and the server finally sends the keys it
+     reads. A v84 amount correction ALWAYS writes a reversal row, so w.reversal_sale_id is set on
+     the corrected original — while Reversed was tested first, this branch could never be reached
+     even once the linkage arrived, and a correction went on reading as a cancellation. */
+  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by){
+    const ref=w.correction_sale_id||w.corrected_sale_id||s.corrected_by;
+    return w.corrected_sale_id&&!w.correction_sale_id
+      ?{label:'Correction',tone:'new',details:`Replacement sale row, written to correct an earlier amount. Audit record id of the sale it corrects: ${ref}`}
+      :{label:'Corrected',tone:'new',details:`Original sale row, later corrected. Audit record id of the correction: ${ref}`};
+  }
+  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
 async function salesPage(){

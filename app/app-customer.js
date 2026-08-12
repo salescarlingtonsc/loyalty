@@ -130,6 +130,39 @@ function showCustomerDecisionDialog({title,body,keepLabel='Keep',confirmLabel='C
     dialog.addEventListener('click',event=>{if(event.target===dialog)finish(cancelValue())});
   });
 }
+/* V290: the promotion twin of showPendingRedemptionQr. Deliberately simpler — a promotion intent
+   moves no points and no credit, so there is nothing to cancel and nothing to reconcile: it is a
+   code that either gets scanned before it expires or does not. The QR carries the same
+   `nestly:promotion:` prefix the merchant scanner parses. */
+function showPendingPromotionQrV290({intent,businessName,promotionName}={}){
+  const token=String(intent?.qr_token||'');
+  if(!token)return;
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-redemption-modal';overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerPromotionQrTitle');
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerPromotionQrTitle">${esc(promotionName||'Offer')}</h2><p class="muted small" style="margin-top:5px">Show this code to ${esc(businessName||'the team')} at the counter.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPromotionQrClose" type="button" aria-label="Close offer code">${CUI.icon('close',{size:18})}</button></div>
+    <div class="redemption-qr" id="customerPromotionQr" aria-label="Offer code"></div>
+    <span class="pill new">Waiting for the counter</span>
+    <p class="muted small" id="customerPromotionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Nothing is used until the team scans this code.${intent?.expires_at?` <span>${esc(redemptionCountdownText(intent.expires_at))}</span>.`:''}</p>
+    <div class="row" style="margin-top:16px"><button class="btn ghost" id="customerPromotionQrDone" type="button">Close</button></div></section>`;
+  document.body.appendChild(overlay);
+  let deactivate=null;
+  const close=()=>{
+    if(deactivate){const cleanup=deactivate;deactivate=null;cleanup({restoreFocus:true})}
+    else overlay.remove();
+  };
+  void loadQrLibrary().then(()=>new QRCode(overlay.querySelector('#customerPromotionQr'),
+    {text:`nestly:promotion:${token}`,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}))
+    .catch(()=>{
+      const status=overlay.querySelector('#customerPromotionQrStatus');
+      if(status)status.insertAdjacentHTML('afterend',`<details style="margin-top:12px;text-align:left"><summary class="small">Show fallback code</summary><code class="growth-redemption-token">${esc(token)}</code></details>`);
+    });
+  overlay.querySelector('#customerPromotionQrClose').onclick=close;
+  overlay.querySelector('#customerPromotionQrDone').onclick=close;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerPromotionQrDone'});
+}
 function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}={}){
   const token=String(intent?.qr_token||'');
   if(!token)return;
@@ -3517,10 +3550,40 @@ async function renderCustomerWallet(businessSlug=null){
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
-  document.querySelectorAll('[data-promotion-counter]').forEach(button=>button.onclick=()=>{
+  /* V290: "Show at counter" used to change its own label and nothing else — there was no code for
+     staff to check and no record that the offer was ever used. It now creates a short-lived
+     promotion intent and renders the same QR the reward path renders, so the counter can verify
+     it with the scanner it already has and the offer finally produces a number. */
+  const promotionIntentAttempts=new Map();
+  document.querySelectorAll('[data-promotion-counter]').forEach(button=>button.onclick=async()=>{
     const card=button.closest('[data-promotion-id]'),status=card?.querySelector('[data-promotion-status]');
-    if(status)status.textContent='Show this offer to the team at the counter.';
-    button.textContent='Ready to show';
+    const promotionId=String(card?.dataset.promotionId||'');
+    const shopId=businessId||b.id;
+    if(!promotionId||!shopId){
+      if(status)status.textContent='Show this offer to the team at the counter.';
+      button.textContent='Ready to show';return;
+    }
+    if(!promotionIntentAttempts.has(promotionId))promotionIntentAttempts.set(promotionId,crypto.randomUUID());
+    const label=button.textContent;
+    button.disabled=true;button.textContent='Preparing code…';
+    const {data:intent,error:intentError}=await sb.rpc('customer_create_promotion_intent_v290',{
+      p_business:shopId,p_promotion:promotionId,
+      p_idempotency_key:promotionIntentAttempts.get(promotionId)
+    });
+    if(!button.isConnected)return;
+    button.disabled=false;button.textContent=label;
+    if(intentError||intent?.status!=='pending'||!intent?.qr_token){
+      promotionIntentAttempts.delete(promotionId);
+      if(status)status.textContent=intentError?.code==='PGRST202'||intentError?.code==='42883'
+        ?'Show this offer to the team at the counter.'
+        :intent?.status==='redeemed'
+          ?'You have already used this offer.'
+          :'This offer could not be prepared right now. Show it to the team at the counter.';
+      return;
+    }
+    if(status)status.textContent='Show this code at the counter.';
+    const offerName=card?.querySelector('h3,h2,b')?.textContent||'Offer';
+    showPendingPromotionQrV290({intent,businessName:b.name,promotionName:offerName});
   });
   /* v286: one offer, one detail surface. The wallet used to open a second modal cloned from the
      card's own <template> — description, a small <dl>, Close and Done — while the SAME offer opened
