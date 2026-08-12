@@ -78,3 +78,32 @@ test('desktop and mobile promotion cards prioritize marketing without overflow o
   assert.match(app,/\.customer-programme-compact-head \.customer-programme-logo\{width:48px;height:48px/);
   assert.doesNotMatch(merchant,/setInterval|autoplay|carousel/);
 });
+
+/* -------------------------------------------------------------------------------- v286 findings */
+
+test('the merchant studio preview is a picture of the card, not a working one',()=>{
+  /* The preview renders the REAL customer card, so with CTA kind "Book now" it drew a live
+     <a href="#/b/<slug>"> — a customer route. One tap took the merchant out of the workspace into
+     the public booking wizard and every unsaved field of the offer they were writing was gone. */
+  const preview=section('function promotionPreviewMarkupV104','function promotionPageCurrentV104');
+  assert.match(preview,/<div class="promotion-preview-card" inert style="pointer-events:none">/,
+    'the preview must be inert for pointer, keyboard and assistive tech alike');
+  assert.match(preview,/\$\{customerPromotionCardV104\(preview,merchant,true,localPreview\)\}<\/div>/,
+    'the customer card markup itself is untouched — the preview neuters it from outside');
+});
+
+test('the wallet opens the same offer sheet Home does, not a poorer second modal',()=>{
+  /* One offer must not have two detail surfaces. The wallet cloned the card's own <template> —
+     no artwork, no branch contact, no Book now, no Share, one dead-end "Done" — while the SAME
+     offer from the Home shelf opened showCustomerOfferDetailV173 with all of it. */
+  const wiring=section("document.querySelectorAll('[data-promotion-details]')",
+    "document.querySelectorAll('[data-share-offer]')");
+  assert.match(wiring,/\.find\(item=>String\(item\?\.id\|\|''\)===offerId\)/,
+    'v265 rule: the offer is read back out of the list the page already rendered');
+  assert.match(wiring,/showCustomerOfferDetailV173\(\{\.\.\.offer,business:\{\.\.\.b,id:businessId\|\|b\.id,slug:businessSlug\}\}\)/);
+  assert.match(wiring,/if\(!offer\)return openCustomerPromotionDetailsV104\(card\)/,
+    'a card whose offer is missing from the list still answers the tap');
+  assert.match(wiring,/recordProductInteractionV100\('customer\.promotion_opened'/,
+    'the v255 open event must survive the reroute');
+  assert.match(wiring,/entry_point:'customer_wallet'/);
+});
