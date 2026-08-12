@@ -44,8 +44,16 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
   }
   assert.match(dashboard,/data-dashboard-metric="\$\{metric\.key\}"/);
   assert.match(dashboard,/Customer membership or customer records created during the selected period/);
-  assert.match(dashboard,/Business-wide customers with no valid visit for at least 30 complete Singapore days/);
-  assert.match(dashboard,/openDashboardMetricDetailV141/);
+  /* V287 retarget: the definition used to claim "at least 30 days" while the tile drilled
+     through to the 30-59 bucket only. The number and the destination now describe the same
+     group, and the definition says so. */
+  assert.match(dashboard,/Customers whose last valid visit was 30 to 59 complete Singapore days ago/);
+  /* V287 retarget: openDashboardMetricDetailV141 was unreachable after V225 made every tile a
+     direct link (all four definitions carry a route, so the `else` could never run). The
+     drilldown contract this test guards is now the navigation itself. */
+  assert.doesNotMatch(dashboard,/function openDashboardMetricDetailV141\(/);
+  assert.match(dashboard,/const route=dashboardMetricDefinitionsV141\[key\]\?\.route;/);
+  assert.match(dashboard,/if\(route\)nav\(route\);/);
   assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
   assert.match(dashboard,/appliedDashboardScopeV141/);
   assert.match(dashboard,/business-current/);
@@ -77,9 +85,12 @@ test('V141 core dashboard copy is localized in Chinese and Malay',()=>{
     const occurrences=app.split(`'${label}':`).length-1;
     assert.ok(occurrences>=2,`${label} must appear in both workspace dictionaries`);
   }
-  assert.match(dashboard,/workspaceTranslationV97\('All business customers'\)/);
-  assert.match(dashboard,/workspaceTranslationV97\('All permitted branches'\)/);
-  assert.match(dashboard,/workspaceTranslationV97\('Current balance\/status'\)/);
+  /* V287 retarget: the only call sites for these three were inside
+     openDashboardMetricDetailV141, the metric modal V225 made unreachable and V287 deleted.
+     Nothing localized was lost — no user could open that dialog. The dictionary coverage
+     asserted above is kept so the phrases stay translated if a surface reuses them. */
+  assert.doesNotMatch(dashboard,/function openDashboardMetricDetailV141\(/);
+  assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
 });
 
 test('V141 customer directory exposes last-visit choice and date joined',()=>{

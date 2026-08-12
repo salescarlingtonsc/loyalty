@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="90ed8883e6ca7069d8071f997d9a2b2c6ff3576f33104c9b8b89e7a03ab1d00a"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="b7a446e9983a732dadeed0e2ee039c5929f72e3a44869a7d76600f0a74885bb6"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1860,7 +1860,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 90ed8883e6ca7069d8071f997d9a2b2c6ff3576f33104c9b8b89e7a03ab1d00a</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · b7a446e9983a732dadeed0e2ee039c5929f72e3a44869a7d76600f0a74885bb6</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -2718,7 +2718,9 @@ async function clientsPage(){
   }
   renderFeedbackChips();
   loadFeedbackQueue();
-  renderReportingScopeSelectorV155(()=>{clientPage=0;refreshInactiveCards();load()},isCustomersCurrent,'clientReportingScopeWrap');
+  /* V287: same orphan as the Dashboard — #clientReportingScopeWrap no longer exists, so this
+     call's immediate onChange ran refreshInactiveCards() and load() a second time on every
+     open. The two explicit calls below are the real ones. */
   refreshInactiveCards();
   load();
 }
@@ -2985,6 +2987,24 @@ async function clientsPage(){
     canWriteClients?CUI.action({id:'c360Edit',label:'Edit customer',iconName:'edit',variant:'secondary'}):'',
     allCustomersAction
   ].filter(Boolean).join('');
+  /* V287. BLOCKER: the redeeming-branch selector below mapped over `ctxBr`, an identifier that
+     is declared NOWHERE in this file. Every customer profile carrying an available birthday
+     benefit therefore threw a ReferenceError while building its markup and rendered nothing at
+     all — the whole profile, not just the card. The list is now loaded the same way every other
+     branch selector on this surface loads it (visibleBranchesForCurrentUser, filtered by the
+     same activeBranchesForScopeV217 rule, because an inactive branch can never complete a
+     benefit), and only when the picker would actually be shown. A failure degrades to "no
+     selector" with an honest sentence rather than taking the profile down. */
+  const birthdayNeedsBranchPickerV287=birthdayBenefitsEnabled&&!birthdayError&&canRedeemBirthday
+    &&Boolean(birthdayBenefit)&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter';
+  let birthdayBranchesV287=[];
+  if(birthdayNeedsBranchPickerV287){
+    try{
+      const {branches}=await visibleBranchesForCurrentUser();
+      birthdayBranchesV287=activeBranchesForScopeV217(branches);
+    }catch(branchError){console.error(branchError);birthdayBranchesV287=[]}
+    if(!isClientDetailCurrent())return;
+  }
   let birthdayCardMarkup='';
   if(birthdayBenefitsEnabled&&birthdayError){
     birthdayCardMarkup=`<div class="card" id="c360-birthday"><b>Birthday benefit temporarily unavailable</b><p class="muted small" style="margin-top:7px">The rest of this customer profile remains current. No birthday status is inferred.</p><button class="btn ghost sm" id="c360BirthdayRetry" style="margin-top:10px">Reload profile</button></div>`;
@@ -2992,8 +3012,10 @@ async function clientsPage(){
     const birthdayStatusLabel=birthdayBenefit.status==='redeemed'
       ?'Redeemed'
       :canRedeemBirthday?'Not currently redeemable':'Read only';
-    const birthdayRedeemMarkup=canRedeemBirthday&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter'
-      ?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${(ctxBr||[]).map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`
+    const birthdayRedeemMarkup=birthdayNeedsBranchPickerV287
+      ?(birthdayBranchesV287.length
+        ?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${birthdayBranchesV287.map(branch=>`<option value="${esc(branch.id)}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`
+        :`<p class="muted small" style="margin-top:10px">The branch list could not be loaded, so this benefit cannot be redeemed here yet. Reload the profile and try again.</p>`)
       :`<span class="pill off" style="margin-top:10px">${birthdayStatusLabel}</span>`;
     const birthdayReverseMarkup=canReverseBirthday&&birthdayBenefit.status==='redeemed'&&birthdayBenefit.redemption==='redeemed'
       ?`<details style="margin-top:10px"><summary class="small">Owner correction</summary><label for="birthdayReverseReason" class="small" style="display:block;margin-top:8px">Reason for reversal</label><textarea id="birthdayReverseReason" rows="2" maxlength="500" placeholder="Required: explain the counter correction"></textarea><button class="btn danger sm" id="birthdayReverse" style="margin-top:8px">Reverse birthday redemption</button><p id="birthdayReverseStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p></details>`
@@ -4540,6 +4562,18 @@ async function tillPage(){
     const branchPicker=accessibleTillBranches.length>1
       ?`<label for="tBranch">Branch</label><select id="tBranch"${locked?' disabled':''}>${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
       :`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`;
+    /* V287. The catalogue composer is the DEFAULT checkout for every firm with catalogue
+       selection on, and it carried no "Who made this sale?" control at all — while
+       record_cart_sale still sends p_staff. Every commission on the default path was therefore
+       attributed to whoever happened to be signed in at the counter. This is the SAME picker the
+       legacy amount-only card renders: same id, same candidate rule, same default, same copy. */
+    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
+    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
+    const staffPickerV287=tillAttributableStaff.length>1
+      ?`<label for="tillSaleStaff">Who made this sale?</label>
+        <select id="tillSaleStaff" style="margin-bottom:12px"${locked?' disabled':''}>${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
+        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`
+      :'';
     // catalog picker (hidden while a finalise recovery / extras partial-failure panel is up)
     let picker='';
     if(!locked){
@@ -4719,6 +4753,7 @@ async function tillPage(){
         </div>
         <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
         ${branchPicker}
+        ${staffPickerV287}
         ${picker}
         ${saleLinesHtml}
         ${panelHtml}
@@ -4740,6 +4775,12 @@ async function tillPage(){
          server for this branch's effective catalogue before another selection is possible. */
       cart=[];catalog=null;catalogError=null;clearCheckoutState();
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
+    };
+    /* V287: re-attributing re-renders so the selected teammate is visible on the control that
+       set it. The finalise and PayNow idempotency fingerprints already carry tillSaleStaffId, so
+       a change of attribution can never replay the previous teammate's sale. */
+    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
+      tillSaleStaffId=event.target.value||tillActingStaffId;draw();
     };
     if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
     document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
@@ -4766,9 +4807,9 @@ async function tillPage(){
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
-    document.querySelectorAll('[data-use-package]').forEach(button=>{
-      button.onclick=()=>useCustomerPackage(button.dataset.usePackage);
-    });
+    /* V287: a second, byte-identical [data-use-package] binding used to sit here. It overwrote
+       the V211 binding above with the same handler, so it changed nothing and only invited the
+       reader to look for a difference that does not exist. */
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
@@ -5255,25 +5296,38 @@ function sgLedgerDateV154(iso){
 function saleRecordStatusV154(s,w={}){
   if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
   if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
-  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Corrected by ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}.`};
+  /* V287: this was the last line in the Sales audit disclosure that dropped a bare UUID into
+     prose. It follows the two V267 lines above: the id stays, because a reconciler inside this
+     collapsed disclosure genuinely needs the key, but it is named as a record id instead of
+     reading like a person's name. */
+  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Original sale row, later corrected. Audit record id of the correction: ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}`};
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
 async function salesPage(){
   /* Paint the page shell BEFORE the ledger queries: a blank white main is not a load
      state, and a failed query must leave a retryable card in place, not an empty page. */
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const salesHead=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Historical sales ledger, corrections and reversals. Use Record sale to create a new sale.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  const salesHead=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
   routeMain.innerHTML=`${salesHead}
-    <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
+    <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
+  /* V287: without this guard a role that cannot read Sales fell straight through to the ledger
+     query, and RLS answered with zero rows — so a permission denial was painted as "No sales
+     match these filters". Never show an empty result where the truthful answer is "you cannot
+     see this". */
+  if(!canReadModule('sales')){
+    routeMain.innerHTML=`${salesHead}<section class="card">${CUI.emptyState({iconName:'info',title:'Sales access needed',body:'Ask the owner for Sales access to see this ledger. This is a permission limit, not an empty ledger.'})}</section>`;
+    return;
+  }
+  /* V287: the companion `clients` fetch here pulled EVERY customer row in the business, paged,
+     on every open of this page — and nothing ever read it. Customer names arrive embedded on
+     each sale row (`clients(full_name)`) and the Customer search filters that same text. */
   const [
-    {data:cl,error:clientError},
     {data:saleStaff,error:staffError}
   ]=await Promise.all([
-    fetchAllRowsResult(()=>sb.from('clients').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('staff').select('id,full_name,user_id',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('full_name').order('id'))]);
   if(!isCurrent())return;
-  const salesLoadError=clientError||staffError;
+  const salesLoadError=staffError;
   if(salesLoadError){
     const shell=$('salesShell');
     if(shell)shell.innerHTML=`<div class="err" role="alert"><b>Sales could not be loaded. Nothing was changed.</b><p class="muted small" style="margin-top:5px">${esc(salesLoadError.message||'Please try again.')}</p></div>
@@ -5289,7 +5343,7 @@ async function salesPage(){
      nothing could not be undone by the button whose whole job is undoing filters. */
   const salesDefaultToV266=sgDateInputValue(),salesDefaultFromV266=shiftSgDateInput(salesDefaultToV266,-29);
   M().innerHTML=`${salesHead}
-    <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
+    <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
         <div class="sales-filter-row">
           <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${salesDefaultFromV266}"></div>
@@ -13376,6 +13430,18 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const branchPicker=accessibleTillBranches.length>1
       ?`<label for="tBranch">Branch</label><select id="tBranch"${locked?' disabled':''}>${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
       :`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`;
+    /* V287. The catalogue composer is the DEFAULT checkout for every firm with catalogue
+       selection on, and it carried no "Who made this sale?" control at all — while
+       record_cart_sale still sends p_staff. Every commission on the default path was therefore
+       attributed to whoever happened to be signed in at the counter. This is the SAME picker the
+       legacy amount-only card renders: same id, same candidate rule, same default, same copy. */
+    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
+    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
+    const staffPickerV287=tillAttributableStaff.length>1
+      ?`<label for="tillSaleStaff">Who made this sale?</label>
+        <select id="tillSaleStaff" style="margin-bottom:12px"${locked?' disabled':''}>${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
+        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`
+      :'';
     // catalog picker (hidden while a finalise recovery / extras partial-failure panel is up)
     let picker='';
     if(!locked){
@@ -13555,6 +13621,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         </div>
         <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
         ${branchPicker}
+        ${staffPickerV287}
         ${picker}
         ${saleLinesHtml}
         ${panelHtml}
@@ -13576,6 +13643,12 @@ async function svRunTopupFlow({branches,state,testOnly}){
          server for this branch's effective catalogue before another selection is possible. */
       cart=[];catalog=null;catalogError=null;clearCheckoutState();
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
+    };
+    /* V287: re-attributing re-renders so the selected teammate is visible on the control that
+       set it. The finalise and PayNow idempotency fingerprints already carry tillSaleStaffId, so
+       a change of attribution can never replay the previous teammate's sale. */
+    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
+      tillSaleStaffId=event.target.value||tillActingStaffId;draw();
     };
     if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
     document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
@@ -13602,9 +13675,9 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
-    document.querySelectorAll('[data-use-package]').forEach(button=>{
-      button.onclick=()=>useCustomerPackage(button.dataset.usePackage);
-    });
+    /* V287: a second, byte-identical [data-use-package] binding used to sit here. It overwrote
+       the V211 binding above with the same handler, so it changed nothing and only invited the
+       reader to look for a difference that does not exist. */
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
@@ -14197,6 +14270,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'90ed8883e6ca7069d8071f997d9a2b2c6ff3576f33104c9b8b89e7a03ab1d00a',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'b7a446e9983a732dadeed0e2ee039c5929f72e3a44869a7d76600f0a74885bb6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

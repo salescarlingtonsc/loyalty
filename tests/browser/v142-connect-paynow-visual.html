@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="f1f41a8a8728ba7d4dbe2280e0f8426ac21345a619f51013d39ff949adda8885"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="a4a6b95e987a2ba421fed5424ba630aa71d3500adb1a0a6a763b0b645314d98e"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1860,7 +1860,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f1f41a8a8728ba7d4dbe2280e0f8426ac21345a619f51013d39ff949adda8885</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · a4a6b95e987a2ba421fed5424ba630aa71d3500adb1a0a6a763b0b645314d98e</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -3126,6 +3126,18 @@ async function tillPage(){
     const branchPicker=accessibleTillBranches.length>1
       ?`<label for="tBranch">Branch</label><select id="tBranch"${locked?' disabled':''}>${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
       :`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`;
+    /* V287. The catalogue composer is the DEFAULT checkout for every firm with catalogue
+       selection on, and it carried no "Who made this sale?" control at all — while
+       record_cart_sale still sends p_staff. Every commission on the default path was therefore
+       attributed to whoever happened to be signed in at the counter. This is the SAME picker the
+       legacy amount-only card renders: same id, same candidate rule, same default, same copy. */
+    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
+    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
+    const staffPickerV287=tillAttributableStaff.length>1
+      ?`<label for="tillSaleStaff">Who made this sale?</label>
+        <select id="tillSaleStaff" style="margin-bottom:12px"${locked?' disabled':''}>${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
+        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`
+      :'';
     // catalog picker (hidden while a finalise recovery / extras partial-failure panel is up)
     let picker='';
     if(!locked){
@@ -3305,6 +3317,7 @@ async function tillPage(){
         </div>
         <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
         ${branchPicker}
+        ${staffPickerV287}
         ${picker}
         ${saleLinesHtml}
         ${panelHtml}
@@ -3326,6 +3339,12 @@ async function tillPage(){
          server for this branch's effective catalogue before another selection is possible. */
       cart=[];catalog=null;catalogError=null;clearCheckoutState();
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
+    };
+    /* V287: re-attributing re-renders so the selected teammate is visible on the control that
+       set it. The finalise and PayNow idempotency fingerprints already carry tillSaleStaffId, so
+       a change of attribution can never replay the previous teammate's sale. */
+    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
+      tillSaleStaffId=event.target.value||tillActingStaffId;draw();
     };
     if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
     document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
@@ -3352,9 +3371,9 @@ async function tillPage(){
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
-    document.querySelectorAll('[data-use-package]').forEach(button=>{
-      button.onclick=()=>useCustomerPackage(button.dataset.usePackage);
-    });
+    /* V287: a second, byte-identical [data-use-package] binding used to sit here. It overwrote
+       the V211 binding above with the same handler, so it changed nothing and only invited the
+       reader to look for a difference that does not exist. */
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
@@ -3826,7 +3845,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'f1f41a8a8728ba7d4dbe2280e0f8426ac21345a619f51013d39ff949adda8885',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'a4a6b95e987a2ba421fed5424ba630aa71d3500adb1a0a6a763b0b645314d98e',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

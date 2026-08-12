@@ -9365,7 +9365,11 @@ function renderShell(page){
     const maxY=Math.max(0,document.documentElement.scrollHeight-window.innerHeight);
     window.scrollTo(priorWindowX,Math.min(priorWindowY,maxY));
   });
-  const customerUiRoutes=new Set(['till','clients','client','grow','loyalty','retention','promotions','referrals','memberships','giftcards']);
+  /* V287: 'sales' joins the set. The Sales ledger renders a 7-column <table data-responsive>
+     and was the only such table left outside CUI.mountMain, so on a phone it printed unlabelled
+     cells. Membership of this set drives exactly two things — CUI.mountMain(main) and
+     CUI.focusRoute's enhanceContent — neither of which changes any query, permission or copy. */
+  const customerUiRoutes=new Set(['till','clients','client','sales','grow','loyalty','retention','promotions','referrals','memberships','giftcards']);
   const enhanceCustomerUi=customerUiRoutes.has(page[0]);
   if(enhanceCustomerUi)customerUiObserver=CUI.mountMain(main);
   wireNav();
@@ -10049,29 +10053,23 @@ async function dashboard(){
     visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',buttonLabel:'View visits',scope:'branch'},
     revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
     new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',buttonLabel:'See new customers',scope:'business'},
-    inactive:{label:'Inactive customers',definition:'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
+    /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
+       only, so the number an owner tapped and the list they landed on could never agree. The
+       server's staff_list_customers_v155 accepts exactly four buckets ('30_59','60_89',
+       '90_plus','never') and raises unsupported_inactivity_bucket for anything else, so an
+       "all inactive" destination is not expressible without a migration. The number is
+       therefore narrowed to match the destination, and the tile says which window it counts.
+       Customers 60+ days quiet are not lost: Merchant insights below still reports them and
+       links to their own bucket. */
+    inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 to 59 complete Singapore days ago. Tapping this tile opens exactly this group. Customers quiet for 60 days or more are reported separately in Merchant insights.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
   };
   let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
-  function openDashboardMetricDetailV141(key,value,drillOverride={}){
-    const metric=dashboardMetricDefinitionsV141[key];if(!metric)return;
-    const route=Object.hasOwn(drillOverride,'route')?drillOverride.route:metric.route;
-    const action=Object.hasOwn(drillOverride,'action')?drillOverride.action:metric.action;
-    const allBusiness=workspaceTranslationV97('All business customers');
-    const branchName=appliedDashboardScopeV141.branchId?appliedDashboardScopeV141.branchName:workspaceTranslationV97('All permitted branches');
-    const scope=metric.scope==='branch'
-      ?`${branchName} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
-      :metric.scope==='business'
-        ?`${allBusiness} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
-        :`${allBusiness} · ${workspaceTranslationV97('Current balance/status')}`;
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="dashboardMetricModal" role="dialog" aria-modal="true" aria-labelledby="dashboardMetricTitle" tabindex="-1" data-workspace-i18n><div class="modal-card" style="max-width:520px"><p class="eyebrow">Performance detail</p><h2 id="dashboardMetricTitle" style="margin-top:4px">${esc(metric.label)}</h2><p style="font-size:2rem;font-weight:750;margin-top:13px">${esc(value)}</p><p class="muted" style="margin-top:10px;line-height:1.55">${esc(metric.definition)}</p><p class="dashboard-read-note">${esc(scope)}</p><div class="row" style="margin-top:18px;flex-wrap:wrap">${route&&action?`<button class="btn" id="dashboardMetricGo">${esc(action)}</button>`:''}<button class="btn ghost sm" id="dashboardMetricClose">Close</button></div></div></div>`);
-    const dialog=$('dashboardMetricModal');
-    localizeWorkspaceSubtreeV97(dialog);
-    let deactivate;
-    const close=()=>deactivate?.();
-    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:route&&action?'#dashboardMetricGo':'#dashboardMetricClose'});
-    $('dashboardMetricClose').onclick=close;
-    if($('dashboardMetricGo'))$('dashboardMetricGo').onclick=()=>{if(key==='inactive')pendingCustomerInactivity=30;close();nav(route)};
-  }
+  /* V287: openDashboardMetricDetailV141 lived here. V225 turned every KPI tile into a direct
+     link to its report ("once clicked, straight away go to sales"), which left this modal
+     reachable only through an `else` branch that required a metric definition WITHOUT a route —
+     and all four definitions have one. It was ~20 lines of dialog, focus trap and localisation
+     that no user could ever open. The definitions above are still live: their label, definition
+     and buttonLabel are what the tiles print. */
   const invalidatePerformance=()=>{
     requestGate.invalidate();killCharts();
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
@@ -10198,20 +10196,25 @@ async function dashboard(){
       customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
-      const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
-      metrics.push({key:'inactive',value:inactiveTotal,hint:''});
+      /* V287: 30-59 only — the same bucket the tile navigates to. inactive60Response is still
+         fetched because Merchant insights and the business-health card below both read it. */
+      const inactiveTotal=inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0);
+      metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30–59 days ago'});
     }
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
        carried is still available inside the report it lands on, so the modal was a stop on the
        way to somewhere the owner had already said they wanted to go. */
+    /* V287: the `else` branch called openDashboardMetricDetailV141, which V225 had already
+       superseded. Every one of the four metric definitions carries a route, and the tiles are
+       built from those same four keys, so the branch could never be taken and the modal it
+       opened could never be seen. Both are gone. */
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       const route=dashboardMetricDefinitionsV141[key]?.route;
       if(key==='inactive')pendingCustomerInactivity=30;
       if(route)nav(route);
-      else openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
     if(loyalty){
       if(!loyaltyVisibleV170)loyalty.innerHTML='';
@@ -10284,7 +10287,11 @@ async function dashboard(){
      the Customers page. The top bar already carries one "Viewing" control for the whole
      workspace, and a second one on the page contradicted it as often as it agreed. The scope
      itself still applies — reportingScopeV155 is unchanged and still sent to every RPC. */
-  await renderReportingScopeSelectorV155(load,isDashboardCurrent,'dashboardReportingScopeWrap');
+  /* V287: V225 removed #dashboardReportingScopeWrap from the markup but left this call behind.
+     renderReportingScopeSelectorV155 fires onChange immediately when its target wrapper is
+     missing, so the Dashboard ran its ENTIRE load twice on every open — two of every reporting
+     RPC, charts built and killed. The scope itself is untouched: reportingScopeV155 is still
+     read by currentReportingScopePayloadV155 on the single load below. */
   if(isDashboardCurrent())await load();
 }
 
@@ -10759,7 +10766,9 @@ async function clientsPage(){
   }
   renderFeedbackChips();
   loadFeedbackQueue();
-  renderReportingScopeSelectorV155(()=>{clientPage=0;refreshInactiveCards();load()},isCustomersCurrent,'clientReportingScopeWrap');
+  /* V287: same orphan as the Dashboard — #clientReportingScopeWrap no longer exists, so this
+     call's immediate onChange ran refreshInactiveCards() and load() a second time on every
+     open. The two explicit calls below are the real ones. */
   refreshInactiveCards();
   load();
 }
@@ -11027,6 +11036,24 @@ async function clientDetail(id){
     canWriteClients?CUI.action({id:'c360Edit',label:'Edit customer',iconName:'edit',variant:'secondary'}):'',
     allCustomersAction
   ].filter(Boolean).join('');
+  /* V287. BLOCKER: the redeeming-branch selector below mapped over `ctxBr`, an identifier that
+     is declared NOWHERE in this file. Every customer profile carrying an available birthday
+     benefit therefore threw a ReferenceError while building its markup and rendered nothing at
+     all — the whole profile, not just the card. The list is now loaded the same way every other
+     branch selector on this surface loads it (visibleBranchesForCurrentUser, filtered by the
+     same activeBranchesForScopeV217 rule, because an inactive branch can never complete a
+     benefit), and only when the picker would actually be shown. A failure degrades to "no
+     selector" with an honest sentence rather than taking the profile down. */
+  const birthdayNeedsBranchPickerV287=birthdayBenefitsEnabled&&!birthdayError&&canRedeemBirthday
+    &&Boolean(birthdayBenefit)&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter';
+  let birthdayBranchesV287=[];
+  if(birthdayNeedsBranchPickerV287){
+    try{
+      const {branches}=await visibleBranchesForCurrentUser();
+      birthdayBranchesV287=activeBranchesForScopeV217(branches);
+    }catch(branchError){console.error(branchError);birthdayBranchesV287=[]}
+    if(!isClientDetailCurrent())return;
+  }
   let birthdayCardMarkup='';
   if(birthdayBenefitsEnabled&&birthdayError){
     birthdayCardMarkup=`<div class="card" id="c360-birthday"><b>Birthday benefit temporarily unavailable</b><p class="muted small" style="margin-top:7px">The rest of this customer profile remains current. No birthday status is inferred.</p><button class="btn ghost sm" id="c360BirthdayRetry" style="margin-top:10px">Reload profile</button></div>`;
@@ -11034,8 +11061,10 @@ async function clientDetail(id){
     const birthdayStatusLabel=birthdayBenefit.status==='redeemed'
       ?'Redeemed'
       :canRedeemBirthday?'Not currently redeemable':'Read only';
-    const birthdayRedeemMarkup=canRedeemBirthday&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter'
-      ?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${(ctxBr||[]).map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`
+    const birthdayRedeemMarkup=birthdayNeedsBranchPickerV287
+      ?(birthdayBranchesV287.length
+        ?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${birthdayBranchesV287.map(branch=>`<option value="${esc(branch.id)}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`
+        :`<p class="muted small" style="margin-top:10px">The branch list could not be loaded, so this benefit cannot be redeemed here yet. Reload the profile and try again.</p>`)
       :`<span class="pill off" style="margin-top:10px">${birthdayStatusLabel}</span>`;
     const birthdayReverseMarkup=canReverseBirthday&&birthdayBenefit.status==='redeemed'&&birthdayBenefit.redemption==='redeemed'
       ?`<details style="margin-top:10px"><summary class="small">Owner correction</summary><label for="birthdayReverseReason" class="small" style="display:block;margin-top:8px">Reason for reversal</label><textarea id="birthdayReverseReason" rows="2" maxlength="500" placeholder="Required: explain the counter correction"></textarea><button class="btn danger sm" id="birthdayReverse" style="margin-top:8px">Reverse birthday redemption</button><p id="birthdayReverseStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p></details>`
@@ -12582,6 +12611,18 @@ async function tillPage(){
     const branchPicker=accessibleTillBranches.length>1
       ?`<label for="tBranch">Branch</label><select id="tBranch"${locked?' disabled':''}>${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
       :`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`;
+    /* V287. The catalogue composer is the DEFAULT checkout for every firm with catalogue
+       selection on, and it carried no "Who made this sale?" control at all — while
+       record_cart_sale still sends p_staff. Every commission on the default path was therefore
+       attributed to whoever happened to be signed in at the counter. This is the SAME picker the
+       legacy amount-only card renders: same id, same candidate rule, same default, same copy. */
+    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
+    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
+    const staffPickerV287=tillAttributableStaff.length>1
+      ?`<label for="tillSaleStaff">Who made this sale?</label>
+        <select id="tillSaleStaff" style="margin-bottom:12px"${locked?' disabled':''}>${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
+        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`
+      :'';
     // catalog picker (hidden while a finalise recovery / extras partial-failure panel is up)
     let picker='';
     if(!locked){
@@ -12761,6 +12802,7 @@ async function tillPage(){
         </div>
         <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
         ${branchPicker}
+        ${staffPickerV287}
         ${picker}
         ${saleLinesHtml}
         ${panelHtml}
@@ -12782,6 +12824,12 @@ async function tillPage(){
          server for this branch's effective catalogue before another selection is possible. */
       cart=[];catalog=null;catalogError=null;clearCheckoutState();
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
+    };
+    /* V287: re-attributing re-renders so the selected teammate is visible on the control that
+       set it. The finalise and PayNow idempotency fingerprints already carry tillSaleStaffId, so
+       a change of attribution can never replay the previous teammate's sale. */
+    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
+      tillSaleStaffId=event.target.value||tillActingStaffId;draw();
     };
     if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
     document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
@@ -12808,9 +12856,9 @@ async function tillPage(){
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
-    document.querySelectorAll('[data-use-package]').forEach(button=>{
-      button.onclick=()=>useCustomerPackage(button.dataset.usePackage);
-    });
+    /* V287: a second, byte-identical [data-use-package] binding used to sit here. It overwrote
+       the V211 binding above with the same handler, so it changed nothing and only invited the
+       reader to look for a difference that does not exist. */
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
@@ -13297,25 +13345,38 @@ function sgLedgerDateV154(iso){
 function saleRecordStatusV154(s,w={}){
   if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
   if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
-  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Corrected by ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}.`};
+  /* V287: this was the last line in the Sales audit disclosure that dropped a bare UUID into
+     prose. It follows the two V267 lines above: the id stays, because a reconciler inside this
+     collapsed disclosure genuinely needs the key, but it is named as a record id instead of
+     reading like a person's name. */
+  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Original sale row, later corrected. Audit record id of the correction: ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}`};
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
 async function salesPage(){
   /* Paint the page shell BEFORE the ledger queries: a blank white main is not a load
      state, and a failed query must leave a retryable card in place, not an empty page. */
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const salesHead=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Historical sales ledger, corrections and reversals. Use Record sale to create a new sale.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  const salesHead=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
   routeMain.innerHTML=`${salesHead}
-    <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
+    <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
+  /* V287: without this guard a role that cannot read Sales fell straight through to the ledger
+     query, and RLS answered with zero rows — so a permission denial was painted as "No sales
+     match these filters". Never show an empty result where the truthful answer is "you cannot
+     see this". */
+  if(!canReadModule('sales')){
+    routeMain.innerHTML=`${salesHead}<section class="card">${CUI.emptyState({iconName:'info',title:'Sales access needed',body:'Ask the owner for Sales access to see this ledger. This is a permission limit, not an empty ledger.'})}</section>`;
+    return;
+  }
+  /* V287: the companion `clients` fetch here pulled EVERY customer row in the business, paged,
+     on every open of this page — and nothing ever read it. Customer names arrive embedded on
+     each sale row (`clients(full_name)`) and the Customer search filters that same text. */
   const [
-    {data:cl,error:clientError},
     {data:saleStaff,error:staffError}
   ]=await Promise.all([
-    fetchAllRowsResult(()=>sb.from('clients').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('staff').select('id,full_name,user_id',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('full_name').order('id'))]);
   if(!isCurrent())return;
-  const salesLoadError=clientError||staffError;
+  const salesLoadError=staffError;
   if(salesLoadError){
     const shell=$('salesShell');
     if(shell)shell.innerHTML=`<div class="err" role="alert"><b>Sales could not be loaded. Nothing was changed.</b><p class="muted small" style="margin-top:5px">${esc(salesLoadError.message||'Please try again.')}</p></div>
@@ -13331,7 +13392,7 @@ async function salesPage(){
      nothing could not be undone by the button whose whole job is undoing filters. */
   const salesDefaultToV266=sgDateInputValue(),salesDefaultFromV266=shiftSgDateInput(salesDefaultToV266,-29);
   M().innerHTML=`${salesHead}
-    <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
+    <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
         <div class="sales-filter-row">
           <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${salesDefaultFromV266}"></div>
