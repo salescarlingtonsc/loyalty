@@ -309,8 +309,12 @@ test('the page never claims legal compliance, only what the product does', () =>
 });
 
 test('the page does not promise delivery channels the product has not switched on', () => {
-  /* app/runtime-config.js ships webPushPublicKey:"" and the campaign tool says
-     "Delivery is not enabled yet" — so no send/broadcast promise may appear. */
+  /* V282 retarget of the REASON, not the rule. This used to read "app/runtime-config.js ships
+     webPushPublicKey:'' " — v282 ships a real key, so web push is no longer dead. Every other
+     outbound channel still is: SMS, email and WhatsApp remain owner-deferred and the campaign tool
+     still says "Delivery is not enabled yet". The rule is therefore unchanged — no send/broadcast
+     promise may appear — and the push-specific claims below stay banned because a push campaign
+     tool does not exist even though the transport now does. */
   const overclaims = [
     /push (?:notification )?campaign/i,
     /send (?:them |out )?(?:a )?(?:sms|text message)/i,

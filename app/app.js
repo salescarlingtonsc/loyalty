@@ -4040,6 +4040,57 @@ async function renderCustomerMessages(){
   await renderCustomerInAppInbox(null,isCurrent);
 }
 
+/* V282 consent history. Both consent stores — the v263 per-channel audit and the v92 platform and
+   partner consent events — have been append-only since the day they were written, and neither was
+   readable by the person the evidence is about. The list is deliberately READ-ONLY: it is a record
+   of what was decided, not a second place to decide it, and the Communications screen above it is
+   the one place a choice changes. Kept as a pure markup function so the plain-language sentences,
+   the escaping and the empty state can be unit-tested without a session. */
+const CUSTOMER_CONSENT_CATEGORY_LABELS_V282={
+  business_offers:'offers from businesses you follow',
+  rewards_and_points:'your rewards and points',
+  peekaa_updates:'Peekaa updates'
+};
+const CUSTOMER_CONSENT_CHANNEL_LABELS_V282={
+  in_app:'in-app messages',push:'push notifications',email:'email',
+  sms:'SMS',whatsapp:'WhatsApp',call:'phone calls'
+};
+function customerConsentHistorySentenceV282(entry){
+  const on=entry?.enabled===true;
+  if(entry?.entry_kind==='platform_partner_marketing'){
+    return on
+      ? 'You agreed to marketing from Peekaa and its selected partners.'
+      : 'You withdrew your agreement to marketing from Peekaa and its selected partners.';
+  }
+  if(entry?.entry_kind==='marketing_all_channels'){
+    return on
+      ? 'You turned on every marketing message, on every channel.'
+      : 'You turned off every marketing message, on every channel.';
+  }
+  const category=CUSTOMER_CONSENT_CATEGORY_LABELS_V282[entry?.category]||String(entry?.category||'');
+  const channel=CUSTOMER_CONSENT_CHANNEL_LABELS_V282[entry?.channel]||String(entry?.channel||'');
+  return `${on?'You turned on':'You turned off'} ${channel} for ${category}.`;
+}
+function customerConsentHistoryMarkupV282(entries){
+  const rows=Array.isArray(entries)?entries:[];
+  if(!rows.length){
+    return '<p class="muted small">Nothing has changed yet. Everything is on unless you turn it off, and each change you make will be listed here.</p>';
+  }
+  return rows.map(entry=>`<div class="wallet-line"><div><b>${esc(customerConsentHistorySentenceV282(entry))}</b><p class="muted small">${esc(walletDate(entry?.occurred_at,true)||'')}</p></div></div>`).join('');
+}
+async function hydrateCustomerConsentHistoryV282(isCurrent){
+  const host=$('customerConsentHistoryBody');
+  if(!host)return;
+  const {data,error}=await sb.rpc('customer_get_consent_history_v282',{p_limit:100});
+  if(typeof isCurrent==='function'&&!isCurrent())return;
+  const section=$('customerConsentHistory');
+  if(!host.isConnected)return;
+  host.innerHTML=error
+    ? '<p class="muted small">Your consent history could not be loaded. Nothing has been changed.</p>'
+    : customerConsentHistoryMarkupV282(data?.entries);
+  if(section)section.setAttribute('aria-busy','false');
+}
+
 async function renderCustomerProfile(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
@@ -4070,6 +4121,7 @@ async function renderCustomerProfile(){
       :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p>'}
     </section>
     <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Communications</h2><p class="muted small">Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>Open communications</span></a></div></section>
+    <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Your consent history</h2><p class="muted small">Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">Loading your consent history…</p></div></section>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
@@ -4231,6 +4283,7 @@ async function renderCustomerProfile(){
     passkeyStatus.textContent='Passkey added. You can use it at your next sign-in.';loadPasskeys();
   };
   loadPasskeys();
+  hydrateCustomerConsentHistoryV282(isCurrent);
   focusCustomerRoute();
 }
 
@@ -22159,6 +22212,9 @@ async function bottleSetupPageV275(){
       <label for="bkCapacity" style="margin-top:14px">Storage capacity</label>
       <input id="bkCapacity" type="number" min="1" max="10000" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(data?.storage_capacity)||500))}">
       <p class="muted small" style="margin-top:-2px">How many bottles you can physically hold. Parking is refused once the shelves are full, so nobody takes a bottle you have nowhere to put. ${esc(String(Number(data?.in_storage)||0))} in storage right now.</p>
+      <label for="bkRemindDays" style="margin-top:14px">Remind the customer</label>
+      <input id="bkRemindDays" type="number" min="1" max="90" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(extraResultV278.data?.reminder_days)||7))}">
+      <p class="muted small" style="margin-top:-2px">Days before a bottle expires that Peekaa messages the customer in their app. It runs by itself every night, and a bottle past its window is marked expired the same way.</p>
     </section>
     <section class="card" style="margin-top:16px">
       <div class="cui-card-head"><h2>Tier keep windows</h2><p>Give your best customers longer. A tier left blank uses the keep window above.</p></div>
@@ -22348,6 +22404,7 @@ async function bottleSetupPageV275(){
   $('bkSave').onclick=async()=>{
     const days=Number($('bkDays').value);
     const capacity=Number($('bkCapacity').value);
+    const remindDays=Number($('bkRemindDays').value);
     const errorHost=$('bkErr'),status=$('bkStatus'),save=$('bkSave');
     errorHost.innerHTML='';
     if(!Number.isInteger(days)||days<1||days>365){
@@ -22356,6 +22413,10 @@ async function bottleSetupPageV275(){
     }
     if(!Number.isInteger(capacity)||capacity<1||capacity>10000){
       errorHost.innerHTML='<div class="err">Storage capacity must be a whole number between 1 and 10000 bottles.</div>';
+      return;
+    }
+    if(!Number.isInteger(remindDays)||remindDays<1||remindDays>90){
+      errorHost.innerHTML='<div class="err">The reminder must be a whole number between 1 and 90 days before expiry.</div>';
       return;
     }
     CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
@@ -22371,6 +22432,18 @@ async function bottleSetupPageV275(){
     CUI.setButtonBusy(save,{busy:false});
     if(saveError){
       errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'Bottle keep could not be saved.')}</div>`;
+      return;
+    }
+    /* V282: a SECOND call rather than a fourth parameter on bar_save_setup_v279, for the reason
+       V279 recorded in this same handler — an overload differing only in arity is what makes
+       PostgREST's resolution ambiguous. It runs only after the keep window has landed, so a
+       failure here cannot leave the two numbers disagreeing about which save succeeded. */
+    const {error:remindError}=await sb.rpc('bar_save_expiry_reminder_days_v282',{
+      p_business:S.biz.id,p_days:remindDays
+    });
+    if(!isCurrent()||!save.isConnected)return;
+    if(remindError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(remindError)||'The reminder window could not be saved. The keep window was saved.')}</div>`;
       return;
     }
     locations=(Array.isArray(saved?.locations)?saved.locations:[])

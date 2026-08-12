@@ -2760,6 +2760,83 @@
       'More campaigns exist':'Lebih banyak kempen wujud','Promotion':'Promosi'
     })
   });
+  // v282 partner obligations copy.
+  const PLATFORM_COPY_V282=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Partner obligations':'合作方义务','Partners':'合作方',
+      'Partner obligations unavailable':'合作方义务不可用',
+      'Loading the partner register…':'正在加载合作方名册…',
+      'Which partner received which customer, and every suppression instruction issued.':'哪个合作方收到了哪位顾客，以及已发出的每一项停止使用指示。',
+      'No data leaves this console':'没有数据从此控制台流出',
+      'Peekaa distributes nothing from here. This is the evidence layer the customer consent already promises.':'Peekaa 不会从这里分发任何数据。这是顾客同意书已承诺的证据层。',
+      'Add partner':'新增合作方','Edit partner':'编辑合作方','Save partner':'保存合作方',
+      'Partner name':'合作方名称','Stated purpose':'声明用途',
+      'What this partner may use customer data for. It should match the consent wording.':'该合作方可将顾客数据用于何种用途，应与同意书措辞一致。',
+      'Record suppression instruction':'记录停止使用指示','Record instruction':'记录指示',
+      'Customer identity':'顾客身份',
+      'Leave blank to instruct the partner for every customer.':'留空表示该指示适用于所有顾客。',
+      'Acknowledge':'确认','Acknowledge instruction':'确认指示',
+      'Acknowledgement reference':'确认参考编号',
+      'The partner’s own confirmation reference, so the acknowledgement is evidenced rather than asserted.':'合作方自己的确认编号，使确认有据可查而非仅凭声明。',
+      'Awaiting acknowledgement':'等待确认',
+      'All customers':'所有顾客','One customer':'单一顾客',
+      'Partner register':'合作方名册',
+      'Every selected partner the customer consent wording can refer to.':'顾客同意书措辞可能指向的每一个选定合作方。',
+      'Partner':'合作方','Purpose':'用途','Disclosures':'披露记录',
+      'Open instructions':'未确认指示','Dataset':'数据范围','Consent wording':'同意书版本',
+      'Issued':'发出时间','Scope':'适用范围','Acknowledged':'已确认',
+      'No partners registered yet':'尚未登记任何合作方',
+      'Register the partners named in the customer consent wording so a disclosure or a suppression can be evidenced.':'登记顾客同意书中提到的合作方，使披露或停止使用指示可被证明。',
+      'Which customers went to which partner, by day. Customers are counted, never listed.':'按日期显示哪些顾客发送给了哪个合作方。顾客只计数，绝不列出。',
+      'Partner disclosures':'合作方披露记录',
+      'No disclosures recorded':'尚无披露记录',
+      'Nothing has been shared with a partner. This ledger fills only when a disclosure is actually made.':'尚未与任何合作方共享数据。只有实际发生披露时，此台账才会有记录。',
+      'Suppression instructions':'停止使用指示',
+      'Every instruction issued to a partner, and whether the partner confirmed it.':'已向合作方发出的每一项指示，以及合作方是否已确认。',
+      'No suppression instructions issued':'尚未发出停止使用指示',
+      'An instruction appears here the moment one is issued to a partner.':'一旦向合作方发出指示，该指示便会显示在此处。',
+      'Partner saved.':'合作方已保存。',
+      'Suppression instruction recorded.':'停止使用指示已记录。',
+      'Acknowledgement recorded.':'确认已记录。'
+    }),
+    ms:Object.freeze({
+      'Partner obligations':'Kewajipan rakan kongsi','Partners':'Rakan kongsi',
+      'Partner obligations unavailable':'Kewajipan rakan kongsi tidak tersedia',
+      'Loading the partner register…':'Memuatkan daftar rakan kongsi…',
+      'Which partner received which customer, and every suppression instruction issued.':'Rakan kongsi mana menerima pelanggan mana, dan setiap arahan henti guna yang dikeluarkan.',
+      'No data leaves this console':'Tiada data keluar dari konsol ini',
+      'Peekaa distributes nothing from here. This is the evidence layer the customer consent already promises.':'Peekaa tidak mengedarkan apa-apa dari sini. Ini lapisan bukti yang telah dijanjikan oleh persetujuan pelanggan.',
+      'Add partner':'Tambah rakan kongsi','Edit partner':'Sunting rakan kongsi','Save partner':'Simpan rakan kongsi',
+      'Partner name':'Nama rakan kongsi','Stated purpose':'Tujuan dinyatakan',
+      'What this partner may use customer data for. It should match the consent wording.':'Untuk apa rakan kongsi ini boleh menggunakan data pelanggan. Ia harus sepadan dengan teks persetujuan.',
+      'Record suppression instruction':'Rekod arahan henti guna','Record instruction':'Rekod arahan',
+      'Customer identity':'Identiti pelanggan',
+      'Leave blank to instruct the partner for every customer.':'Biarkan kosong untuk mengarahkan rakan kongsi bagi setiap pelanggan.',
+      'Acknowledge':'Akui','Acknowledge instruction':'Akui arahan',
+      'Acknowledgement reference':'Rujukan pengakuan',
+      'The partner’s own confirmation reference, so the acknowledgement is evidenced rather than asserted.':'Rujukan pengesahan rakan kongsi sendiri, supaya pengakuan itu dibuktikan dan bukan sekadar didakwa.',
+      'Awaiting acknowledgement':'Menunggu pengakuan',
+      'All customers':'Semua pelanggan','One customer':'Seorang pelanggan',
+      'Partner register':'Daftar rakan kongsi',
+      'Every selected partner the customer consent wording can refer to.':'Setiap rakan kongsi terpilih yang boleh dirujuk oleh teks persetujuan pelanggan.',
+      'Partner':'Rakan kongsi','Purpose':'Tujuan','Disclosures':'Pendedahan',
+      'Open instructions':'Arahan belum diakui','Dataset':'Set data','Consent wording':'Versi persetujuan',
+      'Issued':'Dikeluarkan','Scope':'Skop','Acknowledged':'Diakui',
+      'No partners registered yet':'Belum ada rakan kongsi didaftarkan',
+      'Register the partners named in the customer consent wording so a disclosure or a suppression can be evidenced.':'Daftarkan rakan kongsi yang dinamakan dalam teks persetujuan pelanggan supaya pendedahan atau arahan henti guna boleh dibuktikan.',
+      'Which customers went to which partner, by day. Customers are counted, never listed.':'Pelanggan mana pergi kepada rakan kongsi mana, mengikut hari. Pelanggan dikira, tidak pernah disenaraikan.',
+      'Partner disclosures':'Pendedahan rakan kongsi',
+      'No disclosures recorded':'Tiada pendedahan direkodkan',
+      'Nothing has been shared with a partner. This ledger fills only when a disclosure is actually made.':'Tiada apa-apa dikongsi dengan rakan kongsi. Lejar ini hanya terisi apabila pendedahan benar-benar dibuat.',
+      'Suppression instructions':'Arahan henti guna',
+      'Every instruction issued to a partner, and whether the partner confirmed it.':'Setiap arahan yang dikeluarkan kepada rakan kongsi, dan sama ada rakan kongsi mengesahkannya.',
+      'No suppression instructions issued':'Tiada arahan henti guna dikeluarkan',
+      'An instruction appears here the moment one is issued to a partner.':'Arahan muncul di sini sebaik sahaja ia dikeluarkan kepada rakan kongsi.',
+      'Partner saved.':'Rakan kongsi disimpan.',
+      'Suppression instruction recorded.':'Arahan henti guna direkodkan.',
+      'Acknowledgement recorded.':'Pengakuan direkodkan.'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -2774,6 +2851,7 @@
       ??PLATFORM_COPY_V105[platformLocale]?.[key]
       ??PLATFORM_COPY_V177[platformLocale]?.[key]
       ??PLATFORM_COPY_V255[platformLocale]?.[key]
+      ??PLATFORM_COPY_V282[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -2873,6 +2951,9 @@
     {key:'commissions',label:'Commission payable',shortLabel:'Commission',hash:'#/platform/commissions',icon:'staff'},
     {key:'sectors',label:'Sector modules',shortLabel:'Sectors',hash:'#/platform/sectors',icon:'packages'},
     {key:'automation',label:'System health',shortLabel:'Health',hash:'#/platform/automation',icon:'retention'},
+    /* V282: super-admin only and deliberately NOT given a moduleKey. The partner register is
+       cross-tenant obligation evidence; no tenant-scoped grant may ever open it. */
+    {key:'partners',label:'Partner obligations',shortLabel:'Partners',hash:'#/platform/partners',icon:'setup',superAdminOnly:true},
     {key:'access',label:'Platform access',shortLabel:'Access',hash:'#/platform/access',icon:'staff',superAdminOnly:true}
   ]);
   const platformModuleKeys=Object.freeze([
@@ -3080,7 +3161,7 @@
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports','marketing'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
-    Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','access'])})
+    Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','partners','access'])})
   ]);
   function platformNavigationGroups(allowedRoutes=[]) {
     const allowedByKey=new Map(allowedRoutes.map(route=>[route.key,route]));
@@ -3250,7 +3331,15 @@
   }
 
   function isRoute(hash) {
-    return /^#\/platform(?:\/(?:onboarding|customer-lifecycle|firms|reports|billing|subscription-operations|pnl|commissions|sectors|automation|access))?\/?$/.test(String(hash || '').split('?')[0]);
+    /* V282: derived from the route registry instead of a hand-kept alternation. The literal list
+       had silently fallen three routes behind — marketing, crm and companies were all absent, so a
+       reload or a deep link on any of them was answered with "Peekaa admin could not be loaded"
+       even though the route rendered fine when reached by clicking. A list that must be edited in
+       two places is a list that will disagree with itself again. */
+    const path=String(hash || '').split('?')[0].replace(/\/+$/,'');
+    if(path==='#/platform')return true;
+    if(!path.startsWith('#/platform/'))return false;
+    return routes.some(route=>route.key!=='overview'&&route.key===path.slice('#/platform/'.length));
   }
 
   function routeKey(hash) {
@@ -8808,6 +8897,134 @@
       CUI.focusRoute(main);
     }
   }
+  /* V282 partner obligations. The consent wording pinned by v265 tells a customer that selected
+     partners may receive their contact details; until now nothing recorded which partner, which
+     customer, or when — so a withdrawal could not be honoured downstream and no obligation could
+     be evidenced. This section is that evidence layer and nothing more: it distributes no data,
+     and the disclosure ledger is expected to be empty until something actually distributes some.
+     Customers are counted, never listed — a cross-tenant console has no reason to render the
+     roster it exists to protect. */
+  function partnerRegistryRows(partners,CUI,canWrite) {
+    return partners.map(partner=>[
+      escapeHtml(String(partner.name||'')),
+      escapeHtml(String(partner.purpose||'')),
+      escapeHtml(platformStatus(partner.status)),
+      escapeHtml(String(Number(partner.disclosure_count||0))),
+      Number(partner.open_suppressions||0)>0
+        ? `<b>${escapeHtml(String(Number(partner.open_suppressions)))}</b>`
+        : escapeHtml('0'),
+      canWrite
+        ? `<div class="platform-actions"><button type="button" class="btn ghost sm" data-partner-edit="${escapeHtml(String(partner.id||''))}">${escapeHtml(pt('Edit'))}</button><button type="button" class="btn sm" data-partner-suppress="${escapeHtml(String(partner.id||''))}">${escapeHtml(pt('Record suppression instruction'))}</button></div>`
+        : ''
+    ]);
+  }
+  function partnerDisclosureRows(disclosures) {
+    return disclosures.map(disclosure=>[
+      escapeHtml(String(disclosure.disclosed_on||'')),
+      escapeHtml(String(disclosure.partner_name||'')),
+      escapeHtml(platformStatus(disclosure.dataset)),
+      escapeHtml(String(disclosure.scope_version||'')),
+      escapeHtml(String(Number(disclosure.customers||0)))
+    ]);
+  }
+  function partnerSuppressionRows(suppressions,canWrite) {
+    return suppressions.map(suppression=>[
+      escapeHtml(dateTime(suppression.issued_at)),
+      escapeHtml(String(suppression.partner_name||'')),
+      escapeHtml(platformStatus(suppression.reason)),
+      escapeHtml(suppression.scope==='all_customers'?pt('All customers'):pt('One customer')),
+      suppression.acknowledged_at
+        ? escapeHtml(`${dateTime(suppression.acknowledged_at)} · ${String(suppression.acknowledgement_reference||'')}`)
+        : (canWrite
+          ? `<div class="platform-actions"><button type="button" class="btn ghost sm" data-partner-ack="${escapeHtml(String(suppression.id||''))}">${escapeHtml(pt('Acknowledge'))}</button></div>`
+          : `<b>${escapeHtml(pt('Awaiting acknowledgement'))}</b>`)
+    ]);
+  }
+  function partnerSaveModal(context,partner) {
+    const {CUI,sb}=context;
+    modal({title:partner?'Edit partner':'Add partner',submitLabel:'Save partner',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'partnerName',label:'Partner name',required:true,value:partner?.name||'',attributes:'name="name" minlength="2" maxlength="120"'})}
+      ${CUI.field({id:'partnerStatus',label:'Status',control:'select',required:true,value:partner?.status||'prospective',options:['prospective','active','suspended','ended'].map(value=>({value,label:platformStatus(value)})),attributes:'name="status"'})}
+      <div class="wide">${CUI.field({id:'partnerPurpose',label:'Stated purpose',control:'textarea',required:true,value:partner?.purpose||'',hint:'What this partner may use customer data for. It should match the consent wording.',attributes:'name="purpose" minlength="2" maxlength="400" rows="3"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      await rpc(sb,'platform_save_partner_v282',{
+        p_partner:partner?.id||null,p_name:form.get('name'),
+        p_purpose:form.get('purpose'),p_status:form.get('status')
+      });
+      controls.close();await renderPartnerObligations(context);CUI.announce('Partner saved.');
+    }});
+  }
+  function partnerSuppressionModal(context,partner) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Record suppression instruction',submitLabel:'Record instruction',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'partnerSuppressionPartner',label:'Partner',value:partner?.name||'',attributes:'readonly'})}
+      ${CUI.field({id:'partnerSuppressionReason',label:'Reason',control:'select',required:true,options:['consent_withdrawn','account_closed','customer_request','platform_decision'].map(value=>({value,label:platformStatus(value)})),attributes:'name="reason"'})}
+      <div class="wide">${CUI.field({id:'partnerSuppressionIdentity',label:'Customer identity',hint:'Leave blank to instruct the partner for every customer.',attributes:'name="identity" maxlength="36"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      const identity=String(form.get('identity')||'').trim();
+      await rpc(sb,'platform_record_partner_suppression_v282',{
+        p_partner:partner?.id||null,p_reason:form.get('reason'),
+        p_idempotency_key:attemptKey,p_identity:identity||null
+      });
+      controls.close();await renderPartnerObligations(context);
+      CUI.announce('Suppression instruction recorded.');
+    }});
+  }
+  function partnerAcknowledgeModal(context,suppressionId) {
+    const {CUI,sb}=context;
+    modal({title:'Acknowledge instruction',submitLabel:'Acknowledge instruction',CUI,body:`<div class="platform-form-grid">
+      <div class="wide">${CUI.field({id:'partnerAckReference',label:'Acknowledgement reference',required:true,hint:'The partner’s own confirmation reference, so the acknowledgement is evidenced rather than asserted.',attributes:'name="reference" minlength="1" maxlength="200"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      await rpc(sb,'platform_acknowledge_partner_suppression_v282',{
+        p_suppression:suppressionId,p_reference:form.get('reference')
+      });
+      controls.close();await renderPartnerObligations(context);
+      CUI.announce('Acknowledgement recorded.');
+    }});
+  }
+  async function renderPartnerObligations(context) {
+    const {main,CUI,sb}=context;
+    const canWrite=context.canWrite===true;
+    main.innerHTML=loading(CUI,'Partner obligations','Loading the partner register…','setup');
+    try{
+      const payload=asObject(await rpc(sb,'platform_list_partner_obligations_v282',{p_limit:200}));
+      const partners=asArray(payload.partners);
+      const disclosures=asArray(payload.disclosures);
+      const suppressions=asArray(payload.suppressions);
+      main.innerHTML=`${CUI.pageHeader({title:'Partner obligations',subtitle:'Which partner received which customer, and every suppression instruction issued.',iconName:'setup'})}
+        ${localizedRouteNoteHtml('No data leaves this console','Peekaa distributes nothing from here. This is the evidence layer the customer consent already promises.')}
+        ${canWrite?`<div class="platform-actions"><button type="button" class="btn" id="partnerAdd">${escapeHtml(pt('Add partner'))}</button></div>`:''}
+        ${partners.length
+          ? CUI.card({title:'Partner register',description:'Every selected partner the customer consent wording can refer to.',body:CUI.table({caption:'Partner register',headers:['Partner','Purpose','Status','Disclosures','Open instructions',''],rows:partnerRegistryRows(partners,CUI,canWrite)})})
+          : CUI.emptyState({iconName:'setup',title:'No partners registered yet',body:'Register the partners named in the customer consent wording so a disclosure or a suppression can be evidenced.'})}
+        ${CUI.card({title:'Disclosures',description:'Which customers went to which partner, by day. Customers are counted, never listed.',body:disclosures.length
+          ? CUI.table({caption:'Partner disclosures',headers:['Date','Partner','Dataset','Consent wording','Customers'],rows:partnerDisclosureRows(disclosures)})
+          : CUI.emptyState({iconName:'reports',title:'No disclosures recorded',body:'Nothing has been shared with a partner. This ledger fills only when a disclosure is actually made.'})})}
+        ${CUI.card({title:'Suppression instructions',description:'Every instruction issued to a partner, and whether the partner confirmed it.',body:suppressions.length
+          ? CUI.table({caption:'Suppression instructions',headers:['Issued','Partner','Reason','Scope','Acknowledged'],rows:partnerSuppressionRows(suppressions,canWrite)})
+          : CUI.emptyState({iconName:'reports',title:'No suppression instructions issued',body:'An instruction appears here the moment one is issued to a partner.'})})}`;
+      const add=main.querySelector('#partnerAdd');
+      if(add)add.onclick=()=>partnerSaveModal(context,null);
+      main.querySelectorAll('[data-partner-edit]').forEach(button=>button.onclick=()=>{
+        partnerSaveModal(context,partners.find(entry=>String(entry.id)===button.dataset.partnerEdit)||null);
+      });
+      main.querySelectorAll('[data-partner-suppress]').forEach(button=>button.onclick=()=>{
+        partnerSuppressionModal(context,partners.find(entry=>String(entry.id)===button.dataset.partnerSuppress)||null);
+      });
+      main.querySelectorAll('[data-partner-ack]').forEach(button=>button.onclick=()=>{
+        partnerAcknowledgeModal(context,button.dataset.partnerAck);
+      });
+      CUI.focusRoute(main);
+    }catch(error){
+      main.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Partner obligations')
+        :CUI.errorState({title:'Partner obligations unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'partnerRetryV282'});
+      const retry=main.querySelector('#partnerRetryV282');
+      if(retry)retry.onclick=()=>renderPartnerObligations(context);
+      CUI.focusRoute(main);
+    }
+  }
+
   function platformExpenseModal(context,range) {
     const {CUI,sb}=context;const attemptKey=idempotencyKey();
     modal({title:'Add operating expense',submitLabel:'Record expense',CUI,body:`<div class="platform-form-grid">
@@ -10622,6 +10839,7 @@
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);
     if(!task&&activeKey==='automation')task=renderAutomation(context);
+    if(!task&&activeKey==='partners')task=renderPartnerObligations(context);
     if(!task){
       main.innerHTML=disconnectedRouteHtml(activeKey,CUI);CUI.focusRoute(main);
     }else await task;
@@ -10649,6 +10867,7 @@
     subscriptionDurationHtml,subscriptionOperationsTable,
     companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
     renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
+    renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
     receiptRows,receiptUnreadableReason
   });
   if (typeof module !== 'undefined' && module.exports) {
@@ -10672,6 +10891,7 @@
       subscriptionDurationHtml,subscriptionOperationsTable,
       companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
       renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
+      renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
       receiptRows,receiptUnreadableReason
     };
   }
