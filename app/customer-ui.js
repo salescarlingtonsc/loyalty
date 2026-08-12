@@ -142,7 +142,14 @@
   }
 
   function table({caption,headers,rows,className=''}={}){
-    return `<div class="cui-table-wrap" role="region" aria-label="${escapeHtml(caption)}" tabindex="0"><table class="cui-table ${className}" data-responsive="true"><caption>${escapeHtml(caption)}</caption><thead><tr>${headers.map(header=>`<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((cell,index)=>`<td data-label="${escapeHtml(headers[index]||'')}">${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    /* V298: a caller that passes no caption used to get `<caption></caption>` and
+       `aria-label=""` — an empty element AND a table with no accessible name, the worst of both.
+       Emit no caption at all in that case and let enhanceTables derive one from the surrounding
+       card heading (it always leaves a non-empty name behind), and never let the scroll region's
+       label collapse to nothing. */
+    const captionTextV298=String(caption??'').trim();
+    const regionLabelV298=captionTextV298||'Data table';
+    return `<div class="cui-table-wrap" role="region" aria-label="${escapeHtml(regionLabelV298)}" tabindex="0"><table class="cui-table ${className}" data-responsive="true">${captionTextV298?`<caption>${escapeHtml(captionTextV298)}</caption>`:''}<thead><tr>${headers.map(header=>`<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((cell,index)=>`<td data-label="${escapeHtml(headers[index]||'')}">${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
 
   let generatedFieldId=0;
@@ -161,9 +168,72 @@
 
   function tableCaption(table){
     const card=table.closest('.card');
-    const heading=card?.querySelector('h2,h3,.cui-card-head,b');
+    /* V298: `b` is in this list because that is how a workspace card writes its title — but a
+       `b` INSIDE a table is a cell, not a title. Staff performance was naming its table after the
+       first staff member in it ("Owner Person"), which is both a useless accessible name and a
+       repeat of text already in the grid. Skip anything that lives in a table and fall through to
+       the page heading, which is what the caller meant all along. */
+    const heading=[...(card?.querySelectorAll('h2,h3,.cui-card-head,b')||[])]
+      .find(node=>!node.closest('table')&&node.textContent.trim());
     const page=table.closest('main')?.querySelector('h1');
     return (heading?.textContent||page?.textContent||'Data table').trim();
+  }
+
+  /* V298 (owner report 2026-08-13, from a live Business Insights screenshot: "Revenue by type"
+     printed as the card heading and AGAIN as a smaller grey line right beneath it — same for
+     "Reversal reconciliation", "Loyalty flow…" and "Liabilities…", and the same across the rest
+     of the workspace). Mechanism: a workspace card is written as
+     `<div class="card"><b>Revenue by type</b><table>…`, and enhanceTables below then synthesised
+     a <caption> whose text tableCaption() had just COPIED off that very <b>. The duplicate was
+     structural, not a typo at any one call site.
+
+     A <caption> is the native accessible name of a table, so deleting it would trade a cosmetic
+     bug for a real accessibility regression (screen-reader users would meet an unnamed grid).
+     The name is therefore kept and hidden with the document's existing .sr-only utility: the
+     title is visible exactly once (the heading) and announced exactly once (the caption).
+
+     Hand-written captions are left visible unless they repeat a heading verbatim, because those
+     carry information the heading does not — platform console prints "{count} archived" and
+     "First five source rows" in a caption, and hiding those would delete facts from the page. */
+  function captionRepeatsHeadingV298(table,text){
+    const name=text.trim().toLowerCase();
+    if(!name)return false;
+    const scope=table.closest('.card,.platform-detail-section,section');
+    if(!scope)return false;
+    /* `b`/`strong` are in the list because that is how the workspace cards write their titles;
+       anything inside a table is a cell, not a heading, so it can never be the visible title. */
+    return [...scope.querySelectorAll('h1,h2,h3,h4,.cui-card-head,b,strong')]
+      .some(node=>!node.closest('table')&&node.textContent.trim().toLowerCase()===name);
+  }
+
+  /* V298: the one place that decides whether a table's name is also shown. A caption we
+     synthesised is a copy of an already-visible heading by construction, so it is always hidden;
+     an authored one is hidden only when it repeats that heading word for word. Either way the
+     table is left with a non-empty accessible name. .sr-only is only ever added, never removed,
+     so this is idempotent under the MutationObservers that drive both callers. */
+  function nameTableOnceV298(table,caption,derived){
+    if(derived||!caption.textContent.trim())caption.textContent=tableCaption(table);
+    if(derived||captionRepeatsHeadingV298(table,caption.textContent))caption.classList.add('sr-only');
+  }
+
+  /* The workspace runs the full enhancer (mountMain); the platform console does not — it writes
+     its own finished markup and would otherwise keep the doubled titles the owner reported, on
+     "Loss reasons", "Contacts", "Payment history", "Campaign history", "Explore demand",
+     "Partner register", "Suppression instructions" and "Stripe price catalogue". This observer is
+     the caption rule ALONE: it never touches classes, data-label, thead or the wrapper, so it
+     cannot restyle a console table that was never built for the responsive card layout. */
+  function dedupeTableCaptionsV298(root){
+    root.querySelectorAll('caption').forEach(caption=>{
+      const table=caption.parentElement;
+      if(table?.tagName==='TABLE')nameTableOnceV298(table,caption,false);
+    });
+  }
+
+  function observeTableCaptionsV298(root){
+    dedupeTableCaptionsV298(root);
+    const observer=new MutationObserver(()=>dedupeTableCaptionsV298(root));
+    observer.observe(root,{childList:true,subtree:true});
+    return observer;
   }
 
   function enhanceTables(root){
@@ -172,7 +242,9 @@
       const isComplex=!!table.querySelector('[colspan],[rowspan]');
       table.dataset.responsive=isComplex?'false':'true';
       let caption=table.querySelector(':scope > caption');
-      if(!caption){caption=document.createElement('caption');caption.textContent=tableCaption(table);table.prepend(caption)}
+      const derivedCaptionV298=!caption;
+      if(!caption){caption=document.createElement('caption');table.prepend(caption)}
+      nameTableOnceV298(table,caption,derivedCaptionV298);
       let head=table.querySelector(':scope > thead');
       const firstRow=table.querySelector('tr');
       if(!head&&firstRow?.querySelector('th')){
@@ -308,6 +380,7 @@
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
     associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog,
+    dedupeTableCaptionsV298,observeTableCaptionsV298,
     currentDialogHistoryId
   });
 })(typeof window !== 'undefined' ? window : globalThis);

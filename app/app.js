@@ -2310,12 +2310,21 @@ async function route(){
       const workspaceHash=S.biz?.slug
         ?`#/workspace/${encodeURIComponent(S.biz.slug)}/dashboard`
         :'#/';
-      return await platformConsole.render({
+      const platformRenderedV298=await platformConsole.render({
         root,sb,CUI,brand:BRAND,hash:h,isCurrent:isRouteCurrent,workspaceHash,
         onSignOut:async()=>{
           killChannels();await sb.auth.signOut();resetClientSessionState();nav('#/');
         }
       });
+      /* V298 (owner report 2026-08-13 — a card title printed twice, once as the heading and again
+         as the table's caption). The console never calls CUI.mountMain, so the workspace fix in
+         enhanceTables cannot reach it; this attaches the caption rule on its own, which is the
+         only part of the enhancer that is safe to run over console markup. It reuses
+         customerUiObserver so leaving for a workspace route disconnects it at shell render, and
+         the disconnect above covers console route to console route. */
+      if(customerUiObserver)customerUiObserver.disconnect();
+      customerUiObserver=CUI.observeTableCaptionsV298(root);
+      return platformRenderedV298;
     }
     /* V286: the Stripe self-serve return route, resolved before any persona lookup.
        start_self_serve_business_v130 has already created an active owner staff row by the time

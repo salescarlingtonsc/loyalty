@@ -193,7 +193,6 @@ let loyaltyEntryContextV294=null;
    birthday / bring-back / referral editors. Module-level because those editors live in
    different page functions from the Programmes overview that sets it. */
 let pendingProgrammeSuggestV172=null;
-let customerUiObserver=null;
 let shellRenderEpoch=0;
 let waitlistActiveCount=0;
 let waitlistBadgeRequest=0;

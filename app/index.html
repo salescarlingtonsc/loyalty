@@ -2004,7 +2004,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <script src="/brand-config.js"></script>
 <script src="/runtime-config.js?v=2"></script>
 <script src="/runtime-config-loader.js?v=2"></script>
-<script src="/customer-ui.js?v=20260808-v195-tier-icons"></script>
+<script src="/customer-ui.js?v=20260813-v298-caption-once"></script>
 <!-- v184: the platform console is ~210KB of JS+CSS that only a Peekaa admin can ever use, and it
      was being downloaded by every customer opening a booking page. app.js fetches these on
      demand when a #/platform route is requested (loadPlatformConsoleAssetsV184). This element is
@@ -2030,7 +2030,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=e1a5c2079825","business":"/app-business.js?b=764a509ea436","i18n":"/app-i18n.js?b=c3dd5127e450"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=e1a5c2079825","business":"/app-business.js?b=817b0bbc9033","i18n":"/app-i18n.js?b=c3dd5127e450"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -2054,6 +2054,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=7e13085b0bb2" defer></script>
+<script src="/app-core.js?b=83ba09182be0" defer></script>
 </body>
 </html>
