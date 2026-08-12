@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="88505fc0196b21197c3496c5b2b692694de01615f5ce63fa1ab740cfe0400de0"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="66fdd11e301e43921126cb0f75e861d1b00f1ae3c7110e6aabc6756c6083df87"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1457,19 +1457,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-primary-nav a[aria-current="page"]{background:var(--tint);color:var(--coral)}
 .customer-primary-nav a span,.customer-primary-nav button span{min-width:0;overflow-wrap:break-word;hyphens:auto}
 .customer-surface summary.small,.customer-surface summary.muted{min-height:44px;display:flex;align-items:center}
-.customer-account-menu{position:relative}.customer-account-menu summary{list-style:none}.customer-account-menu summary::-webkit-details-marker{display:none}
-.customer-account-menu .menu{position:absolute;top:calc(100% + 8px);right:0;z-index:48;left:auto;min-width:210px;max-width:min(310px,calc(100vw - 24px));padding:7px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow-lg)}.customer-account-menu .menu a,.customer-account-menu .menu button{display:flex;width:100%;min-width:0;align-items:center;gap:9px;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-weight:600;text-align:left;cursor:pointer}
-.customer-account-menu .menu a span,.customer-account-menu .menu button span{min-width:0;overflow-wrap:anywhere}
-.customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover{background:var(--bg)}
 .workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:100px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
 .customer-sound-toggle input{width:22px;min-height:22px;accent-color:var(--coral)}
 .customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
-.customer-account-menu .menu [data-push-state="enabled"]{color:var(--green)}
+/* v296: the account menu is gone; the push-state colour belongs to the control itself. */
+.customer-push-setting [data-push-state="enabled"]{color:var(--green)}
 .customer-push-setting{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
 .customer-push-setting [data-push-status]{max-width:62ch;line-height:1.55}
 @media(max-width:560px){.customer-push-setting{grid-template-columns:1fr}.customer-push-setting .btn{width:100%}}
-.customer-avatar{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--coral);cursor:pointer}
 .customer-redemption-modal .modal-card{width:min(460px,calc(100vw - 24px));text-align:center}
 .customer-redemption-modal .redemption-qr{display:grid;place-items:center;width:244px;min-height:244px;margin:18px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;color:#111}
 .customer-confirmation-modal .modal-card{width:min(420px,calc(100vw - 24px))}
@@ -1897,7 +1893,7 @@ html[data-customer-theme="dark"] .customer-surface.customer-surface :is(input,se
     .customer-home-offer,.customer-perk-card,.customer-offer-card,.customer-reward-card,
     .customer-programme-compact-head,.wallet-firm,.wallet-reward,
     .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.customer-booking-tabs,.checkrow,.fb-chip,
-    .customer-avatar,.customer-programme-switcher a,.customer-workspace-switch .menu){
+    .customer-programme-switcher a,.customer-workspace-switch .menu){
     background:var(--card);color:var(--ink);border-color:var(--line)
   }
   /* State styling must survive the raised-specificity remap above. */
@@ -1913,8 +1909,7 @@ html[data-customer-theme="dark"] .customer-surface .btn.ghost,
 html[data-customer-theme="dark"] .customer-surface .svc{background:var(--card);color:var(--ink);border-color:var(--line)}
 html[data-customer-theme="dark"] .customer-surface .svc.sel{background:var(--tint);border-color:var(--coral)}
 html[data-customer-theme="dark"] .customer-surface.customer-surface :is(.customer-primary-nav a:hover,.customer-primary-nav button:hover,
-    .customer-workspace-switch .menu a:hover,
-    .customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover){background:#252930;color:var(--ink)}
+    .customer-workspace-switch .menu a:hover){background:#252930;color:var(--ink)}
 html[data-customer-theme="dark"] .customer-surface .customer-home-nba{background:linear-gradient(145deg,var(--card) 35%,var(--tint))}
 html[data-customer-theme="dark"] .customer-surface .customer-home-summary-note{background:linear-gradient(145deg,var(--card) 40%,var(--tint))}
 html[data-customer-theme="dark"] .customer-surface .customer-offer-urgent{background:#4A3816;color:#FFD98B}
@@ -1960,7 +1955,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 88505fc0196b21197c3496c5b2b692694de01615f5ce63fa1ab740cfe0400de0</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 66fdd11e301e43921126cb0f75e861d1b00f1ae3c7110e6aabc6756c6083df87</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5139,7 +5134,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'88505fc0196b21197c3496c5b2b692694de01615f5ce63fa1ab740cfe0400de0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'66fdd11e301e43921126cb0f75e861d1b00f1ae3c7110e6aabc6756c6083df87',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

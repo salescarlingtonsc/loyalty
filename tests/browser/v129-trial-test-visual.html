@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="077f7af2fe9846a9f851efd1ef658a2cf8e457153e0a845297ed85f530433e08"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="1422441d8488b6b8081588f68de3013502c57b4d21fafdd1ce5695841dc74d21"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1457,19 +1457,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-primary-nav a[aria-current="page"]{background:var(--tint);color:var(--coral)}
 .customer-primary-nav a span,.customer-primary-nav button span{min-width:0;overflow-wrap:break-word;hyphens:auto}
 .customer-surface summary.small,.customer-surface summary.muted{min-height:44px;display:flex;align-items:center}
-.customer-account-menu{position:relative}.customer-account-menu summary{list-style:none}.customer-account-menu summary::-webkit-details-marker{display:none}
-.customer-account-menu .menu{position:absolute;top:calc(100% + 8px);right:0;z-index:48;left:auto;min-width:210px;max-width:min(310px,calc(100vw - 24px));padding:7px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow-lg)}.customer-account-menu .menu a,.customer-account-menu .menu button{display:flex;width:100%;min-width:0;align-items:center;gap:9px;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-weight:600;text-align:left;cursor:pointer}
-.customer-account-menu .menu a span,.customer-account-menu .menu button span{min-width:0;overflow-wrap:anywhere}
-.customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover{background:var(--bg)}
 .workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:100px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
 .customer-sound-toggle input{width:22px;min-height:22px;accent-color:var(--coral)}
 .customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
-.customer-account-menu .menu [data-push-state="enabled"]{color:var(--green)}
+/* v296: the account menu is gone; the push-state colour belongs to the control itself. */
+.customer-push-setting [data-push-state="enabled"]{color:var(--green)}
 .customer-push-setting{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
 .customer-push-setting [data-push-status]{max-width:62ch;line-height:1.55}
 @media(max-width:560px){.customer-push-setting{grid-template-columns:1fr}.customer-push-setting .btn{width:100%}}
-.customer-avatar{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--coral);cursor:pointer}
 .customer-redemption-modal .modal-card{width:min(460px,calc(100vw - 24px));text-align:center}
 .customer-redemption-modal .redemption-qr{display:grid;place-items:center;width:244px;min-height:244px;margin:18px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;color:#111}
 .customer-confirmation-modal .modal-card{width:min(420px,calc(100vw - 24px))}
@@ -1897,7 +1893,7 @@ html[data-customer-theme="dark"] .customer-surface.customer-surface :is(input,se
     .customer-home-offer,.customer-perk-card,.customer-offer-card,.customer-reward-card,
     .customer-programme-compact-head,.wallet-firm,.wallet-reward,
     .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.customer-booking-tabs,.checkrow,.fb-chip,
-    .customer-avatar,.customer-programme-switcher a,.customer-workspace-switch .menu){
+    .customer-programme-switcher a,.customer-workspace-switch .menu){
     background:var(--card);color:var(--ink);border-color:var(--line)
   }
   /* State styling must survive the raised-specificity remap above. */
@@ -1913,8 +1909,7 @@ html[data-customer-theme="dark"] .customer-surface .btn.ghost,
 html[data-customer-theme="dark"] .customer-surface .svc{background:var(--card);color:var(--ink);border-color:var(--line)}
 html[data-customer-theme="dark"] .customer-surface .svc.sel{background:var(--tint);border-color:var(--coral)}
 html[data-customer-theme="dark"] .customer-surface.customer-surface :is(.customer-primary-nav a:hover,.customer-primary-nav button:hover,
-    .customer-workspace-switch .menu a:hover,
-    .customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover){background:#252930;color:var(--ink)}
+    .customer-workspace-switch .menu a:hover){background:#252930;color:var(--ink)}
 html[data-customer-theme="dark"] .customer-surface .customer-home-nba{background:linear-gradient(145deg,var(--card) 35%,var(--tint))}
 html[data-customer-theme="dark"] .customer-surface .customer-home-summary-note{background:linear-gradient(145deg,var(--card) 40%,var(--tint))}
 html[data-customer-theme="dark"] .customer-surface .customer-offer-urgent{background:#4A3816;color:#FFD98B}
@@ -1960,7 +1955,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 077f7af2fe9846a9f851efd1ef658a2cf8e457153e0a845297ed85f530433e08</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1422441d8488b6b8081588f68de3013502c57b4d21fafdd1ce5695841dc74d21</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -15427,6 +15422,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'077f7af2fe9846a9f851efd1ef658a2cf8e457153e0a845297ed85f530433e08',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'1422441d8488b6b8081588f68de3013502c57b4d21fafdd1ce5695841dc74d21',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

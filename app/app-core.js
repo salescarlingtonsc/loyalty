@@ -1097,7 +1097,6 @@ async function route(){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   globalThis.document?.documentElement?.removeAttribute('data-customer-surface');
   disposeCurrentRoute();
-  if(typeof customerAccountMenuCleanup==='function')customerAccountMenuCleanup();
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
@@ -2383,28 +2382,6 @@ function renderNoCustomerDestination(staffWorkspaces=[]){
 function customerSurfaceQualifies(profile,customerPersonas=[]){
   return (profile!==null&&profile!==undefined)||(Array.isArray(customerPersonas)&&customerPersonas.length>0);
 }
-let customerAccountMenuCleanup=()=>{};
-function wireCustomerAccountMenu(){
-  customerAccountMenuCleanup();
-  const customerAccountMenuDetails=document.querySelector('.customer-account-menu');
-  if(!customerAccountMenuDetails)return;
-  const summary=customerAccountMenuDetails.querySelector('summary');
-  const onPointerDown=event=>{
-    if(customerAccountMenuDetails.open&&!customerAccountMenuDetails.contains(event.target))customerAccountMenuDetails.open=false;
-  };
-  const onKeyDown=event=>{
-    if(event.key==='Escape'&&customerAccountMenuDetails.open){
-      event.preventDefault();customerAccountMenuDetails.open=false;summary?.focus();
-    }
-  };
-  document.addEventListener('pointerdown',onPointerDown);
-  document.addEventListener('keydown',onKeyDown);
-  customerAccountMenuCleanup=()=>{
-    document.removeEventListener('pointerdown',onPointerDown);
-    document.removeEventListener('keydown',onKeyDown);
-    customerAccountMenuCleanup=()=>{};
-  };
-}
 /* v178: backTo generalises the business-page circle back button so the "My Rewards" tab can
    carry one too (owner: "There is no back button"). businessSlug keeps its own destination. */
 function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=null,backTo=null,navCounts=null}={}){
@@ -2418,21 +2395,16 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
     <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
     <span class="spacer"></span><span id="customerInboxBellSlot">${inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
     ${customerWorkspaceSwitchHtml(staffWorkspaces)}
-    <details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu">
-      <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a>
-      <button id="customerPushMenuControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button>
-      <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button>
-    </div></details>
+    <!-- v296 (owner, annotated: "remove this — here got profile already"). The avatar menu was a
+         second door to a place the navigation already owns: Profile has been a first-class tab
+         since v281, so the menu's three items were one duplicate (Profile & passkeys), one
+         setting that belongs beside the inbox it governs (device notifications — moved to
+         Messages, where the owner drew it), and one action that belongs at the end of the page
+         it acts on (Sign out — now the last thing on Profile). A header control that hides real
+         actions behind a tap is exactly the pattern this navigation was rebuilt to remove. -->
     </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
     <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
     ${legalLinks()}</div></div>`;
-  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-  const customerPush=window.NestlyCustomerPush?.configure({rpc:(name,args)=>sb.rpc(name,args),userId:S.user?.id});
-  if(customerPush){
-    customerPush.bindButton($('customerPushMenuControl'));
-    customerPush.reconcile().catch(()=>{});
-  }
-  wireCustomerAccountMenu();
   if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
   if($('walletBack'))$('walletBack').onclick=()=>nav(backHref);
 }

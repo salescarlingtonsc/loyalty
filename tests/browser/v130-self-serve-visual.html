@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="6ecd2d72454a0e172c474301ecb87a8bfd72a3ad6141ff878d83a232a5615ec5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="0e6bd9f14e447dd1d405f005616cdf954984c2bd73534783b1bd3e656dde4d0b"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1456,19 +1456,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-primary-nav a[aria-current="page"]{background:var(--tint);color:var(--coral)}
 .customer-primary-nav a span,.customer-primary-nav button span{min-width:0;overflow-wrap:break-word;hyphens:auto}
 .customer-surface summary.small,.customer-surface summary.muted{min-height:44px;display:flex;align-items:center}
-.customer-account-menu{position:relative}.customer-account-menu summary{list-style:none}.customer-account-menu summary::-webkit-details-marker{display:none}
-.customer-account-menu .menu{position:absolute;top:calc(100% + 8px);right:0;z-index:48;left:auto;min-width:210px;max-width:min(310px,calc(100vw - 24px));padding:7px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow-lg)}.customer-account-menu .menu a,.customer-account-menu .menu button{display:flex;width:100%;min-width:0;align-items:center;gap:9px;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-weight:600;text-align:left;cursor:pointer}
-.customer-account-menu .menu a span,.customer-account-menu .menu button span{min-width:0;overflow-wrap:anywhere}
-.customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover{background:var(--bg)}
 .workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:100px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
 .customer-sound-toggle input{width:22px;min-height:22px;accent-color:var(--coral)}
 .customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
-.customer-account-menu .menu [data-push-state="enabled"]{color:var(--green)}
+/* v296: the account menu is gone; the push-state colour belongs to the control itself. */
+.customer-push-setting [data-push-state="enabled"]{color:var(--green)}
 .customer-push-setting{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
 .customer-push-setting [data-push-status]{max-width:62ch;line-height:1.55}
 @media(max-width:560px){.customer-push-setting{grid-template-columns:1fr}.customer-push-setting .btn{width:100%}}
-.customer-avatar{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--coral);cursor:pointer}
 .customer-redemption-modal .modal-card{width:min(460px,calc(100vw - 24px));text-align:center}
 .customer-redemption-modal .redemption-qr{display:grid;place-items:center;width:244px;min-height:244px;margin:18px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;color:#111}
 .customer-confirmation-modal .modal-card{width:min(420px,calc(100vw - 24px))}
@@ -1896,7 +1892,7 @@ html[data-customer-theme="dark"] .customer-surface.customer-surface :is(input,se
     .customer-home-offer,.customer-perk-card,.customer-offer-card,.customer-reward-card,
     .customer-programme-compact-head,.wallet-firm,.wallet-reward,
     .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.customer-booking-tabs,.checkrow,.fb-chip,
-    .customer-avatar,.customer-programme-switcher a,.customer-workspace-switch .menu){
+    .customer-programme-switcher a,.customer-workspace-switch .menu){
     background:var(--card);color:var(--ink);border-color:var(--line)
   }
   /* State styling must survive the raised-specificity remap above. */
@@ -1912,8 +1908,7 @@ html[data-customer-theme="dark"] .customer-surface .btn.ghost,
 html[data-customer-theme="dark"] .customer-surface .svc{background:var(--card);color:var(--ink);border-color:var(--line)}
 html[data-customer-theme="dark"] .customer-surface .svc.sel{background:var(--tint);border-color:var(--coral)}
 html[data-customer-theme="dark"] .customer-surface.customer-surface :is(.customer-primary-nav a:hover,.customer-primary-nav button:hover,
-    .customer-workspace-switch .menu a:hover,
-    .customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover){background:#252930;color:var(--ink)}
+    .customer-workspace-switch .menu a:hover){background:#252930;color:var(--ink)}
 html[data-customer-theme="dark"] .customer-surface .customer-home-nba{background:linear-gradient(145deg,var(--card) 35%,var(--tint))}
 html[data-customer-theme="dark"] .customer-surface .customer-home-summary-note{background:linear-gradient(145deg,var(--card) 40%,var(--tint))}
 html[data-customer-theme="dark"] .customer-surface .customer-offer-urgent{background:#4A3816;color:#FFD98B}

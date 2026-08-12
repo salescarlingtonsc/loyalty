@@ -212,7 +212,9 @@ test('service worker accepts only seven customer-safe event types and routes cli
 
 test('customer account and profile controls are touch-sized, accessible, private, and mobile responsive',async()=>{
   const html=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  assert.match(html,/id="customerPushMenuControl"[^>]*aria-pressed="false"/);
+  /* v296: the header menu's copy of this control was removed; the one that stayed with the
+     inbox it governs is on Messages, and the settings home keeps the detailed card. */
+  assert.match(html,/id="customerPushMessagesControl"[^>]*aria-pressed="false"/);
   assert.match(html,/id="customerPushProfileControl"[^>]*aria-pressed="false"/);
   assert.match(html,/data-push-status role="status" aria-live="polite"/);
   /* V263 supersedes this pin. It asserted the copy "Businesses cannot send promotional push
@@ -222,7 +224,7 @@ test('customer account and profile controls are touch-sized, accessible, private
      What must stay true is that this card sends the customer to where the real choice lives. */
   assert.match(html,/controls whether this device can show notifications at all/);
   assert.doesNotMatch(html,/Businesses cannot send promotional push notifications/);
-  assert.match(html,/\.customer-account-menu \.menu a,\.customer-account-menu \.menu button\{[^}]*min-height:44px/s);
+  assert.match(html,/\.customer-push-setting \[data-push-state=\"enabled\"\]\{color:var\(--green\)\}/);
   assert.match(html,/@media\(max-width:560px\)\{\.customer-push-setting\{grid-template-columns:1fr\}/);
   assert.match(html,/function resetClientSessionState[\s\S]*NestlyCustomerPush\?\.clearSession/);
   assert.match(html,/onAuthStateChange\(\(event,session\)=>\{[\s\S]*NestlyCustomerPush\?\.setAuthenticatedUser/);

@@ -98,8 +98,10 @@ test('celebration sound is opt-in, stored locally, and blocked for reduced-motio
 
 test('customer mobile navigation and media layouts keep accessible touch targets and stable image geometry',()=>{
   assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button:not\(\.customer-nav-scan\)\{[^}]*min-height:48px/s);
-  assert.match(app,/\.customer-avatar\{[^}]*width:44px;height:44px/s);
-  assert.doesNotMatch(app,/\.customer-account-menu \.customer-locale-switch/);
+  /* v296: the avatar menu is gone from both shells; the nav above is the touch surface that
+     replaced it, and the registration shell's only exit is now a plain 44px .btn. */
+  assert.match(app,/id="walletSignOut" type="button"/);
+  assert.doesNotMatch(app,/customer-account-menu/); // v296: the whole menu is gone
   assert.match(app,/\.customer-perk-card img,\.customer-offer-card img,\.customer-reward-card img\{[^}]*height:132px/s);
   assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-primary-nav\{position:fixed/s);
   assert.match(app,/@media\(prefers-reduced-motion:reduce\)/);

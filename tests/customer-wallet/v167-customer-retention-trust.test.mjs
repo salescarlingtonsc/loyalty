@@ -65,9 +65,14 @@ test('redemption cancellation uses an in-app decision and always renders canonic
 
 test('customer account trust controls use positioned UI and shared capability truth',async()=>{
   const [app,push]=await Promise.all([Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),read('app/customer-push.js')]);
-  assert.match(app,/\.customer-account-menu \.menu\{position:absolute;top:calc\(100% \+ 8px\);right:0;z-index:/);
-  assert.match(app,/customerAccountMenuDetails/);
-  assert.match(app,/event\.key==='Escape'/);
+  /* v296: the account menu was removed (owner: "remove this — here got profile already").
+     Profile is a nav tab, device notifications live with the inbox they govern, and Sign out is
+     the last card on Profile. Nothing should re-introduce the dropdown this rule styled. */
+  assert.doesNotMatch(app,/customer-account-menu|customerAccountMenuDetails/);
+  /* The menu's hand-rolled Escape went with it. Escape now belongs to the shared dialog helper
+     (v286 moved every customer dialog onto CUI.activateDialog, which owns the focus trap,
+     Escape and the Android Back entry) — one implementation instead of per-widget copies. */
+  assert.match(app,/CUI\.activateDialog\(/);
   const passkeys=section(app,'const loadPasskeys=async','passkeyAdd.onclick');
   assert.doesNotMatch(passkeys,/\bconfirm\(/);
   assert.match(passkeys,/Remove this passkey\?/);

@@ -146,9 +146,12 @@ test('customer shell, deep links, and profile transitions are predictable and ac
   assert.match(shell,/<a class="logo" href="#\/wallet" aria-label="\$\{esc\(BRAND\.customerLabel\)\} home"/);
   assert.match(shell,/<main id="main" tabindex="-1">/);
   assert.match(shell,/customerWorkspaceSwitchHtml\(staffWorkspaces\)/);
-  assert.match(shell,/class="customer-account-menu"/);
-  assert.match(shell,/href="#\/customer\/profile"/);
-  assert.match(shell,/id="walletSignOut"/);
+  /* v296 (owner: "remove this — here got profile already"): the avatar menu is gone. Profile is
+     a nav tab, device notifications sit with the inbox they govern, and Sign out is the last
+     card on Profile. The header must never grow a second door to any of them again. */
+  assert.doesNotMatch(shell,/customer-account-menu|customer-avatar/);
+  assert.doesNotMatch(shell,/id="walletSignOut"|customerPushMenuControl/);
+  assert.doesNotMatch(shell,/href="#\/customer\/profile"/);
   assert.match(shell,/href="#\/customer\/messages" aria-label="\$\{esc\(ct\('notifications'\)\)\}"/);
   // v178: the back control is now generic — a business page returns to My Rewards, and My
   // Rewards itself passes backTo:'#/wallet' (the owner: "There is no back button").
