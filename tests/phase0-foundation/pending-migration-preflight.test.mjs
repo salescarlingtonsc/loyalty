@@ -159,7 +159,13 @@ const sqlTestBySemanticVersion = new Map([
   ['v285', 'db/tests/v285_offer_share_imageless_parity.sql'],
   ['v289', 'db/tests/v289_reschedule_respects_business_setting.sql'],
   ['v290', 'db/tests/v290_customer_withdraw_booking_request.sql'],
-  ['v293', 'db/tests/v293_customer_intelligence_grants.sql']
+  ['v293', 'db/tests/v293_customer_intelligence_grants.sql'],
+  ['v297', 'db/tests/v297_merchant_prospecting_map.sql'],
+  /* v298 (reference seed) and v299 (RPC surface) are the same feature as v297 and are
+     exercised by the same rolled-back suite — it ingests through the v299 RPCs against
+     the v298 taxonomy, so a separate file would re-assert the identical path. */
+  ['v298', 'db/tests/v297_merchant_prospecting_map.sql'],
+  ['v299', 'db/tests/v297_merchant_prospecting_map.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
@@ -761,7 +767,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 247); // V293 customer-intelligence grants
+  assert.equal(pending.length, 250); // V297-V299 prospecting CRM
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

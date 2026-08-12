@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 291,
-  "executableCount": 277,
+  "itemCount": 294,
+  "executableCount": 280,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -419,7 +419,7 @@
     },
     {
       "sourceDeployVersion": "20260812",
-      "count": 12,
+      "count": 15,
       "paths": [
         "db/migrations/20260812_nestly_v281_stripe_launch_readiness.sql",
         "db/migrations/20260812_nestly_v282_promotion_finalize_conflict_fastfail.sql",
@@ -432,7 +432,10 @@
         "db/migrations/20260812_nestly_v290_customer_withdraw_booking_request.sql",
         "db/migrations/20260812_nestly_v290_server_debt_closure.sql",
         "db/migrations/20260812_nestly_v292_demo_requests.sql",
-        "db/migrations/20260812_nestly_v293_customer_intelligence_grants.sql"
+        "db/migrations/20260812_nestly_v293_customer_intelligence_grants.sql",
+        "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql",
+        "db/migrations/20260812_nestly_v298_prospecting_seed_and_reference.sql",
+        "db/migrations/20260812_nestly_v299_prospecting_rpcs.sql"
       ]
     }
   ],
@@ -2764,6 +2767,30 @@
       "semanticVersion": "v293",
       "proposedDeployVersion": "20260812001200",
       "sha256": "644da31ae1a4559d6926a4ca58f031f470b9554e6e1e43271f79a3bde41f1333"
+    },
+    {
+      "order": 292,
+      "kind": "executable",
+      "path": "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql",
+      "semanticVersion": "v297",
+      "proposedDeployVersion": "20260812001300",
+      "sha256": "a3f0ed41d794a4e0a928d0428f1fce735e4cd2ee0f6c868dcbed3cf7ca5bfc8c"
+    },
+    {
+      "order": 293,
+      "kind": "executable",
+      "path": "db/migrations/20260812_nestly_v298_prospecting_seed_and_reference.sql",
+      "semanticVersion": "v298",
+      "proposedDeployVersion": "20260812001400",
+      "sha256": "1faff673db3f49babbfe5ba64a354448cb56d51dc94e90939a63cacef6d5e1d7"
+    },
+    {
+      "order": 294,
+      "kind": "executable",
+      "path": "db/migrations/20260812_nestly_v299_prospecting_rpcs.sql",
+      "semanticVersion": "v299",
+      "proposedDeployVersion": "20260812001500",
+      "sha256": "ab6867f76d3c9d25d0c6253fe4766105c3498e40434c239f522c297a465e0811"
     }
   ]
 }

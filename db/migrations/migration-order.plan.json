@@ -1761,6 +1761,24 @@
       "path": "db/migrations/20260812_nestly_v293_customer_intelligence_grants.sql",
       "semanticVersion": "v293",
       "proposedDeployVersion": "20260812001200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql",
+      "semanticVersion": "v297",
+      "proposedDeployVersion": "20260812001300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260812_nestly_v298_prospecting_seed_and_reference.sql",
+      "semanticVersion": "v298",
+      "proposedDeployVersion": "20260812001400"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260812_nestly_v299_prospecting_rpcs.sql",
+      "semanticVersion": "v299",
+      "proposedDeployVersion": "20260812001500"
     }
   ]
 }

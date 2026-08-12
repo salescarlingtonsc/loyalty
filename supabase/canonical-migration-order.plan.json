@@ -1756,6 +1756,24 @@
       "version": "20260812001200",
       "name": "nestly_v293_customer_intelligence_grants",
       "sourcePath": "db/migrations/20260812_nestly_v293_customer_intelligence_grants.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812001300",
+      "name": "nestly_v297_merchant_prospecting_map",
+      "sourcePath": "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812001400",
+      "name": "nestly_v298_prospecting_seed_and_reference",
+      "sourcePath": "db/migrations/20260812_nestly_v298_prospecting_seed_and_reference.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812001500",
+      "name": "nestly_v299_prospecting_rpcs",
+      "sourcePath": "db/migrations/20260812_nestly_v299_prospecting_rpcs.sql"
     }
   ]
 }
