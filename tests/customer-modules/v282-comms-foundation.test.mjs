@@ -19,12 +19,12 @@ import { fileURLToPath } from 'node:url';
    service worker, the customer surface and the platform console — because the behaviour they
    encode is what the owner is being asked to trust. The DATABASE behaviour (idempotency, the
    consent gate, own-rows-only, append-only) is proven by execution in
-   db/tests/v282_comms_foundation.sql. */
+   db/tests/v284_comms_foundation.sql. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = relative => readFileSync(resolve(repoRoot, relative), 'utf8');
-const migration = read('db/migrations/20260812_nestly_v282_comms_foundation.sql');
-const suite = read('db/tests/v282_comms_foundation.sql');
+const migration = read('db/migrations/20260812_nestly_v284_comms_foundation.sql');
+const suite = read('db/tests/v284_comms_foundation.sql');
 const app = `${read('app/index.html')}\n${read('app/app.js')}`;
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -332,15 +332,17 @@ test('the migration is registered in both plans under one coordinate', () => {
   const canonical = JSON.parse(read('supabase/canonical-migration-order.plan.json'));
   assert.deepEqual(plan.items.at(-1), {
     kind: 'executable',
-    path: 'db/migrations/20260812_nestly_v282_comms_foundation.sql',
-    semanticVersion: 'v282',
-    proposedDeployVersion: '20260812000100'
+    path: 'db/migrations/20260812_nestly_v284_comms_foundation.sql',
+    /* V284 rename: a concurrent session took the v282/v283 names on main; the file is
+       v284 while production keeps the applied name nestly_v282_comms_foundation. */
+    semanticVersion: 'v284',
+    proposedDeployVersion: '20260812000400'
   });
   assert.deepEqual(canonical.items.at(-1), {
     kind: 'pending',
-    version: '20260812000100',
-    name: 'nestly_v282_comms_foundation',
-    sourcePath: 'db/migrations/20260812_nestly_v282_comms_foundation.sql'
+    version: '20260812000400',
+    name: 'nestly_v284_comms_foundation',
+    sourcePath: 'db/migrations/20260812_nestly_v284_comms_foundation.sql'
   });
   // Atomic boundaries: exactly one transaction, and the suite rolls itself back.
   assert.equal((migration.match(/^\s*begin\s*;\s*$/gim) || []).length, 1);

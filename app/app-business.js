@@ -14140,6 +14140,9 @@ async function bottleSetupPageV275(){
       <label for="bkCapacity" style="margin-top:14px">Storage capacity</label>
       <input id="bkCapacity" type="number" min="1" max="10000" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(data?.storage_capacity)||500))}">
       <p class="muted small" style="margin-top:-2px">How many bottles you can physically hold. Parking is refused once the shelves are full, so nobody takes a bottle you have nowhere to put. ${esc(String(Number(data?.in_storage)||0))} in storage right now.</p>
+      <label for="bkRemindDays" style="margin-top:14px">Remind the customer</label>
+      <input id="bkRemindDays" type="number" min="1" max="90" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(extraResultV278.data?.reminder_days)||7))}">
+      <p class="muted small" style="margin-top:-2px">Days before a bottle expires that Peekaa messages the customer in their app. It runs by itself every night, and a bottle past its window is marked expired the same way.</p>
     </section>
     <section class="card" style="margin-top:16px">
       <div class="cui-card-head"><h2>Tier keep windows</h2><p>Give your best customers longer. A tier left blank uses the keep window above.</p></div>
@@ -14329,6 +14332,7 @@ async function bottleSetupPageV275(){
   $('bkSave').onclick=async()=>{
     const days=Number($('bkDays').value);
     const capacity=Number($('bkCapacity').value);
+    const remindDays=Number($('bkRemindDays').value);
     const errorHost=$('bkErr'),status=$('bkStatus'),save=$('bkSave');
     errorHost.innerHTML='';
     if(!Number.isInteger(days)||days<1||days>365){
@@ -14337,6 +14341,10 @@ async function bottleSetupPageV275(){
     }
     if(!Number.isInteger(capacity)||capacity<1||capacity>10000){
       errorHost.innerHTML='<div class="err">Storage capacity must be a whole number between 1 and 10000 bottles.</div>';
+      return;
+    }
+    if(!Number.isInteger(remindDays)||remindDays<1||remindDays>90){
+      errorHost.innerHTML='<div class="err">The reminder must be a whole number between 1 and 90 days before expiry.</div>';
       return;
     }
     CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
@@ -14352,6 +14360,18 @@ async function bottleSetupPageV275(){
     CUI.setButtonBusy(save,{busy:false});
     if(saveError){
       errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'Bottle keep could not be saved.')}</div>`;
+      return;
+    }
+    /* V282: a SECOND call rather than a fourth parameter on bar_save_setup_v279, for the reason
+       V279 recorded in this same handler — an overload differing only in arity is what makes
+       PostgREST's resolution ambiguous. It runs only after the keep window has landed, so a
+       failure here cannot leave the two numbers disagreeing about which save succeeded. */
+    const {error:remindError}=await sb.rpc('bar_save_expiry_reminder_days_v282',{
+      p_business:S.biz.id,p_days:remindDays
+    });
+    if(!isCurrent()||!save.isConnected)return;
+    if(remindError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(remindError)||'The reminder window could not be saved. The keep window was saved.')}</div>`;
       return;
     }
     locations=(Array.isArray(saved?.locations)?saved.locations:[])

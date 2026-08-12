@@ -1,3 +1,8 @@
+-- NAME NOTE: applied to production as `nestly_v282_comms_foundation` before a concurrent
+-- session shipped a DIFFERENT v282 (promotion finalize fast-fail) and a v283 to main. This
+-- file is renumbered v284 so the repo's semantic-version namespace stays unique; the
+-- production migration record and every RPC/table it created keep their v282 names. The
+-- chain replays by file, so nothing depends on the pair matching (same precedent as v265).
 -- NESTLY v282 - COMMUNICATIONS FOUNDATION
 --
 -- Owner ruling 2026-08-12: "deferred by design - proceed to build all". Four
