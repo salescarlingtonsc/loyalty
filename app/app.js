@@ -912,7 +912,12 @@ const CUSTOMER_DIRECT_DESTINATIONS=new Set([
   '#/customer/programmes',
   '#/customer/bookings',
   '#/customer/messages',
-  '#/customer/profile'
+  '#/customer/profile',
+  /* V286: the marketing opt-out route the signup copy itself promises ("turn this off any time
+     in Profile → Communications"). Without it a signed-out deep link fell through to
+     renderAuth — the MERCHANT sign-in card — and nothing remembered where the visitor was
+     going, so even a correct customer sign-in landed on the wallet instead. */
+  '#/customer/communications'
 ]);
 function normalizeCustomerDestination(value){
   const route=String(value??'').trim();
@@ -952,6 +957,9 @@ function resetClientSessionState({preserveInvitation=false}={}){
   if(!preserveInvitation)rememberPendingCustomerJoinToken('');
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+  /* V286: the nav badge cache is per-person. Left standing, customer B's Rewards/Bookings tabs
+     first-painted with customer A's counts on a shared phone until the wallet data landed. */
+  customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';
   resetProductInteractionSessionV100();
@@ -2390,7 +2398,10 @@ async function route(){
     root.innerHTML=`<div class="center-wrap"><div class="card" style="width:400px;max-width:100%;text-align:center">
       <div style="font-size:40px">⚠️</div>
       <h2 style="margin:12px 0 4px">Something went wrong</h2>
-      <p class="muted small">${esc(e&&e.message||String(e))}</p>
+      <!-- V286: this catch wraps getSession() and the persona RPCs, so a customer on flaky
+           mobile data was shown raw engine text ("Failed to fetch"). Same mapper as every
+           other failure card in the app. -->
+      <p class="muted small">${esc(ownerErrorText(e)||'Please try again.')}</p>
       <button class="btn" id="routeReload" style="margin-top:18px">Reload</button>
       </div></div>`;
     const rb=$('routeReload');
@@ -2793,9 +2804,16 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
   let captchaToken='',captchaControl=null;
   if(!passkeySupported)passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
-  $('customerCreateAccount').onclick=()=>{
+  /* V286: renderCustomerOtpStart awaits the phone-OTP capability RPC before it paints anything,
+     so on a slow connection the most important tap on this screen looked like nothing happened —
+     and every further tap started another render racing to overwrite the same shell. */
+  $('customerCreateAccount').onclick=async(event)=>{
+    const button=event.currentTarget;
+    if(button.disabled)return;
+    const idle=CUI.setButtonBusy(button,{label:'Opening…'});
     resetCustomerRegistrationState();
-    renderCustomerOtpStart(isRouteCurrent,'signup');
+    try{await renderCustomerOtpStart(isRouteCurrent,'signup')}
+    finally{if(button.isConnected)idle()}
   };
   $('customerForgotPassword').onclick=()=>renderCustomerOtpStart(isRouteCurrent,'recovery');
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_password',
@@ -9790,7 +9808,15 @@ function renderShell(page){
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
     'customer-interface':customerInterfacePageV243};
-  const pageFn=P[page[0]]||dashboard;
+  /* V286: a hash with no page used to render the Dashboard while location.hash still read the
+     route that was asked for — the one refusal in the router that answered silently. A staff
+     member with a bookmark to a renamed module concluded the bookmark still worked. Every other
+     refusal above says so and corrects the URL; so does this one. */
+  const pageFn=page[0]?P[page[0]]:dashboard;
+  if(!pageFn){
+    toast('That page has moved.');
+    return nav('#/dashboard');
+  }
   const pageResult=pageFn(...page.slice(1));
   Promise.resolve(pageResult).catch(error=>{
     console.error(error);
@@ -15959,6 +15985,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      pressing Edit rendered a form far off screen and read as a dead button. Same move as V236:
      the ONE editor node is moved into a dialog and moved back on close — there is no second
      copy of the reward form, so every handler bound by openRewardEditor travels with it. */
+  /* V286: the dialog lifecycle now belongs to CUI.activateDialog (focus trap + Escape +
+     Android Back), so the deactivator has to outlive open and be spent by close. */
+  let rewardDialogDeactivateV238=null;
   function openRewardDialogV238(title,opener){
     const editor=$('rwEditor');
     if(!editor||document.getElementById('rewardDialogV238'))return;
@@ -15975,9 +16004,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const close=()=>{closeRewardDialogV238(true);opener?.focus?.()};
     dialog.querySelector('#rewardDialogCloseV238').onclick=close;
     dialog.onclick=e=>{if(e.target===dialog)close()};
-    dialog.onkeydown=e=>{if(e.key==='Escape')close()};
+    /* V286: hand-rolled Escape and focus are gone. activateDialog adds the focus trap Tab was
+       walking straight out of, and pushes the history entry that makes Android Back close the
+       editor instead of routing the page underneath it. */
+    rewardDialogDeactivateV238=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#rwCustomerName'});
     const done=$('rwClose');if(done)done.onclick=close;
-    $('rwCustomerName')?.focus({preventScroll:true});
   }
   function closeRewardDialogV238(restore){
     const dialog=document.getElementById('rewardDialogV238');if(!dialog)return;
@@ -15985,7 +16016,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const home=document.getElementById('rewardDialogHomeV238');
     /* Restoring empties the editor: an inline form under the list is the bug this fixed. */
     if(editor&&home&&restore){home.after(editor);editor.innerHTML=''}
-    dialog.remove();
+    /* The editor node is moved home BEFORE the deactivator removes the dialog. restoreFocus is
+       false because every caller that wants focus back names the opener itself. */
+    const deactivate=rewardDialogDeactivateV238;rewardDialogDeactivateV238=null;
+    if(deactivate)deactivate({restoreFocus:false});else dialog.remove();
   }
   async function saveReward(archive){
     const customerName=$('rwCustomerName').value.trim();
@@ -16211,6 +16245,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      The ONE tier form node is moved into a dialog and moved back on close, so every wired
      handler and the perk_note source of truth stay untouched — this is a viewport change,
      not a second editor. */
+  /* V286: see openRewardDialogV238 — the deactivator outlives open and is spent by close. */
+  let tierDialogDeactivateV236=null;
   function openTierDialogV236(title,opener){
     const form=$('trFormV235');
     if(!form||document.getElementById('tierDialogV236'))return;
@@ -16232,8 +16268,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       closeTierDialogV236(true);opener?.focus?.()};
     dialog.querySelector('#tierDialogCloseV236').onclick=close;
     dialog.onclick=e=>{if(e.target===dialog)close()};
-    dialog.onkeydown=e=>{if(e.key==='Escape')close()};
-    $('trName')?.focus({preventScroll:true});
+    /* V286: activateDialog owns Escape, the focus trap and the Android Back entry. Back used to
+       pop the previous hash and route a different page while this editor kept floating over it
+       — and then fired the unsaved-changes confirm() over that unrelated page. */
+    tierDialogDeactivateV236=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#trName'});
   }
   function closeTierDialogV236(restore){
     const dialog=document.getElementById('tierDialogV236');if(!dialog)return;
@@ -16243,7 +16281,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       home.after(form);form.hidden=true;
       const toggle=$('trFormToggleV235');if(toggle)toggle.setAttribute('aria-expanded','false');
     }
-    dialog.remove();
+    /* The form node goes home BEFORE the deactivator removes the dialog. */
+    const deactivate=tierDialogDeactivateV236;tierDialogDeactivateV236=null;
+    if(deactivate)deactivate({restoreFocus:false});else dialog.remove();
   }
   ['trName','trTh','trMul','trFrom','trUntil'].forEach(id=>{
     const field=$(id);if(field)field.addEventListener('input',markTierDirtyV237);

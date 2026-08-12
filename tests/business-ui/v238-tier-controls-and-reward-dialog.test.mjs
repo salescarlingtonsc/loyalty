@@ -140,7 +140,9 @@ test('(d) Edit reward opens a dialog that MOVES the one editor node', () => {
 
   // Three close paths, all returning focus to whatever opened the dialog.
   assert.match(open, /if\(e\.target===dialog\)close\(\)/, 'backdrop');
-  assert.match(open, /if\(e\.key==='Escape'\)close\(\)/, 'Escape');
+  /* V286: Escape (and the focus trap, and Android Back) now come from the shared helper
+     instead of a hand-rolled dialog.onkeydown. */
+  assert.match(open, /CUI\.activateDialog\(dialog,\{onClose:close,initialFocus:'#rwCustomerName'\}\)/, 'Escape');
   assert.match(open, /const done=\$\('rwClose'\);if\(done\)done\.onclick=close;/, 'the editor\'s own Done button');
   assert.match(open, /const close=\(\)=>\{closeRewardDialogV238\(true\);opener\?\.focus\?\.\(\)\}/);
 
