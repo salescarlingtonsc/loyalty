@@ -1738,6 +1738,12 @@
       "version": "20260812000900",
       "name": "nestly_v290_customer_withdraw_booking_request",
       "sourcePath": "db/migrations/20260812_nestly_v290_customer_withdraw_booking_request.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812001000",
+      "name": "nestly_v290_server_debt_closure",
+      "sourcePath": "db/migrations/20260812_nestly_v290_server_debt_closure.sql"
     }
   ]
 }

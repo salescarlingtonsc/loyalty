@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="f50a8d311aaf71f6f4146a73e3ce51f73bd5709adabd6fa3372b8b41c30e2d63"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ba469fb9eb51a554ec217da5afff0850be3346782c2892ca2887d328f2718d57"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1409,6 +1409,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-first-quest-copy{padding:clamp(24px,6vw,48px);text-align:center}.customer-first-quest-icon{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(145deg,var(--coral),#f58c55);color:#fff;box-shadow:0 16px 34px rgba(194,65,53,.25)}
 .customer-first-quest h1{font-size:clamp(1.9rem,7vw,3rem);overflow-wrap:anywhere;word-break:break-word}.customer-first-quest p{max-width:520px;margin:10px auto 0;line-height:1.6}
 .customer-first-quest .btn{margin-top:22px;min-height:54px;padding-inline:24px;font-size:16px}
+/* v286: the same quest card reused as Home's "everything is empty" next action — it sits BELOW
+   the offers shelf rather than being the whole screen, so it reads one step quieter. */
+.customer-home-empty-action .customer-first-quest-copy{padding:clamp(20px,5vw,32px)}
+.customer-home-empty-action h2{font-size:clamp(1.3rem,4.5vw,1.7rem);overflow-wrap:anywhere}
+.customer-home-empty-action .customer-first-quest-icon{width:60px;height:60px;margin-bottom:14px;border-radius:20px}
 .customer-quest-kicker{color:var(--coral);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .customer-scan-modal .modal-card{width:min(520px,calc(100vw - 24px))}
 .customer-programme-switcher{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
@@ -1523,6 +1528,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-identity .customer-programme-compact-copy{display:block}
 .customer-programme-identity b{display:block;font-size:clamp(1.15rem,3.6vw,1.5rem);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .customer-programme-identity-hint{color:var(--coral)!important;font-weight:600}
+/* v286 (audit: the mobile header lost its only affordance). Hiding this hint at 560px left the
+   row as a logo plus a name — no chevron, no tier, nothing saying the header opens the company
+   sheet with the address and phone the v194/v195 owner annotation asked for. The long wording
+   is what does not fit at 390px, not the affordance, so the short label and the tier stay. */
+.customer-programme-identity-hint-short{display:none}
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
@@ -1559,7 +1569,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    flow it pushed the label down and made that tab taller than its neighbours. */
 .customer-nav-count{position:absolute;top:4px;right:8px;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--coral);color:#fff;font-size:10.5px;font-weight:700;line-height:1}
 .customer-primary-nav a[aria-current="page"] .customer-nav-count{background:var(--coral)}
-@media(max-width:560px){.customer-programme-identity-hint{display:none}.customer-tier-milestone b{font-size:9.5px}}
+@media(max-width:560px){.customer-programme-identity-hint-long{display:none}.customer-programme-identity-hint-short{display:inline}.customer-tier-milestone b{font-size:9.5px}}
 .customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
 .customer-programme-compact-copy{min-width:0;flex:1}.customer-programme-compact-copy h1{font-size:clamp(1.25rem,4vw,1.7rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-programme-compact-copy p{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -1720,7 +1730,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
 .redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
 .scanner-video{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#17161a}
-.scanner-frame{position:relative;margin-top:14px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
+/* v286 (audit): the ::after spotlight spreads a 999px shadow; with no clip it escaped the frame
+   and washed the sheet's title, live status line and fallback button in 20% black. */
+.scanner-frame{position:relative;margin-top:14px;overflow:hidden;border-radius:16px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
 .scanner-fallback{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
 .checkrow{display:flex;align-items:flex-start;gap:12px;min-height:48px;margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;color:var(--ink);cursor:pointer}
 .checkrow input[type="checkbox"]{width:22px;min-width:22px;min-height:22px;margin-top:1px;accent-color:var(--coral)}
@@ -1865,7 +1877,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · f50a8d311aaf71f6f4146a73e3ce51f73bd5709adabd6fa3372b8b41c30e2d63</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · ba469fb9eb51a554ec217da5afff0850be3346782c2892ca2887d328f2718d57</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2598,7 +2610,11 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        people — is what still holds. */
     inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
   };
-  let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
+  /* V288: seeded from the branch the top bar is ALREADY showing. It used to start at null, and
+     the Today-schedule glance below is fetched at first paint from this value — so a workspace
+     scoped to one branch opened on a business-wide schedule count, then quietly shrank the first
+     time the owner touched a day tab. The first number on the page must be the scoped one. */
+  let appliedDashboardScopeV141={from:d30,to:today,branchId:selectedBranchId||null,branchName:'All permitted branches'};
   /* V287: openDashboardMetricDetailV141 lived here. V225 turned every KPI tile into a direct
      link to its report ("once clicked, straight away go to sales"), which left this modal
      reachable only through an `else` branch that required a metric definition WITHOUT a route —
@@ -2712,13 +2728,22 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
+    const previousScheduleBranchV288=appliedDashboardScopeV141.branchId;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
+    /* V288: nothing re-invoked the schedule loader after the real branch was resolved, so the
+       glance kept whatever scope first paint guessed until a day tab was pressed. Re-fetch only
+       when the resolved branch actually differs, and keep the day currently on screen. */
+    if(previousScheduleBranchV288!==appliedDashboardScopeV141.branchId){
+      loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,scheduleDateInputV252?.value||null);
+    }
     /* V266: the period is written from the range the RPC was actually answered for, next to the
        numbers, so the Today-schedule date above can never be mistaken for the driver. */
     const performancePeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
     if(performancePeriod)performancePeriod.textContent=workspaceTemplateTextV97('performancePeriodRange',{from:dashboardScheduleDayLabelV252(from),to:dashboardScheduleDayLabelV252(to)});
     if(!kpis||!charts)return;
-    status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
+    /* V288: the banner used to watch the 30–59 read only, so a lone 60+ failure had no retry
+       anywhere on the page — the count it feeds simply went quiet. Both reads share one retry. */
+    status.innerHTML=customerMetricsAvailable&&(inactiveResponse.error||inactive60Response.error)?`<div class="err" role="status">Inactive customer counts could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const previousSummary=previousResponse.error?null:previousResponse.data;
     const revenueChange=percentageChangeV153(d.revenue_cents,previousSummary?.revenue_cents);
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
@@ -2751,6 +2776,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       const route=dashboardMetricDefinitionsV141[key]?.route;
+      /* V288: the pending drill now carries the BUCKET KEY the destination understands, not a
+         day number the Customers page had to re-guess. The tile counts 30–59 (V287), so it
+         asks for 30–59; Merchant insights counts 60+, so it asks for 60+. */
+      if(key==='inactive')pendingCustomerInactivity='30_59';
       if(key==='inactive')pendingCustomerInactivity='all_inactive';
       if(route)nav(route);
     });
@@ -2778,9 +2807,13 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       loyalty.setAttribute('aria-busy','false');
     }
     if(insights){
-      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
+      /* V288: a FAILED 60+ read used to be substituted with a literal 0, which the business-health
+         row then printed as "0 inactive 60+ days · Stable" — the most reassuring sentence on the
+         page, produced by the absence of an answer. null travels instead, and every reader below
+         states that it could not be read. */
+      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?null:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
       insights.setAttribute('aria-busy','false');
-      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=Number(link.dataset.insightInactive)||60}));
+      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=link.dataset.insightInactive||'60_plus'}));
       /* V214: the quiet-branch card offers a way back out of the branch it is scoped to,
          so the owner can see immediately that the business as a whole is not quiet. */
       insights.querySelectorAll('[data-insight-scope-all-v214]').forEach(button=>button.addEventListener('click',()=>{
@@ -4737,7 +4770,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'f50a8d311aaf71f6f4146a73e3ce51f73bd5709adabd6fa3372b8b41c30e2d63',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'ba469fb9eb51a554ec217da5afff0850be3346782c2892ca2887d328f2718d57',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

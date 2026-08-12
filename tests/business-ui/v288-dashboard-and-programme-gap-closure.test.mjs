@@ -62,7 +62,8 @@ test('V288 the Customers page can actually show the 60+ audience', () => {
   // and staff_list_customers_v155 is still only asked for the four buckets it supports.
   assert.match(customers, /if\(bucket==='60_plus'\)return !never&&days>=60;/);
   assert.match(customers, /const pendingInactiveBucketV288=key=>\{/);
-  assert.match(customers, /if\(\['30_59','60_89','60_plus','90_plus','never'\]\.includes\(raw\)\)return raw;/);
+  /* V290 extends the resolver with 'all_inactive'; the guarantee (named buckets pass through) holds. */
+  assert.match(app, /if\(\['30_59','60_89','60_plus','90_plus','never','all_inactive'\]\.includes\(raw\)\)return raw;/)
   // Visible in the filter control, so it can be seen and cleared.
   assert.match(app, /<option value="60_plus">Inactive 60\+ days<\/option>/);
   // And nameable as an audience for export / campaign prep.

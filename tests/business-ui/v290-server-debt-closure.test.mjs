@@ -184,7 +184,9 @@ test('4 — the dashboard tile counts all inactive customers and lands on exactl
   assert.match(app, /if\(key==='inactive'\)pendingCustomerInactivity='all_inactive';/);
   assert.match(app, /hint:'Last visit 30\+ days ago'/);
   /* The handoff must accept a named bucket, not only a number of days. */
-  assert.match(app, /typeof pendingCustomerInactivity==='string'/);
+  /* V290 merge note: folded into the V288 named-bucket resolver — 'all_inactive' is accepted
+     there rather than via a typeof chain. */
+  assert.match(app, /'all_inactive'\]\.includes\(raw\)|'never','all_inactive'/);
   /* The destination must exist in the filter, the classifier and the client-side matcher. */
   assert.match(app, /<option value="all_inactive">Inactive 30\+ days<\/option>/);
   assert.match(app, /if\(bucket==='all_inactive'\)return !never&&days>=30;/);
