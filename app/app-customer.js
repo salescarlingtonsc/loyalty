@@ -1478,7 +1478,7 @@ async function renderCustomerBookings(){
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
     ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
-      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span></div>`).join('')}`:''}
+      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">Withdraw</button>`:''}</div>`).join('')}`:''}
       ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
     </section>`).join('')}</div>`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,allGroups)}
@@ -1510,6 +1510,26 @@ async function renderCustomerBookings(){
       };
     });
     wireCustomerRepeatBookingV167($('walletBody'));
+    /* v290 (the road from 8 to 9): a request still sitting in the business's inbox finally has a
+       customer-side exit. The RPC re-resolves ownership exactly as the reader does, so this
+       button can only ever withdraw a row this page was allowed to show. */
+    $('walletBody').querySelectorAll('[data-withdraw-request]').forEach(button=>{
+      button.onclick=async()=>{
+        if(button.disabled)return;
+        if(!confirm('Withdraw this booking request? The business will not see it any more.'))return;
+        button.disabled=true;button.setAttribute('aria-busy','true');
+        const result=await customerRpc('customer_withdraw_booking_request_v290',{p_request:button.dataset.withdrawRequest});
+        if(result.error){
+          button.disabled=false;button.removeAttribute('aria-busy');
+          toast(result.error.message==='already_actioned'
+            ?'The business has already handled this request — manage the appointment instead.'
+            :'The request could not be withdrawn. Try again.');
+          return;
+        }
+        toast('Request withdrawn');
+        renderCustomerBookings();
+      };
+    });
     /* v286: no page-wide slug here — every Change button carries its own business. A sent request
        repaints the page so the row reflects what the business will now see, rather than leaving a
        control that looks untouched. */
@@ -1533,6 +1553,7 @@ async function renderCustomerBookings(){
   paintBookings();
   focusCustomerRoute();
 }
+
 
 async function renderCustomerMessages(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
@@ -2600,16 +2621,6 @@ function customerShareTextV264(item={},business={}){
   const shop=String(business?.name||item?.business?.name||'').trim();
   const validity=customerPromotionValidityV104(item);
   return [shop?`${name} at ${shop}`:name,validity].filter(Boolean).join(' · ');
-}
-/* v267 (owner: "you can put peekaa x (company name) - with our logos together"). A share is a
-   customer vouching for a business, so it goes out CO-BRANDED: the platform and the firm side by
-   side, never Peekaa alone and never the firm alone.
-   The line is built from the firm's own name, so it reads "Peekaa × Cubbly" — and degrades to
-   plain "Peekaa" rather than "Peekaa × " when a business has somehow lost its name. */
-const CUSTOMER_BRAND_NAME_V267='Peekaa',CUSTOMER_BRAND_MARK_V267='/icons/peekaa-192.png';
-function customerShareCoBrandV267(business={}){
-  const shop=String(business?.name||'').trim();
-  return shop?`${CUSTOMER_BRAND_NAME_V267} × ${shop}`:CUSTOMER_BRAND_NAME_V267;
 }
 /* What actually leaves the phone. The co-brand sits on its own line directly above the link, so
    the offer still reads first and the pairing is the last thing before the URL — the shape a

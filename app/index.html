@@ -1952,7 +1952,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=1ca67717cec0","business":"/app-business.js?b=d3b27801a041","i18n":"/app-i18n.js?b=232400221146"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=49781d15ae25","business":"/app-business.js?b=d3b27801a041","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -1968,7 +1968,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   var hash=location.hash.split('?')[0];
   if(hash.indexOf('#/platform')===0)return;
   var manifest=JSON.parse(document.getElementById('appSurfaceChunks').textContent);
-  var customer=['#/b/','#/customer/','#/wallet','#/claim','#/join'].some(function(prefix){
+  var customer=['#/b/','#/customer/','#/wallet','#/claim','#/join','#/offer/'].some(function(prefix){
     return hash===prefix.replace(/\/$/,'')||hash.indexOf(prefix)===0;
   })||hash===''||hash==='#/';
   var link=document.createElement('link');
@@ -1976,6 +1976,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=2cdf79f20fe0" defer></script>
+<script src="/app-core.js?b=264bfc935278" defer></script>
 </body>
 </html>

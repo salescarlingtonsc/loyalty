@@ -2006,7 +2006,7 @@ function loadAppChunkV185(name){
    route and downloaded the customer chunk instead of the workspace one. '#/customer/' plus the
    matcher's own exact-equality branch covers '#/customer', '#/customer?…' and '#/customer/…'
    exactly as before, and nothing else. The inline preloader in index.html mirrors this list. */
-const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join'];
+const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join','#/offer/'];
 function appSurfaceForRouteV185(hash,{signedIn=false}={}){
   const route=String(hash||'').split('?')[0];
   if(route.startsWith('#/platform'))return null;
@@ -2170,6 +2170,11 @@ async function route(){
     }
     if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
     if(h==='#/'||h==='#/customer'||h==='#/customer/register'||h.startsWith('#/customer?')) return renderCustomerRegistration(isRouteCurrent);
+    /* v290 (the road from 8 to 9): a shared offer's in-app landing. Placed BEFORE the
+       signed-out guard because the recipient of a shared link is usually a STRANGER — the
+       landing resolves the offer anonymously and forwards a signed-out visitor straight to the
+       business's public page, never to a sign-in wall. */
+    if(h.startsWith('#/offer/'))return renderCustomerOfferLandingV290(decodeURIComponent(h.slice(8).split('?')[0]));
     const directCustomerDestination=normalizeCustomerDestination(h);
     if(!S.user&&directCustomerDestination){
       rememberPendingCustomerDestination(directCustomerDestination);
@@ -4292,7 +4297,7 @@ async function renderCustomerBookings(){
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
     ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
-      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span></div>`).join('')}`:''}
+      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">Withdraw</button>`:''}</div>`).join('')}`:''}
       ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
     </section>`).join('')}</div>`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,allGroups)}
@@ -4324,6 +4329,26 @@ async function renderCustomerBookings(){
       };
     });
     wireCustomerRepeatBookingV167($('walletBody'));
+    /* v290 (the road from 8 to 9): a request still sitting in the business's inbox finally has a
+       customer-side exit. The RPC re-resolves ownership exactly as the reader does, so this
+       button can only ever withdraw a row this page was allowed to show. */
+    $('walletBody').querySelectorAll('[data-withdraw-request]').forEach(button=>{
+      button.onclick=async()=>{
+        if(button.disabled)return;
+        if(!confirm('Withdraw this booking request? The business will not see it any more.'))return;
+        button.disabled=true;button.setAttribute('aria-busy','true');
+        const result=await customerRpc('customer_withdraw_booking_request_v290',{p_request:button.dataset.withdrawRequest});
+        if(result.error){
+          button.disabled=false;button.removeAttribute('aria-busy');
+          toast(result.error.message==='already_actioned'
+            ?'The business has already handled this request — manage the appointment instead.'
+            :'The request could not be withdrawn. Try again.');
+          return;
+        }
+        toast('Request withdrawn');
+        renderCustomerBookings();
+      };
+    });
     /* v286: no page-wide slug here — every Change button carries its own business. A sent request
        repaints the page so the row reflects what the business will now see, rather than leaving a
        control that looks untouched. */
@@ -4345,6 +4370,75 @@ async function renderCustomerBookings(){
     };
   };
   paintBookings();
+  focusCustomerRoute();
+}
+
+
+/* v290 (owner: "build the road from 8 to 9") — the in-app landing for a shared offer.
+   The /o/ share page hands humans to #/offer/<id>. Three honest outcomes:
+     * a STRANGER (signed out) is forwarded to the business's public page — the same place the
+       old link went — after one anonymous read; never a sign-in wall;
+     * a signed-in customer sees the offer itself — artwork uncropped, the Peekaa × firm
+       pairing, validity with LIVE state (ends today / N days left / ended) — and one CTA that
+       knows whether they are linked: their own rewards page when they are, the business's
+       public page when they are not;
+     * a dead or unknown offer says so and offers Home, because a shared link outlives the
+       offer it carried. */
+function customerOfferLandingStateV290(endsAt,now=new Date()){
+  const ends=new Date(endsAt||'');
+  if(Number.isNaN(ends.getTime()))return '';
+  if(ends.getTime()<now.getTime())return 'Ended';
+  /* Calendar days in SGT — every date on the customer surface is Singapore time, and an offer
+     ending at 23:59 tonight "ends today", not "tomorrow" because 24 hours have not elapsed. */
+  const sgDay=at=>Math.floor((at.getTime()+8*3600000)/86400000);
+  const days=sgDay(ends)-sgDay(now);
+  if(days<=0)return 'Ends today';
+  return days===1?'Ends tomorrow':`${days} days left`;
+}
+async function renderCustomerOfferLandingV290(offerId){
+  const id=String(offerId||'').trim().toLowerCase();
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id))return nav('#/wallet');
+  if(!S.user){
+    const {data}=await customerRpc('offer_share_page_v268',{p_offer:id});
+    const slug=String(data?.business_slug||'').trim();
+    return nav(slug?`#/b/${encodeURIComponent(slug)}`:'#/wallet');
+  }
+  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
+  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
+  renderCustomerShell({active:'home',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,
+    messagesAvailable:context.features.customer_in_app_inbox===true,
+    body:CUI.loadingState({title:'Offer',iconName:'loyalty'})});
+  const [offerResult,programmesResult]=await Promise.all([
+    customerRpc('offer_share_page_v268',{p_offer:id}),
+    customerRpc('customer_list_programmes_v89')
+  ]);
+  if(!isCurrent())return;
+  const offer=offerResult.error?null:offerResult.data;
+  if(!offer){
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>This offer has ended</h1><p class="muted">The link you followed is for an offer that is no longer running.</p></div></header>
+      <section class="card"><p class="muted small">Businesses you join keep their current offers on your Home.</p><a class="btn" href="#/wallet" style="margin-top:14px">Open Home</a></section>`;
+    focusCustomerRoute();return;
+  }
+  const slug=String(offer.business_slug||'').trim();
+  const linked=(Array.isArray(programmesResult.data?.programmes)?programmesResult.data.programmes
+    :Array.isArray(programmesResult.data)?programmesResult.data:[])
+    .some(programme=>String(programme?.business?.slug||programme?.business_slug||'')===slug);
+  const artwork=customerMediaUrlV95(offer.image_url),
+    validity=customerPromotionValidityV104({starts_at:offer.starts_at,ends_at:offer.ends_at}),
+    liveState=customerOfferLandingStateV290(offer.ends_at);
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">Shared offer</p><h1 data-merchant-content>${esc(offer.name||'Offer')}</h1><p class="muted">${esc(customerShareCoBrandV267({name:offer.business_name}))}</p></div></header>
+    <section class="card customer-offer-landing-v290">
+      ${artwork?`<div class="customer-promotion-card-media"><img src="${esc(artwork)}" alt="${esc(offer.image_alt||offer.name||'Offer')}" loading="eager" style="object-fit:contain"></div>`:''}
+      ${offer.tagline?`<p data-merchant-content style="margin-top:12px">${esc(offer.tagline)}</p>`:''}
+      ${offer.description&&offer.description!==offer.tagline?`<p class="muted small" data-merchant-content style="margin-top:8px">${esc(offer.description)}</p>`:''}
+      <p class="muted small" style="margin-top:12px">${esc([validity,liveState].filter(Boolean).join(' · '))}</p>
+      <div class="row" style="margin-top:16px">
+        ${linked?`<a class="btn" href="#/wallet/${encodeURIComponent(slug)}">Open ${esc(offer.business_name||'business')} rewards</a>`
+          :slug?`<a class="btn" href="#/b/${encodeURIComponent(slug)}">${esc(`View ${offer.business_name||'the business'}`)}</a>`:''}
+        <a class="btn ghost sm" href="#/wallet">Home</a>
+      </div>
+      ${linked?'':`<p class="muted small" style="margin-top:12px">${esc(ct('qrOnlyHelp'))}</p>`}
+    </section>`;
   focusCustomerRoute();
 }
 

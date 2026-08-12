@@ -1012,7 +1012,7 @@ function loadAppChunkV185(name){
    route and downloaded the customer chunk instead of the workspace one. '#/customer/' plus the
    matcher's own exact-equality branch covers '#/customer', '#/customer?…' and '#/customer/…'
    exactly as before, and nothing else. The inline preloader in index.html mirrors this list. */
-const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join'];
+const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join','#/offer/'];
 function appSurfaceForRouteV185(hash,{signedIn=false}={}){
   const route=String(hash||'').split('?')[0];
   if(route.startsWith('#/platform'))return null;
@@ -1165,6 +1165,11 @@ async function route(){
     }
     if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
     if(h==='#/'||h==='#/customer'||h==='#/customer/register'||h.startsWith('#/customer?')) return renderCustomerRegistration(isRouteCurrent);
+    /* v290 (the road from 8 to 9): a shared offer's in-app landing. Placed BEFORE the
+       signed-out guard because the recipient of a shared link is usually a STRANGER — the
+       landing resolves the offer anonymously and forwards a signed-out visitor straight to the
+       business's public page, never to a sign-in wall. */
+    if(h.startsWith('#/offer/'))return renderCustomerOfferLandingV290(decodeURIComponent(h.slice(8).split('?')[0]));
     const directCustomerDestination=normalizeCustomerDestination(h);
     if(!S.user&&directCustomerDestination){
       rememberPendingCustomerDestination(directCustomerDestination);
@@ -2095,6 +2100,74 @@ async function renderCustomerExplore(){
   run('');
   focusCustomerRoute();
 }
+/* v290 (owner: "build the road from 8 to 9") — the in-app landing for a shared offer.
+   The /o/ share page hands humans to #/offer/<id>. Three honest outcomes:
+     * a STRANGER (signed out) is forwarded to the business's public page — the same place the
+       old link went — after one anonymous read; never a sign-in wall;
+     * a signed-in customer sees the offer itself — artwork uncropped, the Peekaa × firm
+       pairing, validity with LIVE state (ends today / N days left / ended) — and one CTA that
+       knows whether they are linked: their own rewards page when they are, the business's
+       public page when they are not;
+     * a dead or unknown offer says so and offers Home, because a shared link outlives the
+       offer it carried. */
+function customerOfferLandingStateV290(endsAt,now=new Date()){
+  const ends=new Date(endsAt||'');
+  if(Number.isNaN(ends.getTime()))return '';
+  if(ends.getTime()<now.getTime())return 'Ended';
+  /* Calendar days in SGT — every date on the customer surface is Singapore time, and an offer
+     ending at 23:59 tonight "ends today", not "tomorrow" because 24 hours have not elapsed. */
+  const sgDay=at=>Math.floor((at.getTime()+8*3600000)/86400000);
+  const days=sgDay(ends)-sgDay(now);
+  if(days<=0)return 'Ends today';
+  return days===1?'Ends tomorrow':`${days} days left`;
+}
+async function renderCustomerOfferLandingV290(offerId){
+  const id=String(offerId||'').trim().toLowerCase();
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id))return nav('#/wallet');
+  if(!S.user){
+    const {data}=await customerRpc('offer_share_page_v268',{p_offer:id});
+    const slug=String(data?.business_slug||'').trim();
+    return nav(slug?`#/b/${encodeURIComponent(slug)}`:'#/wallet');
+  }
+  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
+  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
+  renderCustomerShell({active:'home',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,
+    messagesAvailable:context.features.customer_in_app_inbox===true,
+    body:CUI.loadingState({title:'Offer',iconName:'loyalty'})});
+  const [offerResult,programmesResult]=await Promise.all([
+    customerRpc('offer_share_page_v268',{p_offer:id}),
+    customerRpc('customer_list_programmes_v89')
+  ]);
+  if(!isCurrent())return;
+  const offer=offerResult.error?null:offerResult.data;
+  if(!offer){
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>This offer has ended</h1><p class="muted">The link you followed is for an offer that is no longer running.</p></div></header>
+      <section class="card"><p class="muted small">Businesses you join keep their current offers on your Home.</p><a class="btn" href="#/wallet" style="margin-top:14px">Open Home</a></section>`;
+    focusCustomerRoute();return;
+  }
+  const slug=String(offer.business_slug||'').trim();
+  const linked=(Array.isArray(programmesResult.data?.programmes)?programmesResult.data.programmes
+    :Array.isArray(programmesResult.data)?programmesResult.data:[])
+    .some(programme=>String(programme?.business?.slug||programme?.business_slug||'')===slug);
+  const artwork=customerMediaUrlV95(offer.image_url),
+    validity=customerPromotionValidityV104({starts_at:offer.starts_at,ends_at:offer.ends_at}),
+    liveState=customerOfferLandingStateV290(offer.ends_at);
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">Shared offer</p><h1 data-merchant-content>${esc(offer.name||'Offer')}</h1><p class="muted">${esc(customerShareCoBrandV267({name:offer.business_name}))}</p></div></header>
+    <section class="card customer-offer-landing-v290">
+      ${artwork?`<div class="customer-promotion-card-media"><img src="${esc(artwork)}" alt="${esc(offer.image_alt||offer.name||'Offer')}" loading="eager" style="object-fit:contain"></div>`:''}
+      ${offer.tagline?`<p data-merchant-content style="margin-top:12px">${esc(offer.tagline)}</p>`:''}
+      ${offer.description&&offer.description!==offer.tagline?`<p class="muted small" data-merchant-content style="margin-top:8px">${esc(offer.description)}</p>`:''}
+      <p class="muted small" style="margin-top:12px">${esc([validity,liveState].filter(Boolean).join(' · '))}</p>
+      <div class="row" style="margin-top:16px">
+        ${linked?`<a class="btn" href="#/wallet/${encodeURIComponent(slug)}">Open ${esc(offer.business_name||'business')} rewards</a>`
+          :slug?`<a class="btn" href="#/b/${encodeURIComponent(slug)}">${esc(`View ${offer.business_name||'the business'}`)}</a>`:''}
+        <a class="btn ghost sm" href="#/wallet">Home</a>
+      </div>
+      ${linked?'':`<p class="muted small" style="margin-top:12px">${esc(ct('qrOnlyHelp'))}</p>`}
+    </section>`;
+  focusCustomerRoute();
+}
+
 function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
   setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
@@ -2178,6 +2251,16 @@ function customerPromotionValidityV104(item={}){
   if(starts&&ends)return `Valid ${starts} – ${ends}`;
   if(ends)return `Valid until ${ends}`;
   return starts?`Valid from ${starts}`:'';
+}
+/* v267 (owner: "you can put peekaa x (company name) - with our logos together"). A share is a
+   customer vouching for a business, so it goes out CO-BRANDED: the platform and the firm side by
+   side, never Peekaa alone and never the firm alone.
+   The line is built from the firm's own name, so it reads "Peekaa × Cubbly" — and degrades to
+   plain "Peekaa" rather than "Peekaa × " when a business has somehow lost its name. */
+const CUSTOMER_BRAND_NAME_V267='Peekaa',CUSTOMER_BRAND_MARK_V267='/icons/peekaa-192.png';
+function customerShareCoBrandV267(business={}){
+  const shop=String(business?.name||'').trim();
+  return shop?`${CUSTOMER_BRAND_NAME_V267} × ${shop}`:CUSTOMER_BRAND_NAME_V267;
 }
 function customerShareButtonMarkupV264(offerId,{small=true}={}){
   return `<button class="btn ghost${small?' sm':''} customer-share-button" type="button" data-share-offer="${esc(offerId||'')}" aria-label="Share this offer">${CUI.icon('share',{size:16})}<span>Share</span></button>`;

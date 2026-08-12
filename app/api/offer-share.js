@@ -94,7 +94,10 @@ function renderPage(offer) {
   const logo = absoluteMediaUrl(offer.business_logo_url);
   /* v274 put a marketing landing on "/" (edge middleware) with a script that forwards hash
    * routes to /app. Linking /app directly skips that bounce — one hop, not two. */
-  const appUrl = `${CANONICAL_ORIGIN}/app#/b/${encodeURIComponent(String(offer.business_slug || ''))}`;
+  /* v290: the button lands on the app's own offer page (#/offer/<id>), which shows THIS offer
+   * and then routes by who arrived — a linked customer to their rewards, a stranger straight on
+   * to the business's public page with no sign-in wall. */
+  const appUrl = `${CANONICAL_ORIGIN}/app#/offer/${encodeURIComponent(String(offer.offer_id || ''))}`;
   const pageUrl = `${CANONICAL_ORIGIN}/o/${encodeURIComponent(String(offer.offer_id || ''))}`;
 
   return `<!DOCTYPE html>

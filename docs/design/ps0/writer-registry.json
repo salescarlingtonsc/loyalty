@@ -1997,6 +1997,24 @@
    "rows_written": "(delegates) customer in-app inbox projection rows for the signed-in customer only; the RPC derives the customer from auth.uid() and takes no arguments",
    "kernel_migratability": "unaffected - a projection refresh, not an economic write; nothing for the kernel to own",
    "call_site_finding": "OK - zero-argument call; v286 routed it through customerRpc (12s abort) which is what made the literal name discoverable. The call itself is unchanged since v177."
+  },
+  {
+   "id": "browser.rpc:app/app.js:customer_withdraw_booking_request_v290",
+   "surface": "browser_rpc_binding",
+   "rpc": "customer_withdraw_booking_request_v290",
+   "resolves_to": "customer_withdraw_booking_request_v290/1",
+   "rows_written": "public.booking_requests — one status flip to 'cancelled' on a row the caller owns (verified customer link + management token bound to auth.uid()); only new/pending/waitlisted rows with no appointment can move",
+   "kernel_migratability": "unaffected - a request lifecycle write, pre-economic; no ledger, no sale, nothing for the kernel to own",
+   "call_site_finding": "OK - the browser supplies only the request id; ownership, state and the status transition are all resolved server-side, and a replay returns success without a second write."
+  },
+  {
+   "id": "browser.rpc:app/app.js:offer_share_page_v268",
+   "surface": "browser_rpc_binding",
+   "rpc": "offer_share_page_v268",
+   "resolves_to": "offer_share_page_v268/1 (STABLE, read-only)",
+   "rows_written": "none - a read of broadcast marketing content; declared here only because the registry inventories every browser rpc binding",
+   "kernel_migratability": "unaffected - reads only",
+   "call_site_finding": "OK - primary-key lookup of customer-visible offer content; deliberately anon-callable for the /o/ share page's crawler, and the v290 in-app landing reuses the same read."
   }
  ],
  "allowlist": [
