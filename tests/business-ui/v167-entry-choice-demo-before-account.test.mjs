@@ -36,7 +36,11 @@ test('V167 demo path is no-account consultant contact only', () => {
   assert.match(demo, /Demo request only/);
   assert.match(demo, /Peekaa consultants will contact you/);
   assert.match(demo, /No owner account, workspace, login, Stripe Checkout, or Super Admin approval is created/);
-  assert.match(demo, /mailto:admin\.peekaa@gmail\.com/);
+  /* v292 replaced the mailto with a RECORDED demo request (submit_demo_request_v292) — a
+     consultant follows up from the record instead of hoping an email client opens. The
+     invariant this test guards is unchanged and pinned below: no account, no workspace, no
+     checkout is created. */
+  assert.match(demo, /sb\.rpc\('submit_demo_request_v292'/);
   assert.match(demo, /demoContactName/);
   assert.match(demo, /demoBusinessName/);
   assert.match(demo, /demoContactEmail/);

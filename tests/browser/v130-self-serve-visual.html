@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="dc073f8296d550575b7f03de36172a74e4ccdc167fc294972ebc7de6fab0042a"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="bff27ed0ebe8ab8ca1053b5f58cc8098e4962795214c5d1be6788dc0f9d91c07"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1431,11 +1431,24 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 @keyframes customer-reward-pop{0%{transform:scale(.96);opacity:.65}70%{transform:scale(1.015)}100%{transform:scale(1);opacity:1}}
 .customer-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .customer-booking-filter{display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
-.customer-booking-filter input[type="date"]{min-height:44px;min-width:0;padding:0 2px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
+.customer-booking-filter input[type="date"]{min-height:44px;min-width:0;width:auto;flex:1 1 0;max-width:126px;padding:0 2px;border:0;background:none;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 .customer-booking-filter input[type="date"]:focus{outline:none}
 .customer-booking-filter>span[aria-hidden]{color:var(--muted)}
-@media(max-width:520px){.customer-booking-filter{flex-wrap:wrap;border-radius:16px;padding:6px 10px}}
+/* v291 (owner: "why the big chunk of box takes up so much space, please reduce it to one
+   liner"): the filter never wraps — on a phone it takes its own full-width row under the title
+   but stays one 44px line: icon · from – to · Clear. */
+@media(max-width:520px){.customer-page-head{flex-wrap:wrap}.customer-booking-filter{width:100%;flex-wrap:nowrap;border-radius:999px;padding:0 10px}}
 .customer-booking-filter:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+/* v291 · the Book-with chooser: every joined business, sector-grouped once there is >1 sector */
+.customer-booking-chooser h2{font-size:1.05rem}
+.customer-booking-sector{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 0}
+.customer-booking-chips{display:flex;gap:10px;overflow-x:auto;padding:10px 2px 4px;-webkit-overflow-scrolling:touch}
+.customer-booking-chip{display:flex;align-items:center;gap:10px;flex:0 0 auto;min-height:56px;max-width:240px;padding:8px 14px 8px 8px;border:1px solid var(--control-border);border-radius:16px;background:var(--card);color:var(--ink);text-align:left}
+.customer-booking-chip:hover{border-color:var(--coral)}
+.customer-booking-chip-copy{display:flex;flex-direction:column;min-width:0}
+.customer-booking-chip-copy b{font-size:13.5px;overflow-wrap:anywhere}
+.customer-booking-chip--quiet{opacity:.82}
+.customer-booking-chip--quiet:hover{opacity:1}
 .customer-booking-logo{flex:none;width:40px;height:40px;border-radius:12px;object-fit:cover;background:var(--tint)}
 .customer-booking-logo--fallback{display:flex;align-items:center;justify-content:center;color:var(--coral);font-weight:700}
 
