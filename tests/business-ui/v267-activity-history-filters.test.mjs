@@ -35,12 +35,19 @@ const CUI = {
     `<div class="cui-empty" data-title="${esc(title)}"><h3>${esc(title)}</h3><p>${esc(body)}</p>${actionHtml}</div>`,
 };
 const campaignEntitlementDisplayV99 = (g) => ({ pending: g?.fulfillment_kind === 'campaign_pending', title: 'Campaign' });
+/* v281: the sort header's aria-label goes through the v97 reviewed-template mechanism; the
+   harness renders it exactly as production does (attribute + marker), resolved to English. */
+const workspaceTemplateAttributeV97 = (attribute, key, values = {}) => {
+  const en = { sortByAscending: 'Sort by {label}, ascending', sortByDescending: 'Sort by {label}, descending' }[key] || key;
+  const text = en.replace(/\{([a-z0-9_]+)\}/gi, (_, name) => String(values[name] ?? ''));
+  return `data-workspace-i18n ${attribute}="${esc(text)}"`;
+};
 
-const A = new Function('$', 'esc', 'money', 'sgt', 'sgIso', 'CUI', 'campaignEntitlementDisplayV99', `${activityModule}
+const A = new Function('$', 'esc', 'money', 'sgt', 'sgIso', 'CUI', 'campaignEntitlementDisplayV99', 'workspaceTemplateAttributeV97', `${activityModule}
   return {renderHistPage,activityFilteredRowsV267,activityFilterStateV267,activityTypeOfV267,
     activityAmountCentsV267,activityRangeBoundV267,activityItemTextV267,activityWhenTextV267,
     ACTIVITY_SORTS_V267,ACTIVITY_SORT_DEFAULT_V267,ACTIVITY_STAFF_NONE_V267};`)(
-  $, esc, money, sgt, sgIso, CUI, campaignEntitlementDisplayV99,
+  $, esc, money, sgt, sgIso, CUI, campaignEntitlementDisplayV99, workspaceTemplateAttributeV97,
 );
 
 function setFilters(values = {}) {

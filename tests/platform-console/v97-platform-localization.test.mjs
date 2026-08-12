@@ -285,8 +285,12 @@ test('all static platform interface metadata has real locale copy and no code-li
   const keys=[...new Set([...explicit,...metadata])];
   // Proper nouns and acronyms that are not translated. 'CRM' is the standard
   // term in Malay too, so an identity mapping is the correct copy, not a
-  // missing one.
-  const invariants=new Set(['WhatsApp','Platform','UEN','CRM']);
+  // missing one. V282 adds 'Status', for the same reason and no other: the
+  // Malay word IS "status", and the identity mapping at the ms dictionary has
+  // been correct since it was written. It only became visible now because v282
+  // is the first code to use 'Status' as a field LABEL rather than a table
+  // header, which is what pulls it into this inventory.
+  const invariants=new Set(['WhatsApp','Platform','UEN','CRM','Status']);
   for(const locale of ['zh-CN','ms']){
     api.setPlatformLocaleForTest(locale);
     for(const key of keys){
@@ -302,9 +306,9 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   const explicit=[...new Set([...source.matchAll(/\bpt\((['"])(.*?)\1/g)].map(match=>match[2]))];
   const metadata=[...new Set([...source.matchAll(/\b(?:title|subtitle|description|caption|label|hint|placeholder|body|message|actionLabel|submitLabel)\s*:\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
   const announcements=[...new Set([...source.matchAll(/\.announce\(\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
-  assert.equal(explicit.length,877,'update the audited explicit-copy inventory when adding runtime UI'); // V256
-  assert.equal(metadata.length,718,'update the audited CUI metadata inventory when adding UI metadata'); // V256
-  assert.equal(announcements.length,40,'update the audited static announcement inventory when adding announcements'); // V256
+  assert.equal(explicit.length,908,'update the audited explicit-copy inventory when adding runtime UI'); // V292
+  assert.equal(metadata.length,765,'update the audited CUI metadata inventory when adding UI metadata'); // V292
+  assert.equal(announcements.length,44,'update the audited static announcement inventory when adding announcements'); // V292
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
   const directErrorDisplays=[...source.matchAll(/error\??\.message/g)]

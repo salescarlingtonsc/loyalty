@@ -70,7 +70,10 @@ test('every signed-in persona is shown how to close the account, and can never d
   const onboarding=between(app,'function renderOnboard(){','function parseDelimited(');
   assertDeletionControl(between(onboarding,'root.innerHTML=`<main class="center-wrap"','const finishCheckout='),'onboarding initial load');
   assertDeletionControl(between(onboarding,'if(state.error||!state.data){','const onboarding=state.data.onboarding'),'onboarding load error');
-  assertDeletionControl(between(onboarding,"if(onboarding?.status==='payment_pending'){",'const plans='),'web payment pending');
+  /* V286: renderOnboard's payment-pending branch now delegates to the single
+     renderSelfServePaymentPendingV286 renderer (it was one of two drifted copies, and the other
+     was the reachable one). The deletion + privacy control follows the markup to its new home. */
+  assertDeletionControl(between(app,'function renderSelfServePaymentPendingV286(','function renderBusinessWorkspaceControl('),'web payment pending');
   assertDeletionControl(between(onboarding,'if(!annual||!monthly||!sectors.length){','const capacityOptions='),'unavailable subscription catalogue');
   assertDeletionControl(between(onboarding,'root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px','let slugEdited=false'),'active owner setup');
   assert.doesNotMatch(app,/auth\.admin\.deleteUser/);

@@ -8,8 +8,10 @@
  * what was shared. This function is the one server-rendered surface: it answers the crawler
  * with per-offer Open Graph tags (the offer's own artwork, "offer — Peekaa × firm", validity)
  * and answers a human with the same content plus a scripted hop into the business's page in
- * the app. Crawlers read the tags and stop; humans continue. That split needs no sniffing of
- * who is asking — it falls out of who executes script.
+ * the app. Crawlers read the tags and stop; a human reads the SAME page — it shows the offer in
+ * full and a "View this offer" button carries them on into the app. v281 audit removed the 1.2s
+ * auto-redirect: it yanked the reader into the booking wizard, which never shows the offer they
+ * tapped, before they had read it. The page is the destination, not a bounce.
  *
  * Data comes from one anon-callable read-only RPC (offer_share_page_v268) whose visibility
  * conditions mirror the customer promotion list exactly, so unpublishing an offer kills its
@@ -92,7 +94,10 @@ function renderPage(offer) {
   const logo = absoluteMediaUrl(offer.business_logo_url);
   /* v274 put a marketing landing on "/" (edge middleware) with a script that forwards hash
    * routes to /app. Linking /app directly skips that bounce — one hop, not two. */
-  const appUrl = `${CANONICAL_ORIGIN}/app#/b/${encodeURIComponent(String(offer.business_slug || ''))}`;
+  /* v290: the button lands on the app's own offer page (#/offer/<id>), which shows THIS offer
+   * and then routes by who arrived — a linked customer to their rewards, a stranger straight on
+   * to the business's public page with no sign-in wall. */
+  const appUrl = `${CANONICAL_ORIGIN}/app#/offer/${encodeURIComponent(String(offer.offer_id || ''))}`;
   const pageUrl = `${CANONICAL_ORIGIN}/o/${encodeURIComponent(String(offer.offer_id || ''))}`;
 
   return `<!DOCTYPE html>
@@ -147,7 +152,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;min-height:4
     <a class="btn" href="${esc(appUrl)}">View this offer</a>
   </div>
 </main>
-<script>setTimeout(function(){window.location.replace(${JSON.stringify(appUrl)})},1200);</script>
+
 </body>
 </html>`;
 }

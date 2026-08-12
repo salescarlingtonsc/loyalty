@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="493eacc2a6363902d8f44f3c1c35bc9ea5bf39aa4b5d6c0a5ce4c9b843da31b3"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d4f5d0d0987d27b71b3148737b5df1078610fdbea07ab57af93484b8ad7b01e9"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1144,6 +1144,11 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .calendar-day{position:relative;border-right:1px solid var(--hair);background-image:linear-gradient(to bottom,transparent calc(100% - 1px),var(--line) 0);background-size:100% var(--calendar-hour-height,64px);background-repeat:repeat-y}
 .calendar-day.is-today{background-color:#FFFBF8}
 .calendar-day:last-child{border-right:0}
+/* V288 (audit A2, MEDIUM 7): a cancelled or no-show appointment is drawn behind the live
+   column at full width and struck through. It must stay READABLE — staff still ask "who
+   cancelled?" — but it must not look like an occupied slot. */
+.calendar-event.appointment-inactive-v288,.day-timeline-event.appointment-inactive-v288{opacity:.5;z-index:1;border-style:dashed;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--event-color) 9%,#fff) 0 6px,#0000 6px 12px)}
+.calendar-event.appointment-inactive-v288 b,.day-timeline-event.appointment-inactive-v288 b{text-decoration:line-through}
 .calendar-event{position:absolute;left:4px;right:4px;display:block;width:calc(100% - 8px);min-height:44px;overflow:hidden;padding:6px 7px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 13%,#fff);color:var(--ink);text-align:left;font-size:11px;line-height:1.28;z-index:2}
 .calendar-event:hover,.calendar-event:focus-visible{box-shadow:var(--shadow);z-index:3}.calendar-event b,.calendar-event-time{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event-time{font-variant-numeric:tabular-nums;font-weight:650;margin-top:2px}
 .calendar-blocked-window{position:absolute;left:4px;right:4px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:44px;overflow:hidden;padding:5px 6px;border:1px solid #C9B9B5;border-left:4px solid #7B6D69;border-radius:7px;background:repeating-linear-gradient(135deg,#F2EFED,#F2EFED 8px,#E7E1DE 8px,#E7E1DE 16px);color:#403936;font-size:10.5px;line-height:1.2}.calendar-blocked-window span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-blocked-window button{flex:0 0 auto;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--red);font-weight:750;cursor:pointer}
@@ -1282,7 +1287,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
   .cui-table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(108px,42%) 1fr;gap:12px;padding:8px 4px;border:0;text-align:right;overflow-wrap:anywhere}
   .cui-table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left}
   .cui-table[data-responsive="true"] td:empty{display:none}
-  .calendar-week-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  /* V291 (audit A2 #20): the Day view's pixel timeline gets the same treatment the Week grid
+     already had — hidden below this breakpoint in favour of the linear agenda beneath it. */
+  .calendar-week-scroll,.day-timeline-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  /* The green-slot instruction belongs to the timeline that is now hidden; New appointment in the
+     page header is the booking route on a phone. */
+  .day-timeline-slot-hint-v291{display:none}
   .appointment-detail-modal{align-items:flex-end;padding:0}.appointment-detail-modal .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))}.appointment-detail-grid{grid-template-columns:1fr}.appointment-detail-actions>.btn,.appointment-detail-actions>a.btn{flex:1 1 100%}.appointment-reschedule-form .split{grid-template-columns:1fr}
   .settings-page .row{align-items:stretch;flex-wrap:wrap;width:100%}
   .settings-page .row>.spacer{display:none}
@@ -1367,7 +1377,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
 .customer-shell .wallet-inner{width:min(1040px,100%)}
 .customer-shell .wallet-head{min-height:48px}
-.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:1fr 1fr auto 1fr;gap:6px;
+.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:1fr 1fr auto 1fr 1fr;gap:6px;
   margin:0 0 24px;padding:6px;border:1px solid var(--hair);border-radius:16px;background:rgba(255,255,255,.88);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:var(--shadow)}
 /* v244 · the raised centre Scan control (owner's Grab-style reference) */
@@ -1404,6 +1414,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-first-quest-copy{padding:clamp(24px,6vw,48px);text-align:center}.customer-first-quest-icon{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(145deg,var(--coral),#f58c55);color:#fff;box-shadow:0 16px 34px rgba(194,65,53,.25)}
 .customer-first-quest h1{font-size:clamp(1.9rem,7vw,3rem);overflow-wrap:anywhere;word-break:break-word}.customer-first-quest p{max-width:520px;margin:10px auto 0;line-height:1.6}
 .customer-first-quest .btn{margin-top:22px;min-height:54px;padding-inline:24px;font-size:16px}
+/* v286: the same quest card reused as Home's "everything is empty" next action — it sits BELOW
+   the offers shelf rather than being the whole screen, so it reads one step quieter. */
+.customer-home-empty-action .customer-first-quest-copy{padding:clamp(20px,5vw,32px)}
+.customer-home-empty-action h2{font-size:clamp(1.3rem,4.5vw,1.7rem);overflow-wrap:anywhere}
+.customer-home-empty-action .customer-first-quest-icon{width:60px;height:60px;margin-bottom:14px;border-radius:20px}
 .customer-quest-kicker{color:var(--coral);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .customer-scan-modal .modal-card{width:min(520px,calc(100vw - 24px))}
 .customer-programme-switcher{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
@@ -1460,6 +1475,10 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-category{display:grid;gap:10px}.customer-programme-category-head{display:flex;align-items:center;gap:8px}
 .customer-programme-category-head h2{font-size:16px}.customer-programme-category-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .customer-programme-card{display:block;min-height:44px}
+/* v281 audit: an author display declaration beats the UA sheet's [hidden]{display:none}, so the
+   My Rewards search was "hiding" tiles that stayed fully visible. */
+.customer-programme-card[hidden]{display:none!important}
+.customer-programme-category[hidden]{display:none!important}
 .customer-programme-card-v95{position:relative;overflow:hidden;min-height:152px;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease)}
 .customer-programme-card-v95:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .customer-programme-card-v95:focus-visible{border-color:var(--merchant-accent,var(--coral))}
@@ -1514,6 +1533,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-identity .customer-programme-compact-copy{display:block}
 .customer-programme-identity b{display:block;font-size:clamp(1.15rem,3.6vw,1.5rem);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .customer-programme-identity-hint{color:var(--coral)!important;font-weight:600}
+/* v286 (audit: the mobile header lost its only affordance). Hiding this hint at 560px left the
+   row as a logo plus a name — no chevron, no tier, nothing saying the header opens the company
+   sheet with the address and phone the v194/v195 owner annotation asked for. The long wording
+   is what does not fit at 390px, not the affordance, so the short label and the tier stay. */
+.customer-programme-identity-hint-short{display:none}
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
@@ -1550,7 +1574,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    flow it pushed the label down and made that tab taller than its neighbours. */
 .customer-nav-count{position:absolute;top:4px;right:8px;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--coral);color:#fff;font-size:10.5px;font-weight:700;line-height:1}
 .customer-primary-nav a[aria-current="page"] .customer-nav-count{background:var(--coral)}
-@media(max-width:560px){.customer-programme-identity-hint{display:none}.customer-tier-milestone b{font-size:9.5px}}
+@media(max-width:560px){.customer-programme-identity-hint-long{display:none}.customer-programme-identity-hint-short{display:inline}.customer-tier-milestone b{font-size:9.5px}}
 .customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
 .customer-programme-compact-copy{min-width:0;flex:1}.customer-programme-compact-copy h1{font-size:clamp(1.25rem,4vw,1.7rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-programme-compact-copy p{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -1711,7 +1735,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
 .redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
 .scanner-video{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#17161a}
-.scanner-frame{position:relative;margin-top:14px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
+/* v286 (audit): the ::after spotlight spreads a 999px shadow; with no clip it escaped the frame
+   and washed the sheet's title, live status line and fallback button in 20% black. */
+.scanner-frame{position:relative;margin-top:14px;overflow:hidden;border-radius:16px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
 .scanner-fallback{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
 .checkrow{display:flex;align-items:flex-start;gap:12px;min-height:48px;margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;color:var(--ink);cursor:pointer}
 .checkrow input[type="checkbox"]{width:22px;min-width:22px;min-height:22px;margin-top:1px;accent-color:var(--coral)}
@@ -1856,7 +1882,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 493eacc2a6363902d8f44f3c1c35bc9ea5bf39aa4b5d6c0a5ce4c9b843da31b3</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d4f5d0d0987d27b71b3148737b5df1078610fdbea07ab57af93484b8ad7b01e9</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2242,6 +2268,16 @@ function setReportRetryState(isInstanceCurrent,button,body,message,retryId,onRet
   if(retryButton)retryButton.onclick=onRetry;
   return true;
 }
+/* V289 (audit A3, G1 — "registration completes then freezes"). Routing is driven ONLY by
+   hashchange, and assigning location.hash a value it already holds fires no hashchange. Every
+   nav() to the route already on screen was therefore a silent no-op: after
+   customer_register_verified_phone succeeded, resolveCustomerRegistrationDestination called
+   nav('#/join') from '#/join' (or nav(destination) from that destination) and nothing happened —
+   the account existed, the button stayed on "Creating your account…" forever, and the only way
+   out was a manual reload. Two call sites already worked around this locally (the app-bar search
+   handler's goTo, and the New appointment button); the workaround belongs in the primitive, so
+   no future caller has to remember it. route() is safe to re-enter: it takes a fresh
+   beginRouteInvocation() epoch on entry, which invalidates every in-flight older render. */
   function campaignEntitlementDisplayV99(item){
   const campaign=!!(item?.is_campaign_entitlement===true||item?.campaign_id);
   const pending=campaign
@@ -2280,6 +2316,12 @@ function setReportRetryState(isInstanceCurrent,button,body,message,retryId,onRet
   }
   return {isAdmin,branches};
 }
+/* V285: no page mounts a wrap for this any more. V260/V272 removed the per-page pickers one at a
+   time and V285 removed the last two (P&L and Customer intelligence), so the top bar's selector is
+   the workspace's single branch control and the pages simply read selectedBranchId. The helper is
+   kept intact — it is the only implementation of the employee/admin offer rule and of the
+   "never write into a wrap the route has replaced" guard, and a future surface that genuinely
+   needs its own picker should reuse it rather than write a third one. */
 async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchWrap'){
   const targetIds=Array.isArray(targetId)?targetId:[targetId];
   const currentWraps=()=>targetIds.map(id=>({id,wrap:$(id)})).filter(item=>item.wrap);
@@ -2512,7 +2554,14 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
           <div><h2 class="eyebrow">Today schedule</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
         </div>
         <div class="dashboard-schedule-actions">
-          <a class="btn secondary" href="#/appointments">Open calendar</a>
+          <!-- V288 (audit A2, MEDIUM 8): sector-hiding is ONE predicate. The rail, the app-bar
+               action and the mobile dock already consulted sectorHidesAppointmentsV276; this
+               button did not, so the sectors that have no appointments module were still handed
+               a front-door link to it from the first screen of the day. A seated sector is sent
+               to the surface its requests actually live on. -->
+          ${sectorHidesAppointmentsV276()
+            ?(canReadModule('bookings')?'<a class="btn secondary" href="#/bookings">Open bookings</a>':'')
+            :'<a class="btn secondary" href="#/appointments">Open calendar</a>'}
         </div>
       </div>
       <!-- V252 (owner screenshot): the subtitle line and the second appointments button are
@@ -2554,29 +2603,29 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',buttonLabel:'View visits',scope:'branch'},
     revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
     new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',buttonLabel:'See new customers',scope:'business'},
-    inactive:{label:'Inactive customers',definition:'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
+    /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
+       only, so the number an owner tapped and the list they landed on could never agree. The
+       server's staff_list_customers_v155 accepted exactly four buckets ('30_59','60_89',
+       '90_plus','never') and raised unsupported_inactivity_bucket for anything else, so an
+       "all inactive" destination was not expressible without a migration, and the number was
+       narrowed to match the destination.
+       V290 wrote that migration: 'all_inactive' is now an accepted bucket, so the tile counts
+       every customer quiet for 30 days or more and lands on exactly that group. The narrowing
+       is undone; the rule it enforced — the number and the destination must be the same set of
+       people — is what still holds. */
+    inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
   };
-  let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
-  function openDashboardMetricDetailV141(key,value,drillOverride={}){
-    const metric=dashboardMetricDefinitionsV141[key];if(!metric)return;
-    const route=Object.hasOwn(drillOverride,'route')?drillOverride.route:metric.route;
-    const action=Object.hasOwn(drillOverride,'action')?drillOverride.action:metric.action;
-    const allBusiness=workspaceTranslationV97('All business customers');
-    const branchName=appliedDashboardScopeV141.branchId?appliedDashboardScopeV141.branchName:workspaceTranslationV97('All permitted branches');
-    const scope=metric.scope==='branch'
-      ?`${branchName} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
-      :metric.scope==='business'
-        ?`${allBusiness} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
-        :`${allBusiness} · ${workspaceTranslationV97('Current balance/status')}`;
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="dashboardMetricModal" role="dialog" aria-modal="true" aria-labelledby="dashboardMetricTitle" tabindex="-1" data-workspace-i18n><div class="modal-card" style="max-width:520px"><p class="eyebrow">Performance detail</p><h2 id="dashboardMetricTitle" style="margin-top:4px">${esc(metric.label)}</h2><p style="font-size:2rem;font-weight:750;margin-top:13px">${esc(value)}</p><p class="muted" style="margin-top:10px;line-height:1.55">${esc(metric.definition)}</p><p class="dashboard-read-note">${esc(scope)}</p><div class="row" style="margin-top:18px;flex-wrap:wrap">${route&&action?`<button class="btn" id="dashboardMetricGo">${esc(action)}</button>`:''}<button class="btn ghost sm" id="dashboardMetricClose">Close</button></div></div></div>`);
-    const dialog=$('dashboardMetricModal');
-    localizeWorkspaceSubtreeV97(dialog);
-    let deactivate;
-    const close=()=>deactivate?.();
-    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:route&&action?'#dashboardMetricGo':'#dashboardMetricClose'});
-    $('dashboardMetricClose').onclick=close;
-    if($('dashboardMetricGo'))$('dashboardMetricGo').onclick=()=>{if(key==='inactive')pendingCustomerInactivity=30;close();nav(route)};
-  }
+  /* V288: seeded from the branch the top bar is ALREADY showing. It used to start at null, and
+     the Today-schedule glance below is fetched at first paint from this value — so a workspace
+     scoped to one branch opened on a business-wide schedule count, then quietly shrank the first
+     time the owner touched a day tab. The first number on the page must be the scoped one. */
+  let appliedDashboardScopeV141={from:d30,to:today,branchId:selectedBranchId||null,branchName:'All permitted branches'};
+  /* V287: openDashboardMetricDetailV141 lived here. V225 turned every KPI tile into a direct
+     link to its report ("once clicked, straight away go to sales"), which left this modal
+     reachable only through an `else` branch that required a metric definition WITHOUT a route —
+     and all four definitions have one. It was ~20 lines of dialog, focus trap and localisation
+     that no user could ever open. The definitions above are still live: their label, definition
+     and buttonLabel are what the tiles print. */
   const invalidatePerformance=()=>{
     requestGate.invalidate();killCharts();
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
@@ -2666,7 +2715,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     try{[response,previousResponse,inactiveResponse,inactive60Response,redeemedResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:previousRange.previousFrom,p_to:previousRange.previousTo,...scopePayload}),
-      canReadModule('clients')?sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,p_inactive_bucket:'30_59',p_limit:1,p_offset:0,...scopePayload}):Promise.resolve({data:null,error:null}),
+      canReadModule('clients')?sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,p_inactive_bucket:'all_inactive',p_limit:1,p_offset:0,...scopePayload}):Promise.resolve({data:null,error:null}),
       canReadModule('clients')?sb.rpc('preview_campaign_audience_v155',{p_business:S.biz.id,p_audience_key:'inactive_60_plus',...scopePayload}):Promise.resolve({data:null,error:null}),
       loyaltyVisibleV170?fetchAllRowsResult(()=>sb.from('points_ledger').select('points',{count:'exact'}).eq('business_id',S.biz.id).eq('entry_type','redeem').gte('created_at',sgDateBoundary(from,0)).lt('created_at',sgDateBoundary(to,1)).order('id')):Promise.resolve({data:null,error:null})
     ])}
@@ -2684,13 +2733,22 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
+    const previousScheduleBranchV288=appliedDashboardScopeV141.branchId;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
+    /* V288: nothing re-invoked the schedule loader after the real branch was resolved, so the
+       glance kept whatever scope first paint guessed until a day tab was pressed. Re-fetch only
+       when the resolved branch actually differs, and keep the day currently on screen. */
+    if(previousScheduleBranchV288!==appliedDashboardScopeV141.branchId){
+      loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,scheduleDateInputV252?.value||null);
+    }
     /* V266: the period is written from the range the RPC was actually answered for, next to the
        numbers, so the Today-schedule date above can never be mistaken for the driver. */
     const performancePeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
-    if(performancePeriod)performancePeriod.textContent=`${dashboardScheduleDayLabelV252(from)} to ${dashboardScheduleDayLabelV252(to)}`;
+    if(performancePeriod)performancePeriod.textContent=workspaceTemplateTextV97('performancePeriodRange',{from:dashboardScheduleDayLabelV252(from),to:dashboardScheduleDayLabelV252(to)});
     if(!kpis||!charts)return;
-    status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
+    /* V288: the banner used to watch the 30–59 read only, so a lone 60+ failure had no retry
+       anywhere on the page — the count it feeds simply went quiet. Both reads share one retry. */
+    status.innerHTML=customerMetricsAvailable&&(inactiveResponse.error||inactive60Response.error)?`<div class="err" role="status">Inactive customer counts could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const previousSummary=previousResponse.error?null:previousResponse.data;
     const revenueChange=percentageChangeV153(d.revenue_cents,previousSummary?.revenue_cents);
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
@@ -2703,20 +2761,32 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
-      const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
-      metrics.push({key:'inactive',value:inactiveTotal,hint:''});
+      /* V287 narrowed this tile to 30-59 because "all inactive" was not a destination the
+         server could express, so the number and the list it opened could never agree. V290 adds
+         the all_inactive bucket to staff_list_customers_v155, so the tile counts every customer
+         quiet for 30 days or more again and lands on exactly those people. inactive60Response is
+         still fetched because Merchant insights and the business-health card below both read it. */
+      const inactiveTotal=inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0);
+      metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30+ days ago'});
     }
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
        carried is still available inside the report it lands on, so the modal was a stop on the
        way to somewhere the owner had already said they wanted to go. */
+    /* V287: the `else` branch called openDashboardMetricDetailV141, which V225 had already
+       superseded. Every one of the four metric definitions carries a route, and the tiles are
+       built from those same four keys, so the branch could never be taken and the modal it
+       opened could never be seen. Both are gone. */
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       const route=dashboardMetricDefinitionsV141[key]?.route;
-      if(key==='inactive')pendingCustomerInactivity=30;
+      /* V288: the pending drill now carries the BUCKET KEY the destination understands, not a
+         day number the Customers page had to re-guess. The tile counts 30–59 (V287), so it
+         asks for 30–59; Merchant insights counts 60+, so it asks for 60+. */
+      if(key==='inactive')pendingCustomerInactivity='30_59';
+      if(key==='inactive')pendingCustomerInactivity='all_inactive';
       if(route)nav(route);
-      else openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
     if(loyalty){
       if(!loyaltyVisibleV170)loyalty.innerHTML='';
@@ -2742,9 +2812,13 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       loyalty.setAttribute('aria-busy','false');
     }
     if(insights){
-      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
+      /* V288: a FAILED 60+ read used to be substituted with a literal 0, which the business-health
+         row then printed as "0 inactive 60+ days · Stable" — the most reassuring sentence on the
+         page, produced by the absence of an answer. null travels instead, and every reader below
+         states that it could not be read. */
+      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?null:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
       insights.setAttribute('aria-busy','false');
-      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=Number(link.dataset.insightInactive)||60}));
+      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=link.dataset.insightInactive||'60_plus'}));
       /* V214: the quiet-branch card offers a way back out of the branch it is scoped to,
          so the owner can see immediately that the business as a whole is not quiet. */
       insights.querySelectorAll('[data-insight-scope-all-v214]').forEach(button=>button.addEventListener('click',()=>{
@@ -2789,7 +2863,11 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
      the Customers page. The top bar already carries one "Viewing" control for the whole
      workspace, and a second one on the page contradicted it as often as it agreed. The scope
      itself still applies — reportingScopeV155 is unchanged and still sent to every RPC. */
-  await renderReportingScopeSelectorV155(load,isDashboardCurrent,'dashboardReportingScopeWrap');
+  /* V287: V225 removed #dashboardReportingScopeWrap from the markup but left this call behind.
+     renderReportingScopeSelectorV155 fires onChange immediately when its target wrapper is
+     missing, so the Dashboard ran its ENTIRE load twice on every open — two of every reporting
+     RPC, charts built and killed. The scope itself is untouched: reportingScopeV155 is still
+     read by currentReportingScopePayloadV155 on the single load below. */
   if(isDashboardCurrent())await load();
 }
   async function clientDetail(id){
@@ -3014,7 +3092,9 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const localMobile=digitsPhone.length===10&&digitsPhone.startsWith('65')?digitsPhone.slice(2):digitsPhone.slice(-8);
   const hasTillPhone=/^[89]\d{7}$/.test(localMobile);
   const canQuickEarn=canReadModule('till')&&canReadModule('clients')&&hasRoleCapability('create_sales')&&hasTillPhone;
-  const canBookAppt=canWriteModule('appointments');
+  /* V288 (audit A2, MEDIUM 8): a cafe or bar has no appointments module, so "New appointment"
+     on a customer profile opened a surface the sector does not use. Same predicate as the nav. */
+  const canBookAppt=canWriteModule('appointments')&&!sectorHidesAppointmentsV276();
   const goQuickEarn=()=>{pendingTillPhone=localMobile;nav('#/till')};
   const goNewAppt=()=>{pendingApptClientId=id;nav('#/appointments')};
   /* Status badges — every one is derived from data already fetched above (no persona table read). */
@@ -3055,6 +3135,24 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     canWriteClients?CUI.action({id:'c360Edit',label:'Edit customer',iconName:'edit',variant:'secondary'}):'',
     allCustomersAction
   ].filter(Boolean).join('');
+  /* V287. BLOCKER: the redeeming-branch selector below mapped over `ctxBr`, an identifier that
+     is declared NOWHERE in this file. Every customer profile carrying an available birthday
+     benefit therefore threw a ReferenceError while building its markup and rendered nothing at
+     all — the whole profile, not just the card. The list is now loaded the same way every other
+     branch selector on this surface loads it (visibleBranchesForCurrentUser, filtered by the
+     same activeBranchesForScopeV217 rule, because an inactive branch can never complete a
+     benefit), and only when the picker would actually be shown. A failure degrades to "no
+     selector" with an honest sentence rather than taking the profile down. */
+  const birthdayNeedsBranchPickerV287=birthdayBenefitsEnabled&&!birthdayError&&canRedeemBirthday
+    &&Boolean(birthdayBenefit)&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter';
+  let birthdayBranchesV287=[];
+  if(birthdayNeedsBranchPickerV287){
+    try{
+      const {branches}=await visibleBranchesForCurrentUser();
+      birthdayBranchesV287=activeBranchesForScopeV217(branches);
+    }catch(branchError){console.error(branchError);birthdayBranchesV287=[]}
+    if(!isClientDetailCurrent())return;
+  }
   let birthdayCardMarkup='';
   if(birthdayBenefitsEnabled&&birthdayError){
     birthdayCardMarkup=`<div class="card" id="c360-birthday"><b>Birthday benefit temporarily unavailable</b><p class="muted small" style="margin-top:7px">The rest of this customer profile remains current. No birthday status is inferred.</p><button class="btn ghost sm" id="c360BirthdayRetry" style="margin-top:10px">Reload profile</button></div>`;
@@ -3062,8 +3160,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const birthdayStatusLabel=birthdayBenefit.status==='redeemed'
       ?'Redeemed'
       :canRedeemBirthday?'Not currently redeemable':'Read only';
-    const birthdayRedeemMarkup=canRedeemBirthday&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter'
-      ?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${(ctxBr||[]).map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`
+    const birthdayRedeemMarkup=birthdayNeedsBranchPickerV287
+      ?(birthdayBranchesV287.length
+        ?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${birthdayBranchesV287.map(branch=>`<option value="${esc(branch.id)}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`
+        :`<p class="muted small" style="margin-top:10px">The branch list could not be loaded, so this benefit cannot be redeemed here yet. Reload the profile and try again.</p>`)
       :`<span class="pill off" style="margin-top:10px">${birthdayStatusLabel}</span>`;
     const birthdayReverseMarkup=canReverseBirthday&&birthdayBenefit.status==='redeemed'&&birthdayBenefit.redemption==='redeemed'
       ?`<details style="margin-top:10px"><summary class="small">Owner correction</summary><label for="birthdayReverseReason" class="small" style="display:block;margin-top:8px">Reason for reversal</label><textarea id="birthdayReverseReason" rows="2" maxlength="500" placeholder="Required: explain the counter correction"></textarea><button class="btn danger sm" id="birthdayReverse" style="margin-top:8px">Reverse birthday redemption</button><p id="birthdayReverseStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p></details>`
@@ -3197,7 +3297,20 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       <div class="row" style="margin-top:16px">${CUI.action({id:'ecSave',label:'Save changes',iconName:'check'})}
       ${CUI.action({id:'ecCancel',label:'Cancel',variant:'secondary',className:'sm'})}</div>
     </section>`:'';
+  /* V291: after an erasure the profile must not read like an ordinary one. The banner states
+     what was removed and what deliberately stayed; the fields below already render whatever the
+     server actually left, so nothing here asserts a value it has not read back. */
+  const erasedRecordV291=erasedClientsV291.get(String(id))||null;
+  const erasedBannerV291=erasedRecordV291
+    ?`<div class="imp-note" id="c360ErasedBannerV291" role="status" style="margin-bottom:16px"><b>Personal details erased.</b><p class="small" style="margin-top:5px">Name, contact details and date of birth were replaced with anonymous placeholders on this profile. Sales, points, credit and appointments were kept \u2014 they are the accounting record and are never deleted. This cannot be undone.</p></div>`
+    :'';
+  /* Owner-only. Erasure is not a customer-service action; it destroys identifying data for good. */
+  const eraseCardV291=S.myRole==='owner'&&!erasedRecordV291
+    ?`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Erase customer data</b><p>Replace this customer's name, contact details and date of birth with anonymous placeholders. Sales, points, credit and appointments stay for your accounting.</p></div>
+      <div class="row" style="margin-top:12px"><button class="btn danger sm" type="button" id="c360EraseV291">Erase customer data</button><span class="muted small">Owner only. This cannot be undone.</span></div></section>`
+    :'';
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
+    ${erasedBannerV291}
     ${editCustomerMarkup}
     ${badgesHtml}
     ${staffProfileScopeNote}
@@ -3223,8 +3336,13 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       ${birthdayCardMarkup}${feedbackStripMarkup}</div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
-    ${activityMarkup}`;
+    ${activityMarkup}
+    ${eraseCardV291}`;
   routeMain.querySelector('.cui-page-title h1')?.setAttribute('data-merchant-content','');
+  const eraseButtonV291=$('c360EraseV291');
+  if(eraseButtonV291)eraseButtonV291.onclick=()=>openEraseClientDialogV291({
+    clientId:id,clientName:c.full_name,
+    onDone:()=>{if(isClientDetailCurrent())clientDetail(id)}});
   /* Header quick actions. Every handler routes to an existing surface — no new write path is
      introduced here. */
   /* V259 (owner: "not clickable to see where the points came from"). The POINTS number now opens
@@ -3644,7 +3762,7 @@ function renderHistPage(history,n){
     const active=stateV267.sort.startsWith(key+'_');
     const ascending=active&&stateV267.sort.endsWith('_asc');
     const next=active&&!ascending?`${key}_asc`:`${key}_desc`;
-    return `<th aria-sort="${active?(ascending?'ascending':'descending'):'none'}"><button type="button" class="c360-act-sort-v267" data-act-sort="${next}" aria-label="Sort by ${label}, ${next.endsWith('_asc')?'ascending':'descending'}">${label}<span class="c360-act-caret-v267" aria-hidden="true">${active?(ascending?'▲':'▼'):'↕'}</span></button></th>`;
+    return `<th aria-sort="${active?(ascending?'ascending':'descending'):'none'}"><button type="button" class="c360-act-sort-v267" data-act-sort="${next}" ${workspaceTemplateAttributeV97('aria-label',next.endsWith('_asc')?'sortByAscending':'sortByDescending',{label})}>${label}<span class="c360-act-caret-v267" aria-hidden="true">${active?(ascending?'▲':'▼'):'↕'}</span></button></th>`;
   };
   const DASH_V252='—';
   const cellsV252=h=>{
@@ -4073,8 +4191,10 @@ function renderHistPage(history,n){
   M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div>
     <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
+    <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
   $('drPrint').onclick=()=>window.print();
+  renderReportScopeNoteV272(isCurrent);
   let lastRows=[],lastScope=null;
   const invalidate=()=>{
     if(!requestGate.invalidate())return;
@@ -4219,6 +4339,7 @@ function renderHistPage(history,n){
   }
   const expenseBranches=branchResult.data||[];
   M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+    <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
     <div class="expenses-segment-body" id="expenseAddBody" style="display:none">${canWrite?`<div class="card"><div class="v150-soft-head"><b>Add expense</b><p>Record one cost. It appears in P&amp;L after saving.</p></div>
@@ -4230,7 +4351,11 @@ function renderHistPage(history,n){
       <label>Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
-    <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div></div></div>`;
+    <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>
+      <!-- V285: an expense could only be voided and retyped, which leaves two rows where the
+           business made one cost. Amount, category and note are correctable in place; the branch
+           and the date are not, because those decide which P&L a cost already landed in. -->
+      <div class="card" id="expenseEditCardV285" style="display:none;margin-top:12px"></div></div></div>`;
   const EXPENSE_PAGE_SIZE=100;
   let expensePage=0;
   const expenseLoadGate=createLatestRequestGate(isCurrent);
@@ -4267,7 +4392,11 @@ function renderHistPage(history,n){
   async function load(){
     const isLatest=expenseLoadGate.begin();
     const from=expensePage*EXPENSE_PAGE_SIZE,to=from+EXPENSE_PAGE_SIZE-1;
-    const {data:ex,error,count}=await sb.from('expenses').select('*',{count:'exact'}).eq('business_id',S.biz.id)
+    /* V285: the list was business-wide whatever the top bar said, while the P&L beside it
+       excludes business-wide overhead the moment a branch is chosen. Two screens describing the
+       same costs disagreed by design. The list now follows the same scope. */
+    const expenseQueryV285=sb.from('expenses').select('*',{count:'exact'}).eq('business_id',S.biz.id);
+    const {data:ex,error,count}=await (selectedBranchId?expenseQueryV285.eq('branch_id',selectedBranchId):expenseQueryV285)
       .order('occurred_on',{ascending:false}).order('created_at',{ascending:false}).order('id').range(from,to);
     if(!isLatest())return;
     if(error){
@@ -4281,13 +4410,46 @@ function renderHistPage(history,n){
       ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category)}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
         <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">voided</span>':'<span class="pill ok">active</span>'}</td>
-        <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
+        <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
         <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} expenses · page ${expensePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});
     const prev=$('expensesPrev'),next=$('expensesNext');
     if(prev)prev.onclick=()=>{expensePage=Math.max(0,expensePage-1);load()};
     if(next)next.onclick=()=>{expensePage+=1;load()};
+    expenseRowsV285=ex||[];
   }
+  let expenseRowsV285=[];
+  window.editExpenseV285=(id)=>{
+    if(!canWrite)return;
+    const expense=expenseRowsV285.find(row=>row.id===id);
+    const card=$('expenseEditCardV285');
+    if(!expense||!card)return;
+    card.style.display='block';
+    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>Recorded ${esc(expense.occurred_on)}${expense.branch_id?'':' as business-wide overhead'}. The date and the branch stay as they are — they decide which P&amp;L this cost already sits in.</p></div>
+      <label for="expEditAmountV285">Amount (${esc(S.biz.currency||'SGD')})</label><input id="expEditAmountV285" type="number" min="0.01" step="0.01" value="${(Number(expense.amount_cents||0)/100).toFixed(2)}">
+      <label for="expEditCategoryV285">Category</label><input id="expEditCategoryV285" value="${esc(expense.category||'')}">
+      <label for="expEditNoteV285">Note</label><input id="expEditNoteV285" value="${esc(expense.note||'')}" placeholder="Why it changed">
+      <div class="row" style="margin-top:14px"><button class="btn sm" id="expEditSaveV285">Save correction</button><button class="btn ghost sm" id="expEditCancelV285">Cancel</button></div>`;
+    $('expEditCancelV285').onclick=()=>{card.style.display='none';card.innerHTML=''};
+    $('expEditSaveV285').onclick=async()=>{
+      const amount=Math.round(parseFloat($('expEditAmountV285').value||'0')*100);
+      const category=String($('expEditCategoryV285').value||'').trim();
+      const note=String($('expEditNoteV285').value||'').trim();
+      if(!(amount>0))return toast('Enter an amount');
+      if(category.length<2)return toast('Category required');
+      const saveButton=$('expEditSaveV285');
+      CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
+      const {error}=await sb.rpc('update_expense_v285',{p_business:S.biz.id,p_expense:expense.id,
+        p_amount_cents:amount,p_category:category,p_note:note||null});
+      if(!isCurrent())return;
+      CUI.setButtonBusy(saveButton,{busy:false});
+      if(error)return fail(error);
+      card.style.display='none';card.innerHTML='';
+      toast('Expense corrected');load();
+    };
+    card.scrollIntoView({block:'nearest'});
+  };
+  renderReportScopeNoteV272(isCurrent);
   window.voidExp=async(id)=>{
     if(!canWrite)return;
     if(!confirm('Void this expense? It stays on record, struck through, and drops out of the P&L.')) return;
@@ -4301,10 +4463,17 @@ function renderHistPage(history,n){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('plGo'):null);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
+  /* V285: the per-page branch picker is gone, following the V260/V272 precedent — the top bar
+     owns branch scope, and a second control that can disagree with it is the exact failure those
+     increments removed elsewhere. The page still READS selectedBranchId; what it no longer does
+     is offer a second answer to the same question. The stray closing tag after the range row went
+     with it: it closed the topbar a second time, so every element after it sat one level shallower
+     than the markup claims. */
   M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
     <div class="range no-print"><input type="date" id="plFrom" value="${d30}"> <span class="muted">→</span>
-      <input type="date" id="plTo" value="${today}"> <span id="branchWrap"></span><button class="btn sm" id="plGo">Run</button>
-      <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div></div>
+      <input type="date" id="plTo" value="${today}"> <button class="btn sm" id="plGo">Run</button>
+      <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div>
+    <div style="margin:10px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="plBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a range',body:'Choose a date range and run the P&L to compare sales and expenses.'})}</div></div>`;
   $('plPrint').onclick=()=>window.print();
   let lastCat={},lastMonthly={},lastScope=null,lastSummary=null;
@@ -4400,7 +4569,8 @@ function renderHistPage(history,n){
       {label:'Expenses',data:mk.map(k=>monthly[k].exp/100),backgroundColor:coral,borderRadius:6}]},
       options:{plugins:{legend:{position:'bottom'}}}});
   }
-  refreshBranchFilter(()=>{invalidate();load()},isCurrent);
+  renderReportScopeNoteV272(isCurrent);
+  load();
 }
   async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionableCard=null){
   let host=$('customerInAppInbox');
@@ -4455,7 +4625,7 @@ function renderHistPage(history,n){
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
       ${nextCursor?'<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">Load more</button>':''}
-      ${global?'':`<div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`}`;
+      <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`;
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
     });
@@ -4469,7 +4639,7 @@ function renderHistPage(history,n){
       button.disabled=true;await setState(item,button.dataset.state);if(!walletSectionStillCurrent(host,isCurrent))return;load(null);
     });
     const more=$('customerInboxMore');if(more)more.onclick=()=>{more.disabled=true;load(nextCursor);};
-    if(!global)renderPreferences();
+    renderPreferences();
   };
   const setState=async(item,operation)=>{
     const slug=global?item?.business?.slug:businessSlug;
@@ -4529,27 +4699,67 @@ function renderHistPage(history,n){
     bell=refreshedBell;
     await load(null);
   };
-  const renderPreferences=async()=>{
-    const preferenceHost=$('customerInAppInboxPreferences');if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost)return;
-    const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:businessSlug});
-    if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost.isConnected)return;
-    if(error)return;
-    const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
-    const preferenceRows=Object.entries(topicLabels).map(([topic,label])=>{
-      const preference=preferences.get(topic)||{};
-      return `<fieldset style="margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:8px"><legend class="small" style="padding:0 4px">${esc(label)}</legend><label class="row" style="color:var(--ink);font-weight:500"><input type="checkbox" class="customerInboxPreference" style="width:auto" data-topic="${topic}" ${preference.opted_in===true?'checked':''}>Keep this reminder in my inbox</label><button type="button" class="btn ghost sm customerInboxPreferenceSave" data-topic="${topic}" style="margin-top:8px">Save reminder</button></fieldset>`;
-    }).join('');
-    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders this business may place in your inbox. Nothing changes until you select Save.</p>${preferenceRows}`;
-    preferenceHost.querySelectorAll('.customerInboxPreferenceSave').forEach(button=>button.onclick=async()=>{
-      const topic=button.dataset.topic;const checkbox=preferenceHost.querySelector(`.customerInboxPreference[data-topic="${topic}"]`);if(!checkbox)return;
+  /* V289 (audit A3): "Inbox reminders" — the only place a customer can stop a business putting a
+     reminder in their inbox — was rendered ONLY in the per-business inbox, and the per-business
+     inbox has no caller: renderCustomerInAppInbox is invoked once, from Messages, with a null
+     slug. The controls existed, were tested, and could not be reached by anyone. The RPCs are
+     per-business, so the reachable home for them is the global inbox, grouped by the businesses
+     whose updates are actually in it. Each group loads its own settings only when opened, so the
+     Messages screen still costs the same reads it did before. */
+  const inboxPreferenceRowsMarkupV289=preferences=>Object.entries(topicLabels).map(([topic,label])=>{
+    const preference=preferences.get(topic)||{};
+    return `<fieldset style="margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:8px"><legend class="small" style="padding:0 4px">${esc(label)}</legend><label class="row" style="color:var(--ink);font-weight:500"><input type="checkbox" class="customerInboxPreference" style="width:auto" data-topic="${topic}" ${preference.opted_in===true?'checked':''}>Keep this reminder in my inbox</label><button type="button" class="btn ghost sm customerInboxPreferenceSave" data-topic="${topic}" style="margin-top:8px">Save reminder</button></fieldset>`;
+  }).join('');
+  const wireInboxPreferenceSavesV289=(scope,slug,preferences)=>{
+    scope.querySelectorAll('.customerInboxPreferenceSave').forEach(button=>button.onclick=async()=>{
+      const topic=button.dataset.topic;const checkbox=scope.querySelector(`.customerInboxPreference[data-topic="${topic}"]`);if(!checkbox)return;
       button.disabled=true;const {error:setError}=await request('customer_set_in_app_inbox_preferences',{
-        p_business_slug:businessSlug,p_topic:topic,p_opted_in:checkbox.checked,
+        p_business_slug:slug,p_topic:topic,p_opted_in:checkbox.checked,
         p_quiet_hours_timezone:null,p_quiet_hours_start:null,p_quiet_hours_end:null,p_idempotency_key:crypto.randomUUID()
       });
       if(!walletSectionStillCurrent(host,isCurrent)||!button.isConnected)return;
       button.disabled=false;const status=$('customerInboxStatus');if(setError){if(status)status.textContent='That reminder could not be saved. Try again.';return;}
       preferences.set(topic,{opted_in:checkbox.checked,quiet_hours_timezone:null,quiet_hours_start:null,quiet_hours_end:null});if(status)status.textContent='Inbox reminder saved.';CUI.announce('Inbox reminder saved.');await refreshBell();
     });
+  };
+  const renderGlobalPreferencesV289=preferenceHost=>{
+    const businesses=[],seen=new Set();
+    for(const item of items){
+      const slug=String(item?.business?.slug||'');
+      if(!slug||seen.has(slug))continue;
+      seen.add(slug);businesses.push({slug,name:String(item?.business?.name||slug)});
+    }
+    if(!businesses.length){preferenceHost.innerHTML='';return}
+    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders each business may place in your inbox. Nothing changes until you select Save.</p>
+      ${businesses.map(business=>`<details data-inbox-preferences="${esc(business.slug)}" style="margin-top:12px"><summary>${esc(business.name)}</summary><div data-inbox-preference-body><p class="muted small" style="margin-top:8px">Open to load this business’s reminder settings.</p></div></details>`).join('')}`;
+    preferenceHost.querySelectorAll('[data-inbox-preferences]').forEach(details=>{
+      details.ontoggle=async()=>{
+        if(!details.open||details.dataset.loaded==='1')return;
+        details.dataset.loaded='1';
+        const slug=details.dataset.inboxPreferences,body=details.querySelector('[data-inbox-preference-body]');
+        if(!body)return;
+        body.innerHTML='<p class="muted small" style="margin-top:8px">Loading reminder settings…</p>';
+        const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:slug});
+        if(!walletSectionStillCurrent(host,isCurrent)||!body.isConnected)return;
+        if(error){
+          details.dataset.loaded='';
+          body.innerHTML='<p class="muted small" style="margin-top:8px">These reminder settings could not be loaded. Close and open this business to try again.</p>';return;
+        }
+        const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
+        body.innerHTML=inboxPreferenceRowsMarkupV289(preferences);
+        wireInboxPreferenceSavesV289(body,slug,preferences);
+      };
+    });
+  };
+  const renderPreferences=async()=>{
+    const preferenceHost=$('customerInAppInboxPreferences');if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost)return;
+    if(global)return renderGlobalPreferencesV289(preferenceHost);
+    const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:businessSlug});
+    if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost.isConnected)return;
+    if(error)return;
+    const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
+    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders this business may place in your inbox. Nothing changes until you select Save.</p>${inboxPreferenceRowsMarkupV289(preferences)}`;
+    wireInboxPreferenceSavesV289(preferenceHost,businessSlug,preferences);
   };
   await refreshInbox();
 }
@@ -4583,7 +4793,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'493eacc2a6363902d8f44f3c1c35bc9ea5bf39aa4b5d6c0a5ce4c9b843da31b3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'d4f5d0d0987d27b71b3148737b5df1078610fdbea07ab57af93484b8ad7b01e9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

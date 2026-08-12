@@ -182,6 +182,12 @@ const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
    wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
    SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
 const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
+/* V286: every primary button on an auth screen is disabled until Turnstile hands back a
+   token. When the widget is merely slow — not wedged, so none of the error callbacks fire —
+   the screen offers no way out for 20s. This is the shorter, honest line: after 12s without a
+   token the user is told the one thing that actually helps. It never re-enables a button and
+   never bypasses the check. */
+const TURNSTILE_SLOW_FALLBACK_MS_V286=12000;
 const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
 function loadTurnstile(){
   const ready=turnstileApiReady();
@@ -223,6 +229,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Security check could not connect. Please retry, or check your browser and network settings.',
       load:'Security check could not load. Check your connection and try again.',
       continue:'Complete the security check to continue.',
+      slowFallback:'Taking long? Reload to retry.',
       interactive:'Tick “Verify you are human” above to continue.',
       showPassword:'Show password',hidePassword:'Hide password',
       passkey:'Sign in with Face ID, Touch ID or passkey',passkeyTitle:'Use Face ID, Touch ID or passkey'
@@ -233,6 +240,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'无法连接安全验证。请重试，或检查浏览器及网络设置。',
       load:'无法加载安全验证。请检查网络连接后重试。',
       continue:'请完成安全验证以继续。',
+      slowFallback:'时间过长？请重新加载页面重试。',
       interactive:'请勾选上方的“确认您是真人”以继续。',
       showPassword:'显示密码',hidePassword:'隐藏密码',
       passkey:'使用面容 ID、触控 ID 或通行密钥登录',passkeyTitle:'使用面容 ID、触控 ID 或通行密钥'
@@ -243,6 +251,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Semakan keselamatan tidak dapat disambungkan. Cuba lagi atau semak tetapan pelayar dan rangkaian anda.',
       load:'Semakan keselamatan tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
       continue:'Lengkapkan semakan keselamatan untuk meneruskan.',
+      slowFallback:'Mengambil masa lama? Muat semula untuk mencuba lagi.',
       interactive:'Tandakan “Verify you are human” di atas untuk meneruskan.',
       showPassword:'Tunjukkan kata laluan',hidePassword:'Sembunyikan kata laluan',
       passkey:'Log masuk dengan Face ID, Touch ID atau kunci laluan',passkeyTitle:'Gunakan Face ID, Touch ID atau kunci laluan'
@@ -253,6 +262,18 @@ const authSecurityCopy=(locale,key)=>{
 async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
   const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
   const security=key=>authSecurityCopy(locale,key);
+  let tokenSeenV286=false;
+  const slowNoteV286=document.createElement('p');
+  slowNoteV286.className='challenge-status';
+  slowNoteV286.id=`${status}-slow-note`;
+  slowNoteV286.hidden=true;
+  slowNoteV286.textContent=security('slowFallback');
+  statusEl.insertAdjacentElement('afterend',slowNoteV286);
+  const slowTimerV286=setTimeout(()=>{
+    if(destroyed||tokenSeenV286)return;
+    slowNoteV286.hidden=false;
+  },TURNSTILE_SLOW_FALLBACK_MS_V286);
+  const stopSlowNoteV286=()=>{clearTimeout(slowTimerV286);slowNoteV286.hidden=true};
   /* A passed check should be invisible: red status text and a "Retry" link after
      success read as failure. The block only surfaces while loading or on error. */
   const setPassed=passed=>{
@@ -305,7 +326,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       removeWidget();
       if(!live()){stopStall();return}
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(!live())return;stopStall();onToken(token);retryEl.hidden=true;setPassed(true)},
+        callback:(token)=>{if(!live())return;stopStall();tokenSeenV286=true;stopSlowNoteV286();onToken(token);retryEl.hidden=true;setPassed(true)},
         /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
            security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
            and the passkey button looked broken while the app was simply waiting for a tick. */
@@ -325,7 +346,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
   const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
   const destroy=()=>{
     if(destroyed)return;
-    destroyed=true;generation+=1;stopStall();
+    destroyed=true;generation+=1;stopStall();stopSlowNoteV286();
     retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
   };
   const control={reset,destroy};
@@ -666,7 +687,12 @@ const CUSTOMER_DIRECT_DESTINATIONS=new Set([
   '#/customer/programmes',
   '#/customer/bookings',
   '#/customer/messages',
-  '#/customer/profile'
+  '#/customer/profile',
+  /* V286: the marketing opt-out route the signup copy itself promises ("turn this off any time
+     in Profile → Communications"). Without it a signed-out deep link fell through to
+     renderAuth — the MERCHANT sign-in card — and nothing remembered where the visitor was
+     going, so even a correct customer sign-in landed on the wallet instead. */
+  '#/customer/communications'
 ]);
 function normalizeCustomerDestination(value){
   const route=String(value??'').trim();
@@ -697,6 +723,9 @@ function resetClientSessionState({preserveInvitation=false}={}){
   if(!preserveInvitation)rememberPendingCustomerJoinToken('');
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+  /* V286: the nav badge cache is per-person. Left standing, customer B's Rewards/Bookings tabs
+     first-painted with customer A's counts on a shared phone until the wallet data landed. */
+  customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';
   resetProductInteractionSessionV100();
@@ -850,7 +879,17 @@ const sgDateInputValue=(date=new Date())=>{
 };
 /* reporting-scale:end */
 function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
-function nav(h){location.hash=h}
+/* V289 (audit A3, G1 — "registration completes then freezes"). Routing is driven ONLY by
+   hashchange, and assigning location.hash a value it already holds fires no hashchange. Every
+   nav() to the route already on screen was therefore a silent no-op: after
+   customer_register_verified_phone succeeded, resolveCustomerRegistrationDestination called
+   nav('#/join') from '#/join' (or nav(destination) from that destination) and nothing happened —
+   the account existed, the button stayed on "Creating your account…" forever, and the only way
+   out was a manual reload. Two call sites already worked around this locally (the app-bar search
+   handler's goTo, and the New appointment button); the workaround belongs in the primitive, so
+   no future caller has to remember it. route() is safe to re-enter: it takes a fresh
+   beginRouteInvocation() epoch on entry, which invalidates every in-flight older render. */
+function nav(h){if(location.hash===h)route();else location.hash=h}
 window.addEventListener('hashchange',route);
 /* "/" or ⌘K / Ctrl+K focuses the global customer search from anywhere in the workspace. "/"
    is ignored while the user is typing in a field so it can't hijack normal input. The listener
@@ -973,7 +1012,7 @@ function loadAppChunkV185(name){
    route and downloaded the customer chunk instead of the workspace one. '#/customer/' plus the
    matcher's own exact-equality branch covers '#/customer', '#/customer?…' and '#/customer/…'
    exactly as before, and nothing else. The inline preloader in index.html mirrors this list. */
-const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join'];
+const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join','#/offer/'];
 function appSurfaceForRouteV185(hash,{signedIn=false}={}){
   const route=String(hash||'').split('?')[0];
   if(route.startsWith('#/platform'))return null;
@@ -1035,6 +1074,10 @@ function loadPlatformConsoleAssetsV184(){
   return platformConsoleAssetsPromiseV184;
 }
 /* ---------- routing ---------- */
+/* V288: the parameters of the route currently being rendered. route() fills this in as it
+   strips the query string off the hash, so a page can read `?view=list&preset=today` without
+   re-parsing location.hash (which may already have moved on). */
+let routeQueryParamsV288=new URLSearchParams('');
 function entryRouteForLocation(pathname=location.pathname,hash=location.hash){
   const requested=String(hash||'').trim();
   if(requested&&requested!=='#'&&requested!=='#/')return requested;
@@ -1122,6 +1165,11 @@ async function route(){
     }
     if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
     if(h==='#/'||h==='#/customer'||h==='#/customer/register'||h.startsWith('#/customer?')) return renderCustomerRegistration(isRouteCurrent);
+    /* v290 (the road from 8 to 9): a shared offer's in-app landing. Placed BEFORE the
+       signed-out guard because the recipient of a shared link is usually a STRANGER — the
+       landing resolves the offer anonymously and forwards a signed-out visitor straight to the
+       business's public page, never to a sign-in wall. */
+    if(h.startsWith('#/offer/'))return renderCustomerOfferLandingV290(decodeURIComponent(h.slice(8).split('?')[0]));
     const directCustomerDestination=normalizeCustomerDestination(h);
     if(!S.user&&directCustomerDestination){
       rememberPendingCustomerDestination(directCustomerDestination);
@@ -1155,6 +1203,11 @@ async function route(){
         }
       });
     }
+    /* V286: the Stripe self-serve return route, resolved before any persona lookup.
+       start_self_serve_business_v130 has already created an active owner staff row by the time
+       Stripe redirects here, so every persona-aware branch below would have swallowed this
+       route and shown the paying owner a "Complete secure payment" button. */
+    if(String(h).split('?')[0]==='#/onboarding/payment')return renderOnboard();
     if(h==='#/business'){
       if(staffInviteCodeV151)return renderBusinessStaffInviteAcceptV151(staffInviteCodeV151);
       const approvedInvite=String(location.search||'').match(/(?:^\?|&)invite=([0-9a-f]{64})(?:&|$)/i)?.[1]?.toLowerCase()||'';
@@ -1188,6 +1241,15 @@ async function route(){
       if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
       return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
     }
+    /* V288 (audit A2, HIGH 4). Every workspace route was parsed straight out of the hash, so a
+       '?' became part of the page key: '#/appointments?view=list&preset=today' resolved to the
+       page 'appointments?view=list&preset=today', matched nothing, and fell back to the
+       dashboard. Every deep link with parameters was therefore silently dead. The query is
+       split off ONCE here — after the customer/claim/join branches above, which consume their
+       own parameters directly from `h` — and kept readable through routeParamV288(). The routes
+       reached below never depended on the '?' surviving: they are exact-match page keys. */
+    routeQueryParamsV288=new URLSearchParams(String(h).includes('?')?String(h).slice(String(h).indexOf('?')+1):'');
+    h=String(h).split('?')[0];
     let workspacePage=null,workspaceStaffPersona=null,resolvedWorkspaceControl=null;
     if(h.startsWith('#/workspace/')){
       const workspaceParts=h.slice(12).split('/');
@@ -1412,7 +1474,10 @@ async function route(){
     root.innerHTML=`<div class="center-wrap"><div class="card" style="width:400px;max-width:100%;text-align:center">
       <div style="font-size:40px">⚠️</div>
       <h2 style="margin:12px 0 4px">Something went wrong</h2>
-      <p class="muted small">${esc(e&&e.message||String(e))}</p>
+      <!-- V286: this catch wraps getSession() and the persona RPCs, so a customer on flaky
+           mobile data was shown raw engine text ("Failed to fetch"). Same mapper as every
+           other failure card in the app. -->
+      <p class="muted small">${esc(ownerErrorText(e)||'Please try again.')}</p>
       <button class="btn" id="routeReload" style="margin-top:18px">Reload</button>
       </div></div>`;
     const rb=$('routeReload');
@@ -1499,7 +1564,7 @@ function setCustomerSurfaceDocumentV167(){
 const CUSTOMER_LOCALES=Object.freeze(['en']);
 const CUSTOMER_COPY=Object.freeze({
   en:Object.freeze({
-    home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',
+    home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',profileTab:'Profile',
     notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
     language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
     chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
@@ -1561,12 +1626,18 @@ const CUSTOMER_EXPLORE_LIVE_V248=false;
    because the reference makes it the app's signature action, not a corner utility; it is still
    the same openCustomerJoinScanner behind the same id. Explore is new: search the whole Peekaa
    ecosystem ("chicken rice", "food near me") the way you'd search Google. */
+/* v281 (owner: "change it to scan in the middle and add a profile module at the most right. so 2
+   left 1 qrcode scanning"): five slots — Home · Rewards on the left, Scan as the raised centre,
+   Bookings · Profile on the right. Profile was reachable only through the header avatar menu, two
+   taps behind an icon; the owner promoted it to a first-class destination. The route and page
+   (#/customer/profile, renderCustomerProfile) already existed — only this entry is new. */
 const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',copy:'home'},
   {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'rewardsTab'},
   {key:'scan',icon:'scan',copy:'scanQr'},
   ...(CUSTOMER_EXPLORE_LIVE_V248?[{key:'explore',href:'#/customer/explore',icon:'search',copy:'explore'}]:[]),
-  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
+  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'},
+  {key:'profile',href:'#/customer/profile',icon:'customers',copy:'profileTab'}
 ]);
 /* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
    two tabs that hold countable things now carry that count. A zero is not rendered — a badge
@@ -1605,12 +1676,19 @@ function openCustomerJoinScanner(){
   overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
+  /* v281 (owner: "must show scan, currently need to choose to upload or scan, just show scan
+     first"): the camera starts the moment the sheet opens — tapping Scan IS the consent to scan,
+     so a second "Open camera" tap was pure friction. The upload/paste fallbacks still exist (a
+     desktop with no camera, a screenshot of a QR) but they wait hidden behind one small control,
+     and reveal themselves automatically the moment the camera cannot start. */
   overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
     <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
-    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
-    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
+    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px" hidden>${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
+    <p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p>
+    <button class="btn ghost sm" id="customerJoinScannerManual" type="button" style="width:100%;margin-top:12px">Can't scan? Use a photo or link</button>
+    <div class="scanner-fallback" id="customerJoinScannerFallback" hidden><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
       <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
-    </div><p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
+    </div></section>`;
   document.body.appendChild(overlay);
   const video=overlay.querySelector('#customerJoinScannerVideo');
   const frame=overlay.querySelector('#customerJoinScannerFrame');
@@ -1618,6 +1696,8 @@ function openCustomerJoinScanner(){
   const camera=overlay.querySelector('#customerJoinScannerCamera');
   const imageInput=overlay.querySelector('#customerJoinScannerImage');
   const pasteFallback=overlay.querySelector('#customerJoinScannerPaste');
+  const fallbackWrap=overlay.querySelector('#customerJoinScannerFallback');
+  const manualToggle=overlay.querySelector('#customerJoinScannerManual');
   const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
   let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
   const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
@@ -1626,7 +1706,11 @@ function openCustomerJoinScanner(){
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
     if(!token){status.textContent='That is not an active Peekaa business QR. Ask the business to generate its latest join QR.';return false}
-    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});nav('#/join');return true;
+    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});
+    /* v281 audit: a rescan from the expired-QR screen is ALREADY at #/join — same-hash nav()
+       fires nothing, so the new token was remembered and never submitted. */
+    if(location.hash==='#/join')route();else nav('#/join');
+    return true;
   };
   const decode=(source,width,height)=>{
     if(typeof globalThis.jsQR!=='function'||!context||!width||!height)return '';
@@ -1638,29 +1722,65 @@ function openCustomerJoinScanner(){
     if(video.readyState>=2&&accept(decode(video,video.videoWidth,video.videoHeight)))return;
     frameHandle=requestAnimationFrame(scan);
   };
-  camera.onclick=async()=>{
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus();return}
-    camera.disabled=true;status.textContent='Starting camera…';
-    try{
-      await loadScannerLibrary();
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
-    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus()}
+  /* Reveals the photo/paste alternatives. On camera failure this is called automatically so the
+     customer is never stranded at a dead camera frame; the paste path opens too because a
+     desktop user with no camera most often HAS the link. */
+  const revealFallback=()=>{
+    fallbackWrap.hidden=false;manualToggle.hidden=true;
+    pasteFallback.open=true;imageInput.focus();
   };
+  /* v286 (audit): loadScannerLibrary pulls jsQR from a CDN, so a blocked CDN, an SRI mismatch or
+     an offline device used to reject inside the SAME catch as getUserMedia and be reported as
+     'Camera access was not available' — a lie about a camera that was never even asked for, and
+     the advice it gave (use a photo) led into the photo path, which needs the same missing
+     decoder and then blamed the customer's picture. The loader now has its own guard on BOTH
+     decoder paths and reports the real failure, with the camera button left as a live retry. */
+  const DECODER_LOAD_FAILURE='The scanner could not load. Check your connection and try again.';
+  const cameraLabel=camera.querySelector('span');
+  const loadDecoder=async()=>{try{await loadScannerLibrary();return true}catch{return false}};
+  const startCamera=async()=>{
+    if(closed)return;
+    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';revealFallback();return}
+    camera.disabled=true;camera.hidden=true;status.textContent='Starting camera…';
+    if(!await loadDecoder()){
+      if(closed)return;
+      camera.disabled=false;camera.hidden=false;if(cameraLabel)cameraLabel.textContent='Try again';
+      status.textContent=DECODER_LOAD_FAILURE;return;
+    }
+    if(cameraLabel)cameraLabel.textContent='Open camera';
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      if(closed){stream.getTracks().forEach(track=>track.stop());stream=null;return}
+      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
+    }catch{
+      if(closed)return;
+      camera.disabled=false;camera.hidden=false;
+      status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';revealFallback();
+    }
+  };
+  camera.onclick=startCamera;
+  manualToggle.onclick=()=>revealFallback();
   imageInput.onchange=async event=>{
     const file=event.target.files?.[0];if(!file)return;
     status.textContent='Reading QR image…';
+    /* v286: the photo path needs the same CDN decoder, so it reports the same honest failure
+       instead of 'That image could not be read' — the image was never the problem. */
+    if(!await loadDecoder()){status.textContent=DECODER_LOAD_FAILURE;return}
     try{
-      await loadScannerLibrary();
       const bitmap=await createImageBitmap(file);
       const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
       if(!accept(value))status.textContent='No active Peekaa join QR was found in that image.';
     }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
   };
-  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
+  const pasteValue=overlay.querySelector('#customerJoinScannerValue');
+  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(pasteValue.value);
+  /* v286 (audit): the paste field lives in no <form>, so there was no implicit submission and
+     Enter — the universal reflex, and the only keyboard path — did nothing, silently. */
+  pasteValue.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();accept(pasteValue.value)}};
   overlay.querySelector('#customerJoinScannerClose').onclick=close;
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
-  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerCamera'});
+  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerClose'});
+  startCamera();
 }
 function sortStaffWorkspaces(staff){
   return [...(Array.isArray(staff)?staff:[])].sort((a,b)=>{
@@ -1832,7 +1952,10 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
   customerLocale='en';
   globalThis.document?.documentElement?.setAttribute('lang','en');
   if(!isCurrent())return null;
-  return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
+  /* v286: a null profile has two very different causes — this account has no profile row, or
+     customer_get_profile just failed for a customer we kept on the surface because their personas
+     loaded. Carry the error so callers can say which one happened instead of blaming the account. */
+  return {features,profile,profileError:profileResult.error||null,registeredCustomer,staff,customer,staffWorkspaces:staff};
 }
 
 /* v244 (owner, nav revamp): Explore — "search for nearby peekaa businessess (can type example
@@ -1977,6 +2100,74 @@ async function renderCustomerExplore(){
   run('');
   focusCustomerRoute();
 }
+/* v290 (owner: "build the road from 8 to 9") — the in-app landing for a shared offer.
+   The /o/ share page hands humans to #/offer/<id>. Three honest outcomes:
+     * a STRANGER (signed out) is forwarded to the business's public page — the same place the
+       old link went — after one anonymous read; never a sign-in wall;
+     * a signed-in customer sees the offer itself — artwork uncropped, the Peekaa × firm
+       pairing, validity with LIVE state (ends today / N days left / ended) — and one CTA that
+       knows whether they are linked: their own rewards page when they are, the business's
+       public page when they are not;
+     * a dead or unknown offer says so and offers Home, because a shared link outlives the
+       offer it carried. */
+function customerOfferLandingStateV290(endsAt,now=new Date()){
+  const ends=new Date(endsAt||'');
+  if(Number.isNaN(ends.getTime()))return '';
+  if(ends.getTime()<now.getTime())return 'Ended';
+  /* Calendar days in SGT — every date on the customer surface is Singapore time, and an offer
+     ending at 23:59 tonight "ends today", not "tomorrow" because 24 hours have not elapsed. */
+  const sgDay=at=>Math.floor((at.getTime()+8*3600000)/86400000);
+  const days=sgDay(ends)-sgDay(now);
+  if(days<=0)return 'Ends today';
+  return days===1?'Ends tomorrow':`${days} days left`;
+}
+async function renderCustomerOfferLandingV290(offerId){
+  const id=String(offerId||'').trim().toLowerCase();
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id))return nav('#/wallet');
+  if(!S.user){
+    const {data}=await customerRpc('offer_share_page_v268',{p_offer:id});
+    const slug=String(data?.business_slug||'').trim();
+    return nav(slug?`#/b/${encodeURIComponent(slug)}`:'#/wallet');
+  }
+  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
+  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
+  renderCustomerShell({active:'home',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,
+    messagesAvailable:context.features.customer_in_app_inbox===true,
+    body:CUI.loadingState({title:'Offer',iconName:'loyalty'})});
+  const [offerResult,programmesResult]=await Promise.all([
+    customerRpc('offer_share_page_v268',{p_offer:id}),
+    customerRpc('customer_list_programmes_v89')
+  ]);
+  if(!isCurrent())return;
+  const offer=offerResult.error?null:offerResult.data;
+  if(!offer){
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>This offer has ended</h1><p class="muted">The link you followed is for an offer that is no longer running.</p></div></header>
+      <section class="card"><p class="muted small">Businesses you join keep their current offers on your Home.</p><a class="btn" href="#/wallet" style="margin-top:14px">Open Home</a></section>`;
+    focusCustomerRoute();return;
+  }
+  const slug=String(offer.business_slug||'').trim();
+  const linked=(Array.isArray(programmesResult.data?.programmes)?programmesResult.data.programmes
+    :Array.isArray(programmesResult.data)?programmesResult.data:[])
+    .some(programme=>String(programme?.business?.slug||programme?.business_slug||'')===slug);
+  const artwork=customerMediaUrlV95(offer.image_url),
+    validity=customerPromotionValidityV104({starts_at:offer.starts_at,ends_at:offer.ends_at}),
+    liveState=customerOfferLandingStateV290(offer.ends_at);
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">Shared offer</p><h1 data-merchant-content>${esc(offer.name||'Offer')}</h1><p class="muted">${esc(customerShareCoBrandV267({name:offer.business_name}))}</p></div></header>
+    <section class="card customer-offer-landing-v290">
+      ${artwork?`<div class="customer-promotion-card-media"><img src="${esc(artwork)}" alt="${esc(offer.image_alt||offer.name||'Offer')}" loading="eager" style="object-fit:contain"></div>`:''}
+      ${offer.tagline?`<p data-merchant-content style="margin-top:12px">${esc(offer.tagline)}</p>`:''}
+      ${offer.description&&offer.description!==offer.tagline?`<p class="muted small" data-merchant-content style="margin-top:8px">${esc(offer.description)}</p>`:''}
+      <p class="muted small" style="margin-top:12px">${esc([validity,liveState].filter(Boolean).join(' · '))}</p>
+      <div class="row" style="margin-top:16px">
+        ${linked?`<a class="btn" href="#/wallet/${encodeURIComponent(slug)}">Open ${esc(offer.business_name||'business')} rewards</a>`
+          :slug?`<a class="btn" href="#/b/${encodeURIComponent(slug)}">${esc(`View ${offer.business_name||'the business'}`)}</a>`:''}
+        <a class="btn ghost sm" href="#/wallet">Home</a>
+      </div>
+      ${linked?'':`<p class="muted small" style="margin-top:12px">${esc(ct('qrOnlyHelp'))}</p>`}
+    </section>`;
+  focusCustomerRoute();
+}
+
 function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
   setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
@@ -2060,6 +2251,16 @@ function customerPromotionValidityV104(item={}){
   if(starts&&ends)return `Valid ${starts} – ${ends}`;
   if(ends)return `Valid until ${ends}`;
   return starts?`Valid from ${starts}`:'';
+}
+/* v267 (owner: "you can put peekaa x (company name) - with our logos together"). A share is a
+   customer vouching for a business, so it goes out CO-BRANDED: the platform and the firm side by
+   side, never Peekaa alone and never the firm alone.
+   The line is built from the firm's own name, so it reads "Peekaa × Cubbly" — and degrades to
+   plain "Peekaa" rather than "Peekaa × " when a business has somehow lost its name. */
+const CUSTOMER_BRAND_NAME_V267='Peekaa',CUSTOMER_BRAND_MARK_V267='/icons/peekaa-192.png';
+function customerShareCoBrandV267(business={}){
+  const shop=String(business?.name||'').trim();
+  return shop?`${CUSTOMER_BRAND_NAME_V267} × ${shop}`:CUSTOMER_BRAND_NAME_V267;
 }
 function customerShareButtonMarkupV264(offerId,{small=true}={}){
   return `<button class="btn ghost${small?' sm':''} customer-share-button" type="button" data-share-offer="${esc(offerId||'')}" aria-label="Share this offer">${CUI.icon('share',{size:16})}<span>Share</span></button>`;
@@ -2228,11 +2429,11 @@ function renderBusinessDemoRequest(){
     <div id="businessDemoRequestError" role="alert"></div>
     <button class="btn" id="businessDemoRequestSubmit" style="width:100%;margin-top:18px">Send demo request</button>
     <button class="btn ghost" id="businessDemoRequestBack" style="width:100%;margin-top:10px">Back</button>
-    <p class="muted small" id="businessDemoRequestStatus" role="status" aria-live="polite" style="margin-top:8px">This opens your email app with the demo details. It does not create a Peekaa login.</p>
+    <p class="muted small" id="businessDemoRequestStatus" role="status" aria-live="polite" style="margin-top:8px">Peekaa records this request and a consultant will contact you. It does not create a Peekaa login.</p>
     ${legalLinks()}</section></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
   $('businessDemoRequestBack').onclick=()=>renderBusinessSignupChoice();
-  $('businessDemoRequestSubmit').onclick=()=>{
+  $('businessDemoRequestSubmit').onclick=async()=>{
     const name=String($('demoContactName')?.value||'').trim();
     const business=String($('demoBusinessName')?.value||'').trim();
     const email=String($('demoContactEmail')?.value||'').trim();
@@ -2244,22 +2445,21 @@ function renderBusinessDemoRequest(){
       return;
     }
     $('businessDemoRequestError').innerHTML='';
-    const subject='Peekaa demo request';
-    const body=[
-      'Please contact me for a Peekaa demo.',
-      '',
-      `Name: ${name}`,
-      `Business: ${business}`,
-      `Email: ${email}`,
-      `Mobile: ${phone}`,
-      `Sector: ${sector||'-'}`,
-      '',
-      `Notes: ${notes||'-'}`,
-      '',
-      'I understand this is a demo request only. No Peekaa account, workspace, login, Stripe Checkout, or Super Admin approval is created from this request.'
-    ].join('\n');
-    $('businessDemoRequestStatus').textContent='Opening your email app…';
-    window.location.href=`mailto:admin.peekaa@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const button=$('businessDemoRequestSubmit');
+    button.disabled=true;
+    $('businessDemoRequestStatus').textContent='Sending your demo request…';
+    try{
+      const {error}=await sb.rpc('submit_demo_request_v292',{
+        p_contact_name:name,p_business_name:business,p_contact_email:email,
+        p_contact_phone:phone,p_sector:sector||null,p_note:notes||null
+      });
+      if(error)throw error;
+      $('businessDemoRequestStatus').textContent='Sent. A Peekaa consultant will contact you. No account, workspace, login, Stripe Checkout or charge was created.';
+    }catch(_error){
+      button.disabled=false;
+      $('businessDemoRequestStatus').textContent='';
+      $('businessDemoRequestError').innerHTML='<div class="err">We could not send that demo request. Check your name, business name, email and mobile number, then try again.</div>';
+    }
   };
 }
 function renderStaffInviteAuthV151(mode='in',initialCode=''){
@@ -2554,8 +2754,10 @@ function renderBusinessApplication(){
       $('businessApplicationError').innerHTML=`<div class="err">${esc(a.passwordRule)}</div>`;return;
     }
     $('businessApplicationSubmit').disabled=true;
+    /* V286: the confirmation link used to carry ?selfserve=1 and nothing anywhere read it.
+       A parameter that means nothing is worse than no parameter: it reads as a routing contract
+       that does not exist. /business already resolves the right screen from the session. */
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
-    returnUrl.searchParams.set('selfserve','1');
     const {data,error}=await sb.auth.signUp({
       email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
         data:{account_type:'business_owner',preferred_locale:locale}}
@@ -3068,12 +3270,24 @@ const workspaceTranslationV97=source=>workspaceLocale==='en'||typeof WORKSPACE_G
   ?source
   :(WORKSPACE_COPY_V97[workspaceLocale]?.[source]??WORKSPACE_GENERATED_COPY_V97[workspaceLocale]?.[source]??source);
 const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
-  dashboardSummary:Object.freeze({en:'How {business} is doing','zh-CN':'{business} 的经营概况',ms:'Prestasi {business}'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   scopePeriod:Object.freeze({en:'{branch} · {from} to {to}','zh-CN':'{branch} · {from} 至 {to}',ms:'{branch} · {from} hingga {to}'}),
   allBranchesPeriod:Object.freeze({en:'All permitted branches · {from} to {to}','zh-CN':'所有获准分店 · {from} 至 {to}',ms:'Semua cawangan yang dibenarkan · {from} hingga {to}'}),
+  performancePeriodRange:Object.freeze({en:'{from} to {to}','zh-CN':'{from} 至 {to}',ms:'{from} hingga {to}'}),
+  pointCostDerived:Object.freeze({en:'Cost per point: {cost}. Every reward uses this to work out its point price.','zh-CN':'每积分成本：{cost}。每个奖励都以此计算其积分价格。',ms:'Kos setiap mata: {cost}. Setiap ganjaran menggunakannya untuk mengira harga matanya.'}),
+  parkExpiryPreview:Object.freeze({en:'Expires {expires} · {days} days','zh-CN':'于 {expires} 到期 · {days} 天',ms:'Luput {expires} · {days} hari'}),
+  parkExpiryPreviewTier:Object.freeze({en:'Expires {expires} · {days} days · {tier}','zh-CN':'于 {expires} 到期 · {days} 天 · {tier}',ms:'Luput {expires} · {days} hari · {tier}'}),
+  parkKeptUntil:Object.freeze({en:'Kept until {date}','zh-CN':'保留至 {date}',ms:'Disimpan hingga {date}'}),
+  sortByAscending:Object.freeze({en:'Sort by {label}, ascending','zh-CN':'按{label}升序排序',ms:'Isih ikut {label}, menaik'}),
+  sortByDescending:Object.freeze({en:'Sort by {label}, descending','zh-CN':'按{label}降序排序',ms:'Isih ikut {label}, menurun'}),
+  bottlePercentLeft:Object.freeze({en:'{percent}% left','zh-CN':'剩余 {percent}%',ms:'{percent}% berbaki'}),
+  bookingRequestWaiting:Object.freeze({en:'{count} booking request is waiting for a decision.','zh-CN':'{count} 个预约请求等待处理。',ms:'{count} permintaan tempahan menunggu keputusan.'}),
+  bookingRequestsWaitingMany:Object.freeze({en:'{count} booking requests are waiting for a decision.','zh-CN':'{count} 个预约请求等待处理。',ms:'{count} permintaan tempahan menunggu keputusan.'}),
+  bookingRequestsBadge:Object.freeze({en:'Booking requests — {count} waiting','zh-CN':'预约请求 — {count} 个等待中',ms:'Permintaan tempahan — {count} menunggu'}),
+  staffKeptHasRecord:Object.freeze({en:'{name} has {count} record of work here, so the record is kept. Use Deactivate to stop their access.','zh-CN':'{name} 在此有 {count} 条工作记录，因此保留该记录。请使用停用来停止其访问权限。',ms:'{name} mempunyai {count} rekod kerja di sini, jadi rekod itu dikekalkan. Gunakan Nyahaktif untuk menghentikan aksesnya.'}),
+  staffKeptHasRecords:Object.freeze({en:'{name} has {count} records of work here, so the record is kept. Use Deactivate to stop their access.','zh-CN':'{name} 在此有 {count} 条工作记录，因此保留该记录。请使用停用来停止其访问权限。',ms:'{name} mempunyai {count} rekod kerja di sini, jadi rekod itu dikekalkan. Gunakan Nyahaktif untuk menghentikan aksesnya.'}),
   scopeCustomers:Object.freeze({en:'Showing {shown} of {total} customers for this scope.','zh-CN':'此范围显示 {shown}／{total} 位顾客。',ms:'Menunjukkan {shown} daripada {total} pelanggan untuk skop ini.'}),
   customerRecordExported:Object.freeze({en:'{count} customer record exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
   customerRecordsExported:Object.freeze({en:'{count} customer records exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
@@ -3110,8 +3324,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   exposureRetryChannelLocked:Object.freeze({en:'This retry is locked to {channel} because that is the channel you originally confirmed. Choose that channel, or close and start a separate new attempt.','zh-CN':'此重试已锁定为 {channel}，因为这是您最初确认的渠道。请选择该渠道，或关闭后另行开始新的尝试。',ms:'Cubaan semula ini dikunci kepada {channel} kerana itulah saluran yang anda sahkan pada asalnya. Pilih saluran itu, atau tutup dan mulakan cubaan baharu yang berasingan.'}),
   exposureRetryMixedChannels:Object.freeze({en:'Selected retries use different confirmed channels. Retry one channel group at a time.','zh-CN':'所选重试使用不同的已确认渠道。请每次仅重试一个渠道组。',ms:'Cubaan semula yang dipilih menggunakan saluran pengesahan yang berbeza. Cuba semula satu kumpulan saluran pada satu masa.'}),
   packageVersionCreated:Object.freeze({en:'New package version v{version} created; prior version archived','zh-CN':'已创建配套新版本 v{version}；旧版本已归档',ms:'Versi pakej baharu v{version} dicipta; versi terdahulu diarkibkan'}),
-  packageSoldWithPoints:Object.freeze({en:'Package sold · {earned} points earned · {total} total points','zh-CN':'配套已售出 · 获得 {earned} 分 · 总积分 {total}',ms:'Pakej dijual · {earned} mata diperoleh · jumlah mata {total}'}),
-  packageSoldNoPoints:Object.freeze({en:'Package sold · 0 points earned · {total} total points','zh-CN':'配套已售出 · 获得 0 分 · 总积分 {total}',ms:'Pakej dijual · 0 mata diperoleh · jumlah mata {total}'}),
   giftCardLoaded:Object.freeze({en:'{amount} loaded onto account 🎉','zh-CN':'已将 {amount} 存入账户 🎉',ms:'{amount} dimasukkan ke dalam akaun 🎉'}),
   /* v215: the welcome offer names the item that was handed over, so staff and customer are
      looking at the same words. Interpolated runtime copy has to be a reviewed template. */
@@ -3155,7 +3367,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   selectedStaffFreeFairer:Object.freeze({en:'{staff} is free at this time. {alt} has had fewer appointments if you would rather spread the work.','zh-CN':'{staff} 在这个时间有空。若想更平均分配，{alt} 的预约较少。',ms:'{staff} lapang pada masa ini. {alt} kurang temu janji jika anda mahu agihkan kerja.'}),
   /* Owner: "recent appointment - how recent?" — the number now states its own window. */
   recentInWindow:Object.freeze({en:'{count} in last {window}','zh-CN':'过去{window}内 {count} 个',ms:'{count} dalam {window} lalu'}),
-  recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
   /* V267: the id is gone from these two. A staff member reading the session-correction table
      cannot do anything with a UUID, and the owner asked "what is this?" the first time they
      met one. The relationship is what matters and the counterpart row is in the same table. */
@@ -3203,7 +3414,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
-  'dashboardSummary','customerPagination','completedTransaction','completedTransactions',
+  'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
   'bookingsReady','firstBookings','importBookingPreview','firstImportError','firstImportErrors',
@@ -3214,7 +3425,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'receiptConfirmationRecorded','receiptConfirmationsRecorded',
   'receiptConfirmationFailed','receiptConfirmationsFailed',
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
-  'packageVersionCreated','packageSoldWithPoints','packageSoldNoPoints',
+  'packageVersionCreated',
   'giftCardLoaded','sessionUsed','welcomeOfferGiven',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
@@ -3223,8 +3434,12 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'qrReadyExpiresQrsRevoked','activeQrRevoked',
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
-  'availableStaff','availableStaffMany','recentAppointments','reversalOf',
+  'availableStaff','availableStaffMany','reversalOf',
   'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
+  'performancePeriodRange','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
+  'sortByAscending','sortByDescending','bottlePercentLeft',
+  'bookingRequestWaiting','bookingRequestsWaitingMany','bookingRequestsBadge',
+  'staffKeptHasRecord','staffKeptHasRecords',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
@@ -3238,6 +3453,23 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'publishConfirmationSensitive','publishConfirmationStandard',
   'classicEligibleEarning','stampsEligibleEarning','referralEnabledOutcome'
 ]);
+const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
+  'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
+  'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
+  'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
+  'calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails'
+]);
+const workspaceTemplateTextV97=(key,values={},locale=workspaceLocale)=>{
+  const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';
+  return template.replace(/\{([a-z][a-z0-9_]*)\}/gi,(_,name)=>String(values[name]??''));
+};
+const WORKSPACE_TEMPLATE_ATTRIBUTES_V97=Object.freeze(['aria-label','title','placeholder']);
+const workspaceTemplateAttributeV97=(attribute,key,values={})=>{
+  if(!WORKSPACE_TEMPLATE_ATTRIBUTES_V97.includes(attribute)
+     ||!WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97.includes(key))return '';
+  const encoded=encodeURIComponent(JSON.stringify(values));
+  return `data-workspace-${attribute}-template="${esc(key)}" data-workspace-${attribute}-values="${esc(encoded)}" ${attribute}="${esc(workspaceTemplateTextV97(key,values))}"`;
+};
 const workspaceTemplateInnerHtmlV97=(key,values={},locale=workspaceLocale)=>{
   const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';
   let cursor=0,html='';
@@ -3600,7 +3832,7 @@ function bottleFillToneV279(percent){
 function bottleFillBarV275(percent){
   const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
   const tone=bottleFillToneV279(value);
-  return `<span class="bottle-fill" role="img" aria-label="${value}% left" style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
+  return `<span class="bottle-fill" role="img" ${workspaceTemplateAttributeV97('aria-label','bottlePercentLeft',{percent:value})} style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
 }
 function bottleDaysLabelV275(days){
   /* V278: a bottle may now have NO expiry, and the server sends null for it. Number(null) is 0,

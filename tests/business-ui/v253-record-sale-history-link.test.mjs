@@ -21,7 +21,8 @@ test('View sales history targets the existing #/sales ledger route via the nav()
   const wiring=section("$('tFind').onclick=doFind;",'document.querySelectorAll(\'[data-k]\')');
   assert.match(wiring,/\$\('tViewSalesHistoryV253'\)\.onclick=\(\)=>nav\('#\/sales'\)/);
   // '#/sales' resolves to salesPage(), the existing historical sales ledger — not a new page.
-  const routeMap=section('const P={dashboard,till:tillPage','};\n  const pageFn');
+  /* V286: the dispatch is preceded by a comment block now, so anchor on the lookup itself. */
+  const routeMap=section('const P={dashboard,till:tillPage','const pageFn=');
   assert.match(routeMap,/sales:salesPage/);
 });
 

@@ -116,7 +116,7 @@ test('the scanner is the raised centre of the nav (v244 Grab-style revamp)', () 
      signature centre control. v248 then hid Explore from customers, so four slots show today —
      Scan is still the centre of what they see. */
   const nav = section(appJs, 'const CUSTOMER_PRIMARY_NAV=Object.freeze([', 'function customerPrimaryNavigation(');
-  assert.equal((nav.match(/\{key:/g) || []).length, 5);
+  assert.equal((nav.match(/\{key:/g) || []).length, 6);
   assert.match(appJs, /const CUSTOMER_EXPLORE_LIVE_V248=false;/);
   assert.match(nav, /\{key:'scan',icon:'scan',copy:'scanQr'\}/);
   assert.match(nav, /\{key:'explore',href:'#\/customer\/explore',icon:'search',copy:'explore'\}/);
@@ -125,7 +125,7 @@ test('the scanner is the raised centre of the nav (v244 Grab-style revamp)', () 
   assert.match(appJs, /id="customerNavScan" class="customer-nav-scan"/);
   assert.match(appJs, /if\(\$\('customerNavScan'\)\)\$\('customerNavScan'\)\.onclick=openCustomerJoinScanner/);
   assert.doesNotMatch(appJs, /customer-head-scan/, 'the header no longer duplicates the scanner');
-  assert.match(indexHtml, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr;/);
+  assert.match(indexHtml, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr 1fr;/);
   assert.match(indexHtml, /\.customer-nav-scan-fab\{[^}]*border-radius:999px;background:var\(--grad\)/);
 });
 
@@ -424,4 +424,19 @@ test('the mode comes from the server, so the surface and the redemption gate can
   assert.match(appJs, /rewardsHost:capabilities\.rewards===true,programmeCapabilities:capabilities/);
   assert.match(appJs, /capabilities:programmeCapabilities/);
   assert.doesNotMatch(appJs, /points_mode==='tiers'\?[^\n]*S\.biz/, 'the customer must not read a workspace value');
+});
+
+/* ------------------------------------------------------------------- v281 audit blocker pins */
+
+test('the My Rewards search can actually hide things — [hidden] beats the display classes', () => {
+  /* An author display declaration beats the UA sheet's [hidden]{display:none}; without these two
+     rules the v195 search set the attribute and hid nothing. */
+  assert.match(indexHtml, /\.customer-programme-card\[hidden\]\{display:none!important\}/);
+  assert.match(indexHtml, /\.customer-programme-category\[hidden\]\{display:none!important\}/);
+});
+
+test('reaching #/join from #/join re-routes — same-hash nav() fires no hashchange', () => {
+  /* Two real dead-ends: registration success (already at #/join) and rescanning from the
+     expired-QR screen (also at #/join). Both must explicitly route(). */
+  assert.equal((appJs.match(/if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/g) || []).length, 2);
 });

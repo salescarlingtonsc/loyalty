@@ -207,6 +207,12 @@
   });
   globalObject.navigator?.serviceWorker?.addEventListener('message',event=>{
     if(event.data?.type!=='PEEKAA_SW_ACTIVATED'||!event.data?.cacheVersion)return;
+    /* V289 (audit A3, G3a): this notification reaches EVERY open tab, not only the one that
+       accepted the update, so it was a second uninvited reload path — the tab half-way through an
+       OTP had consented to nothing. The page that asked for the update reloads through
+       updateRequested/controllerchange anyway; any other tab now keeps whatever the person is in
+       the middle of and picks the new shell up on its next safe moment. */
+    if(!updateRequested&&isUnsafeToAutoUpdate())return;
     const key=`peekaa-sw-reloaded:${event.data.cacheVersion}`;
     try{
       if(globalObject.sessionStorage.getItem(key)==='1')return;

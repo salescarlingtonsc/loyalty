@@ -83,7 +83,12 @@ test('staff UI keeps stable keys and confirmation while sale reversal notes are 
   assert.match(app,/Correction note \(optional\)/);
   assert.match(app,/Reason \(required, at least 10 characters\)/);
   assert.match(app,/p_note:reason\|\|null/);
-  assert.match(app,/if\(!isReplay&&!confirm\(/);
+  /* V291 retarget (not a deletion): the confirmation is still exactly one deliberate act before
+     a reversal is written, and it is still skipped on an exact replay — it just runs through the
+     translatable dialog now instead of the browser's untranslatable confirm(). */
+  assert.match(app,/if\(!isReplay\)\{[\s\S]{0,400}confirmDeliberateV288\(\{/);
+  assert.match(app,/title:'Confirm this reversal\?'/);
+  assert.match(app,/acknowledgement:'I understand compensating records will be added\.'/);
   assert.match(app,/reverse_sale_fast_v84':'reverse_loyalty_redemption/);
   assert.match(app,/Changed-request conflict/);
   assert.match(app,/Verify exact replay/);
@@ -93,15 +98,24 @@ test('staff UI keeps stable keys and confirmation while sale reversal notes are 
 });
 
 test('quick sale uses the atomic RPC and browser code cannot mutate financial evidence tables',()=>{
-  const quickSale=app.match(/async function salesPage\(\)\{[\s\S]*?\/\* ---------- services ---------- \*\//)?.[0]||'';
-  assert.match(quickSale,/sb\.rpc\('record_quick_sale'/);
-  for(const input of ['p_amount_cents','p_method','p_client','p_staff','p_branch','p_note','p_paid','p_idempotency_key']){
-    assert.match(quickSale,new RegExp(input));
-  }
-  assert.match(quickSale,/quickSaleAttempt\.fingerprint!==fingerprint[\s\S]*crypto\.randomUUID\(\)/);
-  assert.match(quickSale,/Payment state/);
-  assert.match(quickSale,/Payment method/);
-  assert.match(quickSale,/No active permitted branch/);
+  /* The recording surface moved: salesPage() is now a read-only ledger and every sale is written
+     from the till. The invariants are unchanged — ONE atomic RPC per sale, an idempotency key
+     that is fresh per attempt, reused on retry and invalidated the moment the sale's inputs
+     change, and no browser-side mutation of any financial evidence table. */
+  const till=app.match(/async function tillPage\(\)\{[\s\S]*?\nasync function salesPage\(\)\{/)?.[0]||'';
+  assert.match(till,/sb\.rpc\('record_sale_by_phone',\{p_business:S\.biz\.id,p_phone:[\s\S]{0,200}?p_amount_cents:amt,p_kind:'quick_sale',[\s\S]{0,200}?p_idem:saleIdem,[\s\S]{0,100}?p_branch:tillBranchId,p_method:tender\}/);
+  assert.match(till,/if\(!saleIdem\) saleIdem=crypto\.randomUUID\(\)/,'a fresh key per attempt, reused on retry');
+  assert.match(till,/saleIdem=null/,'changing the sale invalidates the key');
+  assert.match(till,/sb\.rpc\('record_cart_sale',\{p_business:S\.biz\.id,p_client:[\s\S]{0,200}?p_idempotency_key:finaliseKey,[\s\S]{0,120}?p_evaluation_id:evalResult\.evaluation_id,p_paid:true\}/,'the cart flow finalises through ONE atomic RPC');
+  assert.match(till,/writeAttemptKey\(FINALISE_SLOT,evalFingerprint\(\)\)/);
+  /* v281 audit: the catalogue snapshot carries the looked-up customer's entitlements, so it is
+     dropped on EVERY return to the phone step — a walk-in-only reset let customer B redeem
+     customer A's packages. */
+  assert.doesNotMatch(till,/if\(walkin\)\{catalog=null/);
+  assert.match(till,/function resetToStart\(\)\{[\s\S]{0,900}?catalog=null;catalogError=null;/);
+  const salesLedger=app.match(/async function salesPage\(\)\{[\s\S]*?\/\* ---------- services ---------- \*\//)?.[0]||'';
+  assert.doesNotMatch(salesLedger,/sb\.rpc\('record_/,'the sales ledger is read-only');
+  assert.match(salesLedger,/href="#\/till"/,'recording routes to the till');
   const protectedTables=['sales','points_ledger','credit_ledger','points_batches',
     'loyalty_redemption_provenance','loyalty_redemption_batch_drains','financial_operations',
     'package_session_consumptions','package_session_reversals','loyalty_redemption_reversals'];

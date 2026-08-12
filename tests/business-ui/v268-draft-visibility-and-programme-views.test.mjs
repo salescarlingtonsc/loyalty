@@ -42,13 +42,24 @@ test('V268 (a) the page actually READS the draft — it could not have shown a p
 });
 
 test('V268 (a) only a reward whose draft genuinely differs is marked', () => {
-  const diff = section('const growPendingRewardsV268=new Map();', 'const growPendingEarningV268=');
+  /* V291 retarget (not a deletion): the three-field comparison this section pinned moved into
+     growRewardPendingChangesV291, a top-level function the publish gate reads too. The rule this
+     test protects — only a reward that GENUINELY differs is marked — is unchanged, so the
+     section moves to the function that now decides it. */
+  const diff = section('function growRewardPendingChangesV291(', 'function growRetentionPendingChangesV291(');
   // Matched by the reward's own id against the published row, field by field.
-  assert.match(diff, /const live=publishedByIdV268\.get\(key\);/);
-  assert.match(diff, /if\(growRewardLabelV268\(draftReward\)!==growRewardLabelV268\(live\)\)/);
-  assert.match(diff, /if\(Number\(draftReward\.cost_points\|\|0\)!==Number\(live\.cost_points\|\|0\)\)/);
+  assert.match(diff, /const live=liveById\.get\(id\);/);
+  assert.match(diff, /fields\.forEach\(field=>\{/);
+  assert.match(diff, /if\(before!==after\)changes\.push\(/);
   // Nothing is recorded when nothing changed — a marker on every card would be worthless.
-  assert.match(diff, /if\(changes\.length\)growPendingRewardsV268\.set\(key,changes\);/);
+  assert.match(diff, /if\(changes\.length\)changed\.set\(id,changes\);/);
+  /* V291 additions: the fields that used to publish silently. */
+  const fields = section('function growRewardDiffFieldsV291(', 'function growRewardDiffOptionsFromSnapshotV291(');
+  for (const label of ['Name', 'Cost', 'Offered', 'Store credit', 'Expires after',
+    'Uses per customer', 'Who can redeem', 'Branches', 'Services']) {
+    assert.match(fields, new RegExp(`label:'${label}'`), `${label} must be compared`);
+  }
+  assert.match(app, /const growPendingRewardsV268=growRewardDiffV291\.changed;/);
   assert.match(app, /const growPendingBlockV268=changes=>!changes\|\|!changes\.length\?''/);
 });
 

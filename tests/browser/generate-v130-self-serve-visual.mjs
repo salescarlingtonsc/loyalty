@@ -24,9 +24,14 @@ export function buildV130SelfServeVisual(app){
   const auth=between(app,"function renderAuth(mode='in'",'function validNewPassword(');
   const oauthCallback=between(app,'async function consumeBusinessOAuthRedirect(){','async function consumePasswordRecoveryRedirect()');
   const onboard=between(app,'function renderOnboard(){','/* ============================================================================');
+  /* V286: the payment-pending screen is no longer inside renderOnboard or
+     renderBusinessWorkspaceControl — both delegate to one renderer, which lives between the
+     shared checkout executor and the workspace-control screen. Extract it, or this fixture
+     composes two renderers that call a function it never defines. */
+  const paymentPending=between(app,'const SELF_SERVE_RETURN_PROCESSING_V286=','function renderBusinessWorkspaceControl(');
   const control=between(app,'function renderBusinessWorkspaceControl(','/* ---------- auth ---------- */');
   const deletion=between(app,'function accountDeletionCardHtml(){','function renderPasswordUpdate(){');
-  const sourceHash=createHash('sha256').update([style,oauth,signup,auth,oauthCallback,onboard,control,deletion].join('\n')).digest('hex');
+  const sourceHash=createHash('sha256').update([style,oauth,signup,auth,oauthCallback,onboard,paymentPending,control,deletion].join('\n')).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="${sourceHash}"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>${style}body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px}.v130-nav .btn{padding:8px 12px}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v130-nav{position:relative;top:auto;right:auto;padding:8px;overflow:auto}.center-wrap{padding:12px}.grid2{grid-template-columns:1fr}}</style></head><body><nav class="v130-nav" aria-label="V130 acceptance views"><button class="btn" data-view="signup">Signup</button><button class="btn ghost" data-view="login">Login</button><button class="btn ghost" data-view="setup">Setup</button><button class="btn ghost" data-view="pending">Pending</button><button class="btn ghost" data-view="control">Control</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -55,6 +60,7 @@ export function buildV130SelfServeVisual(app){
   ${oauthCallback}
   ${deletion}
   ${onboard}
+  ${paymentPending}
   ${control}
   function showView(view){currentView=view;document.querySelectorAll('[data-view]').forEach(button=>button.className=button.dataset.view===view?'btn':'btn ghost');if(view==='signup')renderBusinessApplication();else if(view==='login')renderAuth('in');else if(view==='control')renderBusinessWorkspaceControl({business_id:pending.business_id,approval:{status:'pending'},subscription:{workspace_paused:false}});else renderOnboard()}
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));

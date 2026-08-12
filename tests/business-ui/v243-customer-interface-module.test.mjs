@@ -49,7 +49,7 @@ test('V243 the rail entry resolves to a routed page function', () => {
 test('V243 the workspace chunk classifier no longer swallows every "#/customer…" hash', () => {
   /* '#/customer' as a bare prefix matched '#/customer-interface' too, which would have sent a
      workspace route to the customer chunk and cost a whole-bundle self-heal on every visit. */
-  assert.match(app, /const CUSTOMER_ROUTE_PREFIXES_V185=\['#\/b\/','#\/customer\/','#\/wallet','#\/claim','#\/join'\];/);
+  assert.match(app, /const CUSTOMER_ROUTE_PREFIXES_V185=\['#\/b\/','#\/customer\/','#\/wallet','#\/claim','#\/join','#\/offer\/'\];/);
   const prefixes = app.match(/const CUSTOMER_ROUTE_PREFIXES_V185=\[([^\]]+)\]/)[1];
   const inline = indexHtml.match(/var customer=\[([^\]]+)\]/)[1];
   assert.equal(inline, prefixes, 'the inline preloader must mirror the router rule');

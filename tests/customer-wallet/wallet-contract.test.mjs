@@ -207,7 +207,10 @@ test('the SPA has a gated customer wallet route before staff onboarding and keep
   for (const name of ['customer_get_business_summary', 'customer_portal_capabilities']) {
     assert.match(app, new RegExp(`(?:\\.rpc|customerRpc)\\(\\s*['"]${name}['"]`, 'i'), `${name} must be wired in the customer shell`);
   }
-  assert.match(app, /\.rpc\(\s*['"]customer_get_(?:appointments|appointments_page)['"]/i,
+  // v286: customerRpc is sb.rpc plus the customer surface's 12s deadline, and every appointments
+  // reader now goes through it. The check is "an allowlisted reader is wired", not "the raw
+  // client is called" — so it accepts the wrapper, exactly as the loop above it already does.
+  assert.match(app, /(?:\.rpc|customerRpc)\(\s*['"]customer_get_(?:appointments|appointments_page)['"]/i,
     'the customer shell must wire an allowlisted appointments reader');
   for (const name of rpcContract.filter(({name})=>name!=='customer_get_appointments').map(({ name }) => name)) {
     const calls = [...app.matchAll(new RegExp(

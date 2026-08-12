@@ -47,8 +47,10 @@ await fallback.evaluate(()=>{
   Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:undefined});
   openCustomerJoinScanner();
 });
-await fallback.getByRole('button',{name:'Open camera'}).click();
+/* v281: the camera starts automatically when the sheet opens; with mediaDevices undefined the
+   fallback must reveal itself without any tap. */
 assert.equal(await fallback.getByText('Camera is unavailable in this browser. Choose a QR image or paste the QR link.',{exact:true}).count(),1);
+assert.equal(await fallback.locator('#customerJoinScannerFallback').evaluate(node=>node.hidden),false);
 assert.equal(await fallback.locator('#customerJoinScannerPaste').evaluate(node=>node.open),true);
 assert.equal(await fallback.locator('#customerJoinScannerImage').evaluate(node=>node===document.activeElement),true);
 assert.equal(await fallback.locator('#customerJoinScannerImage').getAttribute('capture'),null);

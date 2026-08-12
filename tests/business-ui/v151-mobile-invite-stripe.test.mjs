@@ -97,12 +97,16 @@ test('V151 staff invite migration enforces email restriction and one-time server
 });
 
 test('V151 Stripe return polls provider-confirmed self-service status and never trusts success URL alone', () => {
-  assert.match(onboard, /Setting up your Peekaa workspace/);
-  assert.match(onboard, /paymentState/);
-  assert.match(onboard, /get_self_serve_checkout_v130/);
-  assert.match(onboard, /if\(next\?\.status==='active'\)/);
-  assert.match(onboard, /Checkout success pages do not unlock access; provider-confirmed payment does/);
-  assert.match(onboard, /Stripe confirmation is still processing/);
+  /* V286: the poll and the ?status= reading moved out of renderOnboard into the single
+     payment-pending renderer, because renderOnboard was not the screen the Stripe return
+     actually reached. The contract this test is about is unchanged; only its address is. */
+  const pending = section('function renderSelfServePaymentPendingV286(', 'function renderBusinessWorkspaceControl(');
+  assert.match(pending, /Setting up your Peekaa workspace/);
+  assert.match(pending, /selfServePaymentReturnStateV286\(\)/);
+  assert.match(pending, /get_self_serve_checkout_v130/);
+  assert.match(pending, /if\(next\?\.status==='active'\)/);
+  assert.match(pending, /Checkout success pages do not unlock access; provider-confirmed payment does/);
+  assert.match(pending, /Stripe confirmation is still processing/);
   /* V281: the checkout request moved into the shared runSelfServeCheckoutV281 executor. The
      poll this test is about is unchanged and still lives in renderOnboard. */
   assert.match(onboard, /driveSelfServeCheckoutV281\(onboarding,statusNode,button\)/);
@@ -112,8 +116,12 @@ test('V151 Stripe return polls provider-confirmed self-service status and never 
 
 test('V151 dashboard charts show empty states instead of misleading axes', () => {
   assert.match(dashboard, /dashboard-chart-empty/);
-  assert.match(dashboard, /dashboardReportingScopeWrap/);
-  assert.match(dashboard, /renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\)/);
+  /* V287 retarget: V225 deleted #dashboardReportingScopeWrap from the markup but left the
+     selector call behind, and renderReportingScopeSelectorV155 fires onChange immediately when
+     its target is missing — so the Dashboard ran its whole load twice per open. The call is
+     gone; what this test actually guards is that the reporting scope still reaches the RPCs. */
+  assert.doesNotMatch(dashboard, /renderReportingScopeSelectorV155\(/);
+  assert.match(dashboard, /currentReportingScopePayloadV155/);
   assert.match(dashboard, /No revenue recorded in this period/);
   assert.match(dashboard, /More activity is needed to show a trend/);
   // Chart empty states were reworded to say what to do next, not just what is missing.

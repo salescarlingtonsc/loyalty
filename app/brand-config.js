@@ -3,6 +3,9 @@
 
   const brand = Object.freeze({
     productName: 'Peekaa',
+    /* V286: the legal entity behind the product, for the marketing footer's identity line.
+       No UEN is recorded here — one is not invented. */
+    entityName: 'Nestly Technologies Pte. Ltd.',
     wordmark: 'peekaa',
     customerLabel: 'My Peekaa',
     canonicalPublicDomain: 'https://www.peekaa.asia',

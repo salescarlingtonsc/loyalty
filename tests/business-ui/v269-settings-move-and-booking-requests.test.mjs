@@ -180,7 +180,11 @@ test('V269 the button hands off to the one page that owns the decision', () => {
   assert.match(appointments, /bookingRequestsButtonV269\.onclick=\(\)=>nav\('#\/bookings'\);/);
   // Bookings opens on the requests tab, so the hand-off lands on the requests themselves
   assert.match(app, /tabs\.querySelector\('#bookingsTabRequests'\)\.onclick=\(\)=>setTab\('requests'\);/);
-  assert.match(app, /setTab\('requests'\);\n\}/);
+  /* V288 (audit A2 HIGH 3): RETARGETED, not deleted. The enhancement's last act is still to
+     open a tab — but a realtime re-render must restore the tab the owner was actually on
+     rather than always snapping back to Requests, so the literal 'requests' is now the
+     fallback of that restore rather than an unconditional call. */
+  assert.match(app, /setTab\(bookingsActiveTabV288==='settings'\?'settings':'requests'\);\n\}/);
 });
 
 /* --------------------------------- (B2) accept/decline: one path each, idempotent, gated */
@@ -214,8 +218,11 @@ test('V269 a double tap cannot produce two appointments', () => {
 });
 
 test('V269 permission gating on the decision matches the role model, not an assumption', () => {
-  // confirm creates an appointment; decline only closes a booking request
-  assert.match(bookings, /const canConvertBooking=canWriteModule\('appointments'\);/);
+  /* Confirm creates an appointment; decline only closes a booking request.
+     V288 (audit A2 HIGH 1): RETARGETED, not deleted. Both decisions are BOOKINGS rights now —
+     the fnb and bar sectors are never entitled to the appointments module, so demanding it made
+     confirmation impossible for the beachhead vertical while decline stayed available. */
+  assert.match(bookings, /const canConvertBooking=canWriteModule\('bookings'\);/);
   assert.match(bookings, /const canDeclineBooking=canWriteModule\('bookings'\);/);
   assert.match(bookings, /const authorized=decision==='confirm'\?canConvertBooking:decision==='decline'\?canDeclineBooking:false;/);
 });

@@ -216,8 +216,8 @@ test('Explore is hidden entirely — no tab, and the route refuses', () => {
     'a hand-typed URL must not reach a page with no way back into it');
   assert.doesNotMatch(appJs, /ComingSoon/, 'the coming-soon surface the owner replaced is gone, not orphaned');
   assert.doesNotMatch(appCss, /customer-coming-soon|peekaaLookAroundV248/, 'its CSS went with it');
-  assert.match(appCss, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr;/,
-    'four slots while Explore is hidden: Home, Rewards, Scan, Bookings');
+  assert.match(appCss, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr 1fr;/,
+    'five slots while Explore is hidden: Home, Rewards, Scan, Bookings, Profile (v281)');
 });
 
 test('the flag is declared before the navigation reads it', () => {

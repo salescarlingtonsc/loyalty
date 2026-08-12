@@ -35,7 +35,11 @@ test('dashboard uses Singapore dates and labels every mixed metric scope', () =>
     'customer-count detail must be omitted when Clients is unavailable');
   assert.match(dashboard, /dashboardReportRetry/);
   assert.match(dashboard, /requestGate\.begin\(\)/);
-  assert.match(dashboard, /await renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\);[\s\S]*if\(isDashboardCurrent\(\)\)await load\(\)/,
+  /* V287 retarget: the ordering this asserted only existed because of an orphaned selector
+     call whose immediate onChange double-loaded the page. One load, gated on the route still
+     being current, is the contract. */
+  assert.doesNotMatch(dashboard, /renderReportingScopeSelectorV155\(load,isDashboardCurrent/);
+  assert.match(dashboard, /if\(isDashboardCurrent\(\)\)await load\(\)/,
     'the dashboard must load once after its reporting scope is initialized');
   // V252: the handler is now scoped to `.dashboard-range`. Unscoped, it also captured the new
   // Today-schedule date picker and invalidated the Performance panel on every schedule day change.
@@ -236,7 +240,11 @@ test('staff performance excludes non-revenue ledger rows from revenue while reta
     'gift-card issuance is excluded while the signed reversal reduces attributed revenue');
   assert.equal(result.byStaff['staff-1'].commission,-40);
   const staff = section('async function staffPerfPage(drillId)', '/* ---------- daily report ---------- */');
-  assert.match(staff, /fetchAllRows\(\(\)=>sb\.from\('sale_commission'\)/);
+  /* V285 retarget: the commission read is still one fetchAllRows over sale_commission, but the
+     query is now built as a named const first so the branch chosen at the top bar can be applied
+     to it (the page used to rank the whole business whatever the scope said). The pin follows the
+     query rather than being deleted. */
+  assert.match(staff, /fetchAllRows\(\(\)=>\{\s*\n\s*const commissionQueryV285=sb\.from\('sale_commission'\)/);
   assert.match(staff, /require_module_scope_v145[\s\S]*p_module:'staffperf'/);
   assert.match(staff, /Signed ledger records/);
   assert.match(staff, /Ledger records/);
@@ -625,9 +633,17 @@ test('launch-incomplete Stored value is unreachable and Studio remains managemen
      ordinary programme numbers (a BEFORE/AFTER of the loyalty_programs fields). The honesty
      assertion moves with it — the page must still disclaim the surfaces it does not diff
      (rewards, birthday, bring-back) instead of implying completeness. */
-  assert.match(publishGate, /does not summarise reward, birthday or bring-back field values/);
+  /* V291 retarget (not a deletion): the gate no longer disclaims those values — it lists them.
+     The pin follows the capability rather than the old apology. */
+  assert.match(publishGate, /lists every programme, reward, birthday and bring-back value this draft changes/);
+  assert.match(publishGate, /growRewardPendingChangesV291/);
   assert.match(publishGate, /What changes for customers/);
-  assert.match(publishGate, /Reward and birthday changes are listed in their editors/);
+  /* V291 retarget (not a deletion): the gate lists those changes now instead of deferring them,
+     so the pin follows to the sections that render them. */
+  assert.match(publishGate, /Rewards<\/h3>/);
+  assert.match(publishGate, /Birthday benefit<\/h3>/);
+  assert.match(publishGate, /Bring-back rules<\/h3>/);
+  assert.match(publishGate, /The welcome offer is not part of this draft/);
   assert.match(publishGate, /No changes to earning or programme numbers in this draft/);
   assert.match(publishGate, /Could not load the comparison/);
   assert.match(publishGate, /Server-confirmed advanced-action safety/);

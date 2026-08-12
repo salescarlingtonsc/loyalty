@@ -19,6 +19,9 @@ test('Peekaa is the immutable canonical product identity while legacy globals st
   vm.runInNewContext(source,context,{filename:'brand-config.js'});
   assert.deepEqual(JSON.parse(JSON.stringify(context.NestlyBrand)),{
     productName:'Peekaa',
+    /* V286: the marketing footer names the legal entity behind the product. No UEN is
+       recorded here, because none has been supplied to record. */
+    entityName:'Nestly Technologies Pte. Ltd.',
     wordmark:'peekaa',
     customerLabel:'My Peekaa',
     canonicalPublicDomain:'https://www.peekaa.asia',

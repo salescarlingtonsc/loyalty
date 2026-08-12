@@ -290,7 +290,14 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      rewritten availability panel; V215 added welcomeOfferGiven; V225 added accountMenuForBusiness
      when the business name left the top bar and the account button needed its own name. Each was
      reviewed with all three locales and matching placeholders, which the assertions below check. */
-  assert.equal(keys.length,121,'mixed-interface interpolation inventory changed without review');
+  /* 121 -> 124: v150 (deb980e) deleted dashboardSummary's only render path and V217 (6d589bf)
+     superseded recentAppointments with recentInWindow — both dead entries removed; v281 adds
+     performancePeriodRange, pointCostDerived, parkExpiryPreview(+Tier) and parkKeptUntil,
+     bringing the V266/V262/V278 interpolated workspace copy into the reviewed inventory,
+     plus sortByAscending/sortByDescending for the v267 customer-360 sort control and
+     bottlePercentLeft for the v275 fill bar and the three v269 booking-request
+     button strings. */
+  assert.equal(keys.length,130,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -428,7 +435,6 @@ test('v97 dynamic count, page, amount, status, import, QR and billing copy local
   };
   for(const locale of ['zh-CN','ms']){
     const rendered=[
-      templateText('dashboardSummary',{business:fixtures.business},locale),
       templateText('customerPagination',{total:9999,page:12,pages:40},locale),
       templateText('completedTransactions',{count:2},locale),
       templateText('scopePeriod',{branch:'Business',from:fixtures.from,to:fixtures.to},locale),
@@ -473,7 +479,10 @@ test('v97 checkout and responsive tables localize interface parts while preservi
   assert.match(checkout,/workspaceTemplateTextV97\(!enabled\?'catalogueEnabled':'catalogueDisabled'\)/);
   assert.match(appointments,/data-label="Date & time"/);
   assert.match(appointments,/<span data-workspace-i18n>min<\/span>/);
-  assert.match(appointments,/<span class="pill \$\{[^}]+\}">\$\{esc\(a\.status\.replace/);
+  /* V288 (audit A2 LOW 23): RETARGETED, not deleted. `a.status.replace('_',' ')` put the raw
+     database value on screen ("no show", "booked"); statusLabelV288 is the one friendly-label
+     table, and its output is still marked for the workspace localizer. */
+  assert.match(appointments,/<span class="pill \$\{[^}]+\}"><span data-workspace-i18n>\$\{esc\(statusLabelV288\(a\.status\)\)\}<\/span><\/span>/);
   assert.match(appointments,/>Details<\/button>/);
   assert.match(appointments,/>Amend<\/button>/);
   for(const source of ['booked','completed','cancelled','no show','Available in Record sale','Hidden from Record sale','Not offered at this branch']){

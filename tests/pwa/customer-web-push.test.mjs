@@ -186,19 +186,28 @@ test('iOS requires the installed PWA before notification permission can be reque
   assert.doesNotMatch(source,/(setTimeout|DOMContentLoaded)[\s\S]{0,160}requestPermission/);
 });
 
-test('service worker accepts only six customer-safe event types and routes clicks to business context',async()=>{
+/* V282 retarget. The guarantee this test exists to protect - the service worker renders a CLOSED
+   vocabulary of event types and never free text from the payload - is unchanged, and is still
+   asserted by the exact count and the exact membership below. What changed is the membership: the
+   v263 owner ruling ("promotional push IS intended, they can switch off or on") made
+   promotion_alerts push-eligible in the database, and v282 completes that path by giving the
+   dispatcher and the service worker the matching type. The original `doesNotMatch(/promotion/)`
+   line pinned the opposite policy and could not survive the ruling; the privacy property it was
+   really guarding - no prices, no identifiers, no free text - lives in the database's title/body
+   check constraints and in the payload assertions above. */
+test('service worker accepts only seven customer-safe event types and routes clicks to business context',async()=>{
   const source=await read('app/sw.js');
   const eventTypes=source.match(/const CUSTOMER_PUSH_TYPES=new Set\(\[([\s\S]*?)\]\)/)?.[1]||'';
-  assert.equal((eventTypes.match(/'[^']+'/g)||[]).length,6);
+  assert.equal((eventTypes.match(/'[^']+'/g)||[]).length,7);
   for(const eventType of [
     'value_expiry','reward_ready','visit_progress','birthday_benefit',
-    'booking_request_received','appointment_time_changed'
+    'booking_request_received','appointment_time_changed','promotion_alert'
   ])assert.match(eventTypes,new RegExp(`'${eventType}'`));
   assert.match(source,/business_slug\|\|data\?\.programme_slug/);
   assert.match(source,/clients\.matchAll\(\{type:'window',includeUncontrolled:true\}\)/);
   assert.match(source,/existing\.navigate\(target\)/);
   assert.match(source,/clients\.openWindow\(target\)/);
-  assert.doesNotMatch(eventTypes,/marketing|campaign|promotion/);
+  assert.doesNotMatch(eventTypes,/marketing|campaign/);
 });
 
 test('customer account and profile controls are touch-sized, accessible, private, and mobile responsive',async()=>{

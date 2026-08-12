@@ -44,8 +44,20 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
   }
   assert.match(dashboard,/data-dashboard-metric="\$\{metric\.key\}"/);
   assert.match(dashboard,/Customer membership or customer records created during the selected period/);
-  assert.match(dashboard,/Business-wide customers with no valid visit for at least 30 complete Singapore days/);
-  assert.match(dashboard,/openDashboardMetricDetailV141/);
+  /* V287 retarget: the definition used to claim "at least 30 days" while the tile drilled
+     through to the 30-59 bucket only. The number and the destination must describe the same
+     group, and the definition must say so.
+     V290 retarget: that rule is unchanged, but the group is no longer narrowed. V290 added the
+     'all_inactive' bucket to staff_list_customers_v155, so the destination V287 could not express
+     exists and the tile counts every customer quiet for 30 days or more again. */
+  assert.match(dashboard,/Customers whose last valid visit was 30 or more complete Singapore days ago/);
+  assert.match(dashboard,/p_inactive_bucket:'all_inactive'/);
+  /* V287 retarget: openDashboardMetricDetailV141 was unreachable after V225 made every tile a
+     direct link (all four definitions carry a route, so the `else` could never run). The
+     drilldown contract this test guards is now the navigation itself. */
+  assert.doesNotMatch(dashboard,/function openDashboardMetricDetailV141\(/);
+  assert.match(dashboard,/const route=dashboardMetricDefinitionsV141\[key\]\?\.route;/);
+  assert.match(dashboard,/if\(route\)nav\(route\);/);
   assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
   assert.match(dashboard,/appliedDashboardScopeV141/);
   assert.match(dashboard,/business-current/);
@@ -67,7 +79,8 @@ test('V141 dashboard load failures stay in context and can be retried',()=>{
   assert.match(dashboard,/id="dashboardStatus" aria-live="polite"/);
   assert.match(dashboard,/Performance data could not be loaded\./);
   assert.match(dashboard,/dashboardReportRetry/);
-  assert.match(dashboard,/Inactive customer count could not be loaded\./);
+  /* V288: one banner now covers BOTH inactive reads (30-59 and 60+), so the copy is plural. */
+  assert.match(dashboard,/Inactive customer counts could not be loaded\./);
   assert.match(dashboard,/dashboardInactiveRetry/);
   assert.doesNotMatch(dashboard,/Services and goods detail could not be loaded\./);
 });
@@ -77,9 +90,12 @@ test('V141 core dashboard copy is localized in Chinese and Malay',()=>{
     const occurrences=app.split(`'${label}':`).length-1;
     assert.ok(occurrences>=2,`${label} must appear in both workspace dictionaries`);
   }
-  assert.match(dashboard,/workspaceTranslationV97\('All business customers'\)/);
-  assert.match(dashboard,/workspaceTranslationV97\('All permitted branches'\)/);
-  assert.match(dashboard,/workspaceTranslationV97\('Current balance\/status'\)/);
+  /* V287 retarget: the only call sites for these three were inside
+     openDashboardMetricDetailV141, the metric modal V225 made unreachable and V287 deleted.
+     Nothing localized was lost — no user could open that dialog. The dictionary coverage
+     asserted above is kept so the phrases stay translated if a surface reuses them. */
+  assert.doesNotMatch(dashboard,/function openDashboardMetricDetailV141\(/);
+  assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
 });
 
 test('V141 customer directory exposes last-visit choice and date joined',()=>{

@@ -45,8 +45,11 @@ test('a successful sign-in offers the credential to the browser’s own manager'
   assert.match(signIn, /new globalThis\.PasswordCredential\(\{id:phone,password,name:phone\}\)/);
   assert.match(signIn, /\}catch\{\}/, 'a browser without the API must not break sign-in');
   // it runs only after the sign-in succeeded
+  /* V289 (audit A3, G6): the single failure sentence became customerAuthErrorMessageV289, which
+     tells a rate limit and a dead connection apart from a bad password. The ordering this test
+     exists for is unchanged — the failure branch still returns before any credential is stored. */
   const store = signIn.indexOf('navigator.credentials?.store');
-  const failure = signIn.indexOf('The mobile number or password is incorrect.');
+  const failure = signIn.indexOf("customerAuthErrorMessageV289(error,'sign_in')");
   assert.ok(failure > 0 && failure < store, 'the failure path returns before anything is stored');
 });
 

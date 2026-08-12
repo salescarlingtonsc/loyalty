@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 239,
-  "itemCount": 284,
+  "pendingCount": 247,
+  "itemCount": 292,
   "items": [
     {
       "order": 1,
@@ -2843,10 +2843,90 @@
       "order": 284,
       "kind": "pending",
       "version": "20260812000400",
-      "name": "nestly_v284_customer_intelligence_v83",
-      "path": "supabase/migrations/20260812000400_nestly_v284_customer_intelligence_v83.sql",
-      "octetLength": 2945,
-      "sha256": "3d641129e6d71fcec1bae2e84ccbbd5ff14040359f75db846bef3e57e5cfefb4",
+      "name": "nestly_v284_comms_foundation",
+      "path": "supabase/migrations/20260812000400_nestly_v284_comms_foundation.sql",
+      "octetLength": 42177,
+      "sha256": "d5aab00e8b6801314f56d8bb986f2f8dde762ad02854175a18f1530792ed724e",
+      "provenance": "local-source"
+    },
+    {
+      "order": 285,
+      "kind": "pending",
+      "version": "20260812000500",
+      "name": "nestly_v285_offer_share_imageless_parity",
+      "path": "supabase/migrations/20260812000500_nestly_v285_offer_share_imageless_parity.sql",
+      "octetLength": 3158,
+      "sha256": "ee62527fe524e9119b209623be44a804e4c05ddc6bd375eb2b48009bf5698102",
+      "provenance": "local-source"
+    },
+    {
+      "order": 286,
+      "kind": "pending",
+      "version": "20260812000600",
+      "name": "nestly_v285_a4_gap_closure",
+      "path": "supabase/migrations/20260812000600_nestly_v285_a4_gap_closure.sql",
+      "octetLength": 14090,
+      "sha256": "053bc29364114eaba8f94b42375c58ef0a0e87b5e702b72db8a8fd1e49f5086a",
+      "provenance": "local-source"
+    },
+    {
+      "order": 287,
+      "kind": "pending",
+      "version": "20260812000700",
+      "name": "nestly_v288_a2_gap_closure",
+      "path": "supabase/migrations/20260812000700_nestly_v288_a2_gap_closure.sql",
+      "octetLength": 14263,
+      "sha256": "b5fc26e1ec376091d715a6cc174800e858d0d3ed85303ccea28fa378225f244d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 288,
+      "kind": "pending",
+      "version": "20260812000800",
+      "name": "nestly_v289_reschedule_respects_business_setting",
+      "path": "supabase/migrations/20260812000800_nestly_v289_reschedule_respects_business_setting.sql",
+      "octetLength": 6650,
+      "sha256": "7c90e044de49dd76f6455c152fbe280a8114e90a559537ac9bf5af88b7060655",
+      "provenance": "local-source"
+    },
+    {
+      "order": 289,
+      "kind": "pending",
+      "version": "20260812000900",
+      "name": "nestly_v290_customer_withdraw_booking_request",
+      "path": "supabase/migrations/20260812000900_nestly_v290_customer_withdraw_booking_request.sql",
+      "octetLength": 3410,
+      "sha256": "e1ae93e85e3e2e9808d424da2573485e7711295b58ee48218cd138ad2e04d076",
+      "provenance": "local-source"
+    },
+    {
+      "order": 290,
+      "kind": "pending",
+      "version": "20260812001000",
+      "name": "nestly_v290_server_debt_closure",
+      "path": "supabase/migrations/20260812001000_nestly_v290_server_debt_closure.sql",
+      "octetLength": 42597,
+      "sha256": "f09a851128bbad2979889b80bb3da7116d0db2ad76d24a635c15a55fc6e249d9",
+      "provenance": "local-source"
+    },
+    {
+      "order": 291,
+      "kind": "pending",
+      "version": "20260812001100",
+      "name": "nestly_v292_demo_requests",
+      "path": "supabase/migrations/20260812001100_nestly_v292_demo_requests.sql",
+      "octetLength": 15792,
+      "sha256": "7673239fc4ec4f378afe3f8a2a7a31eecf86696c0be98e6a14bb82a9efdc4e72",
+      "provenance": "local-source"
+    },
+    {
+      "order": 292,
+      "kind": "pending",
+      "version": "20260812001200",
+      "name": "nestly_v293_customer_intelligence_grants",
+      "path": "supabase/migrations/20260812001200_nestly_v293_customer_intelligence_grants.sql",
+      "octetLength": 3100,
+      "sha256": "644da31ae1a4559d6926a4ca58f031f470b9554e6e1e43271f79a3bde41f1333",
       "provenance": "local-source"
     }
   ]

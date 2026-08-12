@@ -127,7 +127,7 @@ test('server continuity function is owner-only, stale-write guarded and preserve
 
 test('Grow is entitlement-neutral and retention-only owners can create and edit from the overview',()=>{
   assert.match(app,/pageKey==='grow'&&!growModuleKeys\.some\(module=>canReadModule\(module\)\)/);
-  assert.match(app,/grow:\(hashParam,routedFocus\)=>growPage\('overview',hashParam,routedFocus\)/);
+  assert.match(app,/grow:\(hashParam,routedFocus\)=>growPage\('overview',hashParam,routedFocus,\{fromRouteV288:true\}\)/);
   assert.match(grow,/const canSetupWinback=isOwner&&canWinback&&canWriteModule\('retention'\)/);
   assert.match(grow,/sb\.rpc\('create_grow_config_draft_v138'/);
   assert.match(grow,/p_source:'grow_retention_edit'/);

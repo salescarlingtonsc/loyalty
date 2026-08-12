@@ -1,4 +1,4 @@
--- Rollback-only v284 acceptance: the four restored RPCs are callable by
+-- Rollback-only v293 acceptance: the four restored RPCs are callable by
 -- authenticated and behave per the shipped frontend contract — the REAL
 -- production implementations, not stand-ins.
 --
@@ -19,7 +19,7 @@ grant execute on function public.get_customer_intelligence_export_page_v83(uuid,
 grant execute on function public.customer_sync_verified_relationships_v81(text)
   to authenticated;
 
-do $v284$
+do $v293$
 declare
   v_owner uuid; v_outsider uuid; v_customer uuid;
   v_biz uuid; v_client_a uuid; v_client_b uuid;
@@ -44,13 +44,13 @@ begin
 
   ---------------------------------------------------------------- seed
   insert into public.businesses (name, slug, currency)
-    values ('ZZ V284 INTEL PTE LTD', 'zz-v284-intel', 'SGD') returning id into v_biz;
+    values ('ZZ V293 INTEL PTE LTD', 'zz-v293-intel', 'SGD') returning id into v_biz;
   insert into public.staff (business_id, user_id, role, active)
     values (v_biz, v_owner, 'owner', true);
   -- app.has_perm requires an open workspace (v94): approved + not paused.
   insert into public.business_workspace_controls_v94
       (business_id, approval_status, decided_by, decided_at, decision_reason)
-    values (v_biz, 'approved', v_owner, now(), 'v284 acceptance fixture')
+    values (v_biz, 'approved', v_owner, now(), 'v293 acceptance fixture')
     on conflict (business_id) do update set approval_status = 'approved',
       decided_by = excluded.decided_by, decided_at = excluded.decided_at,
       decision_reason = excluded.decision_reason;
@@ -58,10 +58,10 @@ begin
     values (v_biz, false)
     on conflict (business_id) do update set workspace_paused = false;
   insert into public.clients (business_id, full_name, phone, email, created_at)
-    values (v_biz, 'ZZ Alpha', '81110001', 'a@v284.test', now() - interval '2 days')
+    values (v_biz, 'ZZ Alpha', '81110001', 'a@v293.test', now() - interval '2 days')
     returning id into v_client_a;
   insert into public.clients (business_id, full_name, phone, email, created_at)
-    values (v_biz, 'ZZ Beta', '81110002', 'b@v284.test', now() - interval '1 day')
+    values (v_biz, 'ZZ Beta', '81110002', 'b@v293.test', now() - interval '1 day')
     returning id into v_client_b;
   insert into public.sales (business_id, client_id, kind, amount_cents, occurred_at)
     values (v_biz, v_client_a, 'service', 5000, '2026-07-05T10:00:00+08'),
@@ -152,7 +152,7 @@ begin
     perform set_config('request.jwt.claims',
       json_build_object('sub', v_customer, 'role', 'authenticated')::text, true);
     begin
-      d := public.customer_sync_verified_relationships_v81('v284-accept-key');
+      d := public.customer_sync_verified_relationships_v81('v293-accept-key');
       if coalesce(d->>'outcome','') not in ('synchronized','try_later') then
         raise exception 'F: unexpected sync outcome %', d->>'outcome'; end if;
     exception
@@ -160,7 +160,7 @@ begin
     end;
   end if;
 
-  raise notice 'v284 customer intelligence + relationship sync: all assertions passed';
-end $v284$;
+  raise notice 'v293 customer intelligence + relationship sync: all assertions passed';
+end $v293$;
 
 rollback;

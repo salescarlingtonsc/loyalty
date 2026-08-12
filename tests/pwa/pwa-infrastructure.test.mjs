@@ -198,7 +198,7 @@ test('every installable page exposes consistent PWA and iOS metadata', async () 
   }
 });
 
-test('service worker installs only the versioned public fallback shell', async () => {
+test('service worker installs the versioned fallback shell and waits for consent', async () => {
   const source = await text('sw.js');
   const harness = serviceWorkerHarness(source);
   let installPromise;
@@ -210,20 +210,42 @@ test('service worker installs only the versioned public fallback shell', async (
   });
   await installPromise;
 
-  assert.equal(harness.addedShells.length, 1);
+  /* V289: the install now has two phases. The first addAll is the static fallback set, which
+     still must not contain a document — those are navigation targets, cached last and only as a
+     complete set (see the shell-document test below). */
   const shell = harness.addedShells[0];
   assert.ok(shell.includes('/offline.html'));
   assert.ok(shell.includes('/manifest.webmanifest'));
   assert.ok(shell.includes('/icons/peekaa-512.png'));
   assert.ok(!shell.includes('/'));
   assert.ok(!shell.includes('/index.html'));
+  assert.ok(!shell.includes('/app'));
   assert.ok(!shell.includes('/join.html'));
-  assert.doesNotMatch(source, /cache\.put\s*\(/);
   assert.doesNotMatch(shell.join('\n'), /supabase|runtime-config|customer-ui|brand-config/i);
-  assert.equal(harness.skipWaitingCount, 1, 'critical Peekaa shell updates activate without waiting on an old Nestly cache');
+  /* V289 (audit A3, G3a): skipWaiting() on install forced a controller swap on every deploy,
+     which reloaded customers mid-OTP and made pwa.js's isUnsafeToAutoUpdate() guard decorative.
+     The worker must now WAIT; only the SKIP_WAITING message — sent by the guarded applyUpdate
+     path — may promote it. */
+  assert.equal(harness.skipWaitingCount, 0, 'an install must never take over a live page on its own');
+  assert.match(source, /event\.data\?\.type==='SKIP_WAITING'\)self\.skipWaiting\(\)/,
+    'the consented update path must still be able to promote the waiting worker');
 });
 
-test('service worker reloads open pages after replacing a stale auth/legal shell cache', async () => {
+test('V289: the offline app shell is stored only when every asset it needs is stored too', async () => {
+  const source = await text('sw.js');
+  /* cache.put is what writes the documents, and it may only ever run after the fingerprinted
+     assets discovered in index.html have been added — so a half-cached shell cannot be served. */
+  const precache = source.slice(source.indexOf('async function precacheShellDocumentsV289'));
+  const addAll = precache.indexOf('cache.addAll([...assets])');
+  const put = precache.indexOf('cache.put(document');
+  assert.ok(addAll > 0 && put > addAll, 'the documents must be written after their assets');
+  assert.match(precache, /<script\[\^>\]\+src="\(\[\^"\]\+\)"/,
+    'the fingerprinted script urls must be read from the shipped document, never hardcoded');
+  assert.match(precache, /appSurfaceChunks/, 'the router chunks must be precached too');
+  assert.doesNotMatch(precache, /'business'/, 'the 1.2MB workspace chunk stays out of the shell');
+});
+
+test('service worker notifies but never re-navigates open pages after replacing a stale shell cache', async () => {
   const source = await text('sw.js');
   const harness = serviceWorkerHarness(source, {
     cacheKeys: [
@@ -232,6 +254,7 @@ test('service worker reloads open pages after replacing a stale auth/legal shell
       'nestly-shell-v7-20260805-v167-customer-trust',
       'nestly-shell-v8-20260806-v177-production-polish',
       'nestly-shell-v9-20260808-v195-tier-icons',
+      'nestly-shell-v10-20260812-v289-guarded-updates',
       'unrelated-cache'
     ]
   });
@@ -250,17 +273,20 @@ test('service worker reloads open pages after replacing a stale auth/legal shell
     'nestly-shell-v5-20260802-v138-peekaa-convergence',
     'nestly-shell-v6-20260804-v164-auth-cache-convergence',
     'nestly-shell-v7-20260805-v167-customer-trust',
-    'nestly-shell-v8-20260806-v177-production-polish'
+    'nestly-shell-v8-20260806-v177-production-polish',
+    'nestly-shell-v9-20260808-v195-tier-icons'
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(harness.clientMessages)), [
     {
       type: 'PEEKAA_SW_ACTIVATED',
-      cacheVersion: 'v9-20260808-v195-tier-icons'
+      cacheVersion: 'v10-20260812-v289-guarded-updates'
     }
   ]);
-  assert.deepEqual(harness.clientNavigations, [
-    'https://www.peekaa.asia/business#/'
-  ]);
+  /* V289 (audit A3, G3a): activation is now only reached through the guarded applyUpdate path,
+     and the page that consented reloads itself via controllerchange. Re-navigating every window
+     from the worker reloaded tabs that had consented to nothing — the same mid-OTP interruption
+     from the other direction. The notification stays; the forced navigation does not. */
+  assert.deepEqual(harness.clientNavigations, []);
 });
 
 test('brand and lifecycle assets prefer the network so an old Nestly shell cannot remain visible', async () => {
@@ -279,7 +305,7 @@ test('brand and lifecycle assets prefer the network so an old Nestly shell canno
   assert.deepEqual(harness.matchedPaths, []);
 });
 
-test('cold offline navigation returns the self-contained fallback, not a broken app shell', async () => {
+test('cold offline navigation returns the self-contained fallback when no shell is cached', async () => {
   const source = await text('sw.js');
   const harness = serviceWorkerHarness(source);
   const response = await dispatchFetch(
@@ -287,8 +313,11 @@ test('cold offline navigation returns the self-contained fallback, not a broken 
     request('https://www.peekaa.asia/#/customer', { mode: 'navigate' })
   );
 
+  /* V289: the shell is tried first and, in this harness, is absent — so offline.html is still
+     what an incomplete cache serves. A complete cache serves Peekaa's own document, which knows
+     the route and shows the in-app offline banner. */
   assert.equal(response, harness.offlineResponse);
-  assert.deepEqual(harness.matchedPaths, ['/offline.html']);
+  assert.deepEqual(harness.matchedPaths, ['/index.html', '/offline.html']);
 });
 
 test('customer, business and admin navigation stay network-first and are never persisted by the service worker', async () => {

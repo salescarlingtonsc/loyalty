@@ -150,15 +150,23 @@ const sqlTestBySemanticVersion = new Map([
   ['v279', 'db/tests/v279_bottle_owner_walkthrough.sql'],
   ['v280', 'db/tests/v280_branch_billing_units_and_promotion_version.sql'],
   ['v281', 'db/tests/v281_stripe_launch_readiness.sql'],
+  ['v284', 'db/tests/v284_comms_foundation.sql'],
   ['v282', 'db/tests/v282_promotion_finalize_conflict_fastfail.sql'],
   ['v283', 'db/tests/v283_customer_claim_execute_grants.sql'],
-  ['v284', 'db/tests/v284_customer_intelligence_v83.sql'],
   ['v265', 'db/tests/v265_marketing_consent_scope.sql'],
   ['v267', 'db/tests/v267_summary_business_logo.sql'],
-  ['v268', 'db/tests/v268_offer_share_page.sql']
+  ['v268', 'db/tests/v268_offer_share_page.sql'],
+  ['v285', 'db/tests/v285_offer_share_imageless_parity.sql'],
+  ['v289', 'db/tests/v289_reschedule_respects_business_setting.sql'],
+  ['v290', 'db/tests/v290_customer_withdraw_booking_request.sql'],
+  ['v293', 'db/tests/v293_customer_intelligence_grants.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
+  ['nestly_v292_demo_requests', 'db/tests/v292_demo_requests.sql'],
+  ['nestly_v290_server_debt_closure', 'db/tests/v290_server_debt_closure.sql'],
+  ['nestly_v285_a4_gap_closure', 'db/tests/v285_a4_gap_closure.sql'],
+  ['nestly_v288_a2_gap_closure', 'db/tests/v288_a2_gap_closure.sql'],
   ['nestly_v92_synthetic_reporting_isolation', 'db/tests/v92_synthetic_reporting_isolation.sql'],
   ['nestly_v92_customer_privacy_marketing_manifest', 'db/tests/v92_customer_privacy_marketing_manifest.sql'],
   ['nestly_v93_branch_scoped_merchant_redemption', 'db/tests/v93_synthetic_e2e_campaign.sql'],
@@ -753,7 +761,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 239); // V284 customer-intelligence grants
+  assert.equal(pending.length, 247); // V293 customer-intelligence grants
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

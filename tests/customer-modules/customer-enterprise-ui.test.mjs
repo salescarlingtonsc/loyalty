@@ -183,7 +183,10 @@ test('dashboard and customer loyalty detail preserve accessible names and one pa
   }
   assert.doesNotMatch(walletCard,/h\$\{detail\?'1':'2'\}/);
   assert.match(walletCard,/<h2>\$\{esc\(business\.name\|\|'Business'\)\} rewards<\/h2>/);
-  assert.match(app,/id="walletBack" aria-label="\$\{esc\(ct\('backProgrammes'\)\)\}"[^>]*min-width:44px/);
+  /* v178 made the label conditional: business pages keep the translated backProgrammes,
+     the My Rewards tab (owner-requested back button) reads 'Back to home'. */
+  assert.match(app,/id="walletBack" aria-label="\$\{esc\(backLabel\)\}"[^>]*min-width:44px/);
+  assert.match(app,/backLabel=businessSlug\?ct\('backProgrammes'\):'Back to home'/);
   assert.match(loyalty,/if\(canManageLoyalty\)\{[\s\S]{0,300}?get_active_birthday_program/,
     'read-only staff must not call the owner-only birthday programme RPC');
 });
@@ -265,7 +268,9 @@ test('foreign workspace denials expose a focused main landmark and page heading'
 });
 
 test('progressive enhancement is scoped to approved customer routes',()=>{
-  assert.match(app,/const customerUiRoutes=new Set\(\['till','clients','client','grow','loyalty','retention','promotions','referrals','memberships','giftcards'\]\)/);
+  /* V287 retarget: 'sales' joined the set so the Sales ledger's responsive table gets the same
+     mobile data-labels every other customer-facing table already had. */
+  assert.match(app,/const customerUiRoutes=new Set\(\['till','clients','client','sales','grow','loyalty','retention','promotions','referrals','memberships','giftcards'\]\)/);
   assert.match(app,/if\(enhanceCustomerUi\)customerUiObserver=CUI\.mountMain\(main\)/);
 });
 

@@ -81,7 +81,7 @@ test('the day view still wires its appointment buttons inside the captured route
   const renderDay = calendar.slice(calendar.indexOf('function renderDay(day)'),
     calendar.indexOf('function renderWeek('));
   assert.match(renderDay, /\$\('alist'\)\.innerHTML=`<div class="day-timeline-intro"/);
-  assert.match(renderDay, /class="day-timeline-event" data-appointment="\$\{item\.id\}"/);
+  assert.match(renderDay, /class="day-timeline-event\$\{inactiveV288\?' appointment-inactive-v288':''\}" data-appointment="\$\{item\.id\}"/);
   assert.match(renderDay, /wireBlockedTimeActions\(\);\s*wireAppointmentActions\(\);\s*\}/);
   assert.match(calendar, /<div id="alist"/, 'the day host must be part of the route root markup');
   assert.equal((app.match(/id="alist"/g) || []).length, 1,

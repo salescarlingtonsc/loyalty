@@ -101,9 +101,12 @@ export function buildRewardOverviewVisualFixture(app){
       memberships:emptyPrograms?[]:[{id:'membership-1',name:'Glow Monthly',active:!configuredOff}],
       giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false}};
     window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
+    /* v229 moved the grow list's topic filter into a top-level app global; the extracted
+       sections read it, so the harness declares it exactly as app.js line ~583 does. */
+    let growTopicV229='';
     function fixtureQuery(table){
       const state={single:false,equals:{}};
-      const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
+      const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},not(){return query},gte(){return query},lte(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
         then(resolve,reject){window.__tableReads.push(table);let data=[];
           if(table==='businesses')data={active_config_version_id:fixture.currentVersion};
           else if(table==='loyalty_programs')data=fixture.loyalty?[fixture.loyalty]:[];
@@ -140,6 +143,8 @@ export function buildRewardOverviewVisualFixture(app){
         window.__lastRecommendation=data;
         return {data,error:null};
       }
+      if(name==='business_get_welcome_offer_v215')return {data:{status:'none'},error:null};
+      if(name==='business_programme_usage_v271')return {data:{items:[]},error:null};
       return {data:{version_id:'draft-v2'},error:null};
     }};
     async function loyaltyPage(modelOverride,draftVersionId,recommendation,stableRefresh,editorIntent){

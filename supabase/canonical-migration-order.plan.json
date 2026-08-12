@@ -1706,8 +1706,56 @@
     {
       "kind": "pending",
       "version": "20260812000400",
-      "name": "nestly_v284_customer_intelligence_v83",
-      "sourcePath": "db/migrations/20260812_nestly_v284_customer_intelligence_v83.sql"
+      "name": "nestly_v284_comms_foundation",
+      "sourcePath": "db/migrations/20260812_nestly_v284_comms_foundation.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812000500",
+      "name": "nestly_v285_offer_share_imageless_parity",
+      "sourcePath": "db/migrations/20260812_nestly_v285_offer_share_imageless_parity.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812000600",
+      "name": "nestly_v285_a4_gap_closure",
+      "sourcePath": "db/migrations/20260812_nestly_v285_a4_gap_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812000700",
+      "name": "nestly_v288_a2_gap_closure",
+      "sourcePath": "db/migrations/20260812_nestly_v288_a2_gap_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812000800",
+      "name": "nestly_v289_reschedule_respects_business_setting",
+      "sourcePath": "db/migrations/20260812_nestly_v289_reschedule_respects_business_setting.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812000900",
+      "name": "nestly_v290_customer_withdraw_booking_request",
+      "sourcePath": "db/migrations/20260812_nestly_v290_customer_withdraw_booking_request.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812001000",
+      "name": "nestly_v290_server_debt_closure",
+      "sourcePath": "db/migrations/20260812_nestly_v290_server_debt_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812001100",
+      "name": "nestly_v292_demo_requests",
+      "sourcePath": "db/migrations/20260812_nestly_v292_demo_requests.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812001200",
+      "name": "nestly_v293_customer_intelligence_grants",
+      "sourcePath": "db/migrations/20260812_nestly_v293_customer_intelligence_grants.sql"
     }
   ]
 }

@@ -111,10 +111,16 @@ test('Stripe-catalog outage offers authenticated manual application fallback wit
 });
 
 test('payment-pending workspace is explicit and only provider-paid evidence activates it',()=>{
+  /* V286: renderOnboard and renderBusinessWorkspaceControl each carried their own copy of the
+     payment-pending screen, and only the workspace-control copy was reachable — so a paying
+     owner returning from Stripe was asked to pay again. The duplicate is collapsed onto
+     renderSelfServePaymentPendingV286; these assertions follow the copy to its one owner. */
   const control=section('function renderBusinessWorkspaceControl(','/* ---------- auth ---------- */');
-  assert.match(control,/Complete secure payment/);
-  assert.match(control,/Payment confirmation pending/);
+  const pending=section('function renderSelfServePaymentPendingV286(','function renderBusinessWorkspaceControl(');
+  assert.match(pending,/Complete secure payment/);
+  assert.match(pending,/Payment confirmation pending/);
   assert.match(control,/get_self_serve_checkout_v130/);
+  assert.match(control,/renderSelfServePaymentPendingV286\(onboarding\)/);
   assert.match(migration,/create table public\.self_serve_business_onboarding_v130/);
   assert.match(migration,/create or replace function public\.start_self_serve_business_v130/);
   assert.match(migration,/create or replace function public\.request_self_serve_checkout_v130/);

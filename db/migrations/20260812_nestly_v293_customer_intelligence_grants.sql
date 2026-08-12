@@ -1,4 +1,6 @@
--- NESTLY v284: restore Customer Intelligence and verified-relationship sync —
+-- NESTLY v293: restore Customer Intelligence and verified-relationship sync —
+-- (Applied to production 2026-08-12 as the emergency-numbered v284; lands in
+--  the repo as v293 because parallel work claimed v284-v292 on main first.)
 -- the last four frontend-called RPCs that were deployed without their grants.
 --
 -- GAP (2026-08-12 product audit, high severity): the business Reports →
@@ -35,7 +37,7 @@
 -- anon receives nothing; these are post-authentication surfaces.
 --
 -- Applied to production 2026-08-12 after the rolled-back acceptance suite
--- (db/tests/v284_*) exercised the real functions end to end against prod.
+-- (db/tests/v293_*) exercised the real functions end to end against prod.
 
 begin;
 

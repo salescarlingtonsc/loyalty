@@ -126,11 +126,28 @@ test('copy link is always offered, because it works where nothing else does', ()
 /* ------------------------------------------------------------------ the device sheet comes first */
 
 test('the OS share sheet is tried first, since it is the only path to IG, TikTok and WeChat', () => {
-  assert.match(dispatchSource, /if\(navigator\.share\)\{/);
-  assert.match(dispatchSource, /await navigator\.share\(\{title:brand,text:customerShareMessageV267\(text,shop\),url\}\)/);
-  const nativeAt = dispatchSource.indexOf('navigator.share');
+  /* v286: asked for through the bridge, not navigator.share directly — a Capacitor WKWebView does
+     not expose navigator.share, so the direct branch was skipped on the iOS app and the customer
+     fell to the web sheet, whose target="_blank" channel links a native WebView cannot hand to the
+     installed apps. The bridge calls @capacitor/share when native and navigator.share on the web. */
+  assert.match(dispatchSource,
+    /const shared=await NestlyNativeBridge\.share\(\{title:brand,text:customerShareMessageV267\(text,shop\),url\}\)/);
+  assert.match(dispatchSource, /if\(shared\)\{record\('device'\);return\}/,
+    'only a share the bridge actually performed is recorded as the device channel');
+  assert.doesNotMatch(dispatchSource, /if\(navigator\.share\)/,
+    'the native build must not be gated on a WebView API it does not have');
+  const nativeAt = dispatchSource.indexOf('NestlyNativeBridge.share');
   const fallbackAt = dispatchSource.lastIndexOf('showCustomerShareSheetV264');
-  assert.ok(nativeAt < fallbackAt, 'the in-app sheet is the fallback, not the default');
+  assert.ok(nativeAt >= 0 && nativeAt < fallbackAt, 'the in-app sheet is the fallback, not the default');
+});
+
+test('the bridge really does reach the native share plugin before the web API', async () => {
+  // If this capability ever disappears the fix above silently degrades to the web sheet again.
+  const bridge = await read('app/native-bridge.js');
+  assert.match(bridge, /async share\(\{ title = 'Peekaa', text = '', url = '' \} = \{\}\)/);
+  assert.match(bridge, /if \(isNative && plugins\.Share\?\.share\)/, 'native build uses @capacitor/share');
+  assert.match(bridge, /if \(global\.navigator\.share\)/, 'the web build still gets the OS sheet');
+  assert.match(bridge, /return false;/, 'no sheet available is reported, not thrown — that is the fallback signal');
 });
 
 test('dismissing the OS sheet ends it — no second sheet chasing the customer', () => {
@@ -251,13 +268,15 @@ test('the firm logo the lockup needs is actually returned by the programme RPC',
    a link never runs JavaScript and never authenticates — so the preview can only come from a
    server-rendered page. These tests pin the parts that keep it honest. */
 
-test('the offer page function serves per-offer Open Graph and redirects humans into the app', async () => {
+test('the offer page function serves per-offer Open Graph and lets humans continue into the app', async () => {
   const fn = await read('app/api/offer-share.js');
   assert.match(fn, /og:title/);
   assert.match(fn, /og:image/);
   assert.match(fn, /Peekaa × \$\{business\}/);
   assert.match(fn, /object-fit:contain/, 'merchant artwork is never cropped — words are baked into EDMs');
-  assert.match(fn, /window\.location\.replace/, 'humans continue into the app; crawlers stop at the tags');
+  assert.doesNotMatch(fn, /setTimeout\(function\(\)\{window\.location\.replace/,
+    'v281: no auto-redirect — the page IS the offer; the button carries the reader on');
+  assert.match(fn, /View this offer/);
   assert.doesNotMatch(fn, /user-agent/i, 'no crawler sniffing — the split falls out of who executes script');
   // a dead or unknown link redirects home rather than 404ing the recipient
   assert.match(fn, /if \(!UUID\.test\(id\)\) return redirect\(response, CANONICAL_ORIGIN \+ '\/'\)/);
@@ -277,16 +296,20 @@ test('the /o/ route is wired in both the deployed rewrites and the template they
   }
 });
 
-test('the RPC behind the page mirrors the customer promotion list, and only that', async () => {
-  const migration268 = await read('db/migrations/20260810_nestly_v268_offer_share_page.sql');
-  // the same visibility conditions as customer_get_promotions_v155 — one definition of "visible"
+test('the RPC behind the page mirrors the CURRENT customer visibility rule, and only that', async () => {
+  /* v285 supersedes v268's read: v172/v173 removed the artwork requirement from every customer
+     surface ("the two surfaces must always agree"), so an imageless offer must share too. */
+  const migration285 = await read('db/migrations/20260812_nestly_v285_offer_share_imageless_parity.sql');
   for (const condition of ['content.active', "content.content_type = 'offer'",
-    'content.ends_at > now()', 'asset.customer_visible', 'media.url is not null']) {
-    assert.ok(migration268.includes(condition), `visibility must require: ${condition}`);
+    'content.ends_at > now()', 'asset.customer_visible']) {
+    assert.ok(migration285.includes(condition), `visibility must require: ${condition}`);
   }
+  assert.ok(!migration285.includes('media.url is not null'),
+    'v172/v173 parity: a published imageless offer is visible in the app and must share');
+  const migration268 = await read('db/migrations/20260810_nestly_v268_offer_share_page.sql');
   assert.match(migration268, /grant execute on function public\.offer_share_page_v268\(uuid\) to anon/,
     'the caller is a link-preview crawler; it cannot authenticate — deliberate and documented');
-  assert.match(migration268, /stable/, 'read-only');
-  assert.doesNotMatch(migration268, /phone|email|points_ledger|credit_ledger|customer_links/,
+  assert.match(migration285, /stable/, 'read-only');
+  assert.doesNotMatch(migration285, /phone|email|points_ledger|credit_ledger|customer_links/,
     'nothing but broadcast marketing content leaves through this function');
 });

@@ -20,7 +20,12 @@ test('customer programmes are QR-joined only and automatic global matching is no
   assert.match(programmes,/renderCustomerFirstProgrammeQuest\(\)/);
   assert.doesNotMatch(programmes,/href="#\/claim"|Add programme|customerRelationshipCheckActionHtml/);
   const claim=section(app,'async function renderCustomerClaim','function renderCustomerWalletUnavailable');
-  assert.match(claim,/if\(!invitationToken\)[\s\S]*Customers cannot search for or manually link a business/);
+  /* V289 (audit A3, G2): the QR-only rule is unchanged — there is still no search, directory or
+     listing here, and a visit carrying NOTHING is still sent away to scan. What changed is that a
+     visit which ALREADY carries a business intent (from that business's own deep link) now
+     reaches the claim form instead of being told to scan a QR it effectively just followed. */
+  assert.match(claim,/if\(!invitationToken&&!businessIntent\)[\s\S]*Customers cannot search for or manually link a business/);
+  assert.doesNotMatch(claim,/search for a business|browse businesses/i);
 });
 
 test('opaque QR join survives refresh and has no typed slug authority',async()=>{
@@ -49,7 +54,7 @@ test('customer can scan a business-issued QR from first use and from persistent 
   assert.match(scanner,/openCustomerJoinScanner/);
   assert.match(scanner,/getUserMedia\(\{video:\{facingMode:\{ideal:'environment'\}\}/);
   assert.match(scanner,/id="customerJoinScannerImage" type="file" accept="image\/\*"/);
-  assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);close\(\{restoreFocus:false\}\);nav\('#\/join'\)/);
+  assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);close\(\{restoreFocus:false\}\);[\s\S]{0,300}?if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/); /* v281: same-hash nav() fires nothing; a rescan from #\/join must re-route */
   assert.match(app,/function renderCustomerFirstProgrammeQuest/);
   assert.match(app,/firstQuest:'Your first rewards'/);
   assert.match(app,/id="customerFirstScan"/);
