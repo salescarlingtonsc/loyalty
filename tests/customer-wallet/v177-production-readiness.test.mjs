@@ -134,7 +134,9 @@ test('customer decisions use the in-app dialog, never a native prompt or confirm
 
 test('the service worker ships the v177 shell and keeps navigation network-first',()=>{
   // v195 moved the shell to v9 so the un-fingerprinted customer-ui.js (two new icons) is refetched.
-  assert.match(sw,/const CACHE_VERSION='v9-20260808-v195-tier-icons';/);
+  // V289 moves it to v10: the install no longer calls skipWaiting and the app document itself is
+  // precached, so every client must build the new cache rather than inherit the old one.
+  assert.match(sw,/const CACHE_VERSION='v10-20260812-v289-guarded-updates';/);
   const fetchHandler=section(sw,"self.addEventListener('fetch'",'const CUSTOMER_PUSH_TYPES=');
   assert.match(fetchHandler,/if\(request\.mode==='navigate'\)\{/);
   assert.match(fetchHandler,/return await fetch\(request\)/,'navigation must try the network first');

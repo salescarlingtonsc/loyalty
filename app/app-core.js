@@ -871,7 +871,17 @@ const sgDateInputValue=(date=new Date())=>{
 };
 /* reporting-scale:end */
 function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
-function nav(h){location.hash=h}
+/* V289 (audit A3, G1 — "registration completes then freezes"). Routing is driven ONLY by
+   hashchange, and assigning location.hash a value it already holds fires no hashchange. Every
+   nav() to the route already on screen was therefore a silent no-op: after
+   customer_register_verified_phone succeeded, resolveCustomerRegistrationDestination called
+   nav('#/join') from '#/join' (or nav(destination) from that destination) and nothing happened —
+   the account existed, the button stayed on "Creating your account…" forever, and the only way
+   out was a manual reload. Two call sites already worked around this locally (the app-bar search
+   handler's goTo, and the New appointment button); the workaround belongs in the primitive, so
+   no future caller has to remember it. route() is safe to re-enter: it takes a fresh
+   beginRouteInvocation() epoch on entry, which invalidates every in-flight older render. */
+function nav(h){if(location.hash===h)route();else location.hash=h}
 window.addEventListener('hashchange',route);
 /* "/" or ⌘K / Ctrl+K focuses the global customer search from anywhere in the workspace. "/"
    is ignored while the user is typing in a field so it can't hijack normal input. The listener

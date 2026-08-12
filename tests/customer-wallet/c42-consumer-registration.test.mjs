@@ -128,9 +128,15 @@ test('customer authentication defaults to password while signup and recovery alo
     'WhatsApp OTP is shown only after both runtime and server capability are live');
   assert.doesNotMatch(customerRoute, /coming soon/i,
     'an unavailable OTP provider must be hidden instead of advertised as a placeholder');
-  assert.match(customerRoute, /Mobile verification is not available right now\./);
+  /* V289 (audit A3, G7): an unavailable SMS provider used to paint the WHOLE form — every field,
+     the channel radios and a Turnstile placeholder that never resolved — and only then return
+     without wiring anything, so the screen looked one step from working and never was. The
+     unavailable state is now its own card with no dead controls at all; the requirement it was
+     protecting (never offer a control that cannot work) is stronger, not weaker. */
+  assert.match(customerRoute, /Sign-up by SMS is unavailable/);
+  assert.match(customerRoute, /No account has been created/);
   assert.match(customerRoute, /id="customerOtpSend" type="button" disabled/,
-    'the primary OTP action must start disabled in both available and unavailable states');
+    'the primary OTP action must start disabled until the security check completes');
   assert.doesNotMatch(customerRoute, /id="customerOtpSend"[^>]*\$\{smsAvailable\?'disabled':''\}/,
     'an unavailable SMS provider must not render an enabled button without a handler');
   assert.match(customerRoute, /id="customerDob" type="date"/);

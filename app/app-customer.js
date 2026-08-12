@@ -433,7 +433,7 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     if(!isRouteCurrent()||!button.isConnected||!otpError.isConnected)return;
     if(error||!data?.user||!data?.session){
       button.disabled=false;
-      otpError.innerHTML='<div class="err">That code could not be verified. Check it and try again.</div>';return;
+      otpError.innerHTML=`<div class="err">${esc(customerAuthErrorMessageV289(error,'otp_verify'))}</div>`;return;
     }
     S.user=data.user;
     if(!isRouteCurrent()||!button.isConnected)return;
@@ -460,7 +460,7 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
       :await sb.auth.resend({type:'sms',phone,options});
     if(!isRouteCurrent()||!resend.isConnected||!otpError.isConnected)return;
     resendCaptcha='';resendControl?.reset();
-    if(error){resend.disabled=false;otpError.innerHTML='<div class="err">We could not resend a code. Please try again.</div>';return;}
+    if(error){resend.disabled=false;otpError.innerHTML=`<div class="err">${esc(customerAuthErrorMessageV289(error,'otp_send'))}</div>`;return;}
     seconds=30;resend.textContent='Resend available in 30 seconds';
     const nextCountdown=setInterval(()=>{
       if(!resend?.isConnected)return clearInterval(nextCountdown);
@@ -469,6 +469,53 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
       else {resend.disabled=false;resend.textContent='Resend code';clearInterval(nextCountdown);}
     },1000);
   };
+}
+/* V289 (audit A3, G6 — "auth error honesty"). Sign-in, OTP entry and OTP sending each answered
+   every possible failure with one sentence, so an offline phone, a Supabase rate limit and a
+   genuinely wrong password were indistinguishable — and only one of the three is worth retrying
+   immediately. This classifies what actually came back so the copy can say it.
+
+   DELIBERATELY NOT SPLIT: wrong password vs unknown number. Supabase returns the same
+   `invalid_credentials` for both by design, and making the app say "no account for this number"
+   would turn the sign-in form into an oracle for "is 8xxxxxxx a Peekaa customer" — the same PDPA
+   enumeration risk that `join_program` returns a uniform status to avoid (v14). The combined
+   sentence is the honest one, and it names both possibilities. */
+function customerAuthFailureKindV289(error){
+  if(!error)return 'unknown';
+  const code=String(error.code||'').toLowerCase();
+  const name=String(error.name||'');
+  const message=String(error.message||'').toLowerCase();
+  const status=Number(error.status||0);
+  if(name==='AuthRetryableFetchError'||name==='TypeError'
+    ||(!code&&status===0&&/fetch|network|connection|offline/.test(message)))return 'network';
+  if(globalThis.navigator?.onLine===false)return 'network';
+  if(status===429||code.includes('rate_limit')||message.includes('rate limit'))return 'rate_limited';
+  if(code==='otp_expired'||message.includes('token has expired'))return 'otp_invalid';
+  if(code==='phone_not_confirmed'||message.includes('phone not confirmed'))return 'phone_unconfirmed';
+  if(code==='invalid_credentials'||message.includes('invalid login credentials'))return 'invalid_credentials';
+  if(status>=500||code==='unexpected_failure')return 'server';
+  return 'unknown';
+}
+function customerAuthErrorMessageV289(error,context='sign_in'){
+  const kind=customerAuthFailureKindV289(error);
+  if(kind==='network')return 'We could not reach Peekaa. Check your connection, then try again.';
+  if(kind==='rate_limited'){
+    return context==='otp_send'
+      ?'Too many codes have been requested for this number. Wait a few minutes, then try again.'
+      :'Too many attempts. Wait about a minute, then try again.';
+  }
+  if(context==='otp_verify'){
+    if(kind==='otp_invalid')return 'That code is wrong or has expired. Check the code, or tap Resend code for a new one.';
+    if(kind==='server')return 'Verification is temporarily unavailable. Your code is still valid — try again shortly.';
+    return 'That code could not be verified. Check it and try again.';
+  }
+  if(context==='otp_send'){
+    if(kind==='server')return 'We could not send a code just now. Nothing has changed — try again shortly.';
+    return 'We could not send a code to that number. Check the number and try again.';
+  }
+  if(kind==='phone_unconfirmed')return 'This mobile number has not been verified yet. Tap Create account to finish signing up.';
+  if(kind==='server')return 'Sign-in is temporarily unavailable. Nothing has changed — try again shortly.';
+  return 'The mobile number or password is incorrect. Check both, or use Forgot password?';
 }
 function customerPasswordUpdateErrorMessage(error){
   const code=String(error?.code||'').toLowerCase();
@@ -614,7 +661,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
       signIn.disabled=false;
       passkeyButton.disabled=!passkeySupported;
       signIn.querySelector('span').textContent='Sign in';
-      errorHost.innerHTML='<div class="err">The mobile number or password is incorrect.</div>';return;
+      errorHost.innerHTML=`<div class="err">${esc(customerAuthErrorMessageV289(error,'sign_in'))}</div>`;return;
     }
     /* Offer the credential to the browser's own manager. The form submit is what makes Chrome and
        Safari prompt; this is the explicit path for browsers that implement it, and a no-op
@@ -662,6 +709,24 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
   if(!isRouteCurrent())return;
   const smsAvailable=CUSTOMER_PHONE_OTP_RUNTIME_ENABLED&&serverCapabilities.sms===true;
   const whatsappAvailable=CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED&&serverCapabilities.whatsapp===true;
+  /* V289 (audit A3, G7). When the server reports sms:false this function used to paint the ENTIRE
+     sign-up form — every field, the channel radios, a Turnstile placeholder — and only then hit
+     `if(!smsAvailable)return`, which left the widget unmounted. The result was a complete-looking
+     form whose security check said "Loading security check…" forever and whose Send button never
+     enabled: a screen that lied about being nearly ready. Nothing here can work without SMS, so
+     render the one true sentence and no controls at all. */
+  if(!smsAvailable){
+    customerRegistrationShell(`<section class="card" aria-labelledby="customerOtpUnavailableTitle">
+      <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpUnavailableTitle">${recovering?'Password reset is unavailable':'Sign-up by SMS is unavailable'}</h1></div></div>
+      <p class="muted small" style="margin-top:10px" role="status">${recovering?'We cannot send a reset code right now because mobile verification is unavailable. Nothing has changed on your account. Please try again later.':'We cannot send a verification code right now because mobile verification is unavailable. No account has been created. Please try again later.'}</p>
+      <button class="btn ghost" id="customerOtpBack" type="button" style="width:100%;margin-top:18px">Back to sign in</button>
+    </section>`);
+    $('customerOtpBack').onclick=()=>{
+      resetCustomerRegistrationState();
+      renderCustomerPasswordSignIn(isRouteCurrent);
+    };
+    return;
+  }
   customerRegistrationShell(`<section class="card" aria-labelledby="customerOtpStartTitle">
     <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpStartTitle">${recovering?'Reset your password':'Create your account'}</h1><p class="muted small" style="margin-top:5px">${recovering?'We send one OTP to verify that you own this mobile number.':'Tell us about yourself, choose your password, then verify your mobile number with one OTP.'}</p></div></div>
     <label for="customerPhone">Singapore mobile number</label>
@@ -683,7 +748,6 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     </fieldset>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
     <div style="margin-top:14px">${authChallengeHtml()}</div>
-    ${smsAvailable?'':`<p class="err" role="status" style="margin-top:16px">Mobile verification is not available right now.</p>`}
     <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
     <button class="btn ghost" id="customerOtpBack" type="button" style="width:100%;margin-top:10px">Back to sign in</button>
   </section>`);
@@ -692,7 +756,6 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     resetCustomerRegistrationState();
     renderCustomerPasswordSignIn(isRouteCurrent);
   };
-  if(!smsAvailable)return;
   const send=$('customerOtpSend'),phoneInput=$('customerPhone'),errorHost=$('customerOtpError');
   let captchaToken='',captchaControl=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
@@ -749,7 +812,14 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     captchaControl?.reset();
     if(result.error||(recovering&&result.data?.session)){
       send.disabled=false;
-      errorHost.innerHTML=`<div class="err">${recovering?'If an account exists for this number, a reset code could not be sent. Try again later.':'We could not start account creation. If you already have an account, return and sign in or reset your password.'}</div>`;return;
+      /* V289 (G6): the two sentences below are deliberately non-committal about whether the
+         number exists. A rate limit or a dead connection is not that kind of secret, and telling
+         someone to "try again later" when the real answer is "wait a few minutes" or "you are
+         offline" is what made this screen feel broken. */
+      const startKindV289=customerAuthFailureKindV289(result.error);
+      errorHost.innerHTML=`<div class="err">${startKindV289==='network'||startKindV289==='rate_limited'
+        ?esc(customerAuthErrorMessageV289(result.error,'otp_send'))
+        :(recovering?'If an account exists for this number, a reset code could not be sent. Try again later.':'We could not start account creation. If you already have an account, return and sign in or reset your password.')}</div>`;return;
     }
     if(!recovering&&result.data?.session){
       await sb.auth.signOut();
@@ -844,6 +914,15 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     <button class="btn" id="customerRegister" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:18})}<span>Create my customer account</span></button>
     <div class="row" style="margin-top:12px"><button class="btn ghost sm" id="customerProfileStartOver" type="button">Start again</button><span class="spacer"></span></div>
   </section>`);
+  /* V289 (audit A3, G6): a fresh crypto.randomUUID() per click made every retry a NEW
+     registration operation server-side. customer_register_verified_phone allows 5 per identity
+     per 15 minutes, so four impatient taps on a flaky connection spent the whole allowance and
+     the fifth answered try_later — the app then said "not available yet", which is not what
+     happened. The key is now stable for as long as the submitted details are unchanged, exactly
+     as the claim flow keys its attempt, so a retry REPLAYS the stored response instead of
+     consuming another slot. Editing a field is a genuinely different request and takes a new key
+     (the server hashes the payload and refuses a reused key for changed details). */
+  let registrationAttemptV289=null;
   const register=$('customerRegister'),profileForm=$('customerProfileForm'),profileError=$('customerProfileError');
   const fullNameInput=$('customerFullName'),birthDateInput=$('customerDob'),genderInput=$('customerGender'),languageInput=$('customerLanguage');
   const isProfileCurrent=()=>isRouteCurrent()&&profileForm.isConnected&&register.isConnected;
@@ -868,13 +947,17 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
       profileError.innerHTML='<div class="err">Consent was not recorded. Return to Create account and tick the Terms agreement box before verifying your phone.</div>';return;
     }
     register.disabled=true;register.querySelector('span').textContent='Creating your account…';
+    const attemptKeyV289=[fullName,birthDate,gender,language,String(customerSignupMarketingOptedIn())].join('|');
+    if(!registrationAttemptV289||registrationAttemptV289.key!==attemptKeyV289){
+      registrationAttemptV289={key:attemptKeyV289,id:crypto.randomUUID()};
+    }
     await runCustomerRegistrationProfileSubmission({
       registerRequest:async()=>{
         const result=await sb.rpc('customer_register_verified_phone',{
           p_full_name:fullName,p_birth_date:birthDate,p_gender:gender,p_preferred_language:language,
           p_accept_terms:true,p_accept_privacy:true,
           p_platform_marketing_opted_in:customerSignupMarketingOptedIn(),
-          p_idempotency_key:crypto.randomUUID()
+          p_idempotency_key:registrationAttemptV289.id
         });
         /* Best-effort here on purpose: a brand-new customer holds no v263 deviation rows and
            an absent row already means ON, so a failed grant cannot contradict the tick. It
@@ -887,10 +970,20 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
         return resolveCustomerRegistrationDestination(isRouteCurrent,register);
       },
       isCurrent:isProfileCurrent,
-      onRegistrationError:()=>{
+      onRegistrationError:(result)=>{
         if(!isProfileCurrent())return;
         register.disabled=false;register.querySelector('span').textContent='Create my customer account';
-        profileError.innerHTML='<div class="err">Customer registration is not available yet. Please try again later.</div>';
+        /* V289 (G6): the server says WHEN, so the screen says when. try_later carries
+           retry_after_seconds (900 today); a network failure is not a server refusal at all. */
+        const outcome=String(result?.data?.outcome||'');
+        const kind=customerAuthFailureKindV289(result?.error);
+        let message='Customer registration is not available yet. Please try again later.';
+        if(kind==='network')message='We could not reach Peekaa. Check your connection, then tap Create my customer account again — your account is not created twice.';
+        else if(outcome==='try_later'){
+          const minutes=Math.max(1,Math.ceil(Number(result?.data?.retry_after_seconds||0)/60));
+          message=`Too many sign-up attempts from this account. Try again in about ${minutes} minute${minutes===1?'':'s'}.`;
+        }
+        profileError.innerHTML=`<div class="err">${esc(message)}</div>`;
       }
     });
   };
@@ -1401,11 +1494,13 @@ async function renderCustomerMessages(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
   if(context.features.customer_in_app_inbox!==true){
-    renderCustomerShell({active:'messages',staffWorkspaces:context.staffWorkspaces,messagesAvailable:false,body:`<header class="customer-page-head"><div><h1>Messages are not available</h1><p class="muted">This feature is not available for your account right now.</p></div></header>
+    renderCustomerShell({active:'messages',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:false,body:`<header class="customer-page-head"><div><h1>Messages are not available</h1><p class="muted">This feature is not available for your account right now.</p></div></header>
       <section class="card"><p class="muted small">Your rewards, offers and bookings are still available from the main customer navigation.</p><a class="btn ghost sm" href="#/wallet" style="margin-top:14px">Open Home</a></section>`});
     focusCustomerRoute();return;
   }
-  renderCustomerShell({active:'messages',staffWorkspaces:context.staffWorkspaces,messagesAvailable:true,body:`<header class="customer-page-head"><div><h1>Messages</h1><p class="muted">Customer-safe updates grouped by your separate business programmes.</p></div></header>
+  /* V289: the inbox has no tab of its own — it is opened from the header bell — so it must offer
+     a way back to Home. Without backTo the shell drew no back button at all. */
+  renderCustomerShell({active:'messages',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:true,body:`<header class="customer-page-head"><div><h1>Messages</h1><p class="muted">Customer-safe updates grouped by your separate business programmes.</p></div></header>
     <section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>`});
   focusCustomerRoute();
   await renderCustomerInAppInbox(null,isCurrent);
@@ -1465,7 +1560,7 @@ async function hydrateCustomerConsentHistoryV282(isCurrent){
 async function renderCustomerProfile(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
-  renderCustomerShell({active:'profile',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your profile…</p></div>'});
+  renderCustomerShell({active:'profile',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your profile…</p></div>'});
   if(context.features.customer_phone_registration!==true||!context.profile){
     $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Profile</h1><p class="muted">Your ${esc(BRAND.customerLabel)} account details.</p></div></header><section class="card"><h2>Profile editing is not available</h2><p class="muted small" style="margin-top:6px">Profile editing isn’t available for this account.</p></section>${accountDeletionCardHtml()}`;
     wireAccountDeletionButton();focusCustomerRoute();return;
@@ -1703,7 +1798,15 @@ async function renderCustomerClaim(){
     pendingCustomerBusinessSlug='';
     history.replaceState(null,'',`${location.pathname}${location.search}#/claim`);
   }
-  if(!invitationToken){
+  /* V289 (audit A3, G2): everything below this guard — the claim form, the phone/email method
+     choice, customer_claim_link_by_verified_phone — was unreachable, because the guard fired for
+     EVERY visit without an invitation token, including one that arrived carrying a business
+     intent from that business's own deep link. The intent was then discarded and the customer was
+     told to go and scan a QR they had, in effect, already followed. Discovery is still QR/link
+     only: with no carried intent this is unchanged, and there is still no directory, search or
+     listing anywhere on this surface — the form only appears once a business-issued link or QR
+     has named the business. */
+  if(!invitationToken&&!businessIntent){
     renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR to join</h1><p class="muted small" style="margin-top:7px">Customers cannot search for or manually link a business from this portal. Visit the participating business and scan its current Peekaa QR.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
     focusCustomerRoute();return;
   }
@@ -1792,6 +1895,41 @@ async function renderCustomerClaim(){
   };
 }
 
+/* V289 (audit A3, G2 — "#/wallet/<slug> for a business you have not joined"). Every customer
+   wallet RPC raises 42501 ("verified customer link required") when the signed-in customer holds
+   no link to that business, and the wallet answered all three of those denials with "This
+   business could not be loaded" plus a Retry button that could only ever fail again. Nothing was
+   broken and nothing was loading: the customer simply is not a member yet. Say that, and carry
+   the slug the link supplied into the join flow instead of discarding it. The business NAME is
+   deliberately not fetched — the server refuses to describe a business this account has no link
+   to, and inventing a lookup here would turn a deep link into a directory probe — so the link's
+   own slug is shown as-is. */
+function customerBusinessSlugLabelV289(businessSlug){
+  const slug=String(businessSlug||'').trim();
+  if(!slug)return 'this business';
+  return slug.replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim()
+    .replace(/\b[a-z]/g,letter=>letter.toUpperCase())||'this business';
+}
+function renderCustomerNotJoinedV289(businessSlug){
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  const body=$('walletBody');if(!body)return;
+  const label=customerBusinessSlugLabelV289(businessSlug);
+  body.innerHTML=`<section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
+    <div aria-hidden="true">${CUI.icon('loyalty',{size:34})}</div>
+    <h2 id="customerNotJoinedTitle" style="margin-top:12px">You haven’t joined ${esc(label)} yet</h2>
+    <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
+    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:18})}<span>Join ${esc(label)}</span></button>
+    <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:17})}<span>${esc(ct('scanBusinessQr'))}</span></button>
+    <p class="muted small" style="margin-top:12px"><a href="#/customer/programmes" style="color:var(--coral);text-decoration:underline">Back to My Rewards</a></p>
+  </section>`;
+  const join=$('customerNotJoinedJoin');
+  if(join)join.onclick=()=>{
+    pendingCustomerBusinessSlug=normalizeCustomerBusinessIntent(businessSlug);
+    nav('#/claim?business='+encodeURIComponent(String(businessSlug||'')));
+  };
+  const scan=$('customerNotJoinedScan');
+  if(scan)scan.onclick=openCustomerJoinScanner;
+}
 function renderCustomerWalletRetry(message,businessSlug,retry=()=>renderCustomerWallet(businessSlug),error=null){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const body=$('walletBody');if(!body)return;
@@ -2716,6 +2854,17 @@ function customerProgrammeModeV230({points_mode=null,tiers=false,rewards=false}=
 }
 function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false}){
   const unitLabel=ct(presentation.unit);
+  /* V289 (audit A3, G4). Both wallet readers return loyalty.enabled=false with EVERY number
+     zeroed when the firm has the module off or its programme inactive — the server cannot
+     disclose a balance for a programme that is not running. This panel printed that zero as a
+     bare "0 points", which reads as "you have nothing", when what is true is "nothing is being
+     counted right now, and what you already hold is kept". The tier card has said the equivalent
+     since v189 (`unavailable==='not_running'`); this is the same sentence for points. Only an
+     EXPLICIT false is treated as paused: an older payload with no flag keeps today's behaviour. */
+  if(loyalty.enabled===false){
+    return `<p class="customer-programme-paused" style="font-size:clamp(1.3rem,5vw,1.7rem);line-height:1.15;letter-spacing:-.02em"><b>Programme paused</b></p>
+      <p class="muted small" style="margin-top:6px">This business isn’t running its rewards programme at the moment, so nothing is being counted. Anything you already earned is kept — it reappears here when the programme restarts.</p>`;
+  }
   const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
   const progress=customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward});
   return `<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
@@ -3083,10 +3232,12 @@ async function renderCustomerWallet(businessSlug=null){
         customerRpc('customer_get_actionable_wallet')
       ]);
       if(!isWalletCurrent())return;
+      /* V289: 42501 is "you hold no link to this business", not a load failure. */
+      if(walletRpcDenied(error))return renderCustomerNotJoinedV289(businessSlug);
       if(error)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
       actionableCard=data?.card||null;
       programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
-      if(!actionableCard)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
+      if(!actionableCard)return renderCustomerNotJoinedV289(businessSlug);
     }
   }
   if(!businessSlug){
@@ -3126,6 +3277,9 @@ async function renderCustomerWallet(businessSlug=null){
     customerRpc('customer_get_wallet')
   ]);
   if(!isWalletCurrent())return;
+  /* V289: same denial, same honest answer — the summary and capability reads refuse an unlinked
+     business with 42501 before they refuse anything else. */
+  if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return renderCustomerNotJoinedV289(businessSlug);
   if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
   const b=summary.business||{},loyalty=summary.loyalty||{},packages=summary.packages||{},membership=summary.membership||{};
   const businessId=customerBusinessIdV103({
@@ -3724,7 +3878,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
       ${nextCursor?'<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">Load more</button>':''}
-      ${global?'':`<div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`}`;
+      <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`;
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
     });
@@ -3738,7 +3892,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
       button.disabled=true;await setState(item,button.dataset.state);if(!walletSectionStillCurrent(host,isCurrent))return;load(null);
     });
     const more=$('customerInboxMore');if(more)more.onclick=()=>{more.disabled=true;load(nextCursor);};
-    if(!global)renderPreferences();
+    renderPreferences();
   };
   const setState=async(item,operation)=>{
     const slug=global?item?.business?.slug:businessSlug;
@@ -3798,27 +3952,67 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     bell=refreshedBell;
     await load(null);
   };
-  const renderPreferences=async()=>{
-    const preferenceHost=$('customerInAppInboxPreferences');if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost)return;
-    const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:businessSlug});
-    if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost.isConnected)return;
-    if(error)return;
-    const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
-    const preferenceRows=Object.entries(topicLabels).map(([topic,label])=>{
-      const preference=preferences.get(topic)||{};
-      return `<fieldset style="margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:8px"><legend class="small" style="padding:0 4px">${esc(label)}</legend><label class="row" style="color:var(--ink);font-weight:500"><input type="checkbox" class="customerInboxPreference" style="width:auto" data-topic="${topic}" ${preference.opted_in===true?'checked':''}>Keep this reminder in my inbox</label><button type="button" class="btn ghost sm customerInboxPreferenceSave" data-topic="${topic}" style="margin-top:8px">Save reminder</button></fieldset>`;
-    }).join('');
-    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders this business may place in your inbox. Nothing changes until you select Save.</p>${preferenceRows}`;
-    preferenceHost.querySelectorAll('.customerInboxPreferenceSave').forEach(button=>button.onclick=async()=>{
-      const topic=button.dataset.topic;const checkbox=preferenceHost.querySelector(`.customerInboxPreference[data-topic="${topic}"]`);if(!checkbox)return;
+  /* V289 (audit A3): "Inbox reminders" — the only place a customer can stop a business putting a
+     reminder in their inbox — was rendered ONLY in the per-business inbox, and the per-business
+     inbox has no caller: renderCustomerInAppInbox is invoked once, from Messages, with a null
+     slug. The controls existed, were tested, and could not be reached by anyone. The RPCs are
+     per-business, so the reachable home for them is the global inbox, grouped by the businesses
+     whose updates are actually in it. Each group loads its own settings only when opened, so the
+     Messages screen still costs the same reads it did before. */
+  const inboxPreferenceRowsMarkupV289=preferences=>Object.entries(topicLabels).map(([topic,label])=>{
+    const preference=preferences.get(topic)||{};
+    return `<fieldset style="margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:8px"><legend class="small" style="padding:0 4px">${esc(label)}</legend><label class="row" style="color:var(--ink);font-weight:500"><input type="checkbox" class="customerInboxPreference" style="width:auto" data-topic="${topic}" ${preference.opted_in===true?'checked':''}>Keep this reminder in my inbox</label><button type="button" class="btn ghost sm customerInboxPreferenceSave" data-topic="${topic}" style="margin-top:8px">Save reminder</button></fieldset>`;
+  }).join('');
+  const wireInboxPreferenceSavesV289=(scope,slug,preferences)=>{
+    scope.querySelectorAll('.customerInboxPreferenceSave').forEach(button=>button.onclick=async()=>{
+      const topic=button.dataset.topic;const checkbox=scope.querySelector(`.customerInboxPreference[data-topic="${topic}"]`);if(!checkbox)return;
       button.disabled=true;const {error:setError}=await request('customer_set_in_app_inbox_preferences',{
-        p_business_slug:businessSlug,p_topic:topic,p_opted_in:checkbox.checked,
+        p_business_slug:slug,p_topic:topic,p_opted_in:checkbox.checked,
         p_quiet_hours_timezone:null,p_quiet_hours_start:null,p_quiet_hours_end:null,p_idempotency_key:crypto.randomUUID()
       });
       if(!walletSectionStillCurrent(host,isCurrent)||!button.isConnected)return;
       button.disabled=false;const status=$('customerInboxStatus');if(setError){if(status)status.textContent='That reminder could not be saved. Try again.';return;}
       preferences.set(topic,{opted_in:checkbox.checked,quiet_hours_timezone:null,quiet_hours_start:null,quiet_hours_end:null});if(status)status.textContent='Inbox reminder saved.';CUI.announce('Inbox reminder saved.');await refreshBell();
     });
+  };
+  const renderGlobalPreferencesV289=preferenceHost=>{
+    const businesses=[],seen=new Set();
+    for(const item of items){
+      const slug=String(item?.business?.slug||'');
+      if(!slug||seen.has(slug))continue;
+      seen.add(slug);businesses.push({slug,name:String(item?.business?.name||slug)});
+    }
+    if(!businesses.length){preferenceHost.innerHTML='';return}
+    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders each business may place in your inbox. Nothing changes until you select Save.</p>
+      ${businesses.map(business=>`<details data-inbox-preferences="${esc(business.slug)}" style="margin-top:12px"><summary>${esc(business.name)}</summary><div data-inbox-preference-body><p class="muted small" style="margin-top:8px">Open to load this business’s reminder settings.</p></div></details>`).join('')}`;
+    preferenceHost.querySelectorAll('[data-inbox-preferences]').forEach(details=>{
+      details.ontoggle=async()=>{
+        if(!details.open||details.dataset.loaded==='1')return;
+        details.dataset.loaded='1';
+        const slug=details.dataset.inboxPreferences,body=details.querySelector('[data-inbox-preference-body]');
+        if(!body)return;
+        body.innerHTML='<p class="muted small" style="margin-top:8px">Loading reminder settings…</p>';
+        const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:slug});
+        if(!walletSectionStillCurrent(host,isCurrent)||!body.isConnected)return;
+        if(error){
+          details.dataset.loaded='';
+          body.innerHTML='<p class="muted small" style="margin-top:8px">These reminder settings could not be loaded. Close and open this business to try again.</p>';return;
+        }
+        const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
+        body.innerHTML=inboxPreferenceRowsMarkupV289(preferences);
+        wireInboxPreferenceSavesV289(body,slug,preferences);
+      };
+    });
+  };
+  const renderPreferences=async()=>{
+    const preferenceHost=$('customerInAppInboxPreferences');if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost)return;
+    if(global)return renderGlobalPreferencesV289(preferenceHost);
+    const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:businessSlug});
+    if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost.isConnected)return;
+    if(error)return;
+    const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
+    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders this business may place in your inbox. Nothing changes until you select Save.</p>${inboxPreferenceRowsMarkupV289(preferences)}`;
+    wireInboxPreferenceSavesV289(preferenceHost,businessSlug,preferences);
   };
   await refreshInbox();
 }

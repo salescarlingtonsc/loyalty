@@ -68,7 +68,12 @@ test('SPA preserves opaque join authority through registration and removes typed
   assert.match(registration,/customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*nav\('#\/join'\)/);
   assert.match(app,/customer_join_business_from_qr_v89/);
   assert.match(app,/CUSTOMER_JOIN_SESSION_KEY='nestly\.customer\.pendingJoinToken'/);
-  assert.match(claim,/if\(!invitationToken\)[\s\S]*Customers cannot search for or manually link a business/);
+  /* V289 (audit A3, G2): typed-slug DISCOVERY is still gone — no search, no directory, no
+     listing. The guard now fires only when the visit carries no business at all; a visit that
+     arrived through a business's own deep link reaches the claim form instead of being told to
+     scan a QR it effectively just followed. */
+  assert.match(claim,/if\(!invitationToken&&!businessIntent\)[\s\S]*Customers cannot search for or manually link a business/);
+  assert.doesNotMatch(claim,/search for a business|browse businesses/i);
 });
 
 test('a delayed QR destination response cannot redirect after a newer route starts',async()=>{

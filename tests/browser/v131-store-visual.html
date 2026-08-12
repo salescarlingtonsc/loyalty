@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="5892d686e3789cab673a00ec203b2065588f253cf30ef5ec97c0751be1a10724"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="c38fa0aeee05a48d0775b59c966b5167ac3df0f7cfe30297cc7722f462cd813f"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1892,6 +1892,42 @@ function renderCustomerCapabilityRetry(message){
   $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
+
+/* V289 (audit A3, G2 — "#/wallet/<slug> for a business you have not joined"). Every customer
+   wallet RPC raises 42501 ("verified customer link required") when the signed-in customer holds
+   no link to that business, and the wallet answered all three of those denials with "This
+   business could not be loaded" plus a Retry button that could only ever fail again. Nothing was
+   broken and nothing was loading: the customer simply is not a member yet. Say that, and carry
+   the slug the link supplied into the join flow instead of discarding it. The business NAME is
+   deliberately not fetched — the server refuses to describe a business this account has no link
+   to, and inventing a lookup here would turn a deep link into a directory probe — so the link's
+   own slug is shown as-is. */
+function customerBusinessSlugLabelV289(businessSlug){
+  const slug=String(businessSlug||'').trim();
+  if(!slug)return 'this business';
+  return slug.replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim()
+    .replace(/\b[a-z]/g,letter=>letter.toUpperCase())||'this business';
+}
+function renderCustomerNotJoinedV289(businessSlug){
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  const body=$('walletBody');if(!body)return;
+  const label=customerBusinessSlugLabelV289(businessSlug);
+  body.innerHTML=`<section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
+    <div aria-hidden="true">${CUI.icon('loyalty',{size:34})}</div>
+    <h2 id="customerNotJoinedTitle" style="margin-top:12px">You haven’t joined ${esc(label)} yet</h2>
+    <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
+    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:18})}<span>Join ${esc(label)}</span></button>
+    <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:17})}<span>${esc(ct('scanBusinessQr'))}</span></button>
+    <p class="muted small" style="margin-top:12px"><a href="#/customer/programmes" style="color:var(--coral);text-decoration:underline">Back to My Rewards</a></p>
+  </section>`;
+  const join=$('customerNotJoinedJoin');
+  if(join)join.onclick=()=>{
+    pendingCustomerBusinessSlug=normalizeCustomerBusinessIntent(businessSlug);
+    nav('#/claim?business='+encodeURIComponent(String(businessSlug||'')));
+  };
+  const scan=$('customerNotJoinedScan');
+  if(scan)scan.onclick=openCustomerJoinScanner;
+}
   function renderPersonaResolutionUnavailable(){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="accountAccessTitle">
@@ -2000,6 +2036,56 @@ async function driveSelfServeCheckoutV281(onboarding,statusNode,button){
   if(button)button.disabled=false;
   if(statusNode)statusNode.textContent=outcome.message;
   return outcome;
+}
+/* V286: ONE owner of the self-serve "payment confirmation pending" screen.
+   Two drifted copies existed. renderOnboard's copy understood the contract Stripe actually
+   returns to — `/business#/onboarding/payment?status=processing|canceled` (see
+   supabase/functions/stripe-billing-command success_url/cancel_url) — and polled for verified
+   activation. renderBusinessWorkspaceControl's copy did not read the status param at all.
+   Only the SECOND was reachable: start_self_serve_business_v130 creates an ACTIVE owner staff
+   row, so get_my_personas resolves a workspace and route() never falls through to renderOnboard.
+   A paying owner returning from Stripe was therefore shown "Payment confirmation pending" under
+   a "Complete secure payment" button — asked to pay a second time for the payment they had just
+   made. The drifted duplicate is collapsed here the way V281 collapsed the checkout executors,
+   and route() now resolves #/onboarding/payment BEFORE persona resolution so the return route
+   reaches this renderer regardless of the staff row. */
+const SELF_SERVE_RETURN_PROCESSING_V286=Object.freeze(['success','paid','processing','complete','completed']);
+function selfServePaymentReturnStateV286(){
+  const hashState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
+  const searchState=new URLSearchParams(location.search||'').get('status');
+  const state=String(hashState||searchState||'');
+  return {
+    canceled:state==='canceled'||state==='cancelled',
+    processing:SELF_SERVE_RETURN_PROCESSING_V286.includes(state)
+  };
+}
+/* V286 (with S5): a workspace that has just been paid for and opened lands on the first-run
+   setup guide, not on an empty dashboard. Activation happens once, so this is once. */
+function selfServeActivatedRouteV286(slug){
+  return `#/workspace/${encodeURIComponent(String(slug||''))}/setup`;
+}
+function renderSelfServePaymentPendingV286(onboarding){
+  const setupEpoch=++businessSetupRenderEpoch;
+  if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
+  const {canceled,processing}=selfServePaymentReturnStateV286();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  wireBusinessSetupAccount();wireAccountDeletionButton();
+  $('selfServePay').onclick=()=>driveSelfServeCheckoutV281(onboarding,$('selfServePayStatus'),$('selfServePay'));
+  $('onboardRetry').onclick=route;
+  if(!processing)return;
+  let attempts=0;
+  const poll=async()=>{
+    if(setupEpoch!==businessSetupRenderEpoch)return;
+    attempts+=1;
+    const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
+    if(setupEpoch!==businessSetupRenderEpoch)return;
+    const next=current.data?.onboarding;
+    if(next?.status==='active'){nav(selfServeActivatedRouteV286(next.business_slug));return}
+    const status=$('selfServePayStatus');
+    if(status)status.textContent=attempts<15?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+    if(attempts<15)setTimeout(poll,2000);
+  };
+  setTimeout(poll,1200);
 }
   function renderPersonaChoice(personas,{includeCustomer=true}={}){
   const staff=sortStaffWorkspaces(personas?.staff);

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e9d257b9e5624f51ad79f60d2432d1bdb99deff5254e9bc73b831e5b0b7207ca"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="be4ee20bda2829ba4d9deafc9804bca88fde16c09702da5fe95f89fbec51da16"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1860,7 +1860,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e9d257b9e5624f51ad79f60d2432d1bdb99deff5254e9bc73b831e5b0b7207ca</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · be4ee20bda2829ba4d9deafc9804bca88fde16c09702da5fe95f89fbec51da16</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2246,6 +2246,16 @@ function setReportRetryState(isInstanceCurrent,button,body,message,retryId,onRet
   if(retryButton)retryButton.onclick=onRetry;
   return true;
 }
+/* V289 (audit A3, G1 — "registration completes then freezes"). Routing is driven ONLY by
+   hashchange, and assigning location.hash a value it already holds fires no hashchange. Every
+   nav() to the route already on screen was therefore a silent no-op: after
+   customer_register_verified_phone succeeded, resolveCustomerRegistrationDestination called
+   nav('#/join') from '#/join' (or nav(destination) from that destination) and nothing happened —
+   the account existed, the button stayed on "Creating your account…" forever, and the only way
+   out was a manual reload. Two call sites already worked around this locally (the app-bar search
+   handler's goTo, and the New appointment button); the workaround belongs in the primitive, so
+   no future caller has to remember it. route() is safe to re-enter: it takes a fresh
+   beginRouteInvocation() epoch on entry, which invalidates every in-flight older render. */
   function campaignEntitlementDisplayV99(item){
   const campaign=!!(item?.is_campaign_entitlement===true||item?.campaign_id);
   const pending=campaign
@@ -4482,7 +4492,7 @@ function renderHistPage(history,n){
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
       ${nextCursor?'<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">Load more</button>':''}
-      ${global?'':`<div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`}`;
+      <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`;
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
     });
@@ -4496,7 +4506,7 @@ function renderHistPage(history,n){
       button.disabled=true;await setState(item,button.dataset.state);if(!walletSectionStillCurrent(host,isCurrent))return;load(null);
     });
     const more=$('customerInboxMore');if(more)more.onclick=()=>{more.disabled=true;load(nextCursor);};
-    if(!global)renderPreferences();
+    renderPreferences();
   };
   const setState=async(item,operation)=>{
     const slug=global?item?.business?.slug:businessSlug;
@@ -4556,27 +4566,67 @@ function renderHistPage(history,n){
     bell=refreshedBell;
     await load(null);
   };
-  const renderPreferences=async()=>{
-    const preferenceHost=$('customerInAppInboxPreferences');if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost)return;
-    const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:businessSlug});
-    if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost.isConnected)return;
-    if(error)return;
-    const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
-    const preferenceRows=Object.entries(topicLabels).map(([topic,label])=>{
-      const preference=preferences.get(topic)||{};
-      return `<fieldset style="margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:8px"><legend class="small" style="padding:0 4px">${esc(label)}</legend><label class="row" style="color:var(--ink);font-weight:500"><input type="checkbox" class="customerInboxPreference" style="width:auto" data-topic="${topic}" ${preference.opted_in===true?'checked':''}>Keep this reminder in my inbox</label><button type="button" class="btn ghost sm customerInboxPreferenceSave" data-topic="${topic}" style="margin-top:8px">Save reminder</button></fieldset>`;
-    }).join('');
-    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders this business may place in your inbox. Nothing changes until you select Save.</p>${preferenceRows}`;
-    preferenceHost.querySelectorAll('.customerInboxPreferenceSave').forEach(button=>button.onclick=async()=>{
-      const topic=button.dataset.topic;const checkbox=preferenceHost.querySelector(`.customerInboxPreference[data-topic="${topic}"]`);if(!checkbox)return;
+  /* V289 (audit A3): "Inbox reminders" — the only place a customer can stop a business putting a
+     reminder in their inbox — was rendered ONLY in the per-business inbox, and the per-business
+     inbox has no caller: renderCustomerInAppInbox is invoked once, from Messages, with a null
+     slug. The controls existed, were tested, and could not be reached by anyone. The RPCs are
+     per-business, so the reachable home for them is the global inbox, grouped by the businesses
+     whose updates are actually in it. Each group loads its own settings only when opened, so the
+     Messages screen still costs the same reads it did before. */
+  const inboxPreferenceRowsMarkupV289=preferences=>Object.entries(topicLabels).map(([topic,label])=>{
+    const preference=preferences.get(topic)||{};
+    return `<fieldset style="margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:8px"><legend class="small" style="padding:0 4px">${esc(label)}</legend><label class="row" style="color:var(--ink);font-weight:500"><input type="checkbox" class="customerInboxPreference" style="width:auto" data-topic="${topic}" ${preference.opted_in===true?'checked':''}>Keep this reminder in my inbox</label><button type="button" class="btn ghost sm customerInboxPreferenceSave" data-topic="${topic}" style="margin-top:8px">Save reminder</button></fieldset>`;
+  }).join('');
+  const wireInboxPreferenceSavesV289=(scope,slug,preferences)=>{
+    scope.querySelectorAll('.customerInboxPreferenceSave').forEach(button=>button.onclick=async()=>{
+      const topic=button.dataset.topic;const checkbox=scope.querySelector(`.customerInboxPreference[data-topic="${topic}"]`);if(!checkbox)return;
       button.disabled=true;const {error:setError}=await request('customer_set_in_app_inbox_preferences',{
-        p_business_slug:businessSlug,p_topic:topic,p_opted_in:checkbox.checked,
+        p_business_slug:slug,p_topic:topic,p_opted_in:checkbox.checked,
         p_quiet_hours_timezone:null,p_quiet_hours_start:null,p_quiet_hours_end:null,p_idempotency_key:crypto.randomUUID()
       });
       if(!walletSectionStillCurrent(host,isCurrent)||!button.isConnected)return;
       button.disabled=false;const status=$('customerInboxStatus');if(setError){if(status)status.textContent='That reminder could not be saved. Try again.';return;}
       preferences.set(topic,{opted_in:checkbox.checked,quiet_hours_timezone:null,quiet_hours_start:null,quiet_hours_end:null});if(status)status.textContent='Inbox reminder saved.';CUI.announce('Inbox reminder saved.');await refreshBell();
     });
+  };
+  const renderGlobalPreferencesV289=preferenceHost=>{
+    const businesses=[],seen=new Set();
+    for(const item of items){
+      const slug=String(item?.business?.slug||'');
+      if(!slug||seen.has(slug))continue;
+      seen.add(slug);businesses.push({slug,name:String(item?.business?.name||slug)});
+    }
+    if(!businesses.length){preferenceHost.innerHTML='';return}
+    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders each business may place in your inbox. Nothing changes until you select Save.</p>
+      ${businesses.map(business=>`<details data-inbox-preferences="${esc(business.slug)}" style="margin-top:12px"><summary>${esc(business.name)}</summary><div data-inbox-preference-body><p class="muted small" style="margin-top:8px">Open to load this business’s reminder settings.</p></div></details>`).join('')}`;
+    preferenceHost.querySelectorAll('[data-inbox-preferences]').forEach(details=>{
+      details.ontoggle=async()=>{
+        if(!details.open||details.dataset.loaded==='1')return;
+        details.dataset.loaded='1';
+        const slug=details.dataset.inboxPreferences,body=details.querySelector('[data-inbox-preference-body]');
+        if(!body)return;
+        body.innerHTML='<p class="muted small" style="margin-top:8px">Loading reminder settings…</p>';
+        const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:slug});
+        if(!walletSectionStillCurrent(host,isCurrent)||!body.isConnected)return;
+        if(error){
+          details.dataset.loaded='';
+          body.innerHTML='<p class="muted small" style="margin-top:8px">These reminder settings could not be loaded. Close and open this business to try again.</p>';return;
+        }
+        const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
+        body.innerHTML=inboxPreferenceRowsMarkupV289(preferences);
+        wireInboxPreferenceSavesV289(body,slug,preferences);
+      };
+    });
+  };
+  const renderPreferences=async()=>{
+    const preferenceHost=$('customerInAppInboxPreferences');if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost)return;
+    if(global)return renderGlobalPreferencesV289(preferenceHost);
+    const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:businessSlug});
+    if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost.isConnected)return;
+    if(error)return;
+    const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
+    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose which reminders this business may place in your inbox. Nothing changes until you select Save.</p>${inboxPreferenceRowsMarkupV289(preferences)}`;
+    wireInboxPreferenceSavesV289(preferenceHost,businessSlug,preferences);
   };
   await refreshInbox();
 }
@@ -4610,7 +4660,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'e9d257b9e5624f51ad79f60d2432d1bdb99deff5254e9bc73b831e5b0b7207ca',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'be4ee20bda2829ba4d9deafc9804bca88fde16c09702da5fe95f89fbec51da16',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
