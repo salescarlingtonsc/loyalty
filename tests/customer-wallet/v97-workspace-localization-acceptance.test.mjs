@@ -290,7 +290,14 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      rewritten availability panel; V215 added welcomeOfferGiven; V225 added accountMenuForBusiness
      when the business name left the top bar and the account button needed its own name. Each was
      reviewed with all three locales and matching placeholders, which the assertions below check. */
-  assert.equal(keys.length,121,'mixed-interface interpolation inventory changed without review');
+  /* 121 -> 124: v150 (deb980e) deleted dashboardSummary's only render path and V217 (6d589bf)
+     superseded recentAppointments with recentInWindow — both dead entries removed; v281 adds
+     performancePeriodRange, pointCostDerived, parkExpiryPreview(+Tier) and parkKeptUntil,
+     bringing the V266/V262/V278 interpolated workspace copy into the reviewed inventory,
+     plus sortByAscending/sortByDescending for the v267 customer-360 sort control and
+     bottlePercentLeft for the v275 fill bar and the three v269 booking-request
+     button strings. */
+  assert.equal(keys.length,130,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -428,7 +435,6 @@ test('v97 dynamic count, page, amount, status, import, QR and billing copy local
   };
   for(const locale of ['zh-CN','ms']){
     const rendered=[
-      templateText('dashboardSummary',{business:fixtures.business},locale),
       templateText('customerPagination',{total:9999,page:12,pages:40},locale),
       templateText('completedTransactions',{count:2},locale),
       templateText('scopePeriod',{branch:'Business',from:fixtures.from,to:fixtures.to},locale),

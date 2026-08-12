@@ -113,28 +113,30 @@ test('customer navigation keeps destinations focused while notifications and pro
      route, so it still cannot intercept merchant navigation, and it stays wired through the same
      id on every page. v248 hid Explore behind CUSTOMER_EXPLORE_LIVE_V248, so the customer sees
      four slots today and five when it is switched on; the entry itself is still declared here. */
-  assert.equal((nav.match(/\{key:/g)||[]).length,5);
+  assert.equal((nav.match(/\{key:/g)||[]).length,6);
   assert.match(nav,/\.\.\.\(CUSTOMER_EXPLORE_LIVE_V248\?\[\{key:'explore'/);
   for(const [key,href,copy] of [
     ['home','#/wallet','home'],
     ['programmes','#/customer/programmes','rewardsTab'],
     ['explore','#/customer/explore','explore'],
-    ['bookings','#/customer/bookings','bookings']
+    ['bookings','#/customer/bookings','bookings'],
+    /* v281 (owner): Profile promoted from the header avatar menu to the rightmost slot */
+    ['profile','#/customer/profile','profileTab']
   ]){
     assert.match(nav,new RegExp(`key:'${key}',href:'${href.replaceAll('/','\\/')}'[^\\n]*copy:'${copy}'`));
   }
   assert.match(nav,/\{key:'scan',icon:'scan',copy:'scanQr'\}/);
   assert.match(app,/id="customerNavScan" class="customer-nav-scan"/);
   assert.match(app,/if\(\$\('customerNavScan'\)\)\$\('customerNavScan'\)\.onclick=openCustomerJoinScanner/);
-  assert.doesNotMatch(nav,/key:'messages'|key:'profile'/);
+  assert.doesNotMatch(nav,/key:'messages'/);
   const navMarkup=section('function customerPrimaryNavigation(active','function renderCustomerShell');
   assert.match(navMarkup,/<nav class="customer-primary-nav" aria-label="\$\{esc\(BRAND\.customerLabel\)\}">/);
   assert.match(navMarkup,/aria-current="page"/);
   assert.match(navMarkup,/CUI\.icon\(item\.icon/);
   assert.match(navMarkup,/<span>\$\{esc\(ct\(item\.copy\)\)\}<\/span>/);
 
-  assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr;/s,
-    'four slots while Explore is hidden');
+  assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr 1fr;/s,
+    'five slots while Explore is hidden: Home, Rewards, Scan, Bookings, Profile');
   assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button:not\(\.customer-nav-scan\)\{[^}]*min-height:48px/s);
   assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-primary-nav\{position:fixed[^}]*bottom:/);
 });

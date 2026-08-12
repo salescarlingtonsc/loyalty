@@ -93,15 +93,19 @@ test('staff UI keeps stable keys and confirmation while sale reversal notes are 
 });
 
 test('quick sale uses the atomic RPC and browser code cannot mutate financial evidence tables',()=>{
-  const quickSale=app.match(/async function salesPage\(\)\{[\s\S]*?\/\* ---------- services ---------- \*\//)?.[0]||'';
-  assert.match(quickSale,/sb\.rpc\('record_quick_sale'/);
-  for(const input of ['p_amount_cents','p_method','p_client','p_staff','p_branch','p_note','p_paid','p_idempotency_key']){
-    assert.match(quickSale,new RegExp(input));
-  }
-  assert.match(quickSale,/quickSaleAttempt\.fingerprint!==fingerprint[\s\S]*crypto\.randomUUID\(\)/);
-  assert.match(quickSale,/Payment state/);
-  assert.match(quickSale,/Payment method/);
-  assert.match(quickSale,/No active permitted branch/);
+  /* The recording surface moved: salesPage() is now a read-only ledger and every sale is written
+     from the till. The invariants are unchanged — ONE atomic RPC per sale, an idempotency key
+     that is fresh per attempt, reused on retry and invalidated the moment the sale's inputs
+     change, and no browser-side mutation of any financial evidence table. */
+  const till=app.match(/async function tillPage\(\)\{[\s\S]*?\nasync function salesPage\(\)\{/)?.[0]||'';
+  assert.match(till,/sb\.rpc\('record_sale_by_phone',\{p_business:S\.biz\.id,p_phone:[\s\S]{0,200}?p_amount_cents:amt,p_kind:'quick_sale',[\s\S]{0,200}?p_idem:saleIdem,[\s\S]{0,100}?p_branch:tillBranchId,p_method:tender\}/);
+  assert.match(till,/if\(!saleIdem\) saleIdem=crypto\.randomUUID\(\)/,'a fresh key per attempt, reused on retry');
+  assert.match(till,/saleIdem=null/,'changing the sale invalidates the key');
+  assert.match(till,/sb\.rpc\('record_cart_sale',\{p_business:S\.biz\.id,p_client:[\s\S]{0,200}?p_idempotency_key:finaliseKey,[\s\S]{0,120}?p_evaluation_id:evalResult\.evaluation_id,p_paid:true\}/,'the cart flow finalises through ONE atomic RPC');
+  assert.match(till,/writeAttemptKey\(FINALISE_SLOT,evalFingerprint\(\)\)/);
+  const salesLedger=app.match(/async function salesPage\(\)\{[\s\S]*?\/\* ---------- services ---------- \*\//)?.[0]||'';
+  assert.doesNotMatch(salesLedger,/sb\.rpc\('record_/,'the sales ledger is read-only');
+  assert.match(salesLedger,/href="#\/till"/,'recording routes to the till');
   const protectedTables=['sales','points_ledger','credit_ledger','points_batches',
     'loyalty_redemption_provenance','loyalty_redemption_batch_drains','financial_operations',
     'package_session_consumptions','package_session_reversals','loyalty_redemption_reversals'];

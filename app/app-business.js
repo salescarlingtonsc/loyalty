@@ -1449,23 +1449,6 @@ function workspaceLanguagePickerV97(id='workspaceLanguageV97'){
       <option value="ms" ${workspaceLocale==='ms'?'selected':''}>Bahasa Melayu</option>
     </select>`;
 }
-const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
-  'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
-  'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
-  'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
-  'calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails'
-]);
-const workspaceTemplateTextV97=(key,values={},locale=workspaceLocale)=>{
-  const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';
-  return template.replace(/\{([a-z][a-z0-9_]*)\}/gi,(_,name)=>String(values[name]??''));
-};
-const WORKSPACE_TEMPLATE_ATTRIBUTES_V97=Object.freeze(['aria-label','title','placeholder']);
-const workspaceTemplateAttributeV97=(attribute,key,values={})=>{
-  if(!WORKSPACE_TEMPLATE_ATTRIBUTES_V97.includes(attribute)
-     ||!WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97.includes(key))return '';
-  const encoded=encodeURIComponent(JSON.stringify(values));
-  return `data-workspace-${attribute}-template="${esc(key)}" data-workspace-${attribute}-values="${esc(encoded)}" ${attribute}="${esc(workspaceTemplateTextV97(key,values))}"`;
-};
 function localizeWorkspaceTemplateV97(element){
   const key=element.dataset.workspaceTemplate;
   let values=workspaceTemplateValuesV97.get(element);
@@ -2447,7 +2430,7 @@ async function dashboard(){
     /* V266: the period is written from the range the RPC was actually answered for, next to the
        numbers, so the Today-schedule date above can never be mistaken for the driver. */
     const performancePeriod=dashboardRoot.querySelector('#dashboardPerformancePeriod');
-    if(performancePeriod)performancePeriod.textContent=`${dashboardScheduleDayLabelV252(from)} to ${dashboardScheduleDayLabelV252(to)}`;
+    if(performancePeriod)performancePeriod.textContent=workspaceTemplateTextV97('performancePeriodRange',{from:dashboardScheduleDayLabelV252(from),to:dashboardScheduleDayLabelV252(to)});
     if(!kpis||!charts)return;
     status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const previousSummary=previousResponse.error?null:previousResponse.data;
@@ -3874,7 +3857,7 @@ function renderHistPage(history,n){
     const active=stateV267.sort.startsWith(key+'_');
     const ascending=active&&stateV267.sort.endsWith('_asc');
     const next=active&&!ascending?`${key}_asc`:`${key}_desc`;
-    return `<th aria-sort="${active?(ascending?'ascending':'descending'):'none'}"><button type="button" class="c360-act-sort-v267" data-act-sort="${next}" aria-label="Sort by ${label}, ${next.endsWith('_asc')?'ascending':'descending'}">${label}<span class="c360-act-caret-v267" aria-hidden="true">${active?(ascending?'▲':'▼'):'↕'}</span></button></th>`;
+    return `<th aria-sort="${active?(ascending?'ascending':'descending'):'none'}"><button type="button" class="c360-act-sort-v267" data-act-sort="${next}" ${workspaceTemplateAttributeV97('aria-label',next.endsWith('_asc')?'sortByAscending':'sortByDescending',{label})}>${label}<span class="c360-act-caret-v267" aria-hidden="true">${active?(ascending?'▲':'▼'):'↕'}</span></button></th>`;
   };
   const DASH_V252='—';
   const cellsV252=h=>{
@@ -7377,7 +7360,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       const points=parseFloat($('lr').value),credit=parseFloat($('lc').value);
       const cents=points>0&&credit>0?(credit*100)/points:programmePointCostCentsV262;
       pointCostDerivedV262.dataset.pointCostCents=String(cents);
-      pointCostDerivedV262.textContent=`Cost per point: ${pointCostLabelV262(cents)}. Every reward uses this to work out its point price.`;
+      pointCostDerivedV262.textContent=workspaceTemplateTextV97('pointCostDerived',{cost:pointCostLabelV262(cents)});
     };
     $('lr').addEventListener('input',syncPointCostDerivedV262);
     $('lc').addEventListener('input',syncPointCostDerivedV262);
@@ -9723,7 +9706,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      is deliberately absent from History rather than filed as if it were over. */
   const growHistoryRowsV271=growProgrammeEntriesV271.filter(entry=>entry.state==='ended'||entry.state==='retired');
   const growTableV271=({label,columns,rows,empty})=>rows.length
-    ?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="${esc(label)}"><table class="cui-table" data-responsive="true"><thead><tr>${columns.map(column=>`<th>${esc(column[0])}</th>`).join('')}</tr></thead><tbody>
+    ?`<div class="cui-table-wrap" tabindex="0" role="region" data-workspace-i18n aria-label="${esc(label)}"><table class="cui-table" data-responsive="true"><thead><tr>${columns.map(column=>`<th>${esc(column[0])}</th>`).join('')}</tr></thead><tbody>
       ${rows.map(row=>`<tr>${columns.map(column=>`<td data-label="${esc(column[0])}">${column[1](row)}</td>`).join('')}</tr>`).join('')}
       </tbody></table></div>`
     :`<div class="empty" role="status">${empty}</div>`;
@@ -13061,8 +13044,8 @@ async function appointmentsPage(){
         return;
       }
       badge.textContent=String(waiting);badge.hidden=false;
-      bookingRequestsButtonV269.title=`${waiting} booking ${waiting===1?'request is':'requests are'} waiting for a decision.`;
-      bookingRequestsButtonV269.setAttribute('aria-label',`Booking requests — ${waiting} waiting`);
+      bookingRequestsButtonV269.title=workspaceTemplateTextV97(waiting===1?'bookingRequestWaiting':'bookingRequestsWaitingMany',{count:waiting});
+      bookingRequestsButtonV269.setAttribute('aria-label',workspaceTemplateTextV97('bookingRequestsBadge',{count:waiting}));
     })();
   }
   if(!visibleBranches.length)return;
@@ -14197,7 +14180,7 @@ async function bottleSetupPageV275(){
     host.innerHTML=locations.map((location,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
       <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(location.name)}</b>
       ${location.in_use?'<span class="muted small">In use</span>':''}
-      <button class="btn ghost sm" type="button" data-remove-location="${index}" aria-label="Remove ${esc(location.name)}"><span aria-hidden="true">×</span></button>
+      <button class="btn ghost sm" type="button" data-remove-location="${index}" data-merchant-content aria-label="Remove ${esc(location.name)}"><span aria-hidden="true">×</span></button>
     </div>`).join('');
     host.querySelectorAll('[data-remove-location]').forEach(button=>button.onclick=()=>{
       const index=Number(button.dataset.removeLocation);
@@ -14228,7 +14211,7 @@ async function bottleSetupPageV275(){
     host.innerHTML=tiersV278.map((tier,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
       <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(tier.name)}</b>
       <label class="sr-only" for="bkTierDays${index}">Keep days for ${esc(tier.name)}</label>
-      <input id="bkTierDays${index}" type="number" min="1" max="365" inputmode="numeric" style="max-width:110px" placeholder="${esc(fallback)}" value="${esc(tier.keep_days)}" data-tier-days="${index}">
+      <input id="bkTierDays${index}" type="number" min="1" max="365" inputmode="numeric" style="max-width:110px" placeholder="${esc(fallback)}" value="${esc(tier.keep_days)}" data-tier-days="${index}" data-merchant-content>
       <span class="muted small">days</span>
     </div>`).join('');
     host.querySelectorAll('[data-tier-days]').forEach(input=>input.oninput=()=>{
@@ -14690,12 +14673,15 @@ async function bottlesPage(){
       if(mode==='none'){preview.textContent='No expiry — kept until you say otherwise.';return}
       if(mode==='custom'){
         const chosen=$('parkExpiryDate').value;
-        preview.textContent=chosen?`Kept until ${chosen}`:'Choose the date it is kept until.';
+        preview.textContent=chosen?workspaceTemplateTextV97('parkKeptUntil',{date:chosen}):'Choose the date it is kept until.';
         return;
       }
       const days=Number(autoKeepV278.keep_days)||keepDays;
       const auto=new Date(Date.now()+days*864e5);
-      preview.textContent=`Expires ${sgt(auto.toISOString())||''} · ${days} days${autoKeepV278.tier_name?` · ${autoKeepV278.tier_name}`:''}`;
+      const parkExpires=sgt(auto.toISOString())||'';
+      preview.textContent=autoKeepV278.tier_name
+        ?workspaceTemplateTextV97('parkExpiryPreviewTier',{expires:parkExpires,days,tier:autoKeepV278.tier_name})
+        :workspaceTemplateTextV97('parkExpiryPreview',{expires:parkExpires,days});
     };
     const loadAutoKeepV278=async()=>{
       const clientId=$('parkClient')?$('parkClient').value:'';

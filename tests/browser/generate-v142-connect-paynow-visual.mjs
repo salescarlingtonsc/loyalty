@@ -71,7 +71,10 @@ export async function buildV142Visual(){
   function QRCode(host,options){window.__qrRawData=String(options.text||'');const canvas=document.createElement('canvas');canvas.width=options.width;canvas.height=options.height;canvas.setAttribute('aria-hidden','true');const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#000';for(let y=0;y<21;y++)for(let x=0;x<21;x++)if((x*y+x+y)%3===0)ctx.fillRect(x*12,y*12,10,10);host.appendChild(canvas)}
   QRCode.CorrectLevel={M:0};
   function queryRows(table){
-    return {staff:[{id:STAFF_ID}],branches:[{id:BRANCH_ID,name:'Tanjong Pagar',is_default:true}],staff_branches:[{staff_id:STAFF_ID,branch_id:BRANCH_ID}],services:[{id:SERVICE_ID,name:'Harbour Lunch Set',variant_label:'',duration_min:30}],package_plans:[],membership_plans:[]}[table]||[];
+    /* v187 made sale attribution real: tillPage resolves the acting staff by user_id and
+       gates the whole till on it, so the stub row must carry the signed-in user's id and the
+       full_name the roster orders by. */
+    return {staff:[{id:STAFF_ID,full_name:'Aisyah',user_id:USER_ID}],branches:[{id:BRANCH_ID,name:'Tanjong Pagar',is_default:true}],staff_branches:[{staff_id:STAFF_ID,branch_id:BRANCH_ID}],services:[{id:SERVICE_ID,name:'Harbour Lunch Set',variant_label:'',duration_min:30}],package_plans:[],membership_plans:[]}[table]||[];
   }
   function fixtureQuery(table){
     const query={select(){return query},eq(){return query},order(){return query},limit(){return query},single(){return query},maybeSingle(){return query},then(resolve,reject){return Promise.resolve({data:queryRows(table),error:null}).then(resolve,reject)}};

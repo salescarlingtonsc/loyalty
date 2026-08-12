@@ -11,6 +11,7 @@ const latestEvidence=readFileSync(new URL('../../docs/qa/evidence/V137-MINIMAL-A
 const v138Evidence=readFileSync(new URL('../../docs/qa/evidence/V138-AUTH-GROW-CLOSURE.md',import.meta.url),'utf8');
 const v139Evidence=readFileSync(new URL('../../docs/qa/evidence/V139-GROW-EDITOR-ISOLATION.md',import.meta.url),'utf8');
 const v140Evidence=readFileSync(new URL('../../docs/qa/evidence/V140-GROW-DRAFT-AUTHORITY-LABEL.md',import.meta.url),'utf8');
+const v281Evidence=readFileSync(new URL('../../docs/qa/evidence/V281-GROW-OVERVIEW-FIXTURE-CURRENCY.md',import.meta.url),'utf8');
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -106,5 +107,5 @@ test('server recommendation uses governed sectors and serializes stale tabs onto
 test('checked-in browser evidence identifies the exact extracted production component',()=>{
   const sourceHash=browserFixture.match(/name="production-source-sha256" content="([a-f0-9]{64})"/)?.[1];
   assert.ok(sourceHash,'generated browser fixture must carry its production source hash');
-  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}`,new RegExp(sourceHash));
+  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}`,new RegExp(sourceHash));
 });

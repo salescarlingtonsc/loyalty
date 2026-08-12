@@ -58,7 +58,7 @@ test('portal identity copy and prefill stay linked-business scoped and generatio
   assert.match(portal,/visit the participating business and scan its current Peekaa QR/i);
   assert.doesNotMatch(portal,/Add programme|href="#\/claim\?business=/);
   assert.match(portal,/verified relationship will be validated securely when you submit/i);
-  assert.match(portal,/After secure validation, this booking will be attached/i);
+  assert.match(portal,/This request will be securely attached to your/i); /* v167 (f379dc2) reworded the linked-customer banner; server-side attachment is unchanged */
 });
 
 test('active requests and appointments compose once, remain grouped, and tolerate a partial appointment error',()=>{

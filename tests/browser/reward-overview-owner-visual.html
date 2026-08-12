@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="0317051b2c0e170b3755fcf5da3ad9664b84fe9421eacff330ca1a588c0237c5"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="cae6bbebd34833fb1e1b67b93393c068191ae59f368339f676cab2514446dcb0"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1367,7 +1367,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
 .customer-shell .wallet-inner{width:min(1040px,100%)}
 .customer-shell .wallet-head{min-height:48px}
-.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:1fr 1fr auto 1fr;gap:6px;
+.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:1fr 1fr auto 1fr 1fr;gap:6px;
   margin:0 0 24px;padding:6px;border:1px solid var(--hair);border-radius:16px;background:rgba(255,255,255,.88);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:var(--shadow)}
 /* v244 · the raised centre Scan control (owner's Grab-style reference) */
@@ -1855,7 +1855,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0317051b2c0e170b3755fcf5da3ad9664b84fe9421eacff330ca1a588c0237c5</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · cae6bbebd34833fb1e1b67b93393c068191ae59f368339f676cab2514446dcb0</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -1960,9 +1960,12 @@ function pruneRewardSiblingsV139(root){
       memberships:emptyPrograms?[]:[{id:'membership-1',name:'Glow Monthly',active:!configuredOff}],
       giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false}};
     window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
+    /* v229 moved the grow list's topic filter into a top-level app global; the extracted
+       sections read it, so the harness declares it exactly as app.js line ~583 does. */
+    let growTopicV229='';
     function fixtureQuery(table){
       const state={single:false,equals:{}};
-      const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
+      const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},not(){return query},gte(){return query},lte(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
         then(resolve,reject){window.__tableReads.push(table);let data=[];
           if(table==='businesses')data={active_config_version_id:fixture.currentVersion};
           else if(table==='loyalty_programs')data=fixture.loyalty?[fixture.loyalty]:[];
@@ -1999,6 +2002,8 @@ function pruneRewardSiblingsV139(root){
         window.__lastRecommendation=data;
         return {data,error:null};
       }
+      if(name==='business_get_welcome_offer_v215')return {data:{status:'none'},error:null};
+      if(name==='business_programme_usage_v271')return {data:{items:[]},error:null};
       return {data:{version_id:'draft-v2'},error:null};
     }};
     async function loyaltyPage(modelOverride,draftVersionId,recommendation,stableRefresh,editorIntent){
@@ -2908,7 +2913,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
      is deliberately absent from History rather than filed as if it were over. */
   const growHistoryRowsV271=growProgrammeEntriesV271.filter(entry=>entry.state==='ended'||entry.state==='retired');
   const growTableV271=({label,columns,rows,empty})=>rows.length
-    ?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="${esc(label)}"><table class="cui-table" data-responsive="true"><thead><tr>${columns.map(column=>`<th>${esc(column[0])}</th>`).join('')}</tr></thead><tbody>
+    ?`<div class="cui-table-wrap" tabindex="0" role="region" data-workspace-i18n aria-label="${esc(label)}"><table class="cui-table" data-responsive="true"><thead><tr>${columns.map(column=>`<th>${esc(column[0])}</th>`).join('')}</tr></thead><tbody>
       ${rows.map(row=>`<tr>${columns.map(column=>`<td data-label="${esc(column[0])}">${column[1](row)}</td>`).join('')}</tr>`).join('')}
       </tbody></table></div>`
     :`<div class="empty" role="status">${empty}</div>`;
@@ -3171,6 +3176,10 @@ async function openWelcomeOfferEditorV215(current,onSaved){
         {name:'10% off your next visit',desc:'10% off next time.',budget:tenPct||500}]
     };
     sets.facial=sets.salon;sets.massage=sets.salon;
+    /* V276: a bar's starting rewards are the F&B set — "Free drink" is the single most obvious
+       reward a bar can offer, and the generic fallback ("Free item", "S$5 off") read like a
+       shop's. Same list, no new copy to keep in step. */
+    sets.bar=sets.fnb;
     return sets[industry]||sets.other;
   };
   const surfaceDefinition={
@@ -3595,7 +3604,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'0317051b2c0e170b3755fcf5da3ad9664b84fe9421eacff330ca1a588c0237c5',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'cae6bbebd34833fb1e1b67b93393c068191ae59f368339f676cab2514446dcb0',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

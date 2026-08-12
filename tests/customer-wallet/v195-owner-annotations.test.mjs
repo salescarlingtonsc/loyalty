@@ -116,7 +116,7 @@ test('the scanner is the raised centre of the nav (v244 Grab-style revamp)', () 
      signature centre control. v248 then hid Explore from customers, so four slots show today —
      Scan is still the centre of what they see. */
   const nav = section(appJs, 'const CUSTOMER_PRIMARY_NAV=Object.freeze([', 'function customerPrimaryNavigation(');
-  assert.equal((nav.match(/\{key:/g) || []).length, 5);
+  assert.equal((nav.match(/\{key:/g) || []).length, 6);
   assert.match(appJs, /const CUSTOMER_EXPLORE_LIVE_V248=false;/);
   assert.match(nav, /\{key:'scan',icon:'scan',copy:'scanQr'\}/);
   assert.match(nav, /\{key:'explore',href:'#\/customer\/explore',icon:'search',copy:'explore'\}/);
@@ -125,7 +125,7 @@ test('the scanner is the raised centre of the nav (v244 Grab-style revamp)', () 
   assert.match(appJs, /id="customerNavScan" class="customer-nav-scan"/);
   assert.match(appJs, /if\(\$\('customerNavScan'\)\)\$\('customerNavScan'\)\.onclick=openCustomerJoinScanner/);
   assert.doesNotMatch(appJs, /customer-head-scan/, 'the header no longer duplicates the scanner');
-  assert.match(indexHtml, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr;/);
+  assert.match(indexHtml, /\.customer-primary-nav\{[^}]*grid-template-columns:1fr 1fr auto 1fr 1fr;/);
   assert.match(indexHtml, /\.customer-nav-scan-fab\{[^}]*border-radius:999px;background:var\(--grad\)/);
 });
 

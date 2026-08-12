@@ -1499,7 +1499,7 @@ function setCustomerSurfaceDocumentV167(){
 const CUSTOMER_LOCALES=Object.freeze(['en']);
 const CUSTOMER_COPY=Object.freeze({
   en:Object.freeze({
-    home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',
+    home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',profileTab:'Profile',
     notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
     language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
     chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
@@ -1561,12 +1561,18 @@ const CUSTOMER_EXPLORE_LIVE_V248=false;
    because the reference makes it the app's signature action, not a corner utility; it is still
    the same openCustomerJoinScanner behind the same id. Explore is new: search the whole Peekaa
    ecosystem ("chicken rice", "food near me") the way you'd search Google. */
+/* v281 (owner: "change it to scan in the middle and add a profile module at the most right. so 2
+   left 1 qrcode scanning"): five slots — Home · Rewards on the left, Scan as the raised centre,
+   Bookings · Profile on the right. Profile was reachable only through the header avatar menu, two
+   taps behind an icon; the owner promoted it to a first-class destination. The route and page
+   (#/customer/profile, renderCustomerProfile) already existed — only this entry is new. */
 const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',copy:'home'},
   {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'rewardsTab'},
   {key:'scan',icon:'scan',copy:'scanQr'},
   ...(CUSTOMER_EXPLORE_LIVE_V248?[{key:'explore',href:'#/customer/explore',icon:'search',copy:'explore'}]:[]),
-  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'}
+  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'},
+  {key:'profile',href:'#/customer/profile',icon:'customers',copy:'profileTab'}
 ]);
 /* v194 (owner: "put number to show how many valid rewards i have — here also" on Bookings): the
    two tabs that hold countable things now carry that count. A zero is not rendered — a badge
@@ -1605,12 +1611,19 @@ function openCustomerJoinScanner(){
   overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
+  /* v281 (owner: "must show scan, currently need to choose to upload or scan, just show scan
+     first"): the camera starts the moment the sheet opens — tapping Scan IS the consent to scan,
+     so a second "Open camera" tap was pure friction. The upload/paste fallbacks still exist (a
+     desktop with no camera, a screenshot of a QR) but they wait hidden behind one small control,
+     and reveal themselves automatically the moment the camera cannot start. */
   overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
     <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
-    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
-    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
+    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px" hidden>${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
+    <p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p>
+    <button class="btn ghost sm" id="customerJoinScannerManual" type="button" style="width:100%;margin-top:12px">Can't scan? Use a photo or link</button>
+    <div class="scanner-fallback" id="customerJoinScannerFallback" hidden><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
       <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
-    </div><p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
+    </div></section>`;
   document.body.appendChild(overlay);
   const video=overlay.querySelector('#customerJoinScannerVideo');
   const frame=overlay.querySelector('#customerJoinScannerFrame');
@@ -1618,6 +1631,8 @@ function openCustomerJoinScanner(){
   const camera=overlay.querySelector('#customerJoinScannerCamera');
   const imageInput=overlay.querySelector('#customerJoinScannerImage');
   const pasteFallback=overlay.querySelector('#customerJoinScannerPaste');
+  const fallbackWrap=overlay.querySelector('#customerJoinScannerFallback');
+  const manualToggle=overlay.querySelector('#customerJoinScannerManual');
   const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
   let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
   const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
@@ -1638,15 +1653,30 @@ function openCustomerJoinScanner(){
     if(video.readyState>=2&&accept(decode(video,video.videoWidth,video.videoHeight)))return;
     frameHandle=requestAnimationFrame(scan);
   };
-  camera.onclick=async()=>{
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus();return}
-    camera.disabled=true;status.textContent='Starting camera…';
+  /* Reveals the photo/paste alternatives. On camera failure this is called automatically so the
+     customer is never stranded at a dead camera frame; the paste path opens too because a
+     desktop user with no camera most often HAS the link. */
+  const revealFallback=()=>{
+    fallbackWrap.hidden=false;manualToggle.hidden=true;
+    pasteFallback.open=true;imageInput.focus();
+  };
+  const startCamera=async()=>{
+    if(closed)return;
+    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';revealFallback();return}
+    camera.disabled=true;camera.hidden=true;status.textContent='Starting camera…';
     try{
       await loadScannerLibrary();
       stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      if(closed){stream.getTracks().forEach(track=>track.stop());stream=null;return}
       video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
-    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus()}
+    }catch{
+      if(closed)return;
+      camera.disabled=false;camera.hidden=false;
+      status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';revealFallback();
+    }
   };
+  camera.onclick=startCamera;
+  manualToggle.onclick=()=>revealFallback();
   imageInput.onchange=async event=>{
     const file=event.target.files?.[0];if(!file)return;
     status.textContent='Reading QR image…';
@@ -1660,7 +1690,8 @@ function openCustomerJoinScanner(){
   overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
   overlay.querySelector('#customerJoinScannerClose').onclick=close;
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
-  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerCamera'});
+  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerClose'});
+  startCamera();
 }
 function sortStaffWorkspaces(staff){
   return [...(Array.isArray(staff)?staff:[])].sort((a,b)=>{
@@ -3068,12 +3099,22 @@ const workspaceTranslationV97=source=>workspaceLocale==='en'||typeof WORKSPACE_G
   ?source
   :(WORKSPACE_COPY_V97[workspaceLocale]?.[source]??WORKSPACE_GENERATED_COPY_V97[workspaceLocale]?.[source]??source);
 const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
-  dashboardSummary:Object.freeze({en:'How {business} is doing','zh-CN':'{business} 的经营概况',ms:'Prestasi {business}'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   scopePeriod:Object.freeze({en:'{branch} · {from} to {to}','zh-CN':'{branch} · {from} 至 {to}',ms:'{branch} · {from} hingga {to}'}),
   allBranchesPeriod:Object.freeze({en:'All permitted branches · {from} to {to}','zh-CN':'所有获准分店 · {from} 至 {to}',ms:'Semua cawangan yang dibenarkan · {from} hingga {to}'}),
+  performancePeriodRange:Object.freeze({en:'{from} to {to}','zh-CN':'{from} 至 {to}',ms:'{from} hingga {to}'}),
+  pointCostDerived:Object.freeze({en:'Cost per point: {cost}. Every reward uses this to work out its point price.','zh-CN':'每积分成本：{cost}。每个奖励都以此计算其积分价格。',ms:'Kos setiap mata: {cost}. Setiap ganjaran menggunakannya untuk mengira harga matanya.'}),
+  parkExpiryPreview:Object.freeze({en:'Expires {expires} · {days} days','zh-CN':'于 {expires} 到期 · {days} 天',ms:'Luput {expires} · {days} hari'}),
+  parkExpiryPreviewTier:Object.freeze({en:'Expires {expires} · {days} days · {tier}','zh-CN':'于 {expires} 到期 · {days} 天 · {tier}',ms:'Luput {expires} · {days} hari · {tier}'}),
+  parkKeptUntil:Object.freeze({en:'Kept until {date}','zh-CN':'保留至 {date}',ms:'Disimpan hingga {date}'}),
+  sortByAscending:Object.freeze({en:'Sort by {label}, ascending','zh-CN':'按{label}升序排序',ms:'Isih ikut {label}, menaik'}),
+  sortByDescending:Object.freeze({en:'Sort by {label}, descending','zh-CN':'按{label}降序排序',ms:'Isih ikut {label}, menurun'}),
+  bottlePercentLeft:Object.freeze({en:'{percent}% left','zh-CN':'剩余 {percent}%',ms:'{percent}% berbaki'}),
+  bookingRequestWaiting:Object.freeze({en:'{count} booking request is waiting for a decision.','zh-CN':'{count} 个预约请求等待处理。',ms:'{count} permintaan tempahan menunggu keputusan.'}),
+  bookingRequestsWaitingMany:Object.freeze({en:'{count} booking requests are waiting for a decision.','zh-CN':'{count} 个预约请求等待处理。',ms:'{count} permintaan tempahan menunggu keputusan.'}),
+  bookingRequestsBadge:Object.freeze({en:'Booking requests — {count} waiting','zh-CN':'预约请求 — {count} 个等待中',ms:'Permintaan tempahan — {count} menunggu'}),
   scopeCustomers:Object.freeze({en:'Showing {shown} of {total} customers for this scope.','zh-CN':'此范围显示 {shown}／{total} 位顾客。',ms:'Menunjukkan {shown} daripada {total} pelanggan untuk skop ini.'}),
   customerRecordExported:Object.freeze({en:'{count} customer record exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
   customerRecordsExported:Object.freeze({en:'{count} customer records exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
@@ -3155,7 +3196,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   selectedStaffFreeFairer:Object.freeze({en:'{staff} is free at this time. {alt} has had fewer appointments if you would rather spread the work.','zh-CN':'{staff} 在这个时间有空。若想更平均分配，{alt} 的预约较少。',ms:'{staff} lapang pada masa ini. {alt} kurang temu janji jika anda mahu agihkan kerja.'}),
   /* Owner: "recent appointment - how recent?" — the number now states its own window. */
   recentInWindow:Object.freeze({en:'{count} in last {window}','zh-CN':'过去{window}内 {count} 个',ms:'{count} dalam {window} lalu'}),
-  recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
   /* V267: the id is gone from these two. A staff member reading the session-correction table
      cannot do anything with a UUID, and the owner asked "what is this?" the first time they
      met one. The relationship is what matters and the counterpart row is in the same table. */
@@ -3203,7 +3243,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
-  'dashboardSummary','customerPagination','completedTransaction','completedTransactions',
+  'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
   'bookingsReady','firstBookings','importBookingPreview','firstImportError','firstImportErrors',
@@ -3223,8 +3263,11 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'qrReadyExpiresQrsRevoked','activeQrRevoked',
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
-  'availableStaff','availableStaffMany','recentAppointments','reversalOf',
+  'availableStaff','availableStaffMany','reversalOf',
   'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
+  'performancePeriodRange','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
+  'sortByAscending','sortByDescending','bottlePercentLeft',
+  'bookingRequestWaiting','bookingRequestsWaitingMany','bookingRequestsBadge',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
@@ -3238,6 +3281,23 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'publishConfirmationSensitive','publishConfirmationStandard',
   'classicEligibleEarning','stampsEligibleEarning','referralEnabledOutcome'
 ]);
+const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
+  'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
+  'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
+  'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
+  'calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails'
+]);
+const workspaceTemplateTextV97=(key,values={},locale=workspaceLocale)=>{
+  const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';
+  return template.replace(/\{([a-z][a-z0-9_]*)\}/gi,(_,name)=>String(values[name]??''));
+};
+const WORKSPACE_TEMPLATE_ATTRIBUTES_V97=Object.freeze(['aria-label','title','placeholder']);
+const workspaceTemplateAttributeV97=(attribute,key,values={})=>{
+  if(!WORKSPACE_TEMPLATE_ATTRIBUTES_V97.includes(attribute)
+     ||!WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97.includes(key))return '';
+  const encoded=encodeURIComponent(JSON.stringify(values));
+  return `data-workspace-${attribute}-template="${esc(key)}" data-workspace-${attribute}-values="${esc(encoded)}" ${attribute}="${esc(workspaceTemplateTextV97(key,values))}"`;
+};
 const workspaceTemplateInnerHtmlV97=(key,values={},locale=workspaceLocale)=>{
   const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';
   let cursor=0,html='';
@@ -3600,7 +3660,7 @@ function bottleFillToneV279(percent){
 function bottleFillBarV275(percent){
   const value=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
   const tone=bottleFillToneV279(value);
-  return `<span class="bottle-fill" role="img" aria-label="${value}% left" style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
+  return `<span class="bottle-fill" role="img" ${workspaceTemplateAttributeV97('aria-label','bottlePercentLeft',{percent:value})} style="display:block;height:9px;min-width:88px;border-radius:999px;background:var(--hair,#ece7e1);overflow:hidden"><span style="display:block;height:100%;width:${value}%;background:${tone}"></span></span>`;
 }
 function bottleDaysLabelV275(days){
   /* V278: a bottle may now have NO expiry, and the server sends null for it. Number(null) is 0,

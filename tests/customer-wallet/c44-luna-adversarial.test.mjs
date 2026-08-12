@@ -73,7 +73,7 @@ test('Luna C44: 101/100 truncation is value-first, home firms stay separate, and
   assert.match(wallet, /filter \(where action_rank <= 100\)[\s\S]*bool_or\(action_rank > 100\)[\s\S]*where action_rank <= 101/i);
   assert.doesNotMatch(wallet, /row_number\(\) over \(order by context\.business_slug|source_rank|context[\s\S]{0,240}limit 101/i,
     'alphabetical pre-limiting would silently omit a lexically-last urgent programme');
-  assert.match(route, /customer_get_actionable_wallet[\s\S]*renderActionableWalletHome\(data\)/i);
+  assert.match(route, /customer_get_actionable_wallet[\s\S]*renderActionableWalletHome\(data[,)]/i /* v167 (59946ab) added an options object carrying offers state; data from the C44 RPC is still the first and primary argument */);
   assert.match(route, /customer_get_actionable_business[\s\S]*customer_get_business_summary[\s\S]*customer_portal_capabilities/i);
   for (const reader of ['customer_get_reward_catalog', 'customer_get_loyalty_details', 'customer_get_packages', 'customer_get_memberships', 'customer_get_appointments_page']) {
     assert.match(app, new RegExp(reader, 'i'), `C44 detail must retain ${reader}`);

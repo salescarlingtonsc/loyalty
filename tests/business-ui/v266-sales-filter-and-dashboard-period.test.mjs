@@ -99,7 +99,7 @@ test('V266 B2 the Performance card states the period it covers, next to the numb
   const block = dash();
   assert.match(block, /id="dashboardPerformancePeriod"/);
   // Written from the range the RPC was answered for, not from the inputs at paint time.
-  assert.match(block, /performancePeriod\.textContent=`\$\{dashboardScheduleDayLabelV252\(from\)\} to \$\{dashboardScheduleDayLabelV252\(to\)\}`/);
+  assert.match(block, /performancePeriod\.textContent=workspaceTemplateTextV97\('performancePeriodRange',\{from:dashboardScheduleDayLabelV252\(from\),to:dashboardScheduleDayLabelV252\(to\)\}\)/ /* v281: routed through the v97 reviewed template so zh-CN/ms merchants read it translated */);
   // And it stops claiming a period once the inputs move but Apply has not been pressed.
   assert.match(block, /pendingPeriod\.textContent='Date range changed — press Apply\.'/);
 });

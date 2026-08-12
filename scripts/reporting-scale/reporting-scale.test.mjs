@@ -153,10 +153,11 @@ test('SPA uses aggregates, bounded customer pages, and paged sales export',()=>{
   const clients=appSection('async function clientsPage()','async function clientDetail');
   const reports=appSection('async function reportsPage()','/* ---------- get started');
 
-  assert.match(dashboard,/sb\.rpc\('get_dashboard_summary'/);
+  assert.match(dashboard,/sb\.rpc\('get_dashboard_summary_v155'/);
   assert.doesNotMatch(dashboard,/\.from\('sales'\)/);
-  assert.match(clients,/sb\.rpc\('staff_list_customers_v129'/);
-  assert.match(clients,/const customerDirectoryPage=\(search,inactiveDays,offset\)=>sb\.rpc\('staff_list_customers_v129',\{[\s\S]*p_limit:CLIENT_PAGE_SIZE,p_offset:offset/);
+  assert.match(clients,/sb\.rpc\('staff_list_customers_v155'/);
+  /* v155 (8ee4e5a): branch-scoped successor RPC; inactivity moved from day counts to buckets */
+  assert.match(clients,/const customerDirectoryPage=async\(search,inactiveBucket,offset\)=>\{[\s\S]*?sb\.rpc\('staff_list_customers_v155',\{[\s\S]*?p_limit:CLIENT_PAGE_SIZE,p_offset:offset/);
   assert.match(clients,/customerDirectoryPage\([\s\S]*clientPage\*CLIENT_PAGE_SIZE/);
   assert.match(clients,/const allCustomerDirectoryRows=async\(\)=>\{[\s\S]*while\(total===null\|\|offset<total\)[\s\S]*offset\+=page\.length/);
   assert.match(reports,/sb\.rpc\('get_reports_summary'/);

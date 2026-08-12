@@ -159,15 +159,19 @@ export async function verifyTurnstile(req, token, expectedAction) {
 }
 
 // v175 canonical account-open evidence. Growth reporting must never be able to
-// fail a customer request, so this swallows every failure and only logs it. The
-// RPCs resolve the customer identity server-side and are idempotent per
+// fail a customer request, so this swallows every failure — SILENTLY. The shared
+// gateway's standing privacy rule is that nothing request-derived (tokens, phone
+// numbers, IPs, error messages that may embed them) is ever written to edge logs,
+// and a Postgres error message can carry the very values the rule exists to keep
+// out. If observability of missed account-open writes is wanted later, it must go
+// through a table write recording only non-sensitive constants, never a log line.
+// The RPCs resolve the customer identity server-side and are idempotent per
 // business, customer, channel and Singapore calendar day.
 export async function recordAccountOpen(rpc, args) {
   try {
-    const { error } = await adminClient().rpc(rpc, args);
-    if (error) console.error('v175 account-open not recorded', rpc, error.message);
-  } catch (cause) {
-    console.error('v175 account-open not recorded', rpc, String(cause));
+    await adminClient().rpc(rpc, args);
+  } catch {
+    // deliberately silent: growth evidence must never fail or leak a customer request
   }
 }
 
