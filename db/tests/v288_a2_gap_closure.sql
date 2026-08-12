@@ -25,8 +25,9 @@
 --       never skips anything — the change is behaviour-preserving, not gap-closing.
 --       And when appointments IS genuinely absent, confirm STILL fails 42501: the confirm path
 --       calls public.book_appointment_smart_v47, whose own wrapper unconditionally demands
---       require_branch_module_v94(...,'appointments','rw'). Section 8 pins that as the current
---       deployed truth so the open gap cannot drift silently.
+--       require_branch_module_v94(...,'appointments','rw'). Section 8 pinned that as the deployed
+--       truth. SUPERSEDED by V290, which makes that gate conditional too; section 8 is now a
+--       positive assertion and this suite therefore requires V290 to be applied.
 --
 --   C3  MEDIUM 15 WAS ALREADY CLOSED BY V285. The original asserted that
 --       bar_save_bottle_product_v278 DROPS name and price on update. The deployed v278 does not:
@@ -34,6 +35,15 @@
 --       rewritten its update branch to the same coalesce form. bar_save_bottle_product_v288 is
 --       therefore a behavioural duplicate of the deployed v278. Section 6 now asserts what v288
 --       actually does, and records that v278 does the same.
+--
+--   C5  SECTION 8 REUSED SECTION 2's SLOT (found 2026-08-12 when §8 was first run against a
+--       database with V290 applied). §2 confirms an appointment at v_start; §8 confirming at the
+--       SAME time takes book_appointment_smart_v47's staff-conflict branch, which calls
+--       public.suggest_appointment_staff_v47 — a SEPARATE 'appointments','r' gate outside V290's
+--       scope. §8 now uses its own free slot, v_start8.
+--
+--   C6  staff_decide_booking_request_v73 returns outcome / actual_status / appointment_id, never a
+--       'status' key, so §8's assertion could not have passed even with the gate closed.
 --
 --   C4  SCAFFOLDING. The real bar tenant has NO branch_hours and NO staff_hours rows, so
 --       app.staff_free_for_appointment_v47 refuses every slot and confirm returns
@@ -57,8 +67,9 @@
 --      v278 remains deployed and callable for the Add path.
 --   7  anon and PUBLIC hold no EXECUTE on either new RPC; authenticated holds both; the app-schema
 --      helper is exposed to nobody.
---   8  KNOWN OPEN (see C2): with appointments genuinely absent, confirm still refuses 42501 from
---      book_appointment_smart_v47. Pinned, not celebrated.
+--   8  CLOSED BY V290 (was the C2 KNOWN OPEN): with appointments genuinely absent, confirm now
+--      SUCCEEDS. 20260812_nestly_v290_server_debt_closure made the residual
+--      book_appointment_smart_v47 gates conditional and put the bookings boundary in their place.
 --
 -- Runner note: this is ONE statement so it can be executed through a single-statement client. It
 -- ends in `raise exception 'V288_RESULT ALL PASS -- %'`, which rolls the whole thing back.
@@ -81,7 +92,7 @@ declare
   v_raised boolean; v_has boolean; v_write boolean;
   v_count integer; v_before integer; v_auth integer; v_anon integer;
   v_name text; v_price integer; v_size integer;
-  v_start timestamptz; v_dow smallint;
+  v_start timestamptz; v_start8 timestamptz; v_dow smallint;
 begin
   -- CORRECTION (scaffolding): the original declared pg_temp.as_v288_user as a top-level statement
   -- in a begin/rollback script. This runner is one statement, so it is created inline.
@@ -152,6 +163,13 @@ begin
   -- CORRECTION C4: seed the rota this tenant does not have, or the scheduler refuses every slot.
   v_start := date_trunc('hour', now() at time zone 'Asia/Singapore' + interval '2 days')
              at time zone 'Asia/Singapore' + interval '1 hour';
+  -- CORRECTION C5 (2026-08-12): section 8 must NOT reuse this slot. Section 2 confirms a real
+  -- appointment at v_start for the only staff member this tenant has; a second confirm at the SAME
+  -- time takes book_appointment_smart_v47's staff-conflict branch, which calls
+  -- public.suggest_appointment_staff_v47 — a SEPARATE require_branch_module_v94(...,'appointments',
+  -- 'r') gate that V290 neither touches nor claims to. Without this, section 8 fails
+  -- 'branch_module_access_required:appointments:r' and misreports a closed gap as still open.
+  v_start8 := v_start + interval '4 hours';
   v_dow := extract(dow from (v_start at time zone 'Asia/Singapore'))::smallint;
   if not exists (select 1 from public.branch_hours hours
                   where hours.business_id=v_bar and hours.branch_id=v_branch and hours.weekday=v_dow) then
@@ -369,9 +387,15 @@ begin
   end if;
   v_log := v_log || ' [7 grants authenticated=2, anon+PUBLIC=0, app helper exposed to nobody]';
 
-  -- ---- 8. KNOWN OPEN: V288 does not actually unblock an appointments-less sector --------------
-  -- Pinned so the gap cannot change silently. See C2. If this section ever FAILS because confirm
-  -- succeeded, that is good news and this section should be turned into a positive assertion.
+  -- ---- 8. CLOSED BY V290 (was KNOWN OPEN) ------------------------------------------------------
+  -- This section used to pin the residual gap described in C2: with appointments genuinely absent,
+  -- confirm still failed 42501 because public.book_appointment_smart_v47's own wrapper demanded
+  -- require_branch_module_v94(...,'appointments','rw') unconditionally, and its base demanded
+  -- app.can_module_write(...,'appointments'). db/migrations/20260812_nestly_v290_server_debt_closure
+  -- makes both conditional on app.business_has_appointments_module_v288 and demands the BOOKINGS
+  -- write boundary in their place, so the section is now the positive assertion its own comment
+  -- asked for. The V290 suite (db/tests/v290_server_debt_closure.sql §2-§3) is the primary
+  -- evidence; this is the V288 file refusing to keep claiming a gap that is closed.
   insert into public.platform_module_overrides_v94 (business_id,branch_scope,module_key,mode,reason)
   values (v_bar,null,'appointments','disabled','v288 rolled-back sectorless probe');
   v_has := app.business_has_appointments_module_v288(v_bar, v_branch);
@@ -379,7 +403,7 @@ begin
     raise exception 'v288: a disabled appointments override must make the helper report absent';
   end if;
   insert into public.booking_requests (business_id,name,phone,status,preferred_at)
-  values (v_bar,'V288 sectorless confirm','81000291','new', v_start) returning id into v_request;
+  values (v_bar,'V288 sectorless confirm','81000291','new', v_start8) returning id into v_request;
   v_raised := false;
   perform pg_temp.as_v288_user(v_owner);
   begin
@@ -387,12 +411,27 @@ begin
   exception when others then v_raised := true; v_state := sqlstate; v_msg := sqlerrm;
   end;
   reset role;
-  if not v_raised or v_state <> '42501'
-     or position('appointments' in coalesce(v_msg,'')) = 0 then
-    raise exception 'v288/8: the known-open residual gate changed shape (raised %, state %, msg %)',
-      v_raised, v_state, v_msg;
+  if v_raised then
+    raise exception 'v288/8: V290 should have closed this gap; confirm still raised % (%)',
+      v_state, v_msg;
   end if;
-  v_log := v_log || format(' [8 KNOWN OPEN: appointments-less confirm still 42501 "%s" from book_appointment_smart_v47]', v_msg);
+  -- CORRECTION C6 (2026-08-12): staff_decide_booking_request_v73 returns outcome / actual_status /
+  -- appointment_id and has NO 'status' key, so this assertion could not have passed even with the
+  -- gate closed. Assert on what it actually returns, and on the appointment it actually made.
+  if coalesce(v_payload->>'actual_status','') <> 'confirmed'
+     or coalesce(v_payload->>'outcome','') <> 'applied'
+     or v_payload->>'appointment_id' is null then
+    raise exception 'v288/8: an appointments-less confirm returned % instead of a confirmation',
+      v_payload;
+  end if;
+  if not exists (select 1 from public.appointments appointment
+                  where appointment.id = (v_payload->>'appointment_id')::uuid
+                    and appointment.business_id = v_bar) then
+    raise exception 'v288/8: the confirmation produced no appointment row';
+  end if;
+  v_log := v_log || format(
+    ' [8 CLOSED BY V290: appointments-less confirm outcome=%s actual_status=%s]',
+    v_payload->>'outcome', v_payload->>'actual_status');
 
   raise exception 'V288_RESULT ALL PASS -- %', v_log;
 end

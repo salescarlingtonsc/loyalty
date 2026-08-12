@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ab47961c16e25585eed34acc7bae58987406bbfc48b20b63b3188867a58b5903"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="d455e178fba3de5d33adc9a94d9474ab89822ee3da088e1d06db570a0097214b"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1286,7 +1286,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
   .cui-table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(108px,42%) 1fr;gap:12px;padding:8px 4px;border:0;text-align:right;overflow-wrap:anywhere}
   .cui-table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left}
   .cui-table[data-responsive="true"] td:empty{display:none}
-  .calendar-week-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  /* V291 (audit A2 #20): the Day view's pixel timeline gets the same treatment the Week grid
+     already had — hidden below this breakpoint in favour of the linear agenda beneath it. */
+  .calendar-week-scroll,.day-timeline-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  /* The green-slot instruction belongs to the timeline that is now hidden; New appointment in the
+     page header is the booking route on a phone. */
+  .day-timeline-slot-hint-v291{display:none}
   .appointment-detail-modal{align-items:flex-end;padding:0}.appointment-detail-modal .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))}.appointment-detail-grid{grid-template-columns:1fr}.appointment-detail-actions>.btn,.appointment-detail-actions>a.btn{flex:1 1 100%}.appointment-reschedule-form .split{grid-template-columns:1fr}
   .settings-page .row{align-items:stretch;flex-wrap:wrap;width:100%}
   .settings-page .row>.spacer{display:none}

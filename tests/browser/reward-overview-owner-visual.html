@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="8c53890431572d02debacdcb575f3b203cbc796100a7537989feda28d0429b46"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="bb4e2a645672a89688f16c6a85f2fbcb01e136ac9dddd1e164d9bd0536645e1b"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1287,7 +1287,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
   .cui-table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(108px,42%) 1fr;gap:12px;padding:8px 4px;border:0;text-align:right;overflow-wrap:anywhere}
   .cui-table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left}
   .cui-table[data-responsive="true"] td:empty{display:none}
-  .calendar-week-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  /* V291 (audit A2 #20): the Day view's pixel timeline gets the same treatment the Week grid
+     already had — hidden below this breakpoint in favour of the linear agenda beneath it. */
+  .calendar-week-scroll,.day-timeline-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  /* The green-slot instruction belongs to the timeline that is now hidden; New appointment in the
+     page header is the booking route on a phone. */
+  .day-timeline-slot-hint-v291{display:none}
   .appointment-detail-modal{align-items:flex-end;padding:0}.appointment-detail-modal .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))}.appointment-detail-grid{grid-template-columns:1fr}.appointment-detail-actions>.btn,.appointment-detail-actions>a.btn{flex:1 1 100%}.appointment-reschedule-form .split{grid-template-columns:1fr}
   .settings-page .row{align-items:stretch;flex-wrap:wrap;width:100%}
   .settings-page .row>.spacer{display:none}
@@ -1889,7 +1894,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 8c53890431572d02debacdcb575f3b203cbc796100a7537989feda28d0429b46</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · bb4e2a645672a89688f16c6a85f2fbcb01e136ac9dddd1e164d9bd0536645e1b</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2151,7 +2156,9 @@ function pruneRewardSiblingsV139(root){
         <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?(draftVersionId?'will be live':'live'):'paused'}</span>
         ${draftVersionId&&isOwner&&!exactProgramMissing?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
-          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
+          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}
+        ${!draftVersionId&&isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
+          <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
         :CUI.emptyState({iconName:'retention',title:'No retention programs',body:`There are no programs in this ${draftVersionId?'draft':'configuration'}.`})}</div></div></div>
     ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
       <div style="margin-top:8px">${taxonomy.map(t=>`<div class="retention-taxonomy-row"><div class="retention-taxonomy-copy"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span></div><div class="retention-taxonomy-actions"><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
@@ -2159,7 +2166,55 @@ function pruneRewardSiblingsV139(root){
       <details><summary>Add a new reward type</summary><label>Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label>Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option><option value="credit">Add store credit</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
     </div>`:''}`;
 
+  /* V291 (audit A2 #13). On the published view a rule could only be READ: Edit and Pause were
+     hidden until an editing draft existed, and creating one was a separate button somewhere else
+     on the page. Every change here has to go through a draft — that is the versioning contract
+     and V291 does not weaken it — so the controls now MAKE the draft on the first tap using the
+     same create_loyalty_config_draft RPC the manual button calls, resume an existing draft when
+     there is one rather than opening a second, and land the owner in the draft editor with the
+     rule already open. Nothing publishes; the review gate is still the only way live.
+     There is deliberately still NO delete: a published rule with grant history cannot be
+     unmade without rewriting what customers were given, so pausing is the honest ending. */
   if(isOwner&&!draftVersionId){
+    const ensureRetentionDraftV291=async()=>{
+      if(resumableDraft?.id)return resumableDraft.id;
+      const {data,error}=await sb.rpc('create_loyalty_config_draft',
+        {p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});
+      if(error)throw error;
+      return data?.version_id||null;
+    };
+    document.querySelectorAll('.retentionEditLiveV291').forEach(button=>button.onclick=async()=>{
+      CUI.setButtonBusy(button,{busy:true,label:'Opening…'});
+      let draft=null;
+      try{draft=await ensureRetentionDraftV291()}
+      catch(error){if(button.isConnected)CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      if(!isRetentionCurrent())return;
+      if(!draft){CUI.setButtonBusy(button,{busy:false});return toast('An editing draft could not be created')}
+      toast(resumableDraft?.id?'Opened your existing draft — nothing is live until you publish':'Editing draft created — nothing is live until you publish');
+      refreshRetentionPanel(draft,button.dataset.id,'Bring-back rule opened in a draft.',false);
+    });
+    document.querySelectorAll('.retentionToggleLiveV291').forEach(button=>button.onclick=async()=>{
+      CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
+      let draft=null;
+      try{draft=await ensureRetentionDraftV291()}
+      catch(error){if(button.isConnected)CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      if(!isRetentionCurrent())return;
+      if(!draft){CUI.setButtonBusy(button,{busy:false});return toast('An editing draft could not be created')}
+      /* The draft's own hash is read back rather than guessed: save_retention_program_draft
+         checks it, and a stale hash is exactly the collision the check exists to catch. */
+      const {data:draftDetail,error:draftDetailError}=await sb.rpc('get_retention_config_draft',{p_config_version:draft});
+      if(!isRetentionCurrent())return;
+      if(draftDetailError){CUI.setButtonBusy(button,{busy:false});return fail(draftDetailError)}
+      const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draft,
+        p_program_id:button.dataset.id,p_program:{active:button.dataset.to==='true'},
+        p_expected_snapshot_hash:draftDetail?.snapshot_hash||null});
+      if(!isRetentionCurrent())return;
+      if(error){CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      toast(button.dataset.to==='true'
+        ?'Saved in your draft — the rule resumes when you publish'
+        :'Saved in your draft — the rule pauses when you publish');
+      refreshRetentionPanel(draft,null,'Bring-back rule status saved in the draft.');
+    });
     if($('beginRetentionDraft'))$('beginRetentionDraft').onclick=async()=>{const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});if(!isRetentionCurrent())return;if(error)return fail(error);nav(`#/retention/${data.version_id}`)};
     if($('createRetentionRollback'))$('createRetentionRollback').onclick=async()=>{const base=$('retentionRollback').value;if(!base)return toast('Choose a prior version');const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:base,p_source:'retention_rollback'});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Rollback draft created — review before publishing');nav(`#/retention/${data.version_id}`)};
   }
@@ -2207,9 +2262,26 @@ function pruneRewardSiblingsV139(root){
   const loyaltyRequest=canRewards
     ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_per_cents,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
+  /* V291: credit_cents, entitlement_expiry_days, usage_limit and the tier gate join the read.
+     They were already stored and already editable; only the comparison could not see them, which
+     is exactly why a change to them published silently. */
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
+    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
+  /* Live reward eligibility, plus the names the diff prints. All four are fail-soft: a failed
+     read drops the branch/service rows from the comparison rather than claiming "All branches". */
+  const rewardBranchesRequest=canRewards
+    ?sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id)
+    :Promise.resolve(none);
+  const rewardServicesRequest=canRewards
+    ?sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id)
+    :Promise.resolve(none);
+  const eligibilityNamesRequest=canRewards
+    ?Promise.all([
+      sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+      sb.from('services').select('id,name').eq('business_id',S.biz.id),
+      sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id)])
+    :Promise.resolve([none,none,none]);
   const productsRequest=S.myRole==='owner'
     ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
     :Promise.resolve(none);
@@ -2228,9 +2300,12 @@ function pruneRewardSiblingsV139(root){
   const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},
     {data:rewards,error:rewardsError},{data:products,error:productsError},
     {data:referrals,error:referralsError},{data:memberships,error:membershipsError},
-    {data:giftcardPreferences,error:giftcardsError},{data:promotions,error:promotionsError}]
+    {data:giftcardPreferences,error:giftcardsError},{data:promotions,error:promotionsError},
+    {data:rewardBranches,error:rewardBranchesError},{data:rewardServices,error:rewardServicesError},
+    [{data:branchNames,error:branchNamesError},{data:serviceNames,error:serviceNamesError},{data:tierNames,error:tierNamesError}]]
     =await Promise.all([businessRequest,loyaltyRequest,rewardsRequest,productsRequest,
-      referralsRequest,membershipsRequest,giftcardsRequest,promotionsRequest]);
+      referralsRequest,membershipsRequest,giftcardsRequest,promotionsRequest,
+      rewardBranchesRequest,rewardServicesRequest,eligibilityNamesRequest]);
   if(!isCurrent())return null;
   if(businessError)throw businessError;
   const currentVersion=business?.active_config_version_id||null;
@@ -2260,11 +2335,20 @@ function pruneRewardSiblingsV139(root){
      raises 42501 otherwise) and fail-soft: a failed read leaves the page exactly as it was. */
   const draftHeaderV268=draftError?null:(drafts||[])[0]||null;
   let draftDetailV268=null,draftDetailErrorV268=null;
+  /* V291: the birthday benefit and the bring-back rules are versioned in the SAME draft as the
+     rewards, so an edit to either was equally invisible on this page. Both draft readers are
+     owner-gated and fail-soft, exactly like the reward one. */
+  let draftRetentionV291=null,draftBirthdayV291=null;
   if(draftHeaderV268?.id&&canSetupGrow){
-    const {data:draftDetail,error:draftDetailError}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftHeaderV268.id});
+    const [{data:draftDetail,error:draftDetailError},retentionDraft,birthdayDraft]=await Promise.all([
+      sb.rpc('get_loyalty_reward_draft',{p_config_version:draftHeaderV268.id}),
+      sb.rpc('get_retention_config_draft',{p_config_version:draftHeaderV268.id}),
+      sb.rpc('get_birthday_program_draft',{p_config_version:draftHeaderV268.id})]);
     if(!isCurrent())return null;
     draftDetailErrorV268=draftDetailError||null;
     draftDetailV268=draftDetailError?null:draftDetail||null;
+    draftRetentionV291=retentionDraft.error?null:(Array.isArray(retentionDraft.data?.programs)?retentionDraft.data.programs:null);
+    draftBirthdayV291=birthdayDraft.error?null:(Array.isArray(birthdayDraft.data?.programs)?birthdayDraft.data.programs[0]||null:null);
   }
   /* Overview reads are intentionally fail-soft. A failed optional-engine read must not hide the
      rest of Grow or be mistaken for an unconfigured programme; its row remains Unavailable. */
@@ -2285,6 +2369,15 @@ function pruneRewardSiblingsV139(root){
     draft:draftHeaderV268,
     draftDetail:draftDetailV268,
     draftDetailError:Boolean(draftDetailErrorV268),
+    draftRetention:draftRetentionV291,
+    draftBirthday:draftBirthdayV291,
+    rewardEligibility:{
+      branches:rewardBranchesError?null:rewardBranches||[],
+      services:rewardServicesError?null:rewardServices||[]},
+    eligibilityNames:{
+      branches:branchNamesError?null:branchNames||[],
+      services:serviceNamesError?null:serviceNames||[],
+      tiers:tierNamesError?null:tierNames||[]},
     overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError),
       retention:Boolean(retentionError),referrals:Boolean(referralsError),memberships:Boolean(membershipsError),
       promotions:Boolean(promotionsError),
@@ -2297,7 +2390,11 @@ function pruneRewardSiblingsV139(root){
    minimum spend and free xx product."
    It lives in the Programmes list next to the other rewards because that is where an owner
    looks for "what do my customers get", not in Settings. */
-function welcomeOfferRowV215(status,canSetup,canRewards){
+/* V291: the welcome offer is the one lifestyle reward that is NOT versioned — it is stored in
+   business_welcome_offers_v215 and a save is live immediately, with no draft and no publish
+   step. When a draft is open, saying so is the honest marker; inventing a pending state for it
+   would be a lie in the other direction. */
+function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
   if(!canRewards)return '';
   const configured=!!status?.configured;
   const active=configured&&status.active===true;
@@ -2318,7 +2415,7 @@ function welcomeOfferRowV215(status,canSetup,canRewards){
   const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
     ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
   const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
-    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p></div>`
+    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p>${draftOpen?'<p class="muted small" data-welcome-not-versioned-v291>Not part of your draft \u2014 changes here go live as soon as you save them.</p>':''}</div>`
     +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
     +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
   return canSetup
@@ -2604,11 +2701,14 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     if(href)return `<a class="grow-programme-row" data-programme-kind="${esc(kind)}" href="${esc(href)}">`;
     return `<button type="button" class="grow-programme-row" data-programme-kind="${esc(kind)}" data-rewards-overview-edit="${esc(editKind)}"${rewardId?` data-reward-id="${esc(rewardId)}"`:''}${programId?` data-program-id="${esc(programId)}"`:''}>`;
   };
-  const programmeRow=({kind,icon,title,copy,status,statusTone='off',canWrite=false,readOnly=false,access=null,href=null,editKind=null,rewardId=null,programId=null,actionLabel='Open',merchant=false})=>{
+  /* V291: `pending` is the same "Edited · not live yet" block the reward cards carry, so a
+     bring-back rule or the birthday benefit can say what it becomes without borrowing a banner
+     that cannot name it. */
+  const programmeRow=({kind,icon,title,copy,status,statusTone='off',canWrite=false,readOnly=false,access=null,href=null,editKind=null,rewardId=null,programId=null,actionLabel='Open',merchant=false,pending=null})=>{
     const actionOpen=programmeAction({canWrite,kind,href,editKind,rewardId,programId,label:actionLabel});
     const tagClose=actionOpen?(href?'</a>':'</button>'):'</article>';
     const accessLabel=access?`<span class="grow-programme-access">${esc(access)}</span>`:readOnly?'<span class="grow-programme-access">Read only</span>':'';
-    return `${actionOpen||`<article class="grow-programme-row" data-programme-kind="${esc(kind)}">`}<span class="grow-programme-icon">${icon}</span><div><b${merchant?' data-merchant-content':''}>${esc(title)}</b><p class="muted small"${merchant?' data-merchant-content':''}>${esc(copy)}</p></div><span class="grow-programme-meta">${programmeStatus(status,statusTone)}${accessLabel}${actionOpen?`<span class="grow-programme-action">${esc(actionLabel)} →</span>`:''}</span>${tagClose}`;
+    return `${actionOpen||`<article class="grow-programme-row" data-programme-kind="${esc(kind)}">`}<span class="grow-programme-icon">${icon}</span><div><b${merchant?' data-merchant-content':''}>${esc(title)}</b><p class="muted small"${merchant?' data-merchant-content':''}>${esc(copy)}</p>${growPendingBlockV268(pending)}</div><span class="grow-programme-meta">${programmeStatus(status,statusTone)}${accessLabel}${actionOpen?`<span class="grow-programme-action">${esc(actionLabel)} →</span>`:''}</span>${tagClose}`;
   };
   function growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId}={}){
     if(surface==='rewards'&&rewardId)return `reward~${encodeURIComponent(rewardId)}`;
@@ -2659,31 +2759,25 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const growDraftDetailV268=snapshot.draftDetail||null;
   const growDraftDetailErrorV268=Boolean(snapshot.draftDetailError);
   const growRewardLabelV268=row=>String(row?.customer_name||row?.name||'Reward').trim();
-  const growPendingRewardsV268=new Map();
-  const growPendingNewRewardsV268=[];
-  if(growDraftDetailV268){
-    const publishedByIdV268=new Map((snapshot.rewards||[]).map(reward=>[String(reward.id),reward]));
-    (Array.isArray(growDraftDetailV268.rewards)?growDraftDetailV268.rewards:[]).forEach(draftReward=>{
-      const key=String(draftReward.reward_id||draftReward.id||'');
-      const live=publishedByIdV268.get(key);
-      if(!live){
-        /* A reward the draft creates does not exist for customers at all, so it gets its own
-           card marked as not live rather than a pending line on somebody else's card. */
-        if(draftReward.active!==false)growPendingNewRewardsV268.push({
-          name:growRewardLabelV268(draftReward),cost:Math.max(0,Number(draftReward.cost_points||0))});
-        return;
-      }
-      const changes=[];
-      if(growRewardLabelV268(draftReward)!==growRewardLabelV268(live))
-        changes.push({label:'Name',live:growRewardLabelV268(live),pending:growRewardLabelV268(draftReward)});
-      if(Number(draftReward.cost_points||0)!==Number(live.cost_points||0))
-        changes.push({label:'Cost',live:`${Math.max(0,Number(live.cost_points||0))} ${rewardJourney.unit}`,
-          pending:`${Math.max(0,Number(draftReward.cost_points||0))} ${rewardJourney.unit}`});
-      if((draftReward.active!==false)!==(live.active!==false))
-        changes.push({label:'Offered',live:live.active!==false?'Yes':'No',pending:draftReward.active!==false?'Yes':'No'});
-      if(changes.length)growPendingRewardsV268.set(key,changes);
-    });
-  }
+  /* V291: the three-field comparison this block used to inline now lives in
+     growRewardPendingChangesV291, which the publish gate reads too, and it covers every field a
+     draft can change — credit, expiry, usage limit, tier gate and branch/service eligibility. */
+  const growDiffOptionsV291=growRewardDiffOptionsFromSnapshotV291(snapshot,rewardJourney.unit);
+  const growRewardDiffV291=growRewardPendingChangesV291({
+    liveRewards:growDraftDetailV268?growAttachEligibilityV291(snapshot.rewards||[],snapshot.rewardEligibility):[],
+    draftRewards:growDraftDetailV268?growAttachDraftEligibilityV291(Array.isArray(growDraftDetailV268.rewards)?growDraftDetailV268.rewards:[]):[],
+    options:growDiffOptionsV291});
+  const growPendingRewardsV268=growRewardDiffV291.changed;
+  const growPendingNewRewardsV268=growRewardDiffV291.added;
+  /* V291: the birthday benefit and each bring-back rule get their own pending marker for the
+     same reason the reward cards do — a banner that cannot name the row it means reads as a lost
+     edit. Both are null when the draft reader could not be read, and a null marks nothing. */
+  const growPendingBirthdayV291=growDraftDetailV268&&snapshot.draftBirthday
+    ?growBirthdayPendingChangesV291(snapshot.birthday||null,snapshot.draftBirthday)
+    :[];
+  const growRetentionDiffV291=Array.isArray(snapshot.draftRetention)
+    ?growRetentionPendingChangesV291({livePrograms:snapshot.retention||[],draftPrograms:snapshot.draftRetention})
+    :{changed:new Map(),added:[]};
   const growPendingEarningV268=(()=>{
     const draft=growDraftDetailV268?.program||null,live=snapshot.loyalty||null;
     if(!draft||!live)return [];
@@ -3027,13 +3121,14 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       </div></div>`:''}
       ${topicOnV229('lifestyle')?`
       <div class="programme-category" data-programme-category-v268="lifestyle"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
-        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
+        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards,Boolean(growDraftPendingId))}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
-          <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`)
+          <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p>${growPendingBlockV268(growPendingBirthdayV291)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p>${growPendingBlockV268(growPendingBirthdayV291)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
-        ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
+        ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true,pending:growRetentionDiffV291.changed.get(String(program.id))||null})}).join('')
+        +growRetentionDiffV291.added.map(rule=>programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:rule.name,copy:'Customers see this bring-back rule once you publish.',status:'Not live yet',statusTone:'new',merchant:true})).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
       `:''}
       ${topicOnV229('promotions')?`
@@ -3650,7 +3745,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'8c53890431572d02debacdcb575f3b203cbc796100a7537989feda28d0429b46',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'bb4e2a645672a89688f16c6a85f2fbcb01e136ac9dddd1e164d9bd0536645e1b',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

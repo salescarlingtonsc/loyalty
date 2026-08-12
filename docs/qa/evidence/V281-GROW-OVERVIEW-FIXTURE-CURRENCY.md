@@ -20,7 +20,7 @@ fixed in the generator (never in production code):
 
 ## Production-component source hash
 
-`8c53890431572d02debacdcb575f3b203cbc796100a7537989feda28d0429b46`
+`bb4e2a645672a89688f16c6a85f2fbcb01e136ac9dddd1e164d9bd0536645e1b`
 
 ## What was verified in Chromium (1440×1100, system Chrome via playwright-core)
 

@@ -45,9 +45,13 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
   assert.match(dashboard,/data-dashboard-metric="\$\{metric\.key\}"/);
   assert.match(dashboard,/Customer membership or customer records created during the selected period/);
   /* V287 retarget: the definition used to claim "at least 30 days" while the tile drilled
-     through to the 30-59 bucket only. The number and the destination now describe the same
-     group, and the definition says so. */
-  assert.match(dashboard,/Customers whose last valid visit was 30 to 59 complete Singapore days ago/);
+     through to the 30-59 bucket only. The number and the destination must describe the same
+     group, and the definition must say so.
+     V290 retarget: that rule is unchanged, but the group is no longer narrowed. V290 added the
+     'all_inactive' bucket to staff_list_customers_v155, so the destination V287 could not express
+     exists and the tile counts every customer quiet for 30 days or more again. */
+  assert.match(dashboard,/Customers whose last valid visit was 30 or more complete Singapore days ago/);
+  assert.match(dashboard,/p_inactive_bucket:'all_inactive'/);
   /* V287 retarget: openDashboardMetricDetailV141 was unreachable after V225 made every tile a
      direct link (all four definitions carry a route, so the `else` could never run). The
      drilldown contract this test guards is now the navigation itself. */

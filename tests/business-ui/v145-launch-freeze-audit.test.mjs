@@ -633,9 +633,17 @@ test('launch-incomplete Stored value is unreachable and Studio remains managemen
      ordinary programme numbers (a BEFORE/AFTER of the loyalty_programs fields). The honesty
      assertion moves with it — the page must still disclaim the surfaces it does not diff
      (rewards, birthday, bring-back) instead of implying completeness. */
-  assert.match(publishGate, /does not summarise reward, birthday or bring-back field values/);
+  /* V291 retarget (not a deletion): the gate no longer disclaims those values — it lists them.
+     The pin follows the capability rather than the old apology. */
+  assert.match(publishGate, /lists every programme, reward, birthday and bring-back value this draft changes/);
+  assert.match(publishGate, /growRewardPendingChangesV291/);
   assert.match(publishGate, /What changes for customers/);
-  assert.match(publishGate, /Reward and birthday changes are listed in their editors/);
+  /* V291 retarget (not a deletion): the gate lists those changes now instead of deferring them,
+     so the pin follows to the sections that render them. */
+  assert.match(publishGate, /Rewards<\/h3>/);
+  assert.match(publishGate, /Birthday benefit<\/h3>/);
+  assert.match(publishGate, /Bring-back rules<\/h3>/);
+  assert.match(publishGate, /The welcome offer is not part of this draft/);
   assert.match(publishGate, /No changes to earning or programme numbers in this draft/);
   assert.match(publishGate, /Could not load the comparison/);
   assert.match(publishGate, /Server-confirmed advanced-action safety/);

@@ -28,7 +28,7 @@ test('desktop administration has six primary task areas plus secondary platform 
     })),
     [
       {key:'overview',routes:['overview']},
-      {key:'sales',routes:['onboarding','crm']},
+      {key:'sales',routes:['onboarding','crm','demo-requests']}, // V292
       {key:'customers',routes:['customer-lifecycle','firms','companies']},
       {key:'reports',routes:['reports','marketing']}, // V256
       {key:'finance',routes:['subscription-operations','billing','pnl','commissions']},
@@ -40,7 +40,7 @@ test('desktop administration has six primary task areas plus secondary platform 
   assert.equal(groups.find(group=>group.key==='platform-controls')?.secondary,true);
   assert.deepEqual(
     Array.from(allowed,route=>route.key),
-    ['overview','onboarding','crm','customer-lifecycle','firms','companies','reports','marketing','billing','subscription-operations','pnl','commissions','sectors','automation','partners','access'], // V282
+    ['overview','onboarding','crm','demo-requests','customer-lifecycle','firms','companies','reports','marketing','billing','subscription-operations','pnl','commissions','sectors','automation','partners','access'], // V282
     'streamlining must not delete a capability or deep link'
   );
 });

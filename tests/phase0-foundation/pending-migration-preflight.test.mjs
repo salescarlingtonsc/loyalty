@@ -158,10 +158,13 @@ const sqlTestBySemanticVersion = new Map([
   ['v268', 'db/tests/v268_offer_share_page.sql'],
   ['v285', 'db/tests/v285_offer_share_imageless_parity.sql'],
   ['v289', 'db/tests/v289_reschedule_respects_business_setting.sql'],
-  ['v290', 'db/tests/v290_customer_withdraw_booking_request.sql']
+  ['v290', 'db/tests/v290_customer_withdraw_booking_request.sql'],
+  ['v293', 'db/tests/v293_customer_intelligence_grants.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
+  ['nestly_v292_demo_requests', 'db/tests/v292_demo_requests.sql'],
+  ['nestly_v290_server_debt_closure', 'db/tests/v290_server_debt_closure.sql'],
   ['nestly_v285_a4_gap_closure', 'db/tests/v285_a4_gap_closure.sql'],
   ['nestly_v288_a2_gap_closure', 'db/tests/v288_a2_gap_closure.sql'],
   ['nestly_v92_synthetic_reporting_isolation', 'db/tests/v92_synthetic_reporting_isolation.sql'],
@@ -758,7 +761,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 244); // +v290
+  assert.equal(pending.length, 247); // V293 customer-intelligence grants
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

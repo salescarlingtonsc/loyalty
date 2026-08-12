@@ -174,6 +174,18 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
   await render();
   return control;
 }
+/* V292 (audit G9): the gateway's status code is the ONLY thing that distinguishes
+   "this QR is dead" from "your train went into a tunnel", and this function used
+   to throw it away. public-join answers:
+     404 - the join token failed TOKEN_PATTERN, or internal_public_join_page_v89
+           returned nothing: an expired, revoked, replaced or join-disabled QR.
+           Retrying cannot fix it, ever.
+     403 - the request origin is not on the gateway allow-list. Also terminal for
+           the person holding the phone; it is a configuration fault, not theirs.
+     429 - rate limited, with retry_after. Retrying is exactly right, later.
+     5xx / a rejected fetch - the gateway or the network. Retrying is right now.
+   The status now travels with the error so init() can tell the customer which of
+   those actually happened instead of blaming their connection for all four. */
 async function publicJoin({method='POST',body=null,joinToken=null}={}){
   const query=joinToken?`?token=${encodeURIComponent(joinToken)}`:'';
   const response=await fetch(`${SB_URL}/functions/v1/public-join${query}`,{
@@ -181,7 +193,12 @@ async function publicJoin({method='POST',body=null,joinToken=null}={}){
     body:body?JSON.stringify(body):undefined,credentials:'omit'});
   let payload=null;
   try{payload=await response.json()}catch{}
-  if(!response.ok) throw new Error(payload?.error||'We could not process that request.');
+  if(!response.ok){
+    const error=new Error(payload?.error||'We could not process that request.');
+    error.status=response.status;
+    error.retryAfter=Number(payload?.retry_after)||0;
+    throw error;
+  }
   return payload;
 }
 
@@ -255,6 +272,33 @@ function renderInvalidLink(){
   </div></div>`);
 }
 
+/* ---- state: the gateway refused this QR (404/403) — terminal, no retry ---- */
+function renderExpiredLink(){
+  shellOpen(`<div class="card"><div class="empty">
+    <div class="state-icon" aria-hidden="true">${icon('link',26)}</div>
+    <h2 style="margin-bottom:8px">This QR code is no longer active</h2>
+    <p class="muted">Ask the counter for a new one. Nothing is wrong with your phone or your connection — this particular code has expired, been replaced, or been switched off by the business.</p>
+    <div class="success-actions">
+      <a class="btn" href="${esc(customerAppUrl('#/'))}">${icon('wallet',20)}<span>Open ${esc(BRAND.customerLabel)}</span></a>
+      <a class="btn secondary" href="${esc(customerAppUrl('#/wallet'))}"><span>Already a member? Sign in</span></a>
+    </div>
+  </div></div>`);
+}
+
+/* ---- state: too many requests from this network — retryable, but later ---- */
+function renderBusyGateway(retryAfterSeconds){
+  const wait=Number(retryAfterSeconds)>0
+    ?`Please wait about ${Math.ceil(Number(retryAfterSeconds)/60)} minute(s) and try again.`
+    :'Please wait a moment and try again.';
+  shellOpen(`<div class="card"><div class="empty">
+    <div class="state-icon error" aria-hidden="true">${icon('warning',26)}</div>
+    <h2 style="margin-bottom:8px">Too many sign-ups from this network</h2>
+    <p class="muted" style="margin-bottom:18px">${esc(wait)} Your details have not been sent.</p>
+    <button class="btn" id="retryBtn" style="width:auto;padding:12px 26px">Try again</button>
+  </div></div>`);
+  $('retryBtn').onclick=init;
+}
+
 /* ---- state: error (page failed to load — distinct from an invalid link) ---- */
 function renderLoadError(){
   shellOpen(`<div class="card"><div class="empty">
@@ -304,7 +348,7 @@ function renderForm(page, joinToken){
 
         <label class="field-label" for="f_phone">${icon('phone',18)}<span>Mobile number</span></label>
         <input id="f_phone" inputmode="numeric" maxlength="8" placeholder="8123 4567" autocomplete="tel" enterkeyhint="next">
-        <p class="help">Your 8-digit Singapore number.</p>
+        <p class="help">Your 8-digit Singapore mobile number, starting with 8 or 9.</p>
 
         <label class="field-label" for="f_email">${icon('mail',18)}<span>Email <span class="muted small">(optional)</span></span></label>
         <input id="f_email" type="email" placeholder="you@example.com" autocomplete="email" enterkeyhint="done">
@@ -330,11 +374,35 @@ function renderForm(page, joinToken){
   const btn=$('submitBtn'), errBox=$('formErr');
   let turnstileToken='',turnstileControl=null;
 
+  /* V292: the field is labelled "Mobile number" and the wallet this join feeds
+     accepts only 8/9 numbers (the SPA's own /^[89]\d{7}$/ check), so accepting a
+     3xx/6xx landline here produced a member the customer app could never match.
+     The gateway stays deliberately more permissive; this is the tighter of the
+     two, which is the correct direction for a client-side guard.
+     Email is optional but was previously unchecked, so a typo was silently
+     accepted here and then rejected by the gateway as a generic failure. The
+     pattern is the gateway's own EMAIL_PATTERN. */
+  const JOIN_MOBILE_PATTERN=/^[89]\d{7}$/;
+  const JOIN_EMAIL_PATTERN=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   function cleanPhone(){ return phoneEl.value.replace(/\D/g,'').slice(0,8); }
-  function formValid(){ return nameEl.value.trim().length>=2 && /^[3689]\d{7}$/.test(cleanPhone()); }
+  function emailValid(){
+    const value=emailEl.value.trim();
+    return !value||(value.length<=254&&JOIN_EMAIL_PATTERN.test(value));
+  }
+  function formValid(){
+    return nameEl.value.trim().length>=2
+      && JOIN_MOBILE_PATTERN.test(cleanPhone())
+      && emailValid();
+  }
   function refreshBtn(){ btn.disabled=!formValid()||!turnstileToken; }
 
   nameEl.addEventListener('input', refreshBtn);
+  emailEl.addEventListener('input', ()=>{
+    errBox.innerHTML=emailEl.value.trim()&&!emailValid()
+      ?`<div class="err">Check the email address — it needs an @ and a domain, for example you@example.com.</div>`
+      :'';
+    refreshBtn();
+  });
   phoneEl.addEventListener('input', ()=>{
     const cleaned=cleanPhone();
     if(phoneEl.value!==cleaned) phoneEl.value=cleaned;
@@ -358,6 +426,10 @@ function renderForm(page, joinToken){
         turnstile_token:turnstileToken}});
       renderSuccess((data&&data.business_name)||page.name,joinToken);
     }catch(err){
+      /* A 404 on submit means the QR died between loading this page and pressing
+         Join. Leaving the form on screen would invite the customer to retype
+         everything into a form that can never succeed. */
+      if(err?.status===404||err?.status===403){ renderExpiredLink(); return; }
       errBox.innerHTML=`<div class="err">${esc(err.message||'Something went wrong. Please try again.')}</div>`;
       turnstileControl?.reset();
       setBusy(false);
@@ -375,7 +447,12 @@ async function init(){
   let data;
   try{
     data=await publicJoin({method:'GET',joinToken});
-  }catch{renderLoadError();return}
+  }catch(err){
+    if(err?.status===404||err?.status===403){ renderExpiredLink(); return; }
+    if(err?.status===429){ renderBusyGateway(err.retryAfter); return; }
+    renderLoadError();
+    return;
+  }
   if(!data){ renderInvalidLink(); return; }
   renderForm(data, joinToken);
 }

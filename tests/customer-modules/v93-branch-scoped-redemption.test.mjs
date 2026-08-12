@@ -79,9 +79,13 @@ test('completed-sale receipt scanners preserve branch scope and missing branch f
     app.indexOf('async function tillPage'),
     app.indexOf('async function appointmentsPage', app.indexOf('async function tillPage')),
   );
+  /* V290 retarget: the branch requirement is now stated positively as the kind that needs it.
+     'growth' was already exempt (it scopes through the completed sale); 'promotion' is exempt for
+     the same reason — it records an acceptance, not a branch-scoped reward. The invariant this
+     test exists to hold is that a CLASSIC reward redemption never reaches the RPC without one. */
   assert.match(
     scanner,
-    /payload\.kind!=='growth'&&!branchId[\s\S]*Choose an accessible branch before confirming this reward\.[\s\S]*return;/,
+    /payload\.kind==='classic'&&!branchId[\s\S]*Choose an accessible branch before confirming this reward\.[\s\S]*return;/,
   );
   assert.match(
     till,

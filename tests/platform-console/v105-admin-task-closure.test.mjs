@@ -105,7 +105,7 @@ test('Today is the first task destination while all authorised deep links remain
   assert.equal(groups.filter(group=>!group.secondary).length,6);
   assert.deepEqual(
     Array.from(allowed,route=>route.key),
-    ['overview','onboarding','crm','customer-lifecycle','firms','companies','reports','marketing','billing','subscription-operations','pnl','commissions','sectors','automation','partners','access'], // V282
+    ['overview','onboarding','crm','demo-requests','customer-lifecycle','firms','companies','reports','marketing','billing','subscription-operations','pnl','commissions','sectors','automation','partners','access'], // V282
     'task-first navigation must not delete an authorised route or its deep link'
   );
 });

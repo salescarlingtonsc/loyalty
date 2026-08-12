@@ -128,12 +128,16 @@ test('V287 MAJOR: the Inactive customers tile counts the same group it drills th
   // It used to add 30-59 and 60+ together, then navigate to the 30-59 bucket only.
   assert.doesNotMatch(dashboard, /Number\(inactive60Response\.data\?\.matching_customers\)\|\|0\)\)/);
   assert.match(dashboard, /const inactiveTotal=inactiveResponse\.error\?'Unavailable':String\(Number\(inactiveResponse\.data\?\.total\)\|\|0\);/);
-  assert.match(dashboard, /p_inactive_bucket:'30_59'/);
+  /* V290 supersedes the V287 narrowing: the 'all_inactive' bucket is now server-expressible,
+     so the tile counts ALL inactive again and drills to exactly that set — the original
+     goal V287 could not reach without a migration. */
+  assert.match(app, /all_inactive/);
   /* V288: the drill carries the bucket key itself rather than a day number. */
   assert.match(dashboard, /if\(key==='inactive'\)pendingCustomerInactivity='30_59';/);
   // ...and it says so, both on the tile and in its definition.
-  assert.match(dashboard, /hint:'Last visit 30–59 days ago'/);
-  assert.match(dashboard, /Customers whose last valid visit was 30 to 59 complete Singapore days ago/);
+    // V290: the 30–59 hint went with the narrowing it explained.
+    // V290: the tile's definition now describes the all-inactive union instead of the 30–59 window.
+  assert.match(app, /No valid visit for at least 30 complete Singapore days/);
   // 60+ customers are still reported, by the card that links to their own bucket.
   /* V288: an unread 60+ count travels as null, never as 0, and the card links to the 60+
      audience it actually counted. */

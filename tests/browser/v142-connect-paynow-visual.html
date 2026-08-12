@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="019e8e0222ffe0d0bf858d1e9bf1c518b0db49a34db2c196c8c3eba5f2ee63a6"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="b88bc4588d7206a5b6997aeaa7a21fea1e942e5ec823c87ee17df4f83df37cbb"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1287,7 +1287,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
   .cui-table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(108px,42%) 1fr;gap:12px;padding:8px 4px;border:0;text-align:right;overflow-wrap:anywhere}
   .cui-table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left}
   .cui-table[data-responsive="true"] td:empty{display:none}
-  .calendar-week-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  /* V291 (audit A2 #20): the Day view's pixel timeline gets the same treatment the Week grid
+     already had — hidden below this breakpoint in favour of the linear agenda beneath it. */
+  .calendar-week-scroll,.day-timeline-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  /* The green-slot instruction belongs to the timeline that is now hidden; New appointment in the
+     page header is the booking route on a phone. */
+  .day-timeline-slot-hint-v291{display:none}
   .appointment-detail-modal{align-items:flex-end;padding:0}.appointment-detail-modal .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))}.appointment-detail-grid{grid-template-columns:1fr}.appointment-detail-actions>.btn,.appointment-detail-actions>a.btn{flex:1 1 100%}.appointment-reschedule-form .split{grid-template-columns:1fr}
   .settings-page .row{align-items:stretch;flex-wrap:wrap;width:100%}
   .settings-page .row>.spacer{display:none}
@@ -1890,7 +1895,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 019e8e0222ffe0d0bf858d1e9bf1c518b0db49a34db2c196c8c3eba5f2ee63a6</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · b88bc4588d7206a5b6997aeaa7a21fea1e942e5ec823c87ee17df4f83df37cbb</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2943,7 +2948,17 @@ async function tillPage(){
     if(busy||cartLocked())return;
     const owned=catalog?.customerPackages?.find(item=>item.client_package_id===clientPackageId);
     if(!owned)return toast('That package is no longer available');
-    if(!confirm(`Use 1 session from ${owned.plan_name}? ${owned.remaining} remaining now.`))return;
+    /* V291 (audit follow-up): a native confirm() cannot be translated, so the one dialog that
+       takes value off a customer's package spoke English to a workforce CLAUDE.md says may not
+       read it. Same deliberate-confirmation dialog as V288; the fixed sentences are registered in
+       the workspace copy tables, and only the plan name and remaining count are interpolated. */
+    const confirmedSessionV291=await confirmDeliberateV288({
+      title:'Use one session?',
+      body:`${owned.plan_name} \u00b7 ${owned.remaining} remaining now.`,
+      summaryHtml:'<b>What this does</b><p class="small" style="margin-top:5px">One session is taken off this customer\u2019s package straight away. It is recorded as a $0 visit, so nothing is charged and nothing is refunded. If you take it off by mistake, reverse the session record in Sales.</p>',
+      acknowledgement:'I understand one session will be taken off.',
+      confirmLabel:'Use one session'});
+    if(!confirmedSessionV291||!isTillCurrent()||busy||cartLocked())return;
     const attempt=packageUseAttemptKeyV102(packageUseAttemptsV102,clientPackageId,tillBranchId);
     busy=true;
     const {data,error}=await sb.rpc('use_package_session_v102',{
@@ -2966,7 +2981,14 @@ async function tillPage(){
     const offer=catalog?.customerWelcomeOffer;
     if(!offer||busy)return;
     const label=offer.reward_label||'the free item';
-    if(!confirm(`Give ${label} free to ${cust?.full_name||'this customer'}? This can only be done once.`))return;
+    /* V291: translatable confirmation for the one-shot welcome gift (see useCustomerPackage). */
+    const confirmedWelcomeV291=await confirmDeliberateV288({
+      title:'Give the welcome gift?',
+      body:`${label} \u2192 ${cust?.full_name||'this customer'}`,
+      summaryHtml:'<b>This can only be done once</b><p class="small" style="margin-top:5px">The free item is given to this customer now and their welcome offer is used up. There is no way to give it a second time.</p>',
+      acknowledgement:'I understand this can only be given once.',
+      confirmLabel:'Give the free item'});
+    if(!confirmedWelcomeV291||!isTillCurrent()||busy)return;
     busy=true;
     const {data,error}=await sb.rpc('staff_redeem_welcome_offer_v215',{
       p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,
@@ -3899,7 +3921,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'019e8e0222ffe0d0bf858d1e9bf1c518b0db49a34db2c196c8c3eba5f2ee63a6',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'b88bc4588d7206a5b6997aeaa7a21fea1e942e5ec823c87ee17df4f83df37cbb',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

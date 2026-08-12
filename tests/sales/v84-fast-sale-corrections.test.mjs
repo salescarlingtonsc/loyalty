@@ -86,7 +86,11 @@ test('sales UX tags by team-member name and uses stable double-confirm correctio
   assert.match(app,/p_staff:staffId/);
   assert.match(app,/data-correct-sale/);
   assert.match(app,/id="saleCorrectionChecked"/);
-  assert.match(app,/Final check: replace/);
+  /* V291 retarget (not a deletion): the native confirm() this pinned could not be translated,
+     so the final check now runs through confirmDeliberateV288. The GATE is what this line
+     protects, and it is still exactly one deliberate act before the amount is replaced. */
+  assert.match(app,/title:'Replace this amount\?'/);
+  assert.match(app,/acknowledgement:'I have checked the corrected amount\.'/);
   assert.match(app,/const saleCorrectionAttempts=new Map\(\)/);
   assert.match(app,/if\(!attempt\|\|attempt\.fingerprint!==fingerprint\)[\s\S]*crypto\.randomUUID\(\)[\s\S]*p_idempotency_key:attempt\.key/);
   assert.match(app,/correct_quick_sale_amount_v84/);

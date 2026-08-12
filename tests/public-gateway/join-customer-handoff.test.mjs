@@ -256,3 +256,71 @@ test('join request, consent, Turnstile and guest isolation contracts stay unchan
   assert.match(join,/turnstile_token:turnstileToken/);
   assert.match(join,/publicJoin\(\{body:\{join_token:joinToken,name:nameEl\.value\.trim\(\),phone:cleanPhone\(\),\s*email:emailEl\.value\.trim\(\)\|\|null,consent:consentEl\.checked,\s*turnstile_token:turnstileToken\}\}\)/);
 });
+
+// ---------------------------------------------------------------------------
+// V292 (audit G9). The owner ruled that this page stays. It therefore has to
+// stop lying: every failure -- an expired QR, a revoked QR, a business that
+// switched join off, a rate limit, a dead network -- rendered the same
+// "Something went wrong. Please check your connection." with an infinite retry
+// button. Three of those four are not connection problems and will never be
+// fixed by pressing Try again.
+// ---------------------------------------------------------------------------
+
+test('the gateway status survives the fetch so the page can tell the truth about why',()=>{
+  assert.match(join,/error\.status=response\.status;/);
+  assert.match(join,/error\.retryAfter=Number\(payload\?\.retry_after\)\|\|0;/);
+});
+
+test('an expired, revoked or disabled QR is terminal, not an infinite retry loop',()=>{
+  // public-join answers 404 for a token that fails TOKEN_PATTERN and for a token
+  // internal_public_join_page_v89 will not resolve: expired, revoked, replaced or
+  // join-disabled. 403 is an origin refusal. Neither is retryable by the customer.
+  assert.match(join,/function renderExpiredLink\(\)/);
+  assert.match(join,/This QR code is no longer active/);
+  assert.match(join,/Ask the counter for a new one/);
+  assert.match(join,/if\(err\?\.status===404\|\|err\?\.status===403\)\{ renderExpiredLink\(\); return; \}/);
+  // The terminal card must not offer a retry, which is the whole point.
+  const expired=join.match(/function renderExpiredLink\(\)\{[\s\S]*?\n\}/)?.[0];
+  assert.ok(expired,'join page must expose its expired-QR state');
+  assert.doesNotMatch(expired,/id="retryBtn"/);
+  assert.doesNotMatch(expired,/check your connection/i);
+});
+
+test('a rate limit says wait, and a network failure still says retry', ()=>{
+  assert.match(join,/function renderBusyGateway\(retryAfterSeconds\)/);
+  assert.match(join,/Too many sign-ups from this network/);
+  assert.match(join,/if\(err\?\.status===429\)\{ renderBusyGateway\(err\.retryAfter\); return; \}/);
+  const busy=join.match(/function renderBusyGateway\(retryAfterSeconds\)\{[\s\S]*?\n\}/)?.[0];
+  assert.match(busy,/id="retryBtn"/,'a rate limit is genuinely retryable, later');
+  assert.match(busy,/have not been sent/,'the customer must know nothing was submitted');
+  // The connection message survives for the case it is actually about.
+  assert.match(join,/function renderLoadError\(\)/);
+  assert.match(join,/Please check your connection and try again\./);
+});
+
+test('a QR that dies mid-form does not invite the customer to retype everything',()=>{
+  const submit=join.match(/\$\('joinForm'\)\.addEventListener\('submit'[\s\S]*?\n  \}\);/)?.[0];
+  assert.ok(submit,'join page must expose its submit handler');
+  assert.match(submit,/if\(err\?\.status===404\|\|err\?\.status===403\)\{ renderExpiredLink\(\); return; \}/);
+});
+
+test('the mobile rule matches the app that has to find this member again',()=>{
+  // The SPA matches customers on /^[89]\d{7}$/. Accepting a 3xx/6xx landline here
+  // created a member the customer app could never match. The gateway stays more
+  // permissive on purpose; the client guard is the tighter of the two.
+  assert.match(join,/const JOIN_MOBILE_PATTERN=\/\^\[89\]\\d\{7\}\$\//);
+  assert.doesNotMatch(join,/\[3689\]/,'the join form must not accept Singapore landline prefixes');
+  assert.match(join,/starting with 8 or 9/);
+  assert.match(app,/\/\^\[89\]\\d\{7\}\$\//,'the SPA rule this mirrors must still exist');
+});
+
+test('an optional email is validated before it is sent, not after it is rejected',()=>{
+  assert.match(join,/const JOIN_EMAIL_PATTERN=\/\^\[\^\\s@\]\+@\[\^\\s@\]\+\\\.\[\^\\s@\]\+\$\//);
+  assert.match(join,/function emailValid\(\)/);
+  assert.match(join,/return !value\|\|\(value\.length<=254&&JOIN_EMAIL_PATTERN\.test\(value\)\)/);
+  assert.match(join,/&& emailValid\(\)/);
+  // novalidate stays: every rule on this form is enforced in script and surfaced
+  // in one live region, so letting the browser raise a second, untranslated
+  // bubble would put two different errors on screen for one field.
+  assert.match(join,/<form id="joinForm" novalidate>/);
+});
