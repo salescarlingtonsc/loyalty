@@ -90,7 +90,8 @@ test('celebration sound is opt-in, stored locally, and blocked for reduced-motio
   assert.ok(feedback.indexOf("matchMedia?.('(prefers-reduced-motion: reduce)').matches")<feedback.indexOf('new AudioContext()'));
   assert.match(profile,/id="customerSuccessSound"/);
   assert.match(profile,/sessionStorage\.setItem\('nestly\.customer\.successSound'/);
-  assert.match(profile,/if\(reducedMotion\)\{successSound\.checked=false;successSound\.disabled=true/);
+  /* v286: the branch also rewrites the label, so match the guard rather than a one-line body. */
+  assert.match(profile,/if\(reducedMotion\)\{[\s\S]{0,200}?successSound\.checked=false;successSound\.disabled=true/);
 });
 
 test('customer mobile navigation and media layouts keep accessible touch targets and stable image geometry',()=>{
