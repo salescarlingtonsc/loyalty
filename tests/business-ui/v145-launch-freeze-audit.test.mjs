@@ -240,7 +240,11 @@ test('staff performance excludes non-revenue ledger rows from revenue while reta
     'gift-card issuance is excluded while the signed reversal reduces attributed revenue');
   assert.equal(result.byStaff['staff-1'].commission,-40);
   const staff = section('async function staffPerfPage(drillId)', '/* ---------- daily report ---------- */');
-  assert.match(staff, /fetchAllRows\(\(\)=>sb\.from\('sale_commission'\)/);
+  /* V285 retarget: the commission read is still one fetchAllRows over sale_commission, but the
+     query is now built as a named const first so the branch chosen at the top bar can be applied
+     to it (the page used to rank the whole business whatever the scope said). The pin follows the
+     query rather than being deleted. */
+  assert.match(staff, /fetchAllRows\(\(\)=>\{\s*\n\s*const commissionQueryV285=sb\.from\('sale_commission'\)/);
   assert.match(staff, /require_module_scope_v145[\s\S]*p_module:'staffperf'/);
   assert.match(staff, /Signed ledger records/);
   assert.match(staff, /Ledger records/);

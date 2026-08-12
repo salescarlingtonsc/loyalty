@@ -78,10 +78,16 @@ test('packages and expenses retain reads while their write actions follow the ex
   const packages=section('async function packagesPage(){','/* ---------- branches');
   const expenses=section('async function expensesPage(){','/* ---------- P&L ---------- */');
   assert.match(packages,/const canWrite=canWriteModule\('packages'\)/);
-  assert.match(packages,/const canSell=canWrite&&hasRoleCapability\('create_sales'\)/);
   assert.match(packages,/if\(canWrite\)\{[\s\S]*\$\('kadd'\)\.onclick/);
-  // Gained a null guard on the control before binding; the capability gate is unchanged.
-  assert.match(packages,/if\(canSell&&\$\('ksell'\)\)\$\('ksell'\)\.onclick/);
+  /* V285 retarget: the canSell capability gate and the #ksell handler it guarded are both GONE,
+     because the control they protected has not existed since selling a package moved into the
+     till — no markup here or in index.html renders #ksell, #kc, #kk or #kSaleBranch. The pin now
+     asserts the absence, which is the state the role matrix actually needs: there is no
+     unguarded sell control on this page, and the guarded one is not merely unbound. */
+  assert.doesNotMatch(packages,/\$\('ksell'\)/);
+  assert.doesNotMatch(packages,/const canSell=/);
+  assert.doesNotMatch(packages,/sb\.rpc\('sell_package_v102'/,
+    'the removed handler held this page\'s only sell call; the till keeps its own');
   assert.match(packages,/canWrite&&k\.remaining>0/);
   assert.match(packages,/canWrite&&x\.can_reverse/);
   assert.match(packages,/id="packagesRetry"/);
@@ -91,7 +97,10 @@ test('packages and expenses retain reads while their write actions follow the ex
   assert.doesNotMatch(expenses,/get_revenue_summary/);
   assert.match(expenses,/Read-only expenses access/);
   assert.match(expenses,/if\(canWrite\)\$\('exAdd'\)\.onclick/);
-  assert.match(expenses,/canWrite\?`<button class="btn ghost sm" onclick="voidExp/);
+  /* V285 retarget: Void is still the same canWrite-gated control; it is now preceded by the
+     equally gated Edit, so the pin follows the pair rather than the exact adjacency. */
+  assert.match(expenses,/canWrite\?`<button class="btn ghost sm" onclick="editExpenseV285/);
+  assert.match(expenses,/<button class="btn ghost sm" onclick="voidExp/);
   assert.match(expenses,/id="expensesRetry"/);
 });
 

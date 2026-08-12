@@ -8546,6 +8546,10 @@ function runWorkspaceCustomerLookup(query){
   if(looksPhone&&canReadModule('till')){pendingTillPhone=digits;goTo('#/till');return true}
   if(canReadModule('clients')){pendingCustomerSearch=q;goTo('#/clients');return true}
   if(canReadModule('till')){pendingTillPhone=digits;goTo('#/till');return true}
+  /* V285: a teammate with neither Customers nor Record sale typed a name, pressed search, and
+     nothing at all happened — no result, no error, no movement. The search box is offered to
+     everyone, so the one honest answer it can give here is why it cannot look. */
+  toast('Searching for a customer needs Customers or Record sale access. Ask the owner to turn one on.');
   return false;
 }
 function wireMobileSearchShell(){
@@ -9865,6 +9869,12 @@ async function visibleBranchesForCurrentUser(){
   }
   return {isAdmin,branches};
 }
+/* V285: no page mounts a wrap for this any more. V260/V272 removed the per-page pickers one at a
+   time and V285 removed the last two (P&L and Customer intelligence), so the top bar's selector is
+   the workspace's single branch control and the pages simply read selectedBranchId. The helper is
+   kept intact — it is the only implementation of the employee/admin offer rule and of the
+   "never write into a wrap the route has replaced" guard, and a future surface that genuinely
+   needs its own picker should reuse it rather than write a third one. */
 async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchWrap'){
   const targetIds=Array.isArray(targetId)?targetId:[targetId];
   const currentWraps=()=>targetIds.map(id=>({id,wrap:$(id)})).filter(item=>item.wrap);
@@ -13865,7 +13875,7 @@ async function servicesPage(){
   loadCommissionConfig();
   /* bundles */
   M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
-    <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b>Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
+    <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
       ${canWrite?`
       <label>Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
       <label>Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
@@ -13873,6 +13883,7 @@ async function servicesPage(){
       <div style="margin-top:12px" class="row"><button class="btn sm" id="badd3">Save bundle</button><button class="btn ghost sm" id="cancelBundleForm">Cancel</button></div></div>`:''}
       <div class="v150-soft-head"><b>Bundles catalogue</b><p>Several services at one price. Packages remain in the Packages module.</p></div>
       <div id="blist3" style="margin-top:12px">${CUI.tableSkeleton({rows:3,columns:5})}</div></div></div>`);
+  let bundleCacheV285=[],editingBundleIdV285=null;
   async function loadBR(){
     const [servicesResult,bundlesResult]=await Promise.all([
       sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
@@ -13886,9 +13897,68 @@ async function servicesPage(){
     const sv2=servicesResult.data,bu=bundlesResult.data;
     if(canWrite)$('bsv').innerHTML=(sv2||[]).map(s=>`<label data-merchant-content style="display:inline-flex;gap:6px;margin:4px 10px 0 0;cursor:pointer;color:var(--ink)">
       <input type="checkbox" style="width:auto" data-bs="${s.id}">${esc(s.name)}</label>`).join('')||'<span class="muted">No active services yet — add at least two in the Services tab, then come back.</span>';
-    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th>Price</th><th>Status</th></tr>${bu.map(b=>`<tr>
-      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${b.active?'Active':'Inactive'}</span></td></tr>`).join('')}</table></div>`
+    /* V285: a bundle could be created and then never corrected — no rename, no reprice, no way
+       to change what is in it, no way to switch it off and no way to remove it. bundles and
+       bundle_items carry READ-only RLS, so the three controls below go through the V285 writers
+       rather than table DML. */
+    bundleCacheV285=bu||[];
+    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th>Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
+      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${b.active?'Active':'Inactive'}</span></td>
+      <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
+        <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
+        <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Disable':'Enable'}</button>
+        <button class="btn ghost sm" type="button" data-bundle-delete="${b.id}">Delete</button>
+      </div>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No bundles yet',body:'Create a bundle when you want to sell several services together at one combined price.'});
+    if(!canWrite)return;
+    $('blist3').querySelectorAll('[data-bundle-edit]').forEach(button=>button.onclick=()=>openBundleEditV285(button.dataset.bundleEdit));
+    $('blist3').querySelectorAll('[data-bundle-toggle]').forEach(button=>button.onclick=async()=>{
+      const bundle=bundleCacheV285.find(item=>item.id===button.dataset.bundleToggle);
+      if(!bundle)return;
+      CUI.setButtonBusy(button,{busy:true,label:bundle.active?'Disabling…':'Enabling…'});
+      const {error}=await sb.rpc('update_service_bundle_v285',{p_business:S.biz.id,p_bundle:bundle.id,
+        p_name:null,p_price_cents:null,p_service_ids:null,p_active:!bundle.active});
+      if(!isCurrent())return;
+      if(error){CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      toast(bundle.active?'Bundle switched off':'Bundle switched on');
+      await loadBR();
+    });
+    $('blist3').querySelectorAll('[data-bundle-delete]').forEach(button=>button.onclick=async()=>{
+      const bundle=bundleCacheV285.find(item=>item.id===button.dataset.bundleDelete);
+      if(!bundle)return;
+      if(!confirm(`Delete "${bundle.name}"? It disappears from the catalogue for good. If you only want to stop selling it, use Disable instead — that keeps it here.`))return;
+      CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
+      const {error}=await sb.rpc('delete_service_bundle_v285',{p_business:S.biz.id,p_bundle:bundle.id});
+      if(!isCurrent())return;
+      if(error){CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      if(editingBundleIdV285===bundle.id)closeBundleFormV285();
+      toast('Bundle deleted');
+      await loadBR();
+    });
+  }
+  /* Editing reuses the create form: same three inputs, same validation, one extra id in state.
+     A second form would be a second place for the two to drift apart. */
+  function closeBundleFormV285(){
+    editingBundleIdV285=null;
+    if($('bundleFormCard'))$('bundleFormCard').style.display='none';
+    if($('bundleFormTitleV285'))$('bundleFormTitleV285').textContent='Add bundle';
+    if($('badd3'))$('badd3').textContent='Save bundle';
+    if($('bnm'))$('bnm').value='';
+    if($('bpr'))$('bpr').value='';
+    document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=false});
+  }
+  async function openBundleEditV285(bundleId){
+    const bundle=bundleCacheV285.find(item=>item.id===bundleId);
+    if(!bundle||!$('bundleFormCard'))return;
+    editingBundleIdV285=bundleId;
+    $('bundleFormCard').style.display='block';
+    $('bundleFormTitleV285').textContent='Edit bundle';
+    $('badd3').textContent='Save changes';
+    $('bnm').value=bundle.name||'';
+    $('bpr').value=(Number(bundle.price_cents||0)/100).toFixed(2);
+    const included=new Set((bundle.bundle_items||[]).map(item=>item.service_id));
+    document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=included.has(box.dataset.bs)});
+    $('bnm').focus();
   }
   if(canWrite)$('badd3').onclick=async()=>{
     const badd3=$('badd3');
@@ -13897,6 +13967,18 @@ async function servicesPage(){
     if(name.length<2) return toast('Name the bundle');
     if(picked.length<2) return toast('Pick at least 2 services');
     const priceCents=Math.round(parseFloat($('bpr').value||'0')*100);
+    if(editingBundleIdV285){
+      CUI.setButtonBusy(badd3,{busy:true,label:'Saving…'});
+      const {error}=await sb.rpc('update_service_bundle_v285',{p_business:S.biz.id,
+        p_bundle:editingBundleIdV285,p_name:name,p_price_cents:priceCents,
+        p_service_ids:picked,p_active:null});
+      if(badd3.isConnected)CUI.setButtonBusy(badd3,{busy:false});
+      if(error)return fail(error);
+      closeBundleFormV285();
+      toast('Bundle updated');
+      await loadBR();
+      return;
+    }
     const bundleSlot='nestly.services.createBundle.v123';
     const fingerprint=JSON.stringify([S.biz.id,name,priceCents,[...picked].sort()]);
     CUI.setButtonBusy(badd3,{busy:true,label:'Saving…'});
@@ -13920,8 +14002,8 @@ async function servicesPage(){
      open Bundles in the same visit and it still said "add services first" — with no way to pick
      anything, Save bundle could only ever answer "Pick at least 2 services". Re-read the list
      every time the Bundles view is opened. */
-  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');$('bundleFormCard').style.display='block';loadBR();$('bnm')?.focus()};
-  if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>{$('bundleFormCard').style.display='none'};
+  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();$('bundleFormCard').style.display='block';loadBR();$('bnm')?.focus()};
+  if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>closeBundleFormV285();
   $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
   $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');loadBR()};
   loadBR();
@@ -22516,6 +22598,20 @@ function bottlesDeniedCardV275(title){
       actionHtml:'<a class="btn ghost sm" href="#/dashboard">Back to dashboard</a>'});
 }
 
+/* V285. Branches and Settings are in OWNER_ONLY_MODULES, which the rail honours and the route
+   guard deliberately SKIPS — so the two pages were reachable by any teammate who typed the hash,
+   and both painted their full write UI (branch create/edit, staff assignment, module permissions,
+   invites) to somebody the server would then refuse. The refusal is now stated before anything is
+   rendered or read, in the same shape bottleSetupPageV275 uses: one plain card, not a bounce, so
+   a bookmarked link gets an answer rather than a workspace that appears to break. */
+function ownerOnlyDeniedCardV285(title,iconName='settings'){
+  const host=M();if(!host)return;
+  host.innerHTML=CUI.pageHeader({title,iconName,canWrite:false,moduleLabel:title})
+    +CUI.emptyState({iconName,title:'Only the owner can open this',
+      body:`${title} changes who can do what and what the business is charged for, so it is kept to the owner account. Ask the owner if something here needs to change.`,
+      actionHtml:'<a class="btn ghost sm" href="#/dashboard">Back to dashboard</a>'});
+}
+
 /* Operations setup → Bottle keep. Two owner decisions and nothing else: how long a bottle is
    kept (owner amendment 2 — ONE number, adjustable per business) and where bottles live
    (amendment 3 — the bar defines its own list). */
@@ -22616,11 +22712,18 @@ async function bottleSetupPageV275(){
         body:'Add at least one so staff can say where a bottle is.'});
       return;
     }
+    /* V285: a shelf could be added and removed but never RENAMED, so a typo could only be fixed
+       by deleting the place bottles already point at. The server has always renamed by id when the
+       list is saved (bar_save_setup_v279) — the list simply never offered an editable name. */
     host.innerHTML=locations.map((location,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
-      <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(location.name)}</b>
+      <label class="sr-only" for="bkLocName${index}">Name for ${esc(location.name)}</label>
+      <input id="bkLocName${index}" style="flex:1 1 auto;min-width:140px" maxlength="60" value="${esc(location.name)}" data-location-name="${index}">
       ${location.in_use?'<span class="muted small">In use</span>':''}
       <button class="btn ghost sm" type="button" data-remove-location="${index}" data-merchant-content aria-label="Remove ${esc(location.name)}"><span aria-hidden="true">×</span></button>
     </div>`).join('');
+    host.querySelectorAll('[data-location-name]').forEach(input=>input.oninput=()=>{
+      locations[Number(input.dataset.locationName)].name=input.value;
+    });
     host.querySelectorAll('[data-remove-location]').forEach(button=>button.onclick=()=>{
       const index=Number(button.dataset.removeLocation);
       const removed=locations[index];
@@ -22670,15 +22773,28 @@ async function bottleSetupPageV275(){
         body:'Add a bottle above and staff can pick it when parking.'});
       return;
     }
-    host.innerHTML=catalogueV278.map((product,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
-      <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(product.name)}</b>
+    /* V285: the name and the price could be typed when ADDING a bottle and then never again —
+       a misspelt bottle or a price rise meant deleting the product and losing it from every past
+       sale. Both are editable here; the server keeps null meaning "leave this one alone", so the
+       size-only toggles that existed before behave exactly as they did. */
+    host.innerHTML=catalogueV278.map((product,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">
+      <label class="sr-only" for="bkBottleName${index}">Name for ${esc(product.name)}</label>
+      <input id="bkBottleName${index}" style="flex:1 1 180px;min-width:140px" value="${esc(product.name)}" data-bottle-name="${index}">
       ${product.size_ml?'<span class="pill">Bottle</span>':''}
       <label class="sr-only" for="bkBottleMl${index}">Size in millilitres for ${esc(product.name)}</label>
       <input id="bkBottleMl${index}" type="number" min="100" max="5000" inputmode="numeric" style="max-width:110px" placeholder="Not a bottle" value="${esc(product.size_ml)}" data-bottle-ml="${index}">
+      <label class="sr-only" for="bkBottlePrice${index}">Price for ${esc(product.name)}</label>
+      <input id="bkBottlePrice${index}" type="number" min="0" step="0.01" inputmode="decimal" style="max-width:120px" placeholder="Price" value="${(Number(product.price_cents||0)/100).toFixed(2)}" data-bottle-price="${index}">
       <button class="btn ghost sm" type="button" data-bottle-save="${index}">Save</button>
     </div>`).join('');
     host.querySelectorAll('[data-bottle-ml]').forEach(input=>input.oninput=()=>{
       catalogueV278[Number(input.dataset.bottleMl)].size_ml=input.value.trim();
+    });
+    host.querySelectorAll('[data-bottle-name]').forEach(input=>input.oninput=()=>{
+      catalogueV278[Number(input.dataset.bottleName)].name=input.value;
+    });
+    host.querySelectorAll('[data-bottle-price]').forEach(input=>input.oninput=()=>{
+      catalogueV278[Number(input.dataset.bottlePrice)].price_text=input.value.trim();
     });
     host.querySelectorAll('[data-bottle-save]').forEach(button=>button.onclick=async()=>{
       const product=catalogueV278[Number(button.dataset.bottleSave)];
@@ -22689,9 +22805,20 @@ async function bottleSetupPageV275(){
         if(errorHost)errorHost.innerHTML='<div class="err">A bottle is between 100ml and 5000ml. Clear the box if it is not a bottle.</div>';
         return;
       }
+      const editedName=String(product.name||'').trim();
+      if(editedName.length<2){
+        if(errorHost)errorHost.innerHTML='<div class="err">Give the bottle a name of at least 2 characters.</div>';
+        return;
+      }
+      const priceText=product.price_text===undefined?null:String(product.price_text||'').trim();
+      const editedPrice=priceText===null||priceText===''?null:Math.round(parseFloat(priceText)*100);
+      if(editedPrice!==null&&!(Number.isInteger(editedPrice)&&editedPrice>=0)){
+        if(errorHost)errorHost.innerHTML='<div class="err">The price must be an amount like 88.00.</div>';
+        return;
+      }
       CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
       const {data:saved,error:saveError}=await sb.rpc('bar_save_bottle_product_v278',{
-        p_business:S.biz.id,p_product:product.id,p_name:null,p_size_ml:size,p_price_cents:null});
+        p_business:S.biz.id,p_product:product.id,p_name:editedName,p_size_ml:size,p_price_cents:editedPrice});
       if(!isCurrent()||!button.isConnected)return;
       CUI.setButtonBusy(button,{busy:false});
       if(saveError){
@@ -22790,6 +22917,16 @@ async function bottleSetupPageV275(){
       errorHost.innerHTML='<div class="err">The reminder must be a whole number between 1 and 90 days before expiry.</div>';
       return;
     }
+    /* V285: the shelf names are typed in now, so an emptied box is caught here rather than as a
+       server error the owner cannot map back to a row. */
+    if(locations.some(location=>String(location.name||'').trim().length<1)){
+      errorHost.innerHTML='<div class="err">Every storage place needs a name. Fill the empty one in, or remove it with ×.</div>';
+      return;
+    }
+    if(locations.some(location=>String(location.name||'').trim().length>60)){
+      errorHost.innerHTML='<div class="err">Keep each storage place name under 60 characters.</div>';
+      return;
+    }
     CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
     /* V279 supersedes bar_save_setup_v275 here. The capacity arrives on a NEW function name rather
        than as a fourth parameter on the old one, because a second overload differing only in arity
@@ -22797,7 +22934,7 @@ async function bottleSetupPageV275(){
        paid for. bar_save_setup_v275 stays deployed and callable. */
     const {data:saved,error:saveError}=await sb.rpc('bar_save_setup_v279',{
       p_business:S.biz.id,p_keep_days:days,p_storage_capacity:capacity,
-      p_locations:locations.map(location=>({id:location.id,name:location.name}))
+      p_locations:locations.map(location=>({id:location.id,name:String(location.name||'').trim()}))
     });
     if(!isCurrent()||!save.isConnected)return;
     CUI.setButtonBusy(save,{busy:false});
@@ -23766,7 +23903,7 @@ async function inventoryPage(){
       <div class="split"><div><label>Quantity</label><input id="bq2" type="number" min="1" value="10"></div>
       <div><label>Expiry (optional)</label><input id="be2" type="date"></div></div>
       <div style="margin-top:14px"><button class="btn ghost" id="badd2">Receive batch</button></div></details></div>`:''}
-    <div class="card"><b>Your products</b><div id="ilist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+    <div class="card"><b>Your products</b><div id="ilist" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:5})}</div></div></div>`;
   /* V191 (owner: "how to edit and delete pricing or edit information etc"). Products could only
      be created — a mistyped price or name was permanent, which matters more now that a whole
      café menu lives here. Editing never rewrites history: every sale carries its own snapshot.
@@ -23856,7 +23993,6 @@ async function inventoryPage(){
 async function packagesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('packages');
-  const canSell=canWrite&&hasRoleCapability('create_sales');
   routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
   const [plansResult,servicesResult,branchesResult,preferencesResult,purchasesResult]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('package_plans').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id')),
@@ -24035,26 +24171,10 @@ async function packagesPage(){
     };
     renderPackageDiscount();
   }
-  if(canSell&&$('ksell'))$('ksell').onclick=async()=>{
-    if(!$('kc').value||!$('kk').value||!$('kSaleBranch').value) return toast('Pick customer, package and branch');
-    const sellSlot=`frenly:package-sell:${S.biz.id}`;
-    const sellKey=writeAttemptKey(sellSlot,`${$('kc').value}|${$('kk').value}|${$('kSaleBranch').value}`);
-    const sellButton=$('ksell');sellButton.disabled=true;
-    const {data,error}=await sb.rpc('sell_package_v102',{p_business:S.biz.id,p_client:$('kc').value,
-      p_plan:$('kk').value,p_branch:$('kSaleBranch').value,p_idempotency_key:sellKey});
-    if(error){
-      sellButton.disabled=false;
-      if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(sellSlot);return toast('That sale clashed with another — check the customer’s packages, then start a fresh one')}
-      return fail(error);
-    }
-    const result=packageSaleResultV102(data);
-    if(!result){sellButton.disabled=false;return toast('The package sale receipt was incomplete. Retry with the same checkout.')}
-    clearWriteAttempt(sellSlot);
-    toast(result.pointsEarned>0
-      ?workspaceTemplateTextV97('packageSoldWithPoints',{earned:result.pointsEarned,total:result.pointsTotal})
-      :workspaceTemplateTextV97('packageSoldNoPoints',{total:result.pointsTotal}));
-    packagesPage();
-  };
+  /* V285: the #ksell handler that stood here was dead code. No markup in this file (or in
+     index.html) has rendered #ksell, #kc, #kk or #kSaleBranch since selling a package moved into
+     the till, so the block wired a click on an element that never exists. Selling is unaffected:
+     the till's own checkout is the live call site of sell_package_v102 and is untouched. */
   const [{data:cps,error:cpError},workflow]=await Promise.all([
     sb.rpc('staff_list_package_entitlements_v102',{p_business:S.biz.id}),
     loadReversalWorkflows(null,100,'package').catch(e=>{fail(e);return null})]);
@@ -24136,6 +24256,8 @@ function branchBillingSentenceV280(counts){
     +(lapsed?` · ${lapsed} payment lapsed`:'');
 }
 async function branchesPage(){
+  if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Branches','branches');
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   M().innerHTML=`<div class="topbar"><div><h1>Branches</h1></div>
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
@@ -24216,10 +24338,15 @@ async function branchesPage(){
       sb.from('branches').select('*').eq('business_id',S.biz.id).order('is_default',{ascending:false}).order('name'),
       sb.from('staff').select('id,full_name,role,active').eq('business_id',S.biz.id).eq('active',true).order('full_name')
     ]);
+    /* V285: every other page in this file drops a response whose route has since been replaced.
+       This one painted it, so a slow branch load could overwrite the page the owner had already
+       navigated to. */
+    if(!isCurrent())return;
     if(error) return fail(error);
     branchList=br||[];staffList=st||[];
     if(!branchList.length){$('brList').innerHTML=`<div class="card">${CUI.emptyState({iconName:'branches',title:'No branches yet',body:'Add your first branch so sales, bookings, staff access and reports can be scoped correctly.'})}</div>`;return}
     const {data:sbRows,error:sbErr}=await sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id);
+    if(!isCurrent())return;
     if(sbErr) return fail(sbErr);
     const assigned={};(sbRows||[]).forEach(r=>{(assigned[r.branch_id]=assigned[r.branch_id]||new Set()).add(r.staff_id)});
     const awaiting=branchList.filter(b=>b.billing_state==='pending_payment').length;
@@ -24233,6 +24360,10 @@ async function branchesPage(){
           <span class="spacer"></span>
           <button class="btn ghost sm" onclick="editBranch('${b.id}')">Edit</button>
           <button class="btn ghost sm" onclick="toggleAssign('${b.id}')">Staff (${aset.size})</button>
+          <!-- V285: switching a branch off is the everyday act and stays first (the Active tick
+               inside Edit); deleting one is rare, irreversible and billing-relevant, so it asks
+               for the branch's name to be typed back. The default branch is never deletable. -->
+          ${b.is_default?'':`<button class="btn ghost sm" data-name="${esc(b.name)}" onclick="deleteBranchV285('${b.id}',this)">Delete</button>`}
         </div>
         ${openAssignId===b.id?`<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
           <div class="row" style="gap:10px;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap">
@@ -24247,6 +24378,20 @@ async function branchesPage(){
   }
   window.editBranch=(id)=>{const b=branchList.find(x=>x.id===id);if(b) openForm(b);};
   window.toggleAssign=(id)=>{openAssignId=openAssignId===id?null:id;load();};
+  window.deleteBranchV285=async(branchId,button)=>{
+    const branch=branchList.find(item=>item.id===branchId);
+    if(!branch)return;
+    if(branch.is_default)return toast('Your main branch cannot be deleted.');
+    if(!confirm(`Delete "${branch.name}"? Its staff assignments and opening hours go with it, and it disappears from every branch picker. Past sales, bookings and expenses stay in your reports but stop naming a live branch. If you only want it closed, press Cancel and untick Active in Edit — that keeps everything and stops the billing.`))return;
+    const typed=String(prompt(`Type the branch name to confirm deletion: ${branch.name}`)||'').trim();
+    if(typed!==String(branch.name||'').trim())return toast('The name did not match — nothing was deleted');
+    if(button)button.disabled=true;
+    const {error}=await sb.from('branches').delete().eq('id',branchId).eq('business_id',S.biz.id);
+    if(button)button.disabled=false;
+    if(error)return fail(error);
+    toast('Branch deleted');
+    load();
+  };
   window.toggleStaffBranch=async(branchId,staffId,checked)=>{
     if(checked){
       const {error}=await sb.from('staff_branches').insert({business_id:S.biz.id,staff_id:staffId,branch_id:branchId});
@@ -24280,10 +24425,16 @@ async function customerIntelligencePage(){
   const today=singaporeIsoDate(),from=shiftSingaporeDate(today,-364);
   let lastPayload=null,lastRequest=null,lastTruthBundle=null,lastEconomicsBundle=null,lastCustomerError='';
   const CUSTOMER_INTELLIGENCE_PAGE_SIZE=100;
-  routeMain.innerHTML=`<div class="topbar"><div><h1>Revenue truth</h1><p class="muted small">A defensible revenue picture, exact customer meanings, and one evidence-ranked next action.</p></div>
+  /* V285: the heading now says what the rail says. Every other route in the workspace answers to
+     the name it was opened by; this one was reached under "Customer intelligence" and then titled
+     itself "Revenue truth", which reads as the wrong page. The old title survives as the subtitle
+     because it is an accurate description of what the page produces. The per-page branch picker is
+     gone for the V260/V272 reason — the top bar owns branch scope. */
+  routeMain.innerHTML=`<div class="topbar"><div><h1>Customer intelligence</h1><p class="muted small">A defensible revenue picture, exact customer meanings, and one evidence-ranked next action.</p></div>
     <div class="range"><label class="sr-only" for="cif">Customer intelligence start date</label><input type="date" id="cif" value="${from}">
       <span class="muted" aria-hidden="true">→</span><label class="sr-only" for="cit">Customer intelligence end date</label><input type="date" id="cit" value="${today}">
-      <span id="branchWrap"></span><button class="btn sm" id="ciRun">Run</button><button class="btn ghost sm" id="ciCsv" disabled>Export customers CSV</button></div></div>
+      <button class="btn sm" id="ciRun">Run</button><button class="btn ghost sm" id="ciCsv" disabled>Export customers CSV</button></div></div>
+    <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="customerIntelBody"><div class="card"><div class="empty">Loading customer intelligence…</div></div></div>`;
   const body=$('customerIntelBody');
   const scopeMoney=(cents,currency=S.biz.currency||'SGD')=>`${currency} ${(Number(cents||0)/100).toFixed(2)}`;
@@ -24414,10 +24565,11 @@ async function customerIntelligencePage(){
       -new Date(`${fromDate}T00:00:00+08:00`).getTime()
     )/86400000));
     const comparisonFromDate=shiftSingaporeDate(fromDate,-periodDays);
-    const branchSelect=$('branchSel');
-    const branchName=selectedBranchId
-      ?String(branchSelect?.selectedOptions?.[0]?.textContent||'Selected branch').trim()
-      :'All branches';
+    /* V285: this read a select id that nothing on this page has ever rendered, so the caption on
+       every branch-scoped export and heading printed the literal words "Selected branch". The top
+       bar's own label helper is the single place that knows which branch is in force, and it
+       already answers "All branches" when none is. */
+    const branchName=profileBranchScopeLabelV158();
     const [
       truthResponse,lifecycleResponse,briefingResponse,customerResponse,
       economicsResponse,driversResponse,policyResponse
@@ -24558,7 +24710,8 @@ async function customerIntelligencePage(){
     if(status)status.innerHTML=`<p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97(customers.length===1?'customerRecordExported':'customerRecordsExported',{count:customers.length})}</p>`;
     toast('Complete customer intelligence CSV downloaded');
   };
-  await refreshBranchFilter(run,isCurrent);
+  renderReportScopeNoteV272(isCurrent);
+  await run();
 }
 
 /* ---------- reports ---------- */
@@ -24978,7 +25131,9 @@ async function setupPage(){
     {id:'team',em:'👥',title:'Add your team',
       why:soloOwner?'Marked as not needed — you run this solo.'
         :'Staff logins let you track who\'s on shift and (if you use it) commission per person.',
-      done:soloOwner||activeStaffCount>1,soloDone:soloOwner,link:'#/settings',cta:'Add a teammate →'},
+      /* V285: this pointed at #/settings, which since V269 opens on Modules & plan — the owner
+         was dropped one tab away from the thing the step asks for. #/staffmembers IS the roster. */
+      done:soloOwner||activeStaffCount>1,soloDone:soloOwner,link:'#/staffmembers',cta:'Add a teammate →'},
     {id:'customer',em:'🙋',title:'Add your first customer',
       why:'Customer-linked eligible sales can earn loyalty when an active published programme applies.',
       done:(cl||[]).length>0,link:'#/clients',cta:'Add a customer →'}
@@ -25021,6 +25176,7 @@ async function staffPerfPage(drillId){
       <button class="btn sm" id="papply">Apply</button>
     </div></div>
     <p class="muted small" style="margin:-8px 0 14px">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
+    <div style="margin:-6px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div class="card staff-performance-filterbar" aria-label="Staff performance filters">
       <label class="small">Staff search <input type="search" id="staffPerfSearch" placeholder="Name or email"></label>
       <label class="small">Sort by <select id="staffPerfSort"><option value="revenue">Attributed revenue</option><option value="commission">Signed commission</option><option value="revenueRecords">Revenue-qualified records</option><option value="ledgerRecords">Ledger-record count</option></select></label>
@@ -25053,6 +25209,7 @@ async function staffPerfPage(drillId){
     $('staffPerfSearch').value='';$('staffPerfSort').value='revenue';$('staffPerfDir').value='desc';
     load();
   };
+  renderReportScopeNoteV272(isCurrent);
   async function load(){
     const isLatest=requestGate.begin(),fromDate=$('pf').value,toDate=$('pt').value;
     const range=reportRangeValidation(fromDate,toDate);
@@ -25062,11 +25219,18 @@ async function staffPerfPage(drillId){
     let scopeResult,sc,staffResult;
     try{
       [scopeResult,sc,staffResult]=await Promise.all([
-        sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:null,p_module:'staffperf'}),
-        fetchAllRows(()=>sb.from('sale_commission')
-          .select('sale_id,staff_id,kind,occurred_at,amount_cents,commission_cents,counts_as_revenue',{count:'exact'})
-          .eq('business_id',S.biz.id).gte('occurred_at',from).lt('occurred_at',toExclusive)
-          .order('occurred_at').order('sale_id')),
+        sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:selectedBranchId||null,p_module:'staffperf'}),
+        /* V285: this table carries branch_id and the page ignored it, so a workspace scoped to
+           one branch at the top bar still ranked the whole business — the one figure an owner
+           uses to compare two shops. The scope note above now states what is covered and this
+           read honours it. */
+        fetchAllRows(()=>{
+          const commissionQueryV285=sb.from('sale_commission')
+            .select('sale_id,staff_id,kind,occurred_at,amount_cents,commission_cents,counts_as_revenue',{count:'exact'})
+            .eq('business_id',S.biz.id).gte('occurred_at',from).lt('occurred_at',toExclusive);
+          return (selectedBranchId?commissionQueryV285.eq('branch_id',selectedBranchId):commissionQueryV285)
+            .order('occurred_at').order('sale_id');
+        }),
         sb.from('staff').select('id,full_name').eq('business_id',S.biz.id).order('full_name')
       ]);
     }catch(error){
@@ -25447,8 +25611,10 @@ async function dailyReportPage(){
   M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div>
     <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
+    <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
   $('drPrint').onclick=()=>window.print();
+  renderReportScopeNoteV272(isCurrent);
   let lastRows=[],lastScope=null;
   const invalidate=()=>{
     if(!requestGate.invalidate())return;
@@ -25595,6 +25761,7 @@ async function expensesPage(){
   }
   const expenseBranches=branchResult.data||[];
   M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+    <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
     <div class="expenses-segment-body" id="expenseAddBody" style="display:none">${canWrite?`<div class="card"><div class="v150-soft-head"><b>Add expense</b><p>Record one cost. It appears in P&amp;L after saving.</p></div>
@@ -25606,7 +25773,11 @@ async function expensesPage(){
       <label>Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
-    <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div></div></div>`;
+    <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>
+      <!-- V285: an expense could only be voided and retyped, which leaves two rows where the
+           business made one cost. Amount, category and note are correctable in place; the branch
+           and the date are not, because those decide which P&L a cost already landed in. -->
+      <div class="card" id="expenseEditCardV285" style="display:none;margin-top:12px"></div></div></div>`;
   const EXPENSE_PAGE_SIZE=100;
   let expensePage=0;
   const expenseLoadGate=createLatestRequestGate(isCurrent);
@@ -25643,7 +25814,11 @@ async function expensesPage(){
   async function load(){
     const isLatest=expenseLoadGate.begin();
     const from=expensePage*EXPENSE_PAGE_SIZE,to=from+EXPENSE_PAGE_SIZE-1;
-    const {data:ex,error,count}=await sb.from('expenses').select('*',{count:'exact'}).eq('business_id',S.biz.id)
+    /* V285: the list was business-wide whatever the top bar said, while the P&L beside it
+       excludes business-wide overhead the moment a branch is chosen. Two screens describing the
+       same costs disagreed by design. The list now follows the same scope. */
+    const expenseQueryV285=sb.from('expenses').select('*',{count:'exact'}).eq('business_id',S.biz.id);
+    const {data:ex,error,count}=await (selectedBranchId?expenseQueryV285.eq('branch_id',selectedBranchId):expenseQueryV285)
       .order('occurred_on',{ascending:false}).order('created_at',{ascending:false}).order('id').range(from,to);
     if(!isLatest())return;
     if(error){
@@ -25657,13 +25832,46 @@ async function expensesPage(){
       ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category)}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
         <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">voided</span>':'<span class="pill ok">active</span>'}</td>
-        <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
+        <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
         <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} expenses · page ${expensePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});
     const prev=$('expensesPrev'),next=$('expensesNext');
     if(prev)prev.onclick=()=>{expensePage=Math.max(0,expensePage-1);load()};
     if(next)next.onclick=()=>{expensePage+=1;load()};
+    expenseRowsV285=ex||[];
   }
+  let expenseRowsV285=[];
+  window.editExpenseV285=(id)=>{
+    if(!canWrite)return;
+    const expense=expenseRowsV285.find(row=>row.id===id);
+    const card=$('expenseEditCardV285');
+    if(!expense||!card)return;
+    card.style.display='block';
+    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>Recorded ${esc(expense.occurred_on)}${expense.branch_id?'':' as business-wide overhead'}. The date and the branch stay as they are — they decide which P&amp;L this cost already sits in.</p></div>
+      <label for="expEditAmountV285">Amount (${esc(S.biz.currency||'SGD')})</label><input id="expEditAmountV285" type="number" min="0.01" step="0.01" value="${(Number(expense.amount_cents||0)/100).toFixed(2)}">
+      <label for="expEditCategoryV285">Category</label><input id="expEditCategoryV285" value="${esc(expense.category||'')}">
+      <label for="expEditNoteV285">Note</label><input id="expEditNoteV285" value="${esc(expense.note||'')}" placeholder="Why it changed">
+      <div class="row" style="margin-top:14px"><button class="btn sm" id="expEditSaveV285">Save correction</button><button class="btn ghost sm" id="expEditCancelV285">Cancel</button></div>`;
+    $('expEditCancelV285').onclick=()=>{card.style.display='none';card.innerHTML=''};
+    $('expEditSaveV285').onclick=async()=>{
+      const amount=Math.round(parseFloat($('expEditAmountV285').value||'0')*100);
+      const category=String($('expEditCategoryV285').value||'').trim();
+      const note=String($('expEditNoteV285').value||'').trim();
+      if(!(amount>0))return toast('Enter an amount');
+      if(category.length<2)return toast('Category required');
+      const saveButton=$('expEditSaveV285');
+      CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
+      const {error}=await sb.rpc('update_expense_v285',{p_business:S.biz.id,p_expense:expense.id,
+        p_amount_cents:amount,p_category:category,p_note:note||null});
+      if(!isCurrent())return;
+      CUI.setButtonBusy(saveButton,{busy:false});
+      if(error)return fail(error);
+      card.style.display='none';card.innerHTML='';
+      toast('Expense corrected');load();
+    };
+    card.scrollIntoView({block:'nearest'});
+  };
+  renderReportScopeNoteV272(isCurrent);
   window.voidExp=async(id)=>{
     if(!canWrite)return;
     if(!confirm('Void this expense? It stays on record, struck through, and drops out of the P&L.')) return;
@@ -25679,10 +25887,17 @@ async function pnlPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('plGo'):null);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
+  /* V285: the per-page branch picker is gone, following the V260/V272 precedent — the top bar
+     owns branch scope, and a second control that can disagree with it is the exact failure those
+     increments removed elsewhere. The page still READS selectedBranchId; what it no longer does
+     is offer a second answer to the same question. The stray closing tag after the range row went
+     with it: it closed the topbar a second time, so every element after it sat one level shallower
+     than the markup claims. */
   M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
     <div class="range no-print"><input type="date" id="plFrom" value="${d30}"> <span class="muted">→</span>
-      <input type="date" id="plTo" value="${today}"> <span id="branchWrap"></span><button class="btn sm" id="plGo">Run</button>
-      <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div></div>
+      <input type="date" id="plTo" value="${today}"> <button class="btn sm" id="plGo">Run</button>
+      <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div>
+    <div style="margin:10px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="plBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a range',body:'Choose a date range and run the P&L to compare sales and expenses.'})}</div></div>`;
   $('plPrint').onclick=()=>window.print();
   let lastCat={},lastMonthly={},lastScope=null,lastSummary=null;
@@ -25778,7 +25993,8 @@ async function pnlPage(){
       {label:'Expenses',data:mk.map(k=>monthly[k].exp/100),backgroundColor:coral,borderRadius:6}]},
       options:{plugins:{legend:{position:'bottom'}}}});
   }
-  refreshBranchFilter(()=>{invalidate();load()},isCurrent);
+  renderReportScopeNoteV272(isCurrent);
+  load();
 }
 
 /* ---------- settings ---------- */
@@ -26178,6 +26394,7 @@ async function loadCustomerProgrammePresentationEditorV95(){
    link to one of them is redirected to the surface that owns it instead of opening a blank tab. */
 const SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269=['workspace','programme','fields','data'];
 async function settingsPage(){
+  if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Settings','settings');
   const requestedSettingsTab=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('tab');
   if(SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269.includes(requestedSettingsTab))return nav('#/customer-interface');
   if(['modules','catalogue','team'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
@@ -26602,7 +26819,13 @@ async function settingsPage(){
             ${accessPill}${modPill}<span class="spacer"></span>
             ${s.role!=='owner'?`${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
             <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
-            <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Remove</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
+            <!-- V285: Remove used to be a hard DELETE, which is the wrong default for a person.
+                 Deactivating is what a shop actually does when somebody leaves: access stops at
+                 once, the seat stops being billed (a seat is an ACTIVE login — see CLAUDE.md
+                 §v14), and every past sale, appointment and commission row keeps the name on it.
+                 Delete survives for the row created by mistake, behind its own second confirm. -->
+            <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="setStaffActiveV285('${s.id}',${s.active===false?'true':'false'},this)">${s.active===false?'Reactivate':'Deactivate'}</button>
+            <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Delete</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
           </div>
         </div>
         ${openProfileId===s.id?staffProfilePanelHtml(s):''}
@@ -26638,9 +26861,36 @@ async function settingsPage(){
       </article>`;
     }).join('')
       :'<p class="muted small">No pending invites.</p>';
+    /* V285: a template could be saved and applied but never renamed or removed, so a typo or a
+       set that no longer matches how the shop works stayed in the picker for good. RLS already
+       gives the owner full write on module_templates — only the two controls were missing. */
     $('tplList').innerHTML=templates.length?templates.map(t=>`<div class="row small" style="padding:4px 0">
-      <span>📋 <b>${esc(t.name)}</b></span><span class="spacer"></span><span class="muted small">${(t.modules||[]).length} module${(t.modules||[]).length===1?'':'s'}</span></div>`).join('')
+      <span>📋 <b data-merchant-content>${esc(t.name)}</b></span><span class="spacer"></span><span class="muted small">${(t.modules||[]).length} module${(t.modules||[]).length===1?'':'s'}</span>
+      <button class="btn ghost sm" type="button" data-template-rename="${t.id}">Rename</button>
+      <button class="btn ghost sm" type="button" data-template-delete="${t.id}">Delete</button></div>`).join('')
       :'<p class="muted small">No templates saved yet.</p>';
+    $('tplList').querySelectorAll('[data-template-rename]').forEach(button=>button.onclick=async()=>{
+      const template=templates.find(item=>item.id===button.dataset.templateRename);
+      if(!template)return;
+      const next=String(prompt('Rename this module template',template.name)||'').trim();
+      if(!next||next===template.name)return;
+      if(next.length<2)return toast('Give the template a name of at least 2 characters');
+      const {error}=await sb.from('module_templates').update({name:next})
+        .eq('id',template.id).eq('business_id',S.biz.id);
+      if(error)return fail(error);
+      toast('Template renamed');
+      await loadTemplates();await loadTeam();
+    });
+    $('tplList').querySelectorAll('[data-template-delete]').forEach(button=>button.onclick=async()=>{
+      const template=templates.find(item=>item.id===button.dataset.templateDelete);
+      if(!template)return;
+      if(!confirm(`Delete the "${template.name}" template? Teammates who were given these modules keep them — only the saved shortcut goes.`))return;
+      const {error}=await sb.from('module_templates').delete()
+        .eq('id',template.id).eq('business_id',S.biz.id);
+      if(error)return fail(error);
+      toast('Template deleted');
+      await loadTemplates();await loadTeam();
+    });
   }
   window.chRole=async(id,role)=>{
     const {data,error}=await sb.rpc('set_staff_role_v74',{p_staff:id,p_role:role});
@@ -26653,10 +26903,41 @@ async function settingsPage(){
     delete panelSel[id];openModId=id;toast('Role updated');await loadTeam();
     if(id===myStaffId){S.myModules=null;S.myModulePerms=null;route();}
   };
+  window.setStaffActiveV285=async(id,active,button)=>{
+    const name=button?.dataset?.name||'this teammate';
+    if(!active&&!confirm(`Switch ${name} off? They lose access straight away and stop using a paid seat. Everything they have already done stays on record, and you can switch them back on any time.`))return;
+    if(button)button.disabled=true;
+    const {error}=await sb.from('staff').update({active}).eq('id',id).eq('business_id',S.biz.id);
+    if(button)button.disabled=false;
+    if(error)return fail(error);
+    invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:teamRowsById.get(id)?.user_id||''});
+    toast(active?'Teammate switched back on':'Teammate switched off');
+    await loadTeam();
+  };
+  /* Delete is now the narrow case: a row that has never worked. Anything with a sale, an
+     appointment or a branch assignment behind it must be deactivated instead, because deleting it
+     would take the person's name off history that has to keep answering "who did this". */
   window.rmStaff=async(id,btn)=>{
     const name=btn?.dataset?.name||'this teammate';
-    if(!confirm(`Remove ${name} from your team? They will lose access immediately. This cannot be undone.`))return;
-    const removedUserId=teamRowsById.get(id)?.user_id||'';const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:removedUserId});toast('Removed');await loadTeam();};
+    if(!confirm(`Delete ${name}'s record completely? This is only for a teammate added by mistake. If they worked here, press Cancel and use Deactivate instead — that keeps their history.`))return;
+    if(btn)btn.disabled=true;
+    const [saleCount,appointmentCount]=await Promise.all([
+      sb.from('sales').select('id',{count:'exact',head:true}).eq('business_id',S.biz.id).eq('staff_id',id),
+      sb.from('appointments').select('id',{count:'exact',head:true}).eq('business_id',S.biz.id).eq('staff_id',id)
+    ]);
+    if(btn)btn.disabled=false;
+    if(saleCount.error||appointmentCount.error)return fail(saleCount.error||appointmentCount.error);
+    const worked=Number(saleCount.count||0)+Number(appointmentCount.count||0);
+    if(worked>0){
+      toast(`${name} has ${worked} record${worked===1?'':'s'} of work here, so the record is kept. Use Deactivate to stop their access.`);
+      return;
+    }
+    if(!confirm(`Last check: ${name} has never recorded a sale or an appointment. Delete the record for good?`))return;
+    const removedUserId=teamRowsById.get(id)?.user_id||'';
+    const {error}=await sb.from('staff').delete().eq('id',id);
+    if(error)return fail(error);
+    invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:removedUserId});
+    toast('Record deleted');await loadTeam();};
   window.cpInv=async(c)=>copyTextToClipboard(c,{success:'Code copied — send it to your teammate'});
   window.cpInvLink=async(c)=>copyTextToClipboard(staffInviteLinkV151(c),{success:'Invite link copied — send it to your teammate'});
   /* V217. Owner: "there must be a reference code here - example kelvin sign up an account and

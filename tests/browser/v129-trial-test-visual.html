@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b7a446e9983a732dadeed0e2ee039c5929f72e3a44869a7d76600f0a74885bb6"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="29401751589c8ebe415549c91dd5add02288086c78e2332f8db9c396742df414"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1860,7 +1860,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · b7a446e9983a732dadeed0e2ee039c5929f72e3a44869a7d76600f0a74885bb6</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 29401751589c8ebe415549c91dd5add02288086c78e2332f8db9c396742df414</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -5560,7 +5560,7 @@ async function servicesPage(){
   loadCommissionConfig();
   /* bundles */
   M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
-    <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b>Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
+    <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
       ${canWrite?`
       <label>Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
       <label>Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
@@ -5568,6 +5568,7 @@ async function servicesPage(){
       <div style="margin-top:12px" class="row"><button class="btn sm" id="badd3">Save bundle</button><button class="btn ghost sm" id="cancelBundleForm">Cancel</button></div></div>`:''}
       <div class="v150-soft-head"><b>Bundles catalogue</b><p>Several services at one price. Packages remain in the Packages module.</p></div>
       <div id="blist3" style="margin-top:12px">${CUI.tableSkeleton({rows:3,columns:5})}</div></div></div>`);
+  let bundleCacheV285=[],editingBundleIdV285=null;
   async function loadBR(){
     const [servicesResult,bundlesResult]=await Promise.all([
       sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
@@ -5581,9 +5582,68 @@ async function servicesPage(){
     const sv2=servicesResult.data,bu=bundlesResult.data;
     if(canWrite)$('bsv').innerHTML=(sv2||[]).map(s=>`<label data-merchant-content style="display:inline-flex;gap:6px;margin:4px 10px 0 0;cursor:pointer;color:var(--ink)">
       <input type="checkbox" style="width:auto" data-bs="${s.id}">${esc(s.name)}</label>`).join('')||'<span class="muted">No active services yet — add at least two in the Services tab, then come back.</span>';
-    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th>Price</th><th>Status</th></tr>${bu.map(b=>`<tr>
-      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${b.active?'Active':'Inactive'}</span></td></tr>`).join('')}</table></div>`
+    /* V285: a bundle could be created and then never corrected — no rename, no reprice, no way
+       to change what is in it, no way to switch it off and no way to remove it. bundles and
+       bundle_items carry READ-only RLS, so the three controls below go through the V285 writers
+       rather than table DML. */
+    bundleCacheV285=bu||[];
+    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th>Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
+      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${b.active?'Active':'Inactive'}</span></td>
+      <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
+        <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
+        <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Disable':'Enable'}</button>
+        <button class="btn ghost sm" type="button" data-bundle-delete="${b.id}">Delete</button>
+      </div>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No bundles yet',body:'Create a bundle when you want to sell several services together at one combined price.'});
+    if(!canWrite)return;
+    $('blist3').querySelectorAll('[data-bundle-edit]').forEach(button=>button.onclick=()=>openBundleEditV285(button.dataset.bundleEdit));
+    $('blist3').querySelectorAll('[data-bundle-toggle]').forEach(button=>button.onclick=async()=>{
+      const bundle=bundleCacheV285.find(item=>item.id===button.dataset.bundleToggle);
+      if(!bundle)return;
+      CUI.setButtonBusy(button,{busy:true,label:bundle.active?'Disabling…':'Enabling…'});
+      const {error}=await sb.rpc('update_service_bundle_v285',{p_business:S.biz.id,p_bundle:bundle.id,
+        p_name:null,p_price_cents:null,p_service_ids:null,p_active:!bundle.active});
+      if(!isCurrent())return;
+      if(error){CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      toast(bundle.active?'Bundle switched off':'Bundle switched on');
+      await loadBR();
+    });
+    $('blist3').querySelectorAll('[data-bundle-delete]').forEach(button=>button.onclick=async()=>{
+      const bundle=bundleCacheV285.find(item=>item.id===button.dataset.bundleDelete);
+      if(!bundle)return;
+      if(!confirm(`Delete "${bundle.name}"? It disappears from the catalogue for good. If you only want to stop selling it, use Disable instead — that keeps it here.`))return;
+      CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
+      const {error}=await sb.rpc('delete_service_bundle_v285',{p_business:S.biz.id,p_bundle:bundle.id});
+      if(!isCurrent())return;
+      if(error){CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      if(editingBundleIdV285===bundle.id)closeBundleFormV285();
+      toast('Bundle deleted');
+      await loadBR();
+    });
+  }
+  /* Editing reuses the create form: same three inputs, same validation, one extra id in state.
+     A second form would be a second place for the two to drift apart. */
+  function closeBundleFormV285(){
+    editingBundleIdV285=null;
+    if($('bundleFormCard'))$('bundleFormCard').style.display='none';
+    if($('bundleFormTitleV285'))$('bundleFormTitleV285').textContent='Add bundle';
+    if($('badd3'))$('badd3').textContent='Save bundle';
+    if($('bnm'))$('bnm').value='';
+    if($('bpr'))$('bpr').value='';
+    document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=false});
+  }
+  async function openBundleEditV285(bundleId){
+    const bundle=bundleCacheV285.find(item=>item.id===bundleId);
+    if(!bundle||!$('bundleFormCard'))return;
+    editingBundleIdV285=bundleId;
+    $('bundleFormCard').style.display='block';
+    $('bundleFormTitleV285').textContent='Edit bundle';
+    $('badd3').textContent='Save changes';
+    $('bnm').value=bundle.name||'';
+    $('bpr').value=(Number(bundle.price_cents||0)/100).toFixed(2);
+    const included=new Set((bundle.bundle_items||[]).map(item=>item.service_id));
+    document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=included.has(box.dataset.bs)});
+    $('bnm').focus();
   }
   if(canWrite)$('badd3').onclick=async()=>{
     const badd3=$('badd3');
@@ -5592,6 +5652,18 @@ async function servicesPage(){
     if(name.length<2) return toast('Name the bundle');
     if(picked.length<2) return toast('Pick at least 2 services');
     const priceCents=Math.round(parseFloat($('bpr').value||'0')*100);
+    if(editingBundleIdV285){
+      CUI.setButtonBusy(badd3,{busy:true,label:'Saving…'});
+      const {error}=await sb.rpc('update_service_bundle_v285',{p_business:S.biz.id,
+        p_bundle:editingBundleIdV285,p_name:name,p_price_cents:priceCents,
+        p_service_ids:picked,p_active:null});
+      if(badd3.isConnected)CUI.setButtonBusy(badd3,{busy:false});
+      if(error)return fail(error);
+      closeBundleFormV285();
+      toast('Bundle updated');
+      await loadBR();
+      return;
+    }
     const bundleSlot='nestly.services.createBundle.v123';
     const fingerprint=JSON.stringify([S.biz.id,name,priceCents,[...picked].sort()]);
     CUI.setButtonBusy(badd3,{busy:true,label:'Saving…'});
@@ -5615,8 +5687,8 @@ async function servicesPage(){
      open Bundles in the same visit and it still said "add services first" — with no way to pick
      anything, Save bundle could only ever answer "Pick at least 2 services". Re-read the list
      every time the Bundles view is opened. */
-  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');$('bundleFormCard').style.display='block';loadBR();$('bnm')?.focus()};
-  if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>{$('bundleFormCard').style.display='none'};
+  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();$('bundleFormCard').style.display='block';loadBR();$('bnm')?.focus()};
+  if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>closeBundleFormV285();
   $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
   $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');loadBR()};
   loadBR();
@@ -14270,6 +14342,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'b7a446e9983a732dadeed0e2ee039c5929f72e3a44869a7d76600f0a74885bb6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'29401751589c8ebe415549c91dd5add02288086c78e2332f8db9c396742df414',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

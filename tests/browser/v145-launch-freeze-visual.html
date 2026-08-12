@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="be4ee20bda2829ba4d9deafc9804bca88fde16c09702da5fe95f89fbec51da16"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="5ac7cc885ab74ea6a1f02e55eacceaf9d0bb28b17567cf4ed1373cf481eb7cb4"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1860,7 +1860,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · be4ee20bda2829ba4d9deafc9804bca88fde16c09702da5fe95f89fbec51da16</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5ac7cc885ab74ea6a1f02e55eacceaf9d0bb28b17567cf4ed1373cf481eb7cb4</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2294,6 +2294,12 @@ function setReportRetryState(isInstanceCurrent,button,body,message,retryId,onRet
   }
   return {isAdmin,branches};
 }
+/* V285: no page mounts a wrap for this any more. V260/V272 removed the per-page pickers one at a
+   time and V285 removed the last two (P&L and Customer intelligence), so the top bar's selector is
+   the workspace's single branch control and the pages simply read selectedBranchId. The helper is
+   kept intact — it is the only implementation of the employee/admin offer rule and of the
+   "never write into a wrap the route has replaced" guard, and a future surface that genuinely
+   needs its own picker should reuse it rather than write a third one. */
 async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchWrap'){
   const targetIds=Array.isArray(targetId)?targetId:[targetId];
   const currentWraps=()=>targetIds.map(id=>({id,wrap:$(id)})).filter(item=>item.wrap);
@@ -4110,8 +4116,10 @@ function renderHistPage(history,n){
   M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div>
     <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
+    <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
   $('drPrint').onclick=()=>window.print();
+  renderReportScopeNoteV272(isCurrent);
   let lastRows=[],lastScope=null;
   const invalidate=()=>{
     if(!requestGate.invalidate())return;
@@ -4256,6 +4264,7 @@ function renderHistPage(history,n){
   }
   const expenseBranches=branchResult.data||[];
   M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+    <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
     <div class="expenses-segment-body" id="expenseAddBody" style="display:none">${canWrite?`<div class="card"><div class="v150-soft-head"><b>Add expense</b><p>Record one cost. It appears in P&amp;L after saving.</p></div>
@@ -4267,7 +4276,11 @@ function renderHistPage(history,n){
       <label>Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
-    <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div></div></div>`;
+    <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>
+      <!-- V285: an expense could only be voided and retyped, which leaves two rows where the
+           business made one cost. Amount, category and note are correctable in place; the branch
+           and the date are not, because those decide which P&L a cost already landed in. -->
+      <div class="card" id="expenseEditCardV285" style="display:none;margin-top:12px"></div></div></div>`;
   const EXPENSE_PAGE_SIZE=100;
   let expensePage=0;
   const expenseLoadGate=createLatestRequestGate(isCurrent);
@@ -4304,7 +4317,11 @@ function renderHistPage(history,n){
   async function load(){
     const isLatest=expenseLoadGate.begin();
     const from=expensePage*EXPENSE_PAGE_SIZE,to=from+EXPENSE_PAGE_SIZE-1;
-    const {data:ex,error,count}=await sb.from('expenses').select('*',{count:'exact'}).eq('business_id',S.biz.id)
+    /* V285: the list was business-wide whatever the top bar said, while the P&L beside it
+       excludes business-wide overhead the moment a branch is chosen. Two screens describing the
+       same costs disagreed by design. The list now follows the same scope. */
+    const expenseQueryV285=sb.from('expenses').select('*',{count:'exact'}).eq('business_id',S.biz.id);
+    const {data:ex,error,count}=await (selectedBranchId?expenseQueryV285.eq('branch_id',selectedBranchId):expenseQueryV285)
       .order('occurred_on',{ascending:false}).order('created_at',{ascending:false}).order('id').range(from,to);
     if(!isLatest())return;
     if(error){
@@ -4318,13 +4335,46 @@ function renderHistPage(history,n){
       ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category)}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
         <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">voided</span>':'<span class="pill ok">active</span>'}</td>
-        <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
+        <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
         <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} expenses · page ${expensePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});
     const prev=$('expensesPrev'),next=$('expensesNext');
     if(prev)prev.onclick=()=>{expensePage=Math.max(0,expensePage-1);load()};
     if(next)next.onclick=()=>{expensePage+=1;load()};
+    expenseRowsV285=ex||[];
   }
+  let expenseRowsV285=[];
+  window.editExpenseV285=(id)=>{
+    if(!canWrite)return;
+    const expense=expenseRowsV285.find(row=>row.id===id);
+    const card=$('expenseEditCardV285');
+    if(!expense||!card)return;
+    card.style.display='block';
+    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>Recorded ${esc(expense.occurred_on)}${expense.branch_id?'':' as business-wide overhead'}. The date and the branch stay as they are — they decide which P&amp;L this cost already sits in.</p></div>
+      <label for="expEditAmountV285">Amount (${esc(S.biz.currency||'SGD')})</label><input id="expEditAmountV285" type="number" min="0.01" step="0.01" value="${(Number(expense.amount_cents||0)/100).toFixed(2)}">
+      <label for="expEditCategoryV285">Category</label><input id="expEditCategoryV285" value="${esc(expense.category||'')}">
+      <label for="expEditNoteV285">Note</label><input id="expEditNoteV285" value="${esc(expense.note||'')}" placeholder="Why it changed">
+      <div class="row" style="margin-top:14px"><button class="btn sm" id="expEditSaveV285">Save correction</button><button class="btn ghost sm" id="expEditCancelV285">Cancel</button></div>`;
+    $('expEditCancelV285').onclick=()=>{card.style.display='none';card.innerHTML=''};
+    $('expEditSaveV285').onclick=async()=>{
+      const amount=Math.round(parseFloat($('expEditAmountV285').value||'0')*100);
+      const category=String($('expEditCategoryV285').value||'').trim();
+      const note=String($('expEditNoteV285').value||'').trim();
+      if(!(amount>0))return toast('Enter an amount');
+      if(category.length<2)return toast('Category required');
+      const saveButton=$('expEditSaveV285');
+      CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
+      const {error}=await sb.rpc('update_expense_v285',{p_business:S.biz.id,p_expense:expense.id,
+        p_amount_cents:amount,p_category:category,p_note:note||null});
+      if(!isCurrent())return;
+      CUI.setButtonBusy(saveButton,{busy:false});
+      if(error)return fail(error);
+      card.style.display='none';card.innerHTML='';
+      toast('Expense corrected');load();
+    };
+    card.scrollIntoView({block:'nearest'});
+  };
+  renderReportScopeNoteV272(isCurrent);
   window.voidExp=async(id)=>{
     if(!canWrite)return;
     if(!confirm('Void this expense? It stays on record, struck through, and drops out of the P&L.')) return;
@@ -4338,10 +4388,17 @@ function renderHistPage(history,n){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('plGo'):null);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
+  /* V285: the per-page branch picker is gone, following the V260/V272 precedent — the top bar
+     owns branch scope, and a second control that can disagree with it is the exact failure those
+     increments removed elsewhere. The page still READS selectedBranchId; what it no longer does
+     is offer a second answer to the same question. The stray closing tag after the range row went
+     with it: it closed the topbar a second time, so every element after it sat one level shallower
+     than the markup claims. */
   M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
     <div class="range no-print"><input type="date" id="plFrom" value="${d30}"> <span class="muted">→</span>
-      <input type="date" id="plTo" value="${today}"> <span id="branchWrap"></span><button class="btn sm" id="plGo">Run</button>
-      <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div></div>
+      <input type="date" id="plTo" value="${today}"> <button class="btn sm" id="plGo">Run</button>
+      <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div>
+    <div style="margin:10px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="plBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a range',body:'Choose a date range and run the P&L to compare sales and expenses.'})}</div></div>`;
   $('plPrint').onclick=()=>window.print();
   let lastCat={},lastMonthly={},lastScope=null,lastSummary=null;
@@ -4437,7 +4494,8 @@ function renderHistPage(history,n){
       {label:'Expenses',data:mk.map(k=>monthly[k].exp/100),backgroundColor:coral,borderRadius:6}]},
       options:{plugins:{legend:{position:'bottom'}}}});
   }
-  refreshBranchFilter(()=>{invalidate();load()},isCurrent);
+  renderReportScopeNoteV272(isCurrent);
+  load();
 }
   async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionableCard=null){
   let host=$('customerInAppInbox');
@@ -4660,7 +4718,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'be4ee20bda2829ba4d9deafc9804bca88fde16c09702da5fe95f89fbec51da16',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'5ac7cc885ab74ea6a1f02e55eacceaf9d0bb28b17567cf4ed1373cf481eb7cb4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

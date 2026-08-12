@@ -122,9 +122,13 @@ test('every responsive Chart.js canvas is isolated in a bounded frame', () => {
   /* V272: the guard survived, its parameter names did not (targetId -> id). What matters is
      that a branch-filter refresh still refuses to write into a wrap the route has replaced. */
   assert.match(app, /if\(!wrap\.isConnected\|\|\$\(id\)!==wrap\)return;/);
-  /* V272: #branchSel is still the branch control's id, but it is now read by $() from the
-     pages that own a picker rather than queried out of a wrap element. */
-  assert.match(app, /\$\('branchSel'\)/);
+  /* V285 retarget: no page owns a picker any more. V260/V272 removed them one by one and V285
+     removed the last two (P&L and Customer intelligence), so the only branch control left in the
+     workspace is the top bar's, and #branchSel is an id nothing renders. What must stay true is
+     the same thing this pin was protecting: exactly ONE control decides branch scope, and the
+     pages read it rather than keeping a second one. */
+  assert.match(app, /id="profileBranchScopeSelectV158"/);
+  assert.doesNotMatch(app, /id="branchSel"/);
   assert.equal((dashboard.match(/class="chart-frame"/g) || []).length, 1);
 });
 

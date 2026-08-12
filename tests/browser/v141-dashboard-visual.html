@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="a692d8fefaa422bed295989f8e5844dea4b7eba7f7ca6fafc148e346fcc11346"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="e4f5612280047e775441e33e1f369cf60915bd260369320aeb9d1cdcbd84eb64"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2247,6 +2247,12 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   }
   return {isAdmin,branches};
 }
+/* V285: no page mounts a wrap for this any more. V260/V272 removed the per-page pickers one at a
+   time and V285 removed the last two (P&L and Customer intelligence), so the top bar's selector is
+   the workspace's single branch control and the pages simply read selectedBranchId. The helper is
+   kept intact — it is the only implementation of the employee/admin offer rule and of the
+   "never write into a wrap the route has replaced" guard, and a future surface that genuinely
+   needs its own picker should reuse it rather than write a third one. */
 async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchWrap'){
   const targetIds=Array.isArray(targetId)?targetId:[targetId];
   const currentWraps=()=>targetIds.map(id=>({id,wrap:$(id)})).filter(item=>item.wrap);
@@ -2763,6 +2769,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'a692d8fefaa422bed295989f8e5844dea4b7eba7f7ca6fafc148e346fcc11346',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'e4f5612280047e775441e33e1f369cf60915bd260369320aeb9d1cdcbd84eb64',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

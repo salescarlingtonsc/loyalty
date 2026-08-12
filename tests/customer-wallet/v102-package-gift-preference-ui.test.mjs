@@ -111,12 +111,17 @@ test('package sale UI accepts only authoritative v102 receipt IDs and exact poin
     status:'completed',client_package_id:'cp-1',points_earned:17,points_total:240
   }),null);
   const appPackageCalls=[...app.matchAll(/sb\.rpc\('sell_package_v102'/g)];
-  assert.equal(appPackageCalls.length,2,'Quick Earn and standalone Packages must use v102');
+  /* V285 retarget: there was a SECOND call site on the standalone Packages page, wired to a
+     #ksell button no markup has rendered since selling moved into the till. The dead handler is
+     gone; the surviving call site is the till's own checkout, which is the one that must use
+     v102. The pin follows the live path rather than the count it used to have. */
+  assert.equal(appPackageCalls.length,1,'the till checkout must use v102');
   assert.doesNotMatch(app,/sb\.rpc\('sell_package'/);
   assert.match(app,/p_branch:tillBranchId/);
-  assert.match(app,/p_branch:\$\('kSaleBranch'\)\.value/);
+  /* V285: #kSaleBranch was the dead handler's branch select and is gone with it. The till's own
+     branch is what the surviving call site sends (pinned above as p_branch:tillBranchId). */
+  assert.doesNotMatch(app,/\$\('kSaleBranch'\)/);
   assert.match(app,/packageSaleResultV102\(res\.data\)/);
-  assert.match(app,/packageSaleResultV102\(data\)/);
   assert.doesNotMatch(app,/pointsTotal\s*:\s*[^,}\n]*(?:balance|before|after)/i);
 });
 
