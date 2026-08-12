@@ -5392,16 +5392,18 @@ async function shareCustomerOfferV264(item,business){
     {context:{channel,promotion_id:String(item?.id||''),surface_version:'v264'}});
   /* The device sheet is the only way to reach Instagram, TikTok and WeChat, so it is tried first
      wherever it exists. A customer who dismisses it has decided not to share — that is not an
-     error and must not be answered with a second, different sheet. */
-  if(navigator.share){
-    try{
-      await navigator.share({title:brand,text:customerShareMessageV267(text,shop),url});
-      record('device');
-    }catch(error){
-      if(error?.name==='AbortError')return;
-      showCustomerShareSheetV264({text,url,business:shop,onChannel:record});
-    }
-    return;
+     error and must not be answered with a second, different sheet.
+     v286: it is asked for through the bridge, not through navigator.share directly. This app also
+     ships as a Capacitor build, and a WKWebView does not expose navigator.share — so the device
+     branch was skipped on the iOS app and the customer fell to the web sheet, whose channels are
+     target="_blank" links a native WebView cannot hand to the installed apps. The bridge calls
+     @capacitor/share when native and navigator.share on the web, and returns false when neither
+     exists, which is exactly when the in-app sheet is the right answer. */
+  try{
+    const shared=await NestlyNativeBridge.share({title:brand,text:customerShareMessageV267(text,shop),url});
+    if(shared){record('device');return}
+  }catch(error){
+    if(error?.name==='AbortError')return;
   }
   showCustomerShareSheetV264({text,url,business:shop,onChannel:record});
 }
@@ -6210,8 +6212,23 @@ async function renderCustomerWallet(businessSlug=null){
     if(status)status.textContent='Show this offer to the team at the counter.';
     button.textContent='Ready to show';
   });
+  /* v286: one offer, one detail surface. The wallet used to open a second modal cloned from the
+     card's own <template> — description, a small <dl>, Close and Done — while the SAME offer opened
+     from the Home shelf went to showCustomerOfferDetailV173 with artwork, live branch contact, a
+     fail-closed Book now and Share. The business programme page is the primary surface and was the
+     poorer, dead-ended one, and no share could ever start there. It now routes to the Home sheet,
+     with the offer read back out of the list the page already rendered (the v265 rule) so the sheet
+     can never describe a different promotion from the card that was tapped. The old modal stays as
+     the fallback for a card whose offer is not in that list, so a tap is never answered by nothing. */
   document.querySelectorAll('[data-promotion-details]').forEach(button=>button.onclick=()=>{
-    openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
+    const card=button.closest('[data-promotion-id]'),offerId=String(card?.dataset?.promotionId||'');
+    const offer=(Array.isArray(presentation.offers)?presentation.offers:[]).find(item=>String(item?.id||'')===offerId);
+    if(!offer)return openCustomerPromotionDetailsV104(card);
+    typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.promotion_opened',customerWalletBusinessIdV256,{
+      context:{promotion_id:offerId,surface_key:'promotion_detail',
+        entry_point:'customer_wallet',surface_version:'v255'}
+    });
+    showCustomerOfferDetailV173({...offer,business:{...b,id:businessId||b.id,slug:businessSlug}});
   });
   /* v265: Share reads the offer back out of the list the page already rendered, so the sheet can
      never describe a different promotion from the card that was tapped. */
@@ -16788,7 +16805,15 @@ function promotionPreviewMarkupV104(item,imageUrl='',business=null){
   /* A locally-picked file is a blob: URL that the storage allowlist rejects by design. Pass it
      as an explicit preview override so the owner sees the real photo before publishing. */
   const localPreview=/^blob:/i.test(String(imageUrl||''))?String(imageUrl):'';
-  return customerPromotionCardV104(preview,merchant,true,localPreview);
+  /* v286: the studio preview is a PICTURE of the customer card, never a working one. It renders the
+     real card, so with CTA kind "Book now" it drew a live <a href="#/b/<slug>"> — a customer route —
+     and one tap took the merchant out of the workspace into the public booking wizard with every
+     unsaved field of the offer they were writing silently discarded. Share and "View details" were
+     inert here regardless, because their handlers are wired on the customer surfaces. Wrapping the
+     card is deliberate: the customer-facing markup must stay byte-identical, so the preview neuters
+     it from outside with `inert` (pointer, keyboard and assistive tech) plus pointer-events:none for
+     engines that predate the attribute. */
+  return `<div class="promotion-preview-card" inert style="pointer-events:none">${customerPromotionCardV104(preview,merchant,true,localPreview)}</div>`;
 }
 function promotionPageCurrentV104(pageRoot,host){
   return Boolean(pageRoot?.isConnected&&host?.contains?.(pageRoot));

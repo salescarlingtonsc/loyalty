@@ -126,11 +126,28 @@ test('copy link is always offered, because it works where nothing else does', ()
 /* ------------------------------------------------------------------ the device sheet comes first */
 
 test('the OS share sheet is tried first, since it is the only path to IG, TikTok and WeChat', () => {
-  assert.match(dispatchSource, /if\(navigator\.share\)\{/);
-  assert.match(dispatchSource, /await navigator\.share\(\{title:brand,text:customerShareMessageV267\(text,shop\),url\}\)/);
-  const nativeAt = dispatchSource.indexOf('navigator.share');
+  /* v286: asked for through the bridge, not navigator.share directly — a Capacitor WKWebView does
+     not expose navigator.share, so the direct branch was skipped on the iOS app and the customer
+     fell to the web sheet, whose target="_blank" channel links a native WebView cannot hand to the
+     installed apps. The bridge calls @capacitor/share when native and navigator.share on the web. */
+  assert.match(dispatchSource,
+    /const shared=await NestlyNativeBridge\.share\(\{title:brand,text:customerShareMessageV267\(text,shop\),url\}\)/);
+  assert.match(dispatchSource, /if\(shared\)\{record\('device'\);return\}/,
+    'only a share the bridge actually performed is recorded as the device channel');
+  assert.doesNotMatch(dispatchSource, /if\(navigator\.share\)/,
+    'the native build must not be gated on a WebView API it does not have');
+  const nativeAt = dispatchSource.indexOf('NestlyNativeBridge.share');
   const fallbackAt = dispatchSource.lastIndexOf('showCustomerShareSheetV264');
-  assert.ok(nativeAt < fallbackAt, 'the in-app sheet is the fallback, not the default');
+  assert.ok(nativeAt >= 0 && nativeAt < fallbackAt, 'the in-app sheet is the fallback, not the default');
+});
+
+test('the bridge really does reach the native share plugin before the web API', async () => {
+  // If this capability ever disappears the fix above silently degrades to the web sheet again.
+  const bridge = await read('app/native-bridge.js');
+  assert.match(bridge, /async share\(\{ title = 'Peekaa', text = '', url = '' \} = \{\}\)/);
+  assert.match(bridge, /if \(isNative && plugins\.Share\?\.share\)/, 'native build uses @capacitor/share');
+  assert.match(bridge, /if \(global\.navigator\.share\)/, 'the web build still gets the OS sheet');
+  assert.match(bridge, /return false;/, 'no sheet available is reported, not thrown — that is the fallback signal');
 });
 
 test('dismissing the OS sheet ends it — no second sheet chasing the customer', () => {
