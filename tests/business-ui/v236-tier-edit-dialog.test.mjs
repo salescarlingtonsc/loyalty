@@ -36,7 +36,8 @@ test('V236 the dialog reuses the app modal system and moves the ONE form node', 
 test('V236 the dialog closes on Close, backdrop and Escape, and restores the form home', () => {
   const open = app.slice(app.indexOf('function openTierDialogV236'), app.indexOf('function closeTierDialogV236'));
   assert.match(open, /if\(e\.target===dialog\)close\(\)/);
-  assert.match(open, /if\(e\.key==='Escape'\)close\(\)/);
+  /* V286: Escape, the focus trap and the Android Back entry come from the shared helper. */
+  assert.match(open, /CUI\.activateDialog\(dialog,\{onClose:close,initialFocus:'#trName'\}\)/);
   assert.match(open, /opener\?\.focus\?\.\(\)/, 'focus returns to the Edit button that opened it');
   const close = app.slice(app.indexOf('function closeTierDialogV236'), app.indexOf('const trBenefitAddV235'));
   assert.match(close, /home\.after\(form\);form\.hidden=true;/);
