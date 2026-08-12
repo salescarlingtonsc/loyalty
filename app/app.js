@@ -12261,15 +12261,23 @@ async function tillPage(){
 
   /* Wipe every trace of a checkout attempt: timers, the evaluation, and the STABLE finalise key.
      Called on reset, on Back, and when toggling modes — a deliberate cancel per §2. */
-  function clearCheckoutState(){
+  /* V286: `abandon` marks a DELIBERATE end of this checkout (Back, reset, walk-in switch, branch
+     change, finalise). Dropping paynowAttempt alone killed the poll and the on-screen attempt but
+     left the sessionStorage PayNow request behind, so the next entry to Record sale resumed it —
+     re-creating the earlier customer's QR against an unrelated sale. A deliberate abandon drops the
+     stored request too. There is no provider cancel API (stripe-connect-command exposes only
+     create_paynow), so a LIVE attempt is never abandoned silently: backToPhoneStep refuses while
+     one is outstanding, and the branch picker is disabled by cartLocked(). */
+  function clearCheckoutState({abandon=false}={}){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
     if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
     evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
+    if(abandon)clearPaynowRequestV142();
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
-    clearCheckoutState();
+    clearCheckoutState({abandon:true});
     /* v281 audit: the catalogue snapshot carries the LOOKED-UP CUSTOMER's entitlements
        (packages, vouchers, welcome offer) alongside the branch items. Dropping it only for
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
@@ -12284,7 +12292,12 @@ async function tillPage(){
      cart was a walk-in, the customer-less catalogue snapshot. */
   function backToPhoneStep(){
     if(checkoutError){toast('Finish or retry the unfinished items first');return}
-    clearCheckoutState();
+    /* V286: Back used to abandon a live PayNow QR — the poll died, the attempt vanished from the
+       screen, and the customer still paid a sale the server then fulfilled, so the cashier took the
+       money twice. Nothing can cancel a Stripe PayNow attempt from here, so the only honest answer
+       is to refuse and keep the attempt (and its "Show QR" button) on screen until it settles. */
+    if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
+    clearCheckoutState({abandon:true});
     catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];draw();
   }
@@ -12300,7 +12313,7 @@ async function tillPage(){
   const canOfferWalkin=()=>canRecordSales&&catalogueSelectionEnabled&&!pendingTillRedemptionScan;
   function startWalkinSale(){
     if(!canOfferWalkin())return;
-    clearCheckoutState();
+    clearCheckoutState({abandon:true}); // V286: switching to a walk-in abandons any stored PayNow request
     cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
     catalog=null;catalogError=null; // never reuse a catalogue loaded with another customer's entitlements
@@ -12502,6 +12515,15 @@ async function tillPage(){
   async function loadCatalog(){
     if(catalog||catalogLoading) return;
     catalogLoading=true;catalogError=null;
+    /* V286: the ONE async path on this surface with no epoch guard. Switching branch (or customer)
+       while this fetch is in flight cleared catalog, but the redraw's loadCatalog() bounced off
+       catalogLoading — so when the old response landed it published the PREVIOUS branch's services,
+       products and the previous customer's entitlements under the new label, and nothing refetched.
+       Staff could then tap items business_get_checkout_catalogue_v94 deliberately withheld, and
+       evaluate_checkout rejected the sale with a generic price-check error. Capture what this fetch
+       is for and discard it if either changed; the bail redraws, and drawCartComposer's
+       `catalog===null` re-issues the load for the branch actually on screen. */
+    const forBranchV286=tillBranchId, forClientV286=cust?cust.client_id:null, forWalkinV286=walkin;
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
@@ -12530,6 +12552,8 @@ async function tillPage(){
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
+    // V286: stale response — the branch, the customer or the walk-in flag moved on while it was in flight.
+    if(tillBranchId!==forBranchV286||(cust?cust.client_id:null)!==forClientV286||walkin!==forWalkinV286){draw();return;}
     if(checkout.error||!checkout.data){
       catalogError=checkout.error?.message||'The checkout catalogue could not be loaded.';
       draw();return;
@@ -13088,7 +13112,7 @@ async function tillPage(){
       tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;
       /* A branch change invalidates every item and evaluation. Clear the cart, then ask the
          server for this branch's effective catalogue before another selection is possible. */
-      cart=[];catalog=null;catalogError=null;clearCheckoutState();
+      cart=[];catalog=null;catalogError=null;clearCheckoutState({abandon:true});
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
     /* V287: re-attributing re-renders so the selected teammate is visible on the control that
@@ -13463,7 +13487,7 @@ async function tillPage(){
       duplicate:r?r.duplicate:false,businessName:S.biz.name,
       branchName:accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'',
       paidAt:new Date().toISOString(),paymentReference:null};
-    checkoutError=null;clearCheckoutState();step=3;draw();
+    checkoutError=null;clearCheckoutState({abandon:true});step=3;draw(); // V286: a finalised sale retires any stored PayNow request
   }
   function drawStep3(){
     if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
