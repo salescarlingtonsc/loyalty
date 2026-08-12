@@ -143,9 +143,14 @@ test('advanced authoring is collapsed and optional growth tools are acknowledged
   assert.match(grow,/Advanced rule controls/);
   assert.doesNotMatch(grow,/Program Studio|Stored value/);
   assert.match(grow,/taxonomy, versions and rollback/);
-  for(const module of ['referrals','memberships','giftcards']){
+  /* V301 (owner: "i already removed gift card - but it keeps appearing"): gift cards are no
+     longer one of Grow's optional growth tools — growOverviewSnapshot dropped its
+     modules.includes('giftcards')-gated read along with the Programmes row it fed, since gift
+     cards are sold at the counter (Serve & sell) with their switch under Customer Interface. */
+  for(const module of ['referrals','memberships']){
     assert.match(grow,new RegExp(`modules\\.includes\\('${module}'\\)`));
   }
+  assert.doesNotMatch(grow,/modules\.includes\('giftcards'\)/);
   assert.match(grow,/Optional growth tools/);
 });
 

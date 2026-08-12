@@ -24,7 +24,10 @@ test('mountGrowSurface refuses unknown surfaces instead of crashing', () => {
 test('programme-view tab hashes never mount an engine surface', () => {
   // V271 added 'overview' and 'history'; they are views of this page, so they must be in the same
   // guard — a view hash that reached the surface dictionary is what crashed this page once.
-  assert.match(app, /hashParamIsProgrammeView=\['overview','history','ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/);
+  /* V301 ADDITION (owner 2026-08-13: the one-page setup wizard): 'setup' is another VIEW of
+     this page, so it joins the same guard for the same reason 'overview' and 'history' did — a
+     view hash that reached the surface dictionary is what crashed this page once. */
+  assert.match(app, /hashParamIsProgrammeView=\['overview','history','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)/);
   assert.match(app, /if\(!hashParamIsProgrammeView&&\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|routedSurface==='studio'\)\)/);
 });
 

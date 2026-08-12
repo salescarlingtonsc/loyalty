@@ -54,10 +54,15 @@ test('configured and not-yet-configured programme families share the overview',(
 test('overview reads enough server state to label programme status without inventing setup',()=>{
   assert.match(snapshot,/referral_programs/);
   assert.match(snapshot,/membership_plans/);
-  assert.match(snapshot,/business_get_checkout_preferences_v102/);
+  /* V301 (owner: "i already removed gift card - but it keeps appearing"): the Gift cards row
+     this checkout-preferences read fed is gone (see v271 test + growProgrammeEntriesV271), and
+     it was the only reader of the result inside growOverviewSnapshot, so the read left with it —
+     one less RPC per Programmes Overview load. Gift cards still call this RPC from their own
+     surfaces (Serve & sell, Customer Interface); this assertion only concerns this snapshot. */
+  assert.doesNotMatch(snapshot,/sb\.rpc\('business_get_checkout_preferences_v102'/);
   // V271 added created_at so Programmes History can say when a bring-back reward ran.
   assert.match(snapshot,/retention_programs'\)\.select\('id,name,active,goal_visits,period_days,starts_on,created_at'/);
-  assert.match(snapshot,/overviewErrors:[\s\S]*referrals:[\s\S]*memberships:[\s\S]*giftcards:/);
+  assert.match(snapshot,/overviewErrors:[\s\S]*referrals:[\s\S]*memberships:[\s\S]*promotions:/);
   assert.match(grow,/snapshot\.retention\.length\?snapshot\.retention\.map/);
   assert.match(grow,/const retentionOverviewState=program=>/);
   assert.match(grow,/startsOn>growAsOfDate/);
@@ -66,8 +71,9 @@ test('overview reads enough server state to label programme status without inven
   assert.match(grow,/title:['"]Bring-back rewards['"][\s\S]*status:['"]Not set up['"]/);
   assert.match(grow,/snapshot\.referral\?['"]Paused['"]:['"]Not set up['"]/);
   assert.match(grow,/snapshot\.memberships\.length\?['"]Paused['"]:['"]Not set up['"]/);
-  /* V294: the gift-card status pill left with its row; the snapshot read above stays so
-     overviewErrors.giftcards stays honest for the retry banner. */
+  /* V301: overviewErrors.giftcards left with the read it reported on — there is no longer a
+     retry banner to keep honest. */
+  assert.doesNotMatch(snapshot,/overviewErrors:[\s\S]*giftcards:/);
   for(const source of ['loyalty','rewards','birthday']){
     assert.match(grow,new RegExp(`overviewErrors\\?\\.${source}`),`${source} read failures need a row-level unavailable state`);
   }

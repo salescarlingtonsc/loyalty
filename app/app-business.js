@@ -7898,7 +7898,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     </div></div>${birthdayEditor}`;
   applyGrowLoyaltyEditorIsolationV139(routeMain,editorIntent);
   const growDraftBarPublish=$('growDraftBarPublishV170');
-  if(growDraftBarPublish)growDraftBarPublish.onclick=()=>openProtectedGrowPublishReview(draftVersionId);
+  /* V301: the persistent draft banner's "Review & publish" now opens the setup wizard on its
+     final step — the change list and the publish button on one page, no modal that could open
+     twice. openProtectedGrowPublishReview and #/studio/<draft> are untouched: the Studio rule
+     builder and the editor's own Review button still use them. */
+  if(growDraftBarPublish)growDraftBarPublish.onclick=()=>nav('#/grow/setup/review');
   const redemptionToggle=$('loyaltyCustomerRedemptionEnabled');
   const redemptionStatus=$('loyaltyCustomerRedemptionStatus');
   const redemptionSave=$('saveLoyaltyCustomerRedemption');
@@ -9200,20 +9204,23 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
   const membershipsRequest=modules.includes('memberships')
     ?sb.from('membership_plans').select('id,name,active,created_at').eq('business_id',S.biz.id).order('created_at',{ascending:false})
     :Promise.resolve(none);
-  const giftcardsRequest=modules.includes('giftcards')
-    ?sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})
-    :Promise.resolve({data:null,error:null});
+  /* V301 (owner: "i already removed gift card - but it keeps appearing"): this snapshot used to
+     also fetch checkout preferences here to synthesize a Gift cards programme row. That row is
+     gone (see growProgrammeEntriesV271) and nothing else in this function reads the result, so
+     the read itself is retired with it — one less RPC per Programmes Overview load. Gift cards
+     still read business_get_checkout_preferences_v102 from their own surfaces (Serve & sell,
+     Customer Interface); this was the only caller inside growOverviewSnapshot. */
   const promotionsRequest=S.myRole==='owner'&&canRewards
     ?sb.rpc('business_get_promotion_editor_v155',{p_business:S.biz.id})
     :Promise.resolve({data:{items:[],entitlement:null},error:null});
   const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},
     {data:rewards,error:rewardsError},{data:products,error:productsError},
     {data:referrals,error:referralsError},{data:memberships,error:membershipsError},
-    {data:giftcardPreferences,error:giftcardsError},{data:promotions,error:promotionsError},
+    {data:promotions,error:promotionsError},
     {data:rewardBranches,error:rewardBranchesError},{data:rewardServices,error:rewardServicesError},
     [{data:branchNames,error:branchNamesError},{data:serviceNames,error:serviceNamesError},{data:tierNames,error:tierNamesError}]]
     =await Promise.all([businessRequest,loyaltyRequest,rewardsRequest,productsRequest,
-      referralsRequest,membershipsRequest,giftcardsRequest,promotionsRequest,
+      referralsRequest,membershipsRequest,promotionsRequest,
       rewardBranchesRequest,rewardServicesRequest,eligibilityNamesRequest]);
   if(!isCurrent())return null;
   if(businessError)throw businessError;
@@ -9272,9 +9279,6 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     referral:referralsError?null:(referrals||[])[0]||null,
     memberships:membershipsError?[]:memberships||[],
     promotions:promotionsError?[]:(Array.isArray(promotions?.items)?promotions.items:[]),
-    giftcards:giftcardsError?null:{available:giftcardPreferences?.status==='available'
-      &&typeof giftcardPreferences?.gift_card_sales_enabled==='boolean',
-      enabled:giftcardPreferences?.gift_card_sales_enabled===true},
     draft:draftHeaderV268,
     draftDetail:draftDetailV268,
     draftDetailError:Boolean(draftDetailErrorV268),
@@ -9289,8 +9293,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
       tiers:tierNamesError?null:tierNames||[]},
     overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError),
       retention:Boolean(retentionError),referrals:Boolean(referralsError),memberships:Boolean(membershipsError),
-      promotions:Boolean(promotionsError),
-      giftcards:Boolean(giftcardsError)||Boolean(modules.includes('giftcards')&&giftcardPreferences?.status!=='available')}
+      promotions:Boolean(promotionsError)}
   };
 }
 /* v215 — welcome offer for first-time sign-ups.
@@ -10505,7 +10508,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the list — one is a columnar at-a-glance table of what is running, the other is what has
      stopped — which is why they earn a strip the V180 filter tabs did not. The older 'ongoing',
      'available' and 'settings' hashes still resolve so no existing link or history entry breaks. */
-  const programmeView=['overview','history','ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
+  /* V301 (owner 2026-08-13: "ONE page with step subtabs (Step 1 → 2 → 3 → …)… publish at
+     completion, no popups"): 'setup' is a fourth VIEW of this same page, not a new route — the
+     rail keeps Programmes lit, the three rail children keep working, and the wizard reuses the
+     snapshot growPage has already read rather than loading the programme a second time.
+     #/grow/setup/review carries 'review' in the focus slot and opens it on the final step. */
+  const programmeView=['overview','history','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
+  const growSetupStepV301=programmeView==='setup'&&String(routedFocus||'')==='review'?4:1;
   /* V229: the Ongoing / To set up views are flat lists; a drilled topic only makes sense from
      the tile overview, so arriving via those views clears it. */
   if(programmeView!=='list')growTopicV229='';
@@ -10561,8 +10570,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      draft must keep its live name here or the list would promise something no customer can see.
      What was missing is the reason: without a marker the owner reads the old name as a lost edit.
      Say the edit is saved, say it is not live, and put the publish step one tap away. */
+  /* V301: the wizard's own last step IS the review, so the banner that routes to it would be a
+     second, contradictory door on the same screen. */
   const growDraftPendingId=snapshot.draft?.id||null;
-  const growUnpublishedMarkerV198=growDraftPendingId&&canRewards
+  const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'
     ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
@@ -10623,7 +10634,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTopicSectionV235=growActiveTopicV229?.key==='stamps'?'points':(growActiveTopicV229?.key||null);
   /* V271: Overview and History replace the category list rather than sitting above it — showing
      both would put the same programme on the page twice under two different shapes. */
-  const growCategoryViewV271=!['overview','history'].includes(programmeView);
+  const growCategoryViewV271=!['overview','history','setup'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -10631,7 +10642,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      means live; everything else is work outstanding, and its call to action says which kind of
      work — finishing a draft is not the same job as starting from nothing. */
   const growTopicOngoingV244=topic=>topic.status[1]==='on';
+  /* V301: the two point-engine cards are the cold-start doors the owner reported as unusable, so
+     an owner who has never finished setting a programme up gets the wizard instead of the tile
+     drill. "Never finished" is deliberately narrow — no published configuration at all, or a
+     published one that is neither running nor carrying a single reward. A PAUSED programme WITH
+     a catalogue is a configured programme its owner is managing, and sending them to a four-step
+     wizard would take away the reward history, the tiers and the archived rewards the drill
+     holds. Once anything is live, every existing drill and inline editor is reached exactly as
+     before — editing a running programme is not the wizard's job. */
+  const growSetupEntryV301=key=>canSetupGrow&&['points','stamps'].includes(String(key||''))
+    &&!(snapshot.currentVersion&&snapshot.loyalty&&(loyaltyLive||(snapshot.rewards||[]).length>0));
   const growTopicActionV244=topic=>{
+    if(growSetupEntryV301(topic.key))return growDraftPendingId?'Continue set up →':'Set up →';
     if(growTopicOngoingV244(topic))return 'View →';
     const label=String(topic.status[0]||'');
     if(label==='Draft')return 'Finish setup →';
@@ -10823,9 +10845,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       type:'Membership',started:plan?.created_at||null,ended:null,
       state:plan?.active===false?'retired':'live',
       customers:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
-    if(snapshot.giftcards?.available)entries.push({name:'Gift cards',type:'Gift cards',
-      started:null,ended:null,state:snapshot.giftcards.enabled?'live':'paused',
-      customers:null,detail:''});
+    /* V301 (owner: "i already removed gift card - but it keeps appearing"): gift cards left the
+       Programmes surface with V294 (moved to Serve & sell — sold at the counter, not configured
+       as a programme) and V296 (its enable switch retargeted to Customer Interface). Neither
+       change touched businesses.gift_card_sales_enabled, which is exactly the flag this row's
+       gate read — so hiding every entry point into a Gift cards programme still left this
+       synthesized row reappearing on its own. Do not resurrect it here. */
     return entries;
   })();
   const growOverviewRowsV271=growProgrammeEntriesV271.filter(entry=>entry.state==='live');
@@ -10872,11 +10897,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Programmes</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Programmes</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growTilesHtmlV229:''}
       ${growTilesModeV229&&canWinback?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
+      ${programmeView==='setup'?(canSetupGrow
+        ?'<div id="growSetupHostV301"></div>'
+        :CUI.emptyState({iconName:'loyalty',title:canRewards?'Owner access only':'Loyalty is not included',
+          body:canRewards?'Setting up the rewards programme is an owner job. You can review what is running from the Programmes list.':'This workspace does not include the loyalty module, so there is no rewards programme to set up.',
+          actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})):''}
       ${programmeView==='overview'?growOverviewTableV271:''}
       ${programmeView==='history'?growHistoryTableV271:''}
       ${topicOnV229('points')?`
@@ -10951,7 +10981,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
       </div></div>      `:''}
     </section>
-    ${(growActiveTopicV229?.key==='points'||(!growTilesModeV229&&!growActiveTopicV229)||routedSurface==='studio')?`
+    ${programmeView!=='setup'&&(growActiveTopicV229?.key==='points'||(!growTilesModeV229&&!growActiveTopicV229)||routedSurface==='studio')?`
     <details class="grow-secondary" id="growSecondarySettings">
       <summary>More reward settings</summary><div class="grow-secondary-body">
       <div class="grow-secondary-intro"><h2>How the programme fits together</h2><p class="muted small">Open these controls only when you want to fine-tune the automatic draft or review reward economics.</p></div>
@@ -10999,6 +11029,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
+  /* V301: the wizard mounts into the page card it belongs to and owns only its own node, so the
+     rail, the header and the Programmes shell around it never re-render between steps. */
+  if(programmeView==='setup'&&canSetupGrow){
+    growSetupWizardV301({host:$('growSetupHostV301'),snapshot,isCurrent:isGrowCurrent,startStep:growSetupStepV301}).catch(fail);
+  }
   if(['ongoing','available'].includes(programmeView)){
     let visibleCategories=0;
     outerMain.querySelectorAll('.programme-category').forEach(category=>{
@@ -11400,6 +11435,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      immediately — an owner who just switched the offer on must not still see "Not set up". */
   /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
   outerMain.querySelectorAll('[data-grow-topic-v229]').forEach(tile=>tile.onclick=()=>{
+    /* V301: a point-engine card that is not live yet opens the one-page wizard rather than the
+       drill — the drill is where an owner MANAGES a running programme, and the owner's report is
+       that it is not where anyone can START one. */
+    if(growSetupEntryV301(tile.dataset.growTopicV229))return nav('#/grow/setup');
     growTopicV229=tile.dataset.growTopicV229;
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
@@ -11437,9 +11476,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the dialog's Confirm did. The dialog is kept for the one path it is actually about — a
      business with no published loyalty configuration, where there is a recommendation to
      review and no live version to clone. */
+  /* V301 (owner 2026-08-13: "Business owners cannot set up rewards"). The cold start for the
+     REWARDS family is the whole complaint — three stacked popups and ~13 clicks — so it now goes
+     to the one-page wizard. openRewardsAutoSetup keeps its one remaining caller, the Bring-back
+     cold start, which is a different engine with no wizard of its own; deleting it there would
+     have removed a capability rather than the ceremony the owner objected to. */
   const growProgrammeExistsV258=Boolean(snapshot.currentVersion&&snapshot.loyalty);
   const openGrowEditorV258=async(action)=>{
     if(growDraftVersionId)return mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+    if(canSetupGrow&&!growProgrammeExistsV258&&action.surface==='rewards')return nav('#/grow/setup');
     if(!canSetupGrow||!growProgrammeExistsV258)return openRewardsAutoSetup(action);
     const {data,error}=await sb.rpc('create_loyalty_config_draft',{
       p_business:S.biz.id,p_based_on:snapshot.currentVersion,p_source:'owner_editor'});
@@ -11480,6 +11525,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         activateTarget:kind==='add',rewardId:kind==='catalogue'?button.dataset.rewardId||null:null,
         birthdayId:kind==='birthday'?button.dataset.birthdayId||null:null,
         entryContext:growEntryContextV294()};
+    /* V301: the Point system row's "Set up →" — the state where there is no earning rule at all
+       — is a cold start, so it lands in the wizard. Its "Edit →" (a rule already exists) still
+       opens the editor exactly as before. */
+    if(kind==='earning'&&!rewardJourney.earning&&canSetupGrow)return nav('#/grow/setup');
     if(!growDraftVersionId){
       if(action.surface==='winback'&&canSetupWinback){
         (async()=>{
@@ -11532,7 +11581,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     };
   }
   const growOverviewDraftPublish=$('growOverviewDraftPublishV198');
-  if(growOverviewDraftPublish)growOverviewDraftPublish.onclick=()=>openProtectedGrowPublishReview(growDraftPendingId);
+  /* V301: "Review & publish" lands on the wizard's own last step — the same change list, the
+     same publish call, on the page the owner is already reading — instead of a separate studio
+     screen that auto-opened a modal over itself. #/studio/<draft> still exists and still works;
+     the studio rule builder links it. */
+  if(growOverviewDraftPublish)growOverviewDraftPublish.onclick=()=>nav('#/grow/setup/review');
   const growRewardsRetry=$('growRewardsRetry');
   if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam,routedFocus);
   document.querySelectorAll('[data-reward-cost]').forEach(input=>input.addEventListener('input',()=>{
@@ -11569,7 +11622,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      V172: #/grow/ongoing|available|settings put the TAB name in the hashParam slot — those
      are views of this overview, not engine deep-links, and must never mount a surface
      (mounting built {surface:'overview'} and crashed on the surface dictionary). */
-  const hashParamIsProgrammeView=['overview','history','ongoing','available','settings'].includes(String(hashParam||''));
+  const hashParamIsProgrammeView=['overview','history','ongoing','available','settings','setup'].includes(String(hashParam||''));
   if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
@@ -12717,6 +12770,539 @@ function growBirthdayPendingChangesV291(live,draft){
     .filter(row=>row.before!==row.after)
     .map(row=>({label:row.label,live:String(row.show(row.before)),pending:String(row.show(row.after))}));
 }
+/* ==================== V301 Programmes setup wizard — #/grow/setup ====================
+   Owner report 2026-08-13: "Business owners cannot set up rewards." The cold start was ~13
+   clicks through three STACKED popups — rewardAutoSetupModal, then rewardDialogV238, then
+   growPubModal. Closing any one of them dumped the owner on a page they had not chosen, drafts
+   piled up unpublished (the demo tenant carried 8 open drafts and a paused programme), and the
+   publish confirmation could open TWICE: openPublishFlow was auto-invoked through a
+   queueMicrotask while its own button stayed enabled, so a second #growPubModal duplicated the
+   first's ids and its buttons were wired to the dialog underneath — dead buttons.
+
+   Owner directive: "ONE page with step subtabs (Step 1 → 2 → 3 → …), select-and-Next simplicity
+   a layman can complete unaided, publish at completion, no popups."
+
+   This is a different DOOR onto the existing engine, never a second writer. Every Next saves
+   through the SAME create_loyalty_config_draft / save_loyalty_config_draft the editor writes
+   through, and Publish runs the SAME preview_publish_impact → publish_loyalty_config pair the
+   review page runs. Nothing here touches loyalty_programs, businesses.points_mode or a ledger
+   directly — points_mode stays an advanced-editor concern, exactly as V229 left it. */
+const GROW_SETUP_STEPS_V301=[[1,'Choose'],[2,'Earning'],[3,'Reward'],[4,'Go live']];
+/* The publish gate's "What changes for customers" list, distilled for the wizard's last step.
+   It reads the SAME module-scope comparisons studioPublishReviewPage reads —
+   growPublishFieldRowsV170 plus the V291 reward / birthday / bring-back diffs — so the two
+   screens can never disagree about what publishing does, and the birthday and bring-back
+   changes riding in the same draft are listed here too: publish_loyalty_config publishes the
+   whole bundle, and listing only the rewards would be a lie of omission.
+   Fail-soft exactly like the review page: a section that could not be read is NAMED as
+   unreadable rather than reported as "nothing changed", and it never blocks publishing. */
+async function growSetupComparisonV301(draftVersionId){
+  let draftResult=null,liveResult=null,diff=null;
+  try{
+    const [loyaltyDraft,liveProgram,liveRewards,liveBranchRows,liveServiceRows,
+      branchRows,serviceRows,tierRows,liveRetention,liveBirthday,draftRetention,draftBirthday]=await Promise.all([
+      sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId}),
+      sb.from('loyalty_programs').select('active,loyalty_model,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,expiry_mode,expiry_days')
+        .eq('business_id',S.biz.id).limit(1),
+      sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold').eq('business_id',S.biz.id),
+      sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
+      sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
+      sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+      sb.from('services').select('id,name').eq('business_id',S.biz.id),
+      sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id),
+      sb.from('businesses').select('active_config_version_id').eq('id',S.biz.id).single()
+        .then(row=>row.error||!row.data?.active_config_version_id
+          ?{data:[],error:row.error||null}
+          :sb.from('retention_programs').select('id,name,active,goal_visits,period_days')
+            .eq('business_id',S.biz.id).eq('current_config_version_id',row.data.active_config_version_id)),
+      sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id}),
+      sb.rpc('get_retention_config_draft',{p_config_version:draftVersionId}),
+      sb.rpc('get_birthday_program_draft',{p_config_version:draftVersionId})
+    ]);
+    draftResult=loyaltyDraft;liveResult=liveProgram;
+    const pseudoSnapshot={
+      rewards:liveRewards.error?[]:(liveRewards.data||[]),
+      rewardEligibility:{
+        branches:liveBranchRows.error?null:(liveBranchRows.data||[]),
+        services:liveServiceRows.error?null:(liveServiceRows.data||[])},
+      eligibilityNames:{
+        branches:branchRows.error?null:(branchRows.data||[]),
+        services:serviceRows.error?null:(serviceRows.data||[]),
+        tiers:tierRows.error?null:(tierRows.data||[])}};
+    const unit=String(draftResult?.data?.program?.loyalty_model||'')==='stamps'?'stamps':'points';
+    diff={unit,
+      rewards:(draftResult?.error||liveRewards.error)?null:growRewardPendingChangesV291({
+        liveRewards:growAttachEligibilityV291(pseudoSnapshot.rewards,pseudoSnapshot.rewardEligibility),
+        draftRewards:growAttachDraftEligibilityV291(Array.isArray(draftResult?.data?.rewards)?draftResult.data.rewards:[]),
+        options:growRewardDiffOptionsFromSnapshotV291(pseudoSnapshot,unit)}),
+      retention:(draftRetention.error||liveRetention.error)?null:growRetentionPendingChangesV291({
+        livePrograms:liveRetention.data||[],
+        draftPrograms:Array.isArray(draftRetention.data?.programs)?draftRetention.data.programs:[]}),
+      birthday:(draftBirthday.error||liveBirthday.error)?null:growBirthdayPendingChangesV291(
+        (Array.isArray(liveBirthday.data?.programs)?liveBirthday.data.programs[0]:null)||null,
+        (Array.isArray(draftBirthday.data?.programs)?draftBirthday.data.programs[0]:null)||null),
+      draftRewards:Array.isArray(draftResult?.data?.rewards)?draftResult.data.rewards:[]};
+  }catch(error){return {error,lines:[],unreadable:[],draftActive:null}}
+  if(draftResult?.error||liveResult?.error)
+    return {error:draftResult?.error||liveResult?.error,lines:[],unreadable:[],draftActive:null};
+  const lines=[];
+  const pushChange=(name,label,before,after)=>lines.push(
+    `<li>${name?`<b data-merchant-content>${esc(name)}</b> — `:''}${esc(label)}: <s>${esc(before)}</s> → <b>${esc(after)}</b></li>`);
+  const pushPlain=(name,text)=>lines.push(`<li><b data-merchant-content>${esc(name)}</b> — ${esc(text)}</li>`);
+  growPublishFieldRowsV170((liveResult.data||[])[0]||null,draftResult.data?.program||null)
+    .forEach(row=>pushChange('',row.label,row.before,row.after));
+  if(diff.rewards){
+    const byId=new Map(diff.draftRewards.map(reward=>[String(reward.reward_id||reward.id||''),reward]));
+    diff.rewards.changed.forEach((changes,id)=>{
+      const reward=byId.get(String(id));
+      const name=String(reward?.customer_name||reward?.name||'Reward').trim();
+      changes.forEach(change=>pushChange(name,change.label,change.live,change.pending));
+    });
+    diff.rewards.added.forEach(reward=>pushPlain(reward.name,`now offered for ${reward.cost} ${diff.unit}`));
+    diff.rewards.removed.forEach(reward=>pushPlain(reward.name,'no longer offered'));
+  }
+  if(diff.birthday?.length)diff.birthday.forEach(change=>pushChange('Birthday benefit',change.label,change.live,change.pending));
+  if(diff.retention){
+    diff.retention.changed.forEach(changes=>{
+      const name=changes.find(change=>change.label==='Name')?.pending||'Bring-back rule';
+      changes.forEach(change=>pushChange(name,change.label,change.live,change.pending));
+    });
+    diff.retention.added.forEach(rule=>pushPlain(rule.name,'new bring-back rule, starts when you publish'));
+  }
+  const unreadable=[diff.rewards?'':'rewards',diff.retention?'':'bring-back rules',diff.birthday?'':'the birthday benefit'].filter(Boolean);
+  return {error:null,lines,unreadable,draftActive:draftResult.data?.program?.active??null};
+}
+/* The wizard itself. ONE node, four steps, zero dialogs — the tests assert the absence of
+   `.modal` inside it, because "no popups" is the whole point of this surface. State lives in
+   this closure so a step change never loses a typed value, and only the wizard's own node is
+   re-rendered, so the Programmes page around it (and the rail) is untouched between steps. */
+async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
+  if(!host)return;
+  const currency=S.biz?.currency||'SGD';
+  const live=snapshot?.loyalty||null;
+  const draftProgram=snapshot?.draftDetail?.program||null;
+  /* The DRAFT is what the owner is editing; the published row is the fallback for a firm with
+     no draft yet. Reading the draft first is what makes a resumed setup show what was already
+     saved rather than the numbers customers still see. */
+  const base=draftProgram||live||null;
+  const baseModel=String(base?.loyalty_model||'');
+  /* "Fresh" = nothing has ever reached a customer. It decides exactly three things: which model
+     a points choice writes, whether the cost-per-point default is written, and whether at least
+     one reward is required before the owner can leave step 3. */
+  const fresh=!(snapshot?.currentVersion&&live);
+  const pairSet=Number(base?.redeem_points)>0&&Number(base?.reward_credit_cents)>0;
+  /* V262's basis, unchanged: cost per point is STORED as the redeem_points ÷ reward_credit_cents
+     ratio, so the wizard writes that same pair rather than inventing a second number that could
+     disagree with the Point system editor. */
+  const costBasis=Number(base?.redeem_points)>0?Math.round(Number(base.redeem_points)):800;
+  const rewardListFrom=rows=>(Array.isArray(rows)?rows:[])
+    .filter(reward=>reward?.active!==false)
+    .map(reward=>({id:String(reward.reward_id||reward.id||''),
+      name:String(reward.customer_name||reward.name||'Reward').trim(),
+      points:Math.max(0,Number(reward.cost_points)||0),
+      budgetCents:Math.max(0,Number(reward.estimated_cost_cents)||0)}));
+  const state={
+    step:Math.min(4,Math.max(1,Number(startStep)||1)),
+    visited:new Set([1]),
+    family:baseModel==='stamps'?'stamps':'points',
+    model:baseModel||'points_tiers',
+    versionId:snapshot?.draft?.id||null,
+    snapshotHash:snapshot?.draft?.snapshot_hash||null,
+    basedOn:snapshot?.currentVersion||null,
+    earn:Number(base?.earn_points_per_dollar)>0?Number(base.earn_points_per_dollar):1,
+    stampSpend:Number(base?.stamp_per_cents)>0?Number(base.stamp_per_cents)/100:5,
+    stampTarget:Number(base?.stamp_target)>0?Math.round(Number(base.stamp_target)):8,
+    classicRedeem:Number(base?.redeem_points)>0?Math.round(Number(base.redeem_points)):800,
+    classicCredit:Number(base?.reward_credit_cents)>0?Number(base.reward_credit_cents)/100:20,
+    rewards:rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:snapshot?.rewards),
+    form:null,comparison:null,
+    keepPaused:false,ack:false,needAck:false,impactRules:[],
+    busy:false,error:'',published:false,publishedSummary:null
+  };
+  for(let number=1;number<=state.step;number++)state.visited.add(number);
+  const writesCostDefault=()=>state.family==='points'&&state.model!=='classic'&&(fresh||!pairSet);
+  const costPerPointCents=()=>writesCostDefault()?1
+    :(pairSet?Number(base.reward_credit_cents)/Number(base.redeem_points):1);
+  const unitWord=(value,plural)=>`${value} ${Number(value)===1?(plural==='stamps'?'stamp':'point'):(plural==='stamps'?'stamps':'points')}`;
+  const rewardUnit=()=>state.family==='stamps'?'stamps':'points';
+  /* Points keeps the points-family model the firm already runs (classic stays classic, so its
+     fixed pair is never orphaned); a firm with no model at all gets points_tiers, because that
+     is the catalogue engine every named reward on this page is claimed through. */
+  const modelForFamily=()=>state.family==='stamps'?'stamps'
+    :(baseModel&&baseModel!=='stamps'?baseModel:'points_tiers');
+  const earnLine=()=>state.family==='stamps'
+    ?`${currency} ${Number(state.stampSpend||0).toFixed(2)} spent → 1 stamp`
+    :`${currency} 1 spent → ${unitWord(state.earn,'points')}`;
+  const rewardLine=()=>state.model==='classic'
+    ?`${unitWord(state.classicRedeem,'points')} → ${currency} ${Number(state.classicCredit||0).toFixed(2)} credit`
+    :state.rewards.length
+      ?state.rewards.map(reward=>`${reward.name} — ${unitWord(reward.points,rewardUnit())}`).join(' · ')
+      :'No reward yet';
+  function exampleText(){
+    if(state.family==='stamps'){
+      const spend=Number(state.stampSpend)>0?Number(state.stampSpend):5;
+      return `Spend ${currency} 10 → ${unitWord(Math.floor(10/spend),'stamps')}`;
+    }
+    const rate=Number(state.earn)>0?Number(state.earn):1;
+    return `Spend ${currency} 10 → ${unitWord(Math.round(rate*10*100)/100,'points')}`;
+  }
+  function rewardHintText(){
+    if(state.family==='stamps')return 'Type what the reward costs you, then how many stamps a customer needs for it.';
+    return `One point costs you ${currency} ${(Math.max(1,costPerPointCents())/100).toFixed(3)}. Type your cost and the points fill in — change them if you want.`;
+  }
+  /* Every save goes through here. The draft is created on the FIRST save, never on page load,
+     so a wizard the owner browsed away from leaves no orphan draft behind; the snapshot hash is
+     carried and refreshed from each response; and a failure comes back as a message the caller
+     prints beside the step it belongs to, without touching a single typed value. */
+  const saveDraft=async config=>{
+    if(!state.versionId){
+      const {data,error}=await sb.rpc('create_loyalty_config_draft',{
+        p_business:S.biz.id,p_based_on:state.basedOn,p_source:'owner_setup_wizard_v301'});
+      if(error)return {ok:false,error};
+      if(!data?.version_id)return {ok:false,error:new Error('The editable draft was not returned.')};
+      state.versionId=data.version_id;
+      state.snapshotHash=data.snapshot_hash||null;
+    }
+    const {data,error}=await sb.rpc('save_loyalty_config_draft',{
+      p_version:state.versionId,p_config:config,p_expected_snapshot_hash:state.snapshotHash||null});
+    if(error)return {ok:false,error};
+    state.snapshotHash=data?.snapshot_hash||null;
+    return {ok:true};
+  };
+  /* After a reward write the draft is re-read so this step lists what was actually stored,
+     including the id the server minted for a new reward. Fail-soft: an unreadable re-read keeps
+     the list as it was rather than blanking a reward the owner just created. */
+  const refreshRewards=async()=>{
+    if(!state.versionId)return;
+    const {data,error}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:state.versionId});
+    if(error||!data)return;
+    if(data.snapshot_hash)state.snapshotHash=data.snapshot_hash;
+    state.rewards=rewardListFrom(data.rewards);
+  };
+  const suggestionsV301=()=>{
+    const cents=Math.max(1,costPerPointCents());
+    const make=(name,budgetCents)=>({name,budgetCents,points:Math.max(1,Math.ceil(budgetCents/cents))});
+    return [make('Free drink',300),make('Free small treat',500),make(`${currency} 5 off`,500)];
+  };
+  const errBlock=()=>state.error
+    ?`<div class="err" role="alert">${esc(state.error)}<div class="row" style="margin-top:10px"><button type="button" class="btn ghost sm" id="growSetupRetryV301">Retry</button></div></div>`
+    :'';
+  const stepperHtml=()=>`<ol class="grow-setup-steps-v301" aria-label="Setup steps">${GROW_SETUP_STEPS_V301.map(([number,label])=>{
+    const done=number<state.step,current=number===state.step;
+    const reachable=state.visited.has(number)||number<state.step;
+    return `<li><button type="button" class="grow-setup-step-v301${current?' is-current':''}${done?' is-done':''}" data-grow-setup-goto-v301="${number}"${current?' aria-current="step"':''}${reachable?'':' disabled'}><span class="grow-setup-step-num-v301" aria-hidden="true">${done?'✓':number}</span><span class="grow-setup-step-label-v301">${esc(label)}</span></button></li>`;
+  }).join('')}</ol>`;
+  const stepOneHtml=()=>`<p class="grow-setup-lead-v301">What do customers collect?</p>
+    <div class="grow-setup-options-v301" role="radiogroup" aria-label="What customers collect">
+      <button type="button" class="grow-setup-option-v301${state.family==='points'?' is-picked':''}" role="radio" aria-checked="${state.family==='points'}" data-grow-setup-family-v301="points">
+        <span class="grow-setup-option-icon-v301">${CUI.icon('till',{size:26})}</span><b>Points</b>
+        <span class="muted small">Customers collect points when they spend. They swap points for a reward.</span></button>
+      <button type="button" class="grow-setup-option-v301${state.family==='stamps'?' is-picked':''}" role="radio" aria-checked="${state.family==='stamps'}" data-grow-setup-family-v301="stamps">
+        <span class="grow-setup-option-icon-v301">${CUI.icon('check',{size:26})}</span><b>Stamp card</b>
+        <span class="muted small">Customers collect a stamp when they spend. A full card wins a reward.</span></button>
+    </div>
+    <p class="muted small" style="margin-top:12px">You can change this later.</p>`;
+  const stepTwoHtml=()=>state.family==='stamps'
+    ?`<p class="grow-setup-lead-v301">How fast do customers collect a stamp?</p>
+      <p class="grow-setup-sentence-v301">Customer spends ${esc(currency)} <input id="growSetupStampV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.stampSpend||0).toFixed(2))}" aria-label="Spend needed for one stamp"> → collects <b>1 stamp</b></p>
+      <p class="grow-setup-example-v301" id="growSetupExampleV301" role="status">${esc(exampleText())}</p>`
+    :`<p class="grow-setup-lead-v301">How fast do customers earn points?</p>
+      <!-- data-merchant-content, matching the house rule for an interpolated accessibility
+           attribute (v97): the interpolated value is the tenant's own currency code, which must
+           never be translated, and neither must the number the owner types into this field. -->
+      <p class="grow-setup-sentence-v301">Customer spends ${esc(currency)} <b>1</b> → earns <input id="growSetupEarnV301" class="grow-setup-input-v301" inputmode="decimal" data-merchant-content value="${esc(String(state.earn))}" aria-label="Points earned per ${esc(currency)} 1"> point(s)</p>
+      <p class="grow-setup-example-v301" id="growSetupExampleV301" role="status">${esc(exampleText())}</p>`;
+  const rewardFormHtml=()=>{
+    const form=state.form||{id:null,name:'',budget:'',points:''};
+    return `<div class="grow-setup-rewardform-v301" data-grow-setup-rewardform-v301>
+      <div class="field-grid">
+        <div class="full"><label for="growSetupRewardNameV301">Reward name customers see</label>
+          <input id="growSetupRewardNameV301" value="${esc(form.name)}" placeholder="e.g. Free drink"></div>
+        <div><label for="growSetupRewardBudgetV301">Company cost (${esc(currency)})</label>
+          <input id="growSetupRewardBudgetV301" inputmode="decimal" value="${esc(form.budget)}" placeholder="e.g. 3.00"></div>
+        <div><label for="growSetupRewardPointsV301">${state.family==='stamps'?'Stamps':'Points'} cost</label>
+          <input id="growSetupRewardPointsV301" inputmode="numeric" value="${esc(form.points)}" placeholder="e.g. 300"></div>
+      </div>
+      <p class="muted small" style="margin-top:8px">${esc(rewardHintText())}</p></div>`;
+  };
+  const stepThreeHtml=()=>{
+    /* A firm already on fixed redemption has no reward catalogue to fill in — its one reward IS
+       the pair — and app.redeem_points_v40_internal refuses catalogue claims on that model, so
+       showing a catalogue here would offer rewards its own engine would never honour. */
+    if(state.model==='classic')return `<p class="grow-setup-lead-v301">What do points buy?</p>
+      <p class="grow-setup-sentence-v301"><input id="growSetupClassicPointsV301" class="grow-setup-input-v301" inputmode="numeric" value="${esc(String(state.classicRedeem))}" aria-label="Points needed"> points → ${esc(currency)} <input id="growSetupClassicCreditV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.classicCredit||0).toFixed(2))}" aria-label="Credit given"> credit</p>
+      <p class="muted small" style="margin-top:10px">Customers spend that many points and get store credit back.</p>`;
+    const stampsHead=state.family==='stamps'
+      ?`<p class="grow-setup-sentence-v301">Collect <input id="growSetupStampTargetV301" class="grow-setup-input-v301" inputmode="numeric" value="${esc(String(state.stampTarget))}" aria-label="Stamps needed for a reward"> stamps → reward</p>`
+      :'';
+    const rows=state.rewards.length
+      ?`<ul class="grow-setup-rewardlist-v301">${state.rewards.map(reward=>`<li><span><b data-merchant-content>${esc(reward.name)}</b><span class="muted small"> · ${esc(unitWord(reward.points,rewardUnit()))}</span></span><button type="button" class="btn ghost sm" data-grow-setup-reward-edit-v301="${esc(reward.id)}">Edit</button></li>`).join('')}</ul>`
+      :'<p class="muted small">No reward yet. Add the first one below.</p>';
+    const chips=`<div class="grow-setup-chips-v301" aria-label="Suggested rewards">${suggestionsV301().map((item,index)=>`<button type="button" class="grow-setup-chip-v301" data-grow-setup-suggest-v301="${index}">${esc(item.name)} — ${esc(unitWord(item.points,rewardUnit()))}</button>`).join('')}</div>`;
+    return `<p class="grow-setup-lead-v301">What do customers get?</p>${stampsHead}${rows}${chips}${rewardFormHtml()}`;
+  };
+  const stepFourHtml=()=>{
+    if(state.published)return `<div class="grow-setup-done-v301" role="status">
+      <span class="grow-setup-done-icon-v301">${CUI.icon('check',{size:34})}</span>
+      <h3>Published — customers can use this now</h3>
+      <p class="grow-setup-sentence-v301">${esc(state.publishedSummary?.earn||'')}</p>
+      <p class="grow-setup-sentence-v301" data-merchant-content>${esc(state.publishedSummary?.reward||'')}</p>
+      <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap"><a class="btn" href="#/grow/overview" id="growSetupDoneV301">Back to Programmes</a>
+      <button type="button" class="btn ghost sm" id="growSetupAddAnotherV301">Add another reward</button></div></div>`;
+    const changes=state.comparison;
+    const changeBlock=!changes
+      ?'<p class="muted small">Checking what changes for customers…</p>'
+      :changes.error
+        ?'<p class="muted small">The change list could not be read, so it is not shown. Nothing has been published yet.</p>'
+        :`${changes.lines.length?`<ul class="studio-change-list-v295">${changes.lines.join('')}</ul>`:'<p class="muted small">Nothing changes for customers in this draft.</p>'}${changes.unreadable.length?`<p class="muted small" style="margin-top:10px">Changes to ${esc(changes.unreadable.join(' and '))} could not be read, so they are not listed here.</p>`:''}`;
+    const ackBlock=state.needAck
+      ?`<div class="imp-note" style="margin-top:12px">${state.impactRules.length?`<b>Advanced rules this draft turns on</b><div style="margin-top:6px">${state.impactRules.map(rule=>`<div class="studio-impact-rule"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b></div>`).join('')}</div>`:'<b>This draft turns on a rule that moves money or reaches customers.</b>'}
+        <label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupAckV301" style="width:auto;margin-top:3px"${state.ack?' checked':''}> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label></div>`
+      :'';
+    return `<p class="grow-setup-lead-v301">Ready to go live</p>
+      <p class="grow-setup-sentence-v301">${esc(earnLine())}</p>
+      <p class="grow-setup-sentence-v301" data-merchant-content>${esc(rewardLine())}</p>
+      <section class="grow-setup-changes-v301" aria-label="What changes for customers"><b>What changes for customers</b>
+      <div style="margin-top:8px" id="growSetupChangesV301">${changeBlock}</div></section>
+      <div class="imp-note" style="margin-top:12px"><b>${state.keepPaused?'Programme will stay PAUSED — customers earn nothing.':'Programme will be ON — customers start earning when you publish.'}</b>
+      <label style="display:flex;align-items:center;gap:9px;margin-top:10px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupPauseV301" style="width:auto"${state.keepPaused?' checked':''}> <span>Keep it paused for now</span></label></div>${ackBlock}`;
+  };
+  const bodyHtml=()=>state.step===1?stepOneHtml():state.step===2?stepTwoHtml():state.step===3?stepThreeHtml():stepFourHtml();
+  function render(){
+    host.innerHTML=`<section class="grow-setup-v301" id="growSetupWizardPanelV301" aria-label="Set up rewards" data-grow-setup-step-v301="${state.step}">
+      <div class="grow-setup-head-v301"><div><p class="customer-quest-kicker">Set up rewards</p>
+      <h3 class="grow-setup-title-v301">Step ${state.step} of 4 · ${esc(GROW_SETUP_STEPS_V301[state.step-1][1])}</h3></div>
+      <a class="grow-setup-leave-v301" href="#/grow">Leave set up</a></div>
+      ${stepperHtml()}
+      <div class="grow-setup-body-v301" id="growSetupBodyV301">${bodyHtml()}</div>
+      ${errBlock()}
+      ${state.published?'':`<div class="grow-setup-foot-v301">${state.step>1?'<button type="button" class="btn ghost" id="growSetupBackV301">Back</button>':''}<span class="spacer"></span><button type="button" class="btn grow-setup-next-v301" id="growSetupNextV301"${state.step===4&&state.needAck&&!state.ack?' disabled':''}>${state.step===4?'Publish now':'Next →'}</button></div>`}
+    </section>`;
+    localizeWorkspaceSubtreeV97(host);
+    bind();
+  }
+  const goto=step=>{
+    state.step=Math.min(4,Math.max(1,step));
+    state.visited.add(state.step);
+    state.error='';
+    render();
+    if(state.step===4)loadComparison();
+  };
+  async function loadComparison(){
+    state.comparison=null;
+    if(!state.versionId){state.comparison={error:null,lines:[],unreadable:[],draftActive:null};return render()}
+    const result=await growSetupComparisonV301(state.versionId);
+    if(!isCurrent()||state.step!==4)return;
+    state.comparison=result;
+    render();
+  }
+  const readStepFields=()=>{
+    if(state.step===2){
+      if(state.family==='stamps')state.stampSpend=parseFloat($('growSetupStampV301')?.value||'')||state.stampSpend;
+      else state.earn=parseFloat($('growSetupEarnV301')?.value||'')||state.earn;
+    }
+    if(state.step!==3)return;
+    if(state.model==='classic'){
+      state.classicRedeem=parseInt($('growSetupClassicPointsV301')?.value||'',10)||state.classicRedeem;
+      state.classicCredit=parseFloat($('growSetupClassicCreditV301')?.value||'')||state.classicCredit;
+      return;
+    }
+    if(state.family==='stamps')state.stampTarget=parseInt($('growSetupStampTargetV301')?.value||'',10)||state.stampTarget;
+    const name=String($('growSetupRewardNameV301')?.value||'').trim();
+    const budget=String($('growSetupRewardBudgetV301')?.value||'').trim();
+    const points=String($('growSetupRewardPointsV301')?.value||'').trim();
+    state.form=(name||budget||points)?{id:state.form?.id||null,name,budget,points}:null;
+  };
+  function bind(){
+    host.querySelectorAll('[data-grow-setup-goto-v301]').forEach(button=>button.onclick=()=>{
+      readStepFields();goto(Number(button.dataset.growSetupGotoV301));
+    });
+    host.querySelectorAll('[data-grow-setup-family-v301]').forEach(button=>button.onclick=()=>{
+      state.family=button.dataset.growSetupFamilyV301==='stamps'?'stamps':'points';
+      render();
+    });
+    const rateInput=$('growSetupEarnV301')||$('growSetupStampV301');
+    if(rateInput)rateInput.addEventListener('input',()=>{
+      if(state.family==='stamps')state.stampSpend=parseFloat(rateInput.value||'')||0;
+      else state.earn=parseFloat(rateInput.value||'')||0;
+      const example=$('growSetupExampleV301');
+      if(example)example.textContent=exampleText();
+    });
+    host.querySelectorAll('[data-grow-setup-suggest-v301]').forEach(button=>button.onclick=()=>{
+      const item=suggestionsV301()[Number(button.dataset.growSetupSuggestV301)];
+      if(!item)return;
+      state.form={id:null,name:item.name,budget:(item.budgetCents/100).toFixed(2),points:String(item.points)};
+      render();$('growSetupRewardNameV301')?.focus({preventScroll:true});
+    });
+    host.querySelectorAll('[data-grow-setup-reward-edit-v301]').forEach(button=>button.onclick=()=>{
+      const reward=state.rewards.find(item=>item.id===button.dataset.growSetupRewardEditV301);
+      if(!reward)return;
+      state.form={id:reward.id,name:reward.name,budget:(reward.budgetCents/100).toFixed(2),points:String(reward.points)};
+      render();$('growSetupRewardNameV301')?.focus({preventScroll:true});
+    });
+    /* V293's two-decision maths, unchanged: the company-cost budget derives the points price
+       from the one programme-wide cost per point, and typing a points price pauses that
+       derivation so the field the owner just filled in is never overwritten under their hands.
+       Editing the budget is the owner asking for the maths again, so it resumes. */
+    const budgetInput=$('growSetupRewardBudgetV301'),pointsInput=$('growSetupRewardPointsV301');
+    if(budgetInput&&pointsInput&&state.family!=='stamps'){
+      let manualV301=false;
+      pointsInput.addEventListener('input',()=>{manualV301=true});
+      budgetInput.addEventListener('input',()=>{
+        manualV301=false;
+        const budget=parseFloat(budgetInput.value||'');
+        if(!(budget>0)||manualV301)return;
+        pointsInput.value=String(Math.max(1,Math.ceil((budget*100)/Math.max(1,costPerPointCents()))));
+      });
+    }
+    const pause=$('growSetupPauseV301');
+    if(pause)pause.onchange=()=>{state.keepPaused=pause.checked===true;render()};
+    const ack=$('growSetupAckV301');
+    if(ack)ack.onchange=()=>{
+      state.ack=ack.checked===true;
+      const next=$('growSetupNextV301');if(next)next.disabled=!state.ack;
+    };
+    const retry=$('growSetupRetryV301');
+    if(retry)retry.onclick=()=>{state.error='';render();advance()};
+    const back=$('growSetupBackV301');
+    if(back)back.onclick=()=>{readStepFields();goto(state.step-1)};
+    const next=$('growSetupNextV301');
+    if(next)next.onclick=()=>advance();
+    const addAnother=$('growSetupAddAnotherV301');
+    if(addAnother)addAnother.onclick=()=>{
+      state.published=false;state.form=null;state.ack=false;state.needAck=false;state.impactRules=[];
+      goto(3);
+    };
+  }
+  /* The Next button is disabled for the duration of its own save. This is the same defect class
+     as the double publish modal: an enabled button over an in-flight write is how one intent
+     becomes two writes. */
+  const withBusy=async work=>{
+    if(state.busy)return;
+    state.busy=true;state.error='';
+    const button=$('growSetupNextV301');
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+    try{await work()}
+    finally{
+      state.busy=false;
+      const current=$('growSetupNextV301');
+      if(current&&current===button){current.disabled=false;current.removeAttribute('aria-busy')}
+    }
+  };
+  const failStep=(error,tail)=>{state.error=`${ownerErrorText(error)} ${tail}`;render()};
+  async function advance(){
+    readStepFields();
+    if(state.step===1)return withBusy(async()=>{
+      const model=modelForFamily();
+      state.model=model;
+      /* Nothing is written when the family did not change: an owner who opens the wizard to fix
+         a reward must not create a draft, and a no-op save is still a draft. */
+      if(model===baseModel)return goto(2);
+      const result=await saveDraft({loyalty_model:model});
+      if(!isCurrent())return;
+      if(!result.ok)return failStep(result.error,'Nothing was saved.');
+      goto(2);
+    });
+    if(state.step===2)return withBusy(async()=>{
+      const model=state.model||modelForFamily();
+      if(state.family==='stamps'?!(state.stampSpend>0):!(state.earn>0)){
+        state.error=state.family==='stamps'?'Enter the spend needed for one stamp.':'Enter how many points a customer earns.';
+        return render();
+      }
+      /* The same field set #lsave writes for this model, so a wizard save is never a partial
+         row — minus configuration_status and active, which belong to publishing and to step 4. */
+      const row={business_id:S.biz.id,kind:'points',loyalty_model:model,
+        expiry_mode:String(base?.expiry_mode||'none')};
+      row.expiry_days=row.expiry_mode==='none'?null:(Number(base?.expiry_days)>0?Math.round(Number(base.expiry_days)):null);
+      if(model==='stamps')row.stamp_per_cents=Math.round(state.stampSpend*100);
+      else row.earn_points_per_dollar=state.earn;
+      if(model==='classic'){row.redeem_points=state.classicRedeem;row.reward_credit_cents=Math.round(state.classicCredit*100)}
+      else if(writesCostDefault()){row.redeem_points=costBasis;row.reward_credit_cents=Math.round(0.01*100*costBasis)}
+      if(model==='points_tiers'&&base?.tier_basis)row.tier_basis=String(base.tier_basis);
+      const result=await saveDraft(row);
+      if(!isCurrent())return;
+      if(!result.ok)return failStep(result.error,'Nothing was saved.');
+      goto(3);
+    });
+    if(state.step===3)return withBusy(async()=>{
+      if(state.model==='classic'){
+        if(!(state.classicRedeem>0)||!(state.classicCredit>0)){
+          state.error='Enter how many points a customer spends, and what credit they get.';return render();
+        }
+        const result=await saveDraft({redeem_points:state.classicRedeem,reward_credit_cents:Math.round(state.classicCredit*100)});
+        if(!isCurrent())return;
+        if(!result.ok)return failStep(result.error,'Nothing was saved.');
+        return goto(4);
+      }
+      if(state.family==='stamps'&&!(state.stampTarget>0)){state.error='Enter how many stamps a customer needs.';return render()}
+      const form=state.form;
+      const hasForm=Boolean(form&&form.name.trim().length>=2);
+      if(!hasForm&&!state.rewards.length){
+        state.error='Add one reward customers can get. Give it a name and a cost.';return render();
+      }
+      if(state.family==='stamps'){
+        const result=await saveDraft({stamp_target:state.stampTarget});
+        if(!isCurrent())return;
+        if(!result.ok)return failStep(result.error,'Nothing was saved.');
+      }
+      if(hasForm){
+        const cost=parseInt(form.points||'0',10);
+        if(!(cost>0)){state.error=`Enter how many ${rewardUnit()} this reward costs.`;return render()}
+        const budgetCents=Math.round((parseFloat(form.budget||'0')||0)*100);
+        /* The same envelope saveReward posts. On an EDIT only the three fields this form owns
+           are sent: save_loyalty_reward_draft coalesces every absent key from the existing
+           version, so a description, image or store-credit value set in the full editor is
+           preserved rather than blanked by a wizard that never showed it. */
+        const payload=form.id
+          ?{id:form.id,business_id:S.biz.id,name:form.name.trim(),customer_name:form.name.trim(),
+            cost_points:cost,estimated_cost_cents:budgetCents}
+          :{id:null,business_id:S.biz.id,name:form.name.trim(),customer_name:form.name.trim(),
+            description:null,cost_points:cost,credit_cents:0,estimated_cost_cents:budgetCents,
+            entitlement_expiry_days:null,usage_limit:null,claim_available_from:null,
+            claim_available_until:null,image_ref:null,fulfillment_kind:'manual_item',active:true};
+        const result=await saveDraft({reward:payload,reward_branch_ids:[],reward_service_ids:[],reward_product_ids:[]});
+        if(!isCurrent())return;
+        if(!result.ok)return failStep(result.error,'Nothing was saved.');
+        state.form=null;
+        await refreshRewards();
+        if(!isCurrent())return;
+      }
+      goto(4);
+    });
+    return withBusy(async()=>{
+      const activeResult=await saveDraft({active:!state.keepPaused});
+      if(!isCurrent())return;
+      if(!activeResult.ok)return failStep(activeResult.error,'Nothing was published.');
+      const {data:impact,error:impactError}=await sb.rpc('preview_publish_impact',{p_config_version_id:state.versionId});
+      if(!isCurrent())return;
+      if(impactError){
+        state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} Nothing was published.`;
+        return render();
+      }
+      const rules=Array.isArray(impact?.rules)?impact.rules:[];
+      /* The acknowledgement is the gate, not the ceremony: it appears INLINE, on this page,
+         only when the server says this draft turns on an advanced rule — and the button stays
+         disabled until it is ticked. */
+      if((impact?.requires_confirmation===true||rules.length>0)&&!state.ack){
+        state.needAck=true;state.impactRules=rules;return render();
+      }
+      const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:state.versionId});
+      if(!isCurrent())return;
+      if(publishError){
+        state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} Nothing was published.`;
+        return render();
+      }
+      /* The version just published is no longer a draft, so a further edit has to start a new
+         one — based on whatever is active now, which is exactly what a null p_based_on resolves. */
+      state.published=true;state.versionId=null;state.snapshotHash=null;state.basedOn=null;
+      state.publishedSummary={earn:earnLine(),reward:rewardLine()};
+      toast('Grow changes published');
+      render();
+    });
+  }
+  render();
+  if(state.step===4)loadComparison();
+}
 function growPublishFieldRowsV170(live,draft){
   /* No draft programme row means publication changes none of these fields — say nothing changed
      rather than rendering every live value as "→ not set". */
@@ -12934,13 +13520,29 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
      paused warning belongs in it. */
   const comparisonReadyV258=loadPublishComparison();
   const effectLabel=effect=>(STUDIO_EFFECT_LABEL[effect.effect_type]&&STUDIO_EFFECT_LABEL[effect.effect_type].label)||effect.effect_type||'Action';
+  /* V301 (owner report 2026-08-13: dead buttons on the publish confirmation). This flow opens
+     from TWO places at once — the queued auto-open below and the owner's own press of "Confirm &
+     publish", which stayed enabled throughout the awaited read. Two runs meant two #growPubModal
+     nodes with duplicate ids, so $('growPubConfirm') resolved to the FIRST one and the visible
+     dialog's buttons were wired to the dialog underneath it. Two guards, because either alone
+     leaves a window open: the flag closes the gap while the read is in flight, the id check
+     closes it once a dialog exists, and the trigger stays disabled until the dialog is gone. */
+  let growPublishFlowBusyV301=false;
   const openPublishFlow=async()=>{
+    if(growPublishFlowBusyV301||document.getElementById('growPubModal'))return;
+    growPublishFlowBusyV301=true;
     const button=$('growPublishReview'),status=$('growPublishStatus');
-    button.disabled=true;button.setAttribute('aria-busy','true');status.innerHTML='<span class="muted">Checking advanced-action safety…</span>';
+    const releaseV301=()=>{
+      growPublishFlowBusyV301=false;
+      const trigger=$('growPublishReview');
+      if(trigger){trigger.disabled=false;trigger.removeAttribute('aria-busy')}
+    };
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+    if(status)status.innerHTML='<span class="muted">Checking advanced-action safety…</span>';
     const {data:impact,error}=await sb.rpc('preview_publish_impact',{p_config_version_id:draftVersionId});
-    if(!isCurrent())return;
-    button.disabled=false;button.removeAttribute('aria-busy');status.innerHTML='';
-    if(error){status.innerHTML=`<span class="err">${esc(error.code==='42501'?'Only the owner can publish.':(error.message||'Could not check what publishing would do.'))}</span>`;return}
+    if(!isCurrent()){growPublishFlowBusyV301=false;return}
+    if(status)status.innerHTML='';
+    if(error){releaseV301();status.innerHTML=`<span class="err">${esc(error.code==='42501'?'Only the owner can publish.':(error.message||'Could not check what publishing would do.'))}</span>`;return}
     const rules=Array.isArray(impact?.rules)?impact.rules:[];
     /* V295: the live/shadow/unavailable tally is gone with the box that printed it. It was
        derived entirely from `rules` below, which is rendered in full whenever it has anything
@@ -12963,7 +13565,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
        confirmation. The acknowledgement checkbox and the disabled-until-ticked button are
        untouched: they are the gate, not the ceremony. */
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div><section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml||'<p class="muted small">The change list could not be read on the page behind this dialog. Close, reload the review page and read it before publishing.</p>'}</div></section>${ruleBlocks?`<section class="imp-note" style="margin-bottom:12px" aria-label="Advanced rules"><b>Advanced rules this draft turns on</b><div style="margin-top:8px">${ruleBlocks}</div></section>`:''}${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}${needConfirm?'<div class="studio-emg-banner" role="note" style="margin-top:14px">This draft turns on a rule that moves money or reaches customers.</div>':''}<label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
-    let deactivate;const close=()=>{if(deactivate)deactivate();else $('growPubModal')?.remove()};
+    let deactivate;const close=()=>{if(deactivate)deactivate();else $('growPubModal')?.remove();releaseV301()};
     deactivate=CUI.activateDialog($('growPubModal'),{onClose:close,initialFocus:'#growPubType'});
     $('growPubClose').onclick=$('growPubCancel').onclick=close;
     /* V288 (audit A2, LOW 22): the gate was "type PUBLISH". CLAUDE.md's own low-literacy-first
@@ -12982,6 +13584,11 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     };
   };
   $('growPublishReview').onclick=openPublishFlow;
+  /* V301: the trigger is disabled for the whole of the queued auto-open, not just for the RPC
+     inside it — an enabled button in front of an in-flight open is exactly how one intent became
+     two dialogs. openPublishFlow re-enables it when it finishes or when the dialog closes. */
+  const growPublishTriggerV301=$('growPublishReview');
+  if(growPublishTriggerV301){growPublishTriggerV301.disabled=true;growPublishTriggerV301.setAttribute('aria-busy','true')}
   queueMicrotask(async()=>{await comparisonReadyV258;if(isCurrent())openPublishFlow()});
 }
 
@@ -13548,23 +14155,37 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
   const requestedReviewKey=`nestly:grow-publish-review:${draftVersionId}`;
   if(sessionStorage.getItem(requestedReviewKey)==='1'){
     sessionStorage.removeItem(requestedReviewKey);
+    /* V301: same defect as the Grow review page — the trigger stayed live for the whole of this
+       queued auto-open, so one press during the wait produced a SECOND #studioPubModal whose
+       duplicate ids left the visible dialog's buttons wired to the one underneath. */
+    const studioPublishTriggerV301=$('studioPublish');
+    if(studioPublishTriggerV301){studioPublishTriggerV301.disabled=true;studioPublishTriggerV301.setAttribute('aria-busy','true')}
     queueMicrotask(()=>{if(isCurrent())openPublishFlow()});
   }
+  let studioPublishFlowBusyV301=false;
   async function openPublishFlow(){
-    const btn=$('studioPublish');btn.disabled=true;btn.setAttribute('aria-busy','true');
+    if(studioPublishFlowBusyV301||document.getElementById('studioPubModal'))return;
+    studioPublishFlowBusyV301=true;
+    const btn=$('studioPublish');
+    const releaseV301=()=>{
+      studioPublishFlowBusyV301=false;
+      const trigger=$('studioPublish');
+      if(trigger){trigger.removeAttribute('aria-busy');trigger.disabled=false}
+    };
+    if(btn){btn.disabled=true;btn.setAttribute('aria-busy','true')}
     const st=$('studioPublishStatus');if(st)st.innerHTML='<span class="muted">Checking exactly what will happen…</span>';
     const {data:impact,error}=await sb.rpc('preview_publish_impact',{p_config_version_id:draftVersionId});
-    if(!isCurrent())return;
-    btn.removeAttribute('aria-busy');btn.disabled=false;
+    if(!isCurrent()){studioPublishFlowBusyV301=false;return}
     if(error){
+      releaseV301();
       const msg=error.code==='42501'?'Only the owner can publish.':(error.message||'Could not check what publishing would do.');
       if(st)st.innerHTML=`<span class="err">${esc(msg)}</span>`;CUI.announce(msg,{assertive:true});return;
     }
     if(st)st.innerHTML='';
-    renderPublishImpactDialog(impact||{});
+    renderPublishImpactDialog(impact||{},releaseV301);
   }
   function studioEffLabel(e){return (STUDIO_EFFECT_LABEL[e.effect_type]&&STUDIO_EFFECT_LABEL[e.effect_type].label)||e.effect_type||'Action';}
-  function renderPublishImpactDialog(impact){
+  function renderPublishImpactDialog(impact,releaseTriggerV301=()=>{}){
     const rules=Array.isArray(impact.rules)?impact.rules:[];
     let live=0,shadow=0,unbuilt=0;
     for(const r of rules)for(const e of (r.effects||[])){
@@ -13594,7 +14215,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
       <div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="studioPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="studioPubCancel" type="button">Cancel</button></div>
     </div></div>`);
     let deactivate;
-    const close=()=>{if(deactivate)deactivate();else $('studioPubModal')?.remove();};
+    const close=()=>{if(deactivate)deactivate();else $('studioPubModal')?.remove();releaseTriggerV301();};
     deactivate=CUI.activateDialog($('studioPubModal'),{onClose:close,initialFocus:'#studioPubType'});
     $('studioPubClose').onclick=$('studioPubCancel').onclick=close;
     /* V288 (audit A2, LOW 22): see the matching change in the Grow publish flow. */

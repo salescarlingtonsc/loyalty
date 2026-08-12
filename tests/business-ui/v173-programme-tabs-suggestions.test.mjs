@@ -35,7 +35,10 @@ test('each programme view says plainly what it shows', () => {
      view names are what carry the meaning, so those are what is asserted. */
   /* V245: the owner asked "Pending setup — where is it?", so the view names now match the
      nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
-  assert.match(app, /'Pending setup':'List'/);
+  /* V301 ADDITION (owner 2026-08-13: "ONE page with step subtabs"): the setup wizard is a
+     fourth view and names itself in the same ternary. Every earlier view still names itself —
+     that is what the two assertions below check. */
+  assert.match(app, /'Pending setup':programmeView==='setup'\?'Set up rewards':'List'/);
   assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes'/);
   assert.doesNotMatch(app, /Running for your customers right now\./);
 });
@@ -85,7 +88,9 @@ test('suggestion rows are queried from outerMain, not document', () => {
 
 test('V180: bare #/grow is the full list, and every old hash still resolves', () => {
   assert.match(app, /\?String\(hashParam\):'list';/, 'bare #/grow must land on the full list');
-  assert.match(app, /\['overview','history','ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/,
+  /* V301 ADDITION: 'setup' joins the list; the five hashes this assertion has always protected
+     are still in it, which is the property being kept. */
+  assert.match(app, /\['overview','history','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)/,
     'removing a nav entry must not break its deep link');
   assert.match(app, /id="growSecondarySettings"/, 'advanced settings section must remain on-page');
   assert.match(app, /Nothing is running yet\./, 'Running must explain itself when empty');

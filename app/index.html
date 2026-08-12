@@ -1056,6 +1056,51 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 /* The trail above a drilled-in category: where you are, and one tap back to the level above. */
 .grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
 .grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
+/* V301 (owner 2026-08-13: "ONE page with step subtabs… no popups"). The setup wizard lives
+   inside the Programmes card, so it borrows the page's own tokens and adds no new colours. The
+   step strip scrolls horizontally rather than wrapping into a second line at 390px, and every
+   control keeps a 44px tap target — the staff filling this in may be reading a second language. */
+.grow-setup-v301{padding:4px 14px 16px}
+.grow-setup-head-v301{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.grow-setup-title-v301{margin:2px 0 0;font-size:1.02rem;letter-spacing:-.01em}
+.grow-setup-leave-v301{color:var(--muted);font-size:.82rem;text-decoration:underline;padding:10px 2px;min-height:44px;display:inline-flex;align-items:center}
+.grow-setup-steps-v301{display:flex;gap:8px;list-style:none;margin:12px 0 0;padding:0 0 4px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.grow-setup-steps-v301::-webkit-scrollbar{display:none}
+.grow-setup-steps-v301>li{flex:0 0 auto}
+.grow-setup-step-v301{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font:inherit;font-size:.84rem;font-weight:650;cursor:pointer;white-space:nowrap}
+.grow-setup-step-v301:disabled{opacity:.55;cursor:default}
+.grow-setup-step-v301.is-current{border-color:var(--coral);background:var(--tint);color:var(--ink)}
+.grow-setup-step-v301.is-done{color:var(--ink)}
+.grow-setup-step-num-v301{display:grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--tint);color:var(--coral);font-size:.78rem;font-weight:800}
+.grow-setup-step-v301.is-current .grow-setup-step-num-v301{background:var(--coral);color:#fff}
+.grow-setup-body-v301{margin-top:16px}
+.grow-setup-lead-v301{margin:0 0 12px;font-size:1.02rem;font-weight:750;letter-spacing:-.01em}
+.grow-setup-options-v301{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.grow-setup-option-v301{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;min-height:150px;padding:16px;border:1.5px solid var(--line);border-radius:16px;background:#fff;color:inherit;font:inherit;cursor:pointer}
+.grow-setup-option-v301:hover{border-color:var(--coral);background:var(--tint)}
+.grow-setup-option-v301.is-picked{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3px rgba(201,67,51,.14)}
+.grow-setup-option-icon-v301{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--tint);color:var(--coral)}
+.grow-setup-option-v301>b{font-size:1.02rem}
+.grow-setup-sentence-v301{margin:0 0 10px;font-size:1rem;line-height:2;overflow-wrap:anywhere}
+.grow-setup-input-v301{display:inline-block;width:6.5em;min-height:44px;margin:0 4px;padding:6px 10px;text-align:center;font-weight:700}
+.grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
+.grow-setup-rewardlist-v301{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px}
+.grow-setup-rewardlist-v301>li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:.84rem;cursor:pointer}
+.grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
+.grow-setup-rewardform-v301{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
+.grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
+.grow-setup-changes-v301{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+.grow-setup-foot-v301{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.grow-setup-next-v301{min-height:48px;padding:12px 22px;font-size:1rem}
+.grow-setup-done-v301{text-align:center;padding:12px 0}
+.grow-setup-done-icon-v301{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 12px;border-radius:999px;background:var(--tint);color:var(--coral)}
+@media (max-width:520px){
+  .grow-setup-v301{padding:4px 10px 16px}
+  .grow-setup-foot-v301 .btn{flex:1 1 auto}
+}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -2054,7 +2099,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=30f8b805b877","business":"/app-business.js?b=46af212c2f8d","i18n":"/app-i18n.js?b=c3dd5127e450"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=30f8b805b877","business":"/app-business.js?b=49c7ecb03693","i18n":"/app-i18n.js?b=c3dd5127e450"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
