@@ -24,8 +24,11 @@ test('renaming the programme badge cannot empty the Running view', () => {
 test('programmes nav is one destination, and old hashes still resolve', () => {
   /* V250: the owner struck out the two remaining sub-rows, so the whole `const links=[…]`
      helper went with them — Programmes is one flat link onto the list. */
-  assert.ok(app.includes("{key:'grow',icon:'star',flat:'Programmes',href:'#/grow'"),
-    'Programmes must be one flat nav link');
+  /* V294 (owner markup 2026-08-12): Programmes is a GROUP again — but its children are the
+     page's own three VIEWS (Overview/List/History), not the per-module sub-rows this test was
+     written to keep out. Those stay banned below. */
+  assert.ok(app.includes("{key:'grow',icon:'star',label:'Programmes'"),
+    'Programmes must be one nav group');
   assert.ok(!app.includes('const links=['), 'the sub-nav link helper went with its rows');
   assert.ok(!app.includes("'Programmes list'"), 'the Programmes list row was struck out');
   assert.ok(!app.includes("['#/grow/ongoing'"), 'the Ongoing programmes row was struck out');

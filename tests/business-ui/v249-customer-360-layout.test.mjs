@@ -49,32 +49,33 @@ test('V249 the struck-out suggestion banner is gone, markup and wiring alike', (
   assert.match(profile, /\$\('c360NewAppt'\)\)\$\('c360NewAppt'\)\.onclick=goNewAppt/);
 });
 
-test('V249 the KPI row is two cards and Visits/Lifetime spend became identity chips', () => {
-  const kpiStart = profile.indexOf('const profileKpis=[');
-  const kpis = profile.slice(kpiStart, profile.indexOf('].filter(Boolean).join(\'\');', kpiStart));
-  const cards = kpis.match(/<div class="card kpi/g) || [];
-  assert.equal(cards.length, 2, 'exactly two KPI cards remain');
-  assert.match(kpis, /Business-wide points/);
-  assert.match(kpis, /Business-wide spendable credit/);
-  // The two removed cards must not survive as cards anywhere on this page.
-  assert.doesNotMatch(kpis, /Visible visits|Visible sales total|Lifetime spend/);
+test('V249/V294 the KPI tiles fold into the summary card and the identity line keeps status chips', () => {
+  /* V294 (owner sketch 2026-08-12): the two remaining V249 tiles are GONE — points and credit
+     are compact rows in the upper-right summary card, beside the moved visits / lifetime spend
+     / PDPA rows. Demoted, never deleted: the counter still reads both numbers, and the V249
+     scope-honest wording moved with the figures. */
+  assert.ok(!profile.includes('const profileKpis=['), 'the KPI tile array is gone');
+  assert.ok(!profile.includes('customer360-kpis-v249">'), 'no KPI row renders on the profile');
+  const cardStart = profile.indexOf('const summaryCardV294=`');
+  assert.ok(cardStart > 0, 'the summary card exists');
+  const summaryCard = profile.slice(cardStart, profile.indexOf('</aside>`;', cardStart));
+  assert.match(summaryCard, /Business-wide points/);
+  assert.match(summaryCard, /Business-wide spendable credit/);
+  assert.match(summaryCard, /isProfileAdmin\?'Visits':'Visible visits'/);
+  assert.match(summaryCard, /isProfileAdmin\?'Lifetime spend':'Visible sales'/);
+  assert.match(summaryCard, /PDPA consent/);
 
-  // They are chips on the identity line instead, beside the existing PDPA consent chip.
+  // The identity line keeps STATUS chips only — the moved figures never render twice.
   const badgeStart = profile.indexOf('const badges=[];');
   const badges = profile.slice(badgeStart, profile.indexOf('const badgesHtml=', badgeStart));
-  assert.match(badges, /const visitsLabelV249=`\$\{netVisits\} \$\{isProfileAdmin\?'':'visible '\}visit\$\{netVisits===1\?'':'s'\}`/,
-    'visits pluralise correctly and keep the staff branch-scope qualifier the old card carried');
-  assert.match(badges, /badges\.push\(\{cls:'',icon:'sales',label:`\$\{money\(lifetimeSpendCents\)\} \$\{isProfileAdmin\?'lifetime':'visible sales'\}`\}\)/,
-    'lifetime spend is money() formatted and equally scope-honest');
+  assert.doesNotMatch(badges, /visitsLabelV249|lifetimeSpendCents/);
+  assert.match(badges, /label:'VIP'/);
+  assert.match(badges, /label:'Regular'/);
+  assert.match(badges, /label:'New customer'/);
   /* Two sentences the deleted banner was the only carrier of keep a home on this page: earning
      is conditional, and hidden figures are explained rather than shown as zero. */
   assert.match(profile, /canReadSales&&netVisits<=0\?`<p class="muted small"[^`]*Record an eligible first purchase; points are earned only when an active published loyalty programme applies\./);
   assert.match(profile, /Sales and reward figures are hidden because this role does not have access to those modules\./);
-  // Exactly ONE visits chip is ever pushed — the pre-existing one, reused, never duplicated.
-  assert.equal((badges.match(/visitsLabelV249/g) || []).length, 4,
-    'one declaration plus the three mutually exclusive tier branches');
-  assert.equal((badges.match(/lifetimeSpendCents/g) || []).length, 1);
-  assert.match(profile, /PDPA consent/);
   // Chips carry text, not colour alone.
   assert.match(profile, /class="c360-badge \$\{b\.cls\}">\$\{CUI\.icon\(b\.icon,\{size:14\}\)\}\$\{esc\(b\.label\)\}/);
 });
@@ -99,11 +100,12 @@ test('V249 the expiry note and both collapsibles live inside the POINTS card, on
   assert.match(panel, /S\.myRole==='owner'&&canWriteLoyalty\?`<details/);
   assert.match(profile, /\$\('adjGo'\)/);
 
-  // The POINTS card renders expiry note first, then the panel — the owner's order.
-  const pointsCard = profile.match(/<div class="card kpi customer360-points-card-v249">[\s\S]*?<\/div>`:''/)[0];
-  assert.ok(pointsCard.indexOf('${pointsExpiryMarkup}') < pointsCard.indexOf('pointsPanelDetailsV249'),
+  /* V294: the POINTS card became the summary card's points row — same order preserved: the
+     expiry note under the points value, both collapsibles at the card's foot. */
+  const pointsHost = profile.slice(profile.indexOf('const summaryCardV294=`'), profile.indexOf('</aside>`;'));
+  assert.ok(pointsHost.indexOf('${pointsExpiryMarkup}') < pointsHost.indexOf('pointsPanelDetailsV249'),
     'expiry note sits above the collapsibles');
-  assert.match(pointsCard, /customer360-points-panel-v249/);
+  assert.match(pointsHost, /customer360-points-panel-v249/);
   assert.match(profile, /No actionable points are currently scheduled to expire\./);
 
   // Neither collapsible is left behind in the rewards card body.

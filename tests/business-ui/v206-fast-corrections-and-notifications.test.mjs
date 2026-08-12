@@ -50,7 +50,7 @@ test('the deliberate separation between doing and reviewing is intact', () => {
      exclusive to industry='bar' and is stripped from the resolved module list for every other
      sector before the rail is built). The doing-vs-reviewing separation this test guards is
      unchanged: Bottles is something staff DO during service, not money history. */
-  assert.match(app, /label:'Serve & sell',items:\['till','appointments',(?:'bottles',)?'bookings','waitlist'\]/);
+  assert.match(app, /label:'Serve & sell',items:\['till','appointments',(?:'bottles',)?'bookings','waitlist','giftcards'\]/);
   /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
      this group; the doing-vs-reviewing separation this test guards is unchanged. */
   assert.match(app, /label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]/);

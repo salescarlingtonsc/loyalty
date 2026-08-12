@@ -67,7 +67,10 @@ test('sidebar exposes consolidated Grow programme navigation instead of peer rew
      flat link onto the list — which already opens with the Ongoing / Pending setup groups. The
      intent of this test, that Grow is reached through ONE consolidated nav rather than peer
      reward-module links, is unchanged; the destination count moved from two to one. */
-  assert.match(app,/\{key:'grow',icon:'star',flat:'Programmes',href:'#\/grow',items:\['loyalty','retention','referrals','memberships','giftcards'\]\}/);
+  /* V294 (owner markup 2026-08-12): Programmes became a GROUP whose children are the page's
+     own Overview / List / History views — still ONE consolidated destination family, still no
+     peer reward-module rows. giftcards moved to Serve & sell with its card (item 7b). */
+  assert.match(app,/\{key:'grow',icon:'star',label:'Programmes',items:\['loyalty','retention','referrals','memberships'\],\s*views:\[\['Overview','#\/grow\/overview','reports'\],\['List','#\/grow','menu'\],\['History','#\/grow\/history','waitlist'\]\]\}/);
   for(const label of ['Programmes list','Ongoing programmes','Pending setup','Available programmes','More settings'])
     assert.doesNotMatch(nav,new RegExp(`'${label}'`),`${label} was struck out of the nav`);
   assert.match(nav,/const href=g\.href\|\|`#\/\$\{target\}`/);
@@ -77,7 +80,9 @@ test('sidebar exposes consolidated Grow programme navigation instead of peer rew
 
 test('every editable Grow submodule offers a stable return to the one overview',()=>{
   assert.match(app,/function growBackActionHtmlV138\(\)/);
-  for(const title of ['Loyalty','Retention programs','Promotions','Referrals','Memberships','Gift cards']){
+  /* V294 (owner crossed the Loyalty editor's back button out: "remove") — the rail's
+     Programmes group is that editor's way back now; every other submodule keeps the action. */
+  for(const title of ['Retention programs','Promotions','Referrals','Memberships','Gift cards']){
     assert.match(app,new RegExp(`pageHeader\\(\\{title:'${title}'[\\s\\S]{0,650}?actions:(?:\`\\$\\{growBackActionHtmlV138\\(\\)\\}|growBackActionHtmlV138\\(\\))`),`${title} lacks a return action`);
   }
   assert.match(app,/Back to Grow overview/);

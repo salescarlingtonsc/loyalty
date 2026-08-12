@@ -40,7 +40,10 @@ test('configured and not-yet-configured programme families share the overview',(
   for(const kind of ['earning','redeemable','birthday']){
     assert.match(grow,new RegExp(`data-programme-kind="${kind}"`),`${kind} is missing from the overview`);
   }
-  for(const kind of ['bringback','referrals','memberships','giftcards']){
+  /* V294 (owner markup 2026-08-12): gift cards left the Programmes overview — they are sold at
+     the counter, not configured as a programme — so their row moved to the Serve & sell nav
+     group. The page and its deep-linkable enable control survive (asserted below). */
+  for(const kind of ['bringback','referrals','memberships']){
     assert.match(grow,new RegExp(`kind:'${kind}'`),`${kind} is missing from the overview`);
   }
   assert.match(grow,/Not set up/);
@@ -63,7 +66,8 @@ test('overview reads enough server state to label programme status without inven
   assert.match(grow,/title:['"]Bring-back rewards['"][\s\S]*status:['"]Not set up['"]/);
   assert.match(grow,/snapshot\.referral\?['"]Paused['"]:['"]Not set up['"]/);
   assert.match(grow,/snapshot\.memberships\.length\?['"]Paused['"]:['"]Not set up['"]/);
-  assert.match(grow,/giftCardsLive\?['"]Live['"]:['"]Off['"]/);
+  /* V294: the gift-card status pill left with its row; the snapshot read above stays so
+     overviewErrors.giftcards stays honest for the retry banner. */
   for(const source of ['loyalty','rewards','birthday']){
     assert.match(grow,new RegExp(`overviewErrors\\?\\.${source}`),`${source} read failures need a row-level unavailable state`);
   }
@@ -72,7 +76,10 @@ test('overview reads enough server state to label programme status without inven
 test('not-yet-configured standalone modules deep-link to the exact create control',()=>{
   assert.match(grow,/#\/referrals\/fe/);
   assert.match(grow,/#\/memberships\/mn/);
-  assert.match(grow,/#\/giftcards\/giftCardEnabled/);
+  /* V294: the giftCardEnabled deep link left the overview with its row; the page still wires
+     the exact control, and the nav now carries the entry. */
+  assert.match(app,/focusRoutedWorkspaceControl\(routedFocus,'giftCardEnabled'\)/);
+  assert.match(app,/'bookings','waitlist','giftcards'\]\}/);
   assert.match(app,/async function referralsPage\(\)[\s\S]{0,80}?routedFocus/);
   assert.match(app,/async function membershipsPage\(\)[\s\S]{0,80}?routedFocus/);
   assert.match(app,/async function giftcardsPage\(\)[\s\S]{0,80}?routedFocus/);
@@ -101,7 +108,7 @@ test('earning, birthday, bring-back and stable reward routes retain exact edit i
 test('read-only and unavailable rows expose status but no dead writer',()=>{
   assert.match(grow,/canWriteModule\('referrals'\)/);
   assert.match(grow,/canWriteModule\('memberships'\)/);
-  assert.match(grow,/canWriteModule\('giftcards'\)/);
+  /* V294: the gift-cards writer gate left the overview with its row (see above). */
   assert.match(grow,/programmeAction/);
   assert.match(grow,/if\(!canWrite\)return ''/);
   assert.match(grow,/const canSetupWinback=isOwner&&canWinback&&canWriteModule\('retention'\)/);

@@ -273,9 +273,18 @@ try{
   await page.check('#confirmDeliberateAckV288');
   await page.click('#confirmDeliberateOkV288');
   await page.waitForFunction(()=>!document.getElementById('rewardDialogV238')&&!!document.getElementById('rwList'));
-  await page.waitForFunction(()=>document.getElementById('rwList').textContent.includes('Retired'));
-  assertTrue((await rewardRow('Free premium herbal tea').locator('.pill').innerText()).trim()==='Retired',
-    'archived reward pill reads "Retired"');
+  /* V294 (owner markup 2026-08-12: "expired don't show here, show in own history"): a retired
+     reward now LEAVES the catalogue list and lands in the collapsed Reward history disclosure,
+     so this step asserts the move rather than an inline Retired pill. */
+  await page.waitForFunction(()=>!!document.getElementById('rwHistoryListV294')
+    &&document.getElementById('rwHistoryListV294').textContent.includes('Free premium herbal tea'));
+  assertTrue(!(await page.locator('#rwList').innerText()).includes('Free premium herbal tea'),
+    'archived reward left the catalogue list (V294)');
+  assertTrue(!await page.locator('#rwHistoryV294[open]').count(),'Reward history starts collapsed');
+  await page.click('#rwHistoryV294 > summary');
+  const historyRowV294=page.locator('#rwHistoryListV294 .reward-item',{hasText:'Free premium herbal tea'});
+  assertTrue((await historyRowV294.locator('.pill').innerText()).trim()==='Retired',
+    'archived reward pill reads "Retired" in the history section');
 
   /* ---------------- f. intent URL close-without-save is not a dead end ---------------- */
   say('f1. intent URL dead end is gone (Done without saving)');

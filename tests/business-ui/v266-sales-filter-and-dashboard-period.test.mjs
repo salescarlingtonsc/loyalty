@@ -104,9 +104,16 @@ test('V266 B2 the Performance card states the period it covers, next to the numb
   assert.match(block, /pendingPeriod\.textContent='Date range changed — press Apply\.'/);
 });
 
-test('V266 B3 the Today-schedule day picker says it does not drive the Performance figures', () => {
+test('V266/V294 B3 the Today-schedule day picker drives the Performance figures and says so', () => {
+  /* V294 (owner markup 2026-08-12, arrow from this control to the Performance line: "I want
+     date linked to data below") reversed the V266 disclaimer: a schedule-day pick now retargets
+     the figures through the SAME #df/#dt + load() path the range pills use, and the helper
+     states the new truth. */
   const block = dash();
-  assert.match(block, /Changes the bookings shown here only, not the Performance figures below\./);
+  assert.match(block, /Also sets the figures below to this day\./);
+  assert.doesNotMatch(block, /Changes the bookings shown here only/);
+  assert.match(block, /rangeFromV294\.value=date;rangeToV294\.value=date;/);
+  assert.match(block, /button\.dataset\.d==='1'&&date===sgDateInputValue\(\)/);
   assert.match(block, /dashboard-schedule-scope-v266/);
   // The note wraps onto its own line at every width, including 390px.
   assert.match(html, /\.dashboard-schedule-scope-v266\{flex-basis:100%/);

@@ -13,7 +13,9 @@ test('V164 sidebar terminology is merchant-facing', () => {
   assert.match(appHtml, /reports:\['reports','Business Insights'\]/);
   /* V250: the owner made Programmes ONE flat nav link, so the group declares `flat` where it
      declared `label`. The merchant-facing WORD this test guards is unchanged. */
-  assert.match(appHtml, /\{key:'grow',icon:'star',flat:'Programmes',href:'#\/grow'/);
+  /* V294: Programmes became a group with Overview/List/History children. The merchant-facing
+     WORD this test guards is unchanged. */
+  assert.match(appHtml, /\{key:'grow',icon:'star',label:'Programmes'/);
   /* V170 owner decision: Daily report (today's takings) was fully built and routed but
      absent from every nav group, so owners could not reach it. It now leads the money group. */
   /* V180 owner instruction: Expenses moved ahead of Business Insights (money in, money out,
@@ -55,12 +57,13 @@ test('V164 merchant insights are concise and remove duplicated revenue CTA', () 
 test('V164 Reports page is renamed Business Insights and uses visual decision cards', () => {
   assert.match(appHtml, /<h1>Business Insights<\/h1>/);
   assert.match(appHtml, /Visual reports for revenue, bookings, retention and team activity\./);
-  assert.match(appHtml, /report-decision-grid/);
-  assert.match(appHtml, /report-decision-card/);
-  assert.match(appHtml, /report-card-visual/);
-  assert.match(appHtml, /tone:'appointments'/);
-  assert.match(appHtml, /tone:'retention'/);
-  assert.match(appHtml, /tone:'team'/);
+  /* V294 (owner markup 2026-08-12): the decision cards became a tab bar; the visual grouping
+     this test guarded now lives in the four named tabs. */
+  assert.match(appHtml, /report-tabbar-v294/);
+  assert.match(appHtml, /title:'Sales & Revenue'/);
+  assert.match(appHtml, /title:'Efficiency'/);
+  assert.match(appHtml, /title:'Customer Retention'/);
+  assert.match(appHtml, /title:'Team Performance'/);
 });
 
 test('V164 Staff Performance summary cards use concise visual ranking treatment', () => {
@@ -99,6 +102,7 @@ test('V164 Programmes removes persistent setup CTA and keeps categorised overvie
   assert.match(appHtml, /programme-category-title">Promotions</);
   assert.match(appHtml, /programme-category-title">Referrals</);
   /* V229: renamed to say what is in it rather than what it is like. */
-  assert.match(appHtml, /programme-category-title">Memberships & gift cards</);
+  /* V294: gift cards left the category (item 7b) — Memberships stands alone. */
+  assert.match(appHtml, /programme-category-title">Memberships</);
   assert.doesNotMatch(appHtml, /<button type="button" class="btn grow-primary" id="growAutoSetup">Continue setup<\/button>/);
 });

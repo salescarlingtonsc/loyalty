@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="8b4960236595c4ab5ac0382efa95e3182b02c0cc3aaef9ba92b1fe9c10d0a04a"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="4b106fdc84a4b7231017065351ac34159ae37557a548c904151db226b26f9316"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1188,6 +1188,32 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
 .customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
 .customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
+/* V294 (owner sketch 2026-08-12): compact summary card at the upper right of the Customer 360
+   content area — visits, lifetime spend, points, credit, PDPA as dense rows; the status chips
+   keep the left of the same band. On narrow screens the card drops below the chips full-width. */
+.c360-top-v294{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+.c360-top-main-v294{flex:1 1 240px;min-width:min(100%,220px)}
+.c360-top-main-v294 .c360-badges{margin-bottom:0}
+.c360-summary-card-v294{flex:0 1 360px;margin-left:auto;padding:12px 16px}
+.c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
+.c360-summary-row-v294:last-of-type{border-bottom:0}
+.c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
+.c360-summary-value-v294{font-variant-numeric:tabular-nums;font-size:14px;text-align:right}
+.c360-summary-card-v294 .c360-points-expiry{margin-top:2px}
+.c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
+@media(max-width:760px){.c360-top-v294{flex-direction:column}.c360-summary-card-v294{flex:1 1 auto;width:100%;margin-left:0}}
+/* V294: Available Customer Programmes — one compact row per programme, honest Live/Paused pill. */
+.c360-programmes-v294{display:flex;flex-direction:column;margin-bottom:6px}
+.c360-programme-row-v294{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
+.c360-programme-row-v294:last-child{border-bottom:0}
+.c360-programme-row-v294 b{font-size:13.5px}
+.c360-programme-row-v294 p{margin-top:2px}
+/* V294: retired/ended rewards live in a collapsed Reward history disclosure. */
+.reward-history-v294>summary{cursor:pointer;font-weight:700;font-size:13px;min-height:34px;display:flex;align-items:center}
+/* V294: Business Insights report tabs (the four cards became a tab bar). */
+.report-tabbar-v294{margin-bottom:16px}
+.report-tabbar-v294 button{display:inline-flex;align-items:center;gap:7px}
+.report-panel-v294[hidden]{display:none}
 .customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
 .customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
 .customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
@@ -2541,11 +2567,11 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         </div>
         <label class="sr-only" for="dashboardScheduleDate">Schedule date</label>
         <input type="date" id="dashboardScheduleDate" value="${today}">
-        <!-- V266 (owner drew arrows from this date chip down to the Performance figures and
-             wrote "by right based on this date, there are no numbers"). The figures were right
-             for the range chosen at the top of the page; this day picker is a different
-             control that happens to sit above them. Say so, at the picker. -->
-        <span class="muted small dashboard-schedule-scope-v266">Changes the bookings shown here only, not the Performance figures below.</span>
+        <!-- V266 said this picker changes the bookings only. V294 (owner markup 2026-08-12,
+             circled this control with an arrow to the Performance period line: "I want date
+             linked to data below") reverses that: picking a day here now ALSO retargets the
+             Performance figures to that single day, so the helper states the new truth. -->
+        <span class="muted small dashboard-schedule-scope-v266">Also sets the figures below to this day.</span>
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
@@ -2630,6 +2656,19 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     });
     if(scheduleDateInputV252&&scheduleDateInputV252.value!==date)scheduleDateInputV252.value=date;
     loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,date);
+    /* V294 (owner markup 2026-08-12: "I want date linked to data below"). A schedule-day pick
+       ALSO sets the Performance figures to that single day. It writes through the same #df/#dt
+       + load() path the global range pills use, so there is exactly one range state and the
+       pills/Apply keep working and override. Programmatic .value writes fire no oninput, so the
+       pill-clearing input handler above cannot double-fire; the Today pill is re-lit only when
+       the picked day IS today, because that is the one pill whose range equals this day. */
+    const rangeFromV294=dashboardRoot.querySelector('#df'),rangeToV294=dashboardRoot.querySelector('#dt');
+    if(rangeFromV294&&rangeToV294){
+      rangeFromV294.value=date;rangeToV294.value=date;
+      dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>
+        button.classList.toggle('act',button.dataset.d==='1'&&date===sgDateInputValue()));
+      load();
+    }
   };
   scheduleTabsV252.forEach(tab=>{tab.onclick=()=>applyScheduleDayV252(scheduleTabDateV252(tab))});
   if(scheduleDateInputV252)scheduleDateInputV252.onchange=()=>{
@@ -2837,6 +2876,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'8b4960236595c4ab5ac0382efa95e3182b02c0cc3aaef9ba92b1fe9c10d0a04a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'4b106fdc84a4b7231017065351ac34159ae37557a548c904151db226b26f9316',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

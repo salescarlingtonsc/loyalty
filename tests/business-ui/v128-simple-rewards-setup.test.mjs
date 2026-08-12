@@ -15,6 +15,8 @@ const v281Evidence=readFileSync(new URL('../../docs/qa/evidence/V281-GROW-OVERVI
 /* V288: the fixture is regenerated from app/app.js on every change to it, so the doc that
    records the CURRENT hash is whichever release last re-captured it. */
 const v288Evidence=readFileSync(new URL('../../docs/qa/evidence/V288-A2-GAP-CLOSURE.md',import.meta.url),'utf8');
+/* V294: the owner-batch UI changes regenerated the fixture, so its provenance hash lives in the V294 evidence. */
+const v294Evidence=readFileSync(new URL('../../docs/qa/evidence/V294-OWNER-BATCH-ACCEPTANCE.md',import.meta.url),'utf8');
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -110,5 +112,5 @@ test('server recommendation uses governed sectors and serializes stale tabs onto
 test('checked-in browser evidence identifies the exact extracted production component',()=>{
   const sourceHash=browserFixture.match(/name="production-source-sha256" content="([a-f0-9]{64})"/)?.[1];
   assert.ok(sourceHash,'generated browser fixture must carry its production source hash');
-  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}`,new RegExp(sourceHash));
+  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}`,new RegExp(sourceHash));
 });

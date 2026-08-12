@@ -305,15 +305,17 @@ test('Reports machine-readable scope agrees with every availability flag', () =>
 test('Reports loads only the answers the user opened', () => {
   const reports = section('async function reportsPage()', '/* ---------- get started');
   assert.match(reports,/Run report/);
-  assert.match(reports,/const answerLoaders=\[/);
-  assert.match(reports,/const runOpenAnswers=\(\)=>Promise\.all\(answerLoaders/);
-  assert.match(reports,/\.filter\(\(\[id\]\)=>\$\(id\)\?\.open\)/);
+  /* V294 (owner markup 2026-08-12): the answer cards became tabs. The lazy-load guarantee is
+     unchanged — a report runs when its tab is selected (or Run report is pressed), once per
+     range, never all three at once. */
+  assert.match(reports,/const reportRunnersV294=\{money:runMoney,busy:runBusy,returning:runReturning\}/);
+  assert.match(reports,/if\(!reportTabsRunV294\.has\(key\)\)\{reportTabsRunV294\.add\(key\);runAnswer\(reportRunnersV294\[key\]\)\}/);
   assert.doesNotMatch(reports,/runAll\(|Promise\.all\(\[runMoney\(\),runBusy\(\),runReturning\(\)\]\)/);
   /* V272 owner instruction ("remove this", on the per-page branch select): the branch filter no
      longer re-triggers the open answers — Run report is the trigger, and the top-bar branch scope
      re-enters the page through route(). The lazy-load guarantee this test guards is unchanged. */
   assert.doesNotMatch(reports,/refreshBranchFilter\(/);
-  assert.match(reports,/\$\('rgo'\)\.onclick=\(\)=>\{invalidateAnswers\(\);runOpenAnswers\(\)/);
+  assert.match(reports,/\$\('rgo'\)\.onclick=\(\)=>\{\n\s*invalidateAnswers\(\);/);
 
   const money=reports.slice(reports.indexOf('async function runMoney()'),reports.indexOf('const appointmentSummary='));
   assert.match(money,/get_reports_summary/);
@@ -321,7 +323,7 @@ test('Reports loads only the answers the user opened', () => {
   const busy=reports.slice(reports.indexOf('async function runBusy()'),reports.indexOf('async function runReturning()'));
   assert.match(busy,/appointmentRows/);
   assert.doesNotMatch(busy,/get_reports_summary|get_customer_lifecycle_v107/);
-  const returning=reports.slice(reports.indexOf('async function runReturning()'),reports.indexOf('const answerLoaders='));
+  const returning=reports.slice(reports.indexOf('async function runReturning()'),reports.indexOf('const reportRunnersV294='));
   assert.match(returning,/get_customer_lifecycle_v107/);
   assert.doesNotMatch(returning,/get_reports_summary|appointmentRows|scheduledCapacityHours/);
 });
@@ -342,11 +344,13 @@ test('customer profile never converts inaccessible facets into plausible zero va
   assert.match(client, /require_module_scope_v145/);
   assert.match(client, /No partial totals are shown/);
   assert.match(client, /Some profile figures are unavailable/);
-  /* V249: Visits and Lifetime spend left the KPI row for the identity chips, still gated on
-     canReadSales — an unconfirmed sales facet renders neither chip rather than a zero. */
-  assert.match(client, /if\(canReadSales\)\{[\s\S]*?visitsLabelV249/);
+  /* V249 moved Visits/Lifetime spend to identity chips; V294 (owner sketch 2026-08-12) moved
+     them again, into the upper-right summary card — still gated on canReadSales, so an
+     unconfirmed sales facet renders no row rather than a zero, and the same for loyalty. */
+  assert.match(client, /if\(canReadSales\)\{[\s\S]*?label:'VIP'/);
+  assert.match(client, /canReadSales\?summaryRowV294\(/);
   assert.match(client, /canReadSales&&netVisits<=0\?`<p class="muted small"/);
-  assert.match(client, /loyaltyFactsAvailable\?`<div class="card kpi"/);
+  assert.match(client, /loyaltyFactsAvailable\?summaryRowV294\(/);
   assert.match(client, /canReadLoyalty\?`<section class="card c360-rewards-card" id="c360-loyalty"/);
   assert.match(client, /canReadRetention\?`<div class="card"><b>Retention reward history/);
   assert.match(client, /activitySources\.length\?/);
@@ -385,8 +389,10 @@ test('customer profile proves owner-wide or every assigned staff branch without 
   assert.match(client, /Promise\.all\(profileScopeBranchIds\.map\(branchId=>[\s\S]*p_branch:branchId/);
   assert.match(client, /access across every branch assigned to this staff account/);
   /* V249: the same staff-scope qualifier, now carried by the chips that replaced those cards. */
-  assert.match(client, /isProfileAdmin\?'':'visible '\}visit/);
-  assert.match(client, /isProfileAdmin\?'lifetime':'visible sales'/);
+  /* V294: the scope-honest wording moved with the figures into the summary card — a staff
+     account still reads "Visible visits" / "Visible sales", never a business-wide claim. */
+  assert.match(client, /isProfileAdmin\?'Visits':'Visible visits'/);
+  assert.match(client, /isProfileAdmin\?'Lifetime spend':'Visible sales'/);
   assert.match(client, /Business-wide points/);
   assert.match(client, /Business-wide spendable credit/);
   assert.match(client, /Staff view scope/);
@@ -565,9 +571,11 @@ test('report question cards issue one remote answer request per user action', ()
   // dedupe existed only to stop that pair from double-firing). One native toggle listener is
   // now the only trigger, so one click can no longer fire the same remote report twice.
   assert.doesNotMatch(reports,/scriptedAnswerToggles/);
-  assert.match(reports,/for\(const \[id,runner\] of answerLoaders\)\{/);
-  assert.match(reports,/\$\(id\)\.addEventListener\('toggle',event=>\{/);
-  assert.match(reports,/if\(event\.currentTarget\.open\)runAnswer\(runner\)/);
+  /* V294: the <details> toggle became tab selection — still exactly one trigger per report,
+     still impossible to double-fire one click into two remote requests. */
+  assert.match(reports,/const selectReportTabV294=key=>\{/);
+  assert.match(reports,/reportTabsV294\.forEach\(tab=>tab\.onclick=\(\)=>selectReportTabV294\(tab\.dataset\.reportTabV294\)\)/);
+  assert.match(reports,/if\(!reportTabsRunV294\.has\(key\)\)/);
 });
 
 test('waitlist terminal booked rows are labelled as conversions, never proven seating', () => {

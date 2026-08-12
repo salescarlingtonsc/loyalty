@@ -19,7 +19,10 @@ const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
    nav is one flat "Programmes" link onto that list. The destination it names is what still has
    to be true, which the next test and the filter test below both pin. */
 test('V250 the Programmes nav is one flat link, with no sub-rows left', () => {
-  assert.match(app, /\{key:'grow',icon:'star',flat:'Programmes',href:'#\/grow'/);
+  /* V294: Programmes became a group whose children are the page's own three views — still no
+     per-module sub-rows (the thing V250 removed stays removed). */
+  assert.match(app, /\{key:'grow',icon:'star',label:'Programmes'/);
+  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['List','#\/grow','menu'\],\['History','#\/grow\/history','waitlist'\]\]/);
   assert.doesNotMatch(app, /'Programmes list'/);
   assert.doesNotMatch(app, /\['#\/grow\/ongoing'/);
   assert.doesNotMatch(app, /\['#\/grow\/available'/);

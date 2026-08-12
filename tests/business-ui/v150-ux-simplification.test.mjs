@@ -29,7 +29,7 @@ test('V150 sidebar keeps operational actions separate from money history', () =>
      exclusive to industry='bar' and is stripped from the resolved module list for every other
      sector before the rail is built). The doing-vs-reviewing separation this test guards is
      unchanged: Bottles is something staff DO during service, not money history. */
-  assert.match(navBlock, /items:\['till','appointments',(?:'bottles',)?'bookings','waitlist'\]/);
+  assert.match(navBlock, /items:\['till','appointments',(?:'bottles',)?'bookings','waitlist','giftcards'\]/);
   /* V180 owner instruction: Business Insights and Expenses swapped so the money group reads
      as money in -> money out -> result -> why. The separation this test guards is unchanged. */
   /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
@@ -89,10 +89,12 @@ test('V150 sales is ledger-first and no longer includes the duplicate quick-sale
 
 test('V150 reports uses plain-language report categories and run-report wording', () => {
   assert.match(reportsBlock, /<h1>Business Insights<\/h1>/);
-  assert.match(reportsBlock, /Sales & revenue/);
-  assert.match(reportsBlock, /Appointments & busy times/);
-  assert.match(reportsBlock, /Customer retention/);
-  assert.match(reportsBlock, /Team performance/);
+  /* V294 (owner markup 2026-08-12): the four categories became a tab bar, and the owner
+     renamed Appointments & busy times to Efficiency. Plain language survives as tab titles. */
+  assert.match(reportsBlock, /Sales & Revenue/);
+  assert.match(reportsBlock, /Efficiency/);
+  assert.match(reportsBlock, /Customer Retention/);
+  assert.match(reportsBlock, /Team Performance/);
   assert.match(reportsBlock, /Run report/);
   assert.doesNotMatch(reportsBlock, /Business answers/);
 });
