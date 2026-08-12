@@ -32,7 +32,11 @@ test('V183 Home leads with offers and delegates the reward grid to the My Reward
 
   /* v194 removed the two quick-link cards (they repeated the permanent nav). Offers are what
      Home leads with, which is the ordering this line has always been about. */
-  assert.ok(homeBranch.indexOf('customerHomeOffersMarkupV167(offersState)')<homeBranch.indexOf('customerHomeGuidanceV167('));
+  /* v286: the guidance call moved into a `homeGuidance` const (Home now needs to know whether it
+     produced anything before it decides the surface is empty). The ordering invariant is the
+     rendered order, which is what this line has always been about. */
+  assert.match(home,/const homeGuidance=isHome\?customerHomeGuidanceV167\(/);
+  assert.ok(homeBranch.indexOf('customerHomeOffersMarkupV167(offersState)')<homeBranch.indexOf('${homeGuidance}'));
   assert.doesNotMatch(homeBranch,/customerProgrammeGridMarkupV96/,'the reward grid was crossed out on Home');
   assert.doesNotMatch(homeBranch,/customerMyRewardsHeadingV156/,'the "My Rewards" heading was crossed out on Home');
   assert.ok(homeMarkup.indexOf('customerMyRewardsHeadingV156(cards.length')<homeMarkup.indexOf('customerProgrammeGridMarkupV96(cards)'),

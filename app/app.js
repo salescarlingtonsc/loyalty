@@ -4919,7 +4919,30 @@ let customerHomeOfferIndexV173=new Map();
    trip — and it states the honest empty case rather than disappearing, so a customer can tell the
    difference between "nothing expires soon" and "we did not check". */
 function customerExpiringRewardsMarkupV195(cards=[]){
-  const list=(Array.isArray(cards)?cards:[]).map(card=>{
+  /* v286: the pill used to count `list` AFTER .slice(0,4), so a customer with points expiring at
+     seven businesses was told "4 to use" and the other three were invisible on the one surface
+     whose whole job is that nothing expires by surprise. Count the FULL set, slice only for
+     display, and give the remainder a way out via "See all". */
+  const all=customerExpiringRowsV286(cards),list=all.slice(0,4);
+  if(!(Array.isArray(cards)&&cards.length))return '';
+  return `<section class="card customer-expiring-glance" aria-labelledby="customerExpiringTitle">
+    <div class="customer-expiring-head">
+      <h2 id="customerExpiringTitle">${CUI.icon('retention',{size:18})}<span>Expiring rewards</span></h2>
+      ${all.length?`<span class="pill new">${all.length} to use</span>`:'<span class="muted small">Nothing in 30 days</span>'}
+    </div>
+    ${list.length
+      ?`<ul class="customer-expiring-list">${list.map(row=>`<li${row.soon?' class="is-urgent"':''}>
+        <a href="#/customer/programmes"><b>${esc(customerPointTotalV103(row.units))} ${esc(row.unit)}</b>
+        <span class="muted small">${esc(row.name)}</span>
+        <span class="customer-expiring-when${row.soon?' is-urgent':''}">${esc(row.when)}</span></a></li>`).join('')}</ul>
+        ${all.length>list.length?`<p class="muted small" style="margin-top:8px"><a href="#/customer/programmes">See all ${all.length}</a></p>`:''}`
+      :`<p class="muted small">None of your points expire in the next 30 days.</p>`}
+  </section>`;
+}
+/* v286: the row build is shared — the markup slices it for display, Home asks it whether there is
+   ANY expiring balance before deciding the surface is empty. One definition, one truth. */
+function customerExpiringRowsV286(cards=[]){
+  return (Array.isArray(cards)?cards:[]).map(card=>{
     const expiry=card?.expiry||{},units=Math.max(0,Number(expiry.expiring_units)||0);
     if(!(units>0)||!expiry.next_expiry_at)return null;
     return {
@@ -4928,20 +4951,7 @@ function customerExpiringRewardsMarkupV195(cards=[]){
       soon:Math.max(0,Number(expiry.expiring_within_7_days)||0)>0,
       at:expiry.next_expiry_at,when:walletDate(expiry.next_expiry_at)
     };
-  }).filter(Boolean).sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(0,4);
-  if(!(Array.isArray(cards)&&cards.length))return '';
-  return `<section class="card customer-expiring-glance" aria-labelledby="customerExpiringTitle">
-    <div class="customer-expiring-head">
-      <h2 id="customerExpiringTitle">${CUI.icon('retention',{size:18})}<span>Expiring rewards</span></h2>
-      ${list.length?`<span class="pill new">${list.length} to use</span>`:'<span class="muted small">Nothing in 30 days</span>'}
-    </div>
-    ${list.length
-      ?`<ul class="customer-expiring-list">${list.map(row=>`<li${row.soon?' class="is-urgent"':''}>
-        <a href="#/customer/programmes"><b>${esc(customerPointTotalV103(row.units))} ${esc(row.unit)}</b>
-        <span class="muted small">${esc(row.name)}</span>
-        <span class="customer-expiring-when${row.soon?' is-urgent':''}">${esc(row.when)}</span></a></li>`).join('')}</ul>`
-      :`<p class="muted small">None of your points expire in the next 30 days.</p>`}
-  </section>`;
+  }).filter(Boolean).sort((a,b)=>String(a.at).localeCompare(String(b.at)));
 }
 function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   const items=interleaveCustomerOffersV173(state.items);
@@ -5961,6 +5971,14 @@ function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=
 function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
   return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
 }
+/* v286: a linked customer with nothing expiring, no live offer and no pending redemption used to
+   land on two negatives ("None of your points expire…" + "No offers right now.") and no next
+   action at all — the app's own bar is one obvious action per screen. The one action that is
+   always true on Home is adding the next business, which is scan-only, so reuse the existing
+   scan copy keys and the existing #customerHomeScan wiring rather than inventing a new control. */
+function customerHomeEmptyActionV286(){
+  return `<section class="card customer-first-quest customer-home-empty-action" aria-labelledby="customerHomeEmptyTitle"><div class="customer-first-quest-copy"><div class="customer-first-quest-icon">${CUI.icon('scan',{size:34})}</div><h2 id="customerHomeEmptyTitle">${esc(ct('scanLoyaltyQr'))}</h2><p class="muted small">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerHomeScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:12px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
+}
 /* v244: the v242 "All businesses" directory moved off the bottom of Home into the Explore tab,
    where it is the empty-query result of the ecosystem search. Same rules (an unjoined business
    never navigates, never shows points); Home stays offers-first. */
@@ -5980,9 +5998,14 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   }
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
      grid is the My Rewards tab's job. Home is now offers first, then a two-way jump-off. */
+  const homeGuidance=isHome?customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items}):'';
+  /* v286: "everything resolved and there is nothing" is a real state, not a loading state — only
+     claim it once offers have actually come back ready, never while loading or on an error. */
+  const homeEmpty=isHome&&!homeGuidance&&offersState.status==='ready'
+    &&!(Array.isArray(offersState.items)&&offersState.items.length)&&!customerExpiringRowsV286(cards).length;
   $('walletBody').innerHTML=`${isHome?`${customerExpiringRewardsMarkupV195(cards)}
     ${customerHomeOffersMarkupV167(offersState)}
-    ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}`
+    ${homeGuidance}${homeEmpty?customerHomeEmptyActionV286():''}`
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
@@ -6003,17 +6026,21 @@ async function renderCustomerWallet(businessSlug=null){
       const {data,error}=await customerRpc('customer_get_actionable_wallet');
       if(!isWalletCurrent())return;
       if(!error&&Array.isArray(data?.cards)&&data.cards.length){
+        /* v286: this pair used raw sb.rpc, so it carried NO abortSignal while every other read in
+           the Promise.all aborts at 12s (v177) — and Promise.all waits for the slowest, so one
+           stalled multi-business inbox sync left Home on "Loading Peekaa…" forever with no error
+           and no Retry. Both calls now go through customerRpc, AND the badge no longer gates the
+           paint: Home renders from the wallet/bookings/offers reads and the bell slot hydrates
+           when the count lands. */
         const messagePromise=customerFeatures.customer_in_app_inbox===true
         ?(async()=>{
-          const syncRpc='customer_sync_in_app_inbox_global';
-          const syncResult=await sb.rpc(syncRpc,{p_idempotency_key:crypto.randomUUID()});
+          const syncResult=await customerRpc('customer_sync_in_app_inbox_global',{p_idempotency_key:crypto.randomUUID()});
           if(syncResult.error)return {data:null,error:syncResult.error};
-          return sb.rpc('customer_get_in_app_inbox_global_count');
-        })()
+          return customerRpc('customer_get_in_app_inbox_global_count');
+        })().catch(error=>({data:null,error}))
         :Promise.resolve({data:null,error:null});
-      const [legacyResult,messageResult,bookingRequestResult,offersResult]=await Promise.all([
+      const [legacyResult,bookingRequestResult,offersResult]=await Promise.all([
         customerRpc('customer_get_wallet'),
-        messagePromise,
         customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
         customerRpc('customer_get_home_offers_v167',{p_locale:'en'})
       ]);
@@ -6023,7 +6050,7 @@ async function renderCustomerWallet(businessSlug=null){
         activeRequestCount:bookingRequestResult.error?0:(Array.isArray(bookingRequestResult.data?.items)?bookingRequestResult.data.items.filter(isActiveCustomerBookingRequest).length:0),
         activeRequestsTruncated:!bookingRequestResult.error&&(bookingRequestResult.data?.truncated===true||!!bookingRequestResult.data?.next_cursor),
         bookingsAvailable:!legacyResult.error||!bookingRequestResult.error,
-        messageCount:messageResult.error?null:Math.max(0,Number(messageResult.data?.unread_count||0)),
+        messageCount:null,
         messagesAvailable:customerFeatures.customer_in_app_inbox===true,
         claimsAvailable:false
       };
@@ -6041,11 +6068,19 @@ async function renderCustomerWallet(businessSlug=null){
           +customerHomeOverview.walletCards.reduce((total,card)=>
             total+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0)
       });
-      const inboxSlot=$('customerInboxBellSlot');
-      if(inboxSlot&&customerFeatures.customer_in_app_inbox===true){
-        const unread=customerHomeOverview.messageCount;
+      const paintCustomerInboxBellV286=unread=>{
+        const inboxSlot=$('customerInboxBellSlot');
+        if(!inboxSlot||customerFeatures.customer_in_app_inbox!==true)return;
         inboxSlot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread===null?'Open messages':`Open messages, ${unread} unread`}" title="Open messages">${CUI.icon('bell',{size:19})}${Number(unread)>0?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
-      }
+      };
+      paintCustomerInboxBellV286(customerHomeOverview.messageCount);
+      /* v286: same epoch guard as every other post-await write — a slow badge from an abandoned
+         render must never repaint the surface the customer moved on to. */
+      messagePromise.then(messageResult=>{
+        if(!isWalletCurrent())return;
+        customerHomeOverview.messageCount=messageResult?.error?null:Math.max(0,Number(messageResult?.data?.unread_count||0));
+        paintCustomerInboxBellV286(customerHomeOverview.messageCount);
+      });
       focusCustomerRoute();
       return;
       }
