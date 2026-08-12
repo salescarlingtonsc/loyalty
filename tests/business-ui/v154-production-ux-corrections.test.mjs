@@ -108,8 +108,9 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
   /* V250: the owner made Programmes ONE flat nav link, so the group declares `flat` rather
      than `label`, and the old "Available programmes" sub-row is gone. The naming this test
      protects — that the module is called Programmes, not Grow — is unchanged. */
-  assert.match(nav, /flat:'Programmes'/);
-  assert.doesNotMatch(nav, /label:'Programmes'/);
+  /* V294: Programmes became a group (owner markup 2026-08-12), keeping the owner's word. */
+  assert.match(nav, /label:'Programmes'/);
+  assert.doesNotMatch(nav, /flat:'Programmes'/);
   assert.match(app, /Ongoing programmes/);
   assert.match(grow, /<h1 id="growTitle">Programmes<\/h1>/);
   /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two
@@ -126,7 +127,8 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
   assert.match(grow, /programme-category-title">Promotions</);
   assert.match(grow, /programme-category-title">Referrals</);
   /* V229: renamed to say what is in it rather than what it is like. */
-  assert.match(grow, /programme-category-title">Memberships & gift cards</);
+  /* V294: gift cards left the category (item 7b) — Memberships stands alone. */
+  assert.match(grow, /programme-category-title">Memberships</);
   assert.doesNotMatch(grow, /Start automatically or choose the exact programme below/);
 });
 

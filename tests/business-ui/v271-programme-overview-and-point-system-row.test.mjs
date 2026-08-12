@@ -264,6 +264,8 @@ test('V271 (c) the editor list says the same two things, and disambiguates same-
   assert.match(editor, /r\?\.created_at\?`Added \$\{walletDate\(r\.created_at,true\)\}`:'Added date not recorded'/);
   assert.match(editor, /Retired — customers cannot see or claim this/);
   // The row actually uses them.
-  assert.match(app, /rewards\.map\(r=>\{const state=rewardStatusV271\(r\);/);
+  /* V294: the rows render through the shared builder — offerable rows in the catalogue,
+     retired/ended rows in Reward history — same status derivation, same identity line. */
+  assert.match(app, /offerable\.map\(r=>rewardItemHtmlV294\(r,rewardStatusV271\(r\)\)\)/);
   assert.match(app, /\$\{rewardIdentityLineV271\(r\)\}/);
 });

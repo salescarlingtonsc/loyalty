@@ -78,7 +78,7 @@ test('V276 the app-bar action and the mobile dock follow the same rule as the ra
 
 test('V276 a bar keeps Bookings, Waitlist and Bottles in Serve & sell', () => {
   assert.match(app,
-    /\{key:'serve',icon:'till',label:'Serve & sell',items:\['till','appointments','bottles','bookings','waitlist'\]\}/);
+    /\{key:'serve',icon:'till',label:'Serve & sell',items:\['till','appointments','bottles','bookings','waitlist','giftcards'\]\}/); /* V294: gift cards joined Serve & sell */
   // Bottles is stripped for every sector except a bar, and for no other reason.
   assert.match(navHtml, /const sectorShowsBottlesV275=isBarSectorV275\(\);/);
   assert.match(navHtml, /\.filter\(module=>module!=='bottles'\|\|sectorShowsBottlesV275\)/);

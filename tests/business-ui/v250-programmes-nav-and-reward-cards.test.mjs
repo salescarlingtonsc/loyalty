@@ -34,8 +34,11 @@ const nav = section('function navHtml(', 'function wireNav()');
 const grow = section('async function growPage(', '/* ---------- Bring-back playbooks');
 
 test('V250 (a) Programmes is one flat nav group and both sub-rows are gone', () => {
-  assert.match(app, /\{key:'grow',icon:'star',flat:'Programmes',href:'#\/grow',items:\['loyalty','retention','referrals','memberships','giftcards'\]\}/);
-  assert.doesNotMatch(app, /\{key:'grow',[^}]*label:'Programmes'/);
+  /* V294 (owner markup 2026-08-12): the flat link became a GROUP whose children are the page's
+     own Overview / List / History views. What V250 removed stays removed: no per-module peer
+     rows, no resurrected sub-nav helper. giftcards moved to Serve & sell with its card. */
+  assert.match(app, /\{key:'grow',icon:'star',label:'Programmes',items:\['loyalty','retention','referrals','memberships'\],\s*views:\[\['Overview','#\/grow\/overview','reports'\],\['List','#\/grow','menu'\],\['History','#\/grow\/history','waitlist'\]\]\}/);
+  assert.doesNotMatch(app, /flat:'Programmes'/);
   // The sub-nav helper rendered the three rows; it is gone, not left as an empty container.
   assert.doesNotMatch(app, /growNavItemHtml/);
   assert.doesNotMatch(app, /const links=\[/);
@@ -44,7 +47,7 @@ test('V250 (a) Programmes is one flat nav group and both sub-rows are gone', () 
   assert.doesNotMatch(app, /\['#\/grow\/available','Pending setup'\]/);
   // No dead branch left behind in the collapsible renderer either.
   assert.doesNotMatch(nav, /restItems/);
-  assert.match(nav, /\$\{g\.items\.filter\(m=>MODULES\[m\]\)/);
+  assert.match(nav, /g\.items\.filter\(m=>MODULES\[m\]\)/);
 });
 
 test('V250 (b) the filtered hashes still resolve and the list keeps both V244 sections', () => {

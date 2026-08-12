@@ -26,13 +26,14 @@ const reports = section(js, 'async function reportsPage(){', '\n/* ---------- ge
 
 test('V272 (A) the report controls render above the four category cards', () => {
   const scopeCard = reports.indexOf('class="card report-scope-card"');
-  const grid = reports.indexOf('<div class="report-decision-grid">');
+  /* V294 (owner markup 2026-08-12): the card grid became a tab bar, and the owner renamed
+     Appointments & busy times to Efficiency. The (A) ordering rule is unchanged. */
+  const grid = reports.indexOf('report-tabbar-v294');
   assert.notEqual(scopeCard, -1, 'the control bar is missing');
   assert.notEqual(grid, -1, 'the category card grid is missing');
   assert.ok(scopeCard < grid, 'the control bar must precede the category cards');
-  // The four cards themselves are untouched by the move.
-  for (const title of ['Sales & revenue', 'Appointments & busy times', 'Customer retention', 'Team performance']) {
-    assert.ok(reports.includes(`title:'${title}'`), `missing category card: ${title}`);
+  for (const title of ['Sales & Revenue', 'Efficiency', 'Customer Retention', 'Team Performance']) {
+    assert.ok(reports.includes(`title:'${title}'`), `missing category tab: ${title}`);
   }
 });
 
@@ -87,7 +88,7 @@ test('V272 (C) the #/staffperf route and the Team performance card link both sur
   assert.match(js, /async function staffPerfPage\(/);
   // The card on this page is still the entry point the owner pointed at.
   assert.match(reports, /canReadModule\('staffperf'\)&&\{href:'#\/staffperf'/);
-  assert.match(reports, /title:'Team performance'/);
+  assert.match(reports, /title:'Team Performance'/); /* V294 tab casing */
   // The drill-down back-link inside the page still resolves too.
   assert.match(js, /href="#\/staffperf">← Staff performance/);
   // Module metadata and permission wiring are untouched, so the route stays authorisable.

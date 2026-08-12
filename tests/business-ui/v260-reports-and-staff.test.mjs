@@ -55,18 +55,17 @@ test('V260 (3) Business Insights folds the three answer collapsibles into their 
   const reports = section(js, 'async function reportsPage(){', '\n/* ---------- get started');
   // Each non-href decision is now the <details> element itself — no separate button id and no
   // separate <details id="moneyDetails"> section elsewhere in the page.
-  assert.match(reports, /detailsId:'moneyDetails'/);
-  assert.match(reports, /detailsId:'busyDetails'/);
-  assert.match(reports, /detailsId:'returningDetails'/);
+  /* V294 (owner markup 2026-08-12): the merged <details> cards became TABS — one panel per
+     report, same body ids, still no separate opener button. */
+  assert.match(reports, /panelId:'reportPanelMoneyV294'/);
+  assert.match(reports, /panelId:'reportPanelBusyV294'/);
+  assert.match(reports, /panelId:'reportPanelReturningV294'/);
   assert.doesNotMatch(reports, /id:'moneyAnswer'/);
   assert.doesNotMatch(reports, /id:'busyAnswer'/);
   assert.doesNotMatch(reports, /id:'returningAnswer'/);
-  // The merged markup appears exactly once each — moved, not duplicated.
-  for (const id of ['moneyDetails', 'busyDetails', 'returningDetails']) {
-    const hits = reports.match(new RegExp(`id="\\$\\{item\\.detailsId\\}"`, 'g')) || [];
-    assert.ok(hits.length >= 1, `expected the shared details-id template to render ${id}`);
-  }
-  assert.equal((reports.match(/<details class="report-decision-card"/g) || []).length >= 1, true);
+  // The shared panel template renders every report body exactly once — moved, not duplicated.
+  assert.equal((reports.match(/id="\$\{item\.panelId\}"/g) || []).length, 1);
+  assert.equal((reports.match(/<section class="report-panel-v294"/g) || []).length, 1);
   // The result bodies (rbody/busyBody/returningBody) still exist and are still what
   // runMoney/runBusy/runReturning target — only where they live in the DOM moved.
   assert.match(reports, /bodyId:'rbody'/);
@@ -80,7 +79,7 @@ test('V260 (3) Business Insights folds the three answer collapsibles into their 
 test('V260 (4) Business Insights Team performance card routes to the real Staff performance page', () => {
   const reports = section(js, 'async function reportsPage(){', '\n/* ---------- get started');
   assert.match(reports, /canReadModule\('staffperf'\)&&\{href:'#\/staffperf'/);
-  assert.match(reports, /title:'Team performance'/);
+  assert.match(reports, /title:'Team Performance'/); /* V294 tab casing */
   // #/staffperf is a real registered route (staffPerfPage), not an invented one.
   assert.match(js, /staffperf:staffPerfPage/);
 });

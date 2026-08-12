@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="bb4e2a645672a89688f16c6a85f2fbcb01e136ac9dddd1e164d9bd0536645e1b"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="ab5342d62cbb3d0ffb724c1078d42c8257e5315dfe0a01c49c7d3312f766e798"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1187,6 +1187,32 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
 .customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
 .customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
+/* V294 (owner sketch 2026-08-12): compact summary card at the upper right of the Customer 360
+   content area — visits, lifetime spend, points, credit, PDPA as dense rows; the status chips
+   keep the left of the same band. On narrow screens the card drops below the chips full-width. */
+.c360-top-v294{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+.c360-top-main-v294{flex:1 1 240px;min-width:min(100%,220px)}
+.c360-top-main-v294 .c360-badges{margin-bottom:0}
+.c360-summary-card-v294{flex:0 1 360px;margin-left:auto;padding:12px 16px}
+.c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
+.c360-summary-row-v294:last-of-type{border-bottom:0}
+.c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
+.c360-summary-value-v294{font-variant-numeric:tabular-nums;font-size:14px;text-align:right}
+.c360-summary-card-v294 .c360-points-expiry{margin-top:2px}
+.c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
+@media(max-width:760px){.c360-top-v294{flex-direction:column}.c360-summary-card-v294{flex:1 1 auto;width:100%;margin-left:0}}
+/* V294: Available Customer Programmes — one compact row per programme, honest Live/Paused pill. */
+.c360-programmes-v294{display:flex;flex-direction:column;margin-bottom:6px}
+.c360-programme-row-v294{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
+.c360-programme-row-v294:last-child{border-bottom:0}
+.c360-programme-row-v294 b{font-size:13.5px}
+.c360-programme-row-v294 p{margin-top:2px}
+/* V294: retired/ended rewards live in a collapsed Reward history disclosure. */
+.reward-history-v294>summary{cursor:pointer;font-weight:700;font-size:13px;min-height:34px;display:flex;align-items:center}
+/* V294: Business Insights report tabs (the four cards became a tab bar). */
+.report-tabbar-v294{margin-bottom:16px}
+.report-tabbar-v294 button{display:inline-flex;align-items:center;gap:7px}
+.report-panel-v294[hidden]{display:none}
 .customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
 .customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
 .customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
@@ -1894,7 +1920,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · bb4e2a645672a89688f16c6a85f2fbcb01e136ac9dddd1e164d9bd0536645e1b</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ab5342d62cbb3d0ffb724c1078d42c8257e5315dfe0a01c49c7d3312f766e798</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2564,7 +2590,10 @@ async function openWelcomeOfferEditorV215(current,onSaved){
      switch) must keep the owner where they are. */
   if(fromRouteV288)growTopicV229='';
   const directFocusTokens=new Set(['earning','classic','birthday','add','bringback','new']);
-  if(!routedFocus&&directFocusTokens.has(hashParam)){routedFocus=hashParam;hashParam=null}
+  /* V294: a focus token may carry an entry-context suffix (earning~ctx-points) or be a bare
+     context (ctx-tiers); both belong in the focus slot, not the draft-id slot. */
+  const hashParamBaseV294=String(hashParam||'').replace(/~?ctx-(points|tiers)$/,'');
+  if(!routedFocus&&(directFocusTokens.has(hashParamBaseV294)||/^ctx-(points|tiers)$/.test(String(hashParam||'')))){routedFocus=hashParam;hashParam=null}
   const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
   const modules=S.myModules||[];
   const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
@@ -2677,7 +2706,6 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     :`${loyaltyModelNamesV235[liveLoyaltyModelV235]} is the live model`;
   const bringBackLive=bringBackCount>0;
   const referralLive=snapshot.referral?.enabled===true;
-  const giftCardsLive=snapshot.giftcards?.enabled===true;
   const publishedPromotions=(snapshot.promotions||[]).filter(item=>item?.active===true).length;
   const promotionDrafts=Math.max(0,(snapshot.promotions||[]).length-publishedPromotions);
   let draftSnapshotHash=snapshot.draft?.snapshot_hash||null;
@@ -2710,24 +2738,33 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     const accessLabel=access?`<span class="grow-programme-access">${esc(access)}</span>`:readOnly?'<span class="grow-programme-access">Read only</span>':'';
     return `${actionOpen||`<article class="grow-programme-row" data-programme-kind="${esc(kind)}">`}<span class="grow-programme-icon">${icon}</span><div><b${merchant?' data-merchant-content':''}>${esc(title)}</b><p class="muted small"${merchant?' data-merchant-content':''}>${esc(copy)}</p>${growPendingBlockV268(pending)}</div><span class="grow-programme-meta">${programmeStatus(status,statusTone)}${accessLabel}${actionOpen?`<span class="grow-programme-action">${esc(actionLabel)} →</span>`:''}</span>${tagClose}`;
   };
-  function growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId}={}){
-    if(surface==='rewards'&&rewardId)return `reward~${encodeURIComponent(rewardId)}`;
-    if(surface==='rewards'&&focusTarget==='lm')return 'earning';
-    if(surface==='rewards'&&focusTarget==='lr')return 'classic';
+  function growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId,entryContext=null}={}){
+    /* V294: the entry context rides the same path segment as the focus token, as a suffix, so a
+       reload re-enters the editor the way the owner entered it (points entry stays tiers-free). */
+    const ctxV294=surface==='rewards'&&['points','tiers'].includes(entryContext||'')?`~ctx-${entryContext}`:'';
+    if(surface==='rewards'&&rewardId)return `reward~${encodeURIComponent(rewardId)}${ctxV294}`;
+    if(surface==='rewards'&&focusTarget==='lm')return `earning${ctxV294}`;
+    if(surface==='rewards'&&focusTarget==='lr')return `classic${ctxV294}`;
     if(surface==='rewards'&&focusTarget==='birthdayLabel')return 'birthday';
-    if(surface==='rewards'&&(focusTarget==='rwAdd'||activateTarget))return 'add';
+    if(surface==='rewards'&&(focusTarget==='rwAdd'||activateTarget))return `add${ctxV294}`;
     if(surface==='winback'&&editProgramId)return `program~${encodeURIComponent(editProgramId)}`;
     if(surface==='winback'&&focusTarget==='rn')return 'new';
-    return '';
+    return ctxV294?ctxV294.slice(1):'';
   }
   const routedAction=(()=>{
     if(!routedFocus)return null;
     let focus='';try{focus=decodeURIComponent(String(routedFocus))}catch{return null}
-    if(focus.startsWith('reward~'))return {surface:'rewards',rewardId:focus.slice(7)||null};
-    if(focus==='earning')return {surface:'rewards',focusTarget:'lm'};
-    if(focus==='classic')return {surface:'rewards',focusTarget:'lr'};
-    if(focus==='birthday')return {surface:'rewards',focusTarget:'birthdayLabel'};
-    if(focus==='add')return {surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
+    /* V294: peel the entry-context suffix off first; the remainder parses exactly as before. */
+    let entryContext=null;
+    const ctxMatch=focus.match(/~?ctx-(points|tiers)$/);
+    if(ctxMatch){entryContext=ctxMatch[1];focus=focus.slice(0,focus.length-ctxMatch[0].length)}
+    if(!focus&&entryContext)return {surface:'rewards',entryContext};
+    const withCtx=action=>entryContext?{...action,entryContext}:action;
+    if(focus.startsWith('reward~'))return withCtx({surface:'rewards',rewardId:focus.slice(7)||null});
+    if(focus==='earning')return withCtx({surface:'rewards',focusTarget:'lm'});
+    if(focus==='classic')return withCtx({surface:'rewards',focusTarget:'lr'});
+    if(focus==='birthday')return withCtx({surface:'rewards',focusTarget:'birthdayLabel'});
+    if(focus==='add')return withCtx({surface:'rewards',focusTarget:'rwAdd',activateTarget:true});
     if(focus.startsWith('program~'))return {surface:'winback',focusTarget:'rn',editProgramId:focus.slice(8)||null};
     if(focus==='bringback'||focus==='new')return {surface:'winback',focusTarget:'rn',editProgramId:null};
     return null;
@@ -2811,19 +2848,20 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
   const lifestyleLiveV229=(welcomeOfferStatusV215?.active?1:0)+(rewardJourney.birthday?.active?1:0)+bringBackLiveV229;
   const growTopicDefsV229=[
-    {key:'points',icon:'till',title:'Points redemption',blurb:'Earning, and the rewards points are spent on.',
+    /* V294 (owner markup 2026-08-12): pending-setup cards carry the owner's own benefit lines. */
+    {key:'points',icon:'till',title:'Points redemption',blurb:'Let customers come back with points!',
       status:loyaltyModelTileStatusV235('redeem'),
       summary:!liveLoyaltyModelKeysV240.includes('redeem')?otherModelLiveV235()
         :rewardCount?`${rewardCount} redeemable reward${rewardCount===1?'':'s'}`
         :'Live model · set the earning rate and rewards'},
-    {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
+    {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Do tier membership for your customers!',
       status:loyaltyModelTileStatusV235('tiers'),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?otherModelLiveV235()
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Live model · create the ladder customers climb'},
-    {key:'stamps',icon:'check',title:'Stamp card',blurb:'Collect a stamp per spend, claim at each milestone.',
+    {key:'stamps',icon:'check',title:'Stamp card',blurb:'Customers earn stamps and redeem!',
       status:loyaltyModelTileStatusV235('stamps'),
       summary:!liveLoyaltyModelKeysV240.includes('stamps')?otherModelLiveV235()
         :rewardCount?`Live model · ${rewardCount} milestone${rewardCount===1?'':'s'}`
@@ -2833,14 +2871,20 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
     {key:'promotions',icon:'loyalty',title:'Promotions',blurb:'Offers customers see in their programme.',
       status:publishedPromotions?['Live','on']:promotionDrafts?['Draft','new']:['Not set up','off'],
-      summary:publishedPromotions?`${publishedPromotions} published promotion${publishedPromotions===1?'':'s'}`
+      /* V294 (owner markup 2026-08-12): the ongoing card says "N LIVE", not "N published promotions". */
+      summary:publishedPromotions?`${publishedPromotions} LIVE`
         :promotionDrafts?`${promotionDrafts} saved draft${promotionDrafts===1?'':'s'}`:'Create an offer customers can see'},
-    {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Customers earn for introductions.',
+    {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Refer friends and get rewards!',
       status:!modules.includes('referrals')?['Not included','off']:referralLive?['Live','on']:referralConfigured?['Paused','off']:['Not set up','off'],
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
-    {key:'recurring',icon:'memberships',title:'Memberships & gift cards',blurb:'Recurring plans and prepaid value.',
-      status:(activeMembershipCount||giftCardsLive)?['Live','on']:['Not set up','off'],
-      summary:[activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:'',giftCardsLive?'gift cards on':''].filter(Boolean).join(' · ')||'Plans and gift cards'},
+    /* V294 (owner markup 2026-08-12, combined "Memberships & gift cards" card crossed out:
+       "remove this programme"). Memberships stands alone as its own card ("Do membership for
+       customers"); gift cards are not a programme to set up, so their management moved to the
+       Serve & sell nav group (#/giftcards) instead of sharing a card here. The status stays
+       honest: a tenant with live plans still reads Live, not "pending". */
+    {key:'recurring',icon:'memberships',title:'Memberships',blurb:'Let customers subscribe and save',
+      status:activeMembershipCount?['Live','on']:membershipConfigured?['Paused','off']:['Not set up','off'],
+      summary:activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:membershipConfigured?'Membership plans exist but are currently paused':'Let customers subscribe and save'},
   ];
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
   /* V268 (owner drew the hierarchy: category name, then its items with their set-up status).
@@ -2872,7 +2916,10 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     if(label==='Off')return 'Switch to this →';
     return 'Set up →';
   };
-  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
+  /* V294: a pending-setup card leads with the owner's benefit line (item 7c of the 2026-08-12
+     markup) and keeps its stateful summary underneath when that summary says something the
+     benefit line does not — an error or the next action must never be hidden by marketing copy. */
+  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(growTopicOngoingV244(topic)?topic.summary:topic.blurb)}</span>${!growTopicOngoingV244(topic)&&topic.summary!==topic.blurb?`<span class="muted small">${esc(topic.summary)}</span>`:''}<span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
   const growOngoingTopicsV244=growTopicDefsV229.filter(growTopicOngoingV244);
   const growPendingTopicsV244=growTopicDefsV229.filter(topic=>!growTopicOngoingV244(topic));
   const growTileSectionV244=(title,note,topics,empty)=>`<div class="grow-topic-group-v244">
@@ -2936,14 +2983,23 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       ?`<button type="button" class="reward-card-v250" data-programme-kind="redeemable" data-rewards-overview-edit="${esc(editKind)}"${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="reward-card-open-v250">Edit →</span></button>`
       :`<article class="reward-card-v250" data-programme-kind="redeemable"${editKind==='catalogue'?' data-reward-milestone':''}${rewardId?` data-reward-id="${esc(rewardId)}"`:''}>${body}<span class="grow-programme-access">Read only</span></article>`;
   };
+  /* V294 (owner markup 2026-08-12: "expired don't show here, show in own history"): the offer
+     grid carries only rewards that can still be offered; retired and ended cards move to the
+     collapsed Reward history under the grid. Their Edit contract is unchanged, so a retired
+     reward can still be opened and un-archived from history. */
   const rewardCardsV250=[
     ...(rewardJourney.classicReward?[{name:rewardJourney.classicReward.name,cost:rewardJourney.classicReward.threshold,unit:rewardJourney.classicReward.unit,
       status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused with programme',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
-    ...rewardJourney.milestones.map(milestone=>{
+    ...rewardJourney.milestones.filter(milestone=>milestone.availability!=='ended').map(milestone=>{
       const [status,tone]=rewardCardStatusV250(milestone);
       return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id,
         pending:growPendingRewardsV268.get(String(milestone.id))||null};
-    }),
+    })
+  ];
+  const rewardHistoryCardsV294=[
+    ...rewardJourney.milestones.filter(milestone=>milestone.availability==='ended').map(milestone=>({
+      name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status:'Ended',tone:'off',editKind:'catalogue',rewardId:milestone.id,
+      pending:growPendingRewardsV268.get(String(milestone.id))||null})),
     ...rewardJourney.archivedRewards.map(reward=>({name:reward.name,cost:reward.threshold,unit:reward.unit,
       status:'Retired',tone:'off',editKind:'catalogue',rewardId:reward.id,
       pending:growPendingRewardsV268.get(String(reward.id))||null}))
@@ -2954,6 +3010,9 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       ${canSetupGrow?`<button type="button" class="reward-card-v250 reward-card-add-v250" data-programme-kind="redeemable" data-rewards-overview-edit="add"><span class="reward-card-plus-v250" aria-hidden="true">+</span><b class="reward-card-name-v250">Add reward</b></button>`:''}
     </div>
     ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}
+    ${rewardHistoryCardsV294.length?`<details class="reward-history-v294" data-reward-history-v294 style="margin:4px 14px 12px"><summary>Reward history · ${rewardHistoryCardsV294.length}</summary>
+      <p class="muted small" style="margin-top:6px">Retired and ended rewards. Customers cannot see them; open one to edit or bring it back.</p>
+      <div class="reward-card-grid-v250">${rewardHistoryCardsV294.map(rewardCardHtmlV250).join('')}</div></details>`:''}
     ${canSetupGrow?`<p class="reward-card-templates-v250"><button type="button" class="btn ghost sm" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel">${CUI.icon('star',{size:16})}<span>Start from a template</span></button></p>
     <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}`;
   /* ===== V271 Programmes Overview and History =====
@@ -3142,9 +3201,10 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       </div></div>
       `:''}
       ${topicOnV229('recurring')?`
-      <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
+      <!-- V294: the category follows the card — Memberships only. Gift cards management lives
+           at #/giftcards, now reachable from the Serve & sell nav group. -->
+      <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
-        ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
       </div></div>      `:''}
     </section>
     ${(growActiveTopicV229?.key==='points'||(!growTilesModeV229&&!growActiveTopicV229)||routedSurface==='studio')?`
@@ -3337,8 +3397,11 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     element.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
     return true;
   };
-  async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null,birthdayId=null,editProgramId=null}={}){
+  async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null,birthdayId=null,editProgramId=null,entryContext=null}={}){
     const draft=draftOverride||growDraftVersionId;
+    /* V294: every rewards entry SETS the context (possibly to null) so an earlier entry's
+       context can never bleed into a later plain #/loyalty visit. */
+    if(surface==='rewards')loyaltyEntryContextV294=['points','tiers'].includes(entryContext||'')?entryContext:null;
     const editorIntent=surface==='rewards'?growLoyaltyEditorIntentV139({focusTarget,rewardId}):null;
     const definition=surfaceDefinition[surface];
     /* V172: an unknown surface must never throw. #/grow/ongoing|available|settings carry the
@@ -3349,7 +3412,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     $('growOverview')?.classList.add('grow-editor-active');
     const protectedStudioReview=surface==='studio'&&draft&&sessionStorage.getItem(`nestly:grow-publish-review:${draft}`)==='1';
     const suffix=draft&&(['rewards','winback'].includes(surface)||protectedStudioReview)?`/${draft}`:'';
-    const exactPath=growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId});
+    const exactPath=growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId,entryContext});
     const targetHash=`${definition.hash}${suffix}${exactPath?`/${exactPath}`:''}`;
     const preserveExactRoute=()=>{
       if(location.hash===targetHash)return;
@@ -3578,8 +3641,13 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     deactivateDialog=CUI.activateDialog(modal,{onClose:()=>close(),initialFocus:'#rewardAutoConfirm'});
     $('rewardAutoClose').onclick=()=>close();
   }
+  /* V294: which programme card the owner is inside decides the editor's entry context —
+     Points redemption / Stamp card entries edit the points engine (no tiers block), the Tiered
+     membership entry edits tiers. A click outside any drilled card carries no context. */
+  const growEntryContextV294=()=>growActiveTopicV229?.key==='tiers'?'tiers'
+    :['points','stamps'].includes(growActiveTopicV229?.key||'')?'points':null;
   document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
-    focusTarget:button.dataset.growFocus||null}));
+    focusTarget:button.dataset.growFocus||null,entryContext:growEntryContextV294()}));
   /* The standalone "Create recommended rewards draft" launcher was removed when Programmes was
      simplified to one list (owner: "alot of overlapping roles ... i need it more simplified").
      Its wiring outlived it and could never fire — openRewardsAutoSetup is now reached from the
@@ -3649,7 +3717,8 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       ?{surface:'winback',focusTarget:'rn',editProgramId:button.dataset.programId||null}
       :{surface:'rewards',focusTarget:kind==='earning'?'lm':kind==='classic'?'lr':kind==='birthday'?'birthdayLabel':kind==='add'?'rwAdd':null,
         activateTarget:kind==='add',rewardId:kind==='catalogue'?button.dataset.rewardId||null:null,
-        birthdayId:kind==='birthday'?button.dataset.birthdayId||null:null};
+        birthdayId:kind==='birthday'?button.dataset.birthdayId||null:null,
+        entryContext:growEntryContextV294()};
     if(!growDraftVersionId){
       if(action.surface==='winback'&&canSetupWinback){
         (async()=>{
@@ -3745,7 +3814,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'bb4e2a645672a89688f16c6a85f2fbcb01e136ac9dddd1e164d9bd0536645e1b',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'ab5342d62cbb3d0ffb724c1078d42c8257e5315dfe0a01c49c7d3312f766e798',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

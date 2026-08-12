@@ -102,13 +102,15 @@ test('reports answer money, capacity and returning-customer questions from recor
   // element itself (id=detailsId) instead of a button (id:'moneyAnswer') that revealed a
   // separate <details id="moneyDetails"> section further down the page — same three ids,
   // now carried by detailsId/bodyId on one merged element instead of two separate ones.
-  assert.match(reports, /detailsId:'moneyDetails'/);
-  assert.match(reports, /detailsId:'busyDetails'/);
-  assert.match(reports, /detailsId:'returningDetails'/);
-  assert.match(reports, /title:'Sales & revenue'/);
-  // Team performance is the fourth card and links straight to the real Staff performance route.
+  /* V294 (owner markup 2026-08-12): the decision cards became a TAB BAR — same three report
+     domains, same body ids, one panel per tab instead of one <details> per card. */
+  assert.match(reports, /key:'money',bodyId:'rbody',panelId:'reportPanelMoneyV294'/);
+  assert.match(reports, /key:'busy',bodyId:'busyBody',panelId:'reportPanelBusyV294'/);
+  assert.match(reports, /key:'returning',bodyId:'returningBody',panelId:'reportPanelReturningV294'/);
+  assert.match(reports, /title:'Sales & Revenue'/);
+  // Team Performance is the fourth tab and links straight to the real Staff performance route.
   assert.match(reports, /href:'#\/staffperf'/);
-  assert.match(reports, /id="\$\{item\.detailsId\}"/);
+  assert.match(reports, /id="\$\{item\.panelId\}"/);
   assert.match(reports, /get_customer_lifecycle_v107/);
   assert.match(reports, /staff_hours/);
   assert.match(reports, /staff_off_days/);

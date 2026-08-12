@@ -42,9 +42,12 @@ test('V229 reward milestones live inside Point system, never on the tile overvie
   const points = app.slice(app.indexOf("${topicOnV229('points')?`"), app.indexOf("${growActiveTopicV229?.key==='tiers'?"));
   assert.match(points, /rewardCardGridV250/);
   assert.equal((app.match(/rewardCardGridV250\b/g) || []).length, 2);
-  assert.equal((app.match(/rewardJourney\.milestones\.map/g) || []).length, 1);
+  /* V294 (owner: "expired don't show here, show in own history"): the one milestone mapping
+     split into offer-grid and history halves — still the only two places milestones render. */
+  assert.equal((app.match(/rewardJourney\.milestones\.filter\(milestone=>milestone\.availability!=='ended'\)\.map/g) || []).length, 1);
+  assert.equal((app.match(/rewardJourney\.milestones\.filter\(milestone=>milestone\.availability==='ended'\)\.map/g) || []).length, 1);
   const cards = app.slice(app.indexOf('const rewardCardsV250=['), app.indexOf('const rewardCardGridV250='));
-  assert.match(cards, /rewardJourney\.milestones\.map/);
+  assert.match(cards, /rewardJourney\.milestones\.filter\(milestone=>milestone\.availability!=='ended'\)\.map/);
   // In tiles mode no topic is on, so no category rows exist at all.
   /* V235: Stamp card is a third VIEW of the point engine, so it drills into the points
      section rather than duplicating it — the mapping is what keeps the tile from dead-ending. */
@@ -96,7 +99,11 @@ test('V229 categories carry the owner\'s names', () => {
   assert.match(app, /programme-category-title">Lifestyle rewards</);
   assert.match(app, /programme-category-title">Promotions</);
   assert.match(app, /programme-category-title">Referrals</);
-  assert.match(app, /programme-category-title">Memberships & gift cards</);
+  /* V294 (owner: "remove this programme"): the combined card went; Memberships stands alone
+     and gift cards moved to the Serve & sell nav group. */
+  assert.match(app, /programme-category-title">Memberships</);
+  assert.doesNotMatch(app, /title:'Memberships & gift cards'/);
+  assert.doesNotMatch(app, /programme-category-title">Memberships & gift cards</);
   assert.doesNotMatch(app, /programme-category-title">Promotions & growth</);
   assert.doesNotMatch(app, /programme-category-title">Other rewards</);
   assert.doesNotMatch(app, /programme-category-title">Recurring value</);

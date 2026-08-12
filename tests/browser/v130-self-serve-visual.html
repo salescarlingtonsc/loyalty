@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="bff27ed0ebe8ab8ca1053b5f58cc8098e4962795214c5d1be6788dc0f9d91c07"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="34cb1fbc2c7e3ae8fedc9b6289982c393eb7fff0ab25e36e29647826191c9e8d"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1186,6 +1186,32 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
 .customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
 .customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
+/* V294 (owner sketch 2026-08-12): compact summary card at the upper right of the Customer 360
+   content area — visits, lifetime spend, points, credit, PDPA as dense rows; the status chips
+   keep the left of the same band. On narrow screens the card drops below the chips full-width. */
+.c360-top-v294{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+.c360-top-main-v294{flex:1 1 240px;min-width:min(100%,220px)}
+.c360-top-main-v294 .c360-badges{margin-bottom:0}
+.c360-summary-card-v294{flex:0 1 360px;margin-left:auto;padding:12px 16px}
+.c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
+.c360-summary-row-v294:last-of-type{border-bottom:0}
+.c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
+.c360-summary-value-v294{font-variant-numeric:tabular-nums;font-size:14px;text-align:right}
+.c360-summary-card-v294 .c360-points-expiry{margin-top:2px}
+.c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
+@media(max-width:760px){.c360-top-v294{flex-direction:column}.c360-summary-card-v294{flex:1 1 auto;width:100%;margin-left:0}}
+/* V294: Available Customer Programmes — one compact row per programme, honest Live/Paused pill. */
+.c360-programmes-v294{display:flex;flex-direction:column;margin-bottom:6px}
+.c360-programme-row-v294{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
+.c360-programme-row-v294:last-child{border-bottom:0}
+.c360-programme-row-v294 b{font-size:13.5px}
+.c360-programme-row-v294 p{margin-top:2px}
+/* V294: retired/ended rewards live in a collapsed Reward history disclosure. */
+.reward-history-v294>summary{cursor:pointer;font-weight:700;font-size:13px;min-height:34px;display:flex;align-items:center}
+/* V294: Business Insights report tabs (the four cards became a tab bar). */
+.report-tabbar-v294{margin-bottom:16px}
+.report-tabbar-v294 button{display:inline-flex;align-items:center;gap:7px}
+.report-panel-v294[hidden]{display:none}
 .customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
 .customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
 .customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
