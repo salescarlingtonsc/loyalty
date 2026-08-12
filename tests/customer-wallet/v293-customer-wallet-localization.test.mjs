@@ -1,0 +1,114 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import test from 'node:test';
+
+/* v293: the customer wallet follows the member's stored preferred language for
+   en / zh-CN / ms (the SG-first mandate's app languages; ta stays a messages
+   preference until Tamil app copy ships). This suite guards the parity that
+   makes the switch honest: every English key resolves in both other locales,
+   the plumbing honors the stored choice, and no locale table carries strings
+   that look like code or unfilled prompts. */
+
+const js=await readFile(new URL('../../app/app.js',import.meta.url),'utf8');
+
+function copyBlock(locale){
+  const anchor=locale==='en'?'  en:Object.freeze({':locale==='zh-CN'?"  'zh-CN':Object.freeze({":'  ms:Object.freeze({';
+  const start=js.indexOf('const CUSTOMER_COPY=Object.freeze({');
+  assert.ok(start>=0,'CUSTOMER_COPY missing');
+  const blockStart=js.indexOf(anchor,start);
+  assert.ok(blockStart>start,`${locale} block missing`);
+  let depth=0,i=js.indexOf('{',blockStart+anchor.length-1),from=i,quote=null,escaped=false;
+  for(;i<js.length;i++){
+    const ch=js[i];
+    if(quote){
+      if(escaped)escaped=false;
+      else if(ch==='\\')escaped=true;
+      else if(ch===quote)quote=null;
+      continue;
+    }
+    if(ch==='\''||ch==='"'||ch==='`'){quote=ch;continue}
+    if(ch==='{')depth++;
+    else if(ch==='}'){depth--;if(depth===0)return js.slice(from,i+1)}
+  }
+  assert.fail(`${locale} block never closed`);
+}
+
+function keysOf(block){
+  const keys=[];
+  let depth=0,quote=null,escaped=false,token='',tokenStart=-1;
+  for(let i=0;i<block.length;i++){
+    const ch=block[i];
+    if(quote){
+      if(escaped){escaped=false;token+=ch;continue}
+      if(ch==='\\'){escaped=true;token+=ch;continue}
+      if(ch===quote){
+        quote=null;
+        let j=i+1;
+        while(j<block.length&&/\s/.test(block[j]))j++;
+        if(depth===1&&block[j]===':')keys.push(token);
+        token='';continue;
+      }
+      token+=ch;continue;
+    }
+    if(ch==='\''||ch==='"'){quote=ch;token='';tokenStart=i;continue}
+    if(ch==='{')depth++;
+    else if(ch==='}')depth--;
+    else if(depth===1&&/[A-Za-z_$]/.test(ch)){
+      // bare identifier key
+      let j=i,ident='';
+      while(j<block.length&&/[A-Za-z0-9_$]/.test(block[j])){ident+=block[j];j++}
+      let k=j;while(k<block.length&&/\s/.test(block[k]))k++;
+      if(block[k]===':'){keys.push(ident);i=k}else i=j-1;
+    }
+  }
+  return keys;
+}
+
+const en=keysOf(copyBlock('en'));
+const zh=keysOf(copyBlock('zh-CN'));
+const ms=keysOf(copyBlock('ms'));
+
+test('the wallet ships three locales and zh-CN/ms cover every English key',()=>{
+  assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms'\]\)/);
+  assert.ok(en.length>=40,`en table unexpectedly small: ${en.length}`);
+  const zhSet=new Set(zh),msSet=new Set(ms);
+  const zhMissing=en.filter(k=>!zhSet.has(k));
+  const msMissing=en.filter(k=>!msSet.has(k));
+  assert.deepEqual(zhMissing,[],`zh-CN is missing: ${zhMissing.join(', ')}`);
+  assert.deepEqual(msMissing,[],`ms is missing: ${msMissing.join(', ')}`);
+});
+
+test('zh-CN and ms sentence keys cover the ct()-routed wallet and scanner strings',()=>{
+  const zhSet=new Set(zh),msSet=new Set(ms);
+  for(const key of [
+    'Rewards could not be loaded.',
+    'Membership is not available for this account.',
+    'No appointments are available yet.',
+    'Scan the business QR',
+    'The scanner could not load. Check your connection and try again.',
+    'Point the camera at the business QR.'
+  ]){
+    assert.ok(zhSet.has(key),`zh-CN missing sentence key: ${key}`);
+    assert.ok(msSet.has(key),`ms missing sentence key: ${key}`);
+  }
+});
+
+test('the stored preferred language drives the wallet and legacy zh folds to zh-CN',()=>{
+  assert.match(js,/const normalizeCustomerLocale=value=>\{const v=String\(value\|\|''\)\.trim\(\);if\(v==='zh'\)return 'zh-CN';return CUSTOMER_LOCALES\.includes\(v\)\?v:'en'\}/);
+  assert.match(js,/customerLocale=normalizeCustomerLocale\(profile\?\.preferred_language\)/);
+  assert.match(js,/setAttribute\('lang',customerLocale\)/);
+  // sign-out still resets the surface to English
+  assert.match(js,/customerLocale='en';\n  workspaceLocaleLoadedFor=''/);
+});
+
+test('a saved language change applies immediately and re-renders the profile',()=>{
+  assert.match(js,/const nextLocale=normalizeCustomerLocale\(language\);/);
+  assert.match(js,/if\(nextLocale!==customerLocale\)\{[\s\S]{0,300}?renderCustomerProfile\(\);/);
+  assert.match(js,/CUI\.announce\(ct\('profileSaved'\)\)/);
+});
+
+test('no locale table carries code-like or unfilled translations',()=>{
+  for(const [locale,block] of [['zh-CN',copyBlock('zh-CN')],['ms',copyBlock('ms')]]){
+    assert.doesNotMatch(block,/```|<script|TODO|FIXME|\btranslate this\b/i,`${locale} has a code-like translation`);
+  }
+});

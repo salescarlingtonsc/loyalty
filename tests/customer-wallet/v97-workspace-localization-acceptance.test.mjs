@@ -580,13 +580,15 @@ test('v97 customer, login, recovery and public portal shells explicitly restore 
   }
 });
 
-test('v97 customer portal is English-only while profile language remains metadata',()=>{
+test('v293 customer portal follows the stored profile language without a separate locale RPC',()=>{
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   assert.doesNotMatch(app,/data-customer-locale=/);
   assert.doesNotMatch(app,/customer_get_locale_preference_v95/);
   assert.doesNotMatch(app,/customer_set_locale_preference_v95/);
-  assert.doesNotMatch(section('const CUSTOMER_COPY','const CUSTOMER_PRIMARY_NAV'),/'zh-CN'\s*:\s*Object\.freeze/);
-  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:'en'\}\)/);
+  // v293: the wallet copy tables are trilingual and merchant programme copy is
+  // requested in the member's language where the merchant published it (en/zh-CN).
+  assert.match(section('const CUSTOMER_COPY','const CUSTOMER_PRIMARY_NAV'),/'zh-CN'\s*:\s*Object\.freeze/);
+  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:customerLocale==='zh-CN'\?'zh-CN':'en'\}\)/);
   assert.match(app,/id="customerProfileLanguage"/);
   assert.match(app,/p_preferred_language:language/);
 });

@@ -1561,7 +1561,7 @@ function setCustomerSurfaceDocumentV167(){
   globalThis.document?.documentElement?.setAttribute('data-customer-surface','true');
   applyCustomerThemeV190();
 }
-const CUSTOMER_LOCALES=Object.freeze(['en']);
+const CUSTOMER_LOCALES=Object.freeze(['en','zh-CN','ms']);
 const CUSTOMER_COPY=Object.freeze({
   en:Object.freeze({
     home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',profileTab:'Profile',
@@ -1585,9 +1585,143 @@ const CUSTOMER_COPY=Object.freeze({
     successSounds:'Success sounds',soundOff:'Off by default',soundOn:'On',
     soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
     merchantProgramme:'{business} rewards',featured:'Featured products & services',
-    noFeatured:'This business has not published featured items yet.'
+    noFeatured:'This business has not published featured items yet.',
+    preferredLanguage:'Preferred language',
+    languageHelp:'{product} follows this choice in English, 中文 and Bahasa Melayu. தமிழ் is saved for your messages while we finish Tamil for the app.',
+    profileSaved:'Profile saved.'
+  }),
+  'zh-CN':Object.freeze({
+    home:'首页',programmes:'我的奖励',rewardsTab:'奖励',explore:'发现',bookings:'预约',scanQr:'扫码',profileTab:'我的',
+    notifications:'通知',accountMenu:'打开账户菜单',profilePasskeys:'个人资料与通行密钥',signOut:'退出登录',
+    language:'语言',english:'English',chinese:'简体中文',backProgrammes:'返回我的奖励',
+    chooseProgramme:'选择一家奖励商家',yourProgrammes:'我的奖励',
+    programmesIntro:'选择一家商家，查看它的奖励、权益、预约和活动记录。',
+    addProgramme:'扫码加入',openProgramme:'打开{business}的奖励',localBusiness:'本地商家',
+    rewardReady:'奖励已就绪 — 打开即可兑换。',continueProgramme:'打开奖励主页，看看接下来能做什么。',
+    firstQuest:'你的第一份奖励',scanLoyaltyQr:'扫描会员二维码',
+    firstQuestBody:'在参与商家出示的 Peekaa 二维码处扫码。该认证商家会成为你的第一个奖励账户。',
+    scanBusinessQr:'扫描商家二维码',qrOnlyHelp:'只能通过商家出示的二维码加入。',
+    balance:'余额',nextReward:'下一个奖励',tierProgress:'等级进度',benefits:'权益与优待',
+    offers:'生日与节庆优惠',rewards:'奖励',activityHistory:'活动与历史',
+    noBenefits:'目前没有额外优待。',noOffers:'目前没有生日或节庆优惠。',
+    noRewards:'目前没有可用奖励。',
+    retry:'重试',bookNow:'立即预约',requestVisit:'向{business}预约你的下次光临。',
+    points:'积分',stamps:'印章',currentTier:'当前等级',nextTier:'下一级：{tier}',
+    terms:'条款',availableNow:'现在可用',
+    loadingProgramme:'正在加载奖励…',loadingProgrammes:'正在加载我的奖励…',
+    successSounds:'成功提示音',soundOff:'默认关闭',soundOn:'开启',
+    soundHelp:'可选。系统要求减少动态效果时，提示音保持关闭。',
+    merchantProgramme:'{business}的奖励',featured:'精选产品与服务',
+    noFeatured:'该商家尚未发布精选项目。',
+    preferredLanguage:'首选语言',
+    languageHelp:'{product} 支持 English、中文和 Bahasa Melayu，界面会跟随此选择。தமிழ்（泰米尔文）会保存为你的消息偏好，应用界面即将支持。',
+    profileSaved:'资料已保存。',
+    'Rewards are not available for this account.':'此账户暂无法查看奖励。',
+    'Rewards could not be loaded.':'奖励加载失败。',
+    'Loyalty activity is not available for this account.':'此账户暂无法查看积分活动。',
+    'Activity could not be loaded.':'活动记录加载失败。',
+    'Transaction history is not available for this account.':'此账户暂无法查看交易记录。',
+    'Transaction history could not be loaded.':'交易记录加载失败。',
+    'Gift cards are not available for this account.':'此账户暂无法查看礼品卡。',
+    'Gift cards could not be loaded.':'礼品卡加载失败。',
+    'Packages are not available for this account.':'此账户暂无法查看套餐。',
+    'Packages could not be loaded.':'套餐加载失败。',
+    'Membership is not available for this account.':'此账户暂无法查看会员资格。',
+    'Membership could not be loaded.':'会员资格加载失败。',
+    'Appointments are not available for this account.':'此账户暂无法查看预约。',
+    'Appointments could not be loaded.':'预约加载失败。',
+    'No rewards are available right now.':'目前没有可用奖励。',
+    'No loyalty activity is available yet.':'暂无积分活动。',
+    'No packages are available for this account.':'此账户没有可用套餐。',
+    'No membership is available for this account.':'此账户没有会员资格。',
+    'No appointments are available yet.':'暂无预约。',
+    'Scan the business QR':'扫描商家二维码',
+    'Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.':'请使用商家出示的 Peekaa 二维码。扫码不会加入无关商家。',
+    'Close scanner':'关闭扫码器',
+    'Camera preview for business join QR':'商家加入二维码的相机预览',
+    'Open camera':'打开相机',
+    "Can't scan? Use a photo or link":'无法扫码？使用照片或链接',
+    'Or choose a QR image':'或选择二维码图片',
+    'Camera unavailable?':'相机不可用？',
+    'Paste the QR link':'粘贴二维码链接',
+    'Continue':'继续',
+    'That is not an active Peekaa business QR. Ask the business to generate its latest join QR.':'这不是有效的 Peekaa 商家二维码。请商家生成最新的加入二维码。',
+    'Camera is unavailable in this browser. Choose a QR image or paste the QR link.':'此浏览器无法使用相机。请选择二维码图片或粘贴二维码链接。',
+    'Starting camera…':'正在启动相机…',
+    'The scanner could not load. Check your connection and try again.':'扫码器加载失败。请检查网络后重试。',
+    'Point the camera at the business QR.':'将相机对准商家二维码。',
+    'Camera access was not available. Choose a QR image or paste the QR link.':'无法访问相机。请选择二维码图片或粘贴二维码链接。',
+    'Reading QR image…':'正在读取二维码图片…',
+    'No active Peekaa join QR was found in that image.':'图片中未找到有效的 Peekaa 加入二维码。',
+    'That image could not be read. Try a clearer QR image.':'无法读取该图片。请尝试更清晰的二维码图片。'
+  }),
+  ms:Object.freeze({
+    home:'Laman Utama',programmes:'Ganjaran Saya',rewardsTab:'Ganjaran',explore:'Terokai',bookings:'Tempahan',scanQr:'Imbas QR',profileTab:'Profil',
+    notifications:'Pemberitahuan',accountMenu:'Buka menu akaun',profilePasskeys:'Profil & kunci laluan',signOut:'Log keluar',
+    language:'Bahasa',english:'English',chinese:'简体中文',backProgrammes:'Kembali ke Ganjaran Saya',
+    chooseProgramme:'Pilih perniagaan ganjaran',yourProgrammes:'Ganjaran Saya',
+    programmesIntro:'Pilih perniagaan untuk membuka ganjaran, manfaat, tempahan dan aktivitinya.',
+    addProgramme:'Imbas untuk sertai',openProgramme:'Buka ganjaran {business}',localBusiness:'Perniagaan tempatan',
+    rewardReady:'Ganjaran sedia — buka untuk menebus.',continueProgramme:'Buka laman ganjaran anda untuk melihat langkah seterusnya.',
+    firstQuest:'Ganjaran pertama anda',scanLoyaltyQr:'Imbas QR kesetiaan',
+    firstQuestBody:'Di perniagaan yang menyertai, imbas QR Peekaa yang dipaparkan di kaunter. Perniagaan yang disahkan itu menjadi akaun ganjaran pertama anda.',
+    scanBusinessQr:'Imbas QR perniagaan',qrOnlyHelp:'Perniagaan hanya boleh ditambah dengan QR yang dikeluarkan oleh perniagaan.',
+    balance:'Baki',nextReward:'Ganjaran seterusnya',tierProgress:'Kemajuan tahap',benefits:'Manfaat & keistimewaan',
+    offers:'Tawaran hari jadi & bermusim',rewards:'Ganjaran',activityHistory:'Aktiviti & sejarah',
+    noBenefits:'Tiada keistimewaan tambahan buat masa ini.',noOffers:'Tiada tawaran hari jadi atau bermusim buat masa ini.',
+    noRewards:'Tiada ganjaran tersedia buat masa ini.',
+    retry:'Cuba lagi',bookNow:'Tempah sekarang',requestVisit:'Mohon lawatan seterusnya dengan {business}.',
+    points:'mata',stamps:'setem',currentTier:'Tahap semasa',nextTier:'Seterusnya: {tier}',
+    terms:'Terma',availableNow:'Tersedia sekarang',
+    loadingProgramme:'Memuatkan ganjaran…',loadingProgrammes:'Memuatkan Ganjaran Saya…',
+    successSounds:'Bunyi kejayaan',soundOff:'Dimatikan secara lalai',soundOn:'Hidup',
+    soundHelp:'Pilihan. Bunyi kekal dimatikan apabila gerakan dikurangkan diminta.',
+    merchantProgramme:'Ganjaran {business}',featured:'Produk & perkhidmatan pilihan',
+    noFeatured:'Perniagaan ini belum menerbitkan item pilihan.',
+    preferredLanguage:'Bahasa pilihan',
+    languageHelp:'{product} mengikut pilihan ini dalam English, 中文 dan Bahasa Melayu. தமிழ் disimpan untuk mesej anda sementara kami menyiapkan Tamil untuk aplikasi.',
+    profileSaved:'Profil disimpan.',
+    'Rewards are not available for this account.':'Ganjaran tidak tersedia untuk akaun ini.',
+    'Rewards could not be loaded.':'Ganjaran tidak dapat dimuatkan.',
+    'Loyalty activity is not available for this account.':'Aktiviti kesetiaan tidak tersedia untuk akaun ini.',
+    'Activity could not be loaded.':'Aktiviti tidak dapat dimuatkan.',
+    'Transaction history is not available for this account.':'Sejarah transaksi tidak tersedia untuk akaun ini.',
+    'Transaction history could not be loaded.':'Sejarah transaksi tidak dapat dimuatkan.',
+    'Gift cards are not available for this account.':'Kad hadiah tidak tersedia untuk akaun ini.',
+    'Gift cards could not be loaded.':'Kad hadiah tidak dapat dimuatkan.',
+    'Packages are not available for this account.':'Pakej tidak tersedia untuk akaun ini.',
+    'Packages could not be loaded.':'Pakej tidak dapat dimuatkan.',
+    'Membership is not available for this account.':'Keahlian tidak tersedia untuk akaun ini.',
+    'Membership could not be loaded.':'Keahlian tidak dapat dimuatkan.',
+    'Appointments are not available for this account.':'Temu janji tidak tersedia untuk akaun ini.',
+    'Appointments could not be loaded.':'Temu janji tidak dapat dimuatkan.',
+    'No rewards are available right now.':'Tiada ganjaran tersedia buat masa ini.',
+    'No loyalty activity is available yet.':'Belum ada aktiviti kesetiaan.',
+    'No packages are available for this account.':'Tiada pakej tersedia untuk akaun ini.',
+    'No membership is available for this account.':'Tiada keahlian untuk akaun ini.',
+    'No appointments are available yet.':'Belum ada temu janji.',
+    'Scan the business QR':'Imbas QR perniagaan',
+    'Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.':'Gunakan QR Peekaa yang dipaparkan oleh perniagaan. Imbasan tidak akan menyertai perniagaan yang tiada kaitan.',
+    'Close scanner':'Tutup pengimbas',
+    'Camera preview for business join QR':'Pratonton kamera untuk QR penyertaan perniagaan',
+    'Open camera':'Buka kamera',
+    "Can't scan? Use a photo or link":'Tidak dapat mengimbas? Guna foto atau pautan',
+    'Or choose a QR image':'Atau pilih imej QR',
+    'Camera unavailable?':'Kamera tidak tersedia?',
+    'Paste the QR link':'Tampal pautan QR',
+    'Continue':'Teruskan',
+    'That is not an active Peekaa business QR. Ask the business to generate its latest join QR.':'Itu bukan QR perniagaan Peekaa yang aktif. Minta perniagaan menjana QR penyertaan terkini.',
+    'Camera is unavailable in this browser. Choose a QR image or paste the QR link.':'Kamera tidak tersedia dalam pelayar ini. Pilih imej QR atau tampal pautan QR.',
+    'Starting camera…':'Memulakan kamera…',
+    'The scanner could not load. Check your connection and try again.':'Pengimbas tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
+    'Point the camera at the business QR.':'Halakan kamera ke QR perniagaan.',
+    'Camera access was not available. Choose a QR image or paste the QR link.':'Akses kamera tidak tersedia. Pilih imej QR atau tampal pautan QR.',
+    'Reading QR image…':'Membaca imej QR…',
+    'No active Peekaa join QR was found in that image.':'Tiada QR penyertaan Peekaa yang aktif ditemui dalam imej itu.',
+    'That image could not be read. Try a clearer QR image.':'Imej itu tidak dapat dibaca. Cuba imej QR yang lebih jelas.'
   })
 });
+const normalizeCustomerLocale=value=>{const v=String(value||'').trim();if(v==='zh')return 'zh-CN';return CUSTOMER_LOCALES.includes(v)?v:'en'};
 let customerLocale='en';
 function ct(key,vars={}){
   let value=CUSTOMER_COPY[customerLocale]?.[key]??CUSTOMER_COPY.en[key]??key;
@@ -1681,13 +1815,13 @@ function openCustomerJoinScanner(){
      so a second "Open camera" tap was pure friction. The upload/paste fallbacks still exist (a
      desktop with no camera, a screenshot of a QR) but they wait hidden behind one small control,
      and reveal themselves automatically the moment the camera cannot start. */
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
-    <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
-    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px" hidden>${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">${esc(ct('addProgramme'))}</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">${esc(ct('Scan the business QR'))}</h2><p class="muted small" style="margin-top:5px">${esc(ct('Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:18})}</button></div>
+    <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="${esc(ct('Camera preview for business join QR'))}"></video></div>
+    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px" hidden>${CUI.icon('scan',{size:18})}<span>${esc(ct('Open camera'))}</span></button>
     <p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p>
-    <button class="btn ghost sm" id="customerJoinScannerManual" type="button" style="width:100%;margin-top:12px">Can't scan? Use a photo or link</button>
-    <div class="scanner-fallback" id="customerJoinScannerFallback" hidden><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
-      <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
+    <button class="btn ghost sm" id="customerJoinScannerManual" type="button" style="width:100%;margin-top:12px">${esc(ct("Can't scan? Use a photo or link"))}</button>
+    <div class="scanner-fallback" id="customerJoinScannerFallback" hidden><label for="customerJoinScannerImage">${esc(ct('Or choose a QR image'))}</label><input id="customerJoinScannerImage" type="file" accept="image/*">
+      <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">${esc(ct('Camera unavailable?'))}</summary><label for="customerJoinScannerValue">${esc(ct('Paste the QR link'))}</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">${esc(ct('Continue'))}</button></details>
     </div></section>`;
   document.body.appendChild(overlay);
   const video=overlay.querySelector('#customerJoinScannerVideo');
@@ -1705,7 +1839,7 @@ function openCustomerJoinScanner(){
   activeCustomerJoinScannerCleanup=close;
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
-    if(!token){status.textContent='That is not an active Peekaa business QR. Ask the business to generate its latest join QR.';return false}
+    if(!token){status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
     rememberPendingCustomerJoinToken(token);close({restoreFocus:false});
     /* v281 audit: a rescan from the expired-QR screen is ALREADY at #/join — same-hash nav()
        fires nothing, so the new token was remembered and never submitted. */
@@ -1740,37 +1874,37 @@ function openCustomerJoinScanner(){
   const loadDecoder=async()=>{try{await loadScannerLibrary();return true}catch{return false}};
   const startCamera=async()=>{
     if(closed)return;
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';revealFallback();return}
-    camera.disabled=true;camera.hidden=true;status.textContent='Starting camera…';
+    if(!navigator.mediaDevices?.getUserMedia){status.textContent=ct('Camera is unavailable in this browser. Choose a QR image or paste the QR link.');revealFallback();return}
+    camera.disabled=true;camera.hidden=true;status.textContent=ct('Starting camera…');
     if(!await loadDecoder()){
       if(closed)return;
-      camera.disabled=false;camera.hidden=false;if(cameraLabel)cameraLabel.textContent='Try again';
-      status.textContent=DECODER_LOAD_FAILURE;return;
+      camera.disabled=false;camera.hidden=false;if(cameraLabel)cameraLabel.textContent=ct('retry');
+      status.textContent=ct(DECODER_LOAD_FAILURE);return;
     }
-    if(cameraLabel)cameraLabel.textContent='Open camera';
+    if(cameraLabel)cameraLabel.textContent=ct('Open camera');
     try{
       stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
       if(closed){stream.getTracks().forEach(track=>track.stop());stream=null;return}
-      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
+      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent=ct('Point the camera at the business QR.');scan();
     }catch{
       if(closed)return;
       camera.disabled=false;camera.hidden=false;
-      status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';revealFallback();
+      status.textContent=ct('Camera access was not available. Choose a QR image or paste the QR link.');revealFallback();
     }
   };
   camera.onclick=startCamera;
   manualToggle.onclick=()=>revealFallback();
   imageInput.onchange=async event=>{
     const file=event.target.files?.[0];if(!file)return;
-    status.textContent='Reading QR image…';
+    status.textContent=ct('Reading QR image…');
     /* v286: the photo path needs the same CDN decoder, so it reports the same honest failure
        instead of 'That image could not be read' — the image was never the problem. */
-    if(!await loadDecoder()){status.textContent=DECODER_LOAD_FAILURE;return}
+    if(!await loadDecoder()){status.textContent=ct(DECODER_LOAD_FAILURE);return}
     try{
       const bitmap=await createImageBitmap(file);
       const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
-      if(!accept(value))status.textContent='No active Peekaa join QR was found in that image.';
-    }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
+      if(!accept(value))status.textContent=ct('No active Peekaa join QR was found in that image.');
+    }catch{status.textContent=ct('That image could not be read. Try a clearer QR image.')}
   };
   const pasteValue=overlay.querySelector('#customerJoinScannerValue');
   overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(pasteValue.value);
@@ -1949,8 +2083,11 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
   const registeredCustomer=profile!==null;
   if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
   S.hasCustomerPersona=true;S.customerProfile=profile;
-  customerLocale='en';
-  globalThis.document?.documentElement?.setAttribute('lang','en');
+  /* v293: the wallet renders in the member's stored language. 'zh' folds to
+     zh-CN; 'ta' keeps English app chrome until Tamil copy ships (messages may
+     still localize server-side). Sign-out resets to 'en'. */
+  customerLocale=normalizeCustomerLocale(profile?.preferred_language);
+  globalThis.document?.documentElement?.setAttribute('lang',customerLocale);
   if(!isCurrent())return null;
   /* v286: a null profile has two very different causes — this account has no profile row, or
      customer_get_profile just failed for a customer we kept on the surface because their personas

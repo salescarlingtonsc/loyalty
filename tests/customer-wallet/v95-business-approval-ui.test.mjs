@@ -81,5 +81,6 @@ test('customer programme renders owner-published rewards, products and services'
   assert.match(app,/services:Array\.isArray\(catalogue\.services\)/);
   assert.match(app,/Featured products & services/);
   const customerCopy=app.slice(app.indexOf('const CUSTOMER_COPY'),app.indexOf('const CUSTOMER_PRIMARY_NAV'));
-  assert.doesNotMatch(customerCopy,/精选产品与服务/);
+  // v293: the wallet is trilingual — the zh-CN table now carries this heading.
+  assert.match(customerCopy,/featured:'精选产品与服务'/);
 });

@@ -54,12 +54,14 @@ test('v286: a failed marketing-preference read keeps a way back to the control',
   assert.match(profile, /marketingRetry\.onclick=\(\)=>\{[\s\S]*?renderCustomerProfile\(\)/);
 });
 
-test('v286: the preferred-language control does not claim to change the app', () => {
-  /* CUSTOMER_LOCALES is ['en'] and normalizeCustomerLocale hard-returns 'en', so the select stores
-     a preference nothing reads yet. It says so rather than implying the surface will translate. */
-  assert.match(appJs, /const CUSTOMER_LOCALES=Object\.freeze\(\['en'\]\)/);
-  assert.match(profile, /Preferred language for messages \(English only today\)/);
-  assert.match(profile, /is in English for every customer today\. We store your choice for when other languages arrive/);
+test('v293: the preferred-language control changes the app and says exactly what it covers', () => {
+  /* v286 pinned the honest EN-only label. v293 made the wallet follow the stored language for
+     en/zh-CN/ms, so the label and helper are localized copy keys, the explainer names the ta
+     (messages-only) carve-out, and a changed locale re-renders the profile immediately. */
+  assert.match(appJs, /const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms'\]\)/);
+  assert.match(profile, /\$\{esc\(ct\('preferredLanguage'\)\)\}/);
+  assert.match(profile, /\$\{esc\(ct\('languageHelp',\{product:BRAND\.productName\}\)\)\}/);
+  assert.match(profile, /if\(nextLocale!==customerLocale\)\{[\s\S]{0,240}?renderCustomerProfile\(\)/);
   assert.doesNotMatch(profile, /Keep your name and preferred language current across/);
 });
 

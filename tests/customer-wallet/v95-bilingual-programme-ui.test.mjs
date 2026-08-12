@@ -12,12 +12,14 @@ function section(start,end){
   return app.slice(from,to);
 }
 
-test('customer portal stays English-only while profile language remains communication metadata',()=>{
+test('customer portal follows the stored preferred language (v293: en/zh-CN/ms)',()=>{
   const locale=section('const CUSTOMER_COPY','const CUSTOMER_PRIMARY_NAV');
-  assert.match(locale,/const normalizeCustomerLocale=\(\)=> 'en'/);
-  assert.match(locale,/let customerLocale='en'/);
-  assert.doesNotMatch(locale,/'zh-CN':Object\.freeze/);
-  assert.doesNotMatch(app,/data-customer-locale=/);
+  // normalize honors its argument, folds legacy 'zh' to zh-CN, and falls back to en
+  assert.match(locale,/const normalizeCustomerLocale=value=>\{const v=String\(value\|\|''\)\.trim\(\);if\(v==='zh'\)return 'zh-CN';return CUSTOMER_LOCALES\.includes\(v\)\?v:'en'\}/);
+  assert.match(locale,/'zh-CN':Object\.freeze/);
+  assert.match(locale,/ms:Object\.freeze/);
+  // the wallet reads the profile's preferred_language on load, no separate locale RPC
+  assert.match(app,/customerLocale=normalizeCustomerLocale\(profile\?\.preferred_language\)/);
   assert.doesNotMatch(app,/customer_get_locale_preference_v95|customer_set_locale_preference_v95/);
   assert.match(app,/id="customerProfileLanguage"/);
 });
@@ -45,7 +47,7 @@ test('programme selector precedes merchant detail and zero-programme state only 
 test('merchant home consumes the v95 presentation contract with truthful capability gating and resilient fallback',()=>{
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const presentation=section('function customerProgrammePresentationV95','function actionableWalletCardMarkup');
-  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:'en'\}\)/);
+  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:customerLocale==='zh-CN'\?'zh-CN':'en'\}\)/);
   assert.match(wallet,/businessActions\?\.booking\?\.enabled===true&&presentation\.capabilities\.booking_enabled!==false/);
   assert.match(wallet,/customerMerchantExperienceMarkupV95\(\{presentation,business:b,actionableCard,programmeCards/);
   assert.match(wallet,/customerProgrammePresentationV95\(presentationResult\.error\?\{\}:presentationResult\.data/);

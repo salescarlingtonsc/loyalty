@@ -59,5 +59,5 @@ test('customer programme RPC calls consume the UUID supplied by the repaired sum
   assert.match(app, /customerBusinessIdV103[\s\S]{0,400}summaryBusiness\?\.id/,
     'the summary business ID must be the primary UUID source');
   assert.match(app, /customer_get_business_actions_v89'[\s\S]{0,100}\{p_business:businessId\}/);
-  assert.match(app, /customer_get_business_presentation_v95'[\s\S]{0,100}\{p_business:businessId,p_branch:null,p_locale:'en'\}/);
+  assert.match(app, /customer_get_business_presentation_v95'[\s\S]{0,100}\{p_business:businessId,p_branch:null,p_locale:customerLocale==='zh-CN'\?'zh-CN':'en'\}/);
 });

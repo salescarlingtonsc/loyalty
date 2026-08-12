@@ -1118,7 +1118,6 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
   return renderCustomerPasswordSignIn(isRouteCurrent);
 }
 
-const normalizeCustomerLocale=()=> 'en';
 let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
 function applyCustomerNavCountsV194(counts={}){
   customerNavCountsV194={...customerNavCountsV194,...counts};
@@ -1672,8 +1671,8 @@ async function renderCustomerProfile(){
   const personalDetailsHtmlV286=profile
     ?`<div class="customer-profile-grid"><section class="card"><h2>Personal details</h2>
       <label for="customerProfileName">Full name</label><input id="customerProfileName" autocomplete="name" maxlength="200" value="${esc(profile.full_name||'')}">
-      <label for="customerProfileLanguage">Preferred language for messages (English only today)</label><select id="customerProfileLanguage" autocomplete="language"><option value="en" ${profile.preferred_language==='en'?'selected':''}>English</option><option value="zh" ${profile.preferred_language==='zh'?'selected':''}>中文</option><option value="ms" ${profile.preferred_language==='ms'?'selected':''}>Bahasa Melayu</option><option value="ta" ${profile.preferred_language==='ta'?'selected':''}>தமிழ்</option></select>
-      <p class="muted small" style="margin-top:6px">${esc(BRAND.productName)} is in English for every customer today. We store your choice for when other languages arrive — picking one does not change this app or your messages yet.</p>
+      <label for="customerProfileLanguage">${esc(ct('preferredLanguage'))}</label><select id="customerProfileLanguage" autocomplete="language"><option value="en" ${profile.preferred_language==='en'?'selected':''}>English</option><option value="zh" ${profile.preferred_language==='zh'?'selected':''}>中文</option><option value="ms" ${profile.preferred_language==='ms'?'selected':''}>Bahasa Melayu</option><option value="ta" ${profile.preferred_language==='ta'?'selected':''}>தமிழ்</option></select>
+      <p class="muted small" style="margin-top:6px">${esc(ct('languageHelp',{product:BRAND.productName}))}</p>
       <div id="customerProfileSaveStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
     </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>`
@@ -1750,7 +1749,21 @@ async function renderCustomerProfile(){
     if(!isCurrent()||!button.isConnected)return;
     button.disabled=false;
     if(error||data?.outcome!=='updated'){status.innerHTML='<div class="err">Your profile could not be saved. Please try again.</div>';return}
-    profileAttempt=null;status.innerHTML='<p class="muted small" style="margin-top:10px;color:var(--green)">Profile saved.</p>';CUI.announce('Profile saved.');
+    profileAttempt=null;
+    /* v293: the wallet follows the saved language immediately. Re-render only
+       when the locale actually changed so the status line survives a plain
+       name edit. */
+    const nextLocale=normalizeCustomerLocale(language);
+    if(nextLocale!==customerLocale){
+      customerLocale=nextLocale;
+      if(S.customerProfile)S.customerProfile.preferred_language=language;
+      globalThis.document?.documentElement?.setAttribute('lang',customerLocale);
+      CUI.announce(ct('profileSaved'));
+      renderCustomerProfile();
+      return;
+    }
+    if(S.customerProfile)S.customerProfile.preferred_language=language;
+    status.innerHTML=`<p class="muted small" style="margin-top:10px;color:var(--green)">${esc(ct('profileSaved'))}</p>`;CUI.announce(ct('profileSaved'));
   };
   const marketingSave=$('customerProfileMarketingSave');
   if(marketingSave){
@@ -3478,7 +3491,7 @@ async function renderCustomerWallet(businessSlug=null){
     :Promise.resolve({data:null,error:null});
   const [businessActionsResult,presentationResult,effectiveTierResult,promotionsResult,promotionPromptResult]=await Promise.all([
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
-    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
+    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:customerLocale==='zh-CN'?'zh-CN':'en'}):unavailableBusinessId(), /* v293: merchant programme copy is bilingual (en/zh-CN); ms wallets read the English merchant copy */
     businessId?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId}):unavailableBusinessId(),
     /* V201 (owner: "customer view only have 1 company instead of multiple branch"). The customer
        sees the FIRM, so this read is firm-wide by definition — never the workspace's selected
@@ -3714,7 +3727,7 @@ async function renderCustomerWallet(businessSlug=null){
     ]);
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
-    if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?'Rewards are not available for this account.':'Rewards could not be loaded.',loadRewards,error);
+    if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?ct('Rewards are not available for this account.'):ct('Rewards could not be loaded.'),loadRewards,error);
     /* V241: the catalog is an OBJECT {rewards, points_mode}. The V230 shape appended the mode
        to the rewards ARRAY, where data.points_mode does not exist — so the mode never arrived
        and the stray element could render as a phantom reward. Both shapes are accepted here so
@@ -3764,7 +3777,7 @@ async function renderCustomerWallet(businessSlug=null){
        offers a retry; this one now does too, and no card claims an availability we could not
        check. */
     const redemptionUncheckedV286=!!actionsResult.error;
-    if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards','No rewards are available right now.',businessSlug,'rewards',loadRewards,isWalletCurrent);
+    if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards',ct('No rewards are available right now.'),businessSlug,'rewards',loadRewards,isWalletCurrent);
     const availability={
       available_at_counter:'Available at counter',
       disabled:'Unavailable for redemption',
@@ -3844,11 +3857,11 @@ async function renderCustomerWallet(businessSlug=null){
     const host=$('walletActivity');if(!host)return;
     const {data,error}=await customerRpc('customer_get_loyalty_details',{...args,p_cursor:cursor||{limit:20}});
     if(!isWalletSectionCurrent(host))return;
-    if(error)return walletSectionError('walletActivity',walletRpcDenied(error)?'Loyalty activity is not available for this account.':'Activity could not be loaded.',()=>loadActivity(cursor),error);
+    if(error)return walletSectionError('walletActivity',walletRpcDenied(error)?ct('Loyalty activity is not available for this account.'):ct('Activity could not be loaded.'),()=>loadActivity(cursor),error);
     const next=Array.isArray(data?.items)?data.items:[];
     activityState.items=cursor?[...activityState.items,...next]:next;activityState.nextCursor=data?.next_cursor||null;
     if(!cursor)customerConfirmedEarnFeedback(businessId,next,data?.unit||loyalty.unit||'points');
-    if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity','No loyalty activity is available yet.',businessSlug,'activity',()=>loadActivity(null),isWalletCurrent);
+    if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity',ct('No loyalty activity is available yet.'),businessSlug,'activity',()=>loadActivity(null),isWalletCurrent);
     const unit=esc(data?.unit||loyalty.unit||'points'),expiry=data?.expiry||{};
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Loyalty activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${esc(customerPointTotalV103(expiry.expiring_next_30_days))} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
@@ -3868,7 +3881,7 @@ async function renderCustomerWallet(businessSlug=null){
     if(error){
       return walletSectionError(
         'walletTransactions',
-        walletRpcDenied(error)?'Transaction history is not available for this account.':'Transaction history could not be loaded.',
+        walletRpcDenied(error)?ct('Transaction history is not available for this account.'):ct('Transaction history could not be loaded.'),
         ()=>loadTransactions(cursor),
         error
       );
@@ -3920,7 +3933,7 @@ async function renderCustomerWallet(businessSlug=null){
     host.setAttribute('aria-busy','true');
     const {data,error}=await customerRpc('customer_get_gift_cards',args);
     if(!isWalletSectionCurrent(host))return;
-    if(error)return walletSectionError('walletGiftCards',walletRpcDenied(error)?'Gift cards are not available for this account.':'Gift cards could not be loaded.',loadGiftCards,error);
+    if(error)return walletSectionError('walletGiftCards',walletRpcDenied(error)?ct('Gift cards are not available for this account.'):ct('Gift cards could not be loaded.'),loadGiftCards,error);
     const cards=Array.isArray(data?.cards)?data.cards:[];
     if(!cards.length){host.remove();ensureWalletEmptyState(businessSlug);return}
     const giftCurrency=String(data?.business?.currency||currency);
@@ -3948,10 +3961,10 @@ async function renderCustomerWallet(businessSlug=null){
     const host=$('walletPackages');if(!host)return;
     const {data,error}=await customerRpc('customer_get_packages',{...args,p_cursor:cursor||{limit:20}});
     if(!isWalletSectionCurrent(host))return;
-    if(error)return walletSectionError('walletPackages',walletRpcDenied(error)?'Packages are not available for this account.':'Packages could not be loaded.',()=>loadPackages(cursor),error);
+    if(error)return walletSectionError('walletPackages',walletRpcDenied(error)?ct('Packages are not available for this account.'):ct('Packages could not be loaded.'),()=>loadPackages(cursor),error);
     const next=Array.isArray(data?.items)?data.items:[];
     packageState.items=cursor?[...packageState.items,...next]:next;packageState.nextCursor=data?.next_cursor||null;
-    if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages','No packages are available for this account.',businessSlug,'packages',()=>loadPackages(null),isWalletCurrent);
+    if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages',ct('No packages are available for this account.'),businessSlug,'packages',()=>loadPackages(null),isWalletCurrent);
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Packages</h2><p class="muted small">Session balances and recent usage.</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
@@ -3963,9 +3976,9 @@ async function renderCustomerWallet(businessSlug=null){
     const host=$('walletMemberships');if(!host)return;
     const {data,error}=await customerRpc('customer_get_memberships',args);
     if(!isWalletSectionCurrent(host))return;
-    if(error)return walletSectionError('walletMemberships',walletRpcDenied(error)?'Membership is not available for this account.':'Membership could not be loaded.',loadMemberships,error);
+    if(error)return walletSectionError('walletMemberships',walletRpcDenied(error)?ct('Membership is not available for this account.'):ct('Membership could not be loaded.'),loadMemberships,error);
     const memberships=Array.isArray(data)?data:[];
-    if(!memberships.length)return walletSectionEmpty('walletMemberships','Membership','No membership is available for this account.',businessSlug,'membership',loadMemberships,isWalletCurrent);
+    if(!memberships.length)return walletSectionEmpty('walletMemberships','Membership',ct('No membership is available for this account.'),businessSlug,'membership',loadMemberships,isWalletCurrent);
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Membership</h2><p class="muted small">Current plan and period status.</p></div></div>${memberships.map(item=>`<div class="wallet-line"><div><b>${esc(item.plan_name||'Membership')}</b><p class="muted small" style="margin-top:3px">${esc(String(item.cadence||'').replaceAll('_',' '))}${item.current_period_start?' · '+esc(walletDate(item.current_period_start))+' to '+esc(walletDate(item.current_period_end)):''}</p></div><span class="spacer"></span><span class="pill">${esc(String(item.status||'').replaceAll('_',' '))}</span></div>`).join('')}`;
   };
@@ -3974,10 +3987,10 @@ async function renderCustomerWallet(businessSlug=null){
     const host=$('walletAppointments');if(!host)return;
     const {data,error}=await customerRpc('customer_get_appointments_page',{...args,p_cursor:cursor||{limit:20}});
     if(!isWalletSectionCurrent(host))return;
-    if(error)return walletSectionError('walletAppointments',walletRpcDenied(error)?'Appointments are not available for this account.':'Appointments could not be loaded.',()=>loadAppointments(cursor),error);
+    if(error)return walletSectionError('walletAppointments',walletRpcDenied(error)?ct('Appointments are not available for this account.'):ct('Appointments could not be loaded.'),()=>loadAppointments(cursor),error);
     const next=Array.isArray(data?.items)?data.items:[];
     appointmentState.items=cursor?[...appointmentState.items,...next]:next;appointmentState.nextCursor=data?.next_cursor||null;
-    if(!appointmentState.items.length)return walletSectionEmpty('walletAppointments','Appointments','No appointments are available yet.',businessSlug,'appointments',()=>loadAppointments(null),isWalletCurrent);
+    if(!appointmentState.items.length)return walletSectionEmpty('walletAppointments','Appointments',ct('No appointments are available yet.'),businessSlug,'appointments',()=>loadAppointments(null),isWalletCurrent);
     renderWalletAppointments(host,businessSlug,appointmentState,customerFeatures,{appointmentChangesEnabled});
     if($('walletAppointmentsMore'))$('walletAppointmentsMore').onclick=()=>{ $('walletAppointmentsMore').disabled=true;loadAppointments(appointmentState.nextCursor) };
   };

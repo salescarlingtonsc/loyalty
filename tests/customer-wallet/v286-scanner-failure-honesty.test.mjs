@@ -13,8 +13,8 @@ test('a failed decoder load is reported as a decoder failure, not a camera or ph
   assert.match(js,/const DECODER_LOAD_FAILURE='The scanner could not load\. Check your connection and try again\.'/);
   assert.match(js,/const loadDecoder=async\(\)=>\{try\{await loadScannerLibrary\(\);return true\}catch\{return false\}\}/);
   // camera path: decoder guard runs BEFORE getUserMedia is ever called, and leaves a live retry.
-  assert.match(js,/if\(!await loadDecoder\(\)\)\{[\s\S]{0,200}?cameraLabel\.textContent='Try again';[\s\S]{0,80}?status\.textContent=DECODER_LOAD_FAILURE;return;/);
-  assert.match(js,/status\.textContent=DECODER_LOAD_FAILURE;return\}[\s\S]{0,120}?createImageBitmap\(file\)/);
+  assert.match(js,/if\(!await loadDecoder\(\)\)\{[\s\S]{0,200}?cameraLabel\.textContent=ct\('retry'\);[\s\S]{0,80}?status\.textContent=ct\(DECODER_LOAD_FAILURE\);return;/);
+  assert.match(js,/status\.textContent=ct\(DECODER_LOAD_FAILURE\);return\}[\s\S]{0,120}?createImageBitmap\(file\)/);
   // the camera catch no longer swallows the loader rejection.
   assert.doesNotMatch(js,/await loadScannerLibrary\(\);\s*stream=await navigator\.mediaDevices\.getUserMedia/);
   assert.doesNotMatch(js,/await loadScannerLibrary\(\);\s*const bitmap=await createImageBitmap/);
@@ -38,9 +38,12 @@ test('the scanner spotlight shadow is clipped to the video frame',()=>{
   assert.match(html,/\.scanner-frame::after\{[^}]*box-shadow:0 0 0 999px/);
 });
 
-/* v286: the customer surface is EN-only today (CUSTOMER_LOCALES=['en']), so the scanner sheet's
-   literals are the current product state, not a regression. This pin records that: the day a
-   second customer locale is added, this test fails and the sheet must be routed through ct(). */
-test('the customer surface is still single-locale, so scanner literals are the product state',()=>{
-  assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en'\]\)/);
+/* v286 pinned the EN-only state and demanded ct() routing the day a second locale arrived.
+   v293 added zh-CN + ms, so the sheet's user-facing strings now go through ct() and the
+   status assignments carry ct(...) — the pin flips to assert the multilingual contract. */
+test('the customer surface is multilingual and the scanner sheet is routed through ct()',()=>{
+  assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms'\]\)/);
+  assert.match(js,/\$\{esc\(ct\('Scan the business QR'\)\)\}/);
+  assert.match(js,/status\.textContent=ct\(DECODER_LOAD_FAILURE\)/);
+  assert.match(js,/status\.textContent=ct\('Point the camera at the business QR\.'\)/);
 });
