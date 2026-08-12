@@ -331,8 +331,10 @@ test('multilingual support is scoped to the business workspace, never the custom
   const app = await read('app/app.js');
   assert.match(app, /WORKSPACE_LOCALES_V97=Object\.freeze\(\['en','zh-CN','ms'\]\)/,
     'the workspace locale set moved');
-  assert.match(app, /CUSTOMER_LOCALES=Object\.freeze\(\['en'\]\)/,
-    'the customer surface is English-only; if that changes, the copy may be widened');
+  /* v293 widened the customer surface to en/zh-CN/ms, so the landing may now
+     claim customer-side languages — but the claim must match the shipped set. */
+  assert.match(app, /CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms'\]\)/,
+    'the landing language claims are pinned to the shipped customer locale set');
 
   if (/Bahasa Melayu/.test(landing)) {
     assert.match(
@@ -340,8 +342,8 @@ test('multilingual support is scoped to the business workspace, never the custom
       /business workspace runs in English, 中文 or Bahasa Melayu/,
       'any multilingual claim must name the business workspace as its scope'
     );
-    assert.match(landing, /customer-facing side is English/i,
-      'the English-only customer surface must be stated, not hidden');
+    assert.match(landing, /customer rewards app follows each member’s choice of English, 中文 or Bahasa Melayu/,
+      'the customer-side language support must be stated accurately');
   }
 });
 
