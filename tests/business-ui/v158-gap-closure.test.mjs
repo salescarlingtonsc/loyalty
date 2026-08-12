@@ -29,7 +29,7 @@ const appointments = section('async function appointmentsPage()', 'async functio
 
 test('V158 makes /programmes deep links resolve to the existing Programmes/Grow route', () => {
   assert.match(routing, /if\(h==='#\/programmes'\|\|h\.startsWith\('#\/programmes\/'\)\)h=h\.replace\('#\/programmes','#\/grow'\)/);
-  assert.match(shell, /grow:\(hashParam,routedFocus\)=>growPage\('overview',hashParam,routedFocus\)/);
+  assert.match(shell, /grow:\(hashParam,routedFocus\)=>growPage\('overview',hashParam,routedFocus,\{fromRouteV288:true\}\)/);
 });
 
 test('V158 allows invited staff to start Google sign-in while preserving server-side invite acceptance', () => {
