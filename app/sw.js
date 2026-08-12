@@ -96,7 +96,8 @@ const CUSTOMER_PUSH_TYPES=new Set([
   'visit_progress',
   'birthday_benefit',
   'booking_request_received',
-  'appointment_time_changed'
+  'appointment_time_changed',
+  'promotion_alert'
 ]);
 
 function customerPushRoute(data){

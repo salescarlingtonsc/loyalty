@@ -66,7 +66,10 @@ export type PushLease = {
     | 'c44_actionable_wallet'
     | 'c45_birthday_benefit'
     | 'v33_booking_action'
-    | 'v48_appointment_reschedule';
+    | 'v48_appointment_reschedule'
+    | 'v122_promotion_new'
+    | 'v122_promotion_expiry'
+    | 'v282_bottle_expiry';
   topic: string;
   title: string;
   body: string;
@@ -85,7 +88,8 @@ export type CustomerPushEventType =
   | 'visit_progress'
   | 'birthday_benefit'
   | 'booking_request_received'
-  | 'appointment_time_changed';
+  | 'appointment_time_changed'
+  | 'promotion_alert';
 
 /**
  * Returns null - never throws - for a lease this dispatcher cannot render.
@@ -106,6 +110,11 @@ export function customerPushEventTypeOrNull(
   if (lease.source_kind === 'v48_appointment_reschedule') {
     return 'appointment_time_changed';
   }
+  // V282: promotion_alerts became push-eligible in v255/v263, but this mapping
+  // was never added, so every promotional push fell through to the null branch
+  // and was recorded as a permanent 'unsupported_push_event' failure. The
+  // promotion cron has been enqueueing them every fifteen minutes since.
+  if (lease.topic === 'promotion_alerts') return 'promotion_alert';
   if (
     lease.topic === 'value_expiry' || lease.topic === 'reward_ready' ||
     lease.topic === 'visit_progress' || lease.topic === 'birthday_benefit'

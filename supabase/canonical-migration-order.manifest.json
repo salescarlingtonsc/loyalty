@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 235,
-  "itemCount": 280,
+  "pendingCount": 239,
+  "itemCount": 284,
   "items": [
     {
       "order": 1,
@@ -2807,6 +2807,46 @@
       "path": "supabase/migrations/20260811000600_nestly_v280_branch_billing_units_and_promotion_version.sql",
       "octetLength": 15052,
       "sha256": "c9e58ce7cb1a6a4b57b3dce26f9f503ac313047744a7b67f1d48bfc46a0300e4",
+      "provenance": "local-source"
+    },
+    {
+      "order": 281,
+      "kind": "pending",
+      "version": "20260812000100",
+      "name": "nestly_v281_stripe_launch_readiness",
+      "path": "supabase/migrations/20260812000100_nestly_v281_stripe_launch_readiness.sql",
+      "octetLength": 31654,
+      "sha256": "0c6f52d70d8d9b81d771d4644bc077dd1b470f84cd891c78e979a064c308b38d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 282,
+      "kind": "pending",
+      "version": "20260812000200",
+      "name": "nestly_v282_promotion_finalize_conflict_fastfail",
+      "path": "supabase/migrations/20260812000200_nestly_v282_promotion_finalize_conflict_fastfail.sql",
+      "octetLength": 16800,
+      "sha256": "318bba5a4ae81fce02d283da8c24f23146d5a7733154e8ebc296046af7d0ef8a",
+      "provenance": "local-source"
+    },
+    {
+      "order": 283,
+      "kind": "pending",
+      "version": "20260812000300",
+      "name": "nestly_v283_customer_claim_execute_grants",
+      "path": "supabase/migrations/20260812000300_nestly_v283_customer_claim_execute_grants.sql",
+      "octetLength": 1911,
+      "sha256": "9691dd78e1a020d7a5ec9d5929486730a8575b8437938d1ca204a1b3bded5170",
+      "provenance": "local-source"
+    },
+    {
+      "order": 284,
+      "kind": "pending",
+      "version": "20260812000400",
+      "name": "nestly_v284_comms_foundation",
+      "path": "supabase/migrations/20260812000400_nestly_v284_comms_foundation.sql",
+      "octetLength": 42177,
+      "sha256": "d5aab00e8b6801314f56d8bb986f2f8dde762ad02854175a18f1530792ed724e",
       "provenance": "local-source"
     }
   ]

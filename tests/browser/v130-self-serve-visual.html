@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="99f7bb7eb391f4ec42f828447c64d50fbc882d1f11e2bf1ade3680b32564bdf6"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="d98122ceb4cd838eb0a7512c5deba05c7f6a9006b3408e8ef74ff2ee95410d34"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2207,32 +2207,8 @@ async function wireAccountDeletionButton(){
   if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.55rem;margin-top:18px">Loading secure business setup…</h1><p class="muted small" style="margin-top:7px">Checking current plans and any saved payment step.</p>${businessSetupAccountHtml()}${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   wireBusinessSetupAccount();wireAccountDeletionButton();
-  const finishCheckout=async(onboarding,statusNode,button)=>{
-    if(button)button.disabled=true;
-    if(statusNode)statusNode.textContent='Opening secure Stripe Checkout…';
-    const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;
-    let idempotencyKey=sessionStorage.getItem(storageKey);
-    if(!idempotencyKey){idempotencyKey=crypto.randomUUID();sessionStorage.setItem(storageKey,idempotencyKey)}
-    const requested=await sb.rpc('request_self_serve_checkout_v130',{
-      p_business:onboarding.business_id,p_cadence:onboarding.cadence,
-      p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:idempotencyKey
-    });
-    if(requested.error||!requested.data?.command_id){
-      if(button)button.disabled=false;
-      if(statusNode)statusNode.textContent='We could not confirm the saved checkout request. Retry; the same request will be reused.';
-      return;
-    }
-    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
-    if(executed.error){
-      if(button)button.disabled=false;
-      if(statusNode)statusNode.textContent='Stripe could not be reached. Retry to recover the same secure checkout.';
-      return;
-    }
-    const result=executed.data||requested.data;
-    if(result.redirect_url){sessionStorage.removeItem(storageKey);location.assign(result.redirect_url);return}
-    if(button)button.disabled=false;
-    if(statusNode)statusNode.textContent='Payment confirmation is still pending. Peekaa will open the workspace only after Stripe confirms a paid invoice.';
-  };
+  const finishCheckout=(onboarding,statusNode,button)=>
+    driveSelfServeCheckoutV281(onboarding,statusNode,button);
   (async()=>{
     const state=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
     if(setupEpoch!==businessSetupRenderEpoch)return;
@@ -2339,15 +2315,9 @@ async function wireAccountDeletionButton(){
       }
       if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
       root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Peekaa opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      $('businessControlPay').onclick=async()=>{
-        const button=$('businessControlPay'),status=$('businessControlPayStatus');button.disabled=true;status.textContent='Opening secure Stripe Checkout…';
-        const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;let key=sessionStorage.getItem(storageKey);if(!key){key=crypto.randomUUID();sessionStorage.setItem(storageKey,key)}
-        const requested=await sb.rpc('request_self_serve_checkout_v130',{p_business:onboarding.business_id,p_cadence:onboarding.cadence,p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:key});
-        if(requested.error||!requested.data?.command_id){button.disabled=false;status.textContent='We could not recover the saved checkout. Retry the same payment step.';return}
-        const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
-        if(executed.data?.redirect_url){sessionStorage.removeItem(storageKey);location.assign(executed.data.redirect_url);return}
-        button.disabled=false;status.textContent='Stripe is still processing this payment. Check again after payment is confirmed.';
-      };
+      $('businessControlPay').onclick=()=>driveSelfServeCheckoutV281(
+        onboarding,$('businessControlPayStatus'),$('businessControlPay')
+      );
       $('businessControlRetry').onclick=route;
       $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
       wireAccountDeletionButton();

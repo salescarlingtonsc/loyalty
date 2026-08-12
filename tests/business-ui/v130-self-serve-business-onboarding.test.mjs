@@ -62,8 +62,14 @@ test('signed-in owner chooses business, sector, cadence and capacity before Stri
   assert.match(onboard,/manualBusinessApplicationFallbackHtml\(sectors\)/);
   assert.match(onboard,/wireManualBusinessApplicationFallback\(\)/);
   assert.match(onboard,/start_self_serve_business_v130/);
-  assert.match(onboard,/request_self_serve_checkout_v130/);
-  assert.match(onboard,/stripe-billing-command/);
+  /* V281: the checkout call moved out of renderOnboard into the shared
+     runSelfServeCheckoutV281 executor, which the workspace-control payment screen now uses too.
+     The contract is unchanged — onboarding still reaches the server-priced checkout through the
+     same RPC and the same edge function — so it is asserted where it now lives. */
+  assert.match(onboard,/driveSelfServeCheckoutV281\(onboarding,statusNode,button\)/);
+  const checkout=section('async function runSelfServeCheckoutV281(','function renderBusinessWorkspaceControl(');
+  assert.match(checkout,/request_self_serve_checkout_v130/);
+  assert.match(checkout,/stripe-billing-command/);
   assert.match(onboard,/GST not charged/);
   assert.doesNotMatch(onboard,/An approved invitation is required|Apply for a business account/);
 });

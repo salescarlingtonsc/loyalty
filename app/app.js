@@ -4071,6 +4071,57 @@ async function renderCustomerMessages(){
   await renderCustomerInAppInbox(null,isCurrent);
 }
 
+/* V282 consent history. Both consent stores — the v263 per-channel audit and the v92 platform and
+   partner consent events — have been append-only since the day they were written, and neither was
+   readable by the person the evidence is about. The list is deliberately READ-ONLY: it is a record
+   of what was decided, not a second place to decide it, and the Communications screen above it is
+   the one place a choice changes. Kept as a pure markup function so the plain-language sentences,
+   the escaping and the empty state can be unit-tested without a session. */
+const CUSTOMER_CONSENT_CATEGORY_LABELS_V282={
+  business_offers:'offers from businesses you follow',
+  rewards_and_points:'your rewards and points',
+  peekaa_updates:'Peekaa updates'
+};
+const CUSTOMER_CONSENT_CHANNEL_LABELS_V282={
+  in_app:'in-app messages',push:'push notifications',email:'email',
+  sms:'SMS',whatsapp:'WhatsApp',call:'phone calls'
+};
+function customerConsentHistorySentenceV282(entry){
+  const on=entry?.enabled===true;
+  if(entry?.entry_kind==='platform_partner_marketing'){
+    return on
+      ? 'You agreed to marketing from Peekaa and its selected partners.'
+      : 'You withdrew your agreement to marketing from Peekaa and its selected partners.';
+  }
+  if(entry?.entry_kind==='marketing_all_channels'){
+    return on
+      ? 'You turned on every marketing message, on every channel.'
+      : 'You turned off every marketing message, on every channel.';
+  }
+  const category=CUSTOMER_CONSENT_CATEGORY_LABELS_V282[entry?.category]||String(entry?.category||'');
+  const channel=CUSTOMER_CONSENT_CHANNEL_LABELS_V282[entry?.channel]||String(entry?.channel||'');
+  return `${on?'You turned on':'You turned off'} ${channel} for ${category}.`;
+}
+function customerConsentHistoryMarkupV282(entries){
+  const rows=Array.isArray(entries)?entries:[];
+  if(!rows.length){
+    return '<p class="muted small">Nothing has changed yet. Everything is on unless you turn it off, and each change you make will be listed here.</p>';
+  }
+  return rows.map(entry=>`<div class="wallet-line"><div><b>${esc(customerConsentHistorySentenceV282(entry))}</b><p class="muted small">${esc(walletDate(entry?.occurred_at,true)||'')}</p></div></div>`).join('');
+}
+async function hydrateCustomerConsentHistoryV282(isCurrent){
+  const host=$('customerConsentHistoryBody');
+  if(!host)return;
+  const {data,error}=await sb.rpc('customer_get_consent_history_v282',{p_limit:100});
+  if(typeof isCurrent==='function'&&!isCurrent())return;
+  const section=$('customerConsentHistory');
+  if(!host.isConnected)return;
+  host.innerHTML=error
+    ? '<p class="muted small">Your consent history could not be loaded. Nothing has been changed.</p>'
+    : customerConsentHistoryMarkupV282(data?.entries);
+  if(section)section.setAttribute('aria-busy','false');
+}
+
 async function renderCustomerProfile(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
@@ -4101,6 +4152,7 @@ async function renderCustomerProfile(){
       :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p>'}
     </section>
     <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Communications</h2><p class="muted small">Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>Open communications</span></a></div></section>
+    <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Your consent history</h2><p class="muted small">Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">Loading your consent history…</p></div></section>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
@@ -4262,6 +4314,7 @@ async function renderCustomerProfile(){
     passkeyStatus.textContent='Passkey added. You can use it at your next sign-in.';loadPasskeys();
   };
   loadPasskeys();
+  hydrateCustomerConsentHistoryV282(isCurrent);
   focusCustomerRoute();
 }
 
@@ -6708,6 +6761,64 @@ function renderNativeBusinessCompanion(){
   wireAccountDeletionButton();
 }
 
+/* V281 — the "pay now" button must always land in one of three DEFINED states: redirected to
+   Stripe, a named recoverable message, or a named terminal message. It previously had a fourth,
+   undefined one. stripe-billing-command answers HTTP 202 with status 'uncertain' when it cannot
+   prove whether Stripe executed, and documents its own recovery in the same body:
+   `recovery:'retry_same_command_id'` — re-invoking the SAME command id retrieves the Checkout
+   session that was in fact created and returns its URL. The platform console has performed that
+   replay since V156. Neither owner-facing self-service surface did: both fell through to a
+   generic "still pending" line, leaving an owner who HAD a live Stripe session staring at a
+   screen that told them to wait for a webhook that would never come, because they never paid.
+   Both surfaces now run this one executor, so the two copies cannot drift again. */
+const SELF_SERVE_CHECKOUT_STATUS_V281=Object.freeze({
+  opening:'Opening secure Stripe Checkout…',
+  request_failed:'We could not confirm the saved checkout request. Retry; the same request will be reused.',
+  unreachable:'Stripe could not be reached. Retry to recover the same secure checkout.',
+  pending:'Stripe has not returned a checkout page yet. Retry — the same secure checkout is reused, and nothing is charged twice.'
+});
+function selfServeCheckoutKeyV281(businessId){
+  return `nestly-self-serve-checkout-${businessId}`;
+}
+async function runSelfServeCheckoutV281(onboarding){
+  const storageKey=selfServeCheckoutKeyV281(onboarding.business_id);
+  let idempotencyKey=sessionStorage.getItem(storageKey);
+  if(!idempotencyKey){idempotencyKey=crypto.randomUUID();sessionStorage.setItem(storageKey,idempotencyKey)}
+  const requested=await sb.rpc('request_self_serve_checkout_v130',{
+    p_business:onboarding.business_id,p_cadence:onboarding.cadence,
+    p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:idempotencyKey
+  });
+  if(requested.error||!requested.data?.command_id)
+    return {outcome:'request_failed',message:SELF_SERVE_CHECKOUT_STATUS_V281.request_failed};
+  const commandId=requested.data.command_id;
+  const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
+  if(executed.error)
+    return {outcome:'unreachable',message:SELF_SERVE_CHECKOUT_STATUS_V281.unreachable};
+  let result=executed.data||requested.data;
+  /* Exactly one replay, and only of the same command id — the server holds a stable Stripe
+     idempotency key for it, so this retrieves or replays the identical session and can never
+     create a second one or a second charge. */
+  if(!result?.redirect_url&&['uncertain','pending','processing'].includes(String(result?.status||''))){
+    const recovered=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
+    if(!recovered.error&&recovered.data)result=recovered.data;
+  }
+  if(result?.redirect_url){
+    sessionStorage.removeItem(storageKey);
+    return {outcome:'redirect',redirectUrl:result.redirect_url};
+  }
+  return {outcome:'pending',message:SELF_SERVE_CHECKOUT_STATUS_V281.pending};
+}
+async function driveSelfServeCheckoutV281(onboarding,statusNode,button){
+  if(button)button.disabled=true;
+  if(statusNode)statusNode.textContent=SELF_SERVE_CHECKOUT_STATUS_V281.opening;
+  const outcome=await runSelfServeCheckoutV281(onboarding);
+  if(outcome.outcome==='redirect'){location.assign(outcome.redirectUrl);return outcome}
+  /* Every non-redirect outcome re-enables the button. A disabled button with a "pending"
+     message is the stuck state this function exists to remove. */
+  if(button)button.disabled=false;
+  if(statusNode)statusNode.textContent=outcome.message;
+  return outcome;
+}
 function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
@@ -6720,15 +6831,9 @@ function renderBusinessWorkspaceControl(control={}){
       }
       if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
       root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Peekaa opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      $('businessControlPay').onclick=async()=>{
-        const button=$('businessControlPay'),status=$('businessControlPayStatus');button.disabled=true;status.textContent='Opening secure Stripe Checkout…';
-        const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;let key=sessionStorage.getItem(storageKey);if(!key){key=crypto.randomUUID();sessionStorage.setItem(storageKey,key)}
-        const requested=await sb.rpc('request_self_serve_checkout_v130',{p_business:onboarding.business_id,p_cadence:onboarding.cadence,p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:key});
-        if(requested.error||!requested.data?.command_id){button.disabled=false;status.textContent='We could not recover the saved checkout. Retry the same payment step.';return}
-        const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
-        if(executed.data?.redirect_url){sessionStorage.removeItem(storageKey);location.assign(executed.data.redirect_url);return}
-        button.disabled=false;status.textContent='Stripe is still processing this payment. Check again after payment is confirmed.';
-      };
+      $('businessControlPay').onclick=()=>driveSelfServeCheckoutV281(
+        onboarding,$('businessControlPayStatus'),$('businessControlPay')
+      );
       $('businessControlRetry').onclick=route;
       $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
       wireAccountDeletionButton();
@@ -7696,32 +7801,8 @@ function renderOnboard(){
   if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.55rem;margin-top:18px">Loading secure business setup…</h1><p class="muted small" style="margin-top:7px">Checking current plans and any saved payment step.</p>${businessSetupAccountHtml()}${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   wireBusinessSetupAccount();wireAccountDeletionButton();
-  const finishCheckout=async(onboarding,statusNode,button)=>{
-    if(button)button.disabled=true;
-    if(statusNode)statusNode.textContent='Opening secure Stripe Checkout…';
-    const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;
-    let idempotencyKey=sessionStorage.getItem(storageKey);
-    if(!idempotencyKey){idempotencyKey=crypto.randomUUID();sessionStorage.setItem(storageKey,idempotencyKey)}
-    const requested=await sb.rpc('request_self_serve_checkout_v130',{
-      p_business:onboarding.business_id,p_cadence:onboarding.cadence,
-      p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:idempotencyKey
-    });
-    if(requested.error||!requested.data?.command_id){
-      if(button)button.disabled=false;
-      if(statusNode)statusNode.textContent='We could not confirm the saved checkout request. Retry; the same request will be reused.';
-      return;
-    }
-    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
-    if(executed.error){
-      if(button)button.disabled=false;
-      if(statusNode)statusNode.textContent='Stripe could not be reached. Retry to recover the same secure checkout.';
-      return;
-    }
-    const result=executed.data||requested.data;
-    if(result.redirect_url){sessionStorage.removeItem(storageKey);location.assign(result.redirect_url);return}
-    if(button)button.disabled=false;
-    if(statusNode)statusNode.textContent='Payment confirmation is still pending. Peekaa will open the workspace only after Stripe confirms a paid invoice.';
-  };
+  const finishCheckout=(onboarding,statusNode,button)=>
+    driveSelfServeCheckoutV281(onboarding,statusNode,button);
   (async()=>{
     const state=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
     if(setupEpoch!==businessSetupRenderEpoch)return;
@@ -22174,6 +22255,9 @@ async function bottleSetupPageV275(){
       <label for="bkCapacity" style="margin-top:14px">Storage capacity</label>
       <input id="bkCapacity" type="number" min="1" max="10000" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(data?.storage_capacity)||500))}">
       <p class="muted small" style="margin-top:-2px">How many bottles you can physically hold. Parking is refused once the shelves are full, so nobody takes a bottle you have nowhere to put. ${esc(String(Number(data?.in_storage)||0))} in storage right now.</p>
+      <label for="bkRemindDays" style="margin-top:14px">Remind the customer</label>
+      <input id="bkRemindDays" type="number" min="1" max="90" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(extraResultV278.data?.reminder_days)||7))}">
+      <p class="muted small" style="margin-top:-2px">Days before a bottle expires that Peekaa messages the customer in their app. It runs by itself every night, and a bottle past its window is marked expired the same way.</p>
     </section>
     <section class="card" style="margin-top:16px">
       <div class="cui-card-head"><h2>Tier keep windows</h2><p>Give your best customers longer. A tier left blank uses the keep window above.</p></div>
@@ -22363,6 +22447,7 @@ async function bottleSetupPageV275(){
   $('bkSave').onclick=async()=>{
     const days=Number($('bkDays').value);
     const capacity=Number($('bkCapacity').value);
+    const remindDays=Number($('bkRemindDays').value);
     const errorHost=$('bkErr'),status=$('bkStatus'),save=$('bkSave');
     errorHost.innerHTML='';
     if(!Number.isInteger(days)||days<1||days>365){
@@ -22371,6 +22456,10 @@ async function bottleSetupPageV275(){
     }
     if(!Number.isInteger(capacity)||capacity<1||capacity>10000){
       errorHost.innerHTML='<div class="err">Storage capacity must be a whole number between 1 and 10000 bottles.</div>';
+      return;
+    }
+    if(!Number.isInteger(remindDays)||remindDays<1||remindDays>90){
+      errorHost.innerHTML='<div class="err">The reminder must be a whole number between 1 and 90 days before expiry.</div>';
       return;
     }
     CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
@@ -22386,6 +22475,18 @@ async function bottleSetupPageV275(){
     CUI.setButtonBusy(save,{busy:false});
     if(saveError){
       errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'Bottle keep could not be saved.')}</div>`;
+      return;
+    }
+    /* V282: a SECOND call rather than a fourth parameter on bar_save_setup_v279, for the reason
+       V279 recorded in this same handler — an overload differing only in arity is what makes
+       PostgREST's resolution ambiguous. It runs only after the keep window has landed, so a
+       failure here cannot leave the two numbers disagreeing about which save succeeded. */
+    const {error:remindError}=await sb.rpc('bar_save_expiry_reminder_days_v282',{
+      p_business:S.biz.id,p_days:remindDays
+    });
+    if(!isCurrent()||!save.isConnected)return;
+    if(remindError){
+      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(remindError)||'The reminder window could not be saved. The keep window was saved.')}</div>`;
       return;
     }
     locations=(Array.isArray(saved?.locations)?saved.locations:[])

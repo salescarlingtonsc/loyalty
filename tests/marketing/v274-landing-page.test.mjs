@@ -309,8 +309,12 @@ test('the page never claims legal compliance, only what the product does', () =>
 });
 
 test('the page does not promise delivery channels the product has not switched on', () => {
-  /* app/runtime-config.js ships webPushPublicKey:"" and the campaign tool says
-     "Delivery is not enabled yet" — so no send/broadcast promise may appear. */
+  /* V282 retarget of the REASON, not the rule. This used to read "app/runtime-config.js ships
+     webPushPublicKey:'' " — v282 ships a real key, so web push is no longer dead. Every other
+     outbound channel still is: SMS, email and WhatsApp remain owner-deferred and the campaign tool
+     still says "Delivery is not enabled yet". The rule is therefore unchanged — no send/broadcast
+     promise may appear — and the push-specific claims below stay banned because a push campaign
+     tool does not exist even though the transport now does. */
   const overclaims = [
     /push (?:notification )?campaign/i,
     /send (?:them |out )?(?:a )?(?:sms|text message)/i,
@@ -411,6 +415,149 @@ test('the page uses no animated library and only translate3d for depth', () => {
   assert.match(script, /translate3d\(/, 'layered depth must stay on the compositor');
   assert.doesNotMatch(script, /\.style\.(?:top|left|width|height|margin)\s*=/,
     'the scroll handler must not write layout-triggering properties');
+});
+
+/* ── V283 · the five-layer scroll depth system ─────────────────────────────
+   The owner's brief is a SPEC, not a taste: five layers, each in a named band
+   of apparent scroll rate, all driven continuously by scroll position. Rates
+   are declared in the markup, so they can be pinned here — a layer silently
+   drifting out of its band is the regression these tests exist to catch. */
+
+const BANDS = {
+  L1: [0.15, 0.25],   // background glows and large soft shapes
+  L2: [0.35, 0.50],   // decorative fragments / reward symbols
+  L3: [0.70, 0.80],   // the product UI composition — the main object
+  L4: [1.00, 1.20],   // floating product cards, nearer than the composition
+  L5: [1.20, 1.40]    // small foreground elements
+};
+const inBand = (value, band) => value >= BANDS[band][0] - 1e-9 && value <= BANDS[band][1] + 1e-9;
+const attrValues = (name) =>
+  [...landing.matchAll(new RegExp(`\\b${name}="([-0-9.]+)"`, 'g'))].map((m) => Number(m[1]));
+
+test('V283 · the fixed background layers all sit in the L1 or L2 rate band', () => {
+  const drifts = attrValues('data-drift');
+  assert.ok(drifts.length >= 8, `expected a populated depth field, found ${drifts.length} layers`);
+  for (const rate of drifts) {
+    assert.ok(
+      inBand(rate, 'L1') || inBand(rate, 'L2'),
+      `data-drift="${rate}" is in neither L1 (0.15–0.25) nor L2 (0.35–0.50)`
+    );
+  }
+  assert.ok(drifts.some((r) => inBand(r, 'L1')), 'L1 (0.15–0.25x) must be represented');
+  assert.ok(drifts.some((r) => inBand(r, 'L2')), 'L2 (0.35–0.50x) must be represented');
+});
+
+test('V283 · every in-flow layer sits in the L3, L4 or L5 rate band', () => {
+  const rates = [...attrValues('data-rate'), ...attrValues('data-rate-sm')];
+  assert.ok(rates.length >= 12, `expected the layered composition, found ${rates.length} layers`);
+  for (const rate of rates) {
+    assert.ok(
+      inBand(rate, 'L3') || inBand(rate, 'L4') || inBand(rate, 'L5'),
+      `data-rate="${rate}" falls outside L3 (0.70–0.80), L4 (1.00–1.20) and L5 (1.20–1.40)`
+    );
+  }
+  for (const band of ['L3', 'L4', 'L5']) {
+    assert.ok(rates.some((r) => inBand(r, band)), `${band} must be represented`);
+  }
+  /* A layer at exactly 1.0 would be pinned to the page and read as no layer at
+     all, so the floating cards must actually lead it. */
+  assert.ok(rates.some((r) => r > 1.0), 'at least one layer must travel faster than the page');
+  assert.ok(rates.some((r) => r < 1.0), 'at least one layer must travel slower than the page');
+});
+
+test('V283 · the product composition really is the layer that lags', () => {
+  /* If the hero mocks ever lose their L3 rate the page collapses back into a
+     flat stack of sections, which is exactly the complaint this work answers. */
+  for (const cls of ['stage-dash', 'stage-phone', 'stage-hub']) {
+    const tag = new RegExp(`class="[^"]*${cls}[^"]*"[^>]*`).exec(landing)?.[0] || '';
+    const rate = Number(/\bdata-rate="([-0-9.]+)"/.exec(tag)?.[1]);
+    assert.ok(inBand(rate, 'L3'), `.${cls} must carry an L3 rate, found "${rate}"`);
+  }
+});
+
+test('V283 · the hero reads business dashboard → Peekaa → customer experience', () => {
+  const dash = landing.indexOf('>Business dashboard<');
+  const hub = landing.indexOf('class="stage-hub"');
+  const customer = landing.indexOf('>Customer experience<');
+  assert.ok(dash > -1 && hub > -1 && customer > -1, 'all three stations must be labelled');
+  assert.ok(dash < hub && hub < customer, 'the hero must read left to right, in that order');
+});
+
+test('V283 · the sticky scene exists and runs the four owner-named steps in order', () => {
+  assert.match(landing, /id="sceneTrack"/, 'the scene needs a track taller than the viewport');
+  assert.match(landing, /id="sceneSticky"/, 'and a stage that sticks inside it');
+  assert.match(landing, /html\.js \.scene-track\{height:\d+vh\}/,
+    'the track height is what turns scrolling into story progress');
+  assert.match(landing, /html\.js \.scene-sticky\{position:sticky/,
+    'the stage must pin, and only when JavaScript is driving it');
+
+  const steps = [...landing.matchAll(/<li class="scene-step">[\s\S]*?<span class="t">([^<]+)<\/span>/g)]
+    .map((m) => m[1].trim());
+  assert.deepEqual(steps, ['Reward customers', 'Keep them engaged', 'Bring them back', 'Build loyalty']);
+
+  const pieces = [...landing.matchAll(/id="scenePiece([A-D])"/g)].map((m) => m[1]);
+  assert.deepEqual(pieces, ['A', 'B', 'C', 'D'], 'four components must converge on the last step');
+});
+
+test('V283 · the write phase reads no layout and writes no layout property', () => {
+  /* Every measurement belongs in measure(). A single getBoundingClientRect in
+     the rAF callback turns a 60fps page into a stuttering one. */
+  const paint = /function paint\(\)\{([\s\S]*?)\n  \}/.exec(landing);
+  assert.ok(paint, 'the paint function must be findable');
+  const body = paint[1];
+  for (const forbidden of ['getBoundingClientRect', 'offsetHeight', 'offsetTop', 'getComputedStyle', 'scrollHeight']) {
+    assert.ok(!body.includes(forbidden), `paint() must not read layout (found ${forbidden})`);
+  }
+  const writes = [...body.matchAll(/\.style\.([A-Za-z]+)\s*=/g)].map((m) => m[1]);
+  assert.ok(writes.length > 0, 'paint() does move things');
+  for (const property of writes) {
+    assert.ok(['transform', 'opacity'].includes(property),
+      `paint() may only write transform and opacity; found style.${property}`);
+  }
+  /* A wide window: the reduced-motion listener spans several lines before its
+     options object, and a short window would miss the flag and false-fail. */
+  const listeners = [...landing.matchAll(/addEventListener\('scroll'[\s\S]{0,320}?\}\);/g)].map((m) => m[0]);
+  assert.ok(listeners.length > 0);
+  for (const listener of listeners) {
+    assert.match(listener, /passive:\s*true/, 'every scroll listener must be passive');
+  }
+});
+
+test('V283 · reduced motion removes the depth system entirely', () => {
+  const block = /@media\s*\(\s*prefers-reduced-motion:\s*reduce\s*\)\s*\{([\s\S]*?)\n\}/.exec(landing)[1];
+  assert.match(block, /\[data-rate\]/, 'in-flow layers must be neutralised');
+  assert.match(block, /\[data-drift\]/, 'fixed layers must be neutralised');
+  assert.match(block, /\.depth[^}]*display:none!important/,
+    'the whole depth field is removed, not merely frozen');
+  assert.match(block, /\.scene-track\{height:auto!important\}/,
+    'the sticky track must collapse or the reader scrolls three empty screens');
+  assert.match(block, /\.scene-sticky\{position:static!important/, 'and the stage must unpin');
+  assert.match(block, /\.scene-piece\{position:static!important;opacity:1!important/,
+    'every scene component must be visible and in normal flow');
+
+  /* And the engine must bail before it registers a single layer. */
+  const script = [...landing.matchAll(/<script\b(?![^>]*\bsrc=)(?![^>]*application\/ld)[^>]*>([\s\S]*?)<\/script>/gi)]
+    .map((m) => m[1]).join('\n');
+  const guard = /if\(reduce\)\{([\s\S]*?)\n  \}/.exec(script);
+  assert.ok(guard, 'the engine must have an explicit reduced-motion early return');
+  assert.match(guard[1], /return;/, 'reduced motion returns before any layer is registered');
+  assert.ok(script.indexOf('querySelectorAll(\'[data-drift]\')') > script.indexOf('if(reduce){'),
+    'the layer registry must be built after the reduced-motion guard, not before it');
+});
+
+test('V283 · the phone keeps the depth, at a shorter throw', () => {
+  /* The brief is explicit: mobile reduces amplitude and layer count. It never
+     switches the system off, and it never lets a layer push the page sideways. */
+  const script = [...landing.matchAll(/<script\b(?![^>]*\bsrc=)(?![^>]*application\/ld)[^>]*>([\s\S]*?)<\/script>/gi)]
+    .map((m) => m[1]).join('\n');
+  const amp = /amp=vw<700\?([0-9.]+):/.exec(script);
+  assert.ok(amp, 'a narrow viewport must scale the throw');
+  const factor = Number(amp[1]);
+  assert.ok(factor > 0.4 && factor < 1,
+    `the phone throw factor is ${factor}; it must be reduced but never zero`);
+  assert.match(landing, /overflow-x:hidden/, 'no layer may ever widen the document');
+  assert.match(landing, /\.scene-stage\{[^}]*overflow:hidden/,
+    'the morphing stage must clip rather than push the page sideways');
 });
 
 /* ── links ────────────────────────────────────────────────────────────────── */
