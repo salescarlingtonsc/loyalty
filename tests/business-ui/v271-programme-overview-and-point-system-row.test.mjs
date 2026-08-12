@@ -125,15 +125,18 @@ test('V271 (b) all three views exist, resolve from the hash, and keep the old on
   assert.match(app, /programmeView==='overview'\?'Overview':programmeView==='history'\?'History'/);
 });
 
-test('V271 (b) the three views are reachable from one strip, each with its own linkable hash', () => {
-  assert.match(app, /\[\['overview','Overview','#\/grow\/overview'\],\['list','List','#\/grow'\],\['history','History','#\/grow\/history'\]\]/);
-  assert.match(app, /data-grow-view-v271="\$\{esc\(href\)\}"/);
-  assert.match(app, /aria-pressed="\$\{growViewTabActiveV271===key\?'true':'false'\}"/);
-  assert.match(app, /document\.querySelectorAll\('\[data-grow-view-v271\]'\)\.forEach\(button=>button\.onclick=\(\)=>\s*\r?\n?\s*nav\(button\.dataset\.growViewV271\)\)/);
-  // Rendered into the page, once.
-  assert.equal(grow.split('${growViewTabsV271}').length - 1, 1);
-  // It reuses the existing sub-module strip, so no new 390px behaviour is invented.
-  assert.match(app, /class="v150-segment section-subtabs-v200" role="group" aria-label="Programme views"/);
+test('V271 (b) the three views are reachable, each with its own linkable hash', () => {
+  /* V296 retarget (owner circled the in-page strip on 2026-08-12 and wrote "remove"), NOT a
+     weakening. V271's requirement is that all three views are REACHABLE and each has its own
+     linkable hash. V294 made them children of the Programmes nav group, so the in-page strip was
+     the same three destinations printed a second time one line below. The strip is gone; the
+     three hashes and their resolution are asserted here directly, and the rail entries below. */
+  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['List','#\/grow','menu'\],\['History','#\/grow\/history','waitlist'\]\]/);
+  assert.match(app, /const navViewActiveV296=href=>\{/);
+  assert.match(app, /if\(routeKey==='grow'\)return routeView\?page\[1\]===routeView:\(page\[1\]!=='overview'&&page\[1\]!=='history'\)/);
+  assert.doesNotMatch(app, /data-grow-view-v271/);
+  assert.doesNotMatch(app, /aria-label="Programme views"/);
+  // The shared sub-module strip styling stays — other pages still use it.
   assert.match(html, /\.section-subtabs-v200\{display:flex;max-width:100%/);
 });
 

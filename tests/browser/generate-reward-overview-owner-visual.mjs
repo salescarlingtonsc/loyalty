@@ -19,7 +19,11 @@ function sourceBetween(source,start,end){
 export function buildRewardOverviewVisualFixture(app){
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!style)throw new Error('production inline stylesheet missing');
-  const growBack=sourceBetween(app,'function growBackActionHtmlV138','function waitlistBadgeHtml');
+  /* V296: growBackActionHtmlV138 was deleted with the owner's "remove" on the grow submodule
+     headers (2026-08-12). The slice it named is still extracted — activeGroupKey and the badge
+     helpers live in it and the fixture's rail needs them — it is simply anchored on the block that
+     survived rather than on a function that no longer exists. */
+  const growBack=sourceBetween(app,'function activeGroupKey(pageKey)','function waitlistBadgeHtml');
   const loyaltyAuthority=sourceBetween(app,'function loyaltyAuthorityActionV140','function growLoyaltyEditorIntentV139');
   const loyaltyIsolation=sourceBetween(app,'function growLoyaltyEditorIntentV139','const refreshLoyaltyPanel');
   const snapshotAdapter=sourceBetween(app,'async function growOverviewSnapshot','function ownerRewardJourneyV122');

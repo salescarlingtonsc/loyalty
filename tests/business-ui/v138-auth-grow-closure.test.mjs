@@ -78,15 +78,21 @@ test('sidebar exposes consolidated Grow programme navigation instead of peer rew
   assert.doesNotMatch(nav,/Rewards &amp; bring-backs/);
 });
 
-test('every editable Grow submodule offers a stable return to the one overview',()=>{
-  assert.match(app,/function growBackActionHtmlV138\(\)/);
-  /* V294 (owner crossed the Loyalty editor's back button out: "remove") — the rail's
-     Programmes group is that editor's way back now; every other submodule keeps the action. */
-  for(const title of ['Retention programs','Promotions','Referrals','Memberships','Gift cards']){
-    assert.match(app,new RegExp(`pageHeader\\(\\{title:'${title}'[\\s\\S]{0,650}?actions:(?:\`\\$\\{growBackActionHtmlV138\\(\\)\\}|growBackActionHtmlV138\\(\\))`),`${title} lacks a return action`);
-  }
-  assert.match(app,/Back to Grow overview/);
-  assert.match(app,/href="#\/grow" aria-label="Back to Grow overview"/);
+test('the stable return to the one overview is the rail, not a per-page back button',()=>{
+  /* V296 retarget (owner markup 2026-08-12: "remove"), NOT a weakening. V138's requirement was
+     that no grow submodule is a dead end. V294 gave the rail a Programmes GROUP whose children
+     are #/grow's own views, and that group renders on every workspace page — so the return
+     action exists on all five submodules without a button repeating it in each header. The
+     owner struck the button out on the loyalty editor (V295) and then on these headers too. */
+  assert.doesNotMatch(app,/growBackActionHtmlV138/);
+  /* The one surviving "Back to Grow overview" is inside an ERROR card — a recovery link on a
+     panel that failed to open, not a header ornament — so it is pinned by its aria-label. */
+  assert.doesNotMatch(app,/aria-label="Back to Grow overview"/);
+  for(const title of ['Retention programs','Promotions','Referrals','Memberships','Gift cards'])
+    assert.doesNotMatch(app,new RegExp(`pageHeader\\(\\{title:'${title}',[^\\n]{0,400}?actions:`),
+      `${title} still builds a header back action`);
+  assert.match(app,/views:\[\['Overview','#\/grow\/overview','reports'\],\['List','#\/grow','menu'\],\['History','#\/grow\/history','waitlist'\]\]/,
+    'the rail still carries the three #/grow destinations that replace the button');
 });
 
 test('reward completion returns to the Grow overview instead of leaving the owner in an editor',()=>{

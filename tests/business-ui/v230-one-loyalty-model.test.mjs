@@ -19,7 +19,10 @@ const app = rawApp.replace(/const WORKSPACE_GENERATED_COPY_V97=Object\.freeze\([
 const migration = readFileSync(join(root, 'db', 'migrations', '20260808_nestly_v230_points_mode_in_customer_portal.sql'), 'utf8');
 
 test('V230 one three-way model select, in the owner\'s words', () => {
-  assert.match(app, />Points redemption — earn points, redeem rewards</);
+  /* V296 retarget: the owner struck "redemption" and wrote "System" over this option's label.
+     The option VALUE is still 'redeem' (asserted below), so the intent — one three-way select
+     over the same three model keys — is unchanged. */
+  assert.match(app, />Points System — earn points, redeem rewards</);
   assert.match(app, />Tiered membership — points build a tier and its benefits</);
   assert.match(app, />Stamp card — collect stamps, milestone rewards</);
   assert.match(app, /Loyalty model — only one is live at a time/);

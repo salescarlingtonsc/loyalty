@@ -77,8 +77,14 @@ test('not-yet-configured standalone modules deep-link to the exact create contro
   assert.match(grow,/#\/referrals\/fe/);
   assert.match(grow,/#\/memberships\/mn/);
   /* V294: the giftCardEnabled deep link left the overview with its row; the page still wires
-     the exact control, and the nav now carries the entry. */
-  assert.match(app,/focusRoutedWorkspaceControl\(routedFocus,'giftCardEnabled'\)/);
+     the exact control, and the nav now carries the entry.
+     V296 retarget (owner: "remove this"): 'giftCardEnabled' moved to Customer Interface, so it
+     can no longer be this page's routed-focus FALLBACK — a fallback that resolves to nothing
+     focuses nothing. The requirement (arriving here lands on the exact control) is unchanged; the
+     control a person arriving at Gift cards needs is the amount field, and the moved switch has
+     its own routable sub-tab. */
+  assert.match(app,/focusRoutedWorkspaceControl\(routedFocus,'ga'\)/);
+  assert.match(app,/\['giftcards','Gift cards','#\/customer-interface\/giftcards','giftcard'\]/);
   assert.match(app,/'bookings','waitlist','giftcards'\]\}/);
   assert.match(app,/async function referralsPage\(\)[\s\S]{0,80}?routedFocus/);
   assert.match(app,/async function membershipsPage\(\)[\s\S]{0,80}?routedFocus/);

@@ -238,7 +238,7 @@ test('MEDIUM 15 — the catalogue row and the shelf list can be corrected', () =
 /* ------------------------------------------------------------------ MEDIUM 18/19 */
 
 test('MEDIUM 18 — Customer Interface paints a loading state before it reads', () => {
-  const page = between('async function customerInterfacePageV243(){', 'phone country-code picker');
+  const page = between('async function customerInterfacePageV243(hashParam){', 'phone country-code picker');
   assert.match(page, /customerInterfaceHostV288[\s\S]*?CUI\.loadingState\(\{/);
   assert.equal(page.indexOf('CUI.loadingState({') < page.indexOf('client_field_definitions'), true);
 });

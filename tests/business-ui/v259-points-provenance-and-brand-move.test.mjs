@@ -32,7 +32,7 @@ const clientDetail = section('async function clientDetail(id){', 'function rende
 const settings = section('async function settingsPage(){', '/* ---------- billing (read-only) ---------- */');
 const brandPanel = section('function workspaceBrandPanelHtmlV259(){', 'function wireWorkspaceBrandV259(){');
 const brandWiring = section('function wireWorkspaceBrandV259(){', '/* The public page a customer meets before joining.');
-const interfacePage = section('async function customerInterfacePageV243()', '/* ---------- phone country-code picker');
+const interfacePage = section('async function customerInterfacePageV243(hashParam)', '/* ---------- phone country-code picker');
 
 /* ------------------------------------------------------- (1a) the number is a real control */
 
@@ -97,9 +97,16 @@ test('V259 the paused line renders only when the programme is not live', () => {
   assert.match(clientDetail, /\$\{pointsPausedNoteV259\}\$\{pointsExpiryMarkup\}/);
 });
 
-test('V259 a paused programme is no longer described as "not set up yet"', () => {
-  assert.match(clientDetail, /This programme is paused, so nothing can be redeemed right now\./);
+test('V259 a paused programme is still distinguished from one that was never built', () => {
+  /* V296 retarget (owner struck the paused PARAGRAPH out on 2026-08-12), NOT a weakening. V259's
+     requirement is that "paused" and "never set up" are told apart. They still are, and now by the
+     programme row itself: a paused programme renders a row with a Paused pill and this customer's
+     own balance, while a business with no programme at all renders no row and keeps the explicit
+     "Rewards are not set up yet" sentence. The paragraph the pill already said is gone. */
+  assert.doesNotMatch(clientDetail, /This programme is paused, so nothing can be redeemed right now\./);
   assert.match(clientDetail, /Rewards are not set up yet\. The owner can create them from Grow\./);
+  assert.match(clientDetail, /programmeRowHtmlV294=\(name,copy,live,label=null\)/);
+  assert.match(clientDetail, /<span class="pill \$\{live\?'on':'off'\}">\$\{esc\(label\|\|\(live\?'Live':'Paused'\)\)\}<\/span>/);
 });
 
 test('V259 the dialog explains the 0 on the card instead of contradicting it', () => {

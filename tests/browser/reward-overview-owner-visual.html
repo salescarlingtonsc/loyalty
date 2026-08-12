@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="b0567b2d686767de22517c801c09692fef825d377b8455836d15432041c071a5"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="e4c25977a186f1c18f70b16a5e5b9c961a88dba052198dd29c524e1e85038bf7"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1225,6 +1225,33 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .report-tabbar-v294{margin-bottom:16px}
 .report-tabbar-v294 button{display:inline-flex;align-items:center;gap:7px}
 .report-panel-v294[hidden]{display:none}
+/* V297 (owner markup on Business Insights, 2026-08-12: "please make business insights more
+   interesting & easier to understand" / "i want to know if my business is improving?"). Two
+   additions: the verdict band that opens every report tab, and a CSS-only proportional bar under
+   Revenue by type. No charting library and no remote asset — the app's CSP forbids both, and the
+   mix only needs to be readable, not plotted. */
+.report-verdict-host-v297{margin-bottom:16px}
+.report-verdict-host-v297:empty{display:none;margin-bottom:0}
+.reports-grid>.report-verdict-v297{grid-column:1/-1}
+.report-verdict-v297{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--muted);
+  border-radius:var(--r);box-shadow:var(--shadow);padding:16px 20px;min-width:0;max-width:100%}
+.report-verdict-label-v297{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:750}
+.report-verdict-value-v297{font-size:1.85rem;font-weight:750;line-height:1.15;margin-top:6px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.report-verdict-change-v297{display:flex;align-items:baseline;gap:7px;margin-top:6px;font-size:14px;font-weight:650;line-height:1.45;color:var(--ink2)}
+.report-verdict-arrow-v297{font-size:15px;line-height:1;flex:0 0 auto}
+.report-verdict-note-v297{margin-top:8px;line-height:1.45}
+.report-verdict-up-v297{border-left-color:var(--green)}
+.report-verdict-up-v297 .report-verdict-change-v297{color:var(--green)}
+.report-verdict-down-v297{border-left-color:var(--red)}
+.report-verdict-down-v297 .report-verdict-change-v297{color:var(--red)}
+.report-verdict-flat-v297{border-left-color:var(--amber)}
+.report-share-v297{margin-top:12px}
+.report-share-bar-v297{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--line)}
+.report-share-bar-v297>span{display:block;height:100%}
+.report-share-legend-v297{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+.report-share-legend-v297 li{display:flex;align-items:center;gap:6px}
+.report-share-dot-v297{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+@media(max-width:720px){.report-verdict-value-v297{font-size:1.55rem}}
 .customer360-points-panel-v249{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair);display:grid;gap:8px}
 .customer360-points-panel-v249 summary{font-size:12.5px;font-weight:650;cursor:pointer;min-height:28px;display:flex;align-items:center}
 .customer360-points-panel-v249 .row{flex-wrap:wrap;gap:8px}
@@ -1932,7 +1959,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b0567b2d686767de22517c801c09692fef825d377b8455836d15432041c071a5</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e4c25977a186f1c18f70b16a5e5b9c961a88dba052198dd29c524e1e85038bf7</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -1966,9 +1993,17 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     const openProtectedGrowPublishReview=()=>{};
     const refreshRetentionPanel=()=>{};
     const renderPlaybooks=()=>{};
-    function growBackActionHtmlV138(){
-  return '<a class="btn ghost sm" href="#/grow" aria-label="Back to Grow overview">← Back to Grow overview</a>';
+    function activeGroupKey(pageKey){
+  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey==='staffperf'?'reports':pageKey;
+  if(k==='grow')return 'grow';
+  const g=NAVGROUPS.find(g=>g.items.includes(k));
+  return g?g.key:null;
 }
+/* V296 (owner markup 2026-08-12: "remove"). The "← Back to Grow overview" header button that used
+   to be built here sat on every grow submodule — Retention, Promotions, Referrals, Memberships and
+   Gift cards. V295 removed it from the loyalty editor; the owner's ruling covers these headers too,
+   now that the rail carries Programmes' own children and Gift cards sits under Serve & sell. The
+   destination is one rail click away, so the capability did not leave with the button. */
     function loyaltyAuthorityActionV140({canManage=false,draftVersionId=null}={}){
   if(!canManage)return '<span class="pill off">Read only</span>';
   if(draftVersionId)return '<span class="pill new">Editable draft</span>';
@@ -2166,7 +2201,7 @@ function pruneRewardSiblingsV139(root){
       <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Return-visit rules customers actually experience, with reward behavior and grant history intact.',iconName:'retention',actions:growBackActionHtmlV138(),canWrite:isOwner,moduleLabel:'Retention configuration'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Return-visit rules customers actually experience, with reward behavior and grant history intact.',iconName:'retention',canWrite:isOwner,moduleLabel:'Retention configuration'})}
     ${draftVersionId?'':'<section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
     ${versionTools}
     ${exactProgramMissing?`<div class="notice warn" id="retentionExactProgramMissing" role="alert" tabindex="-1" style="margin-bottom:16px"><b>This Bring-back rule is not present in the editable draft.</b><p class="small" style="margin-top:5px">Return to the programme overview and refresh before changing another rule.</p></div>`:''}
@@ -2577,7 +2612,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const redeemPoints=Math.max(0,Number(loyalty?.redeem_points||0));
   const rewardCreditCents=Math.max(0,Number(loyalty?.reward_credit_cents||0));
   const classicReward=model==='classic'&&redeemPoints>0&&rewardCreditCents>0?{
-    id:`classic:${loyalty?.id||'programme'}`,name:'Points redemption',threshold:redeemPoints,unit:'points',
+    id:`classic:${loyalty?.id||'programme'}`,name:'Points System',threshold:redeemPoints,unit:'points',
     value:`SGD ${(rewardCreditCents/100).toFixed(2)} store credit`,availableToCustomers:programmeActive
   }:null;
   const birthdayReward=!birthday?null:{
@@ -2706,20 +2741,31 @@ async function openWelcomeOfferEditorV215(current,onSaved){
      so the overview can never disagree with the editor about what customers are on. */
   const liveLoyaltyModelV235=snapshot.loyalty?.loyalty_model==='stamps'?'stamps'
     :(pointsModeV229==='tiers'?'tiers':pointsModeV229==='both'?'both':'redeem');
-  const loyaltyModelNamesV235={redeem:'Points redemption',tiers:'Tiered membership',both:'Points + tiers',stamps:'Stamp card'};
+  /* V296: same owner rename as loyaltyModelCopyV235 — the display name only. */
+  const loyaltyModelNamesV235={redeem:'Points System',tiers:'Tiered membership',both:'Points + tiers',stamps:'Stamp card'};
   /* V240: 'both' makes TWO tiles live at once (points and tiers), which is the whole point of
      the Chagee shape. The stamp card is still mutually exclusive with the points engine. */
   const liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'?['redeem','tiers']:[liveLoyaltyModelV235];
   const loyaltyModelTileStatusV235=key=>!canRewards?['Not included','off']
     :!liveLoyaltyModelKeysV240.includes(key)?['Off','off']
     :loyaltyLive?['Active','on']:['Active · paused','off'];
-  const otherModelLiveV235=()=>liveLoyaltyModelV235==='both'
-    ?'Points redemption and Tiered membership are both live'
-    :`${loyaltyModelNamesV235[liveLoyaltyModelV235]} is the live model`;
+  /* V296 (owner markup 2026-08-12, "X NO — not linked to point" across the Tiered membership and
+     Stamp card cards): otherModelLiveV235() rendered "<other model> is the live model" as those
+     cards' subtitle, so a card about tiers spent its one line talking about points. A pending card
+     now carries the owner's benefit line and its status pill and nothing else; the helper had no
+     other caller, so it goes with the copy it existed to produce. */
   const bringBackLive=bringBackCount>0;
   const referralLive=snapshot.referral?.enabled===true;
   const publishedPromotions=(snapshot.promotions||[]).filter(item=>item?.active===true).length;
   const promotionDrafts=Math.max(0,(snapshot.promotions||[]).length-publishedPromotions);
+  /* V296 (owner markup 2026-08-12: the single aggregate row "Promotions · 2 published promotions.
+     Customers see up to six current offers. · Ongoing · Manage" struck out, and "1. XXX / small
+     details here, 2. XXX …" sketched in its place — "can see what promo title"). Drilling into
+     Promotions now lists the promotions themselves. The rows are built from the snapshot the page
+     already read, normalised through the SAME promotionEditorItemV104 the promotions page uses, and
+     each state comes from promotionLifecycleV186 — the one predicate the customer surfaces publish
+     against — so a scheduled or ended offer can never be printed here as running. */
+  const growPromotionItemsV296=(snapshot.promotions||[]).map(promotionEditorItemV104);
   let draftSnapshotHash=snapshot.draft?.snapshot_hash||null;
   const draftLabel=growDraftVersionId?'Draft ready':null;
   const nodeStatus=live=>draftLabel|| (live?'Live':'Needs setup');
@@ -2861,23 +2907,25 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const lifestyleLiveV229=(welcomeOfferStatusV215?.active?1:0)+(rewardJourney.birthday?.active?1:0)+bringBackLiveV229;
   const growTopicDefsV229=[
     /* V294 (owner markup 2026-08-12): pending-setup cards carry the owner's own benefit lines. */
-    {key:'points',icon:'till',title:'Points redemption',blurb:'Let customers come back with points!',
+    /* V296: "Points redemption" renamed to "Points System" here too — the tile is the door the
+       owner presses, so its title must match the page it opens. */
+    {key:'points',icon:'till',title:'Points System',blurb:'Let customers come back with points!',
       status:loyaltyModelTileStatusV235('redeem'),
-      summary:!liveLoyaltyModelKeysV240.includes('redeem')?otherModelLiveV235()
+      summary:!liveLoyaltyModelKeysV240.includes('redeem')?''
         :rewardCount?`${rewardCount} redeemable reward${rewardCount===1?'':'s'}`
-        :'Live model · set the earning rate and rewards'},
+        :'Set the earning rate and rewards'},
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Do tier membership for your customers!',
       status:loyaltyModelTileStatusV235('tiers'),
-      summary:!liveLoyaltyModelKeysV240.includes('tiers')?otherModelLiveV235()
+      summary:!liveLoyaltyModelKeysV240.includes('tiers')?''
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
-        :'Live model · create the ladder customers climb'},
+        :'Create the ladder customers climb'},
     {key:'stamps',icon:'check',title:'Stamp card',blurb:'Customers earn stamps and redeem!',
       status:loyaltyModelTileStatusV235('stamps'),
-      summary:!liveLoyaltyModelKeysV240.includes('stamps')?otherModelLiveV235()
-        :rewardCount?`Live model · ${rewardCount} milestone${rewardCount===1?'':'s'}`
-        :'Live model · set the spend per stamp and its milestones'},
+      summary:!liveLoyaltyModelKeysV240.includes('stamps')?''
+        :rewardCount?`${rewardCount} milestone${rewardCount===1?'':'s'}`
+        :'Set the spend per stamp and its milestones'},
     {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
       status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
       summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
@@ -2931,7 +2979,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   /* V294: a pending-setup card leads with the owner's benefit line (item 7c of the 2026-08-12
      markup) and keeps its stateful summary underneath when that summary says something the
      benefit line does not — an error or the next action must never be hidden by marketing copy. */
-  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(growTopicOngoingV244(topic)?topic.summary:topic.blurb)}</span>${!growTopicOngoingV244(topic)&&topic.summary!==topic.blurb?`<span class="muted small">${esc(topic.summary)}</span>`:''}<span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
+  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(growTopicOngoingV244(topic)?topic.summary:topic.blurb)}</span>${!growTopicOngoingV244(topic)&&topic.summary&&topic.summary!==topic.blurb?`<span class="muted small">${esc(topic.summary)}</span>`:''}<span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
   const growOngoingTopicsV244=growTopicDefsV229.filter(growTopicOngoingV244);
   const growPendingTopicsV244=growTopicDefsV229.filter(topic=>!growTopicOngoingV244(topic));
   const growTileSectionV244=(title,note,topics,empty)=>`<div class="grow-topic-group-v244">
@@ -3146,8 +3194,12 @@ async function openWelcomeOfferEditorV215(current,onSaved){
      It reuses the house sub-module strip rather than reviving the V173-era one, which V173/V180
      removed because it duplicated the sidebar's own sub-rows. These three are not sidebar rows —
      V250 flattened Programmes to a single rail link — and they are not filters of one list. */
-  const growViewTabActiveV271=programmeView==='overview'?'overview':programmeView==='history'?'history':'list';
-  const growViewTabsV271=growActiveTopicV229?'':`<div class="v150-segment section-subtabs-v200" role="group" aria-label="Programme views">${[['overview','Overview','#/grow/overview'],['list','List','#/grow'],['history','History','#/grow/history']].map(([key,label,href])=>`<button type="button" data-grow-view-v271="${esc(href)}" aria-pressed="${growViewTabActiveV271===key?'true':'false'}">${esc(label)}</button>`).join('')}</div>`;
+  /* V296 (owner circled the Overview / List / History pill strip on 2026-08-12 and wrote
+     "remove"). V294 gave the Programmes nav group exactly these three children, so the strip was
+     the same menu printed twice, one line under the other. Only the CONTROL is gone: programmeView
+     above still resolves 'overview', 'history' and the legacy 'ongoing' / 'available' / 'settings'
+     hashes, so #/grow/overview, #/grow/history, every rail child and every existing deep link or
+     history entry still lands on exactly the view it always did. */
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -3157,7 +3209,6 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
       <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Programmes</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
-      ${growViewTabsV271}
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growTilesHtmlV229:''}
@@ -3204,7 +3255,22 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       `:''}
       ${topicOnV229('promotions')?`
       <div class="programme-category" data-programme-category-v268="promotions"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
-        ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
+        ${snapshot.overviewErrors?.promotions
+          ?programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'})
+          :`<p class="muted small grow-promotions-count-v296" style="padding:0 14px 4px">${growPromotionItemsV296.length?`${publishedPromotions} published · ${promotionDrafts} draft${promotionDrafts===1?'':'s'}. Customers see up to six current offers.`:'No promotion has been created yet.'}</p>
+          ${growPromotionItemsV296.map(item=>{const life=promotionLifecycleV186(item);
+            const detailV296=[life.label,String(item.offerFacts||item.tagline||item.description||'').replace(/\s+/g,' ').trim().slice(0,120)].filter(Boolean).join(' · ');
+            return programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),
+              title:item.name||item.offerFacts||'Untitled draft',copy:detailV296,merchant:true,
+              status:life.state==='live'?'Live':life.state==='scheduled'?'Scheduled':life.state==='ended'?'Ended':'Draft',
+              statusTone:life.live?'on':life.state==='draft'?'new':'off',
+              canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner,
+              href:`#/promotions/${encodeURIComponent(item.id)}`,actionLabel:'Edit'})}).join('')}
+          ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),
+            title:growPromotionItemsV296.length?'Add another promotion':'Create your first promotion',
+            copy:'One factual offer and a photo, ready for the customer programme.',
+            status:'Not set up',statusTone:'off',canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner,
+            href:'#/promotions',actionLabel:'Set up'})}`}
       </div></div>
       `:''}
       ${topicOnV229('referrals')?`
@@ -3721,8 +3787,6 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));
-  document.querySelectorAll('[data-grow-view-v271]').forEach(button=>button.onclick=()=>
-    nav(button.dataset.growViewV271));
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -3826,7 +3890,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'b0567b2d686767de22517c801c09692fef825d377b8455836d15432041c071a5',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'e4c25977a186f1c18f70b16a5e5b9c961a88dba052198dd29c524e1e85038bf7',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

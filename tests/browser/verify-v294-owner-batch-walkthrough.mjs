@@ -16,7 +16,7 @@
  *      matching #/grow view.
  *   5. Catalogue: a retired reward is absent from the offer grid/list and lives in the collapsed
  *      Reward history; Edit from history still opens.
- *   6. Loyalty editor: entered from the Points redemption card -> no "Your tiers"; entered from
+ *   6. Loyalty editor: entered from the Points System card -> no "Your tiers"; entered from
  *      the Tiered membership card -> tiers present; no "Back to Grow overview" button anywhere.
  *   7. Programmes overview: "1 LIVE" promotions copy; no "Memberships & gift cards" card; the
  *      owner's new blurbs present; Gift cards reachable from the Serve & sell nav group.
@@ -278,7 +278,10 @@ try{
     'the points value keeps its history button inside the summary card');
   await page.waitForSelector('#c360-loyalty .c360-programme-row-v294',{timeout:20000});
   const programmesText=await page.locator('#c360-loyalty').innerText();
-  for(const needle of ['Points redemption','Tiered membership','August Special','Referral programme','Welcome offer'])
+  /* V296 retarget: the owner renamed "Points redemption" to "Points System" on 2026-08-12. The
+     V294 requirement — every programme this customer can use listed as its own row — is unchanged
+     and still asserted row by row. */
+  for(const needle of ['Points System','Tiered membership','August Special','Referral programme','Welcome offer'])
     assertTrue(programmesText.includes(needle),`programmes section lists "${needle}"`);
   const pausedPills=await page.locator('#c360-loyalty .c360-programme-row-v294 .pill.off').allInnerTexts();
   assertTrue(pausedPills.some(text=>text.trim()==='Paused'),'the paused loyalty programme shows a Paused pill, not a bare message');

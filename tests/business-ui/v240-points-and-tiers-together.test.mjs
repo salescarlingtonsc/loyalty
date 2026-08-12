@@ -110,7 +110,14 @@ test('V240 the wallet shows the ladder and the rewards together', () => {
 test('V240 the overview can show two live models at once', () => {
   assert.match(app, /liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'\?\['redeem','tiers'\]:\[liveLoyaltyModelV235\]/);
   assert.match(app, /:!liveLoyaltyModelKeysV240\.includes\(key\)\?\['Off','off'\]/);
-  assert.match(app, /Points redemption and Tiered membership are both live/);
+  /* V296 retarget: that sentence was otherModelLiveV235()'s output, printed as the SUBTITLE of a
+     pending card; the owner struck those subtitles out ("X NO — not linked to point") on
+     2026-08-12 and the helper went with them. What this test is really about — 'both' making two
+     tiles live at once — is asserted directly on the tile status instead, which is stronger. */
+  assert.doesNotMatch(app, /otherModelLiveV235\(\)\?/);
+  assert.match(app, /\{key:'points',icon:'till',title:'Points System'/);
+  assert.match(app, /summary:!liveLoyaltyModelKeysV240\.includes\('redeem'\)\?''/);
+  assert.match(app, /summary:!liveLoyaltyModelKeysV240\.includes\('tiers'\)\?''/);
   // The stamp card is still exclusive with the points engine — 'both' never marks it live.
   assert.doesNotMatch(app, /liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'\?\[[^\]]*'stamps'/);
   assert.match(app, /data-points-mode-v229="both"/, 'the first-run chooser offers it too');

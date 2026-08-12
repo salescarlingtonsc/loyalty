@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="f46edf1836aa422dbf607d7bfc1850ffd8761e22e09e2213a290f7cd90b87f26"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="88505fc0196b21197c3496c5b2b692694de01615f5ce63fa1ab740cfe0400de0"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1960,7 +1960,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · f46edf1836aa422dbf607d7bfc1850ffd8761e22e09e2213a290f7cd90b87f26</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 88505fc0196b21197c3496c5b2b692694de01615f5ce63fa1ab740cfe0400de0</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3184,13 +3184,23 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       .then(r=>r.error?null:((r.data?.programs||[])[0]||null)).catch(()=>null):Promise.resolve(null),
     canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_cents,min_spend_cents')
       .eq('business_id',S.biz.id).limit(1).then(r=>r.error?null:((r.data||[])[0]||null)).catch(()=>null)
-      :Promise.resolve(null)
+      :Promise.resolve(null),
+    /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent" line struck
+       out and "0 points" written beside the pill). A programme row has to state THIS customer's
+       standing, and for the tier row that means the ladder plus the firm's chosen tier basis.
+       Both are fail-soft: an unreadable ladder makes the row say so, never invent a tier. */
+    canReadLoyalty?sb.from('loyalty_tiers').select('id,name,threshold').eq('business_id',S.biz.id)
+      .order('threshold').then(r=>r.error?null:(r.data||[])).catch(()=>null):Promise.resolve(null),
+    canReadLoyalty?sb.from('loyalty_programs').select('tier_basis').eq('business_id',S.biz.id).limit(1)
+      .then(r=>r.error?null:((r.data||[])[0]?.tier_basis||null)).catch(()=>null):Promise.resolve(null)
   ]);
   if(!isClientDetailCurrent())return;
   const promotionsV294=programmeFactReadsV294[0];
   const welcomeOfferV294=programmeFactReadsV294[1];
   const birthdayProgrammeV294=programmeFactReadsV294[2];
   const referralProgrammeV294=programmeFactReadsV294[3];
+  const loyaltyTiersV296=programmeFactReadsV294[4];
+  const tierBasisV296=programmeFactReadsV294[5];
   const customValueByField=Object.fromEntries((cfVals||[]).map(v=>[v.field_definition_id,v]));
   const customFieldInput=(f)=>{
     const v=customValueByField[f.id]||{},inputId=`cfv-${f.id}`;
@@ -3212,6 +3222,29 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const lastVisitIso=validVisits
     .reduce((mx,s)=>(s.occurred_at||'')>mx?s.occurred_at:mx,'');
   const lastVisitDays=lastVisitIso?completeSgCalendarDaysSince(lastVisitIso):null;
+  /* V296: app.loyalty_tier_for() is the server's own resolver, but it lives in the `app` schema and
+     is not callable through PostgREST, so the same three bases are resolved here from figures this
+     page has ALREADY loaded — visits and lifetime spend are computed above. 'points_earned' is the
+     one basis nothing on the page covers (points_balance is the actionable balance, not lifetime
+     earn), so it takes one extra bounded read, only when that is the firm's basis. Every failure
+     leaves the metric null, and a null metric prints "could not be loaded", never a tier. */
+  let tierMetricV296=tierBasisV296==='visits'?netVisits
+    :tierBasisV296==='spend'?lifetimeSpendCents/100
+    :null;
+  if(tierBasisV296==='points_earned'&&canReadLoyalty){
+    const earnedV296=await fetchAllRowsResult(()=>sb.from('points_ledger').select('id,points',{count:'exact'})
+      .eq('business_id',S.biz.id).eq('client_id',id).eq('entry_type','earn').order('id'));
+    if(!isClientDetailCurrent())return;
+    tierMetricV296=earnedV296.error?null
+      :(earnedV296.data||[]).reduce((total,row)=>total+(Number(row.points)||0),0);
+  }
+  const tierLadderV296=Array.isArray(loyaltyTiersV296)
+    ?[...loyaltyTiersV296].sort((a,b)=>(Number(a.threshold)||0)-(Number(b.threshold)||0)):null;
+  const tierStandingV296=!tierLadderV296||!tierLadderV296.length||tierMetricV296==null
+    ?{known:false,current:null,next:null}
+    :{known:true,
+      current:tierLadderV296.filter(tier=>(Number(tier.threshold)||0)<=tierMetricV296).pop()||null,
+      next:tierLadderV296.find(tier=>(Number(tier.threshold)||0)>tierMetricV296)||null};
   /* Reward readiness comes only from the staff-safe server projection. It has already
      applied expiry allocation, published claim windows, usage limits, restrictions and
      the merchant redemption switch; the browser never reconstructs those rules. */
@@ -3361,7 +3394,12 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     /* V259: a programme that EXISTS but is paused is not the same thing as one that was never
        built. Saying "not set up yet" about a paused programme is what sent the owner looking for
        a bug in the earn engine. */
-    rewardsMarkup='<p class="muted small" style="margin-top:7px">This programme is paused, so nothing can be redeemed right now. The owner can resume it from Grow.</p>';
+    /* V296 (owner struck this whole sentence out on 2026-08-12). The programme row directly above
+       already carries a "Paused" pill and this customer's own balance, so the paragraph repeated
+       the pill in longer words. V259's point — that "paused" is not "your points vanished" — is
+       still made, by customer360-points-paused-v259 on the summary card, which is where the number
+       it explains lives. */
+    rewardsMarkup='';
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
   }
@@ -3409,11 +3447,22 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(loyaltyFactsAvailable&&prog){
     const loyaltyLiveV294=prog.active===true;
     const pointsModeV294=S.biz.points_mode||'redeem';
+    /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent, redeem on
+       rewards" line struck through, "0 points" written beside the Paused pill). A row on a CUSTOMER
+       profile answers "where does this person stand", not "how does the scheme work" — the scheme
+       is one collapsible away on the summary card. The promotion and referral rows below keep their
+       short customer-facing description; the owner circled those two approvingly. */
+    const nextRewardBitV296=!redemptionEnabled||!projectedNextReward?''
+      :projectedNextReward.available_now?` · ${projectedNextReward.name||'A reward'} ready now`
+      :` · ${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more for ${projectedNextReward.name||'a reward'}`;
     if((prog.unit==='stamps'?'stamps':'points')==='stamps'){
-      programmeRowsV294.push(programmeRowHtmlV294('Stamp card',`1 stamp for every ${money(prog.stamp_per_cents||500)} spent — claim a reward at each milestone.`,loyaltyLiveV294));
+      programmeRowsV294.push(programmeRowHtmlV294('Stamp card',`${pts} ${pts===1?'stamp':'stamps'} collected${nextRewardBitV296}`,loyaltyLiveV294));
     }else{
-      if(pointsModeV294!=='tiers')programmeRowsV294.push(programmeRowHtmlV294('Points redemption',`Earn ${Number(prog.earn_points_per_dollar)||0} points for every SGD 1 spent, redeem on rewards.`,loyaltyLiveV294));
-      if(pointsModeV294==='tiers'||pointsModeV294==='both')programmeRowsV294.push(programmeRowHtmlV294('Tiered membership','Points build a tier with its own benefits.',loyaltyLiveV294));
+      if(pointsModeV294!=='tiers')programmeRowsV294.push(programmeRowHtmlV294('Points System',`${pts} ${pointsUnit}${nextRewardBitV296}`,loyaltyLiveV294));
+      if(pointsModeV294==='tiers'||pointsModeV294==='both')programmeRowsV294.push(programmeRowHtmlV294('Tiered membership',
+        !tierStandingV296.known?'Tier standing could not be loaded.'
+        :`${tierStandingV296.current?`Currently ${tierStandingV296.current.name}`:'Not in a tier yet'}${tierStandingV296.next?` · next ${tierStandingV296.next.name} at ${Number(tierStandingV296.next.threshold)||0}`:''}`,
+        loyaltyLiveV294));
     }
   }
   (promotionsV294||[]).filter(item=>item?.active===true).slice(0,6).forEach(item=>
@@ -5090,7 +5139,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'f46edf1836aa422dbf607d7bfc1850ffd8761e22e09e2213a290f7cd90b87f26',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'88505fc0196b21197c3496c5b2b692694de01615f5ce63fa1ab740cfe0400de0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

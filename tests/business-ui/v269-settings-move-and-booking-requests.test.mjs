@@ -33,7 +33,7 @@ function section(start, end) {
 }
 
 const settings = section('async function settingsPage()', '/* ---------- billing (read-only) ---------- */');
-const customerInterface = section('async function customerInterfacePageV243()', '/* ---------- phone country-code picker');
+const customerInterface = section('async function customerInterfacePageV243(hashParam)', '/* ---------- phone country-code picker');
 const appointments = section('async function appointmentsPage()', 'async function waitlistPage()');
 const bookings = section('async function bookingsPage()', 'function productProfitabilityV122(');
 
@@ -58,8 +58,12 @@ test('V269 the "Moved to Customer Interface" placeholder cards are deleted, not 
 
 test('V269 a deep link to a deleted tab lands on the surface that owns it, not a blank tab', () => {
   assert.match(app, /const SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269=\['workspace','programme','fields','data'\];/);
+  /* V296 retarget: the redirect now names the SECTION that absorbed each deleted tab, which is
+     strictly more precise than the surface-level landing V269 asked for. */
+  assert.match(app,
+    /const SETTINGS_TAB_CUSTOMER_INTERFACE_VIEW_V296=\{workspace:'brand',programme:'programme',fields:'interface',data:'interface'\};/);
   assert.match(settings,
-    /if\(SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269\.includes\(requestedSettingsTab\)\)return nav\('#\/customer-interface'\);/);
+    /if\(SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269\.includes\(requestedSettingsTab\)\)\s*\r?\n?\s*return nav\(`#\/customer-interface\/\$\{SETTINGS_TAB_CUSTOMER_INTERFACE_VIEW_V296\[requestedSettingsTab\]\}`\);/);
   // the remembered tab can no longer be one of the deleted ones, on any entry path
   assert.match(app, /let settingsActiveTab='modules';/);
   assert.match(settings, /if\(!\['modules','catalogue','team'\]\.includes\(settingsActiveTab\)\)settingsActiveTab='modules';/);
@@ -107,7 +111,10 @@ test('V269 Settings no longer renders, loads or wires any of the moved forms', (
 test('V269 Customer Interface presents the three sections the owner named, in order', () => {
   const headings = [...customerInterface.matchAll(/customerInterfaceSectionHeadingV269\('[A-Za-z0-9]+','([^']+)'/g)]
     .map((m) => m[1]);
-  assert.deepEqual(headings, ['Workspace & brand', 'Customer programme', 'Interface']);
+  /* V296 retarget: the same three sections, in the same order, are now the rail's sub-tabs.
+     'Interface' was renamed 'Sign-up & fields' (its own hint's words) so the child row says what
+     it holds, and the moved gift-card switch adds a fourth section after them. */
+  assert.deepEqual(headings, ['Workspace & brand', 'Customer programme', 'Sign-up & fields', 'Gift cards']);
   // each heading immediately precedes the panel it names
   const order = [
     "customerInterfaceSectionHeadingV269('ciSectionBrandV269'",
@@ -116,6 +123,8 @@ test('V269 Customer Interface presents the three sections the owner named, in or
     'id="customerProgrammeEditorV95"',
     "customerInterfaceSectionHeadingV269('ciSectionInterfaceV269'",
     'customerInterfaceSectionsHtmlV243(',
+    "customerInterfaceSectionHeadingV269('ciSectionGiftCardsV296'",
+    'id="giftCardEnabled"',
   ];
   let cursor = -1;
   for (const marker of order) {
@@ -129,7 +138,7 @@ test('V269 nothing already living in Customer Interface was lost to the new sect
   for (const kept of [
     /customerInterfacePreviewCardHtmlV243\(\)/, /wireCustomerInterfacePreviewV243\(\)/,
     /wireWorkspaceBrandV259\(\)/, /loadCustomerProgrammePresentationEditorV95\(\)/,
-    /wireCustomerInterfaceV243\(customerInterfacePageV243\)/,
+    /wireCustomerInterfaceV243\(\(\)=>customerInterfacePageV243\(hashParam\)\)/,
   ]) assert.match(customerInterface, kept);
 });
 

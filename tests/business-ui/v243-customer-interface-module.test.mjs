@@ -26,16 +26,19 @@ function section(source, start, end) {
 }
 
 const settings = section(app, 'async function settingsPage()', '/* ---------- billing (read-only) ---------- */');
-const page = section(app, 'async function customerInterfacePageV243()', '/* ---------- phone country-code picker');
+const page = section(app, 'async function customerInterfacePageV243(hashParam)', '/* ---------- phone country-code picker');
 const sections = section(app, 'function customerInterfaceSectionsHtmlV243(', 'function wireCustomerInterfaceV243(');
-const wiring = section(app, 'function wireCustomerInterfaceV243(', 'async function customerInterfacePageV243()');
+const wiring = section(app, 'function wireCustomerInterfaceV243(', 'async function customerInterfacePageV243(hashParam)');
 const preview = section(app, 'function customerInterfacePreviewCardHtmlV243(', 'function wireCustomerInterfacePreviewV243(');
 
 /* ------------------------------------------------ (a) the rail entry and the route both exist */
 
 test('V243 Customer Interface is a top-level rail entry beside Programmes', () => {
   const groups = app.match(/const NAVGROUPS=\[[\s\S]*?\n\];/)[0];
-  assert.match(groups, /\{key:'customerui',icon:'customers',flat:'Customer Interface',items:\['customer-interface'\]\},/);
+  /* V296 retarget (owner: "please make sub-tab under 'Customer Interface'"): the entry is still
+     a top-level rail entry directly after Programmes, but it is now a GROUP with routable
+     children instead of a flat link — the same shape V294 gave Programmes. */
+  assert.match(groups, /\{key:'customerui',icon:'customers',label:'Customer Interface',items:\['customer-interface'\],\s*views:CUSTOMER_INTERFACE_VIEWS_V296\.map\(view=>\[view\[1\],view\[2\],view\[3\]\]\)\}/);
   const order = [...groups.matchAll(/\{key:'([a-z]+)'/g)].map((m) => m[1]);
   assert.equal(order[order.indexOf('grow') + 1], 'customerui', 'it sits directly after Programmes');
 });
@@ -43,7 +46,9 @@ test('V243 Customer Interface is a top-level rail entry beside Programmes', () =
 test('V243 the rail entry resolves to a routed page function', () => {
   // navHtml renders a flat group as #/<items[0]>, so the module key IS the hash.
   assert.match(app, /'customer-interface':customerInterfacePageV243\}/);
-  assert.match(app, /async function customerInterfacePageV243\(\)\{/);
+  assert.match(app, /async function customerInterfacePageV243\(hashParam\)\{/);
+  // V296: the bare '#/customer-interface' still lands on the page's first view.
+  assert.match(app, /const customerInterfaceViewV296=CUSTOMER_INTERFACE_VIEWS_V296\.some\(view=>view\[0\]===String\(hashParam\|\|''\)\)/);
 });
 
 test('V243 the workspace chunk classifier no longer swallows every "#/customer…" hash', () => {
@@ -62,7 +67,8 @@ test('V243 the module hosts the sign-up QR and customer-app switches through the
   // The hosts those loaders write into come from the lifted markup, not a second copy.
   assert.match(sections, /<div class="card" id="signupWrap">/);
   assert.match(sections, /id="businessCustomerCapabilities"/);
-  assert.match(page, /wireCustomerInterfaceV243\(customerInterfacePageV243\)/);
+  // V296: the re-render callback carries the open sub-tab so add/retire returns to it.
+  assert.match(page, /wireCustomerInterfaceV243\(\(\)=>customerInterfacePageV243\(hashParam\)\)/);
   // One definition of each, still where it always was.
   assert.equal((app.match(/async function loadSignupConfig\(\)/g) || []).length, 1);
   assert.equal((app.match(/async function loadCustomerCapabilitiesV223\(\)/g) || []).length, 1);
