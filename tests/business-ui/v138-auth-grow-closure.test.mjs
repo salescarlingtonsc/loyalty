@@ -90,7 +90,12 @@ test('reward completion returns to the Grow overview instead of leaving the owne
   // V238 put the editor in a dialog: Done closes the dialog when open, and still leaves the
   // editor when it is not. Same intent — Done never strands the owner inside an editor.
   assert.match(app,/\$\('rwClose'\)\.onclick=\(\)=>document\.getElementById\('rewardDialogV238'\)\?closeRewardDialogV238\(true\):finishGrowEditorV139\(\)/);
-  assert.match(app,/toast\('Draft reward saved'\);\s*finishGrowEditorV139\(\)/);
+  /* V293 (owner walkthrough 2026-08-12): a save no longer returns to the Grow overview — the
+     add/reward intent hash re-armed a blank New-reward dialog there. The same intent this test
+     protects (never strand the owner in an editor) is now met by SPENDING the intent: the save
+     lands on the intent-stripped loyalty catalogue where the saved reward is visible. */
+  assert.match(app,/toast\('Draft reward saved'\);[\s\S]{0,320}?spendRewardIntentV293\(\)/);
+  assert.match(app,/const spendRewardIntentV293=\(\)=>nav\(draftVersionId\?`#\/loyalty\/\$\{draftVersionId\}`:'#\/loyalty'\)/);
 });
 
 test('the install surface contains no customer-visible Nestly brand',()=>{

@@ -167,7 +167,9 @@ test('(d2) a successful reward save closes the dialog before any re-render can o
   const closeAt = save.indexOf('closeRewardDialogV238(false)');
   assert.notEqual(closeAt, -1);
   assert.ok(closeAt < save.indexOf('openProtectedGrowPublishReview(versionId)'), 'closes before the publish-review navigation');
-  assert.ok(closeAt < save.indexOf('finishGrowEditorV139()'), 'closes before leaving the editor');
+  /* V293: the save's exit is now spendRewardIntentV293() — same guarantee this test always
+     held (dialog closed BEFORE any navigation can orphan the moved editor node). */
+  assert.ok(closeAt < save.indexOf('spendRewardIntentV293()'), 'closes before leaving the editor');
 });
 
 test('(e) derived benefit rows are read-only, and Remove resets the control that owns them', () => {

@@ -253,7 +253,10 @@ test('V271 (c) retired and programme-paused rewards carry different, plain-langu
 test('V271 (c) the editor list says the same two things, and disambiguates same-named rewards', () => {
   const editor = section('const rewardStatusV271=', 'const rewardRows=(label)=>');
   assert.match(editor, /r\?\.active===false\?\{label:'Retired',tone:'off'\}/);
-  assert.match(editor, /:p\?\.active===false\?\{label:'Paused with programme',tone:'off'\}/);
+  /* V293 (owner walkthrough 2026-08-12): "Paused with programme" on a fresh reward read as the
+     REWARD being retired. Same truth, said of the programme — plus a helper line above the
+     list — so a paused programme's rewards never read as dead. */
+  assert.match(editor, /:p\?\.active===false\?\{label:'Programme paused',tone:'off'\}/);
   assert.match(editor, /:rewardBoundary\(r\)/);
   // The duplicate-name case the owner circled: each says when it was added.
   assert.match(editor, /const rewardNameCountsV271=\(rewards\|\|\[\]\)\.reduce\(/);
