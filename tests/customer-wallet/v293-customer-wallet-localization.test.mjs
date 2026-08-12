@@ -2,17 +2,17 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-/* v293: the customer wallet follows the member's stored preferred language for
-   en / zh-CN / ms (the SG-first mandate's app languages; ta stays a messages
-   preference until Tamil app copy ships). This suite guards the parity that
-   makes the switch honest: every English key resolves in both other locales,
-   the plumbing honors the stored choice, and no locale table carries strings
-   that look like code or unfilled prompts. */
+/* v293/v294: the customer wallet follows the member's stored preferred
+   language for all four SG-first mandate languages — en / zh-CN / ms / ta.
+   This suite guards the parity that makes the switch honest: every English
+   key resolves in every other locale, the plumbing honors the stored choice,
+   and no locale table carries strings that look like code or unfilled
+   prompts. */
 
 const js=await readFile(new URL('../../app/app.js',import.meta.url),'utf8');
 
 function copyBlock(locale){
-  const anchor=locale==='en'?'  en:Object.freeze({':locale==='zh-CN'?"  'zh-CN':Object.freeze({":'  ms:Object.freeze({';
+  const anchor=locale==='en'?'  en:Object.freeze({':locale==='zh-CN'?"  'zh-CN':Object.freeze({":locale==='ta'?'  ta:Object.freeze({':'  ms:Object.freeze({';
   const start=js.indexOf('const CUSTOMER_COPY=Object.freeze({');
   assert.ok(start>=0,'CUSTOMER_COPY missing');
   const blockStart=js.indexOf(anchor,start);
@@ -67,19 +67,20 @@ function keysOf(block){
 const en=keysOf(copyBlock('en'));
 const zh=keysOf(copyBlock('zh-CN'));
 const ms=keysOf(copyBlock('ms'));
+const ta=keysOf(copyBlock('ta'));
 
-test('the wallet ships three locales and zh-CN/ms cover every English key',()=>{
-  assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms'\]\)/);
+test('the wallet ships four locales and zh-CN/ms/ta cover every English key',()=>{
+  assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/);
   assert.ok(en.length>=40,`en table unexpectedly small: ${en.length}`);
-  const zhSet=new Set(zh),msSet=new Set(ms);
-  const zhMissing=en.filter(k=>!zhSet.has(k));
-  const msMissing=en.filter(k=>!msSet.has(k));
-  assert.deepEqual(zhMissing,[],`zh-CN is missing: ${zhMissing.join(', ')}`);
-  assert.deepEqual(msMissing,[],`ms is missing: ${msMissing.join(', ')}`);
+  for(const [name,keys] of [['zh-CN',zh],['ms',ms],['ta',ta]]){
+    const set=new Set(keys);
+    const missing=en.filter(k=>!set.has(k));
+    assert.deepEqual(missing,[],`${name} is missing: ${missing.join(', ')}`);
+  }
 });
 
-test('zh-CN and ms sentence keys cover the ct()-routed wallet and scanner strings',()=>{
-  const zhSet=new Set(zh),msSet=new Set(ms);
+test('zh-CN, ms and ta sentence keys cover the ct()-routed wallet and scanner strings',()=>{
+  const sets=[['zh-CN',new Set(zh)],['ms',new Set(ms)],['ta',new Set(ta)]];
   for(const key of [
     'Rewards could not be loaded.',
     'Membership is not available for this account.',
@@ -88,8 +89,7 @@ test('zh-CN and ms sentence keys cover the ct()-routed wallet and scanner string
     'The scanner could not load. Check your connection and try again.',
     'Point the camera at the business QR.'
   ]){
-    assert.ok(zhSet.has(key),`zh-CN missing sentence key: ${key}`);
-    assert.ok(msSet.has(key),`ms missing sentence key: ${key}`);
+    for(const [name,set] of sets)assert.ok(set.has(key),`${name} missing sentence key: ${key}`);
   }
 });
 
@@ -108,7 +108,7 @@ test('a saved language change applies immediately and re-renders the profile',()
 });
 
 test('no locale table carries code-like or unfilled translations',()=>{
-  for(const [locale,block] of [['zh-CN',copyBlock('zh-CN')],['ms',copyBlock('ms')]]){
+  for(const [locale,block] of [['zh-CN',copyBlock('zh-CN')],['ms',copyBlock('ms')],['ta',copyBlock('ta')]]){
     assert.doesNotMatch(block,/```|<script|TODO|FIXME|\btranslate this\b/i,`${locale} has a code-like translation`);
   }
 });

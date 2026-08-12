@@ -58,7 +58,7 @@ test('v293: the preferred-language control changes the app and says exactly what
   /* v286 pinned the honest EN-only label. v293 made the wallet follow the stored language for
      en/zh-CN/ms, so the label and helper are localized copy keys, the explainer names the ta
      (messages-only) carve-out, and a changed locale re-renders the profile immediately. */
-  assert.match(appJs, /const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms'\]\)/);
+  assert.match(appJs, /const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/);
   assert.match(profile, /\$\{esc\(ct\('preferredLanguage'\)\)\}/);
   assert.match(profile, /\$\{esc\(ct\('languageHelp',\{product:BRAND\.productName\}\)\)\}/);
   assert.match(profile, /if\(nextLocale!==customerLocale\)\{[\s\S]{0,240}?renderCustomerProfile\(\)/);

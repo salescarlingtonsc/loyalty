@@ -267,11 +267,13 @@ test('foreign workspace denials expose a focused main landmark and page heading'
   assert.equal((routing.match(/\$\('main'\)\.focus\(\)/g)||[]).length,2);
 });
 
-test('progressive enhancement is scoped to approved customer routes',()=>{
-  /* V287 retarget: 'sales' joined the set so the Sales ledger's responsive table gets the same
-     mobile data-labels every other customer-facing table already had. */
-  assert.match(app,/const customerUiRoutes=new Set\(\['till','clients','client','sales','grow','loyalty','retention','promotions','referrals','memberships','giftcards'\]\)/);
-  assert.match(app,/if\(enhanceCustomerUi\)customerUiObserver=CUI\.mountMain\(main\)/);
+test('progressive enhancement covers every workspace route',()=>{
+  /* V287 grew a per-route allowlist one mobile-table bug at a time; v294 ends it. enhanceTables
+     is idempotent and adds markup only where absent, so mounting everywhere removes the failure
+     mode instead of curating it. */
+  assert.doesNotMatch(app,/customerUiRoutes/);
+  assert.match(app,/customerUiObserver=CUI\.mountMain\(main\)/);
+  assert.match(app,/if\(customerUiObserver\)customerUiObserver\.disconnect\(\)/);
 });
 
 test('customer list has search, keyboard links, pagination, export/import, and latest-response safety',()=>{

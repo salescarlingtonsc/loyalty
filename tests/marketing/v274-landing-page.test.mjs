@@ -333,7 +333,7 @@ test('multilingual support is scoped to the business workspace, never the custom
     'the workspace locale set moved');
   /* v293 widened the customer surface to en/zh-CN/ms, so the landing may now
      claim customer-side languages — but the claim must match the shipped set. */
-  assert.match(app, /CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms'\]\)/,
+  assert.match(app, /CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/,
     'the landing language claims are pinned to the shipped customer locale set');
 
   if (/Bahasa Melayu/.test(landing)) {
@@ -342,7 +342,7 @@ test('multilingual support is scoped to the business workspace, never the custom
       /business workspace runs in English, 中文 or Bahasa Melayu/,
       'any multilingual claim must name the business workspace as its scope'
     );
-    assert.match(landing, /customer rewards app follows each member’s choice of English, 中文 or Bahasa Melayu/,
+    assert.match(landing, /customer rewards app follows each member’s choice of English, 中文, Bahasa Melayu or தமிழ்/,
       'the customer-side language support must be stated accurately');
   }
 });

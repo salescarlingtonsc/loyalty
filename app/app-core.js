@@ -1561,7 +1561,7 @@ function setCustomerSurfaceDocumentV167(){
   globalThis.document?.documentElement?.setAttribute('data-customer-surface','true');
   applyCustomerThemeV190();
 }
-const CUSTOMER_LOCALES=Object.freeze(['en','zh-CN','ms']);
+const CUSTOMER_LOCALES=Object.freeze(['en','zh-CN','ms','ta']);
 const CUSTOMER_COPY=Object.freeze({
   en:Object.freeze({
     home:'Home',programmes:'My Rewards',rewardsTab:'Rewards',explore:'Explore',bookings:'Bookings',scanQr:'Scan QR',profileTab:'Profile',
@@ -1587,7 +1587,7 @@ const CUSTOMER_COPY=Object.freeze({
     merchantProgramme:'{business} rewards',featured:'Featured products & services',
     noFeatured:'This business has not published featured items yet.',
     preferredLanguage:'Preferred language',
-    languageHelp:'{product} follows this choice in English, 中文 and Bahasa Melayu. தமிழ் is saved for your messages while we finish Tamil for the app.',
+    languageHelp:'{product} follows this choice in English, 中文, Bahasa Melayu and தமிழ்.',
     profileSaved:'Profile saved.'
   }),
   'zh-CN':Object.freeze({
@@ -1614,7 +1614,7 @@ const CUSTOMER_COPY=Object.freeze({
     merchantProgramme:'{business}的奖励',featured:'精选产品与服务',
     noFeatured:'该商家尚未发布精选项目。',
     preferredLanguage:'首选语言',
-    languageHelp:'{product} 支持 English、中文和 Bahasa Melayu，界面会跟随此选择。தமிழ்（泰米尔文）会保存为你的消息偏好，应用界面即将支持。',
+    languageHelp:'{product} 支持 English、中文、Bahasa Melayu 和 தமிழ்，界面会跟随此选择。',
     profileSaved:'资料已保存。',
     'Rewards are not available for this account.':'此账户暂无法查看奖励。',
     'Rewards could not be loaded.':'奖励加载失败。',
@@ -1679,7 +1679,7 @@ const CUSTOMER_COPY=Object.freeze({
     merchantProgramme:'Ganjaran {business}',featured:'Produk & perkhidmatan pilihan',
     noFeatured:'Perniagaan ini belum menerbitkan item pilihan.',
     preferredLanguage:'Bahasa pilihan',
-    languageHelp:'{product} mengikut pilihan ini dalam English, 中文 dan Bahasa Melayu. தமிழ் disimpan untuk mesej anda sementara kami menyiapkan Tamil untuk aplikasi.',
+    languageHelp:'{product} mengikut pilihan ini dalam English, 中文, Bahasa Melayu dan தமிழ்.',
     profileSaved:'Profil disimpan.',
     'Rewards are not available for this account.':'Ganjaran tidak tersedia untuk akaun ini.',
     'Rewards could not be loaded.':'Ganjaran tidak dapat dimuatkan.',
@@ -1719,6 +1719,71 @@ const CUSTOMER_COPY=Object.freeze({
     'Reading QR image…':'Membaca imej QR…',
     'No active Peekaa join QR was found in that image.':'Tiada QR penyertaan Peekaa yang aktif ditemui dalam imej itu.',
     'That image could not be read. Try a clearer QR image.':'Imej itu tidak dapat dibaca. Cuba imej QR yang lebih jelas.'
+  }),
+  ta:Object.freeze({
+    home:'முகப்பு',programmes:'என் வெகுமதிகள்',rewardsTab:'வெகுமதிகள்',explore:'கண்டறிய',bookings:'முன்பதிவுகள்',scanQr:'QR ஸ்கேன்',profileTab:'சுயவிவரம்',
+    notifications:'அறிவிப்புகள்',accountMenu:'கணக்கு மெனுவைத் திற',profilePasskeys:'சுயவிவரம் & கடவுச்சாவிகள்',signOut:'வெளியேறு',
+    language:'மொழி',english:'English',chinese:'简体中文',backProgrammes:'என் வெகுமதிகளுக்குத் திரும்பு',
+    chooseProgramme:'வெகுமதி வணிகத்தைத் தேர்ந்தெடுக்கவும்',yourProgrammes:'என் வெகுமதிகள்',
+    programmesIntro:'வெகுமதிகள், சலுகைகள், முன்பதிவுகள் மற்றும் செயல்பாடுகளைத் திறக்க ஒரு வணிகத்தைத் தேர்ந்தெடுக்கவும்.',
+    addProgramme:'சேர QR ஸ்கேன் செய்யவும்',openProgramme:'{business} வெகுமதிகளைத் திற',localBusiness:'உள்ளூர் வணிகம்',
+    rewardReady:'வெகுமதி தயார் — மீட்டெடுக்கத் திறக்கவும்.',continueProgramme:'அடுத்து என்ன என்பதைப் பார்க்க உங்கள் வெகுமதி முகப்பைத் திறக்கவும்.',
+    firstQuest:'உங்கள் முதல் வெகுமதிகள்',scanLoyaltyQr:'லாயல்டி QR-ஐ ஸ்கேன் செய்யவும்',
+    firstQuestBody:'பங்கேற்கும் வணிகத்தில், கவுண்டரில் காட்டப்படும் Peekaa QR-ஐ ஸ்கேன் செய்யவும். அந்தச் சரிபார்க்கப்பட்ட வணிகமே உங்கள் முதல் வெகுமதிக் கணக்காகும்.',
+    scanBusinessQr:'வணிக QR-ஐ ஸ்கேன் செய்யவும்',qrOnlyHelp:'வணிகம் வழங்கும் QR மூலம் மட்டுமே வணிகங்களைச் சேர்க்க முடியும்.',
+    balance:'இருப்பு',nextReward:'அடுத்த வெகுமதி',tierProgress:'நிலை முன்னேற்றம்',benefits:'சலுகைகள் & சிறப்புரிமைகள்',
+    offers:'பிறந்தநாள் & பருவகால சலுகைகள்',rewards:'வெகுமதிகள்',activityHistory:'செயல்பாடு & வரலாறு',
+    noBenefits:'தற்போது கூடுதல் சிறப்புரிமைகள் எதுவும் இல்லை.',noOffers:'தற்போது பிறந்தநாள் அல்லது பருவகால சலுகைகள் இல்லை.',
+    noRewards:'தற்போது வெகுமதிகள் எதுவும் இல்லை.',
+    retry:'மீண்டும் முயற்சிக்கவும்',bookNow:'இப்போதே முன்பதிவு செய்யுங்கள்',requestVisit:'{business} உடன் உங்கள் அடுத்த வருகையைக் கோருங்கள்.',
+    points:'புள்ளிகள்',stamps:'முத்திரைகள்',currentTier:'தற்போதைய நிலை',nextTier:'அடுத்தது: {tier}',
+    terms:'விதிமுறைகள்',availableNow:'இப்போது கிடைக்கிறது',
+    loadingProgramme:'வெகுமதிகள் ஏற்றப்படுகின்றன…',loadingProgrammes:'என் வெகுமதிகள் ஏற்றப்படுகின்றன…',
+    successSounds:'வெற்றி ஒலிகள்',soundOff:'இயல்பாக அணைக்கப்பட்டுள்ளது',soundOn:'இயக்கத்தில்',
+    soundHelp:'விருப்பத்தேர்வு. குறைந்த அசைவு கோரப்படும்போது ஒலிகள் அணைந்தே இருக்கும்.',
+    merchantProgramme:'{business} வெகுமதிகள்',featured:'சிறப்பு பொருட்கள் & சேவைகள்',
+    noFeatured:'இந்த வணிகம் இன்னும் சிறப்பு அம்சங்களை வெளியிடவில்லை.',
+    preferredLanguage:'விருப்ப மொழி',
+    languageHelp:'{product} இந்தத் தேர்வை English, 中文, Bahasa Melayu மற்றும் தமிழில் பின்பற்றுகிறது.',
+    profileSaved:'சுயவிவரம் சேமிக்கப்பட்டது.',
+    'Rewards are not available for this account.':'இந்தக் கணக்கிற்கு வெகுமதிகள் கிடைக்கவில்லை.',
+    'Rewards could not be loaded.':'வெகுமதிகளை ஏற்ற முடியவில்லை.',
+    'Loyalty activity is not available for this account.':'இந்தக் கணக்கிற்கு லாயல்டி செயல்பாடு கிடைக்கவில்லை.',
+    'Activity could not be loaded.':'செயல்பாட்டை ஏற்ற முடியவில்லை.',
+    'Transaction history is not available for this account.':'இந்தக் கணக்கிற்கு பரிவர்த்தனை வரலாறு கிடைக்கவில்லை.',
+    'Transaction history could not be loaded.':'பரிவர்த்தனை வரலாற்றை ஏற்ற முடியவில்லை.',
+    'Gift cards are not available for this account.':'இந்தக் கணக்கிற்கு பரிசு அட்டைகள் கிடைக்கவில்லை.',
+    'Gift cards could not be loaded.':'பரிசு அட்டைகளை ஏற்ற முடியவில்லை.',
+    'Packages are not available for this account.':'இந்தக் கணக்கிற்கு தொகுப்புகள் கிடைக்கவில்லை.',
+    'Packages could not be loaded.':'தொகுப்புகளை ஏற்ற முடியவில்லை.',
+    'Membership is not available for this account.':'இந்தக் கணக்கிற்கு உறுப்பினர் நிலை கிடைக்கவில்லை.',
+    'Membership could not be loaded.':'உறுப்பினர் நிலையை ஏற்ற முடியவில்லை.',
+    'Appointments are not available for this account.':'இந்தக் கணக்கிற்கு சந்திப்புகள் கிடைக்கவில்லை.',
+    'Appointments could not be loaded.':'சந்திப்புகளை ஏற்ற முடியவில்லை.',
+    'No rewards are available right now.':'தற்போது வெகுமதிகள் எதுவும் இல்லை.',
+    'No loyalty activity is available yet.':'இன்னும் லாயல்டி செயல்பாடு இல்லை.',
+    'No packages are available for this account.':'இந்தக் கணக்கிற்கு தொகுப்புகள் இல்லை.',
+    'No membership is available for this account.':'இந்தக் கணக்கிற்கு உறுப்பினர் நிலை இல்லை.',
+    'No appointments are available yet.':'இன்னும் சந்திப்புகள் இல்லை.',
+    'Scan the business QR':'வணிக QR-ஐ ஸ்கேன் செய்யவும்',
+    'Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.':'வணிகம் காட்டும் Peekaa QR-ஐப் பயன்படுத்தவும். ஸ்கேன் ஒருபோதும் தொடர்பில்லாத வணிகத்தில் சேர்க்காது.',
+    'Close scanner':'ஸ்கேனரை மூடு',
+    'Camera preview for business join QR':'வணிக சேர்க்கை QR-க்கான கேமரா முன்னோட்டம்',
+    'Open camera':'கேமராவைத் திற',
+    "Can't scan? Use a photo or link":'ஸ்கேன் செய்ய முடியவில்லையா? புகைப்படம் அல்லது இணைப்பைப் பயன்படுத்தவும்',
+    'Or choose a QR image':'அல்லது QR படத்தைத் தேர்ந்தெடுக்கவும்',
+    'Camera unavailable?':'கேமரா கிடைக்கவில்லையா?',
+    'Paste the QR link':'QR இணைப்பை ஒட்டவும்',
+    'Continue':'தொடரவும்',
+    'That is not an active Peekaa business QR. Ask the business to generate its latest join QR.':'அது செயலில் உள்ள Peekaa வணிக QR அல்ல. சமீபத்திய சேர்க்கை QR-ஐ உருவாக்க வணிகத்திடம் கேளுங்கள்.',
+    'Camera is unavailable in this browser. Choose a QR image or paste the QR link.':'இந்த உலாவியில் கேமரா கிடைக்கவில்லை. QR படத்தைத் தேர்ந்தெடுக்கவும் அல்லது QR இணைப்பை ஒட்டவும்.',
+    'Starting camera…':'கேமரா தொடங்குகிறது…',
+    'The scanner could not load. Check your connection and try again.':'ஸ்கேனரை ஏற்ற முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
+    'Point the camera at the business QR.':'கேமராவை வணிக QR-இல் குறிவைக்கவும்.',
+    'Camera access was not available. Choose a QR image or paste the QR link.':'கேமரா அணுகல் கிடைக்கவில்லை. QR படத்தைத் தேர்ந்தெடுக்கவும் அல்லது QR இணைப்பை ஒட்டவும்.',
+    'Reading QR image…':'QR படம் படிக்கப்படுகிறது…',
+    'No active Peekaa join QR was found in that image.':'அந்தப் படத்தில் செயலில் உள்ள Peekaa சேர்க்கை QR எதுவும் கிடைக்கவில்லை.',
+    'That image could not be read. Try a clearer QR image.':'அந்தப் படத்தைப் படிக்க முடியவில்லை. தெளிவான QR படத்தை முயற்சிக்கவும்.'
   })
 });
 const normalizeCustomerLocale=value=>{const v=String(value||'').trim();if(v==='zh')return 'zh-CN';return CUSTOMER_LOCALES.includes(v)?v:'en'};
@@ -2083,9 +2148,9 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
   const registeredCustomer=profile!==null;
   if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
   S.hasCustomerPersona=true;S.customerProfile=profile;
-  /* v293: the wallet renders in the member's stored language. 'zh' folds to
-     zh-CN; 'ta' keeps English app chrome until Tamil copy ships (messages may
-     still localize server-side). Sign-out resets to 'en'. */
+  /* v293/v294: the wallet renders in the member's stored language — all four
+     of English, 中文, Bahasa Melayu and தமிழ் ('zh' folds to zh-CN). Sign-out
+     resets to 'en'. */
   customerLocale=normalizeCustomerLocale(profile?.preferred_language);
   globalThis.document?.documentElement?.setAttribute('lang',customerLocale);
   if(!isCurrent())return null;

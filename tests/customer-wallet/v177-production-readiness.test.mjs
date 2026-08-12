@@ -126,7 +126,7 @@ test('customer decisions use the in-app dialog, never a native prompt or confirm
   assert.match(passkeys,/if\(friendlyName===null\)/,'cancel must stay a no-op');
   assert.match(passkeys,/name\.length>120/,'the existing validation must be unchanged');
 
-  const cancelBooking=section(app,'window.mCancel=async()=>{','window.mReschedule=async()=>{');
+  const cancelBooking=section(app,'const mCancelHandler=async()=>{','const mRescheduleHandler=async()=>{');
   assert.doesNotMatch(cancelBooking,/\bconfirm\(/,'public booking cancel must not use a native confirm');
   assert.match(cancelBooking,/showCustomerDecisionDialog\(\{title:'Cancel this booking\?'/);
   assert.match(cancelBooking,/if\(!confirmed\) return;/);

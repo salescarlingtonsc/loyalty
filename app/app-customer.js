@@ -4877,8 +4877,13 @@ async function renderPortal(slug){
       $('mlist').innerHTML=`<div style="padding:10px 0"><b>${esc(walletDate(when,true))||'Time pending'}</b>
         <div class="muted small">${esc(data.service_name||'general visit')} · ${esc(data.status||'pending')}</div></div>
         ${data.can_change?`<label>New preferred time</label><input type="datetime-local" id="mdt">
-        <div class="row" style="margin-top:10px"><button class="btn ghost sm" id="mcancel" onclick="mCancel()">Request cancellation</button>
-        <button class="btn sm" id="mresched" onclick="mReschedule()">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
+        <div class="row" style="margin-top:10px"><button class="btn ghost sm" id="mcancel" type="button">Request cancellation</button>
+        <button class="btn sm" id="mresched" type="button">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
+      /* v294: real listeners on the freshly-rendered buttons. The old inline onclick reached
+         handlers only through window globals — fragile under a minifier and blocked by any
+         future CSP that drops 'unsafe-inline'. Attached per repaint, exactly like copyManage. */
+      $('mcancel')?.addEventListener('click',mCancelHandler);
+      $('mresched')?.addEventListener('click',mRescheduleHandler);
     };
     showStep(repeatService?steps.indexOf('time'):0);
     if(manageToken) setTimeout(()=>$('mfind')?.click(),0);
@@ -4904,7 +4909,7 @@ async function renderPortal(slug){
        honest source for the booking's new status, and it also re-evaluates can_change. */
     $('mfind')?.click();
   };
-  window.mCancel=async()=>{
+  const mCancelHandler=async()=>{
     manageToken=($('mtoken')?.value||manageToken).trim();
     if(!manageToken) return toast('Enter your booking management code');
     /* v177: the native browser confirmation is unstyled, untranslatable and blocked in some webviews.
@@ -4922,7 +4927,7 @@ async function renderPortal(slug){
     catch(error){manageChangeBusyV286(false);return toast(error.message)}
     manageChangeSettledV286(data);
   };
-  window.mReschedule=async()=>{
+  const mRescheduleHandler=async()=>{
     manageToken=($('mtoken')?.value||manageToken).trim();
     if(!manageToken) return toast('Enter your booking management code');
     const val=$('mdt')?.value;

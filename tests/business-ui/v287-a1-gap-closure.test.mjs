@@ -113,11 +113,12 @@ test('V287 MAJOR: the orphaned reporting-scope selectors that double-loaded two 
 /* ------------------------------------------------------------------ MAJOR 4 */
 
 test('V287 MAJOR: the Sales ledger gets the responsive table enhancer', () => {
-  assert.match(app, /const customerUiRoutes=new Set\(\['till','clients','client','sales',/);
-  // Membership drives exactly these two things and nothing else.
-  assert.equal((app.match(/customerUiRoutes\.has\(/g) || []).length, 1);
-  assert.match(app, /const enhanceCustomerUi=customerUiRoutes\.has\(page\[0\]\);/);
-  assert.equal((app.match(/enhanceCustomerUi/g) || []).length, 3);
+  /* v294 retired the per-route allowlist: every workspace route mounts the enhancer, which is
+     strictly stronger than the original invariant (the Sales ledger being enhanced). This pin
+     now guards against the allowlist coming back. */
+  assert.doesNotMatch(app, /customerUiRoutes/);
+  assert.match(app, /const enhanceCustomerUi=true;/);
+  assert.match(app, /customerUiObserver=CUI\.mountMain\(main\);/);
   // The table it is for.
   assert.match(sales, /<table data-responsive="true">/);
 });

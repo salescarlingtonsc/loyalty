@@ -1664,13 +1664,14 @@ function renderShell(page){
     const maxY=Math.max(0,document.documentElement.scrollHeight-window.innerHeight);
     window.scrollTo(priorWindowX,Math.min(priorWindowY,maxY));
   });
-  /* V287: 'sales' joins the set. The Sales ledger renders a 7-column <table data-responsive>
-     and was the only such table left outside CUI.mountMain, so on a phone it printed unlabelled
-     cells. Membership of this set drives exactly two things — CUI.mountMain(main) and
-     CUI.focusRoute's enhanceContent — neither of which changes any query, permission or copy. */
-  const customerUiRoutes=new Set(['till','clients','client','sales','grow','loyalty','retention','promotions','referrals','memberships','giftcards']);
-  const enhanceCustomerUi=customerUiRoutes.has(page[0]);
-  if(enhanceCustomerUi)customerUiObserver=CUI.mountMain(main);
+  /* V287 added routes to a curated enhancement set one bug at a time — the Sales ledger was
+     "the only such table left outside CUI.mountMain" until the next one wasn't. v294 ends the
+     allowlist: every workspace route mounts the enhancer. enhanceTables is idempotent (class,
+     caption, thead, data-label and wrapper are all added only when absent), no workspace table
+     hand-sets data-responsive, and mounting drives nothing but markup enhancement — so the
+     per-route membership question no longer exists, and neither does its failure mode. */
+  const enhanceCustomerUi=true;
+  customerUiObserver=CUI.mountMain(main);
   wireNav();
   wireGlobalActions();
   wireMobileSearchShell();

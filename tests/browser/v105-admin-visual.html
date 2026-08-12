@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="13f63ee6a22ece5f6b8468204cc576c752354c4d232fb0cf77bf671e045da396">
+<meta name="v105-production-component-sha256" content="003bab4346b33f69fea3242ef9cbcbb41bbf023169e5f02089e58a7af7297782">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1978,7 +1978,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 .platform-kpi{min-width:0}
 .platform-kpi-link{display:block;color:inherit;text-decoration:none}
-.platform-kpi-link:hover{border-color:rgba(194,65,53,.35);box-shadow:var(--shadow-sm)}
+.platform-kpi-link:hover{border-color:rgba(194,65,53,.35);box-shadow:var(--shadow)} /* v294: --shadow-sm was never defined in the shared token block, so this hover shadow silently resolved to none */
 .platform-kpi-link:focus-visible{outline:3px solid rgba(194,65,53,.25);outline-offset:2px}
 .platform-kpi-label{
   display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;font-weight:700
@@ -2614,7 +2614,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 13f63ee6a22e</span>
+<span class="v105-provenance">v105 production-component harness · 003bab4346b3</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2739,7 +2739,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'13f63ee6a22ece5f6b8468204cc576c752354c4d232fb0cf77bf671e045da396',
+  sourceHash:'003bab4346b33f69fea3242ef9cbcbb41bbf023169e5f02089e58a7af7297782',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

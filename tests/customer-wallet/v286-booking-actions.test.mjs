@@ -91,8 +91,8 @@ test('the portal Change button is gated on appointment_changes, and fails closed
 /* ---------------------------------- 5 · the guest manage panel tells the truth after a change */
 
 test('a guest cancellation disables its buttons, keeps its submission id and repaints', () => {
-  const cancel = section(appJs, 'window.mCancel=async()=>{', 'window.mReschedule=async()=>{');
-  const reschedule = section(appJs, 'window.mReschedule=async()=>{', '  draw();');
+  const cancel = section(appJs, 'const mCancelHandler=async()=>{', 'const mRescheduleHandler=async()=>{');
+  const reschedule = section(appJs, 'const mRescheduleHandler=async()=>{', '  draw();');
   for (const block of [cancel, reschedule]) {
     assert.match(block, /manageChangeBusyV286\(true\);/, 'both buttons go busy for the await');
     assert.match(block, /catch\(error\)\{manageChangeBusyV286\(false\);return toast\(error\.message\)\}/);
@@ -100,10 +100,14 @@ test('a guest cancellation disables its buttons, keeps its submission id and rep
     assert.doesNotMatch(block, /changeAttempt=null;/,
       'clearing the attempt let a repeat tap mint a second submission_id and duplicate the request');
   }
-  const settled = section(appJs, 'const manageChangeSettledV286=data=>{', '  window.mCancel=async()=>{');
+  const settled = section(appJs, 'const manageChangeSettledV286=data=>{', '  const mCancelHandler=async()=>{');
   assert.match(settled, /\$\('mfind'\)\?\.click\(\);/, 'the row repaints from a fresh lookup, not from hope');
-  assert.match(appJs, /<button class="btn ghost sm" id="mcancel" onclick="mCancel\(\)">/);
-  assert.match(appJs, /<button class="btn sm" id="mresched" onclick="mReschedule\(\)">/);
+  /* v294: the buttons carry real listeners attached per repaint — no inline onclick, no
+     window globals (minifier-safe, and survives a CSP without 'unsafe-inline'). */
+  assert.match(appJs, /<button class="btn ghost sm" id="mcancel" type="button">/);
+  assert.match(appJs, /<button class="btn sm" id="mresched" type="button">/);
+  assert.match(appJs, /\$\('mcancel'\)\?\.addEventListener\('click',mCancelHandler\)/);
+  assert.match(appJs, /\$\('mresched'\)\?\.addEventListener\('click',mRescheduleHandler\)/);
 });
 
 /* ---------------------------------- 6 · one surface, one timezone */

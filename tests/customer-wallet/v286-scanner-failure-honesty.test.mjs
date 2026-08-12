@@ -42,7 +42,7 @@ test('the scanner spotlight shadow is clipped to the video frame',()=>{
    v293 added zh-CN + ms, so the sheet's user-facing strings now go through ct() and the
    status assignments carry ct(...) — the pin flips to assert the multilingual contract. */
 test('the customer surface is multilingual and the scanner sheet is routed through ct()',()=>{
-  assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms'\]\)/);
+  assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/);
   assert.match(js,/\$\{esc\(ct\('Scan the business QR'\)\)\}/);
   assert.match(js,/status\.textContent=ct\(DECODER_LOAD_FAILURE\)/);
   assert.match(js,/status\.textContent=ct\('Point the camera at the business QR\.'\)/);
