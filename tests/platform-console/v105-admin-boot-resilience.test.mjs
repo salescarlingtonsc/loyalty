@@ -91,6 +91,8 @@ test('a missing platform module renders a recoverable error instead of falling t
       loadPlatformConsoleAssetsV184:async()=>null,
       renderCustomerRegistration(){},renderAuth(){},
       esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'),
+      /* v286: route()'s catch now launders raw error text through ownerErrorText */
+      ownerErrorText:error=>String(error?.message||error||''),
       $:id=>id==='routeReload'?{onclick:null}:null
     };
     context.globalThis=context;

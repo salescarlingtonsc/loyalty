@@ -1725,6 +1725,12 @@
       "path": "db/migrations/20260812_nestly_v285_a4_gap_closure.sql",
       "semanticVersion": "v285",
       "proposedDeployVersion": "20260812000600"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260812_nestly_v289_reschedule_respects_business_setting.sql",
+      "semanticVersion": "v289",
+      "proposedDeployVersion": "20260812000700"
     }
   ]
 }

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="a4a6b95e987a2ba421fed5424ba630aa71d3500adb1a0a6a763b0b645314d98e"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="f499269547d3c9961804fabb6c81ff968ba6caf380eb4c715f07152c860eff59"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1404,6 +1404,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-first-quest-copy{padding:clamp(24px,6vw,48px);text-align:center}.customer-first-quest-icon{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(145deg,var(--coral),#f58c55);color:#fff;box-shadow:0 16px 34px rgba(194,65,53,.25)}
 .customer-first-quest h1{font-size:clamp(1.9rem,7vw,3rem);overflow-wrap:anywhere;word-break:break-word}.customer-first-quest p{max-width:520px;margin:10px auto 0;line-height:1.6}
 .customer-first-quest .btn{margin-top:22px;min-height:54px;padding-inline:24px;font-size:16px}
+/* v286: the same quest card reused as Home's "everything is empty" next action — it sits BELOW
+   the offers shelf rather than being the whole screen, so it reads one step quieter. */
+.customer-home-empty-action .customer-first-quest-copy{padding:clamp(20px,5vw,32px)}
+.customer-home-empty-action h2{font-size:clamp(1.3rem,4.5vw,1.7rem);overflow-wrap:anywhere}
+.customer-home-empty-action .customer-first-quest-icon{width:60px;height:60px;margin-bottom:14px;border-radius:20px}
 .customer-quest-kicker{color:var(--coral);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .customer-scan-modal .modal-card{width:min(520px,calc(100vw - 24px))}
 .customer-programme-switcher{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
@@ -1518,6 +1523,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-identity .customer-programme-compact-copy{display:block}
 .customer-programme-identity b{display:block;font-size:clamp(1.15rem,3.6vw,1.5rem);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .customer-programme-identity-hint{color:var(--coral)!important;font-weight:600}
+/* v286 (audit: the mobile header lost its only affordance). Hiding this hint at 560px left the
+   row as a logo plus a name — no chevron, no tier, nothing saying the header opens the company
+   sheet with the address and phone the v194/v195 owner annotation asked for. The long wording
+   is what does not fit at 390px, not the affordance, so the short label and the tier stay. */
+.customer-programme-identity-hint-short{display:none}
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
@@ -1554,7 +1564,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    flow it pushed the label down and made that tab taller than its neighbours. */
 .customer-nav-count{position:absolute;top:4px;right:8px;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--coral);color:#fff;font-size:10.5px;font-weight:700;line-height:1}
 .customer-primary-nav a[aria-current="page"] .customer-nav-count{background:var(--coral)}
-@media(max-width:560px){.customer-programme-identity-hint{display:none}.customer-tier-milestone b{font-size:9.5px}}
+@media(max-width:560px){.customer-programme-identity-hint-long{display:none}.customer-programme-identity-hint-short{display:inline}.customer-tier-milestone b{font-size:9.5px}}
 .customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
 .customer-programme-compact-copy{min-width:0;flex:1}.customer-programme-compact-copy h1{font-size:clamp(1.25rem,4vw,1.7rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-programme-compact-copy p{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -1715,7 +1725,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
 .redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
 .scanner-video{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#17161a}
-.scanner-frame{position:relative;margin-top:14px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
+/* v286 (audit): the ::after spotlight spreads a 999px shadow; with no clip it escaped the frame
+   and washed the sheet's title, live status line and fallback button in 20% black. */
+.scanner-frame{position:relative;margin-top:14px;overflow:hidden;border-radius:16px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
 .scanner-fallback{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
 .checkrow{display:flex;align-items:flex-start;gap:12px;min-height:48px;margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;color:var(--ink);cursor:pointer}
 .checkrow input[type="checkbox"]{width:22px;min-width:22px;min-height:22px;margin-top:1px;accent-color:var(--coral)}
@@ -1860,7 +1872,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · a4a6b95e987a2ba421fed5424ba630aa71d3500adb1a0a6a763b0b645314d98e</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f499269547d3c9961804fabb6c81ff968ba6caf380eb4c715f07152c860eff59</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2510,15 +2522,23 @@ async function tillPage(){
 
   /* Wipe every trace of a checkout attempt: timers, the evaluation, and the STABLE finalise key.
      Called on reset, on Back, and when toggling modes — a deliberate cancel per §2. */
-  function clearCheckoutState(){
+  /* V286: `abandon` marks a DELIBERATE end of this checkout (Back, reset, walk-in switch, branch
+     change, finalise). Dropping paynowAttempt alone killed the poll and the on-screen attempt but
+     left the sessionStorage PayNow request behind, so the next entry to Record sale resumed it —
+     re-creating the earlier customer's QR against an unrelated sale. A deliberate abandon drops the
+     stored request too. There is no provider cancel API (stripe-connect-command exposes only
+     create_paynow), so a LIVE attempt is never abandoned silently: backToPhoneStep refuses while
+     one is outstanding, and the branch picker is disabled by cartLocked(). */
+  function clearCheckoutState({abandon=false}={}){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
     if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
     evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
+    if(abandon)clearPaynowRequestV142();
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
-    clearCheckoutState();
+    clearCheckoutState({abandon:true});
     /* v281 audit: the catalogue snapshot carries the LOOKED-UP CUSTOMER's entitlements
        (packages, vouchers, welcome offer) alongside the branch items. Dropping it only for
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
@@ -2533,7 +2553,12 @@ async function tillPage(){
      cart was a walk-in, the customer-less catalogue snapshot. */
   function backToPhoneStep(){
     if(checkoutError){toast('Finish or retry the unfinished items first');return}
-    clearCheckoutState();
+    /* V286: Back used to abandon a live PayNow QR — the poll died, the attempt vanished from the
+       screen, and the customer still paid a sale the server then fulfilled, so the cashier took the
+       money twice. Nothing can cancel a Stripe PayNow attempt from here, so the only honest answer
+       is to refuse and keep the attempt (and its "Show QR" button) on screen until it settles. */
+    if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
+    clearCheckoutState({abandon:true});
     catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];draw();
   }
@@ -2549,7 +2574,7 @@ async function tillPage(){
   const canOfferWalkin=()=>canRecordSales&&catalogueSelectionEnabled&&!pendingTillRedemptionScan;
   function startWalkinSale(){
     if(!canOfferWalkin())return;
-    clearCheckoutState();
+    clearCheckoutState({abandon:true}); // V286: switching to a walk-in abandons any stored PayNow request
     cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
     catalog=null;catalogError=null; // never reuse a catalogue loaded with another customer's entitlements
@@ -2751,6 +2776,15 @@ async function tillPage(){
   async function loadCatalog(){
     if(catalog||catalogLoading) return;
     catalogLoading=true;catalogError=null;
+    /* V286: the ONE async path on this surface with no epoch guard. Switching branch (or customer)
+       while this fetch is in flight cleared catalog, but the redraw's loadCatalog() bounced off
+       catalogLoading — so when the old response landed it published the PREVIOUS branch's services,
+       products and the previous customer's entitlements under the new label, and nothing refetched.
+       Staff could then tap items business_get_checkout_catalogue_v94 deliberately withheld, and
+       evaluate_checkout rejected the sale with a generic price-check error. Capture what this fetch
+       is for and discard it if either changed; the bail redraws, and drawCartComposer's
+       `catalog===null` re-issues the load for the branch actually on screen. */
+    const forBranchV286=tillBranchId, forClientV286=cust?cust.client_id:null, forWalkinV286=walkin;
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
@@ -2779,6 +2813,8 @@ async function tillPage(){
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
+    // V286: stale response — the branch, the customer or the walk-in flag moved on while it was in flight.
+    if(tillBranchId!==forBranchV286||(cust?cust.client_id:null)!==forClientV286||walkin!==forWalkinV286){draw();return;}
     if(checkout.error||!checkout.data){
       catalogError=checkout.error?.message||'The checkout catalogue could not be loaded.';
       draw();return;
@@ -3337,7 +3373,7 @@ async function tillPage(){
       tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;
       /* A branch change invalidates every item and evaluation. Clear the cart, then ask the
          server for this branch's effective catalogue before another selection is possible. */
-      cart=[];catalog=null;catalogError=null;clearCheckoutState();
+      cart=[];catalog=null;catalogError=null;clearCheckoutState({abandon:true});
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
     /* V287: re-attributing re-renders so the selected teammate is visible on the control that
@@ -3712,7 +3748,7 @@ async function tillPage(){
       duplicate:r?r.duplicate:false,businessName:S.biz.name,
       branchName:accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'',
       paidAt:new Date().toISOString(),paymentReference:null};
-    checkoutError=null;clearCheckoutState();step=3;draw();
+    checkoutError=null;clearCheckoutState({abandon:true});step=3;draw(); // V286: a finalised sale retires any stored PayNow request
   }
   function drawStep3(){
     if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
@@ -3845,7 +3881,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'a4a6b95e987a2ba421fed5424ba630aa71d3500adb1a0a6a763b0b645314d98e',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'f499269547d3c9961804fabb6c81ff968ba6caf380eb4c715f07152c860eff59',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

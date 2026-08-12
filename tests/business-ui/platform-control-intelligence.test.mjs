@@ -54,7 +54,7 @@ test('Quick Earn is catalogue-first and an explicit firm setting can fall back t
   assert.match(till,/record_cart_sale/);
   assert.match(till,/Loading products and services for this branch/);
   assert.match(till,/id="tCatRetry"/);
-  assert.match(till,/cart=\[\];catalog=null;catalogError=null;clearCheckoutState\(\)/);
+  assert.match(till,/cart=\[\];catalog=null;catalogError=null;clearCheckoutState\(\{abandon:true\}\)/); /* v286: a deliberate mode switch also abandons any stored PayNow request */
   assert.match(till,/No checkout items at this branch/);
 });
 

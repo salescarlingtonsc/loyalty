@@ -687,7 +687,12 @@ const CUSTOMER_DIRECT_DESTINATIONS=new Set([
   '#/customer/programmes',
   '#/customer/bookings',
   '#/customer/messages',
-  '#/customer/profile'
+  '#/customer/profile',
+  /* V286: the marketing opt-out route the signup copy itself promises ("turn this off any time
+     in Profile → Communications"). Without it a signed-out deep link fell through to
+     renderAuth — the MERCHANT sign-in card — and nothing remembered where the visitor was
+     going, so even a correct customer sign-in landed on the wallet instead. */
+  '#/customer/communications'
 ]);
 function normalizeCustomerDestination(value){
   const route=String(value??'').trim();
@@ -718,6 +723,9 @@ function resetClientSessionState({preserveInvitation=false}={}){
   if(!preserveInvitation)rememberPendingCustomerJoinToken('');
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+  /* V286: the nav badge cache is per-person. Left standing, customer B's Rewards/Bookings tabs
+     first-painted with customer A's counts on a shared phone until the wallet data landed. */
+  customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';
   resetProductInteractionSessionV100();
@@ -1448,7 +1456,10 @@ async function route(){
     root.innerHTML=`<div class="center-wrap"><div class="card" style="width:400px;max-width:100%;text-align:center">
       <div style="font-size:40px">⚠️</div>
       <h2 style="margin:12px 0 4px">Something went wrong</h2>
-      <p class="muted small">${esc(e&&e.message||String(e))}</p>
+      <!-- V286: this catch wraps getSession() and the persona RPCs, so a customer on flaky
+           mobile data was shown raw engine text ("Failed to fetch"). Same mapper as every
+           other failure card in the app. -->
+      <p class="muted small">${esc(ownerErrorText(e)||'Please try again.')}</p>
       <button class="btn" id="routeReload" style="margin-top:18px">Reload</button>
       </div></div>`;
     const rb=$('routeReload');
@@ -1700,12 +1711,26 @@ function openCustomerJoinScanner(){
     fallbackWrap.hidden=false;manualToggle.hidden=true;
     pasteFallback.open=true;imageInput.focus();
   };
+  /* v286 (audit): loadScannerLibrary pulls jsQR from a CDN, so a blocked CDN, an SRI mismatch or
+     an offline device used to reject inside the SAME catch as getUserMedia and be reported as
+     'Camera access was not available' — a lie about a camera that was never even asked for, and
+     the advice it gave (use a photo) led into the photo path, which needs the same missing
+     decoder and then blamed the customer's picture. The loader now has its own guard on BOTH
+     decoder paths and reports the real failure, with the camera button left as a live retry. */
+  const DECODER_LOAD_FAILURE='The scanner could not load. Check your connection and try again.';
+  const cameraLabel=camera.querySelector('span');
+  const loadDecoder=async()=>{try{await loadScannerLibrary();return true}catch{return false}};
   const startCamera=async()=>{
     if(closed)return;
     if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';revealFallback();return}
     camera.disabled=true;camera.hidden=true;status.textContent='Starting camera…';
+    if(!await loadDecoder()){
+      if(closed)return;
+      camera.disabled=false;camera.hidden=false;if(cameraLabel)cameraLabel.textContent='Try again';
+      status.textContent=DECODER_LOAD_FAILURE;return;
+    }
+    if(cameraLabel)cameraLabel.textContent='Open camera';
     try{
-      await loadScannerLibrary();
       stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
       if(closed){stream.getTracks().forEach(track=>track.stop());stream=null;return}
       video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
@@ -1720,14 +1745,20 @@ function openCustomerJoinScanner(){
   imageInput.onchange=async event=>{
     const file=event.target.files?.[0];if(!file)return;
     status.textContent='Reading QR image…';
+    /* v286: the photo path needs the same CDN decoder, so it reports the same honest failure
+       instead of 'That image could not be read' — the image was never the problem. */
+    if(!await loadDecoder()){status.textContent=DECODER_LOAD_FAILURE;return}
     try{
-      await loadScannerLibrary();
       const bitmap=await createImageBitmap(file);
       const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
       if(!accept(value))status.textContent='No active Peekaa join QR was found in that image.';
     }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
   };
-  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
+  const pasteValue=overlay.querySelector('#customerJoinScannerValue');
+  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(pasteValue.value);
+  /* v286 (audit): the paste field lives in no <form>, so there was no implicit submission and
+     Enter — the universal reflex, and the only keyboard path — did nothing, silently. */
+  pasteValue.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();accept(pasteValue.value)}};
   overlay.querySelector('#customerJoinScannerClose').onclick=close;
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerClose'});
@@ -1903,7 +1934,10 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
   customerLocale='en';
   globalThis.document?.documentElement?.setAttribute('lang','en');
   if(!isCurrent())return null;
-  return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
+  /* v286: a null profile has two very different causes — this account has no profile row, or
+     customer_get_profile just failed for a customer we kept on the surface because their personas
+     loaded. Carry the error so callers can say which one happened instead of blaming the account. */
+  return {features,profile,profileError:profileResult.error||null,registeredCustomer,staff,customer,staffWorkspaces:staff};
 }
 
 /* v244 (owner, nav revamp): Explore — "search for nearby peekaa businessess (can type example
@@ -3157,6 +3191,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   bookingRequestWaiting:Object.freeze({en:'{count} booking request is waiting for a decision.','zh-CN':'{count} 个预约请求等待处理。',ms:'{count} permintaan tempahan menunggu keputusan.'}),
   bookingRequestsWaitingMany:Object.freeze({en:'{count} booking requests are waiting for a decision.','zh-CN':'{count} 个预约请求等待处理。',ms:'{count} permintaan tempahan menunggu keputusan.'}),
   bookingRequestsBadge:Object.freeze({en:'Booking requests — {count} waiting','zh-CN':'预约请求 — {count} 个等待中',ms:'Permintaan tempahan — {count} menunggu'}),
+  staffKeptHasRecord:Object.freeze({en:'{name} has {count} record of work here, so the record is kept. Use Deactivate to stop their access.','zh-CN':'{name} 在此有 {count} 条工作记录，因此保留该记录。请使用停用来停止其访问权限。',ms:'{name} mempunyai {count} rekod kerja di sini, jadi rekod itu dikekalkan. Gunakan Nyahaktif untuk menghentikan aksesnya.'}),
+  staffKeptHasRecords:Object.freeze({en:'{name} has {count} records of work here, so the record is kept. Use Deactivate to stop their access.','zh-CN':'{name} 在此有 {count} 条工作记录，因此保留该记录。请使用停用来停止其访问权限。',ms:'{name} mempunyai {count} rekod kerja di sini, jadi rekod itu dikekalkan. Gunakan Nyahaktif untuk menghentikan aksesnya.'}),
   scopeCustomers:Object.freeze({en:'Showing {shown} of {total} customers for this scope.','zh-CN':'此范围显示 {shown}／{total} 位顾客。',ms:'Menunjukkan {shown} daripada {total} pelanggan untuk skop ini.'}),
   customerRecordExported:Object.freeze({en:'{count} customer record exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
   customerRecordsExported:Object.freeze({en:'{count} customer records exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
@@ -3193,8 +3229,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   exposureRetryChannelLocked:Object.freeze({en:'This retry is locked to {channel} because that is the channel you originally confirmed. Choose that channel, or close and start a separate new attempt.','zh-CN':'此重试已锁定为 {channel}，因为这是您最初确认的渠道。请选择该渠道，或关闭后另行开始新的尝试。',ms:'Cubaan semula ini dikunci kepada {channel} kerana itulah saluran yang anda sahkan pada asalnya. Pilih saluran itu, atau tutup dan mulakan cubaan baharu yang berasingan.'}),
   exposureRetryMixedChannels:Object.freeze({en:'Selected retries use different confirmed channels. Retry one channel group at a time.','zh-CN':'所选重试使用不同的已确认渠道。请每次仅重试一个渠道组。',ms:'Cubaan semula yang dipilih menggunakan saluran pengesahan yang berbeza. Cuba semula satu kumpulan saluran pada satu masa.'}),
   packageVersionCreated:Object.freeze({en:'New package version v{version} created; prior version archived','zh-CN':'已创建配套新版本 v{version}；旧版本已归档',ms:'Versi pakej baharu v{version} dicipta; versi terdahulu diarkibkan'}),
-  packageSoldWithPoints:Object.freeze({en:'Package sold · {earned} points earned · {total} total points','zh-CN':'配套已售出 · 获得 {earned} 分 · 总积分 {total}',ms:'Pakej dijual · {earned} mata diperoleh · jumlah mata {total}'}),
-  packageSoldNoPoints:Object.freeze({en:'Package sold · 0 points earned · {total} total points','zh-CN':'配套已售出 · 获得 0 分 · 总积分 {total}',ms:'Pakej dijual · 0 mata diperoleh · jumlah mata {total}'}),
   giftCardLoaded:Object.freeze({en:'{amount} loaded onto account 🎉','zh-CN':'已将 {amount} 存入账户 🎉',ms:'{amount} dimasukkan ke dalam akaun 🎉'}),
   /* v215: the welcome offer names the item that was handed over, so staff and customer are
      looking at the same words. Interpolated runtime copy has to be a reviewed template. */
@@ -3296,7 +3330,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'receiptConfirmationRecorded','receiptConfirmationsRecorded',
   'receiptConfirmationFailed','receiptConfirmationsFailed',
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
-  'packageVersionCreated','packageSoldWithPoints','packageSoldNoPoints',
+  'packageVersionCreated',
   'giftCardLoaded','sessionUsed','welcomeOfferGiven',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
@@ -3310,6 +3344,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'performancePeriodRange','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
   'sortByAscending','sortByDescending','bottlePercentLeft',
   'bookingRequestWaiting','bookingRequestsWaitingMany','bookingRequestsBadge',
+  'staffKeptHasRecord','staffKeptHasRecords',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',

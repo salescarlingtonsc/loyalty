@@ -1720,6 +1720,12 @@
       "version": "20260812000600",
       "name": "nestly_v285_a4_gap_closure",
       "sourcePath": "db/migrations/20260812_nestly_v285_a4_gap_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260812000700",
+      "name": "nestly_v289_reschedule_respects_business_setting",
+      "sourcePath": "db/migrations/20260812_nestly_v289_reschedule_respects_business_setting.sql"
     }
   ]
 }
