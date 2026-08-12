@@ -47,7 +47,7 @@ test('programme selector precedes merchant detail and zero-programme state only 
 test('merchant home consumes the v95 presentation contract with truthful capability gating and resilient fallback',()=>{
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const presentation=section('function customerProgrammePresentationV95','function actionableWalletCardMarkup');
-  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:customerLocale==='zh-CN'\?'zh-CN':'en'\}\)/);
+  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale\(\)\}\)/);
   assert.match(wallet,/businessActions\?\.booking\?\.enabled===true&&presentation\.capabilities\.booking_enabled!==false/);
   assert.match(wallet,/customerMerchantExperienceMarkupV95\(\{presentation,business:b,actionableCard,programmeCards/);
   assert.match(wallet,/customerProgrammePresentationV95\(presentationResult\.error\?\{\}:presentationResult\.data/);

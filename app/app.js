@@ -3463,6 +3463,98 @@ const CUSTOMER_COPY=Object.freeze({
     soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
     merchantProgramme:'{business} rewards',featured:'Featured products & services',
     noFeatured:'This business has not published featured items yet.',
+    /* v295: wallet detail sections + claim flow. */
+    'Transactions & points':'Transactions & points',
+    'Every purchase, reversal, correction, and points event kept in time order.':'Every purchase, reversal, correction, and points event kept in time order.',
+    'Loyalty activity':'Loyalty activity',
+    'Your loyalty history with this business.':'Your loyalty history with this business.',
+    'Gift cards':'Gift cards',
+    'Money left on your gift cards from this business.':'Money left on your gift cards from this business.',
+    'Show this screen at the counter — the team uses your card there. We never show the full card number.':'Show this screen at the counter — the team uses your card there. We never show the full card number.',
+    'Packages':'Packages',
+    'Session balances and recent usage.':'Session balances and recent usage.',
+    'Membership':'Membership',
+    'Current plan and period status.':'Current plan and period status.',
+    'Appointments':'Appointments',
+    'Upcoming and recent visits.':'Upcoming and recent visits.',
+    'Your bottles':'Your bottles',
+    'What {business} is keeping for you. Show this screen at the counter to have one brought out.':'What {business} is keeping for you. Show this screen at the counter to have one brought out.',
+    'this bar':'this bar',
+    'Load more':'Load more',
+    'Pending with business':'Pending with business',
+    'Ready to use':'Ready to use',
+    'All used up':'All used up',
+    'Not valid':'Not valid',
+    'This section':'This section',
+    '{section} didn’t load':'{section} didn’t load',
+    'Your sign-in expired. Sign in again.':'Your sign-in expired. Sign in again.',
+    'Sign in':'Sign in',
+    'Book again':'Book again',
+    'Open programme':'Open programme',
+    'Withdraw':'Withdraw',
+    'Waitlisted':'Waitlisted',
+    'Pending':'Pending',
+    'Appointment':'Appointment',
+    'Add a business programme':'Add a business programme',
+    'Accept invitation':'Accept invitation',
+    'Confirm this private invitation while signed in to the intended account.':'Confirm this private invitation while signed in to the intended account.',
+    'Enter the business link from its QR or invitation. We only connect an exact unclaimed record.':'Enter the business link from its QR or invitation. We only connect an exact unclaimed record.',
+    'Use the same confirmed email your business has on file.':'Use the same confirmed email your business has on file.',
+    'Checking access…':'Checking access…',
+    'How should we find your record?':'How should we find your record?',
+    'Use my verified mobile number':'Use my verified mobile number',
+    'Use my confirmed email instead':'Use my confirmed email instead',
+    'Business link':'Business link',
+    'Claim':'Claim',
+    'Checking…':'Checking…',
+    'Customer access could not be checked.':'Customer access could not be checked.',
+    'Customer access is unavailable. Please try again later.':'Customer access is unavailable. Please try again later.',
+    'Choose where to continue':'Choose where to continue',
+    'Wallet links:':'Wallet links:',
+    'Staff workspaces:':'Staff workspaces:',
+    'No wallet links yet.':'No wallet links yet.',
+    'Linked':'Linked',
+    'Request received':'Request received',
+    'Your wallet is ready.':'Your wallet is ready.',
+    'If the details match an available customer record, the business link will appear here.':'If the details match an available customer record, the business link will appear here.',
+    'Open wallet':'Open wallet',
+    /* v295: Communications (PDPA consent) + profile consent cluster. */
+    'Communications':'Communications',
+    'Loading your communication choices…':'Loading your communication choices…',
+    'Your communication choices could not be loaded. Nothing has been changed.':'Your communication choices could not be loaded. Nothing has been changed.',
+    'No communication choices yet':'No communication choices yet',
+    'There is nothing to set here for your account right now.':'There is nothing to set here for your account right now.',
+    'Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.':'Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.',
+    'Send me all marketing messages':'Send me all marketing messages',
+    'One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.':'One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.',
+    'Saving…':'Saving…',
+    'That choice could not be saved, so it has been put back. Please try again.':'That choice could not be saved, so it has been put back. Please try again.',
+    'Saved.':'Saved.',
+    'That change could not be saved, so your choices have been put back. Please try again.':'That change could not be saved, so your choices have been put back. Please try again.',
+    'All marketing messages are on.':'All marketing messages are on.',
+    'All marketing messages are off. Receipts, bookings and security messages still send.':'All marketing messages are off. Receipts, bookings and security messages still send.',
+    'Offers from businesses you follow':'Offers from businesses you follow',
+    'Promotions and deals from the businesses whose programmes you have joined.':'Promotions and deals from the businesses whose programmes you have joined.',
+    'Your rewards and points':'Your rewards and points',
+    'Points you earn, rewards unlocked, and value that is about to expire.':'Points you earn, rewards unlocked, and value that is about to expire.',
+    'Peekaa updates':'Peekaa updates',
+    'News and new features from Peekaa itself.':'News and new features from Peekaa itself.',
+    'In-app message':'In-app message',
+    'Push notification':'Push notification',
+    'Email':'Email',
+    'SMS':'SMS',
+    'WhatsApp':'WhatsApp',
+    'Call':'Call',
+    'Marketing choices':'Marketing choices',
+    'Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.':'Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.',
+    'Yes — send me these offers and updates. I can turn this off here, or in {link}, at any time. {product} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.':'Yes — send me these offers and updates. I can turn this off here, or in {link}, at any time. {product} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.',
+    'Save marketing choice':'Save marketing choice',
+    'Your marketing choice could not be loaded. No change has been made.':'Your marketing choice could not be loaded. No change has been made.',
+    'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.',
+    'Open communications':'Open communications',
+    'Your consent history':'Your consent history',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.',
+    'Loading your consent history…':'Loading your consent history…',
     preferredLanguage:'Preferred language',
     languageHelp:'{product} follows this choice in English, 中文, Bahasa Melayu and தமிழ்.',
     profileSaved:'Profile saved.'
@@ -3530,7 +3622,99 @@ const CUSTOMER_COPY=Object.freeze({
     'Camera access was not available. Choose a QR image or paste the QR link.':'无法访问相机。请选择二维码图片或粘贴二维码链接。',
     'Reading QR image…':'正在读取二维码图片…',
     'No active Peekaa join QR was found in that image.':'图片中未找到有效的 Peekaa 加入二维码。',
-    'That image could not be read. Try a clearer QR image.':'无法读取该图片。请尝试更清晰的二维码图片。'
+    'That image could not be read. Try a clearer QR image.':'无法读取该图片。请尝试更清晰的二维码图片。',
+    /* v295: wallet detail sections + claim flow. */
+    'Transactions & points':'交易与积分',
+    'Every purchase, reversal, correction, and points event kept in time order.':'每一笔购买、冲正、更正和积分事件均按时间顺序保存。',
+    'Loyalty activity':'积分活动',
+    'Your loyalty history with this business.':'你在该商家的积分历史。',
+    'Gift cards':'礼品卡',
+    'Money left on your gift cards from this business.':'该商家礼品卡的剩余金额。',
+    'Show this screen at the counter — the team uses your card there. We never show the full card number.':'请在柜台出示此屏幕——工作人员会在那里使用你的卡。我们从不显示完整卡号。',
+    'Packages':'套餐',
+    'Session balances and recent usage.':'剩余次数和近期使用情况。',
+    'Membership':'会员资格',
+    'Current plan and period status.':'当前方案和周期状态。',
+    'Appointments':'预约',
+    'Upcoming and recent visits.':'即将到来和近期的到店记录。',
+    'Your bottles':'你的存酒',
+    'What {business} is keeping for you. Show this screen at the counter to have one brought out.':'{business} 为你保管的物品。在柜台出示此屏幕即可取出。',
+    'this bar':'这家酒吧',
+    'Load more':'加载更多',
+    'Pending with business':'等待商家处理',
+    'Ready to use':'可以使用',
+    'All used up':'已用完',
+    'Not valid':'无效',
+    'This section':'此部分',
+    '{section} didn’t load':'{section}加载失败',
+    'Your sign-in expired. Sign in again.':'你的登录已过期。请重新登录。',
+    'Sign in':'登录',
+    'Book again':'再次预约',
+    'Open programme':'打开方案',
+    'Withdraw':'撤回',
+    'Waitlisted':'已加入候补',
+    'Pending':'待处理',
+    'Appointment':'预约',
+    'Add a business programme':'添加商家方案',
+    'Accept invitation':'接受邀请',
+    'Confirm this private invitation while signed in to the intended account.':'请在登录目标账户的状态下确认此私人邀请。',
+    'Enter the business link from its QR or invitation. We only connect an exact unclaimed record.':'请输入商家二维码或邀请中的链接。我们只会连接完全匹配且未被认领的记录。',
+    'Use the same confirmed email your business has on file.':'请使用商家存档中已确认的同一邮箱。',
+    'Checking access…':'正在检查访问权限…',
+    'How should we find your record?':'我们该如何找到你的记录？',
+    'Use my verified mobile number':'使用我已验证的手机号码',
+    'Use my confirmed email instead':'改用我已确认的邮箱',
+    'Business link':'商家链接',
+    'Claim':'认领',
+    'Checking…':'正在检查…',
+    'Customer access could not be checked.':'无法检查顾客访问权限。',
+    'Customer access is unavailable. Please try again later.':'顾客访问暂不可用。请稍后重试。',
+    'Choose where to continue':'选择继续的位置',
+    'Wallet links:':'钱包链接：',
+    'Staff workspaces:':'员工工作区：',
+    'No wallet links yet.':'暂无钱包链接。',
+    'Linked':'已关联',
+    'Request received':'请求已收到',
+    'Your wallet is ready.':'你的钱包已就绪。',
+    'If the details match an available customer record, the business link will appear here.':'如果信息与可用的顾客记录匹配，商家链接会显示在此处。',
+    'Open wallet':'打开钱包',
+    /* v295: Communications (PDPA consent) + profile consent cluster. */
+    'Communications':'通讯设置',
+    'Loading your communication choices…':'正在加载你的通讯选择…',
+    'Your communication choices could not be loaded. Nothing has been changed.':'无法加载你的通讯选择。未做任何更改。',
+    'No communication choices yet':'暂无通讯选择',
+    'There is nothing to set here for your account right now.':'你的账户目前无需在此设置任何内容。',
+    'Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.':'除非你关闭，否则全部开启。在此关闭任何项目都不会停止收据、预约确认或安全消息——这些不属于营销消息，会继续发送。',
+    'Send me all marketing messages':'向我发送所有营销消息',
+    'One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.':'勾选一次即涵盖下方所有类别和渠道——推送、邮件、短信、WhatsApp 和来电。你可以随时单独关闭其中任何一项。',
+    'Saving…':'正在保存…',
+    'That choice could not be saved, so it has been put back. Please try again.':'该选择保存失败，已恢复原状。请重试。',
+    'Saved.':'已保存。',
+    'That change could not be saved, so your choices have been put back. Please try again.':'该更改保存失败，你的选择已恢复原状。请重试。',
+    'All marketing messages are on.':'所有营销消息已开启。',
+    'All marketing messages are off. Receipts, bookings and security messages still send.':'所有营销消息已关闭。收据、预约和安全消息仍会发送。',
+    'Offers from businesses you follow':'你关注商家的优惠',
+    'Promotions and deals from the businesses whose programmes you have joined.':'来自你已加入方案的商家的促销和优惠。',
+    'Your rewards and points':'你的奖励和积分',
+    'Points you earn, rewards unlocked, and value that is about to expire.':'你赚取的积分、已解锁的奖励，以及即将到期的价值。',
+    'Peekaa updates':'Peekaa 更新',
+    'News and new features from Peekaa itself.':'来自 Peekaa 本身的消息和新功能。',
+    'In-app message':'应用内消息',
+    'Push notification':'推送通知',
+    'Email':'电子邮件',
+    'SMS':'短信',
+    'WhatsApp':'WhatsApp',
+    'Call':'来电',
+    'Marketing choices':'营销选择',
+    'Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.':'来自 {product} 背后的公司 Nestly Technologies Pte. Ltd. 及其合作伙伴的优惠和更新，通过推送通知、应用内消息、电子邮件、短信、WhatsApp、电话及其他营销渠道发送。你的姓名和联系方式可能仅出于营销目的与 {product} 的合作伙伴共享。这与各商家自行发送的消息无关。',
+    'Yes — send me these offers and updates. I can turn this off here, or in {link}, at any time. {product} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.':'是——请向我发送这些优惠和更新。我可以随时在此处或在{link}中关闭。{product} 会立即停止发送。合作伙伴将被要求在 10 个工作日内停止。关闭此项不会影响我的积分、预约或服务消息。',
+    'Save marketing choice':'保存营销选择',
+    'Your marketing choice could not be loaded. No change has been made.':'无法加载你的营销选择。未做任何更改。',
+    'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'选择你想了解的内容和方式——你关注商家的优惠、你的奖励和积分，以及 Peekaa 更新。',
+    'Open communications':'打开通讯设置',
+    'Your consent history':'你的同意记录',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'你做过的每一项营销选择，最新在前。这仅为记录——如需更改，请打开上方的通讯设置。',
+    'Loading your consent history…':'正在加载你的同意记录…',
   }),
   ms:Object.freeze({
     home:'Laman Utama',programmes:'Ganjaran Saya',rewardsTab:'Ganjaran',explore:'Terokai',bookings:'Tempahan',scanQr:'Imbas QR',profileTab:'Profil',
@@ -3595,7 +3779,99 @@ const CUSTOMER_COPY=Object.freeze({
     'Camera access was not available. Choose a QR image or paste the QR link.':'Akses kamera tidak tersedia. Pilih imej QR atau tampal pautan QR.',
     'Reading QR image…':'Membaca imej QR…',
     'No active Peekaa join QR was found in that image.':'Tiada QR penyertaan Peekaa yang aktif ditemui dalam imej itu.',
-    'That image could not be read. Try a clearer QR image.':'Imej itu tidak dapat dibaca. Cuba imej QR yang lebih jelas.'
+    'That image could not be read. Try a clearer QR image.':'Imej itu tidak dapat dibaca. Cuba imej QR yang lebih jelas.',
+    /* v295: wallet detail sections + claim flow. */
+    'Transactions & points':'Transaksi & mata',
+    'Every purchase, reversal, correction, and points event kept in time order.':'Setiap pembelian, pembalikan, pembetulan dan peristiwa mata disimpan mengikut susunan masa.',
+    'Loyalty activity':'Aktiviti kesetiaan',
+    'Your loyalty history with this business.':'Sejarah kesetiaan anda dengan perniagaan ini.',
+    'Gift cards':'Kad hadiah',
+    'Money left on your gift cards from this business.':'Baki wang pada kad hadiah anda daripada perniagaan ini.',
+    'Show this screen at the counter — the team uses your card there. We never show the full card number.':'Tunjukkan skrin ini di kaunter — pasukan akan menggunakan kad anda di sana. Kami tidak pernah memaparkan nombor kad penuh.',
+    'Packages':'Pakej',
+    'Session balances and recent usage.':'Baki sesi dan penggunaan terkini.',
+    'Membership':'Keahlian',
+    'Current plan and period status.':'Pelan semasa dan status tempoh.',
+    'Appointments':'Temu janji',
+    'Upcoming and recent visits.':'Lawatan akan datang dan terkini.',
+    'Your bottles':'Botol anda',
+    'What {business} is keeping for you. Show this screen at the counter to have one brought out.':'Apa yang {business} simpan untuk anda. Tunjukkan skrin ini di kaunter untuk mendapatkannya.',
+    'this bar':'bar ini',
+    'Load more':'Muat lagi',
+    'Pending with business':'Menunggu perniagaan',
+    'Ready to use':'Sedia digunakan',
+    'All used up':'Sudah habis digunakan',
+    'Not valid':'Tidak sah',
+    'This section':'Bahagian ini',
+    '{section} didn’t load':'{section} tidak dimuatkan',
+    'Your sign-in expired. Sign in again.':'Log masuk anda telah tamat tempoh. Sila log masuk semula.',
+    'Sign in':'Log masuk',
+    'Book again':'Tempah lagi',
+    'Open programme':'Buka program',
+    'Withdraw':'Tarik balik',
+    'Waitlisted':'Dalam senarai menunggu',
+    'Pending':'Menunggu',
+    'Appointment':'Temu janji',
+    'Add a business programme':'Tambah program perniagaan',
+    'Accept invitation':'Terima jemputan',
+    'Confirm this private invitation while signed in to the intended account.':'Sahkan jemputan peribadi ini semasa log masuk ke akaun yang dimaksudkan.',
+    'Enter the business link from its QR or invitation. We only connect an exact unclaimed record.':'Masukkan pautan perniagaan daripada QR atau jemputannya. Kami hanya menyambungkan rekod tepat yang belum dituntut.',
+    'Use the same confirmed email your business has on file.':'Gunakan e-mel disahkan yang sama seperti dalam rekod perniagaan anda.',
+    'Checking access…':'Menyemak akses…',
+    'How should we find your record?':'Bagaimana kami patut mencari rekod anda?',
+    'Use my verified mobile number':'Guna nombor telefon bimbit saya yang disahkan',
+    'Use my confirmed email instead':'Guna e-mel saya yang disahkan sebaliknya',
+    'Business link':'Pautan perniagaan',
+    'Claim':'Tuntut',
+    'Checking…':'Menyemak…',
+    'Customer access could not be checked.':'Akses pelanggan tidak dapat disemak.',
+    'Customer access is unavailable. Please try again later.':'Akses pelanggan tidak tersedia. Sila cuba sebentar lagi.',
+    'Choose where to continue':'Pilih tempat untuk meneruskan',
+    'Wallet links:':'Pautan dompet:',
+    'Staff workspaces:':'Ruang kerja kakitangan:',
+    'No wallet links yet.':'Belum ada pautan dompet.',
+    'Linked':'Dipautkan',
+    'Request received':'Permintaan diterima',
+    'Your wallet is ready.':'Dompet anda sudah sedia.',
+    'If the details match an available customer record, the business link will appear here.':'Jika butiran sepadan dengan rekod pelanggan yang tersedia, pautan perniagaan akan muncul di sini.',
+    'Open wallet':'Buka dompet',
+    /* v295: Communications (PDPA consent) + profile consent cluster. */
+    'Communications':'Komunikasi',
+    'Loading your communication choices…':'Memuatkan pilihan komunikasi anda…',
+    'Your communication choices could not be loaded. Nothing has been changed.':'Pilihan komunikasi anda tidak dapat dimuatkan. Tiada apa-apa yang diubah.',
+    'No communication choices yet':'Belum ada pilihan komunikasi',
+    'There is nothing to set here for your account right now.':'Tiada apa-apa untuk ditetapkan di sini bagi akaun anda buat masa ini.',
+    'Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.':'Semuanya dihidupkan melainkan anda mematikannya. Mematikan sesuatu di sini tidak akan menghentikan resit, pengesahan tempahan atau mesej keselamatan — itu bukan pemasaran dan akan terus dihantar.',
+    'Send me all marketing messages':'Hantar semua mesej pemasaran kepada saya',
+    'One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.':'Satu tanda meliputi setiap kategori dan setiap saluran di bawah — tolak, e-mel, SMS, WhatsApp dan panggilan. Anda boleh mematikan mana-mana satu pada bila-bila masa.',
+    'Saving…':'Menyimpan…',
+    'That choice could not be saved, so it has been put back. Please try again.':'Pilihan itu tidak dapat disimpan, jadi ia telah dikembalikan. Sila cuba lagi.',
+    'Saved.':'Disimpan.',
+    'That change could not be saved, so your choices have been put back. Please try again.':'Perubahan itu tidak dapat disimpan, jadi pilihan anda telah dikembalikan. Sila cuba lagi.',
+    'All marketing messages are on.':'Semua mesej pemasaran dihidupkan.',
+    'All marketing messages are off. Receipts, bookings and security messages still send.':'Semua mesej pemasaran dimatikan. Resit, tempahan dan mesej keselamatan masih dihantar.',
+    'Offers from businesses you follow':'Tawaran daripada perniagaan yang anda ikuti',
+    'Promotions and deals from the businesses whose programmes you have joined.':'Promosi dan tawaran daripada perniagaan yang programnya telah anda sertai.',
+    'Your rewards and points':'Ganjaran dan mata anda',
+    'Points you earn, rewards unlocked, and value that is about to expire.':'Mata yang anda peroleh, ganjaran yang dibuka, dan nilai yang hampir luput.',
+    'Peekaa updates':'Kemas kini Peekaa',
+    'News and new features from Peekaa itself.':'Berita dan ciri baharu daripada Peekaa sendiri.',
+    'In-app message':'Mesej dalam apl',
+    'Push notification':'Pemberitahuan tolak',
+    'Email':'E-mel',
+    'SMS':'SMS',
+    'WhatsApp':'WhatsApp',
+    'Call':'Panggilan',
+    'Marketing choices':'Pilihan pemasaran',
+    'Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.':'Tawaran dan kemas kini daripada Nestly Technologies Pte. Ltd., syarikat di sebalik {product}, dan rakan kongsinya, melalui pemberitahuan tolak, mesej dalam apl, e-mel, SMS, WhatsApp, panggilan telefon dan saluran pemasaran lain. Nama dan butiran hubungan anda mungkin dikongsi dengan rakan kongsi {product} untuk tujuan pemasaran sahaja. Ini berasingan daripada mesej yang dihantar oleh perniagaan individu.',
+    'Yes — send me these offers and updates. I can turn this off here, or in {link}, at any time. {product} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.':'Ya — hantar tawaran dan kemas kini ini kepada saya. Saya boleh mematikannya di sini, atau dalam {link}, pada bila-bila masa. {product} berhenti menghantar dengan serta-merta. Rakan kongsi diberitahu untuk berhenti dalam masa 10 hari bekerja. Mematikannya tidak menjejaskan mata, tempahan atau mesej perkhidmatan saya.',
+    'Save marketing choice':'Simpan pilihan pemasaran',
+    'Your marketing choice could not be loaded. No change has been made.':'Pilihan pemasaran anda tidak dapat dimuatkan. Tiada perubahan dibuat.',
+    'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'Pilih apa yang anda mahu dengar dan bagaimana — tawaran daripada perniagaan yang anda ikuti, ganjaran dan mata anda, dan kemas kini Peekaa.',
+    'Open communications':'Buka komunikasi',
+    'Your consent history':'Sejarah kebenaran anda',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'Setiap pilihan pemasaran yang anda buat, terbaharu dahulu. Ini rekod sahaja — untuk mengubah sesuatu, buka Komunikasi di atas.',
+    'Loading your consent history…':'Memuatkan sejarah kebenaran anda…',
   }),
   ta:Object.freeze({
     home:'முகப்பு',programmes:'என் வெகுமதிகள்',rewardsTab:'வெகுமதிகள்',explore:'கண்டறிய',bookings:'முன்பதிவுகள்',scanQr:'QR ஸ்கேன்',profileTab:'சுயவிவரம்',
@@ -3660,12 +3936,111 @@ const CUSTOMER_COPY=Object.freeze({
     'Camera access was not available. Choose a QR image or paste the QR link.':'கேமரா அணுகல் கிடைக்கவில்லை. QR படத்தைத் தேர்ந்தெடுக்கவும் அல்லது QR இணைப்பை ஒட்டவும்.',
     'Reading QR image…':'QR படம் படிக்கப்படுகிறது…',
     'No active Peekaa join QR was found in that image.':'அந்தப் படத்தில் செயலில் உள்ள Peekaa சேர்க்கை QR எதுவும் கிடைக்கவில்லை.',
-    'That image could not be read. Try a clearer QR image.':'அந்தப் படத்தைப் படிக்க முடியவில்லை. தெளிவான QR படத்தை முயற்சிக்கவும்.'
+    'That image could not be read. Try a clearer QR image.':'அந்தப் படத்தைப் படிக்க முடியவில்லை. தெளிவான QR படத்தை முயற்சிக்கவும்.',
+    /* v295: wallet detail sections + claim flow. */
+    'Transactions & points':'பரிவர்த்தனைகள் & புள்ளிகள்',
+    'Every purchase, reversal, correction, and points event kept in time order.':'ஒவ்வொரு வாங்குதல், மாற்றியமைப்பு, திருத்தம் மற்றும் புள்ளி நிகழ்வும் கால வரிசையில் வைக்கப்படுகிறது.',
+    'Loyalty activity':'லாயல்டி செயல்பாடு',
+    'Your loyalty history with this business.':'இந்த வணிகத்துடனான உங்கள் லாயல்டி வரலாறு.',
+    'Gift cards':'பரிசு அட்டைகள்',
+    'Money left on your gift cards from this business.':'இந்த வணிகத்தின் உங்கள் பரிசு அட்டைகளில் மீதமுள்ள தொகை.',
+    'Show this screen at the counter — the team uses your card there. We never show the full card number.':'இந்தத் திரையைக் கவுண்டரில் காட்டவும் — குழுவினர் அங்கு உங்கள் அட்டையைப் பயன்படுத்துவார்கள். முழு அட்டை எண்ணை நாங்கள் ஒருபோதும் காட்டுவதில்லை.',
+    'Packages':'தொகுப்புகள்',
+    'Session balances and recent usage.':'அமர்வு இருப்புகள் மற்றும் சமீபத்திய பயன்பாடு.',
+    'Membership':'உறுப்பினர் நிலை',
+    'Current plan and period status.':'தற்போதைய திட்டம் மற்றும் கால நிலை.',
+    'Appointments':'சந்திப்புகள்',
+    'Upcoming and recent visits.':'வரவிருக்கும் மற்றும் சமீபத்திய வருகைகள்.',
+    'Your bottles':'உங்கள் பாட்டில்கள்',
+    'What {business} is keeping for you. Show this screen at the counter to have one brought out.':'{business} உங்களுக்காக வைத்திருப்பவை. ஒன்றை எடுத்து வர கவுண்டரில் இந்தத் திரையைக் காட்டவும்.',
+    'this bar':'இந்த பார்',
+    'Load more':'மேலும் ஏற்று',
+    'Pending with business':'வணிகத்தில் நிலுவையில்',
+    'Ready to use':'பயன்படுத்தத் தயார்',
+    'All used up':'முழுவதும் பயன்படுத்தப்பட்டது',
+    'Not valid':'செல்லுபடியாகாது',
+    'This section':'இந்தப் பகுதி',
+    '{section} didn’t load':'{section} ஏற்றப்படவில்லை',
+    'Your sign-in expired. Sign in again.':'உங்கள் உள்நுழைவு காலாவதியானது. மீண்டும் உள்நுழையவும்.',
+    'Sign in':'உள்நுழை',
+    'Book again':'மீண்டும் முன்பதிவு செய்',
+    'Open programme':'திட்டத்தைத் திற',
+    'Withdraw':'திரும்பப் பெறு',
+    'Waitlisted':'காத்திருப்புப் பட்டியலில்',
+    'Pending':'நிலுவையில்',
+    'Appointment':'சந்திப்பு',
+    'Add a business programme':'வணிகத் திட்டத்தைச் சேர்',
+    'Accept invitation':'அழைப்பை ஏற்று',
+    'Confirm this private invitation while signed in to the intended account.':'நோக்கப்பட்ட கணக்கில் உள்நுழைந்திருக்கும்போது இந்தத் தனிப்பட்ட அழைப்பை உறுதிப்படுத்தவும்.',
+    'Enter the business link from its QR or invitation. We only connect an exact unclaimed record.':'வணிகத்தின் QR அல்லது அழைப்பிலிருந்து வணிக இணைப்பை உள்ளிடவும். சரியாகப் பொருந்தும், உரிமை கோரப்படாத பதிவை மட்டுமே இணைப்போம்.',
+    'Use the same confirmed email your business has on file.':'உங்கள் வணிகத்தின் பதிவில் உள்ள அதே உறுதிப்படுத்தப்பட்ட மின்னஞ்சலைப் பயன்படுத்தவும்.',
+    'Checking access…':'அணுகல் சரிபார்க்கப்படுகிறது…',
+    'How should we find your record?':'உங்கள் பதிவை நாங்கள் எப்படிக் கண்டறிய வேண்டும்?',
+    'Use my verified mobile number':'சரிபார்க்கப்பட்ட என் கைபேசி எண்ணைப் பயன்படுத்து',
+    'Use my confirmed email instead':'அதற்குப் பதிலாக உறுதிப்படுத்தப்பட்ட என் மின்னஞ்சலைப் பயன்படுத்து',
+    'Business link':'வணிக இணைப்பு',
+    'Claim':'உரிமை கோர்',
+    'Checking…':'சரிபார்க்கப்படுகிறது…',
+    'Customer access could not be checked.':'வாடிக்கையாளர் அணுகலைச் சரிபார்க்க முடியவில்லை.',
+    'Customer access is unavailable. Please try again later.':'வாடிக்கையாளர் அணுகல் கிடைக்கவில்லை. பின்னர் மீண்டும் முயற்சிக்கவும்.',
+    'Choose where to continue':'எங்கே தொடர்வது என்பதைத் தேர்ந்தெடுக்கவும்',
+    'Wallet links:':'வாலட் இணைப்புகள்:',
+    'Staff workspaces:':'ஊழியர் பணியிடங்கள்:',
+    'No wallet links yet.':'இதுவரை வாலட் இணைப்புகள் இல்லை.',
+    'Linked':'இணைக்கப்பட்டது',
+    'Request received':'கோரிக்கை பெறப்பட்டது',
+    'Your wallet is ready.':'உங்கள் வாலட் தயார்.',
+    'If the details match an available customer record, the business link will appear here.':'விவரங்கள் கிடைக்கும் வாடிக்கையாளர் பதிவுடன் பொருந்தினால், வணிக இணைப்பு இங்கே தோன்றும்.',
+    'Open wallet':'வாலட்டைத் திற',
+    /* v295: Communications (PDPA consent) + profile consent cluster. */
+    'Communications':'தகவல் தொடர்புகள்',
+    'Loading your communication choices…':'உங்கள் தகவல் தொடர்பு விருப்பங்கள் ஏற்றப்படுகின்றன…',
+    'Your communication choices could not be loaded. Nothing has been changed.':'உங்கள் தகவல் தொடர்பு விருப்பங்களை ஏற்ற முடியவில்லை. எதுவும் மாற்றப்படவில்லை.',
+    'No communication choices yet':'இன்னும் தகவல் தொடர்பு விருப்பங்கள் இல்லை',
+    'There is nothing to set here for your account right now.':'உங்கள் கணக்கிற்கு இப்போது இங்கே அமைக்க எதுவும் இல்லை.',
+    'Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.':'நீங்கள் அணைக்கும் வரை அனைத்தும் இயக்கத்தில் இருக்கும். இங்கே எதையேனும் அணைப்பது ரசீதுகள், முன்பதிவு உறுதிப்படுத்தல்கள் அல்லது பாதுகாப்புச் செய்திகளை நிறுத்தாது — அவை விளம்பரம் அல்ல, தொடர்ந்து அனுப்பப்படும்.',
+    'Send me all marketing messages':'எனக்கு அனைத்து விளம்பரச் செய்திகளையும் அனுப்பவும்',
+    'One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.':'ஒரு தேர்வு கீழே உள்ள ஒவ்வொரு வகையையும் ஒவ்வொரு சேனலையும் உள்ளடக்கும் — புஷ், மின்னஞ்சல், SMS, WhatsApp மற்றும் அழைப்புகள். எப்போது வேண்டுமானாலும் ஒவ்வொன்றையும் தனித்தனியாக அணைக்கலாம்.',
+    'Saving…':'சேமிக்கப்படுகிறது…',
+    'That choice could not be saved, so it has been put back. Please try again.':'அந்தத் தேர்வைச் சேமிக்க முடியவில்லை, அது பழையபடி மாற்றப்பட்டது. மீண்டும் முயற்சிக்கவும்.',
+    'Saved.':'சேமிக்கப்பட்டது.',
+    'That change could not be saved, so your choices have been put back. Please try again.':'அந்த மாற்றத்தைச் சேமிக்க முடியவில்லை, உங்கள் தேர்வுகள் பழையபடி மாற்றப்பட்டன. மீண்டும் முயற்சிக்கவும்.',
+    'All marketing messages are on.':'அனைத்து விளம்பரச் செய்திகளும் இயக்கத்தில் உள்ளன.',
+    'All marketing messages are off. Receipts, bookings and security messages still send.':'அனைத்து விளம்பரச் செய்திகளும் அணைக்கப்பட்டுள்ளன. ரசீதுகள், முன்பதிவுகள் மற்றும் பாதுகாப்புச் செய்திகள் தொடர்ந்து அனுப்பப்படும்.',
+    'Offers from businesses you follow':'நீங்கள் பின்தொடரும் வணிகங்களின் சலுகைகள்',
+    'Promotions and deals from the businesses whose programmes you have joined.':'நீங்கள் சேர்ந்த திட்டங்களைக் கொண்ட வணிகங்களின் விளம்பரங்கள் மற்றும் சலுகைகள்.',
+    'Your rewards and points':'உங்கள் வெகுமதிகள் மற்றும் புள்ளிகள்',
+    'Points you earn, rewards unlocked, and value that is about to expire.':'நீங்கள் பெறும் புள்ளிகள், திறக்கப்பட்ட வெகுமதிகள், மற்றும் காலாவதியாகவுள்ள மதிப்பு.',
+    'Peekaa updates':'Peekaa புதுப்பிப்புகள்',
+    'News and new features from Peekaa itself.':'Peekaa-விலிருந்தே செய்திகள் மற்றும் புதிய அம்சங்கள்.',
+    'In-app message':'செயலிக்குள் செய்தி',
+    'Push notification':'புஷ் அறிவிப்பு',
+    'Email':'மின்னஞ்சல்',
+    'SMS':'SMS',
+    'WhatsApp':'WhatsApp',
+    'Call':'அழைப்பு',
+    'Marketing choices':'விளம்பரத் தேர்வுகள்',
+    'Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.':'{product}-ன் பின்னணி நிறுவனமான Nestly Technologies Pte. Ltd. மற்றும் அதன் கூட்டாளர்களிடமிருந்து புஷ் அறிவிப்பு, செயலிக்குள் செய்தி, மின்னஞ்சல், SMS, WhatsApp, தொலைபேசி அழைப்பு மற்றும் பிற விளம்பர சேனல்கள் வழியாக சலுகைகளும் புதுப்பிப்புகளும். உங்கள் பெயரும் தொடர்பு விவரங்களும் விளம்பர நோக்கத்திற்காக மட்டுமே {product}-ன் கூட்டாளர்களுடன் பகிரப்படலாம். இது தனிப்பட்ட வணிகங்கள் அனுப்பும் செய்திகளிலிருந்து வேறானது.',
+    'Yes — send me these offers and updates. I can turn this off here, or in {link}, at any time. {product} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.':'ஆம் — இந்தச் சலுகைகளையும் புதுப்பிப்புகளையும் எனக்கு அனுப்புங்கள். இதை இங்கே அல்லது {link} இல் எப்போது வேண்டுமானாலும் அணைக்கலாம். {product} உடனடியாக அனுப்புவதை நிறுத்தும். கூட்டாளர்கள் 10 வேலை நாட்களுக்குள் நிறுத்தச் சொல்லப்படுவார்கள். இதை அணைப்பது என் புள்ளிகள், முன்பதிவுகள் அல்லது சேவைச் செய்திகளைப் பாதிக்காது.',
+    'Save marketing choice':'விளம்பரத் தேர்வைச் சேமி',
+    'Your marketing choice could not be loaded. No change has been made.':'உங்கள் விளம்பரத் தேர்வை ஏற்ற முடியவில்லை. எந்த மாற்றமும் செய்யப்படவில்லை.',
+    'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'எதைப் பற்றி எப்படி அறிய வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும் — நீங்கள் பின்தொடரும் வணிகங்களின் சலுகைகள், உங்கள் வெகுமதிகள் மற்றும் புள்ளிகள், மற்றும் Peekaa புதுப்பிப்புகள்.',
+    'Open communications':'தகவல் தொடர்புகளைத் திற',
+    'Your consent history':'உங்கள் ஒப்புதல் வரலாறு',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'நீங்கள் செய்த ஒவ்வொரு விளம்பரத் தேர்வும், புதியது முதலில். இது ஒரு பதிவு மட்டுமே — ஏதேனும் மாற்ற, மேலே உள்ள தகவல் தொடர்புகளைத் திறக்கவும்.',
+    'Loading your consent history…':'உங்கள் ஒப்புதல் வரலாறு ஏற்றப்படுகிறது…',
   })
 });
 const normalizeCustomerLocale=value=>{const v=String(value||'').trim();if(v==='zh')return 'zh-CN';return CUSTOMER_LOCALES.includes(v)?v:'en'};
 let customerLocale='en';
 let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
+/* v295: merchant-AUTHORED copy (offer text, promotion names, media alt) is stored per locale by
+   the business itself, and the backend contract for those reads is en/zh-CN only — a ms or ta
+   wallet correctly falls back to the merchant's English. Every such read must go through this
+   one helper: the expression used to be inlined, and four of the five call sites silently kept
+   'en' when the wallet went multilingual, throwing away Chinese copy the backend was ready to
+   return. One name, one place to change when a merchant locale is added. */
+function merchantCopyLocale(){return customerLocale==='zh-CN'?'zh-CN':'en'}
 function ct(key,vars={}){
   let value=CUSTOMER_COPY[customerLocale]?.[key]??CUSTOMER_COPY.en[key]??key;
   for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
@@ -4615,9 +4990,9 @@ async function renderCustomerBookings(){
     ${currentBookingTab==='bookings'?customerBookingChooserV291(allGroups):''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
-    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
-      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">Withdraw</button>`:''}</div>`).join('')}`:''}
-      ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
+    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${esc(ct('Book again'))}</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">${esc(ct('Open programme'))}</a>`:''}</div>
+      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`).join('')}`:''}
+      ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book again'))}</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`}</div>`).join('')}`:''}
     </section>`).join('')}</div>`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
@@ -4859,17 +5234,17 @@ async function renderCustomerProfile(){
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
     </section>
     <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><span>${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span></label></div></section>
-    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Offers and updates from Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.</p>
-      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates. I can turn this off here, or in <a href="#/customer/communications" style="color:var(--coral);text-decoration:underline">Communications</a>, at any time. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.</span></label>
+    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>${esc(ct('Marketing choices'))}</h2><p class="muted small" style="margin-top:5px">${esc(ct('Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.',{product:BRAND.productName}))}</p>
+      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>${ct('Yes — send me these offers and updates. I can turn this off here, or in {link}, at any time. {product} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.',{link:`<a href="#/customer/communications" style="color:var(--coral);text-decoration:underline">${esc(ct('Communications'))}</a>`,product:esc(BRAND.productName)})}</span></label>
       <div id="customerProfileMarketingStatus" role="status" aria-live="polite"></div>
-      <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save marketing choice</span></button>`
+      <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>${esc(ct('Save marketing choice'))}</span></button>`
       /* v286: a failed read used to render this sentence ALONE — no checkbox, no save button, and
          nothing to press. Withdrawing marketing consent is the one control here the customer can
          demand at any time, so the read is retryable instead of a dead end. */
-      :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p><button class="btn ghost" id="customerMarketingRetry" type="button" style="margin-top:14px">Try again</button>'}
+      :`<p class="err" role="status" style="margin-top:12px">${esc(ct('Your marketing choice could not be loaded. No change has been made.'))}</p><button class="btn ghost" id="customerMarketingRetry" type="button" style="margin-top:14px">${esc(ct('retry'))}</button>`}
     </section>
-    <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Communications</h2><p class="muted small">Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>Open communications</span></a></div></section>
-    <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Your consent history</h2><p class="muted small">Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">Loading your consent history…</p></div></section>
+    <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('Communications'))}</h2><p class="muted small">${esc(ct('Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.'))}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>${esc(ct('Open communications'))}</span></a></div></section>
+    <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(ct('Your consent history'))}</h2><p class="muted small">${esc(ct('Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.'))}</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">${esc(ct('Loading your consent history…'))}</p></div></section>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
@@ -5132,29 +5507,29 @@ async function renderCustomerClaim(){
   const phoneClaimAvailable=!invitationToken
     && customerCapabilities.customer_phone_claims===true
     && customerCapabilities.customer_phone_registration===true;
-  renderCustomerShell({active:'programmes',body:`<div class="card"><h1>${invitationToken?'Accept invitation':'Add a business programme'}</h1><p class="muted small" style="margin-top:6px">${invitationToken?'Confirm this private invitation while signed in to the intended account.':phoneClaimAvailable?'Enter the business link from its QR or invitation. We only connect an exact unclaimed record.':'Use the same confirmed email your business has on file.'}</p>
-      <div id="claimPersonas" style="margin-top:14px"><p class="muted small">Checking access…</p></div>
-      ${invitationToken?'':`${phoneClaimAvailable?`<fieldset style="border:0;padding:0;margin-top:14px"><legend class="small" style="font-weight:700">How should we find your record?</legend><label class="row" for="claimByPhone" style="color:var(--ink);font-weight:500"><input id="claimByPhone" name="claimMethod" type="radio" value="phone" checked style="width:20px;min-width:20px;min-height:20px"> <span>Use my verified mobile number</span></label><label class="row" for="claimByEmail" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="claimByEmail" name="claimMethod" type="radio" value="email" style="width:20px;min-width:20px;min-height:20px"> <span>Use my confirmed email instead</span></label></fieldset>`:''}<label for="claimSlug">Business link</label><input id="claimSlug" autocomplete="off" placeholder="business-slug or ${esc(BRAND.productName)} link" value="${esc(businessIntent)}">`}
-      <button class="btn" id="claimStart" style="margin-top:14px">${invitationToken?'Accept invitation':'Claim'}</button>
+  renderCustomerShell({active:'programmes',body:`<div class="card"><h1>${esc(invitationToken?ct('Accept invitation'):ct('Add a business programme'))}</h1><p class="muted small" style="margin-top:6px">${esc(invitationToken?ct('Confirm this private invitation while signed in to the intended account.'):phoneClaimAvailable?ct('Enter the business link from its QR or invitation. We only connect an exact unclaimed record.'):ct('Use the same confirmed email your business has on file.'))}</p>
+      <div id="claimPersonas" style="margin-top:14px"><p class="muted small">${esc(ct('Checking access…'))}</p></div>
+      ${invitationToken?'':`${phoneClaimAvailable?`<fieldset style="border:0;padding:0;margin-top:14px"><legend class="small" style="font-weight:700">${esc(ct('How should we find your record?'))}</legend><label class="row" for="claimByPhone" style="color:var(--ink);font-weight:500"><input id="claimByPhone" name="claimMethod" type="radio" value="phone" checked style="width:20px;min-width:20px;min-height:20px"> <span>${esc(ct('Use my verified mobile number'))}</span></label><label class="row" for="claimByEmail" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="claimByEmail" name="claimMethod" type="radio" value="email" style="width:20px;min-width:20px;min-height:20px"> <span>${esc(ct('Use my confirmed email instead'))}</span></label></fieldset>`:''}<label for="claimSlug">${esc(ct('Business link'))}</label><input id="claimSlug" autocomplete="off" placeholder="business-slug or ${esc(BRAND.productName)} link" value="${esc(businessIntent)}">`}
+      <button class="btn" id="claimStart" style="margin-top:14px">${esc(invitationToken?ct('Accept invitation'):ct('Claim'))}</button>
       <div id="claimResult"></div></div>`});
   focusCustomerRoute();
   const renderPersonas=async()=>{
     const {data,error}=await sb.rpc('get_my_personas');
     if(!isClaimCurrent())return;
     if(error){
-      $('claimPersonas').innerHTML=`<div class="err">Customer access could not be checked. <button class="btn ghost sm" id="claimPersonaRetry" style="margin-left:8px">Retry</button></div>`;
+      $('claimPersonas').innerHTML=`<div class="err">${esc(ct('Customer access could not be checked.'))} <button class="btn ghost sm" id="claimPersonaRetry" style="margin-left:8px">${esc(ct('retry'))}</button></div>`;
       $('claimPersonaRetry').onclick=renderPersonas;
       return;
     }
     const staff=sortStaffWorkspaces(data?.staff||[]),customer=data?.customer||[];
     const staffLinks=staff.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('');
     $('claimPersonas').innerHTML=staff.length&&customer.length
-      ?`<div class="card" style="background:var(--bg)"><b>Choose where to continue</b><div class="row" style="margin-top:10px">${staffLinks}<a class="btn ghost sm" href="#/wallet">${esc(BRAND.customerLabel)}</a></div></div>`
+      ?`<div class="card" style="background:var(--bg)"><b>${esc(ct('Choose where to continue'))}</b><div class="row" style="margin-top:10px">${staffLinks}<a class="btn ghost sm" href="#/wallet">${esc(BRAND.customerLabel)}</a></div></div>`
       :customer.length
-        ?`<p class="muted small">Wallet links: ${customer.map(x=>`<a style="color:#D06A2E" href="#/wallet/${encodeURIComponent(x.business_slug)}">${esc(x.business_name)}</a>`).join(', ')}</p>`
+        ?`<p class="muted small">${esc(ct('Wallet links:'))} ${customer.map(x=>`<a style="color:#D06A2E" href="#/wallet/${encodeURIComponent(x.business_slug)}">${esc(x.business_name)}</a>`).join(', ')}</p>`
         :staff.length
-          ?`<div><p class="muted small">Staff workspaces:</p><div class="row" style="margin-top:8px">${staffLinks}</div></div>`
-          :'<p class="muted small">No wallet links yet.</p>';
+          ?`<div><p class="muted small">${esc(ct('Staff workspaces:'))}</p><div class="row" style="margin-top:8px">${staffLinks}</div></div>`
+          :`<p class="muted small">${esc(ct('No wallet links yet.'))}</p>`;
   };
   const {data:intentPersonas,error:intentPersonasError}=businessIntent
     ?await sb.rpc('get_my_personas'): {data:null,error:null};
@@ -5176,14 +5551,14 @@ async function renderCustomerClaim(){
     const method=invitationToken?'invitation':(phoneClaimAvailable?(document.querySelector('input[name="claimMethod"]:checked')?.value||'phone'):'email');
     const attemptKey=`${method}:${slug}`;
     if(!claimAttempt||claimAttempt.key!==attemptKey)claimAttempt={key:attemptKey,id:crypto.randomUUID()};
-    const originalLabel=invitationToken?'Accept invitation':'Claim';
-    $('claimStart').disabled=true;$('claimStart').textContent='Checking…';
+    const originalLabel=invitationToken?ct('Accept invitation'):ct('Claim');
+    $('claimStart').disabled=true;$('claimStart').textContent=ct('Checking…');
     if(method==='email'||method==='invitation'){
       const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:identityAttemptId});
       if(!isClaimCurrent())return;
       if(identity.error){
         $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
-        $('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return;
+        $('claimResult').innerHTML=`<div class="err">${esc(ct('Customer access is unavailable. Please try again later.'))}</div>`;return;
       }
     }
     const {data,error}=invitationToken
@@ -5193,7 +5568,7 @@ async function renderCustomerClaim(){
         :await sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id});
     if(!isClaimCurrent())return;
     $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
-    if(error){$('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return}
+    if(error){$('claimResult').innerHTML=`<div class="err">${esc(ct('Customer access is unavailable. Please try again later.'))}</div>`;return}
     pendingCustomerInvitationToken='';
     const outcome=data?.outcome||'no_link_created';
     if(!invitationToken&&outcome==='linked'){
@@ -5201,9 +5576,9 @@ async function renderCustomerClaim(){
       rememberPendingCustomerDestination('');
       nav('#/wallet/'+encodeURIComponent(slug));return;
     }
-    $('claimResult').innerHTML=`<div class="card" style="margin-top:16px"><b>${outcome==='linked'?'Linked':'Request received'}</b>
-      <p class="muted small" style="margin-top:6px">${outcome==='linked'?'Your wallet is ready.':'If the details match an available customer record, the business link will appear here.'}</p>
-      ${outcome==='linked'?'<button class="btn sm" id="goWallet" style="margin-top:10px">Open wallet</button>':''}</div>`;
+    $('claimResult').innerHTML=`<div class="card" style="margin-top:16px"><b>${esc(outcome==='linked'?ct('Linked'):ct('Request received'))}</b>
+      <p class="muted small" style="margin-top:6px">${esc(outcome==='linked'?ct('Your wallet is ready.'):ct('If the details match an available customer record, the business link will appear here.'))}</p>
+      ${outcome==='linked'?`<button class="btn sm" id="goWallet" style="margin-top:10px">${esc(ct('Open wallet'))}</button>`:''}</div>`;
     if($('goWallet'))$('goWallet').onclick=()=>nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/wallet');
     await renderPersonas();
   };
@@ -5283,20 +5658,25 @@ function walletDate(value,withTime=false){
   return date.toLocaleString('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium',...(withTime?{timeStyle:'short'}:{})});
 }
 
+/* v295: title/description arrive as English ct() KEYS and are translated HERE, so all six
+   wallet detail sections localize at one chokepoint instead of six call sites. The translated
+   title is what lands in data-section-title, so walletSectionError's "<title> didn't load"
+   reads in the member's language too. */
 function walletSectionShell(id,title,description=''){
-  return `<section class="card wallet-section" id="${id}" data-section-title="${esc(title)}" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(title)}</h2>${description?`<p class="muted small">${esc(description)}</p>`:''}</div></div><div class="wallet-skeleton"></div></section>`;
+  const heading=ct(title),body=description?ct(description):'';
+  return `<section class="card wallet-section" id="${id}" data-section-title="${esc(heading)}" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(heading)}</h2>${body?`<p class="muted small">${esc(body)}</p>`:''}</div></div><div class="wallet-skeleton"></div></section>`;
 }
 
 function walletSectionError(id,message,retry,error=null){
   const host=$(id);if(!host)return;
   host.setAttribute('aria-busy','false');
-  const title=host.dataset.sectionTitle||host.querySelector('h2')?.textContent?.trim()||'This section';
+  const title=host.dataset.sectionTitle||host.querySelector('h2')?.textContent?.trim()||ct('This section');
   if(walletSessionExpired(error)){
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(title)} didn’t load</h2><p class="muted small">Your sign-in expired. Sign in again.</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">Sign in</button></div>`;
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('{section} didn’t load',{section:title}))}</h2><p class="muted small">${esc(ct('Your sign-in expired. Sign in again.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">${esc(ct('Sign in'))}</button></div>`;
     $(`${id}Retry`).onclick=()=>customerSessionExpiredSignIn();
     return;
   }
-  host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(title)} didn’t load</h2><p class="muted small">${esc(message)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">Retry</button></div>`;
+  host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('{section} didn’t load',{section:title}))}</h2><p class="muted small">${esc(message)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">${esc(ct('retry'))}</button></div>`;
   $(`${id}Retry`).onclick=retry;
 }
 
@@ -5344,8 +5724,8 @@ function renderWalletAppointments(host,businessSlug,state,customerFeatures,{appo
   host.innerHTML=`<div class="wallet-section-head"><div><h2>Appointments</h2><p class="muted small">Upcoming and recent visits</p></div></div>
     <div>${state.items.map(a=>`<div class="wallet-appt"><div><b>${esc(walletDate(a.starts_at,true))}</b>
       <p class="muted small" style="margin-top:3px">${esc(a.service_name||'Appointment')}${a.branch_name?' · '+esc(a.branch_name):''} · ${esc(String(a.status||'').replaceAll('_',' '))}</p></div><span class="spacer"></span>
-      ${customerFeatures.customer_actions&&appointmentChangesEnabled&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:a.status==='completed'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(businessSlug)}" data-appointment-id="${esc(a.appointment_id)}">Book again</button>`:''}</div>`).join('')}</div>
-    ${state.nextCursor?'<button class="btn ghost sm" id="walletAppointmentsMore" style="margin-top:12px">Load more</button>':''}`;
+      ${customerFeatures.customer_actions&&appointmentChangesEnabled&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:a.status==='completed'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(businessSlug)}" data-appointment-id="${esc(a.appointment_id)}">${esc(ct('Book again'))}</button>`:''}</div>`).join('')}</div>
+    ${state.nextCursor?`<button class="btn ghost sm" id="walletAppointmentsMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
   wireWalletAppointmentActions(businessSlug);
   wireCustomerRepeatBookingV167(host);
 }
@@ -5664,7 +6044,7 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
       const contact=host('[data-business-contact]');
       if(contact)contact.innerHTML='<p class="muted small">Contact details unavailable.</p>';
     });
-  Promise.resolve(customerRpc('customer_get_promotions_v155',{p_business:business.id,p_branch:null,p_locale:'en'}))
+  Promise.resolve(customerRpc('customer_get_promotions_v155',{p_business:business.id,p_branch:null,p_locale:merchantCopyLocale()}))
     .then(({data,error})=>{
       const offersHost=host('[data-business-offers]');if(!offersHost)return;
       if(error){offersHost.innerHTML='<p class="muted small">Current offers couldn’t load.</p>';return}
@@ -6659,7 +7039,7 @@ async function renderCustomerWallet(businessSlug=null){
       const [legacyResult,bookingRequestResult,offersResult]=await Promise.all([
         customerRpc('customer_get_wallet'),
         customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
-        customerRpc('customer_get_home_offers_v167',{p_locale:'en'})
+        customerRpc('customer_get_home_offers_v167',{p_locale:merchantCopyLocale()})
       ]);
       if(!isWalletCurrent())return;
       customerHomeOverview={
@@ -6721,7 +7101,7 @@ async function renderCustomerWallet(businessSlug=null){
       customerRpc('customer_get_wallet'),
       customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
       customerRpc('customer_get_programme_selector_media_v96'),
-      customerRpc('customer_get_home_offers_v167',{p_locale:'en'})
+      customerRpc('customer_get_home_offers_v167',{p_locale:merchantCopyLocale()})
     ]);
     if(!isWalletCurrent())return;
     if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null,undefined,error);
@@ -6795,14 +7175,14 @@ async function renderCustomerWallet(businessSlug=null){
     :Promise.resolve({data:null,error:null});
   const [businessActionsResult,presentationResult,effectiveTierResult,promotionsResult,promotionPromptResult]=await Promise.all([
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
-    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:customerLocale==='zh-CN'?'zh-CN':'en'}):unavailableBusinessId(), /* v293: merchant programme copy is bilingual (en/zh-CN); ms wallets read the English merchant copy */
+    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale()}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId}):unavailableBusinessId(),
     /* V201 (owner: "customer view only have 1 company instead of multiple branch"). The customer
        sees the FIRM, so this read is firm-wide by definition — never the workspace's selected
        branch. selectedBranchId is workspace state; a staff member who is also a customer would
        otherwise carry their branch scope into their own customer view and silently lose the other
        outlets' offers. A promotion that only runs at one outlet says so in its own terms. */
-    businessId?sb.rpc('customer_get_promotions_v155',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
+    businessId?sb.rpc('customer_get_promotions_v155',{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale()}):unavailableBusinessId(),
     promotionPromptRequest
   ]);
   if(!isWalletCurrent())return;
@@ -7168,9 +7548,9 @@ async function renderCustomerWallet(businessSlug=null){
     if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity',ct('No loyalty activity is available yet.'),businessSlug,'activity',()=>loadActivity(null),isWalletCurrent);
     const unit=esc(data?.unit||loyalty.unit||'points'),expiry=data?.expiry||{};
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Loyalty activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${esc(customerPointTotalV103(expiry.expiring_next_30_days))} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
-      <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0),campaign=campaignEntitlementDisplayV99(item);return `<div class="wallet-line"><div><b>${esc(campaign.title||'Loyalty activity')}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${campaign.status?' · '+esc(campaign.status.replaceAll('_',' ')):''}</p>${campaign.detail?`<p class="muted small" style="margin-top:3px">${esc(campaign.detail)}</p>`:''}</div><span class="spacer"></span>${campaign.pending?'<span class="pill off">Pending with business</span>':`<span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':delta<0?'−':''}${esc(customerPointTotalV103(Math.abs(delta)))} ${unit}</span>`}</div>`}).join('')}</div>
-      ${activityState.nextCursor?'<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">Load more</button>':''}`;
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Loyalty activity'))}</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${esc(customerPointTotalV103(expiry.expiring_next_30_days))} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:`<p class="muted small">${esc(ct('Your loyalty history with this business.'))}</p>`}</div></div>
+      <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0),campaign=campaignEntitlementDisplayV99(item);return `<div class="wallet-line"><div><b>${esc(campaign.title||ct('Loyalty activity'))}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${campaign.status?' · '+esc(campaign.status.replaceAll('_',' ')):''}</p>${campaign.detail?`<p class="muted small" style="margin-top:3px">${esc(campaign.detail)}</p>`:''}</div><span class="spacer"></span>${campaign.pending?`<span class="pill off">${esc(ct('Pending with business'))}</span>`:`<span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':delta<0?'−':''}${esc(customerPointTotalV103(Math.abs(delta)))} ${unit}</span>`}</div>`}).join('')}</div>
+      ${activityState.nextCursor?`<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
     if($('walletActivityMore'))$('walletActivityMore').onclick=()=>{ $('walletActivityMore').disabled=true;loadActivity(activityState.nextCursor) };
   };
   const transactionState={items:[],nextCursor:null};
@@ -7242,9 +7622,9 @@ async function renderCustomerWallet(businessSlug=null){
     if(!cards.length){host.remove();ensureWalletEmptyState(businessSlug);return}
     const giftCurrency=String(data?.business?.currency||currency);
     const giftMoney=cents=>`${giftCurrency} ${(Number(cents||0)/100).toFixed(2)}`;
-    const giftState={active:'Ready to use',redeemed:'All used up',void:'Not valid'};
+    const giftState={active:ct('Ready to use'),redeemed:ct('All used up'),void:ct('Not valid')};
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Gift cards</h2><p class="muted small">Show this screen at the counter — the team uses your card there. We never show the full card number.</p></div><span class="spacer"></span><span class="pill">${esc(giftMoney(data?.total_balance_cents))} left</span></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Gift cards'))}</h2><p class="muted small">${esc(ct('Show this screen at the counter — the team uses your card there. We never show the full card number.'))}</p></div><span class="spacer"></span><span class="pill">${esc(giftMoney(data?.total_balance_cents))} left</span></div>
       ${cards.map(card=>`<div class="wallet-line"><div><b>${esc(giftMoney(card.balance_cents))} left</b><p class="muted small" style="margin-top:3px">Card ····${esc(card.code_suffix||'')} · started at ${esc(giftMoney(card.initial_cents))}${card.created_at?' · '+esc(walletDate(card.created_at)):''}</p></div><span class="spacer"></span><span class="pill">${esc(giftState[card.status]||String(card.status||'').replaceAll('_',' '))}</span></div>`).join('')}
       ${data?.truncated?`<p class="muted small" style="margin-top:10px">Showing your ${cards.length} newest cards. The total above counts every card you have.</p>`:''}`;
   };
@@ -7273,7 +7653,7 @@ async function renderCustomerWallet(businessSlug=null){
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Packages</h2><p class="muted small">Session balances and recent usage.</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
       ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
-      ${packageState.nextCursor?'<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">Load more</button>':''}`;
+      ${packageState.nextCursor?`<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
     if($('walletPackagesMore'))$('walletPackagesMore').onclick=()=>{ $('walletPackagesMore').disabled=true;loadPackages(packageState.nextCursor) };
   };
   const loadMemberships=async()=>{
@@ -7342,8 +7722,8 @@ async function renderCustomerWallet(businessSlug=null){
     const bottles=Array.isArray(data?.items)?data.items:[];
     if(!bottles.length)return;
     if($('walletBottles'))return;
-    sections.insertAdjacentHTML('afterbegin',`<section class="card wallet-section" id="walletBottles" data-section-title="Your bottles">
-      <div class="wallet-section-head"><div><h2>Your bottles</h2><p class="muted small">What ${esc(b.name||'this bar')} is keeping for you. Show this screen at the counter to have one brought out.</p></div><span class="spacer"></span><span class="pill">${bottles.length}</span></div>
+    sections.insertAdjacentHTML('afterbegin',`<section class="card wallet-section" id="walletBottles" data-section-title="${esc(ct('Your bottles'))}">
+      <div class="wallet-section-head"><div><h2>${esc(ct('Your bottles'))}</h2><p class="muted small">${esc(ct('What {business} is keeping for you. Show this screen at the counter to have one brought out.',{business:b.name||ct('this bar')}))}</p></div><span class="spacer"></span><span class="pill">${bottles.length}</span></div>
       ${bottles.map(bottle=>{
         /* V278: Number(null) is 0, and 0 <= 7 — the naive test painted every NEVER-expiring
            bottle amber and told the customer it was about to run out. */
@@ -7422,7 +7802,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${global?`${esc(BRAND.customerLabel)} inbox`:'Inbox'}</h2><p class="muted small">${global?'Updates grouped by your separate business programmes.':'Customer-safe updates from this business.'}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button></div>
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
-      ${nextCursor?'<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">Load more</button>':''}
+      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
       <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`;
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
@@ -7590,6 +7970,9 @@ async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>
    is exactly how a screen and its send-path gate drift apart.
    Transactional messages (receipts, booking confirmations, security notices) are deliberately
    absent: they have no category server-side and cannot be switched off from anywhere. */
+/* v295: the label/help strings below are ct() KEYS, not rendered copy — every render site
+   passes them through ct() so this PDPA consent surface reads in the member's own language.
+   Consent you cannot read is not consent. */
 const CUSTOMER_COMMUNICATION_CATEGORIES_V263=[
   ['business_offers','Offers from businesses you follow','Promotions and deals from the businesses whose programmes you have joined.'],
   ['rewards_and_points','Your rewards and points','Points you earn, rewards unlocked, and value that is about to expire.'],
@@ -7607,12 +7990,12 @@ async function renderCustomerCommunicationsV263(){
     messagesAvailable:context.features.customer_in_app_inbox===true,
     backTo:'#/customer/profile',body
   });
-  shell(CUI.loadingState({title:'Communications',body:'Loading your communication choices…',variant:'form'}));
+  shell(CUI.loadingState({title:ct('Communications'),body:ct('Loading your communication choices…'),variant:'form'}));
   focusCustomerRoute();
   const {data,error}=await sb.rpc('customer_get_communication_preferences_v263');
   if(!isCurrent())return;
   if(error){
-    shell(CUI.errorState({title:'Communications',message:'Your communication choices could not be loaded. Nothing has been changed.',retryId:'customerCommsRetry'}));
+    shell(CUI.errorState({title:ct('Communications'),message:ct('Your communication choices could not be loaded. Nothing has been changed.'),retryId:'customerCommsRetry'}));
     const retry=$('customerCommsRetry');if(retry)retry.onclick=()=>renderCustomerCommunicationsV263();
     focusCustomerRoute();return;
   }
@@ -7620,20 +8003,20 @@ async function renderCustomerCommunicationsV263(){
   const known=new Map(CUSTOMER_COMMUNICATION_CATEGORIES_V263.map(([key,label,help])=>[key,{label,help}]));
   const rows=serverCategories.filter(entry=>known.has(entry?.category));
   if(!rows.length){
-    shell(`<header class="customer-page-head"><div><h1>Communications</h1></div></header>${CUI.emptyState({iconName:'bell',title:'No communication choices yet',body:'There is nothing to set here for your account right now.'})}`);
+    shell(`<header class="customer-page-head"><div><h1>${esc(ct('Communications'))}</h1></div></header>${CUI.emptyState({iconName:'bell',title:ct('No communication choices yet'),body:ct('There is nothing to set here for your account right now.')})}`);
     focusCustomerRoute();return;
   }
   const allEnabled=data?.all_enabled===true;
-  shell(`<header class="customer-page-head"><div><h1>Communications</h1><p class="muted">Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.</p></div></header>
-    <section class="card"><label class="row" for="customerCommsAll" style="align-items:flex-start;color:var(--ink);font-weight:600"><input id="customerCommsAll" type="checkbox" ${allEnabled?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:2px"> <span>Send me all marketing messages<span class="muted small" style="display:block;font-weight:400;margin-top:3px">One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.</span></span></label>
+  shell(`<header class="customer-page-head"><div><h1>${esc(ct('Communications'))}</h1><p class="muted">${esc(ct('Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.'))}</p></div></header>
+    <section class="card"><label class="row" for="customerCommsAll" style="align-items:flex-start;color:var(--ink);font-weight:600"><input id="customerCommsAll" type="checkbox" ${allEnabled?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:2px"> <span>${esc(ct('Send me all marketing messages'))}<span class="muted small" style="display:block;font-weight:400;margin-top:3px">${esc(ct('One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.'))}</span></span></label>
       <p class="muted small" id="customerCommsStatus" role="status" aria-live="polite" style="margin-top:10px"></p></section>
     ${rows.map(entry=>{
       const meta=known.get(entry.category);
       const channels=Array.isArray(entry.channels)?entry.channels:[];
-      return `<section class="card" style="margin-top:14px"><h2>${esc(meta.label)}</h2><p class="muted small" style="margin-top:5px">${esc(meta.help)}</p>
+      return `<section class="card" style="margin-top:14px"><h2>${esc(ct(meta.label))}</h2><p class="muted small" style="margin-top:5px">${esc(ct(meta.help))}</p>
       ${channels.map(channel=>{
         const label=(CUSTOMER_COMMUNICATION_CHANNELS_V263.find(([key])=>key===channel?.channel)||[null,channel?.channel])[1];
-        return `<label class="row" for="customerComms-${esc(entry.category)}-${esc(channel.channel)}" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="customerComms-${esc(entry.category)}-${esc(channel.channel)}" class="customerCommsToggle" type="checkbox" style="width:auto" data-category="${esc(entry.category)}" data-channel="${esc(channel.channel)}" ${channel.enabled===true?'checked':''}>${esc(label||channel.channel)}</label>`;
+        return `<label class="row" for="customerComms-${esc(entry.category)}-${esc(channel.channel)}" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="customerComms-${esc(entry.category)}-${esc(channel.channel)}" class="customerCommsToggle" type="checkbox" style="width:auto" data-category="${esc(entry.category)}" data-channel="${esc(channel.channel)}" ${channel.enabled===true?'checked':''}>${esc(label?ct(label):channel.channel)}</label>`;
       }).join('')}</section>`;
     }).join('')}`);
   focusCustomerRoute();
@@ -7648,28 +8031,28 @@ async function renderCustomerCommunicationsV263(){
      so the screen can never claim a preference the server did not store. */
   document.querySelectorAll('.customerCommsToggle').forEach(input=>input.onchange=async()=>{
     const wanted=input.checked;
-    input.disabled=true;say('Saving…');
+    input.disabled=true;say(ct('Saving…'));
     const {error:setError}=await sb.rpc('customer_set_communication_preference_v263',{
       p_category:input.dataset.category,p_channel:input.dataset.channel,p_enabled:wanted
     });
     if(!isCurrent()||!input.isConnected)return;
     input.disabled=false;
-    if(setError){input.checked=!wanted;syncMaster();say('That choice could not be saved, so it has been put back. Please try again.');return}
-    syncMaster();say('Saved.');
+    if(setError){input.checked=!wanted;syncMaster();say(ct('That choice could not be saved, so it has been put back. Please try again.'));return}
+    syncMaster();say(ct('Saved.'));
   });
   if(master)master.onchange=async()=>{
     const wanted=master.checked;
     const before=[...document.querySelectorAll('.customerCommsToggle')].map(input=>[input,input.checked]);
     master.disabled=true;before.forEach(([input])=>{input.disabled=true;input.checked=wanted});
-    say('Saving…');
+    say(ct('Saving…'));
     const {error:setError}=await sb.rpc('customer_set_all_communications_v263',{p_enabled:wanted});
     if(!isCurrent()||!master.isConnected)return;
     master.disabled=false;before.forEach(([input])=>{input.disabled=false});
     if(setError){
       master.checked=!wanted;before.forEach(([input,was])=>{input.checked=was});
-      say('That change could not be saved, so your choices have been put back. Please try again.');return;
+      say(ct('That change could not be saved, so your choices have been put back. Please try again.'));return;
     }
-    say(wanted?'All marketing messages are on.':'All marketing messages are off. Receipts, bookings and security messages still send.');
+    say(wanted?ct('All marketing messages are on.'):ct('All marketing messages are off. Receipts, bookings and security messages still send.'));
   };
 }
 
@@ -8539,7 +8922,7 @@ function renderAuth(mode='in',{admin=false}={}){
       resetClientSessionState({preserveInvitation:true});route();
     }catch(e){
       if(authControl)authControl.reset();
-      $('autherr').innerHTML=`<div class="err">${esc(e.message)}</div>`;
+      $('autherr').innerHTML=`<div class="err">${esc(humanErrorV295(e,'We could not sign you in. Please try again.'))}</div>`;
     }
   };
 }
@@ -8877,7 +9260,7 @@ function renderOnboard(){
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
     };
-    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(error.message);$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
+    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
     $('out').onclick=async()=>{killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();route()};
   })();
 }
@@ -9652,6 +10035,22 @@ async function initNotifications(){
 const WORKSPACE_LOCALES_V97=Object.freeze(['en','zh-CN','ms']);
 const WORKSPACE_COPY_V97=Object.freeze({
   'zh-CN':Object.freeze({
+    /* v295: humanErrorV295 fallbacks — every sentence the mapper can show instead of a raw
+       provider string or a machine code. */
+    'That did not go through. Please try again.':'操作未能完成。请重试。',
+    'We could not reach Peekaa. Check your connection and try again.':'无法连接 Peekaa。请检查网络后重试。',
+    'That took too long and was stopped. Please try again.':'耗时过长已停止。请重试。',
+    'That invite code could not be used.':'该邀请码无法使用。',
+    'Your cancellation request could not be sent.':'取消请求发送失败。',
+    'Your reschedule request could not be sent.':'改期请求发送失败。',
+    'We could not sign you in. Please try again.':'无法登录。请重试。',
+    'Those settings could not be saved.':'设置保存失败。',
+    'That import could not be completed.':'导入未能完成。',
+    'This section could not be loaded.':'此部分加载失败。',
+    'That appointment could not be saved.':'预约保存失败。',
+    'That appointment could not be rescheduled.':'预约改期失败。',
+    'Your booking request could not be sent.':'预订请求发送失败。',
+    'That booking could not be found.':'未找到该预订。',
     'Dashboard':'仪表板','Home':'首页','Customers':'顾客','Serve & sell':'服务与销售','Record sale':'记录销售',
     'Performance':'经营表现','Performance detail':'经营详情','Today':'今天','Date joined':'加入日期',
     'Inactive customers':'不活跃顾客','Recorded gender':'已记录性别','Services and goods':'服务与商品',
@@ -9817,6 +10216,22 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'I have checked the corrected amount.':'我已核对更正后的金额。','Replace the amount':'替换金额'
   }),
   ms:Object.freeze({
+    /* v295: humanErrorV295 fallbacks — every sentence the mapper can show instead of a raw
+       provider string or a machine code. */
+    'That did not go through. Please try again.':'Tindakan itu tidak berjaya. Sila cuba lagi.',
+    'We could not reach Peekaa. Check your connection and try again.':'Kami tidak dapat menghubungi Peekaa. Semak sambungan anda dan cuba lagi.',
+    'That took too long and was stopped. Please try again.':'Ia mengambil masa terlalu lama dan dihentikan. Sila cuba lagi.',
+    'That invite code could not be used.':'Kod jemputan itu tidak boleh digunakan.',
+    'Your cancellation request could not be sent.':'Permintaan pembatalan anda tidak dapat dihantar.',
+    'Your reschedule request could not be sent.':'Permintaan penjadualan semula anda tidak dapat dihantar.',
+    'We could not sign you in. Please try again.':'Kami tidak dapat log masuk anda. Sila cuba lagi.',
+    'Those settings could not be saved.':'Tetapan itu tidak dapat disimpan.',
+    'That import could not be completed.':'Import itu tidak dapat diselesaikan.',
+    'This section could not be loaded.':'Bahagian ini tidak dapat dimuatkan.',
+    'That appointment could not be saved.':'Temu janji itu tidak dapat disimpan.',
+    'That appointment could not be rescheduled.':'Temu janji itu tidak dapat dijadualkan semula.',
+    'Your booking request could not be sent.':'Permintaan tempahan anda tidak dapat dihantar.',
+    'That booking could not be found.':'Tempahan itu tidak dapat ditemui.',
     'Dashboard':'Papan pemuka','Home':'Utama','Customers':'Pelanggan','Serve & sell':'Khidmat & jualan','Record sale':'Rekod jualan',
     'Performance':'Prestasi','Performance detail':'Butiran prestasi','Today':'Hari ini','Date joined':'Tarikh menyertai',
     'Inactive customers':'Pelanggan tidak aktif','Recorded gender':'Jantina direkodkan','Services and goods':'Perkhidmatan dan barangan',
@@ -10021,6 +10436,38 @@ function workspaceLanguagePickerV97(id='workspaceLanguageV97'){
 const workspaceTranslationV97=source=>workspaceLocale==='en'||typeof WORKSPACE_GENERATED_COPY_V97==='undefined'
   ?source
   :(WORKSPACE_COPY_V97[workspaceLocale]?.[source]??WORKSPACE_GENERATED_COPY_V97[workspaceLocale]?.[source]??source);
+/* v295: the workspace/portal twin of the platform console's platformErrorMessage.
+   Sixteen sites rendered error.message straight into a toast or an .err block, so an owner or a
+   customer could read 'Failed to fetch' or a bare Postgres code like
+   'valid_promotion_reader_context_required'. Neither is copy: it cannot be translated, it names
+   nothing the reader can act on, and the same failure class is already mapped and localized in
+   the platform console.
+
+   Routing the raw text through workspaceTranslationV97 alone does NOT fix it — that helper ends
+   in `??source`, so an unknown string passes through verbatim. This mapper decides instead:
+     1. a known provider/network string gets a real sentence;
+     2. a MACHINE CODE (snake_case, or PostgREST/Postgres internals) is never shown — the reader
+        gets one honest fallback;
+     3. a sentence the backend deliberately wrote for a human IS shown, translated when the
+        dictionary knows it.
+   The raw text always goes to console.error, so debuggability is unchanged. */
+const WORKSPACE_ERROR_COPY_V295=Object.freeze({
+  'Failed to fetch':'We could not reach Peekaa. Check your connection and try again.',
+  'NetworkError when attempting to fetch resource.':'We could not reach Peekaa. Check your connection and try again.',
+  'Load failed':'We could not reach Peekaa. Check your connection and try again.',
+  'The user aborted a request.':'That took too long and was stopped. Please try again.',
+  'signal is aborted without reason':'That took too long and was stopped. Please try again.'
+});
+const PROVIDER_NOISE_V295=/^(JSON object requested|duplicate key value|new row for relation|permission denied|relation ".*" does not exist|could not find|invalid input syntax|null value in column)/i;
+function humanErrorV295(error,fallback='That did not go through. Please try again.',translate=workspaceTranslationV97){
+  const raw=String(error?.message??error??'').trim();
+  if(raw&&globalThis.console?.error)globalThis.console.error('[peekaa] error:',raw);
+  if(!raw)return translate(fallback);
+  const mapped=WORKSPACE_ERROR_COPY_V295[raw];
+  if(mapped)return translate(mapped);
+  const machineCode=!/\s/.test(raw)||/^[a-z0-9_]+$/.test(raw)||PROVIDER_NOISE_V295.test(raw);
+  return machineCode?translate(fallback):translate(raw);
+}
 const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -13460,7 +13907,7 @@ async function tillPage(){
         p_phone:notFoundPhone||phone,p_full_name:name,p_marketing_consent:$('tConsent').checked,
         p_source:'till quick add'});
       if(!isTillCurrent())return;
-      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(humanErrorV295(error))}</div>`;return}
       const {data:lk,error:lkErr}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:notFoundPhone||phone});
       if(!isTillCurrent())return;
       busy=false;
@@ -15696,7 +16143,7 @@ async function bookingsPage(){
       p_takes_table_reservations:takesTables});
     if(!isCurrent())return;
     $('setSave').disabled=false;
-    if(error){$('setErr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+    if(error){$('setErr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Those settings could not be saved.'))}</div>`;return}
     $('setErr').innerHTML='';
     /* V223: only mirror what was actually sent. The server coalesces a null, keeping the stored
        value, so copying null into S.biz would make the local copy disagree with the database. */
@@ -15821,7 +16268,7 @@ async function bookingsPage(){
       const {data,error}=await sb.rpc('import_bookings',{p_business:S.biz.id,p_rows:recs});
       if(!isCurrent())return;
       $('bkCsvGo').disabled=false;
-      if(error){$('bkCsvPrev').innerHTML+=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){$('bkCsvPrev').innerHTML+=`<div class="err">${esc(humanErrorV295(error,'That import could not be completed.'))}</div>`;return}
       const errs=(data.errors||[]).slice(0,5);
       $('bkCsvPrev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('importBookingPreview',{inserted:data.inserted,skipped:data.skipped})}</p>
         ${errs.length?`<div class="err" style="margin-top:8px">${workspaceTemplateHtmlV97(errs.length===1?'firstImportError':'firstImportErrors',{count:errs.length})}<br>${errs.map(e=>`<span data-workspace-i18n>Row</span> <span data-merchant-content>${esc(String(e.row))}</span>: <span data-merchant-content>${esc(e.error)}</span>`).join('<br>')}</div>`:''}`;
@@ -17516,7 +17963,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     if(!isRetentionCurrent())return;
     if(error){
       routeMain.innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
-        <div class="card"><p class="err">${esc(error.message)}</p><button class="btn" id="retryRetention">Retry</button></div>`;
+        <div class="card"><p class="err">${esc(humanErrorV295(error,'This section could not be loaded.'))}</p><button class="btn" id="retryRetention">Retry</button></div>`;
       $('retryRetention').onclick=()=>retentionPage(draftVersionId,editProgramId);return;
     }
     programs=draft?.programs||[];taxonomy=draft?.taxonomy||[];snapshotHash=draft?.snapshot_hash||null;
@@ -23523,7 +23970,7 @@ async function appointmentsPage(){
       p_staff:$('astf').value==='auto'?null:$('astf').value});
     if(!stillCurrent())return null;
     $('checkAvailability').disabled=false;
-    if(error){formError.innerHTML=`<div class="err">${esc(error.message)}</div>`;return null}
+    if(error){formError.innerHTML=`<div class="err">${esc(humanErrorV295(error))}</div>`;return null}
     renderSuggestions(data||{});return data;
   }
   if(canWrite){
@@ -23570,7 +24017,7 @@ async function appointmentsPage(){
       const {data,error}=await sb.rpc('book_appointment_smart_v47',{...request,p_idempotency_key:bookingAttempt.key});
       if(!stillCurrent())return;
       $('ago').disabled=false;
-      if(error){$('appointmentFormError').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){$('appointmentFormError').innerHTML=`<div class="err">${esc(humanErrorV295(error,'That appointment could not be saved.'))}</div>`;return}
       if(data?.status==='conflict'){
         /* V220. Owner: "if the timing is clashed, when press book appointment - should pop up
            prompt to notify user, direct them to change timing / suggest free staff".
@@ -23793,7 +24240,7 @@ async function appointmentsPage(){
       const stillCurrent=rescheduleGate.begin();setReschedulePending(true);errorHost.innerHTML='';
       const {data,error}=await sb.rpc('reschedule_appointment_v48',{...request,p_idempotency_key:rescheduleAttempt.key});
       if(!stillCurrent()){if(editForm.isConnected)setReschedulePending(false);return}setReschedulePending(false);
-      if(error){errorHost.innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){errorHost.innerHTML=`<div class="err">${esc(humanErrorV295(error,'That appointment could not be rescheduled.'))}</div>`;return}
       if(data?.status==='conflict'){renderRescheduleSuggestions(feedback,data.suggestions||{});CUI.announce('Appointment clash found. The appointment was not changed.',{assertive:true});return}
       const confirmation={
         in_app_created:' Customer in-app confirmation created.',
@@ -26763,7 +27210,7 @@ async function reportsPage(){
   async function runMoney(){
     const isLatest=moneyGate.begin(),target=$('rbody'),exportButton=$('rcsv');
     let scope;
-    try{scope=answerRange()}catch(error){if(isLatest()){target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;exportButton.hidden=true;exportButton.disabled=true}return}
+    try{scope=answerRange()}catch(error){if(isLatest()){target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;exportButton.hidden=true;exportButton.disabled=true}return}
     target.innerHTML=CUI.skeletonGrid({cards:4,lines:4});
     exportButton.hidden=true;exportButton.disabled=true;
     let response;
@@ -26921,7 +27368,7 @@ async function reportsPage(){
   async function runBusy(){
     const target=$('busyBody');if(!target)return;
     const isLatest=busyGate.begin();
-    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;return}
+    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;return}
     target.innerHTML=CUI.skeletonGrid({cards:3,lines:4});
     try{
       const [reportsScope,appointmentScope]=await Promise.all([
@@ -26955,7 +27402,7 @@ async function reportsPage(){
   async function runReturning(){
     const target=$('returningBody');if(!target)return;
     const isLatest=returningGate.begin();
-    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;return}
+    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;return}
     target.innerHTML=CUI.skeletonGrid({cards:3,lines:4});
     const currentRequest={p_business:S.biz.id,p_from:scope.from,p_to:shiftSgDateInput(scope.to,1),p_branch:scope.branchId,p_as_of:scope.toExclusive};
     const priorRequest={p_business:S.biz.id,p_from:scope.priorFrom,p_to:shiftSgDateInput(scope.priorTo,1),p_branch:scope.branchId,p_as_of:sgDateBoundary(scope.priorTo,1)};
@@ -29907,7 +30354,7 @@ async function loadPortalUpcomingBookingsV183(slug,isPortalCurrent=()=>true){
     host.innerHTML='<p class="muted small">You have no upcoming bookings with this business yet.</p>';
     return;
   }
-  host.innerHTML=`${requests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · awaiting the business</p></div><span class="spacer"></span><span class="pill ${item.status==='waitlisted'?'new':'off'}">${esc(item.status==='waitlisted'?'Waitlisted':'Pending')}</span></div>`).join('')}
+  host.innerHTML=`${requests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · awaiting the business</p></div><span class="spacer"></span><span class="pill ${item.status==='waitlisted'?'new':'off'}">${esc(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending'))}</span></div>`).join('')}
     ${appointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true))}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'booked').replaceAll('_',' '))}</p></div><span class="spacer"></span>${String(item.status||'')==='booked'?(changesEnabled?`<button class="btn ghost sm walletChange" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(slug)}">Change</button>`:'<span class="muted small">Contact the business to change this</span>'):''}</div>`).join('')}`;
   wireWalletAppointmentActions(slug);
 }
@@ -30259,7 +30706,7 @@ async function renderPortal(slug){
         turnstile_token:bookingTurnstileToken},signedInUser,isPortalCurrent)}
       catch(error){
         if(!isPortalCurrent()||!$('perr')?.isConnected)return;
-        $('perr').innerHTML=`<div class="err">${esc(error.message)}</div>`;
+        $('perr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Your booking request could not be sent.'))}</div>`;
         if($('psend'))$('psend').disabled=false;
         bookingTurnstileControl?.reset();return;
       }
@@ -30291,7 +30738,7 @@ async function renderPortal(slug){
       $('merr').innerHTML='';$('mfind').disabled=true;
       let data;
       try{data=await publicGateway('manage-booking',{body:{action:'lookup',token:manageToken}})}
-      catch(error){$('merr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('mfind').disabled=false;return}
+      catch(error){$('merr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'That booking could not be found.'))}</div>`;$('mfind').disabled=false;return}
       $('mfind').disabled=false;
       const when=data.starts_at||data.preferred_at;
       /* v286 (audit): this was the one time on the whole booking surface printed in the device's
@@ -30349,7 +30796,7 @@ async function renderPortal(slug){
     let data;
     manageChangeBusyV286(true);
     try{data=await publicGateway('manage-booking',{body:{action:'change',token:manageToken,submission_id:changeAttempt.id,kind:'cancel',proposed:null,note:null}})}
-    catch(error){manageChangeBusyV286(false);return toast(error.message)}
+    catch(error){manageChangeBusyV286(false);return toast(humanErrorV295(error,'Your cancellation request could not be sent.'))}
     manageChangeSettledV286(data);
   };
   const mRescheduleHandler=async()=>{
@@ -30362,7 +30809,7 @@ async function renderPortal(slug){
     let data;
     manageChangeBusyV286(true);
     try{data=await publicGateway('manage-booking',{body:{action:'change',token:manageToken,submission_id:changeAttempt.id,kind:'reschedule',proposed,note:null}})}
-    catch(error){manageChangeBusyV286(false);return toast(error.message)}
+    catch(error){manageChangeBusyV286(false);return toast(humanErrorV295(error,'Your reschedule request could not be sent.'))}
     manageChangeSettledV286(data);
   };
   draw();

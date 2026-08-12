@@ -35,7 +35,7 @@ test('customer consumes the server-limited linked-business promotion projection'
      lost the other outlets' offers. The customer sees the firm; a promotion restricted to one
      outlet says so in its own terms. The v178 sheet path already read firm-wide — this is the
      wallet catching up, not a new rule. */
-  assert.match(wallet,/p_business:businessId,p_branch:null,p_locale:'en'/);
+  assert.match(wallet,/p_business:businessId,p_branch:null,p_locale:merchantCopyLocale\(\)/);
   assert.match(wallet,/Array\.isArray\(promotionsResult\.data\?\.items\)\?promotionsResult\.data\.items:\[\]/);
   assert.match(wallet,/const programmeOffersStatus=promotionsResult\.error\?'error':'ready'/);
   assert.match(wallet,/promotionsResult\.error\s*\?\[\]/);

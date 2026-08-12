@@ -3,6 +3,22 @@
    Edit app/app.js and run: npm run bundle-stamp */
 const WORKSPACE_COPY_V97=Object.freeze({
   'zh-CN':Object.freeze({
+    /* v295: humanErrorV295 fallbacks — every sentence the mapper can show instead of a raw
+       provider string or a machine code. */
+    'That did not go through. Please try again.':'操作未能完成。请重试。',
+    'We could not reach Peekaa. Check your connection and try again.':'无法连接 Peekaa。请检查网络后重试。',
+    'That took too long and was stopped. Please try again.':'耗时过长已停止。请重试。',
+    'That invite code could not be used.':'该邀请码无法使用。',
+    'Your cancellation request could not be sent.':'取消请求发送失败。',
+    'Your reschedule request could not be sent.':'改期请求发送失败。',
+    'We could not sign you in. Please try again.':'无法登录。请重试。',
+    'Those settings could not be saved.':'设置保存失败。',
+    'That import could not be completed.':'导入未能完成。',
+    'This section could not be loaded.':'此部分加载失败。',
+    'That appointment could not be saved.':'预约保存失败。',
+    'That appointment could not be rescheduled.':'预约改期失败。',
+    'Your booking request could not be sent.':'预订请求发送失败。',
+    'That booking could not be found.':'未找到该预订。',
     'Dashboard':'仪表板','Home':'首页','Customers':'顾客','Serve & sell':'服务与销售','Record sale':'记录销售',
     'Performance':'经营表现','Performance detail':'经营详情','Today':'今天','Date joined':'加入日期',
     'Inactive customers':'不活跃顾客','Recorded gender':'已记录性别','Services and goods':'服务与商品',
@@ -168,6 +184,22 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'I have checked the corrected amount.':'我已核对更正后的金额。','Replace the amount':'替换金额'
   }),
   ms:Object.freeze({
+    /* v295: humanErrorV295 fallbacks — every sentence the mapper can show instead of a raw
+       provider string or a machine code. */
+    'That did not go through. Please try again.':'Tindakan itu tidak berjaya. Sila cuba lagi.',
+    'We could not reach Peekaa. Check your connection and try again.':'Kami tidak dapat menghubungi Peekaa. Semak sambungan anda dan cuba lagi.',
+    'That took too long and was stopped. Please try again.':'Ia mengambil masa terlalu lama dan dihentikan. Sila cuba lagi.',
+    'That invite code could not be used.':'Kod jemputan itu tidak boleh digunakan.',
+    'Your cancellation request could not be sent.':'Permintaan pembatalan anda tidak dapat dihantar.',
+    'Your reschedule request could not be sent.':'Permintaan penjadualan semula anda tidak dapat dihantar.',
+    'We could not sign you in. Please try again.':'Kami tidak dapat log masuk anda. Sila cuba lagi.',
+    'Those settings could not be saved.':'Tetapan itu tidak dapat disimpan.',
+    'That import could not be completed.':'Import itu tidak dapat diselesaikan.',
+    'This section could not be loaded.':'Bahagian ini tidak dapat dimuatkan.',
+    'That appointment could not be saved.':'Temu janji itu tidak dapat disimpan.',
+    'That appointment could not be rescheduled.':'Temu janji itu tidak dapat dijadualkan semula.',
+    'Your booking request could not be sent.':'Permintaan tempahan anda tidak dapat dihantar.',
+    'That booking could not be found.':'Tempahan itu tidak dapat ditemui.',
     'Dashboard':'Papan pemuka','Home':'Utama','Customers':'Pelanggan','Serve & sell':'Khidmat & jualan','Record sale':'Rekod jualan',
     'Performance':'Prestasi','Performance detail':'Butiran prestasi','Today':'Hari ini','Date joined':'Tarikh menyertai',
     'Inactive customers':'Pelanggan tidak aktif','Recorded gender':'Jantina direkodkan','Services and goods':'Perkhidmatan dan barangan',

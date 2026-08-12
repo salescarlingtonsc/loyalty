@@ -199,7 +199,7 @@ test('consent history resolves the caller from the session, never from an argume
 
 test('the profile renders consent history read-only and in plain language', () => {
   assert.match(app, /id="customerConsentHistory"/);
-  assert.match(app, /<h2>Your consent history<\/h2>/);
+  assert.match(app, /<h2>\$\{esc\(ct\('Your consent history'\)\)\}<\/h2>/);
   assert.match(app, /sb\.rpc\('customer_get_consent_history_v282',\{p_limit:100\}\)/);
   assert.match(app, /hydrateCustomerConsentHistoryV282\(isCurrent\)/);
   const section = app.slice(

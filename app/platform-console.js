@@ -8634,12 +8634,18 @@
          opens an error. */
       const scopedReader=context.access?.role==='sales_staff';
       main.querySelectorAll('[data-prospect]').forEach(card=>{
-        card.onclick=()=>{
+        /* The cards are <article>/<tr> carrying role="button" + tabindex=0, so the browser does
+           NOT synthesize a click from Enter/Space — a keyboard or switch user focused an element
+           announced as a button and nothing happened, while the identical card on the Onboarding
+           board worked. Both routes now share one activation path. */
+        const open=()=>{
           const item=items.find(entry=>String(entry.id||entry.prospect_id)===card.dataset.prospect);
           if(!item)return;
           if(scopedReader)openScopedProspect(item,context,[],{onClose:()=>renderCrm(context,active)});
           else openProspectDetail(item,{...context,prospectCloseHash:crmHash(active)});
         };
+        card.onclick=open;
+        card.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open()}};
       });
       /* Reuse the Firms drawer's request modal rather than posting a request
          from here. v176 requires a period_kind of monthly|quarterly|yearly AND

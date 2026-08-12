@@ -50,7 +50,7 @@ test('v286: account-level controls do not depend on the profile row', () => {
 });
 
 test('v286: a failed marketing-preference read keeps a way back to the control', () => {
-  assert.match(profile, /Your marketing choice could not be loaded\. No change has been made\.<\/p><button class="btn ghost" id="customerMarketingRetry"/);
+  assert.match(profile, /ct\('Your marketing choice could not be loaded\. No change has been made\.'\)\)\}<\/p><button class="btn ghost" id="customerMarketingRetry"/);
   assert.match(profile, /marketingRetry\.onclick=\(\)=>\{[\s\S]*?renderCustomerProfile\(\)/);
 });
 

@@ -95,7 +95,7 @@ test('a guest cancellation disables its buttons, keeps its submission id and rep
   const reschedule = section(appJs, 'const mRescheduleHandler=async()=>{', '  draw();');
   for (const block of [cancel, reschedule]) {
     assert.match(block, /manageChangeBusyV286\(true\);/, 'both buttons go busy for the await');
-    assert.match(block, /catch\(error\)\{manageChangeBusyV286\(false\);return toast\(error\.message\)\}/);
+    assert.match(block, /catch\(error\)\{manageChangeBusyV286\(false\);return toast\(humanErrorV295\(error,'[^']+'\)\)\}/);
     assert.match(block, /manageChangeSettledV286\(data\);/);
     assert.doesNotMatch(block, /changeAttempt=null;/,
       'clearing the attempt let a repeat tap mint a second submission_id and duplicate the request');

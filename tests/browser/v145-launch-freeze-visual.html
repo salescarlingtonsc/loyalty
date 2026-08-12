@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2b2b17df2f0342c223bdbb938fbc2304315e5d27995ac95d66cffc9c238386e4"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="43eb62be64b58a39a86150cf0c48c517fe50e8060e5c5cb94e8b8c257965104b"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1921,7 +1921,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 2b2b17df2f0342c223bdbb938fbc2304315e5d27995ac95d66cffc9c238386e4</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 43eb62be64b58a39a86150cf0c48c517fe50e8060e5c5cb94e8b8c257965104b</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -4016,7 +4016,7 @@ function renderHistPage(history,n){
   async function runMoney(){
     const isLatest=moneyGate.begin(),target=$('rbody'),exportButton=$('rcsv');
     let scope;
-    try{scope=answerRange()}catch(error){if(isLatest()){target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;exportButton.hidden=true;exportButton.disabled=true}return}
+    try{scope=answerRange()}catch(error){if(isLatest()){target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;exportButton.hidden=true;exportButton.disabled=true}return}
     target.innerHTML=CUI.skeletonGrid({cards:4,lines:4});
     exportButton.hidden=true;exportButton.disabled=true;
     let response;
@@ -4174,7 +4174,7 @@ function renderHistPage(history,n){
   async function runBusy(){
     const target=$('busyBody');if(!target)return;
     const isLatest=busyGate.begin();
-    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;return}
+    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;return}
     target.innerHTML=CUI.skeletonGrid({cards:3,lines:4});
     try{
       const [reportsScope,appointmentScope]=await Promise.all([
@@ -4208,7 +4208,7 @@ function renderHistPage(history,n){
   async function runReturning(){
     const target=$('returningBody');if(!target)return;
     const isLatest=returningGate.begin();
-    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;return}
+    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;return}
     target.innerHTML=CUI.skeletonGrid({cards:3,lines:4});
     const currentRequest={p_business:S.biz.id,p_from:scope.from,p_to:shiftSgDateInput(scope.to,1),p_branch:scope.branchId,p_as_of:scope.toExclusive};
     const priorRequest={p_business:S.biz.id,p_from:scope.priorFrom,p_to:shiftSgDateInput(scope.priorTo,1),p_branch:scope.branchId,p_as_of:sgDateBoundary(scope.priorTo,1)};
@@ -4754,7 +4754,7 @@ function renderHistPage(history,n){
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${global?`${esc(BRAND.customerLabel)} inbox`:'Inbox'}</h2><p class="muted small">${global?'Updates grouped by your separate business programmes.':'Customer-safe updates from this business.'}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button></div>
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
-      ${nextCursor?'<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">Load more</button>':''}
+      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
       <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`;
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
@@ -4923,7 +4923,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'2b2b17df2f0342c223bdbb938fbc2304315e5d27995ac95d66cffc9c238386e4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'43eb62be64b58a39a86150cf0c48c517fe50e8060e5c5cb94e8b8c257965104b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

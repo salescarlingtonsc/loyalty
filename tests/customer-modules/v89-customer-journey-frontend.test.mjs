@@ -201,7 +201,7 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
   assert.match(bookings,/customer_list_programmes_v89/);
   assert.match(bookings,/customer_get_business_actions_v89/);
   assert.match(bookings,/response\.data\?\.booking\?\.enabled===true/);
-  assert.match(bookings,/group\.bookingEnabled&&group\.business_slug[\s\S]*>Book again</);
+  assert.match(bookings,/group\.bookingEnabled&&group\.business_slug[\s\S]*ct\('Book again'\)/);
 });
 
 test('loyalty owner can enable customer QR redemption without a bookings module',async()=>{

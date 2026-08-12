@@ -1119,6 +1119,13 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
 }
 
 let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
+/* v295: merchant-AUTHORED copy (offer text, promotion names, media alt) is stored per locale by
+   the business itself, and the backend contract for those reads is en/zh-CN only — a ms or ta
+   wallet correctly falls back to the merchant's English. Every such read must go through this
+   one helper: the expression used to be inlined, and four of the five call sites silently kept
+   'en' when the wallet went multilingual, throwing away Chinese copy the backend was ready to
+   return. One name, one place to change when a merchant locale is added. */
+function merchantCopyLocale(){return customerLocale==='zh-CN'?'zh-CN':'en'}
 function applyCustomerNavCountsV194(counts={}){
   customerNavCountsV194={...customerNavCountsV194,...counts};
   const nav=document.querySelector('.customer-primary-nav');
@@ -1539,9 +1546,9 @@ async function renderCustomerBookings(){
     ${currentBookingTab==='bookings'?customerBookingChooserV291(allGroups):''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
-    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
-      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">Withdraw</button>`:''}</div>`).join('')}`:''}
-      ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
+    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${esc(ct('Book again'))}</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">${esc(ct('Open programme'))}</a>`:''}</div>
+      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`).join('')}`:''}
+      ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book again'))}</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`}</div>`).join('')}`:''}
     </section>`).join('')}</div>`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
@@ -1715,17 +1722,17 @@ async function renderCustomerProfile(){
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
     </section>
     <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><span>${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span></label></div></section>
-    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Offers and updates from Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.</p>
-      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates. I can turn this off here, or in <a href="#/customer/communications" style="color:var(--coral);text-decoration:underline">Communications</a>, at any time. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.</span></label>
+    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>${esc(ct('Marketing choices'))}</h2><p class="muted small" style="margin-top:5px">${esc(ct('Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.',{product:BRAND.productName}))}</p>
+      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>${ct('Yes — send me these offers and updates. I can turn this off here, or in {link}, at any time. {product} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.',{link:`<a href="#/customer/communications" style="color:var(--coral);text-decoration:underline">${esc(ct('Communications'))}</a>`,product:esc(BRAND.productName)})}</span></label>
       <div id="customerProfileMarketingStatus" role="status" aria-live="polite"></div>
-      <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save marketing choice</span></button>`
+      <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>${esc(ct('Save marketing choice'))}</span></button>`
       /* v286: a failed read used to render this sentence ALONE — no checkbox, no save button, and
          nothing to press. Withdrawing marketing consent is the one control here the customer can
          demand at any time, so the read is retryable instead of a dead end. */
-      :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p><button class="btn ghost" id="customerMarketingRetry" type="button" style="margin-top:14px">Try again</button>'}
+      :`<p class="err" role="status" style="margin-top:12px">${esc(ct('Your marketing choice could not be loaded. No change has been made.'))}</p><button class="btn ghost" id="customerMarketingRetry" type="button" style="margin-top:14px">${esc(ct('retry'))}</button>`}
     </section>
-    <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Communications</h2><p class="muted small">Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>Open communications</span></a></div></section>
-    <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Your consent history</h2><p class="muted small">Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">Loading your consent history…</p></div></section>
+    <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('Communications'))}</h2><p class="muted small">${esc(ct('Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.'))}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>${esc(ct('Open communications'))}</span></a></div></section>
+    <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(ct('Your consent history'))}</h2><p class="muted small">${esc(ct('Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.'))}</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">${esc(ct('Loading your consent history…'))}</p></div></section>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
@@ -1988,29 +1995,29 @@ async function renderCustomerClaim(){
   const phoneClaimAvailable=!invitationToken
     && customerCapabilities.customer_phone_claims===true
     && customerCapabilities.customer_phone_registration===true;
-  renderCustomerShell({active:'programmes',body:`<div class="card"><h1>${invitationToken?'Accept invitation':'Add a business programme'}</h1><p class="muted small" style="margin-top:6px">${invitationToken?'Confirm this private invitation while signed in to the intended account.':phoneClaimAvailable?'Enter the business link from its QR or invitation. We only connect an exact unclaimed record.':'Use the same confirmed email your business has on file.'}</p>
-      <div id="claimPersonas" style="margin-top:14px"><p class="muted small">Checking access…</p></div>
-      ${invitationToken?'':`${phoneClaimAvailable?`<fieldset style="border:0;padding:0;margin-top:14px"><legend class="small" style="font-weight:700">How should we find your record?</legend><label class="row" for="claimByPhone" style="color:var(--ink);font-weight:500"><input id="claimByPhone" name="claimMethod" type="radio" value="phone" checked style="width:20px;min-width:20px;min-height:20px"> <span>Use my verified mobile number</span></label><label class="row" for="claimByEmail" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="claimByEmail" name="claimMethod" type="radio" value="email" style="width:20px;min-width:20px;min-height:20px"> <span>Use my confirmed email instead</span></label></fieldset>`:''}<label for="claimSlug">Business link</label><input id="claimSlug" autocomplete="off" placeholder="business-slug or ${esc(BRAND.productName)} link" value="${esc(businessIntent)}">`}
-      <button class="btn" id="claimStart" style="margin-top:14px">${invitationToken?'Accept invitation':'Claim'}</button>
+  renderCustomerShell({active:'programmes',body:`<div class="card"><h1>${esc(invitationToken?ct('Accept invitation'):ct('Add a business programme'))}</h1><p class="muted small" style="margin-top:6px">${esc(invitationToken?ct('Confirm this private invitation while signed in to the intended account.'):phoneClaimAvailable?ct('Enter the business link from its QR or invitation. We only connect an exact unclaimed record.'):ct('Use the same confirmed email your business has on file.'))}</p>
+      <div id="claimPersonas" style="margin-top:14px"><p class="muted small">${esc(ct('Checking access…'))}</p></div>
+      ${invitationToken?'':`${phoneClaimAvailable?`<fieldset style="border:0;padding:0;margin-top:14px"><legend class="small" style="font-weight:700">${esc(ct('How should we find your record?'))}</legend><label class="row" for="claimByPhone" style="color:var(--ink);font-weight:500"><input id="claimByPhone" name="claimMethod" type="radio" value="phone" checked style="width:20px;min-width:20px;min-height:20px"> <span>${esc(ct('Use my verified mobile number'))}</span></label><label class="row" for="claimByEmail" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="claimByEmail" name="claimMethod" type="radio" value="email" style="width:20px;min-width:20px;min-height:20px"> <span>${esc(ct('Use my confirmed email instead'))}</span></label></fieldset>`:''}<label for="claimSlug">${esc(ct('Business link'))}</label><input id="claimSlug" autocomplete="off" placeholder="business-slug or ${esc(BRAND.productName)} link" value="${esc(businessIntent)}">`}
+      <button class="btn" id="claimStart" style="margin-top:14px">${esc(invitationToken?ct('Accept invitation'):ct('Claim'))}</button>
       <div id="claimResult"></div></div>`});
   focusCustomerRoute();
   const renderPersonas=async()=>{
     const {data,error}=await sb.rpc('get_my_personas');
     if(!isClaimCurrent())return;
     if(error){
-      $('claimPersonas').innerHTML=`<div class="err">Customer access could not be checked. <button class="btn ghost sm" id="claimPersonaRetry" style="margin-left:8px">Retry</button></div>`;
+      $('claimPersonas').innerHTML=`<div class="err">${esc(ct('Customer access could not be checked.'))} <button class="btn ghost sm" id="claimPersonaRetry" style="margin-left:8px">${esc(ct('retry'))}</button></div>`;
       $('claimPersonaRetry').onclick=renderPersonas;
       return;
     }
     const staff=sortStaffWorkspaces(data?.staff||[]),customer=data?.customer||[];
     const staffLinks=staff.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('');
     $('claimPersonas').innerHTML=staff.length&&customer.length
-      ?`<div class="card" style="background:var(--bg)"><b>Choose where to continue</b><div class="row" style="margin-top:10px">${staffLinks}<a class="btn ghost sm" href="#/wallet">${esc(BRAND.customerLabel)}</a></div></div>`
+      ?`<div class="card" style="background:var(--bg)"><b>${esc(ct('Choose where to continue'))}</b><div class="row" style="margin-top:10px">${staffLinks}<a class="btn ghost sm" href="#/wallet">${esc(BRAND.customerLabel)}</a></div></div>`
       :customer.length
-        ?`<p class="muted small">Wallet links: ${customer.map(x=>`<a style="color:#D06A2E" href="#/wallet/${encodeURIComponent(x.business_slug)}">${esc(x.business_name)}</a>`).join(', ')}</p>`
+        ?`<p class="muted small">${esc(ct('Wallet links:'))} ${customer.map(x=>`<a style="color:#D06A2E" href="#/wallet/${encodeURIComponent(x.business_slug)}">${esc(x.business_name)}</a>`).join(', ')}</p>`
         :staff.length
-          ?`<div><p class="muted small">Staff workspaces:</p><div class="row" style="margin-top:8px">${staffLinks}</div></div>`
-          :'<p class="muted small">No wallet links yet.</p>';
+          ?`<div><p class="muted small">${esc(ct('Staff workspaces:'))}</p><div class="row" style="margin-top:8px">${staffLinks}</div></div>`
+          :`<p class="muted small">${esc(ct('No wallet links yet.'))}</p>`;
   };
   const {data:intentPersonas,error:intentPersonasError}=businessIntent
     ?await sb.rpc('get_my_personas'): {data:null,error:null};
@@ -2032,14 +2039,14 @@ async function renderCustomerClaim(){
     const method=invitationToken?'invitation':(phoneClaimAvailable?(document.querySelector('input[name="claimMethod"]:checked')?.value||'phone'):'email');
     const attemptKey=`${method}:${slug}`;
     if(!claimAttempt||claimAttempt.key!==attemptKey)claimAttempt={key:attemptKey,id:crypto.randomUUID()};
-    const originalLabel=invitationToken?'Accept invitation':'Claim';
-    $('claimStart').disabled=true;$('claimStart').textContent='Checking…';
+    const originalLabel=invitationToken?ct('Accept invitation'):ct('Claim');
+    $('claimStart').disabled=true;$('claimStart').textContent=ct('Checking…');
     if(method==='email'||method==='invitation'){
       const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:identityAttemptId});
       if(!isClaimCurrent())return;
       if(identity.error){
         $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
-        $('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return;
+        $('claimResult').innerHTML=`<div class="err">${esc(ct('Customer access is unavailable. Please try again later.'))}</div>`;return;
       }
     }
     const {data,error}=invitationToken
@@ -2049,7 +2056,7 @@ async function renderCustomerClaim(){
         :await sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id});
     if(!isClaimCurrent())return;
     $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
-    if(error){$('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return}
+    if(error){$('claimResult').innerHTML=`<div class="err">${esc(ct('Customer access is unavailable. Please try again later.'))}</div>`;return}
     pendingCustomerInvitationToken='';
     const outcome=data?.outcome||'no_link_created';
     if(!invitationToken&&outcome==='linked'){
@@ -2057,9 +2064,9 @@ async function renderCustomerClaim(){
       rememberPendingCustomerDestination('');
       nav('#/wallet/'+encodeURIComponent(slug));return;
     }
-    $('claimResult').innerHTML=`<div class="card" style="margin-top:16px"><b>${outcome==='linked'?'Linked':'Request received'}</b>
-      <p class="muted small" style="margin-top:6px">${outcome==='linked'?'Your wallet is ready.':'If the details match an available customer record, the business link will appear here.'}</p>
-      ${outcome==='linked'?'<button class="btn sm" id="goWallet" style="margin-top:10px">Open wallet</button>':''}</div>`;
+    $('claimResult').innerHTML=`<div class="card" style="margin-top:16px"><b>${esc(outcome==='linked'?ct('Linked'):ct('Request received'))}</b>
+      <p class="muted small" style="margin-top:6px">${esc(outcome==='linked'?ct('Your wallet is ready.'):ct('If the details match an available customer record, the business link will appear here.'))}</p>
+      ${outcome==='linked'?`<button class="btn sm" id="goWallet" style="margin-top:10px">${esc(ct('Open wallet'))}</button>`:''}</div>`;
     if($('goWallet'))$('goWallet').onclick=()=>nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/wallet');
     await renderPersonas();
   };
@@ -2108,20 +2115,25 @@ function renderCustomerWalletRetry(message,businessSlug,retry=()=>renderCustomer
   $('walletRetry').onclick=expired?(()=>customerSessionExpiredSignIn()):retry;
 }
 
+/* v295: title/description arrive as English ct() KEYS and are translated HERE, so all six
+   wallet detail sections localize at one chokepoint instead of six call sites. The translated
+   title is what lands in data-section-title, so walletSectionError's "<title> didn't load"
+   reads in the member's language too. */
 function walletSectionShell(id,title,description=''){
-  return `<section class="card wallet-section" id="${id}" data-section-title="${esc(title)}" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(title)}</h2>${description?`<p class="muted small">${esc(description)}</p>`:''}</div></div><div class="wallet-skeleton"></div></section>`;
+  const heading=ct(title),body=description?ct(description):'';
+  return `<section class="card wallet-section" id="${id}" data-section-title="${esc(heading)}" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(heading)}</h2>${body?`<p class="muted small">${esc(body)}</p>`:''}</div></div><div class="wallet-skeleton"></div></section>`;
 }
 
 function walletSectionError(id,message,retry,error=null){
   const host=$(id);if(!host)return;
   host.setAttribute('aria-busy','false');
-  const title=host.dataset.sectionTitle||host.querySelector('h2')?.textContent?.trim()||'This section';
+  const title=host.dataset.sectionTitle||host.querySelector('h2')?.textContent?.trim()||ct('This section');
   if(walletSessionExpired(error)){
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(title)} didn’t load</h2><p class="muted small">Your sign-in expired. Sign in again.</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">Sign in</button></div>`;
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('{section} didn’t load',{section:title}))}</h2><p class="muted small">${esc(ct('Your sign-in expired. Sign in again.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">${esc(ct('Sign in'))}</button></div>`;
     $(`${id}Retry`).onclick=()=>customerSessionExpiredSignIn();
     return;
   }
-  host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(title)} didn’t load</h2><p class="muted small">${esc(message)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">Retry</button></div>`;
+  host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('{section} didn’t load',{section:title}))}</h2><p class="muted small">${esc(message)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">${esc(ct('retry'))}</button></div>`;
   $(`${id}Retry`).onclick=retry;
 }
 
@@ -2169,8 +2181,8 @@ function renderWalletAppointments(host,businessSlug,state,customerFeatures,{appo
   host.innerHTML=`<div class="wallet-section-head"><div><h2>Appointments</h2><p class="muted small">Upcoming and recent visits</p></div></div>
     <div>${state.items.map(a=>`<div class="wallet-appt"><div><b>${esc(walletDate(a.starts_at,true))}</b>
       <p class="muted small" style="margin-top:3px">${esc(a.service_name||'Appointment')}${a.branch_name?' · '+esc(a.branch_name):''} · ${esc(String(a.status||'').replaceAll('_',' '))}</p></div><span class="spacer"></span>
-      ${customerFeatures.customer_actions&&appointmentChangesEnabled&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:a.status==='completed'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(businessSlug)}" data-appointment-id="${esc(a.appointment_id)}">Book again</button>`:''}</div>`).join('')}</div>
-    ${state.nextCursor?'<button class="btn ghost sm" id="walletAppointmentsMore" style="margin-top:12px">Load more</button>':''}`;
+      ${customerFeatures.customer_actions&&appointmentChangesEnabled&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:a.status==='completed'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(businessSlug)}" data-appointment-id="${esc(a.appointment_id)}">${esc(ct('Book again'))}</button>`:''}</div>`).join('')}</div>
+    ${state.nextCursor?`<button class="btn ghost sm" id="walletAppointmentsMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
   wireWalletAppointmentActions(businessSlug);
   wireCustomerRepeatBookingV167(host);
 }
@@ -2485,7 +2497,7 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
       const contact=host('[data-business-contact]');
       if(contact)contact.innerHTML='<p class="muted small">Contact details unavailable.</p>';
     });
-  Promise.resolve(customerRpc('customer_get_promotions_v155',{p_business:business.id,p_branch:null,p_locale:'en'}))
+  Promise.resolve(customerRpc('customer_get_promotions_v155',{p_business:business.id,p_branch:null,p_locale:merchantCopyLocale()}))
     .then(({data,error})=>{
       const offersHost=host('[data-business-offers]');if(!offersHost)return;
       if(error){offersHost.innerHTML='<p class="muted small">Current offers couldn’t load.</p>';return}
@@ -3385,7 +3397,7 @@ async function renderCustomerWallet(businessSlug=null){
       const [legacyResult,bookingRequestResult,offersResult]=await Promise.all([
         customerRpc('customer_get_wallet'),
         customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
-        customerRpc('customer_get_home_offers_v167',{p_locale:'en'})
+        customerRpc('customer_get_home_offers_v167',{p_locale:merchantCopyLocale()})
       ]);
       if(!isWalletCurrent())return;
       customerHomeOverview={
@@ -3447,7 +3459,7 @@ async function renderCustomerWallet(businessSlug=null){
       customerRpc('customer_get_wallet'),
       customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
       customerRpc('customer_get_programme_selector_media_v96'),
-      customerRpc('customer_get_home_offers_v167',{p_locale:'en'})
+      customerRpc('customer_get_home_offers_v167',{p_locale:merchantCopyLocale()})
     ]);
     if(!isWalletCurrent())return;
     if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null,undefined,error);
@@ -3521,14 +3533,14 @@ async function renderCustomerWallet(businessSlug=null){
     :Promise.resolve({data:null,error:null});
   const [businessActionsResult,presentationResult,effectiveTierResult,promotionsResult,promotionPromptResult]=await Promise.all([
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
-    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:customerLocale==='zh-CN'?'zh-CN':'en'}):unavailableBusinessId(), /* v293: merchant programme copy is bilingual (en/zh-CN); ms wallets read the English merchant copy */
+    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale()}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId}):unavailableBusinessId(),
     /* V201 (owner: "customer view only have 1 company instead of multiple branch"). The customer
        sees the FIRM, so this read is firm-wide by definition — never the workspace's selected
        branch. selectedBranchId is workspace state; a staff member who is also a customer would
        otherwise carry their branch scope into their own customer view and silently lose the other
        outlets' offers. A promotion that only runs at one outlet says so in its own terms. */
-    businessId?sb.rpc('customer_get_promotions_v155',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
+    businessId?sb.rpc('customer_get_promotions_v155',{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale()}):unavailableBusinessId(),
     promotionPromptRequest
   ]);
   if(!isWalletCurrent())return;
@@ -3894,9 +3906,9 @@ async function renderCustomerWallet(businessSlug=null){
     if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity',ct('No loyalty activity is available yet.'),businessSlug,'activity',()=>loadActivity(null),isWalletCurrent);
     const unit=esc(data?.unit||loyalty.unit||'points'),expiry=data?.expiry||{};
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Loyalty activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${esc(customerPointTotalV103(expiry.expiring_next_30_days))} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
-      <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0),campaign=campaignEntitlementDisplayV99(item);return `<div class="wallet-line"><div><b>${esc(campaign.title||'Loyalty activity')}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${campaign.status?' · '+esc(campaign.status.replaceAll('_',' ')):''}</p>${campaign.detail?`<p class="muted small" style="margin-top:3px">${esc(campaign.detail)}</p>`:''}</div><span class="spacer"></span>${campaign.pending?'<span class="pill off">Pending with business</span>':`<span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':delta<0?'−':''}${esc(customerPointTotalV103(Math.abs(delta)))} ${unit}</span>`}</div>`}).join('')}</div>
-      ${activityState.nextCursor?'<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">Load more</button>':''}`;
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Loyalty activity'))}</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${esc(customerPointTotalV103(expiry.expiring_next_30_days))} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:`<p class="muted small">${esc(ct('Your loyalty history with this business.'))}</p>`}</div></div>
+      <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0),campaign=campaignEntitlementDisplayV99(item);return `<div class="wallet-line"><div><b>${esc(campaign.title||ct('Loyalty activity'))}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${campaign.status?' · '+esc(campaign.status.replaceAll('_',' ')):''}</p>${campaign.detail?`<p class="muted small" style="margin-top:3px">${esc(campaign.detail)}</p>`:''}</div><span class="spacer"></span>${campaign.pending?`<span class="pill off">${esc(ct('Pending with business'))}</span>`:`<span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':delta<0?'−':''}${esc(customerPointTotalV103(Math.abs(delta)))} ${unit}</span>`}</div>`}).join('')}</div>
+      ${activityState.nextCursor?`<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
     if($('walletActivityMore'))$('walletActivityMore').onclick=()=>{ $('walletActivityMore').disabled=true;loadActivity(activityState.nextCursor) };
   };
   const transactionState={items:[],nextCursor:null};
@@ -3968,9 +3980,9 @@ async function renderCustomerWallet(businessSlug=null){
     if(!cards.length){host.remove();ensureWalletEmptyState(businessSlug);return}
     const giftCurrency=String(data?.business?.currency||currency);
     const giftMoney=cents=>`${giftCurrency} ${(Number(cents||0)/100).toFixed(2)}`;
-    const giftState={active:'Ready to use',redeemed:'All used up',void:'Not valid'};
+    const giftState={active:ct('Ready to use'),redeemed:ct('All used up'),void:ct('Not valid')};
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Gift cards</h2><p class="muted small">Show this screen at the counter — the team uses your card there. We never show the full card number.</p></div><span class="spacer"></span><span class="pill">${esc(giftMoney(data?.total_balance_cents))} left</span></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Gift cards'))}</h2><p class="muted small">${esc(ct('Show this screen at the counter — the team uses your card there. We never show the full card number.'))}</p></div><span class="spacer"></span><span class="pill">${esc(giftMoney(data?.total_balance_cents))} left</span></div>
       ${cards.map(card=>`<div class="wallet-line"><div><b>${esc(giftMoney(card.balance_cents))} left</b><p class="muted small" style="margin-top:3px">Card ····${esc(card.code_suffix||'')} · started at ${esc(giftMoney(card.initial_cents))}${card.created_at?' · '+esc(walletDate(card.created_at)):''}</p></div><span class="spacer"></span><span class="pill">${esc(giftState[card.status]||String(card.status||'').replaceAll('_',' '))}</span></div>`).join('')}
       ${data?.truncated?`<p class="muted small" style="margin-top:10px">Showing your ${cards.length} newest cards. The total above counts every card you have.</p>`:''}`;
   };
@@ -3999,7 +4011,7 @@ async function renderCustomerWallet(businessSlug=null){
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Packages</h2><p class="muted small">Session balances and recent usage.</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
       ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
-      ${packageState.nextCursor?'<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">Load more</button>':''}`;
+      ${packageState.nextCursor?`<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
     if($('walletPackagesMore'))$('walletPackagesMore').onclick=()=>{ $('walletPackagesMore').disabled=true;loadPackages(packageState.nextCursor) };
   };
   const loadMemberships=async()=>{
@@ -4068,8 +4080,8 @@ async function renderCustomerWallet(businessSlug=null){
     const bottles=Array.isArray(data?.items)?data.items:[];
     if(!bottles.length)return;
     if($('walletBottles'))return;
-    sections.insertAdjacentHTML('afterbegin',`<section class="card wallet-section" id="walletBottles" data-section-title="Your bottles">
-      <div class="wallet-section-head"><div><h2>Your bottles</h2><p class="muted small">What ${esc(b.name||'this bar')} is keeping for you. Show this screen at the counter to have one brought out.</p></div><span class="spacer"></span><span class="pill">${bottles.length}</span></div>
+    sections.insertAdjacentHTML('afterbegin',`<section class="card wallet-section" id="walletBottles" data-section-title="${esc(ct('Your bottles'))}">
+      <div class="wallet-section-head"><div><h2>${esc(ct('Your bottles'))}</h2><p class="muted small">${esc(ct('What {business} is keeping for you. Show this screen at the counter to have one brought out.',{business:b.name||ct('this bar')}))}</p></div><span class="spacer"></span><span class="pill">${bottles.length}</span></div>
       ${bottles.map(bottle=>{
         /* V278: Number(null) is 0, and 0 <= 7 — the naive test painted every NEVER-expiring
            bottle amber and told the customer it was about to run out. */
@@ -4148,7 +4160,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${global?`${esc(BRAND.customerLabel)} inbox`:'Inbox'}</h2><p class="muted small">${global?'Updates grouped by your separate business programmes.':'Customer-safe updates from this business.'}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button></div>
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
-      ${nextCursor?'<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">Load more</button>':''}
+      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
       <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`;
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
@@ -4295,6 +4307,9 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
    is exactly how a screen and its send-path gate drift apart.
    Transactional messages (receipts, booking confirmations, security notices) are deliberately
    absent: they have no category server-side and cannot be switched off from anywhere. */
+/* v295: the label/help strings below are ct() KEYS, not rendered copy — every render site
+   passes them through ct() so this PDPA consent surface reads in the member's own language.
+   Consent you cannot read is not consent. */
 const CUSTOMER_COMMUNICATION_CATEGORIES_V263=[
   ['business_offers','Offers from businesses you follow','Promotions and deals from the businesses whose programmes you have joined.'],
   ['rewards_and_points','Your rewards and points','Points you earn, rewards unlocked, and value that is about to expire.'],
@@ -4312,12 +4327,12 @@ async function renderCustomerCommunicationsV263(){
     messagesAvailable:context.features.customer_in_app_inbox===true,
     backTo:'#/customer/profile',body
   });
-  shell(CUI.loadingState({title:'Communications',body:'Loading your communication choices…',variant:'form'}));
+  shell(CUI.loadingState({title:ct('Communications'),body:ct('Loading your communication choices…'),variant:'form'}));
   focusCustomerRoute();
   const {data,error}=await sb.rpc('customer_get_communication_preferences_v263');
   if(!isCurrent())return;
   if(error){
-    shell(CUI.errorState({title:'Communications',message:'Your communication choices could not be loaded. Nothing has been changed.',retryId:'customerCommsRetry'}));
+    shell(CUI.errorState({title:ct('Communications'),message:ct('Your communication choices could not be loaded. Nothing has been changed.'),retryId:'customerCommsRetry'}));
     const retry=$('customerCommsRetry');if(retry)retry.onclick=()=>renderCustomerCommunicationsV263();
     focusCustomerRoute();return;
   }
@@ -4325,20 +4340,20 @@ async function renderCustomerCommunicationsV263(){
   const known=new Map(CUSTOMER_COMMUNICATION_CATEGORIES_V263.map(([key,label,help])=>[key,{label,help}]));
   const rows=serverCategories.filter(entry=>known.has(entry?.category));
   if(!rows.length){
-    shell(`<header class="customer-page-head"><div><h1>Communications</h1></div></header>${CUI.emptyState({iconName:'bell',title:'No communication choices yet',body:'There is nothing to set here for your account right now.'})}`);
+    shell(`<header class="customer-page-head"><div><h1>${esc(ct('Communications'))}</h1></div></header>${CUI.emptyState({iconName:'bell',title:ct('No communication choices yet'),body:ct('There is nothing to set here for your account right now.')})}`);
     focusCustomerRoute();return;
   }
   const allEnabled=data?.all_enabled===true;
-  shell(`<header class="customer-page-head"><div><h1>Communications</h1><p class="muted">Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.</p></div></header>
-    <section class="card"><label class="row" for="customerCommsAll" style="align-items:flex-start;color:var(--ink);font-weight:600"><input id="customerCommsAll" type="checkbox" ${allEnabled?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:2px"> <span>Send me all marketing messages<span class="muted small" style="display:block;font-weight:400;margin-top:3px">One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.</span></span></label>
+  shell(`<header class="customer-page-head"><div><h1>${esc(ct('Communications'))}</h1><p class="muted">${esc(ct('Everything is on unless you turn it off. Turning something off here never stops receipts, booking confirmations or security messages — those are not marketing and keep sending.'))}</p></div></header>
+    <section class="card"><label class="row" for="customerCommsAll" style="align-items:flex-start;color:var(--ink);font-weight:600"><input id="customerCommsAll" type="checkbox" ${allEnabled?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:2px"> <span>${esc(ct('Send me all marketing messages'))}<span class="muted small" style="display:block;font-weight:400;margin-top:3px">${esc(ct('One tick covers every category and every channel below — push, email, SMS, WhatsApp and calls. You can switch any single one back off at any time.'))}</span></span></label>
       <p class="muted small" id="customerCommsStatus" role="status" aria-live="polite" style="margin-top:10px"></p></section>
     ${rows.map(entry=>{
       const meta=known.get(entry.category);
       const channels=Array.isArray(entry.channels)?entry.channels:[];
-      return `<section class="card" style="margin-top:14px"><h2>${esc(meta.label)}</h2><p class="muted small" style="margin-top:5px">${esc(meta.help)}</p>
+      return `<section class="card" style="margin-top:14px"><h2>${esc(ct(meta.label))}</h2><p class="muted small" style="margin-top:5px">${esc(ct(meta.help))}</p>
       ${channels.map(channel=>{
         const label=(CUSTOMER_COMMUNICATION_CHANNELS_V263.find(([key])=>key===channel?.channel)||[null,channel?.channel])[1];
-        return `<label class="row" for="customerComms-${esc(entry.category)}-${esc(channel.channel)}" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="customerComms-${esc(entry.category)}-${esc(channel.channel)}" class="customerCommsToggle" type="checkbox" style="width:auto" data-category="${esc(entry.category)}" data-channel="${esc(channel.channel)}" ${channel.enabled===true?'checked':''}>${esc(label||channel.channel)}</label>`;
+        return `<label class="row" for="customerComms-${esc(entry.category)}-${esc(channel.channel)}" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="customerComms-${esc(entry.category)}-${esc(channel.channel)}" class="customerCommsToggle" type="checkbox" style="width:auto" data-category="${esc(entry.category)}" data-channel="${esc(channel.channel)}" ${channel.enabled===true?'checked':''}>${esc(label?ct(label):channel.channel)}</label>`;
       }).join('')}</section>`;
     }).join('')}`);
   focusCustomerRoute();
@@ -4353,28 +4368,28 @@ async function renderCustomerCommunicationsV263(){
      so the screen can never claim a preference the server did not store. */
   document.querySelectorAll('.customerCommsToggle').forEach(input=>input.onchange=async()=>{
     const wanted=input.checked;
-    input.disabled=true;say('Saving…');
+    input.disabled=true;say(ct('Saving…'));
     const {error:setError}=await sb.rpc('customer_set_communication_preference_v263',{
       p_category:input.dataset.category,p_channel:input.dataset.channel,p_enabled:wanted
     });
     if(!isCurrent()||!input.isConnected)return;
     input.disabled=false;
-    if(setError){input.checked=!wanted;syncMaster();say('That choice could not be saved, so it has been put back. Please try again.');return}
-    syncMaster();say('Saved.');
+    if(setError){input.checked=!wanted;syncMaster();say(ct('That choice could not be saved, so it has been put back. Please try again.'));return}
+    syncMaster();say(ct('Saved.'));
   });
   if(master)master.onchange=async()=>{
     const wanted=master.checked;
     const before=[...document.querySelectorAll('.customerCommsToggle')].map(input=>[input,input.checked]);
     master.disabled=true;before.forEach(([input])=>{input.disabled=true;input.checked=wanted});
-    say('Saving…');
+    say(ct('Saving…'));
     const {error:setError}=await sb.rpc('customer_set_all_communications_v263',{p_enabled:wanted});
     if(!isCurrent()||!master.isConnected)return;
     master.disabled=false;before.forEach(([input])=>{input.disabled=false});
     if(setError){
       master.checked=!wanted;before.forEach(([input,was])=>{input.checked=was});
-      say('That change could not be saved, so your choices have been put back. Please try again.');return;
+      say(ct('That change could not be saved, so your choices have been put back. Please try again.'));return;
     }
-    say(wanted?'All marketing messages are on.':'All marketing messages are off. Receipts, bookings and security messages still send.');
+    say(wanted?ct('All marketing messages are on.'):ct('All marketing messages are off. Receipts, bookings and security messages still send.'));
   };
 }
 
@@ -4482,7 +4497,7 @@ async function loadPortalUpcomingBookingsV183(slug,isPortalCurrent=()=>true){
     host.innerHTML='<p class="muted small">You have no upcoming bookings with this business yet.</p>';
     return;
   }
-  host.innerHTML=`${requests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · awaiting the business</p></div><span class="spacer"></span><span class="pill ${item.status==='waitlisted'?'new':'off'}">${esc(item.status==='waitlisted'?'Waitlisted':'Pending')}</span></div>`).join('')}
+  host.innerHTML=`${requests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · awaiting the business</p></div><span class="spacer"></span><span class="pill ${item.status==='waitlisted'?'new':'off'}">${esc(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending'))}</span></div>`).join('')}
     ${appointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true))}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'booked').replaceAll('_',' '))}</p></div><span class="spacer"></span>${String(item.status||'')==='booked'?(changesEnabled?`<button class="btn ghost sm walletChange" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(slug)}">Change</button>`:'<span class="muted small">Contact the business to change this</span>'):''}</div>`).join('')}`;
   wireWalletAppointmentActions(slug);
 }
@@ -4834,7 +4849,7 @@ async function renderPortal(slug){
         turnstile_token:bookingTurnstileToken},signedInUser,isPortalCurrent)}
       catch(error){
         if(!isPortalCurrent()||!$('perr')?.isConnected)return;
-        $('perr').innerHTML=`<div class="err">${esc(error.message)}</div>`;
+        $('perr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Your booking request could not be sent.'))}</div>`;
         if($('psend'))$('psend').disabled=false;
         bookingTurnstileControl?.reset();return;
       }
@@ -4866,7 +4881,7 @@ async function renderPortal(slug){
       $('merr').innerHTML='';$('mfind').disabled=true;
       let data;
       try{data=await publicGateway('manage-booking',{body:{action:'lookup',token:manageToken}})}
-      catch(error){$('merr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('mfind').disabled=false;return}
+      catch(error){$('merr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'That booking could not be found.'))}</div>`;$('mfind').disabled=false;return}
       $('mfind').disabled=false;
       const when=data.starts_at||data.preferred_at;
       /* v286 (audit): this was the one time on the whole booking surface printed in the device's
@@ -4924,7 +4939,7 @@ async function renderPortal(slug){
     let data;
     manageChangeBusyV286(true);
     try{data=await publicGateway('manage-booking',{body:{action:'change',token:manageToken,submission_id:changeAttempt.id,kind:'cancel',proposed:null,note:null}})}
-    catch(error){manageChangeBusyV286(false);return toast(error.message)}
+    catch(error){manageChangeBusyV286(false);return toast(humanErrorV295(error,'Your cancellation request could not be sent.'))}
     manageChangeSettledV286(data);
   };
   const mRescheduleHandler=async()=>{
@@ -4937,7 +4952,7 @@ async function renderPortal(slug){
     let data;
     manageChangeBusyV286(true);
     try{data=await publicGateway('manage-booking',{body:{action:'change',token:manageToken,submission_id:changeAttempt.id,kind:'reschedule',proposed,note:null}})}
-    catch(error){manageChangeBusyV286(false);return toast(error.message)}
+    catch(error){manageChangeBusyV286(false);return toast(humanErrorV295(error,'Your reschedule request could not be sent.'))}
     manageChangeSettledV286(data);
   };
   draw();

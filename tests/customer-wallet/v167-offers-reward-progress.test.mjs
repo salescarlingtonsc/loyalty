@@ -35,7 +35,7 @@ test('customer Home always renders populated, empty, and retryable offer states'
   assert.match(app,/Offers couldn’t load\./);
   assert.match(app,/id="customerOffersRetry"/);
   // v178: the only remaining offers-shelf fetch is Home's, through the timeout-guarded customerRpc.
-  assert.match(app,/customerRpc\('customer_get_home_offers_v167',\{p_locale:'en'\}\)/);
+  assert.match(app,/customerRpc\('customer_get_home_offers_v167',\{p_locale:merchantCopyLocale\(\)\}\)/);
   assert.match(app,/customer-home-offers-track/);
   assert.match(app,/Ends soon/);
   assert.match(app,/if\(!cards\.length\)\{[\s\S]*customerHomeOffersMarkupV167\(offersState\)[\s\S]*customer-first-quest/);

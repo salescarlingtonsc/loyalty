@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9beb11b301cec891e12f23e4063911ab257009375d510796e2e88ad8ffa76da2"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="4c1a60a0ee84019b557a2b32fc31af36ae0600b396c6cddc1da1247a8c1e2ca8"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1921,7 +1921,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 9beb11b301cec891e12f23e4063911ab257009375d510796e2e88ad8ffa76da2</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 4c1a60a0ee84019b557a2b32fc31af36ae0600b396c6cddc1da1247a8c1e2ca8</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -4299,7 +4299,7 @@ async function tillPage(){
         p_phone:notFoundPhone||phone,p_full_name:name,p_marketing_consent:$('tConsent').checked,
         p_source:'till quick add'});
       if(!isTillCurrent())return;
-      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(humanErrorV295(error))}</div>`;return}
       const {data:lk,error:lkErr}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:notFoundPhone||phone});
       if(!isTillCurrent())return;
       busy=false;
@@ -6535,7 +6535,7 @@ async function bookingsPage(){
       p_takes_table_reservations:takesTables});
     if(!isCurrent())return;
     $('setSave').disabled=false;
-    if(error){$('setErr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+    if(error){$('setErr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Those settings could not be saved.'))}</div>`;return}
     $('setErr').innerHTML='';
     /* V223: only mirror what was actually sent. The server coalesces a null, keeping the stored
        value, so copying null into S.biz would make the local copy disagree with the database. */
@@ -6660,7 +6660,7 @@ async function bookingsPage(){
       const {data,error}=await sb.rpc('import_bookings',{p_business:S.biz.id,p_rows:recs});
       if(!isCurrent())return;
       $('bkCsvGo').disabled=false;
-      if(error){$('bkCsvPrev').innerHTML+=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){$('bkCsvPrev').innerHTML+=`<div class="err">${esc(humanErrorV295(error,'That import could not be completed.'))}</div>`;return}
       const errs=(data.errors||[]).slice(0,5);
       $('bkCsvPrev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('importBookingPreview',{inserted:data.inserted,skipped:data.skipped})}</p>
         ${errs.length?`<div class="err" style="margin-top:8px">${workspaceTemplateHtmlV97(errs.length===1?'firstImportError':'firstImportErrors',{count:errs.length})}<br>${errs.map(e=>`<span data-workspace-i18n>Row</span> <span data-merchant-content>${esc(String(e.row))}</span>: <span data-merchant-content>${esc(e.error)}</span>`).join('<br>')}</div>`:''}`;
@@ -8355,7 +8355,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     if(!isRetentionCurrent())return;
     if(error){
       routeMain.innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
-        <div class="card"><p class="err">${esc(error.message)}</p><button class="btn" id="retryRetention">Retry</button></div>`;
+        <div class="card"><p class="err">${esc(humanErrorV295(error,'This section could not be loaded.'))}</p><button class="btn" id="retryRetention">Retry</button></div>`;
       $('retryRetention').onclick=()=>retentionPage(draftVersionId,editProgramId);return;
     }
     programs=draft?.programs||[];taxonomy=draft?.taxonomy||[];snapshotHash=draft?.snapshot_hash||null;
@@ -13932,7 +13932,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         p_phone:notFoundPhone||phone,p_full_name:name,p_marketing_consent:$('tConsent').checked,
         p_source:'till quick add'});
       if(!isTillCurrent())return;
-      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(humanErrorV295(error))}</div>`;return}
       const {data:lk,error:lkErr}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:notFoundPhone||phone});
       if(!isTillCurrent())return;
       busy=false;
@@ -15235,7 +15235,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const stillCurrent=rescheduleGate.begin();setReschedulePending(true);errorHost.innerHTML='';
       const {data,error}=await sb.rpc('reschedule_appointment_v48',{...request,p_idempotency_key:rescheduleAttempt.key});
       if(!stillCurrent()){if(editForm.isConnected)setReschedulePending(false);return}setReschedulePending(false);
-      if(error){errorHost.innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){errorHost.innerHTML=`<div class="err">${esc(humanErrorV295(error,'That appointment could not be rescheduled.'))}</div>`;return}
       if(data?.status==='conflict'){renderRescheduleSuggestions(feedback,data.suggestions||{});CUI.announce('Appointment clash found. The appointment was not changed.',{assertive:true});return}
       const confirmation={
         in_app_created:' Customer in-app confirmation created.',
@@ -15263,6 +15263,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'9beb11b301cec891e12f23e4063911ab257009375d510796e2e88ad8ffa76da2',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'4c1a60a0ee84019b557a2b32fc31af36ae0600b396c6cddc1da1247a8c1e2ca8',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

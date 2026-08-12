@@ -588,7 +588,7 @@ test('v293 customer portal follows the stored profile language without a separat
   // v293: the wallet copy tables are trilingual and merchant programme copy is
   // requested in the member's language where the merchant published it (en/zh-CN).
   assert.match(section('const CUSTOMER_COPY','const CUSTOMER_PRIMARY_NAV'),/'zh-CN'\s*:\s*Object\.freeze/);
-  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:customerLocale==='zh-CN'\?'zh-CN':'en'\}\)/);
+  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale\(\)\}\)/);
   assert.match(app,/id="customerProfileLanguage"/);
   assert.match(app,/p_preferred_language:language/);
 });

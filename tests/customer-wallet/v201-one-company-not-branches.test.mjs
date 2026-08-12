@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const app = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'app/app.js'), 'utf8');
 
 test('the customer reads promotions firm-wide, never through a workspace branch scope', () => {
-  assert.match(app, /customer_get_promotions_v155',\{p_business:businessId,p_branch:null,p_locale:'en'\}/);
+  assert.match(app, /customer_get_promotions_v155',\{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale\(\)\}/);
   // selectedBranchId is workspace state; a staff member who is also a customer must not carry
   // their branch scope into their own customer view and lose the other outlets' offers
   assert.doesNotMatch(app, /customer_get_promotions_v155'[^)]*p_branch:selectedBranchId/);

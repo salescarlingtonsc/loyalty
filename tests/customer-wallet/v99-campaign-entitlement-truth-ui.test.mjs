@@ -75,7 +75,7 @@ test('Customer 360 campaign grant uses the same pending no-wallet-value truth',(
 test('both customer activity and Customer 360 render pending campaign truth without a value',()=>{
   const wallet=section('const activityState={items:[]','const transactionState=');
   assert.match(wallet,/campaignEntitlementDisplayV99\(item\)/);
-  assert.match(wallet,/campaign\.pending\?'<span class="pill off">Pending with business<\/span>'/);
+  assert.match(wallet,/campaign\.pending\?`<span class="pill off">\$\{esc\(ct\('Pending with business'\)\)\}<\/span>`/);
 
   const customer360=section('async function clientDetail','/* ---------- quick earn');
   assert.match(customer360,/staff_get_reward_entitlements_v99/);

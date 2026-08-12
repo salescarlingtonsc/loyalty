@@ -947,7 +947,7 @@ function renderOnboard(){
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
     };
-    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(error.message);$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
+    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
     $('out').onclick=async()=>{killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();route()};
   })();
 }
@@ -4754,7 +4754,7 @@ async function tillPage(){
         p_phone:notFoundPhone||phone,p_full_name:name,p_marketing_consent:$('tConsent').checked,
         p_source:'till quick add'});
       if(!isTillCurrent())return;
-      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(humanErrorV295(error))}</div>`;return}
       const {data:lk,error:lkErr}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:notFoundPhone||phone});
       if(!isTillCurrent())return;
       busy=false;
@@ -6966,7 +6966,7 @@ async function bookingsPage(){
       p_takes_table_reservations:takesTables});
     if(!isCurrent())return;
     $('setSave').disabled=false;
-    if(error){$('setErr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+    if(error){$('setErr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Those settings could not be saved.'))}</div>`;return}
     $('setErr').innerHTML='';
     /* V223: only mirror what was actually sent. The server coalesces a null, keeping the stored
        value, so copying null into S.biz would make the local copy disagree with the database. */
@@ -7091,7 +7091,7 @@ async function bookingsPage(){
       const {data,error}=await sb.rpc('import_bookings',{p_business:S.biz.id,p_rows:recs});
       if(!isCurrent())return;
       $('bkCsvGo').disabled=false;
-      if(error){$('bkCsvPrev').innerHTML+=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){$('bkCsvPrev').innerHTML+=`<div class="err">${esc(humanErrorV295(error,'That import could not be completed.'))}</div>`;return}
       const errs=(data.errors||[]).slice(0,5);
       $('bkCsvPrev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('importBookingPreview',{inserted:data.inserted,skipped:data.skipped})}</p>
         ${errs.length?`<div class="err" style="margin-top:8px">${workspaceTemplateHtmlV97(errs.length===1?'firstImportError':'firstImportErrors',{count:errs.length})}<br>${errs.map(e=>`<span data-workspace-i18n>Row</span> <span data-merchant-content>${esc(String(e.row))}</span>: <span data-merchant-content>${esc(e.error)}</span>`).join('<br>')}</div>`:''}`;
@@ -8786,7 +8786,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     if(!isRetentionCurrent())return;
     if(error){
       routeMain.innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
-        <div class="card"><p class="err">${esc(error.message)}</p><button class="btn" id="retryRetention">Retry</button></div>`;
+        <div class="card"><p class="err">${esc(humanErrorV295(error,'This section could not be loaded.'))}</p><button class="btn" id="retryRetention">Retry</button></div>`;
       $('retryRetention').onclick=()=>retentionPage(draftVersionId,editProgramId);return;
     }
     programs=draft?.programs||[];taxonomy=draft?.taxonomy||[];snapshotHash=draft?.snapshot_hash||null;
@@ -14493,7 +14493,7 @@ async function appointmentsPage(){
       p_staff:$('astf').value==='auto'?null:$('astf').value});
     if(!stillCurrent())return null;
     $('checkAvailability').disabled=false;
-    if(error){formError.innerHTML=`<div class="err">${esc(error.message)}</div>`;return null}
+    if(error){formError.innerHTML=`<div class="err">${esc(humanErrorV295(error))}</div>`;return null}
     renderSuggestions(data||{});return data;
   }
   if(canWrite){
@@ -14540,7 +14540,7 @@ async function appointmentsPage(){
       const {data,error}=await sb.rpc('book_appointment_smart_v47',{...request,p_idempotency_key:bookingAttempt.key});
       if(!stillCurrent())return;
       $('ago').disabled=false;
-      if(error){$('appointmentFormError').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){$('appointmentFormError').innerHTML=`<div class="err">${esc(humanErrorV295(error,'That appointment could not be saved.'))}</div>`;return}
       if(data?.status==='conflict'){
         /* V220. Owner: "if the timing is clashed, when press book appointment - should pop up
            prompt to notify user, direct them to change timing / suggest free staff".
@@ -14763,7 +14763,7 @@ async function appointmentsPage(){
       const stillCurrent=rescheduleGate.begin();setReschedulePending(true);errorHost.innerHTML='';
       const {data,error}=await sb.rpc('reschedule_appointment_v48',{...request,p_idempotency_key:rescheduleAttempt.key});
       if(!stillCurrent()){if(editForm.isConnected)setReschedulePending(false);return}setReschedulePending(false);
-      if(error){errorHost.innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){errorHost.innerHTML=`<div class="err">${esc(humanErrorV295(error,'That appointment could not be rescheduled.'))}</div>`;return}
       if(data?.status==='conflict'){renderRescheduleSuggestions(feedback,data.suggestions||{});CUI.announce('Appointment clash found. The appointment was not changed.',{assertive:true});return}
       const confirmation={
         in_app_created:' Customer in-app confirmation created.',
@@ -17700,7 +17700,7 @@ async function reportsPage(){
   async function runMoney(){
     const isLatest=moneyGate.begin(),target=$('rbody'),exportButton=$('rcsv');
     let scope;
-    try{scope=answerRange()}catch(error){if(isLatest()){target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;exportButton.hidden=true;exportButton.disabled=true}return}
+    try{scope=answerRange()}catch(error){if(isLatest()){target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;exportButton.hidden=true;exportButton.disabled=true}return}
     target.innerHTML=CUI.skeletonGrid({cards:4,lines:4});
     exportButton.hidden=true;exportButton.disabled=true;
     let response;
@@ -17858,7 +17858,7 @@ async function reportsPage(){
   async function runBusy(){
     const target=$('busyBody');if(!target)return;
     const isLatest=busyGate.begin();
-    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;return}
+    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;return}
     target.innerHTML=CUI.skeletonGrid({cards:3,lines:4});
     try{
       const [reportsScope,appointmentScope]=await Promise.all([
@@ -17892,7 +17892,7 @@ async function reportsPage(){
   async function runReturning(){
     const target=$('returningBody');if(!target)return;
     const isLatest=returningGate.begin();
-    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(error.message)}</div></div>`;return}
+    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;return}
     target.innerHTML=CUI.skeletonGrid({cards:3,lines:4});
     const currentRequest={p_business:S.biz.id,p_from:scope.from,p_to:shiftSgDateInput(scope.to,1),p_branch:scope.branchId,p_as_of:scope.toExclusive};
     const priorRequest={p_business:S.biz.id,p_from:scope.priorFrom,p_to:shiftSgDateInput(scope.priorTo,1),p_branch:scope.branchId,p_as_of:sgDateBoundary(scope.priorTo,1)};

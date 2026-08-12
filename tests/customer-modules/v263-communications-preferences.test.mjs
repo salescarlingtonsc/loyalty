@@ -68,7 +68,7 @@ test('loading, error, empty and saved states all exist', () => {
   assert.match(screen, /CUI\.loadingState\(/);
   assert.match(screen, /CUI\.errorState\(/);
   assert.match(screen, /CUI\.emptyState\(/);
-  assert.match(screen, /say\('Saved\.'\)/);
+  assert.match(screen, /say\(ct\('Saved\.'\)\)/);
   assert.match(screen, /customerCommsRetry/, 'the error state must be retryable');
 });
 

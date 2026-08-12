@@ -125,7 +125,7 @@ test('offer details open a company sheet with contact, current offers and a per-
   assert.match(sheet,/Contact details unavailable\./);
   assert.match(sheet,/href="tel:/);
   assert.match(sheet,/href="mailto:/);
-  assert.match(sheet,/customerRpc\('customer_get_promotions_v155',\{p_business:business\.id,p_branch:null,p_locale:'en'\}\)/);
+  assert.match(sheet,/customerRpc\('customer_get_promotions_v155',\{p_business:business\.id,p_branch:null,p_locale:merchantCopyLocale\(\)\}\)/);
   assert.match(sheet,/Loading offers…/);
   assert.match(sheet,/No current offers from this business\./);
   assert.match(sheet,/Current offers couldn’t load\./);
