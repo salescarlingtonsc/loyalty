@@ -3717,7 +3717,10 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
   customerLocale='en';
   globalThis.document?.documentElement?.setAttribute('lang','en');
   if(!isCurrent())return null;
-  return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
+  /* v286: a null profile has two very different causes — this account has no profile row, or
+     customer_get_profile just failed for a customer we kept on the surface because their personas
+     loaded. Carry the error so callers can say which one happened instead of blaming the account. */
+  return {features,profile,profileError:profileResult.error||null,registeredCustomer,staff,customer,staffWorkspaces:staff};
 }
 
 async function renderCustomerProgrammes(){
@@ -4302,21 +4305,29 @@ async function renderCustomerProfile(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
   renderCustomerShell({active:'profile',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your profile…</p></div>'});
-  if(context.features.customer_phone_registration!==true||!context.profile){
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Profile</h1><p class="muted">Your ${esc(BRAND.customerLabel)} account details.</p></div></header><section class="card"><h2>Profile editing is not available</h2><p class="muted small" style="margin-top:6px">Profile editing isn’t available for this account.</p></section>${accountDeletionCardHtml()}`;
-    wireAccountDeletionButton();focusCustomerRoute();return;
-  }
+  const profile=context.features.customer_phone_registration===true?context.profile:null;
+  /* v286: a null profile used to collapse the whole page into "Profile editing isn’t available for
+     this account" — the same wording for a transient customer_get_profile failure as for an account
+     that genuinely has no profile row, and it took Appearance, password, passkeys, notifications,
+     Communications and Marketing choices down with it. None of those read the profile row, so they
+     now render either way, and a failed read says so and offers a retry. */
+  const detailsLoadFailedV286=!profile&&context.features.customer_phone_registration===true&&context.profileError!=null;
   const marketingResult=await sb.rpc('customer_get_platform_marketing_preference');
   if(!isCurrent())return;
-  const profile=context.profile;
   const marketingPreference=marketingResult.error?null:marketingResult.data;
-  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Profile</h1><p class="muted">Keep your name and preferred language current across ${esc(BRAND.customerLabel)}.</p></div></header>
-    <div class="customer-profile-grid"><section class="card"><h2>Personal details</h2>
+  const personalDetailsHtmlV286=profile
+    ?`<div class="customer-profile-grid"><section class="card"><h2>Personal details</h2>
       <label for="customerProfileName">Full name</label><input id="customerProfileName" autocomplete="name" maxlength="200" value="${esc(profile.full_name||'')}">
-      <label for="customerProfileLanguage">Preferred language</label><select id="customerProfileLanguage" autocomplete="language"><option value="en" ${profile.preferred_language==='en'?'selected':''}>English</option><option value="zh" ${profile.preferred_language==='zh'?'selected':''}>中文</option><option value="ms" ${profile.preferred_language==='ms'?'selected':''}>Bahasa Melayu</option><option value="ta" ${profile.preferred_language==='ta'?'selected':''}>தமிழ்</option></select>
+      <label for="customerProfileLanguage">Preferred language for messages (English only today)</label><select id="customerProfileLanguage" autocomplete="language"><option value="en" ${profile.preferred_language==='en'?'selected':''}>English</option><option value="zh" ${profile.preferred_language==='zh'?'selected':''}>中文</option><option value="ms" ${profile.preferred_language==='ms'?'selected':''}>Bahasa Melayu</option><option value="ta" ${profile.preferred_language==='ta'?'selected':''}>தமிழ்</option></select>
+      <p class="muted small" style="margin-top:6px">${esc(BRAND.productName)} is in English for every customer today. We store your choice for when other languages arrive — picking one does not change this app or your messages yet.</p>
       <div id="customerProfileSaveStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
-    </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>
+    </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>`
+    :detailsLoadFailedV286
+      ?`<section class="card" id="customerProfileDetailsError"><h2>We couldn’t load your details</h2><p class="muted small" style="margin-top:6px">Your name and date of birth did not load just now. Nothing has been changed, and everything below still works.</p><button class="btn" id="customerProfileDetailsRetry" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Try again</span></button></section>`
+      :'<section class="card"><h2>Profile editing is not available</h2><p class="muted small" style="margin-top:6px">Profile editing isn’t available for this account.</p></section>';
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Profile</h1><p class="muted">${profile?`Keep your name up to date and manage your ${esc(BRAND.customerLabel)} account.`:`Your ${esc(BRAND.customerLabel)} account details.`}</p></div></header>
+    ${personalDetailsHtmlV286}
     <section class="card" id="customerAppearance" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Appearance</h2><p class="muted small">Peekaa looks the same as your businesses do by default. Switch to dark if you prefer it.</p></div></div>
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
     </section>
@@ -4325,7 +4336,10 @@ async function renderCustomerProfile(){
       ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates. I can turn this off here, or in <a href="#/customer/communications" style="color:var(--coral);text-decoration:underline">Communications</a>, at any time. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.</span></label>
       <div id="customerProfileMarketingStatus" role="status" aria-live="polite"></div>
       <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save marketing choice</span></button>`
-      :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p>'}
+      /* v286: a failed read used to render this sentence ALONE — no checkbox, no save button, and
+         nothing to press. Withdrawing marketing consent is the one control here the customer can
+         demand at any time, so the read is retryable instead of a dead end. */
+      :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p><button class="btn ghost" id="customerMarketingRetry" type="button" style="margin-top:14px">Try again</button>'}
     </section>
     <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Communications</h2><p class="muted small">Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>Open communications</span></a></div></section>
     <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Your consent history</h2><p class="muted small">Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">Loading your consent history…</p></div></section>
@@ -4349,7 +4363,12 @@ async function renderCustomerProfile(){
   const successSound=$('customerSuccessSound');
   if(successSound){
     const reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
-    if(reducedMotion){successSound.checked=false;successSound.disabled=true;customerCelebrationSoundEnabled=false}
+    /* v286: the label is painted from the stored preference, so a customer who had turned sounds on
+       and then switched Reduce Motion on saw a greyed-out, unchecked box captioned "On". */
+    if(reducedMotion){
+      successSound.checked=false;successSound.disabled=true;customerCelebrationSoundEnabled=false;
+      const label=successSound.nextElementSibling;if(label)label.textContent=ct('soundOff');
+    }
     successSound.onchange=()=>{
       customerCelebrationSoundEnabled=successSound.checked&&!reducedMotion;
       try{sessionStorage.setItem('nestly.customer.successSound',customerCelebrationSoundEnabled?'1':'0')}catch{}
@@ -4363,7 +4382,10 @@ async function renderCustomerProfile(){
   }
   wireAccountDeletionButton();
   let profileAttempt=null;
-  $('customerProfileSave').onclick=async()=>{
+  /* v286: the retry re-runs the whole profile render, which re-reads customer_get_profile. */
+  const detailsRetry=$('customerProfileDetailsRetry');
+  if(detailsRetry)detailsRetry.onclick=()=>{detailsRetry.disabled=true;CUI.announce('Loading your details again.');renderCustomerProfile()};
+  if($('customerProfileSave'))$('customerProfileSave').onclick=async()=>{
     const fullName=$('customerProfileName').value.trim(),language=$('customerProfileLanguage').value;
     const status=$('customerProfileSaveStatus');
     if(!fullName){status.innerHTML='<div class="err">Enter your full name.</div>';$('customerProfileName').focus();return}
@@ -4405,6 +4427,12 @@ async function renderCustomerProfile(){
       CUI.announce(optedIn?'Marketing consent saved.':'Marketing consent withdrawn.');
     };
   }
+  /* v286: re-runs the profile render, which re-reads customer_get_platform_marketing_preference,
+     so a customer who came here to switch marketing off is never stranded by one failed read. */
+  const marketingRetry=$('customerMarketingRetry');
+  if(marketingRetry)marketingRetry.onclick=()=>{
+    marketingRetry.disabled=true;CUI.announce('Loading your marketing choice again.');renderCustomerProfile();
+  };
   $('customerProfilePasswordSave').onclick=async()=>{
     const password=$('customerProfilePassword').value;
     const confirmation=$('customerProfilePasswordConfirm').value;
