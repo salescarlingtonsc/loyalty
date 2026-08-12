@@ -217,8 +217,10 @@ test('customer home and destinations reuse existing customer contracts with hone
 
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   assert.match(wallet,/const context=await loadCustomerSurfaceContext\(isWalletCurrent\)/);
-  const syncAt=wallet.indexOf("const syncRpc='customer_sync_in_app_inbox_global'");
-  const countAt=wallet.indexOf("return sb.rpc('customer_get_in_app_inbox_global_count')");
+  /* v286: the ordering invariant is unchanged (sync, then count); the calls moved onto customerRpc
+     so they inherit the v177 abort deadline instead of hanging Home forever. */
+  const syncAt=wallet.indexOf("customerRpc('customer_sync_in_app_inbox_global'");
+  const countAt=wallet.indexOf("return customerRpc('customer_get_in_app_inbox_global_count')");
   assert.ok(syncAt>=0&&countAt>syncAt,'home must sync the global inbox before claiming a current unread count');
   assert.match(wallet,/claimsAvailable:false/);
   assert.match(wallet,/customer_create_redemption_intent_v89/);
