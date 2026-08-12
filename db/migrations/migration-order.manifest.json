@@ -2771,7 +2771,7 @@
       "path": "db/migrations/20260813_nestly_v300_growth_readbacks.sql",
       "semanticVersion": "v300",
       "proposedDeployVersion": "20260813000100",
-      "sha256": "1b9f7478319c863b89759763883fcca964294bb6ba328ac67f18c303b52f8479"
+      "sha256": "b4f7f54310b9d85eb63753aabf730b70ff5e05ba9325bd0fb9f12781688d0c29"
     }
   ]
 }

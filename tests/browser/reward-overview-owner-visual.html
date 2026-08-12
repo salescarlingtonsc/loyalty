@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="f8c996c2d1ed0a8b05ab36b286fbd3a420352ee68b6eec0b493a2774eaff6df6"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="f326609c3bc26e8e5214072a719fa6ccf33847ba2f230439d290b74a979c9220"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1626,6 +1626,13 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
+/* V300: how many times a reward has actually been redeemed, on its card. */
+.reward-card-redeemed-v300{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+/* V300: the customer's own referral code — dashed coupon treatment so it reads as a thing
+   you hand to a friend, not as data. */
+.customer-referral-code-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.customer-referral-code{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1.5px dashed var(--coral);border-radius:12px;background:var(--tint);color:var(--coral);font-size:1.3rem;font-weight:750;letter-spacing:.14em;font-variant-numeric:tabular-nums}
+.customer-referral-count{margin-top:10px}
 /* V299: when a firm runs tiers AND spendable points, the balance is visible on the tab bar
    itself — the customer's number one fact must not hide behind the unselected tab. */
 .customer-programme-tablist--with-balance{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
@@ -1971,7 +1978,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · f8c996c2d1ed0a8b05ab36b286fbd3a420352ee68b6eec0b493a2774eaff6df6</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · f326609c3bc26e8e5214072a719fa6ccf33847ba2f230439d290b74a979c9220</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2214,7 +2221,7 @@ function pruneRewardSiblingsV139(root){
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Return-visit rules customers actually experience, with reward behavior and grant history intact.',iconName:'retention',canWrite:isOwner,moduleLabel:'Retention configuration'})}
-    ${draftVersionId?'':'<section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
+    ${draftVersionId?'':'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-bottom:18px"></section><section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
     ${versionTools}
     ${exactProgramMissing?`<div class="notice warn" id="retentionExactProgramMissing" role="alert" tabindex="-1" style="margin-bottom:16px"><b>This Bring-back rule is not present in the editable draft.</b><p class="small" style="margin-top:5px">Return to the programme overview and refresh before changing another rule.</p></div>`:''}
     ${draftVersionId&&isOwner&&!exactProgramMissing?`<div class="card" style="margin-bottom:16px"><b>Quick templates</b><div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
@@ -2339,7 +2346,59 @@ function pruneRewardSiblingsV139(root){
      section renders progressively into #pbHost after the rule editor paints; every async write
      back into it is guarded by isRetentionCurrent so a late resolve from an abandoned tab is
      dropped exactly like the rest of this page. */
-  if(!draftVersionId)renderPlaybooks({isOwner,isCurrent:isRetentionCurrent,currentVersion});
+  if(!draftVersionId){
+    renderComebackCardV300({isCurrent:isRetentionCurrent});
+    renderPlaybooks({isOwner,isCurrent:isRetentionCurrent,currentVersion});
+  }
+}
+
+/* V300 (owner approval 2026-08-13, the landing-page promise): "IN THIS GROUP / CAME BACK" on the
+   retention surface itself. Two server answers, one card:
+     * away now  — retention_lapsed_candidates_v244 (the exact list the playbook audience uses);
+     * came back — staff_list_returned_customers_v300, the SAME valid-visit predicate, so the two
+       numbers can never disagree about what a visit is.
+   Purely descriptive: it states who returned after crossing the threshold, never WHY — causal
+   claims stay with the playbooks and their held-back arms. Missing backend (PGRST202/42883) or a
+   denied scope removes the card rather than guessing. */
+async function renderComebackCardV300({isCurrent=()=>true}={}){
+  const host=$('comebackHost');
+  if(!host)return;
+  const paint=async awayDays=>{
+    if(!isCurrent()||!host.isConnected)return;
+    host.innerHTML=`<div class="card"><p class="muted small">Checking who has come back…</p></div>`;
+    const [lapsedResult,returnedResult]=await Promise.all([
+      sb.rpc('retention_lapsed_candidates_v244',{p_business:S.biz.id,p_lapsed_days:awayDays,p_min_visits:1}),
+      sb.rpc('staff_list_returned_customers_v300',{p_business:S.biz.id,p_away_days:awayDays,p_window_days:30})
+    ]);
+    if(!isCurrent()||!host.isConnected)return;
+    const unavailable=result=>['42883','PGRST202'].includes(String(result?.error?.code||''))||String(result?.error?.code||'')==='42501';
+    if(unavailable(lapsedResult)||unavailable(returnedResult)){host.remove();return}
+    if(lapsedResult.error||returnedResult.error){
+      host.innerHTML=`<div class="card"><p class="muted small">The come-back answer could not be loaded.</p><button class="btn ghost sm" id="comebackRetry" style="margin-top:10px">Try again</button></div>`;
+      const retry=$('comebackRetry');if(retry)retry.onclick=()=>paint(awayDays);
+      return;
+    }
+    const away=Number(lapsedResult.data?.total??lapsedResult.data?.count??0)||0;
+    const returned=returnedResult.data||{};
+    const rows=Array.isArray(returned.rows)?returned.rows:[];
+    host.innerHTML=`<div class="card">
+      <div class="row" style="align-items:flex-start;gap:12px;flex-wrap:wrap"><div>
+        <h2>Gone quiet, and who came back</h2>
+        <p class="muted small" style="margin-top:4px">Members with no valid visit for the chosen stretch, and those who ended a stretch that long within the last 30 days. Observed visits only — this card claims no cause.</p>
+      </div><span class="spacer"></span>
+      <div class="v150-segment" role="group" aria-label="Away threshold">${[30,60,90].map(days=>`<button type="button" data-comeback-days="${days}" aria-pressed="${days===awayDays}">${days}+ days</button>`).join('')}</div></div>
+      <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+        <div class="card kpi"><div class="l">Away ${awayDays}+ days now</div><div class="v">${away}</div></div>
+        <div class="card kpi"><div class="l">Came back in the last 30 days</div><div class="v" style="color:var(--green)">${Number(returned.total_returned||0)}</div></div>
+      </div>
+      ${rows.length?`<div style="margin-top:14px"><b class="small">Returned recently</b>
+        ${rows.slice(0,8).map(row=>`<div class="wallet-line"><div><b>${esc(row.full_name||'Customer')}</b><p class="muted small" style="margin-top:3px">Away ${Number(row.away_days||0)} days · back ${esc(sgt(row.returned_at)||'')}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/client/${esc(row.id||'')}">Open</a></div>`).join('')}
+        ${returned.truncated||rows.length>8?`<p class="muted small" style="margin-top:8px">Showing the ${Math.min(8,rows.length)} most recent returns of ${Number(returned.total_returned||0)}.</p>`:''}</div>`
+      :`<p class="muted small" style="margin-top:12px">Nobody has ended a ${awayDays}+ day break in the last 30 days.</p>`}
+    </div>`;
+    host.querySelectorAll('[data-comeback-days]').forEach(button=>button.onclick=()=>paint(Number(button.dataset.comebackDays)||60));
+  };
+  paint(60);
 }
     async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=[],isCurrent}){
   const none={data:[],error:null};
@@ -3972,6 +4031,24 @@ function growBirthdayPendingChangesV291(live,draft){
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));
+  /* V300 (owner approval 2026-08-13, the landing-page promise "Redeemed 41 times"): each reward
+     card states how many times it has actually been redeemed. Progressive: the count annotates
+     the painted cards when the server answers, and a missing backend or denied scope simply
+     leaves the cards as they were — no zero is invented, and a reward with no redemptions yet
+     carries no counter rather than a demoralising "Redeemed 0 times". */
+  (async()=>{
+    const {data,error}=await sb.rpc('business_reward_redemption_counts_v300',{p_business:S.biz.id});
+    if(error)return;
+    const redemptionCounts=data?.rewards||{};
+    document.querySelectorAll('.reward-card-v250[data-reward-id]').forEach(card=>{
+      if(!card.isConnected)return;
+      const redeemed=Number(redemptionCounts[card.dataset.rewardId]||0);
+      if(!(redeemed>0)||card.querySelector('.reward-card-redeemed-v300'))return;
+      const costLine=card.querySelector('.reward-card-cost-v250');
+      if(costLine)costLine.insertAdjacentHTML('afterend',
+        `<span class="reward-card-redeemed-v300">Redeemed ${redeemed} time${redeemed===1?'':'s'}</span>`);
+    });
+  })();
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -4075,7 +4152,7 @@ function growBirthdayPendingChangesV291(live,draft){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'f8c996c2d1ed0a8b05ab36b286fbd3a420352ee68b6eec0b493a2774eaff6df6',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'f326609c3bc26e8e5214072a719fa6ccf33847ba2f230439d290b74a979c9220',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

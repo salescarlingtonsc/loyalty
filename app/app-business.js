@@ -3810,6 +3810,12 @@ async function clientDetail(id){
     ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
          though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
       c.created_at?summaryRowV294('Member since',`<b>${esc(formatCustomerJoinedDateV141(c.created_at))}</b>`):''}
+    ${/* V300 (landing-parity): Last visit from the SAME valid-visit set the Visits number above
+         is counted from — the two rows can never disagree. Rewards claimed counts unreversed
+         redemptions, and only when the reversal projection actually loaded; a count that might
+         silently include compensated redemptions is worse than no count. */
+      canReadSales&&lastVisitIso?summaryRowV294('Last visit',`<b>${esc(formatCustomerJoinedDateV141(lastVisitIso))}</b>${lastVisitDays===null?'':` · ${lastVisitDays===0?'today':`${lastVisitDays} day${lastVisitDays===1?'':'s'} ago`}`}`):''}
+    ${canReadLoyalty&&!reversalActionsUnavailable&&reversalData!==null?summaryRowV294('Rewards claimed',`<b>${histRedemptions.filter(r=>!r.reversed_at).length}</b>`):''}
     ${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}
   </aside>`;
   /* V294: one compact row per programme this customer can use — name + one line of what the
@@ -8973,7 +8979,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Return-visit rules customers actually experience, with reward behavior and grant history intact.',iconName:'retention',canWrite:isOwner,moduleLabel:'Retention configuration'})}
-    ${draftVersionId?'':'<section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
+    ${draftVersionId?'':'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-bottom:18px"></section><section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
     ${versionTools}
     ${exactProgramMissing?`<div class="notice warn" id="retentionExactProgramMissing" role="alert" tabindex="-1" style="margin-bottom:16px"><b>This Bring-back rule is not present in the editable draft.</b><p class="small" style="margin-top:5px">Return to the programme overview and refresh before changing another rule.</p></div>`:''}
     ${draftVersionId&&isOwner&&!exactProgramMissing?`<div class="card" style="margin-bottom:16px"><b>Quick templates</b><div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
@@ -9098,7 +9104,59 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
      section renders progressively into #pbHost after the rule editor paints; every async write
      back into it is guarded by isRetentionCurrent so a late resolve from an abandoned tab is
      dropped exactly like the rest of this page. */
-  if(!draftVersionId)renderPlaybooks({isOwner,isCurrent:isRetentionCurrent,currentVersion});
+  if(!draftVersionId){
+    renderComebackCardV300({isCurrent:isRetentionCurrent});
+    renderPlaybooks({isOwner,isCurrent:isRetentionCurrent,currentVersion});
+  }
+}
+
+/* V300 (owner approval 2026-08-13, the landing-page promise): "IN THIS GROUP / CAME BACK" on the
+   retention surface itself. Two server answers, one card:
+     * away now  — retention_lapsed_candidates_v244 (the exact list the playbook audience uses);
+     * came back — staff_list_returned_customers_v300, the SAME valid-visit predicate, so the two
+       numbers can never disagree about what a visit is.
+   Purely descriptive: it states who returned after crossing the threshold, never WHY — causal
+   claims stay with the playbooks and their held-back arms. Missing backend (PGRST202/42883) or a
+   denied scope removes the card rather than guessing. */
+async function renderComebackCardV300({isCurrent=()=>true}={}){
+  const host=$('comebackHost');
+  if(!host)return;
+  const paint=async awayDays=>{
+    if(!isCurrent()||!host.isConnected)return;
+    host.innerHTML=`<div class="card"><p class="muted small">Checking who has come back…</p></div>`;
+    const [lapsedResult,returnedResult]=await Promise.all([
+      sb.rpc('retention_lapsed_candidates_v244',{p_business:S.biz.id,p_lapsed_days:awayDays,p_min_visits:1}),
+      sb.rpc('staff_list_returned_customers_v300',{p_business:S.biz.id,p_away_days:awayDays,p_window_days:30})
+    ]);
+    if(!isCurrent()||!host.isConnected)return;
+    const unavailable=result=>['42883','PGRST202'].includes(String(result?.error?.code||''))||String(result?.error?.code||'')==='42501';
+    if(unavailable(lapsedResult)||unavailable(returnedResult)){host.remove();return}
+    if(lapsedResult.error||returnedResult.error){
+      host.innerHTML=`<div class="card"><p class="muted small">The come-back answer could not be loaded.</p><button class="btn ghost sm" id="comebackRetry" style="margin-top:10px">Try again</button></div>`;
+      const retry=$('comebackRetry');if(retry)retry.onclick=()=>paint(awayDays);
+      return;
+    }
+    const away=Number(lapsedResult.data?.total??lapsedResult.data?.count??0)||0;
+    const returned=returnedResult.data||{};
+    const rows=Array.isArray(returned.rows)?returned.rows:[];
+    host.innerHTML=`<div class="card">
+      <div class="row" style="align-items:flex-start;gap:12px;flex-wrap:wrap"><div>
+        <h2>Gone quiet, and who came back</h2>
+        <p class="muted small" style="margin-top:4px">Members with no valid visit for the chosen stretch, and those who ended a stretch that long within the last 30 days. Observed visits only — this card claims no cause.</p>
+      </div><span class="spacer"></span>
+      <div class="v150-segment" role="group" aria-label="Away threshold">${[30,60,90].map(days=>`<button type="button" data-comeback-days="${days}" aria-pressed="${days===awayDays}">${days}+ days</button>`).join('')}</div></div>
+      <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+        <div class="card kpi"><div class="l">Away ${awayDays}+ days now</div><div class="v">${away}</div></div>
+        <div class="card kpi"><div class="l">Came back in the last 30 days</div><div class="v" style="color:var(--green)">${Number(returned.total_returned||0)}</div></div>
+      </div>
+      ${rows.length?`<div style="margin-top:14px"><b class="small">Returned recently</b>
+        ${rows.slice(0,8).map(row=>`<div class="wallet-line"><div><b>${esc(row.full_name||'Customer')}</b><p class="muted small" style="margin-top:3px">Away ${Number(row.away_days||0)} days · back ${esc(sgt(row.returned_at)||'')}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/client/${esc(row.id||'')}">Open</a></div>`).join('')}
+        ${returned.truncated||rows.length>8?`<p class="muted small" style="margin-top:8px">Showing the ${Math.min(8,rows.length)} most recent returns of ${Number(returned.total_returned||0)}.</p>`:''}</div>`
+      :`<p class="muted small" style="margin-top:12px">Nobody has ended a ${awayDays}+ day break in the last 30 days.</p>`}
+    </div>`;
+    host.querySelectorAll('[data-comeback-days]').forEach(button=>button.onclick=()=>paint(Number(button.dataset.comebackDays)||60));
+  };
+  paint(60);
 }
 
 /* ---------- Grow: one customer journey over separate versioned engines ----------
@@ -10818,6 +10876,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growTilesHtmlV229:''}
+      ${growTilesModeV229&&canWinback?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
       ${programmeView==='overview'?growOverviewTableV271:''}
       ${programmeView==='history'?growHistoryTableV271:''}
       ${topicOnV229('points')?`
@@ -10858,6 +10917,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true,pending:growRetentionDiffV291.changed.get(String(program.id))||null})}).join('')
         +growRetentionDiffV291.added.map(rule=>programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:rule.name,copy:'Customers see this bring-back rule once you publish.',status:'Not live yet',statusTone:'new',merchant:true})).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
+      ${canWinback?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
       `:''}
       ${topicOnV229('promotions')?`
       <div class="programme-category" data-programme-category-v268="promotions"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
@@ -11393,6 +11453,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));
+  /* V300 (owner approval 2026-08-13, the landing-page promise "Redeemed 41 times"): each reward
+     card states how many times it has actually been redeemed. Progressive: the count annotates
+     the painted cards when the server answers, and a missing backend or denied scope simply
+     leaves the cards as they were — no zero is invented, and a reward with no redemptions yet
+     carries no counter rather than a demoralising "Redeemed 0 times". */
+  renderComebackCardV300({isCurrent:isGrowCurrent});
+  (async()=>{
+    const {data,error}=await sb.rpc('business_reward_redemption_counts_v300',{p_business:S.biz.id});
+    if(error)return;
+    const redemptionCounts=data?.rewards||{};
+    document.querySelectorAll('.reward-card-v250[data-reward-id]').forEach(card=>{
+      if(!card.isConnected)return;
+      const redeemed=Number(redemptionCounts[card.dataset.rewardId]||0);
+      if(!(redeemed>0)||card.querySelector('.reward-card-redeemed-v300'))return;
+      const costLine=card.querySelector('.reward-card-cost-v250');
+      if(costLine)costLine.insertAdjacentHTML('afterend',
+        `<span class="reward-card-redeemed-v300">Redeemed ${redeemed} time${redeemed===1?'':'s'}</span>`);
+    });
+  })();
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -17834,6 +17913,48 @@ async function customerIntelligencePage(){
    A business whose own record starts inside (or after) that window has no comparable earlier
    period — printing "down 100%" against dates that predate the company would be a fabricated
    verdict, which is exactly what must never appear here. */
+/* V300: calendar grains. Month/quarter/year-to-date compare with the SAME ELAPSED span of the
+   previous calendar unit; the finished units (last month / last quarter) compare full-vs-full.
+   All arithmetic is on date STRINGS via UTC, so no browser timezone can shift a boundary. */
+function reportCalendarPresetV300(kind,todayStr){
+  const [y,m,d]=String(todayStr).split('-').map(Number);
+  const pad=n=>String(n).padStart(2,'0');
+  const iso=(yy,mm,dd)=>`${yy}-${pad(mm)}-${pad(dd)}`;
+  const lastDay=(yy,mm)=>new Date(Date.UTC(yy,mm,0)).getUTCDate();
+  const clampDay=(yy,mm,dd)=>iso(yy,mm,Math.min(dd,lastDay(yy,mm)));
+  const addDays=(dateStr,delta)=>{
+    const [ay,am,ad]=dateStr.split('-').map(Number);
+    const t=new Date(Date.UTC(ay,am-1,ad));t.setUTCDate(t.getUTCDate()+delta);
+    return iso(t.getUTCFullYear(),t.getUTCMonth()+1,t.getUTCDate());
+  };
+  const daysBetween=(a,b)=>Math.round((Date.UTC(...b.split('-').map((v,i)=>i===1?Number(v)-1:Number(v)))
+    -Date.UTC(...a.split('-').map((v,i)=>i===1?Number(v)-1:Number(v))))/86400000);
+  const prevMonth=(yy,mm)=>mm===1?[yy-1,12]:[yy,mm-1];
+  if(kind==='month'){
+    const from=iso(y,m,1),[py,pm]=prevMonth(y,m);
+    return {from,to:todayStr,cf:iso(py,pm,1),ct:clampDay(py,pm,d)};
+  }
+  if(kind==='lastmonth'){
+    const [py,pm]=prevMonth(y,m),[qy,qm]=prevMonth(py,pm);
+    return {from:iso(py,pm,1),to:iso(py,pm,lastDay(py,pm)),cf:iso(qy,qm,1),ct:iso(qy,qm,lastDay(qy,qm))};
+  }
+  const quarterStartMonth=mm=>mm-((mm-1)%3);
+  if(kind==='quarter'){
+    const qm=quarterStartMonth(m),from=iso(y,qm,1);
+    const [py,pqm]=qm===1?[y-1,10]:[y,qm-3];
+    const cf=iso(py,pqm,1);
+    return {from,to:todayStr,cf,ct:addDays(cf,daysBetween(from,todayStr))};
+  }
+  if(kind==='lastquarter'){
+    const qm=quarterStartMonth(m);
+    const [py,pqm]=qm===1?[y-1,10]:[y,qm-3];
+    const [qy,qqm]=pqm===1?[py-1,10]:[py,pqm-3];
+    const endMonth=(yy,mm)=>iso(yy,mm+2,lastDay(yy,mm+2));
+    return {from:iso(py,pqm,1),to:endMonth(py,pqm),cf:iso(qy,qqm,1),ct:endMonth(qy,qqm)};
+  }
+  // year to date vs the same dates last year (29 Feb clamps to 28).
+  return {from:iso(y,1,1),to:todayStr,cf:iso(y-1,1,1),ct:clampDay(y-1,m,d)};
+}
 function reportPriorWindowV297(scope){
   const started=String(S.biz?.created_at||'');
   const startedDay=Number.isFinite(Date.parse(started))?sgDateInputValue(new Date(started)):null;
@@ -17849,8 +17970,10 @@ function reportPriorWindowV297(scope){
    Direction is carried three ways on purpose — arrow, colour class and the word itself — because
    an owner reading it at a glance and a screen reader reading it aloud need different cues. */
 function reportVerdictBandV297({label,valueText,current,previous,previousText='',days=0,
-  available=true,unavailableReason='',zeroBaselineText='nothing was recorded in the previous period',note=''}={}){
-  const periodWords=`the previous ${days} day${days===1?'':'s'}`;
+  available=true,unavailableReason='',zeroBaselineText='nothing was recorded in the previous period',note='',periodLabel=''}={}){
+  /* V300: an explicitly chosen baseline (calendar grain or custom compare dates) names itself;
+     the derived window keeps the exact V297 phrasing. */
+  const periodWords=periodLabel||`the previous ${days} day${days===1?'':'s'}`;
   const currentValue=Number(current),previousValue=Number(previous);
   let tone='none',arrow='',word='',sentence='';
   if(!available||!Number.isFinite(previousValue)||!Number.isFinite(currentValue)){
@@ -17944,6 +18067,17 @@ async function reportsPage(){
            computed, the owner just stops hand-typing "last quarter". The comparison stays the
            derived previous equal-length window on every choice. */''}
       <div class="report-scope-presets" role="group" aria-label="Quick date ranges">${[[7,'7 days'],[30,'30 days'],[90,'90 days'],[182,'6 months'],[365,'12 months']].map(([presetDays,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-days="${presetDays}">${presetLabel}</button>`).join('')}</div>
+      ${/* V300: calendar grains — each fills From/To AND the explicit compare pair with the
+           matching previous calendar window, then presses the same Run. */''}
+      <div class="report-scope-presets" role="group" aria-label="Calendar ranges">${[['month','This month'],['lastmonth','Last month'],['quarter','This quarter'],['lastquarter','Last quarter'],['year','This year']].map(([presetKind,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-cal="${presetKind}">${presetLabel}</button>`).join('')}</div>
+      <details id="reportCompareDetailsV300" style="margin-top:10px"><summary class="small" style="cursor:pointer;font-weight:650">Compare with different dates</summary>
+        <div class="range" style="margin-top:8px">
+          <label class="small">Compare from <input type="date" id="rcf"></label>
+          <span class="muted">→</span><label class="small">to <input type="date" id="rct"></label>
+          <button class="btn ghost sm" id="reportCompareClear" type="button">Use previous period</button>
+        </div>
+        <p class="muted small" style="margin-top:6px">Leave empty to compare with the previous period of the same length.</p>
+      </details>
       <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div class="v150-segment section-subtabs-v200 report-tabbar-v294" role="group" aria-label="Report categories">${decisions.map(item=>item.href
       ?`<button type="button" data-report-tab-href-v294="${item.href}" aria-pressed="false">${CUI.icon(item.icon,{size:16})} ${esc(item.title)}</button>`
@@ -17957,7 +18091,17 @@ async function reportsPage(){
     const range=reportRangeValidation(from,to);
     if(!range.ok)throw new Error(range.reason);
     const days=range.days;
-    return {from,to,days,priorFrom:shiftSgDateInput(from,-days),priorTo:shiftSgDateInput(from,-1),
+    /* V300: an owner-chosen baseline overrides the derived previous-equal-window. Both dates
+       must be present and valid; a half-filled pair is ignored rather than guessed. */
+    const compareFrom=$('rcf')?.value||'',compareTo=$('rct')?.value||'';
+    let priorFrom=shiftSgDateInput(from,-days),priorTo=shiftSgDateInput(from,-1),priorLabel='';
+    if(compareFrom&&compareTo){
+      const compareRange=reportRangeValidation(compareFrom,compareTo);
+      if(!compareRange.ok)throw new Error(`Compare dates: ${compareRange.reason}`);
+      priorFrom=compareFrom;priorTo=compareTo;
+      priorLabel=`the compared period (${compareFrom} to ${compareTo})`;
+    }
+    return {from,to,days,priorFrom,priorTo,priorLabel,
       fromTs:sgDateBoundary(from),toExclusive:sgDateBoundary(to,1),branchId:selectedBranchId||null};
   };
   /* V294: which report tabs have run since the last range change. Selecting a tab lazily runs
@@ -18034,7 +18178,7 @@ async function reportsPage(){
       valueText:money(currentRevenueTotalV297),
       current:currentRevenueTotalV297,previous:priorRevenueTotalV297,
       previousText:priorRevenueTotalV297===null?'':money(priorRevenueTotalV297),
-      days:scope.days,available:priorRevenueTotalV297!==null,
+      days:scope.days,periodLabel:scope.priorLabel||'',available:priorRevenueTotalV297!==null,
       unavailableReason:priorWindowV297.comparable
         ?'the same report could not be read for those earlier dates'
         :priorWindowV297.reason,
@@ -18213,7 +18357,7 @@ async function reportsPage(){
         current:current.serviceHours,
         previous:busyWindowV297.comparable?prior.serviceHours:null,
         previousText:`${prior.serviceHours.toFixed(1)} hours`,
-        days:scope.days,available:busyWindowV297.comparable,
+        days:scope.days,periodLabel:scope.priorLabel||'',available:busyWindowV297.comparable,
         unavailableReason:busyWindowV297.reason,
         zeroBaselineText:'nothing was booked in the previous period',
         note:busyNoteV297
@@ -18278,7 +18422,7 @@ async function reportsPage(){
       current:Number(cm.existing_returning_customers||0),
       previous:priorReturningV297,
       previousText:priorReturningV297===null?'':`${priorReturningV297} returning`,
-      days:scope.days,available:priorReturningV297!==null,
+      days:scope.days,periodLabel:scope.priorLabel||'',available:priorReturningV297!==null,
       unavailableReason:returningWindowV297.comparable
         ?'no identified customer purchases exist in those earlier dates'
         :returningWindowV297.reason,
@@ -18332,8 +18476,24 @@ async function reportsPage(){
     const presetDays=Math.max(1,Number(presetButton.dataset.reportPresetDays)||30);
     $('rt2').value=today;
     $('rf').value=shiftSgDateInput(today,-(presetDays-1));
+    if($('rcf'))$('rcf').value='';
+    if($('rct'))$('rct').value='';
     $('rgo').click();
   });
+  routeMain.querySelectorAll('[data-report-preset-cal]').forEach(presetButton=>presetButton.onclick=()=>{
+    const preset=reportCalendarPresetV300(presetButton.dataset.reportPresetCal,today);
+    $('rf').value=preset.from;$('rt2').value=preset.to;
+    if($('rcf'))$('rcf').value=preset.cf;
+    if($('rct'))$('rct').value=preset.ct;
+    const compareDetails=$('reportCompareDetailsV300');
+    if(compareDetails)compareDetails.open=true;
+    $('rgo').click();
+  });
+  if($('rcf'))$('rcf').onchange=()=>{if($('rcf').value&&$('rct').value)$('rgo').click()};
+  if($('rct'))$('rct').onchange=()=>{if($('rcf').value&&$('rct').value)$('rgo').click()};
+  if($('reportCompareClear'))$('reportCompareClear').onclick=()=>{
+    $('rcf').value='';$('rct').value='';$('rgo').click();
+  };
   if(reportTabsV294.length)selectReportTabV294(reportTabsV294[0].dataset.reportTabV294);
   $('rcsv').onclick=async()=>{
     if(!lastScope||$('rcsv').hidden) return toast('Sales export is unavailable for this report scope');

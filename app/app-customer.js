@@ -2752,13 +2752,13 @@ function customerShareLockupV267(business={}){
     <p class="customer-share-cobrand">${esc(customerShareCoBrandV267(business))}</p>
   </div>`;
 }
-function customerShareSheetMarkupV264({text,url,business={}}){
+function customerShareSheetMarkupV264({text,url,business={},title='Share this offer'}){
   const message=customerShareMessageV267(text,business);
   const channels=CUSTOMER_SHARE_CHANNELS_V264
     .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text:message,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
     .join('');
   return `<section class="modal-card customer-share-sheet">
-    <div class="row"><h2 id="customerShareTitle">Share this offer</h2><span class="spacer"></span>
+    <div class="row"><h2 id="customerShareTitle">${esc(title)}</h2><span class="spacer"></span>
       <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
     ${customerShareLockupV267(business)}
     <p class="muted small">${esc(text)}</p>
@@ -2767,12 +2767,12 @@ function customerShareSheetMarkupV264({text,url,business={}}){
     <p class="muted small customer-share-note">Instagram, TikTok and WeChat can be reached from your phone's own share button.</p>
   </section>`;
 }
-function showCustomerShareSheetV264({text,url,business={},onChannel=()=>{}}){
+function showCustomerShareSheetV264({text,url,business={},onChannel=()=>{},title='Share this offer'}){
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-share-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerShareTitle');
-  overlay.innerHTML=customerShareSheetMarkupV264({text,url,business});
+  overlay.innerHTML=customerShareSheetMarkupV264({text,url,business,title});
   document.body.appendChild(overlay);
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerShareClose'});
   overlay.querySelector('#customerShareClose').onclick=()=>deactivate({restoreFocus:true});
@@ -2816,6 +2816,51 @@ async function shareCustomerOfferV264(item,business){
     if(error?.name==='AbortError')return;
   }
   showCustomerShareSheetV264({text,url,business:shop,onChannel:record});
+}
+/* V300 (owner approval 2026-08-13): customers see and share their OWN referral code, synced to
+   the firm's live programme. The card renders only when the server says the programme AND the
+   referrals module are both on — the same {enabled:false} that hides the card also withholds the
+   terms and the code, so a switched-off programme can never be advertised. The share path is the
+   V264/V267 machinery: device sheet first (Instagram/TikTok/WeChat live there), co-branded
+   fallback sheet with the three real web endpoints otherwise. */
+function customerReferralMoneyV300(cents,currency){
+  return `${currency} ${(Number(cents||0)/100).toFixed(2)}`;
+}
+function customerReferralCardMarkupV300(card,business){
+  const currency=String(card?.currency||business?.currency||'SGD');
+  const code=String(card?.code||'').trim();
+  const referred=Math.max(0,Number(card?.referred_count)||0);
+  const reward=customerReferralMoneyV300(card?.reward_cents,currency);
+  const floor=Number(card?.min_spend_cents||0)>0?customerReferralMoneyV300(card?.min_spend_cents,currency):'';
+  return `<section class="card wallet-section customer-referral-card-v300" id="walletReferral" aria-labelledby="customerReferralTitle">
+    <div class="wallet-section-head"><div>
+      <h2 id="customerReferralTitle">${esc(ct('referralHeading',{business:business?.name||ct('localBusiness')}))}</h2>
+      <p class="muted small">${esc(floor?ct('referralTermsWithFloor',{reward,floor}):ct('referralTerms',{reward}))}</p>
+    </div></div>
+    ${code?`<div class="customer-referral-code-row">
+      <span class="customer-referral-code" aria-label="${esc(ct('yourReferralCode'))}">${esc(code)}</span>
+      <button class="btn ghost sm" id="customerReferralCopy" type="button">${CUI.icon('copy',{size:16})}<span>${esc(ct('copyCode'))}</span></button>
+      <button class="btn sm" id="customerReferralShare" type="button">${CUI.icon('share',{size:16})}<span>${esc(ct('shareCode'))}</span></button>
+    </div>`:`<p class="muted small" style="margin-top:10px">${esc(ct('referralCodePending'))}</p>`}
+    ${referred>0?`<p class="muted small customer-referral-count">${esc(ct('referredCount',{count:referred}))}</p>`:''}
+  </section>`;
+}
+async function shareCustomerReferralV300(card,business){
+  const slug=String(business?.slug||'').trim();
+  let url='';
+  try{url=slug?NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`):''}catch{}
+  if(!url)return toast('This business has no public page to share yet.');
+  const text=ct('referralShareMessage',{business:business?.name||ct('localBusiness'),code:String(card?.code||'').trim()});
+  const businessId=String(business?.id||'');
+  const record=channel=>typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.referral_shared',businessId,
+    {context:{channel,surface_version:'v300'}});
+  try{
+    const shared=await NestlyNativeBridge.share({title:customerShareCoBrandV267(business),text:customerShareMessageV267(text,business),url});
+    if(shared){record('device');return}
+  }catch(error){
+    if(error?.name==='AbortError')return;
+  }
+  showCustomerShareSheetV264({text,url,business,onChannel:record,title:ct('shareYourCode')});
 }
 function openCustomerPromotionDetailsV104(card){
   const template=card?.querySelector('template[data-promotion-details-template]');
@@ -3171,6 +3216,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerPointsExplainerMarkupV167(business)}
     ${customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
+    <div id="walletReferralSlot" hidden></div>
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
@@ -3744,6 +3790,23 @@ async function renderCustomerWallet(businessSlug=null){
   };
   ensureWalletEmptyState(businessSlug);
   const isWalletSectionCurrent=(host)=>walletSectionStillCurrent(host,isWalletCurrent);
+  /* V300: the referral card renders only from a server yes. Any other answer — programme off,
+     module off, backend not yet applied, denial, transport failure — removes the slot: this is
+     a growth invitation, not the customer's money, so a retry card here would be noise about a
+     feature the customer does not know exists. */
+  const loadReferralCardV300=async()=>{
+    const slot=$('walletReferralSlot');
+    if(!slot)return;
+    const {data,error}=await customerRpc('customer_get_referral_card_v300',{p_business_slug:businessSlug});
+    if(!isWalletCurrent()||!slot.isConnected)return;
+    if(error||data?.enabled!==true){slot.remove();return}
+    slot.outerHTML=customerReferralCardMarkupV300(data,{...b,id:businessId||b.id,slug:businessSlug});
+    const copyButton=$('customerReferralCopy');
+    if(copyButton)copyButton.onclick=()=>copyTextToClipboard(String(data.code||''),{button:copyButton,
+      success:ct('codeCopied'),failure:'Copying is blocked in this browser. Long-press the code to copy it.'});
+    const shareButton=$('customerReferralShare');
+    if(shareButton)shareButton.onclick=()=>shareCustomerReferralV300(data,{...b,id:businessId||b.id,slug:businessSlug});
+  };
   const loadGrowthOffers=async()=>{
     const host=$('walletGrowthOffers');
     if(!host||!window.NestlyGrowthOffers)return;
@@ -4133,7 +4196,7 @@ async function renderCustomerWallet(businessSlug=null){
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Rate your visit'))}</h2><p class="muted small">${esc(ct('Your review helps other people find this business.'))}</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
   };
-  await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
+  await Promise.all([loadReferralCardV300(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
   if(!isWalletCurrent())return;
 }
 

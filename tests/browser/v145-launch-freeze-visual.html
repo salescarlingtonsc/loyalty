@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="342b0e01149e73d98090b8c404ae82342836dc0b878f27e1e72ff4c5c6ee0fe8"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="3d56a571d31fe7b06d412222ab1fd41ee375fbea205aed3523564645cf52cd8f"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1626,6 +1626,13 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
+/* V300: how many times a reward has actually been redeemed, on its card. */
+.reward-card-redeemed-v300{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+/* V300: the customer's own referral code — dashed coupon treatment so it reads as a thing
+   you hand to a friend, not as data. */
+.customer-referral-code-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.customer-referral-code{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1.5px dashed var(--coral);border-radius:12px;background:var(--tint);color:var(--coral);font-size:1.3rem;font-weight:750;letter-spacing:.14em;font-variant-numeric:tabular-nums}
+.customer-referral-count{margin-top:10px}
 /* V299: when a firm runs tiers AND spendable points, the balance is visible on the tab bar
    itself — the customer's number one fact must not hide behind the unselected tab. */
 .customer-programme-tablist--with-balance{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
@@ -1972,7 +1979,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 342b0e01149e73d98090b8c404ae82342836dc0b878f27e1e72ff4c5c6ee0fe8</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 3d56a571d31fe7b06d412222ab1fd41ee375fbea205aed3523564645cf52cd8f</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3452,6 +3459,12 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
          though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
       c.created_at?summaryRowV294('Member since',`<b>${esc(formatCustomerJoinedDateV141(c.created_at))}</b>`):''}
+    ${/* V300 (landing-parity): Last visit from the SAME valid-visit set the Visits number above
+         is counted from — the two rows can never disagree. Rewards claimed counts unreversed
+         redemptions, and only when the reversal projection actually loaded; a count that might
+         silently include compensated redemptions is worse than no count. */
+      canReadSales&&lastVisitIso?summaryRowV294('Last visit',`<b>${esc(formatCustomerJoinedDateV141(lastVisitIso))}</b>${lastVisitDays===null?'':` · ${lastVisitDays===0?'today':`${lastVisitDays} day${lastVisitDays===1?'':'s'} ago`}`}`):''}
+    ${canReadLoyalty&&!reversalActionsUnavailable&&reversalData!==null?summaryRowV294('Rewards claimed',`<b>${histRedemptions.filter(r=>!r.reversed_at).length}</b>`):''}
     ${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}
   </aside>`;
   /* V294: one compact row per programme this customer can use — name + one line of what the
@@ -4125,6 +4138,17 @@ function renderHistPage(history,n){
            computed, the owner just stops hand-typing "last quarter". The comparison stays the
            derived previous equal-length window on every choice. */''}
       <div class="report-scope-presets" role="group" aria-label="Quick date ranges">${[[7,'7 days'],[30,'30 days'],[90,'90 days'],[182,'6 months'],[365,'12 months']].map(([presetDays,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-days="${presetDays}">${presetLabel}</button>`).join('')}</div>
+      ${/* V300: calendar grains — each fills From/To AND the explicit compare pair with the
+           matching previous calendar window, then presses the same Run. */''}
+      <div class="report-scope-presets" role="group" aria-label="Calendar ranges">${[['month','This month'],['lastmonth','Last month'],['quarter','This quarter'],['lastquarter','Last quarter'],['year','This year']].map(([presetKind,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-cal="${presetKind}">${presetLabel}</button>`).join('')}</div>
+      <details id="reportCompareDetailsV300" style="margin-top:10px"><summary class="small" style="cursor:pointer;font-weight:650">Compare with different dates</summary>
+        <div class="range" style="margin-top:8px">
+          <label class="small">Compare from <input type="date" id="rcf"></label>
+          <span class="muted">→</span><label class="small">to <input type="date" id="rct"></label>
+          <button class="btn ghost sm" id="reportCompareClear" type="button">Use previous period</button>
+        </div>
+        <p class="muted small" style="margin-top:6px">Leave empty to compare with the previous period of the same length.</p>
+      </details>
       <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div class="v150-segment section-subtabs-v200 report-tabbar-v294" role="group" aria-label="Report categories">${decisions.map(item=>item.href
       ?`<button type="button" data-report-tab-href-v294="${item.href}" aria-pressed="false">${CUI.icon(item.icon,{size:16})} ${esc(item.title)}</button>`
@@ -4138,7 +4162,17 @@ function renderHistPage(history,n){
     const range=reportRangeValidation(from,to);
     if(!range.ok)throw new Error(range.reason);
     const days=range.days;
-    return {from,to,days,priorFrom:shiftSgDateInput(from,-days),priorTo:shiftSgDateInput(from,-1),
+    /* V300: an owner-chosen baseline overrides the derived previous-equal-window. Both dates
+       must be present and valid; a half-filled pair is ignored rather than guessed. */
+    const compareFrom=$('rcf')?.value||'',compareTo=$('rct')?.value||'';
+    let priorFrom=shiftSgDateInput(from,-days),priorTo=shiftSgDateInput(from,-1),priorLabel='';
+    if(compareFrom&&compareTo){
+      const compareRange=reportRangeValidation(compareFrom,compareTo);
+      if(!compareRange.ok)throw new Error(`Compare dates: ${compareRange.reason}`);
+      priorFrom=compareFrom;priorTo=compareTo;
+      priorLabel=`the compared period (${compareFrom} to ${compareTo})`;
+    }
+    return {from,to,days,priorFrom,priorTo,priorLabel,
       fromTs:sgDateBoundary(from),toExclusive:sgDateBoundary(to,1),branchId:selectedBranchId||null};
   };
   /* V294: which report tabs have run since the last range change. Selecting a tab lazily runs
@@ -4215,7 +4249,7 @@ function renderHistPage(history,n){
       valueText:money(currentRevenueTotalV297),
       current:currentRevenueTotalV297,previous:priorRevenueTotalV297,
       previousText:priorRevenueTotalV297===null?'':money(priorRevenueTotalV297),
-      days:scope.days,available:priorRevenueTotalV297!==null,
+      days:scope.days,periodLabel:scope.priorLabel||'',available:priorRevenueTotalV297!==null,
       unavailableReason:priorWindowV297.comparable
         ?'the same report could not be read for those earlier dates'
         :priorWindowV297.reason,
@@ -4394,7 +4428,7 @@ function renderHistPage(history,n){
         current:current.serviceHours,
         previous:busyWindowV297.comparable?prior.serviceHours:null,
         previousText:`${prior.serviceHours.toFixed(1)} hours`,
-        days:scope.days,available:busyWindowV297.comparable,
+        days:scope.days,periodLabel:scope.priorLabel||'',available:busyWindowV297.comparable,
         unavailableReason:busyWindowV297.reason,
         zeroBaselineText:'nothing was booked in the previous period',
         note:busyNoteV297
@@ -4459,7 +4493,7 @@ function renderHistPage(history,n){
       current:Number(cm.existing_returning_customers||0),
       previous:priorReturningV297,
       previousText:priorReturningV297===null?'':`${priorReturningV297} returning`,
-      days:scope.days,available:priorReturningV297!==null,
+      days:scope.days,periodLabel:scope.priorLabel||'',available:priorReturningV297!==null,
       unavailableReason:returningWindowV297.comparable
         ?'no identified customer purchases exist in those earlier dates'
         :returningWindowV297.reason,
@@ -4513,8 +4547,24 @@ function renderHistPage(history,n){
     const presetDays=Math.max(1,Number(presetButton.dataset.reportPresetDays)||30);
     $('rt2').value=today;
     $('rf').value=shiftSgDateInput(today,-(presetDays-1));
+    if($('rcf'))$('rcf').value='';
+    if($('rct'))$('rct').value='';
     $('rgo').click();
   });
+  routeMain.querySelectorAll('[data-report-preset-cal]').forEach(presetButton=>presetButton.onclick=()=>{
+    const preset=reportCalendarPresetV300(presetButton.dataset.reportPresetCal,today);
+    $('rf').value=preset.from;$('rt2').value=preset.to;
+    if($('rcf'))$('rcf').value=preset.cf;
+    if($('rct'))$('rct').value=preset.ct;
+    const compareDetails=$('reportCompareDetailsV300');
+    if(compareDetails)compareDetails.open=true;
+    $('rgo').click();
+  });
+  if($('rcf'))$('rcf').onchange=()=>{if($('rcf').value&&$('rct').value)$('rgo').click()};
+  if($('rct'))$('rct').onchange=()=>{if($('rcf').value&&$('rct').value)$('rgo').click()};
+  if($('reportCompareClear'))$('reportCompareClear').onclick=()=>{
+    $('rcf').value='';$('rct').value='';$('rgo').click();
+  };
   if(reportTabsV294.length)selectReportTabV294(reportTabsV294[0].dataset.reportTabV294);
   $('rcsv').onclick=async()=>{
     if(!lastScope||$('rcsv').hidden) return toast('Sales export is unavailable for this report scope');
@@ -5164,7 +5214,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'342b0e01149e73d98090b8c404ae82342836dc0b878f27e1e72ff4c5c6ee0fe8',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'3d56a571d31fe7b06d412222ab1fd41ee375fbea205aed3523564645cf52cd8f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

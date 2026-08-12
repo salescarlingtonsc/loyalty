@@ -3117,6 +3117,18 @@
     {
       "id": "browser.rpc:app/app.js:staff_customer_bucket_counts_v290",
       "reason": "v290 read-only inactivity bucket aggregate; same auth+branch scope as staff_list_customers_v155; replaces the client paging the whole directory to count. No DML, no value table."
+    },
+    {
+      "id": "browser.rpc:app/app.js:customer_get_referral_card_v300",
+      "reason": "V300 read-only referral card. It writes nothing: it returns the CALLER'S OWN referral code (clients row resolved through the verified customer link), the firm's live referral_programs terms, and a count of the caller's qualified/rewarded referrals. Gated by app.v32_customer_wallet_context (42501 without a verified link); a disabled programme or module returns only {enabled:false} with no code and no terms."
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_list_returned_customers_v300",
+      "reason": "V300 read-only retention projection. It writes nothing: it lists customers whose latest valid visit (verbatim v244 counts_as_visit predicate, reversals excluded both ways) closed a gap of >= p_away_days inside the window. Gated by require_module_scope_v145(retention) which raises 42501 out of scope; capped at 50 rows with an honest truncated flag."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_reward_redemption_counts_v300",
+      "reason": "V300 read-only aggregate. It writes nothing: per-reward counts over the append-only loyalty_redemptions ledger (classic reward-less rows reported separately). Gated by require_module_scope_v145(loyalty); returns counts only, no customer identities."
     }
   ]
 }

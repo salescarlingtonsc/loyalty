@@ -31,6 +31,19 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   during launch-readiness work. Work is limited to correctness, stability,
   performance, clarity, and completion of behavior already present in the
   confirmed product scope.
+- Owner approval 2026-08-13 (V300, superseding the freeze for exactly these
+  scopes and nothing else): (1) customers may see and share their OWN referral
+  code inside the business programme page, synced to the firm's live referral
+  programme — the card renders only when the programme and the referrals module
+  are both on, states the firm's actual reward and qualifying floor, and shares
+  through the co-branded device-sheet-first path; (2) the retention surface may
+  state observed come-backs (away-now and returned-within-window on one shared
+  valid-visit predicate) as descriptive facts that claim no cause — causal
+  claims remain exclusive to bring-back playbooks and their held-back arms;
+  (3) Business Insights carries calendar comparison grains and an owner-chosen
+  compare-with baseline, Customer 360 states Member since / Last visit /
+  Rewards claimed from data consistent with its own figures, and reward cards
+  state real redemption counts (never an invented zero).
 - Every visible dashboard value must come from an identified persistent source
   and use one documented formula, branch scope, time range, Singapore-calendar
   boundary, and inclusion/exclusion policy. A failed, partial, stale, capped, or

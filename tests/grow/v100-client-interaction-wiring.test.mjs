@@ -69,7 +69,9 @@ test('v100 interaction contexts remain short allowlisted dimensions with no cust
   // V256: 7 v100 call sites plus the 9 v255 emit points; V264 adds the promotion share; V286 moves
   // the wallet's "View details" onto the Home offer sheet and re-emits the SAME v255
   // customer.promotion_opened event from the new handler — a call site, not a new event name.
-  assert.equal(calls.length,18);
+  // V300 adds customer.referral_shared (channel + surface_version only — the same fixed-handful
+  // channel dimension the V264 share uses; no code, no identity, no free text).
+  assert.equal(calls.length,19);
   for(const [,context] of calls){
     // V256: query_shape is deliberately allowed and deliberately NOT the typed text — the
     // shape helper is asserted separately in tests/business-ui/v255-interaction-batching.

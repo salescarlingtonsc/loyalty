@@ -57,7 +57,8 @@ test('dashboard KPI grid is tile-count-agnostic',()=>{
 test('Business Insights carries quick-range presets that press the existing Run',()=>{
   assert.match(app,/\[\[7,'7 days'\],\[30,'30 days'\],\[90,'90 days'\],\[182,'6 months'\],\[365,'12 months'\]\]/);
   assert.match(app,/data-report-preset-days="\$\{presetDays\}"/);
-  assert.match(app,/\$\('rf'\)\.value=shiftSgDateInput\(today,-\(presetDays-1\)\);\n\s*\$\('rgo'\)\.click\(\);/);
+  assert.match(app,/\$\('rf'\)\.value=shiftSgDateInput\(today,-\(presetDays-1\)\);/);
+  assert.match(app,/data-report-preset-days[\s\S]{0,400}?\$\('rgo'\)\.click\(\);/);
   assert.match(indexHtml,/\.report-scope-presets\{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px\}/);
 });
 

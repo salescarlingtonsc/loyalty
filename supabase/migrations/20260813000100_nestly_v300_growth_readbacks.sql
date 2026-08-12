@@ -94,7 +94,10 @@ end
 $$;
 
 revoke all on function public.customer_get_referral_card_v300(text) from public, anon;
-grant execute on function public.customer_get_referral_card_v300(text) to authenticated, service_role;
+grant execute on function public.customer_get_referral_card_v300(text)
+  to authenticated;
+grant execute on function public.customer_get_referral_card_v300(text)
+  to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 2. Observed come-backs: customers whose latest valid visit happened inside the
@@ -188,7 +191,10 @@ end
 $$;
 
 revoke all on function public.staff_list_returned_customers_v300(uuid, integer, integer) from public, anon;
-grant execute on function public.staff_list_returned_customers_v300(uuid, integer, integer) to authenticated, service_role;
+grant execute on function public.staff_list_returned_customers_v300(uuid, integer, integer)
+  to authenticated;
+grant execute on function public.staff_list_returned_customers_v300(uuid, integer, integer)
+  to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 3. Redemption counts per reward. loyalty_redemptions is append-only and written by
@@ -235,6 +241,9 @@ end
 $$;
 
 revoke all on function public.business_reward_redemption_counts_v300(uuid) from public, anon;
-grant execute on function public.business_reward_redemption_counts_v300(uuid) to authenticated, service_role;
+grant execute on function public.business_reward_redemption_counts_v300(uuid)
+  to authenticated;
+grant execute on function public.business_reward_redemption_counts_v300(uuid)
+  to service_role;
 
 commit;
