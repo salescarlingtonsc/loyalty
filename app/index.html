@@ -1751,7 +1751,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
 .redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
 .scanner-video{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#17161a}
-.scanner-frame{position:relative;margin-top:14px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
+/* v286 (audit): the ::after spotlight spreads a 999px shadow; with no clip it escaped the frame
+   and washed the sheet's title, live status line and fallback button in 20% black. */
+.scanner-frame{position:relative;margin-top:14px;overflow:hidden;border-radius:16px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
 .scanner-fallback{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
 .checkrow{display:flex;align-items:flex-start;gap:12px;min-height:48px;margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;color:var(--ink);cursor:pointer}
 .checkrow input[type="checkbox"]{width:22px;min-width:22px;min-height:22px;margin-top:1px;accent-color:var(--coral)}

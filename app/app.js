@@ -3452,12 +3452,26 @@ function openCustomerJoinScanner(){
     fallbackWrap.hidden=false;manualToggle.hidden=true;
     pasteFallback.open=true;imageInput.focus();
   };
+  /* v286 (audit): loadScannerLibrary pulls jsQR from a CDN, so a blocked CDN, an SRI mismatch or
+     an offline device used to reject inside the SAME catch as getUserMedia and be reported as
+     'Camera access was not available' — a lie about a camera that was never even asked for, and
+     the advice it gave (use a photo) led into the photo path, which needs the same missing
+     decoder and then blamed the customer's picture. The loader now has its own guard on BOTH
+     decoder paths and reports the real failure, with the camera button left as a live retry. */
+  const DECODER_LOAD_FAILURE='The scanner could not load. Check your connection and try again.';
+  const cameraLabel=camera.querySelector('span');
+  const loadDecoder=async()=>{try{await loadScannerLibrary();return true}catch{return false}};
   const startCamera=async()=>{
     if(closed)return;
     if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';revealFallback();return}
     camera.disabled=true;camera.hidden=true;status.textContent='Starting camera…';
+    if(!await loadDecoder()){
+      if(closed)return;
+      camera.disabled=false;camera.hidden=false;if(cameraLabel)cameraLabel.textContent='Try again';
+      status.textContent=DECODER_LOAD_FAILURE;return;
+    }
+    if(cameraLabel)cameraLabel.textContent='Open camera';
     try{
-      await loadScannerLibrary();
       stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
       if(closed){stream.getTracks().forEach(track=>track.stop());stream=null;return}
       video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
@@ -3472,14 +3486,20 @@ function openCustomerJoinScanner(){
   imageInput.onchange=async event=>{
     const file=event.target.files?.[0];if(!file)return;
     status.textContent='Reading QR image…';
+    /* v286: the photo path needs the same CDN decoder, so it reports the same honest failure
+       instead of 'That image could not be read' — the image was never the problem. */
+    if(!await loadDecoder()){status.textContent=DECODER_LOAD_FAILURE;return}
     try{
-      await loadScannerLibrary();
       const bitmap=await createImageBitmap(file);
       const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
       if(!accept(value))status.textContent='No active Peekaa join QR was found in that image.';
     }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
   };
-  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
+  const pasteValue=overlay.querySelector('#customerJoinScannerValue');
+  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(pasteValue.value);
+  /* v286 (audit): the paste field lives in no <form>, so there was no implicit submission and
+     Enter — the universal reflex, and the only keyboard path — did nothing, silently. */
+  pasteValue.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();accept(pasteValue.value)}};
   overlay.querySelector('#customerJoinScannerClose').onclick=close;
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerClose'});
@@ -4561,7 +4581,11 @@ async function renderCustomerQrJoin(){
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   if(!['joined','already_joined','completed','linked'].includes(String(data?.outcome||data?.status||''))){
-    status.textContent='This programme could not be joined. Ask the business to check its sign-up settings.';
+    /* v286 (audit): this branch left the customer on a card still headed 'Joining this programme'
+       with no action, and kept the dead token + write-attempt key so a later retry replayed the
+       same failing join. It now matches the error branch: a way out, and a clean rescan. */
+    clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
+    status.innerHTML='This programme could not be joined. Ask the business to check its sign-up settings.<br><a class="btn ghost sm" href="#/customer/programmes" style="margin-top:12px">Back to programmes</a>';
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
