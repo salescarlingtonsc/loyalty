@@ -120,10 +120,10 @@ img{max-width:100%;display:block}
 @media(min-width:900px){.head-nav{display:flex}.head-login{padding:10px 14px}}
 
 /* ---------- hero ---------- */
-.hero{position:relative;padding:56px 0 8px;overflow:hidden}
-.hero-glow{position:absolute;inset:-30% -20% auto -20%;height:720px;pointer-events:none;z-index:0;
-  background:radial-gradient(58% 52% at 22% 24%,rgba(194,65,53,.16),transparent 66%),
-             radial-gradient(46% 44% at 84% 8%,rgba(167,85,20,.11),transparent 62%)}
+/* V283: overflow is VISIBLE so the hero's own tokens keep travelling into the
+   sections below it — the composition does not stop at the hero's edge. The
+   horizontal overrun is still contained by body{overflow-x:hidden}. */
+.hero{position:relative;padding:56px 0 92px;overflow:visible}
 .hero .wrap{position:relative;z-index:1}
 .hero h1{font-size:clamp(2.6rem,8.4vw,4.55rem);letter-spacing:-.042em;margin:20px 0 0;max-width:16ch}
 .hero-lede{font-size:clamp(1.02rem,3.1vw,1.24rem);color:var(--ink2);max-width:46ch;margin-top:20px;line-height:1.55}
@@ -149,9 +149,16 @@ img{max-width:100%;display:block}
 /* ---------- story ---------- */
 .story{padding:20px 0 30px}
 .story-intro{padding:70px 0 10px}
-.step{padding:52px 0;border-top:1px solid var(--line)}
-.step:first-of-type{border-top:0}
-.step-grid{display:grid;gap:32px;align-items:center}
+/* V283: a hard full-width rule between steps drew five separate slabs. The seam
+   is now a hairline that fades out at both ends, so one step flows into the next. */
+.step{padding:52px 0;position:relative}
+.step::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line) 18%,var(--line) 82%,transparent)}
+.step:first-of-type::before{display:none}
+.step-grid{display:grid;gap:54px;align-items:center}
+/* V283: the art carries an L3 layer and drifts; the copy must never be covered. */
+.step-copy{position:relative;z-index:2}
+.step-art{position:relative;z-index:1}
 .step-num{display:inline-flex;align-items:center;gap:11px;font-size:12.5px;font-weight:750;letter-spacing:.12em;
   text-transform:uppercase;color:var(--coral)}
 .step-num b{font-family:var(--sf);font-size:15px;letter-spacing:.02em;font-weight:800}
@@ -285,21 +292,65 @@ img{max-width:100%;display:block}
 .heat i.b{background:rgba(194,65,53,.5)}
 .heat i.c{background:rgba(194,65,53,.85)}
 
-/* ---------- loop diagram ---------- */
-.loop{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.loop-stage{display:grid;gap:26px;margin-top:44px;align-items:center}
-.loop-side{display:grid;gap:14px;justify-items:center}
-.loop-cap{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);text-align:center}
-.loop-steps{list-style:none;display:grid;gap:12px;counter-reset:loopstep}
-.loop-steps li{display:flex;gap:13px;align-items:flex-start;padding:15px 16px;border:1px solid var(--line);
-  border-radius:16px;background:var(--bg)}
-.loop-steps li b{flex:none;width:25px;height:25px;border-radius:100px;background:var(--grad);color:#fff;
-  display:grid;place-items:center;font-size:12px;font-weight:800}
-.loop-steps li>span:not([class]){min-width:0}
-.loop-steps .t{display:block;font-size:14.5px;font-weight:650;letter-spacing:-.018em}
-.loop-steps .d{display:block;font-size:13px;color:var(--muted);margin-top:4px;line-height:1.45}
+/* ---------- V283 · the sticky storytelling scene ----------
+   The track is taller than the viewport; the stage sticks inside it, so for the
+   length of the track scrolling stops advancing the PAGE and starts advancing
+   the STORY. The left column is pinned; the right composition morphs through
+   four steps and converges on the last one. Without JavaScript the track
+   collapses to its natural height and the stage is an ordinary diagram. */
+.scene{background:rgba(255,255,255,.6);padding-bottom:0}
+.scene-track{position:relative;height:auto}
+html.js .scene-track{height:340vh}
+.scene-sticky{position:relative;padding:26px 0 40px}
+html.js .scene-sticky{position:sticky;top:0;min-height:100vh;display:flex;align-items:center}
+.scene-grid{display:grid;gap:26px;width:100%;align-items:center}
+.scene-copy h2{font-size:clamp(1.8rem,5vw,2.7rem);letter-spacing:-.036em;max-width:14ch}
+.scene-lede{margin-top:14px;color:var(--ink2);font-size:clamp(1rem,2.5vw,1.08rem);max-width:44ch}
+.scene-steps{list-style:none;display:grid;gap:9px;margin-top:24px;counter-reset:sc}
+.scene-step{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid transparent;
+  border-radius:14px;background:transparent;
+  transition:opacity .45s var(--ease),transform .45s var(--ease),background .45s var(--ease),border-color .45s var(--ease)}
+html.js .scene-step{opacity:.42}
+html.js .scene-step.done{opacity:.7}
+html.js .scene-step.on{opacity:1;transform:translate3d(6px,0,0);background:var(--tint);border-color:rgba(194,65,53,.28)}
+.scene-step b{flex:none;width:24px;height:24px;border-radius:100px;background:var(--grad);color:#fff;
+  display:grid;place-items:center;font-size:11.5px;font-weight:800}
+.scene-step>span:not([class]){min-width:0}
+.scene-step .t{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.018em}
+.scene-step .d{display:block;font-size:13px;color:var(--muted);margin-top:3px;line-height:1.45}
+/* The stage. Each piece is absolutely centred and moved only by transform, so a
+   morph between steps is four compositor writes and no layout at all. */
+.scene-stage{position:relative;height:clamp(360px,54vh,470px);display:block;overflow:hidden}
+.scene-piece{position:absolute;left:50%;top:50%;width:min(100%,330px);margin-left:max(-50%,-165px);
+  will-change:transform,opacity}
+.scene-piece.p-a{z-index:1}
+.scene-piece.p-d{z-index:2}
+.scene-piece.p-b{z-index:3}
+.scene-piece.p-c{z-index:4}
+.scene-piece.p-b{width:min(56%,182px);margin-left:max(-28%,-91px)}
+.scene-piece.p-c{width:min(74%,242px);margin-left:max(-37%,-121px)}
+.scene-piece.p-d{width:min(70%,232px);margin-left:max(-35%,-116px)}
+.scene-piece{width:min(92%,306px);margin-left:max(-46%,-153px)}
+.scene-cap{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font-size:11px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 @media(min-width:1000px){
-  .loop-stage{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,.82fr);gap:34px}
+  .scene-grid{grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:52px}
+  .scene-stage{height:clamp(430px,62vh,560px)}
+  .scene-piece{width:min(96%,360px);margin-left:max(-48%,-180px)}
+  .scene-piece.p-b{width:min(58%,222px);margin-left:max(-29%,-111px)}
+  .scene-piece.p-c{width:min(76%,300px);margin-left:max(-38%,-150px)}
+  .scene-piece.p-d{width:min(72%,286px);margin-left:max(-36%,-143px)}
+}
+@media(max-width:999px){
+  html.js .scene-track{height:300vh}
+  .scene-steps{margin-top:16px;gap:5px}
+  .scene-step .d{display:none}
+  .scene-step{padding:10px 12px}
+  .scene-lede{margin-top:11px;font-size:14.5px}
+  .scene-sticky{padding:10px 0 16px}
+  /* Pinned BELOW the sticky header, or the eyebrow is clipped by it. */
+  html.js .scene-sticky{top:62px;min-height:calc(100vh - 62px)}
+  .scene-stage{height:clamp(268px,34vh,340px)}
 }
 
 /* ---------- module grid ---------- */
@@ -312,8 +363,9 @@ img{max-width:100%;display:block}
 .mod p{font-size:14px;color:var(--muted);margin-top:7px;line-height:1.5}
 
 /* ---------- customer experience ---------- */
-.cx{background:linear-gradient(180deg,#FFF7F4,#F4F2EE 62%)}
-.cx-grid{display:grid;gap:34px;margin-top:40px;align-items:center}
+/* Translucent, so the depth field drifts on through rather than being masked. */
+.cx{background:linear-gradient(180deg,rgba(255,247,244,.86),rgba(244,242,238,.35) 62%,rgba(244,242,238,0))}
+.cx-grid{display:grid;gap:54px;margin-top:40px;align-items:center}
 @media(min-width:940px){.cx-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:60px}}
 .cx-list{list-style:none;display:grid;gap:18px;margin-top:6px}
 .cx-list h3{font-size:16.5px;letter-spacing:-.022em}
@@ -352,7 +404,7 @@ img{max-width:100%;display:block}
 .final-card .btn.line:hover{background:rgba(255,255,255,.12);border-color:#fff}
 
 /* ---------- footer ---------- */
-.site-foot{border-top:1px solid var(--line);padding:44px 0 56px;background:var(--bg)}
+.site-foot{border-top:1px solid var(--line);padding:44px 0 56px;background:transparent}
 .foot-top{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:flex-start}
 .foot-nav{display:flex;flex-wrap:wrap;gap:4px 24px;font-size:14px;font-weight:600;color:var(--ink2)}
 /* WCAG 2.5.8 wants a 24px minimum target; a bare inline link is only ~22px tall. */
@@ -361,35 +413,191 @@ img{max-width:100%;display:block}
 .foot-legal{margin-top:28px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;
   display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
 
-/* ---------- motion ---------- */
-html.js .reveal{opacity:0;transform:translateY(20px);transition:opacity .72s var(--ease),transform .72s var(--ease)}
-html.js .reveal.in{opacity:1;transform:none}
-html.js .reveal[data-delay="1"]{transition-delay:.08s}
-html.js .reveal[data-delay="2"]{transition-delay:.16s}
-html.js .reveal[data-delay="3"]{transition-delay:.24s}
-[data-parallax]{will-change:transform}
+/* ============================================================================
+   V283 — FIVE-LAYER SCROLL DEPTH
+   The page is ONE composition. Every layer's position is a pure function of
+   scrollY, expressed as an APPARENT SCROLL RATE relative to the page itself
+   (the page is 1.0x). One rAF loop writes translate3d and nothing else.
+
+     L1  0.15–0.25x  background glows and large soft shapes   [data-drift]
+     L2  0.35–0.50x  decorative fragments / reward symbols    [data-drift]
+     L3  0.70–0.80x  the product UI composition (main object) [data-rate]
+     L4  1.00–1.20x  floating product cards, nearer than L3   [data-rate]
+     L5  1.20–1.40x  small foreground elements                [data-rate]
+
+   [data-drift] = a FIXED layer. transform = -(scrollY * rate), recycled over
+   (viewport + own height) so it never restarts at a section boundary and never
+   runs off the document. Its wrap always happens off-screen.
+
+   [data-rate]  = an IN-FLOW layer. transform = (1 - rate) * (scrollY - y0),
+   where y0 is the scroll position at which the element sits where the designer
+   put it (0 for anything above the fold, so the page loads pixel-correct).
+   Capped by data-max so a layer can never collide with its neighbour.
+
+   data-min="<px>" drops a layer below that viewport width. The phone keeps all
+   five bands — fewer members and smaller amplitude, never a flat page.
+   ============================================================================ */
+.depth{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:layout paint}
+.depth span{position:absolute;display:block;top:0;left:0;will-change:transform}
+/* ---- L1 · 0.15–0.25x ---- */
+.d-orb{border-radius:50%}
+.d-orb.a{width:min(132vw,1220px);height:min(132vw,1220px);left:-34vw;
+  background:radial-gradient(circle at 44% 40%,rgba(194,65,53,.22),rgba(194,65,53,.055) 46%,transparent 70%)}
+.d-orb.b{width:min(118vw,980px);height:min(118vw,980px);left:auto;right:-32vw;
+  background:radial-gradient(circle at 54% 46%,rgba(167,85,20,.19),rgba(167,85,20,.045) 48%,transparent 72%)}
+.d-orb.c{width:min(106vw,860px);height:min(106vw,860px);left:2vw;
+  background:radial-gradient(circle at 50% 50%,rgba(31,107,72,.15),rgba(31,107,72,.03) 45%,transparent 70%)}
+.d-orb.d{width:min(92vw,740px);height:min(92vw,740px);left:auto;right:3vw;
+  background:radial-gradient(circle at 50% 50%,rgba(23,22,26,.055),transparent 66%)}
+/* ---- L2 · 0.35–0.50x ---- */
+.d-ring{border-radius:50%;border:1.5px solid rgba(194,65,53,.18)}
+.d-ring.r1{width:196px;height:196px;left:2%}
+.d-ring.r2{width:124px;height:124px;left:auto;right:8%;border-color:rgba(23,22,26,.1)}
+.d-ring.r3{width:264px;height:264px;left:auto;right:3%;border-color:rgba(167,85,20,.16)}
+.d-sq{border-radius:30%;background:rgba(23,22,26,.03);border:1px solid rgba(23,22,26,.055)}
+.d-sq.s1{width:138px;height:138px;left:auto;right:13%}
+.d-sq.s2{width:92px;height:92px;left:3%;background:rgba(194,65,53,.055);border-color:rgba(194,65,53,.11)}
+.d-mark{width:52px;height:52px;border-radius:16px;background:var(--tint);color:var(--coral);opacity:.62;
+  display:grid;place-items:center;border:1px solid rgba(194,65,53,.16)}
+.d-mark.m1{left:3%}
+.d-mark.m2{left:auto;right:4%;background:#E7F6EE;color:var(--green);border-color:rgba(31,107,72,.16)}
+.d-mark.m3{left:auto;right:12%;background:#FBF0E4;color:var(--amber);border-color:rgba(167,85,20,.18)}
+.d-dot{width:10px;height:10px;border-radius:100px;background:var(--coral);opacity:.32}
+.d-dot.p1{left:6%}
+.d-dot.p2{left:auto;right:7%;background:var(--green);opacity:.28}
+
+/* Scroll progress: one unbroken line for one unbroken page. */
+.scroll-progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;overflow:hidden;pointer-events:none}
+.scroll-progress i{display:block;height:100%;width:100%;background:var(--grad);border-radius:2px;
+  transform:scaleX(0);transform-origin:0 50%;will-change:transform}
+
+/* ---- L4 · floating product cards. Real product moments, drawn nearer than the
+   composition itself, so they visibly slide up past it as the page moves. ---- */
+.fcard{position:absolute;z-index:4;display:flex;align-items:center;gap:9px;padding:9px 14px 9px 10px;
+  border-radius:15px;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow-lg);
+  white-space:nowrap;letter-spacing:-.012em;will-change:transform}
+.fcard .fi{flex:none;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
+  background:var(--tint);color:var(--coral)}
+.fcard.ok .fi{background:#E7F6EE;color:var(--green)}
+.fcard.amber .fi{background:#FBF0E4;color:var(--amber)}
+.fcard.violet .fi{background:#EDEBF6;color:#4A3F86}
+.fcard b{display:block;font-size:12px;font-weight:750;color:var(--ink)}
+.fcard em{display:block;font-size:10.5px;font-style:normal;font-weight:600;color:var(--muted);margin-top:1px}
+/* ---- L5 · small foreground elements ---- */
+.fpill{position:absolute;z-index:5;display:inline-flex;align-items:center;gap:5px;padding:5px 11px;
+  border-radius:100px;background:var(--tint);border:1px solid rgba(194,65,53,.22);color:var(--coral-deep);
+  font-size:11px;font-weight:800;letter-spacing:-.008em;white-space:nowrap;
+  box-shadow:0 4px 12px rgba(157,53,44,.14);will-change:transform}
+.fpill.ok{background:#E7F6EE;border-color:rgba(31,107,72,.2);color:var(--green);box-shadow:0 4px 12px rgba(31,107,72,.12)}
+.fpill.plain{background:#fff;border-color:var(--hair);color:var(--ink2);box-shadow:var(--shadow)}
+
+/* Mid-page L4/L5. Every section, not just the hero, carries a card and a pill
+   drawn nearer than its product mock, so the depth never runs out. */
+.step-art,.cx-art{position:relative}
+.step-float{z-index:6}
+.step-float.a{left:1%;top:9%}
+.step-float.b{left:auto;right:2%;bottom:7%}
+.step-float.c{left:auto;right:1%;top:14%}
+@media(min-width:940px){
+  .step-float.a{left:-4%;top:11%}
+  .step-float.b{right:-3%;bottom:6%}
+  .step-float.c{right:-4%;top:12%}
+}
+@media(max-width:819px){
+  .step-float{display:none}
+  .fcard.step-float.keep{display:flex}
+  .fpill.step-float.keep{display:inline-flex}
+}
+
+/* Section floats sit beside the section head, in the empty half of the measure,
+   so the feature grids and price cards themselves never carry a transform. */
+.sec-float{display:none;z-index:6}
+@media(min-width:940px){
+  .sec-float{display:flex}
+  .fpill.sec-float{display:inline-flex}
+  .sec-float.a{left:auto;right:3%;top:92px}
+  .sec-float.b{left:auto;right:15%;top:196px}
+}
+
+/* Hero float placement. Below 1000px only two cards and two pills survive, at
+   safe insets — the phone keeps the depth without ever overflowing sideways. */
+.hero-float{display:none}
+.hero-float.keep{display:flex}
+.fpill.hero-float.keep{display:inline-flex}
+.hero-float.f1{left:1%;top:41%}
+.hero-float.f2{left:auto;right:1%;top:9%}
+.hero-float.f3{left:3%;top:95%}
+.hero-float.f4{left:auto;right:1%;top:88%}
+.hero-float.f5{left:auto;right:20%;top:100%}
+.hero-float.g1{left:2%;top:29%}
+.hero-float.g2{left:auto;right:3%;top:64%}
+.hero-float.g3{left:26%;top:104%}
+@media(min-width:1000px){
+  .hero-float{display:flex}
+  .fpill.hero-float{display:inline-flex}
+  .hero-float.f1{left:-2%;top:70%}
+  .hero-float.f2{right:-2%;top:98%}
+  .hero-float.f3{left:2%;top:107%}
+  .hero-float.f4{left:44%;right:auto;top:104%}
+  .hero-float.f5{right:26%;top:-5%}
+  .hero-float.g1{left:3%;top:32%}
+  .hero-float.g2{left:auto;right:33%;top:58%}
+  .hero-float.g3{left:22%;top:114%}
+}
+
+/* ---------- reveal ---------- */
+/* Deliberately small: the depth system, not a fade, is what carries the page.
+   A reveal never lands on an element that also carries a scroll layer. */
+html.js .reveal{opacity:0;transform:translate3d(0,12px,0);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+html.js .reveal.in{opacity:1;transform:translate3d(0,0,0)}
+html.js .reveal[data-delay="1"]{transition-delay:.06s}
+html.js .reveal[data-delay="2"]{transition-delay:.12s}
+html.js .reveal[data-delay="3"]{transition-delay:.18s}
+[data-rate],[data-drift]{will-change:transform}
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   html.js .reveal,html.js .reveal.in{opacity:1!important;transform:none!important;transition:none!important}
-  [data-parallax]{transform:none!important;will-change:auto}
+  [data-rate],[data-drift],.fcard,.fpill,.scene-piece{transform:none!important;will-change:auto}
+  .depth,.scroll-progress,.hero-float{display:none!important}
+  html.js .scene-track{height:auto!important}
+  html.js .scene-sticky{position:static!important;min-height:0!important}
+  html.js .scene-step{opacity:1!important}
+  html.js .scene-stage{position:static!important;height:auto!important}
+  html.js .scene-piece{position:static!important;opacity:1!important;margin:0 auto 16px}
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 }
 
 /* ---------- hero composition ---------- */
-.stage{position:relative;display:grid;gap:22px;justify-items:center}
-.stage-dash{width:100%;max-width:560px}
-.stage-phone{width:100%;max-width:250px}
-.link-svg{display:none}
+/* V283 — the hero reads left to right: BUSINESS DASHBOARD → PEEKAA → CUSTOMER.
+   The hub in the middle is the product itself, and it is the only element that
+   sits on top of both sides, so the eye is told what joins them. */
+.stage{position:relative;display:grid;gap:18px;justify-items:center}
+.stage-dash{width:100%;max-width:560px;position:relative}
+.stage-phone{width:100%;max-width:250px;position:relative}
+.stage-hub{display:flex;align-items:center;justify-content:center;gap:7px;z-index:3;flex-direction:column}
+.hub-core{display:grid;justify-items:center;gap:6px}
+.hub-badge{width:60px;height:60px;border-radius:20px;background:#fff;border:1px solid rgba(194,65,53,.2);
+  box-shadow:0 6px 22px rgba(157,53,44,.16);display:grid;place-items:center;padding:10px}
+.hub-badge img{width:100%;height:auto}
+.hub-name{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--coral-deep)}
+.hub-arrows{display:flex;align-items:center;color:#C6BFB5}
+.hub-arrows svg{transform:rotate(90deg)}
+@media(min-width:900px){.stage-hub{flex-direction:row}.hub-arrows svg{transform:none}}
+.stage-cap{font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  text-align:center;margin-bottom:9px}
 @media(min-width:900px){
-  .hero{padding-top:64px}
+  /* Room for the composition to lag into. At 0.74x it trails 150px behind
+     the page by the time it leaves — that space is its, not the strip's. */
+  .hero{padding:64px 0 168px}
   .hero-stage{margin-top:56px}
   /* Capped rather than fluid: stretched to 1100px the dashboard mock reads as an
      empty page with three numbers in it, not as a working product screen. */
-  .stage{grid-template-columns:minmax(0,680px) minmax(0,280px);align-items:center;gap:0;
+  .stage{grid-template-columns:minmax(0,1fr) 106px minmax(0,268px);align-items:center;gap:0;
     justify-content:center;justify-items:stretch}
-  .stage-dash{max-width:680px;justify-self:end;width:100%}
-  .stage-phone{justify-self:center;margin-left:-34px;max-width:268px;z-index:2}
-  .link-svg{display:block;position:absolute;left:0;right:0;top:50%;height:2px;pointer-events:none}
+  .stage-dash{max-width:640px;justify-self:end;width:100%}
+  .stage-hub{justify-self:center}
+  .stage-phone{justify-self:center;margin-left:-16px;max-width:268px;z-index:2}
+  .stage-cap{position:absolute;top:-26px;left:0;right:0;margin:0}
 }
 /* The hero stays a single column at every width: the dashboard + phone composition
    needs the full measure to sit side by side, and squeezing it into half the grid
@@ -409,7 +617,34 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 
+<!-- ══════════════════ V283 DEPTH FIELD ══════════════════
+     One fixed field behind the whole document. Because it is fixed rather than
+     owned by any section, nothing in it restarts at a section boundary — this is
+     what makes the page read as a single composition instead of stacked pages.
+     Purely decorative; it carries no information and is hidden from assistive
+     technology, removed entirely under reduced motion. -->
+<div class="depth" id="depthField" aria-hidden="true">
+  <!-- L1 · 0.15–0.25x — background glows. At a fifth of the page's rate these
+       are what make the depth unmistakable the moment anyone scrolls. -->
+  <span class="d-orb a" data-drift="0.16" data-phase="0.04" data-x="34"></span>
+  <span class="d-orb b" data-drift="0.21" data-phase="0.46" data-x="-38"></span>
+  <span class="d-orb c" data-drift="0.19" data-phase="0.74" data-x="26" data-min="640"></span>
+  <span class="d-orb d" data-drift="0.24" data-phase="0.26" data-x="-30" data-min="900"></span>
+  <!-- L2 · 0.35–0.50x — fragments and reward symbols. -->
+  <span class="d-ring r1" data-drift="0.37" data-phase="0.08" data-x="24"></span>
+  <span class="d-ring r2" data-drift="0.46" data-phase="0.58" data-x="-26" data-min="640"></span>
+  <span class="d-ring r3" data-drift="0.4" data-phase="0.33" data-x="20" data-min="1100"></span>
+  <span class="d-sq s1" data-drift="0.43" data-phase="0.71" data-x="-22" data-min="760"></span>
+  <span class="d-sq s2" data-drift="0.36" data-phase="0.19" data-x="18"></span>
+  <span class="d-mark m1" data-drift="0.48" data-phase="0.87" data-x="-16" data-min="640"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/></svg></span>
+  <span class="d-mark m2" data-drift="0.42" data-phase="0.51" data-x="14" data-min="900"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+  <span class="d-mark m3" data-drift="0.5" data-phase="0.14" data-x="-12" data-min="1100"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-5M12.5 16V8M17 16v-3"/></svg></span>
+  <span class="d-dot p1" data-drift="0.45" data-phase="0.39" data-x="12"></span>
+  <span class="d-dot p2" data-drift="0.5" data-phase="0.83" data-x="-14" data-min="640"></span>
+</div>
+
 <header class="site-head" id="siteHead">
+  <div class="scroll-progress" aria-hidden="true"><i id="scrollFill"></i></div>
   <div class="wrap head-inner">
     <a href="#top" aria-label="Peekaa home"><img class="brand-logo" src="/brand/peekaa-logo.png" alt="Peekaa" width="240" height="68"></a>
     <nav class="head-nav" aria-label="Page sections">
@@ -430,7 +665,6 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
 
 <!-- ══════════════════════════ HERO ══════════════════════════ -->
 <section class="hero" aria-labelledby="heroTitle">
-  <div class="hero-glow" aria-hidden="true" data-parallax data-speed="-0.08"></div>
   <div class="wrap">
     <div class="hero-top">
       <div class="hero-copy reveal">
@@ -445,9 +679,40 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
       </div>
 
       <div class="hero-stage reveal" data-delay="1">
+        <!-- L4 · 1.00–1.20x — floating product cards, nearer to the viewer than
+             the composition itself. Anchored to the hero, but because they move
+             FASTER than the page they are still climbing through the category
+             strip and the story intro long after the hero has scrolled away:
+             the hero does not stop at a section boundary. The two marked "keep"
+             survive on a phone; the rest are desktop-only, by layer count. -->
+        <span class="fcard hero-float ok f1 keep" aria-hidden="true" data-rate="1.16" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+          <span><b>Reward earned</b><em>Serene Lim · +82 pts</em></span>
+        </span>
+        <span class="fcard hero-float f2" aria-hidden="true" data-min="1000" data-rate="1.08" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M19 8v6M22 11h-6"/></svg></span>
+          <span><b>New customer</b><em>Joined at the counter</em></span>
+        </span>
+        <span class="fcard hero-float amber f3" aria-hidden="true" data-min="1000" data-rate="1.12" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M16.5 9.5a4 4 0 0 1 0 5"/></svg></span>
+          <span><b>Promotion</b><em>2-for-1 lattes · live</em></span>
+        </span>
+        <span class="fcard hero-float violet f4 keep" aria-hidden="true" data-rate="1.19" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-5M12.5 16V8M17 16v-3"/></svg></span>
+          <span><b>Loyalty progress</b><em>180 pts to Platinum</em></span>
+        </span>
+        <span class="fcard hero-float f5" aria-hidden="true" data-min="1000" data-rate="1.05" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <span><b>Customer activity</b><em>Visit 6 · Tanjong Pagar</em></span>
+        </span>
+        <!-- L5 · 1.20–1.40x — the small stuff, nearest of all. -->
+        <span class="fpill hero-float g1 keep" aria-hidden="true" data-rate="1.34" data-max="230">+18 pts</span>
+        <span class="fpill ok hero-float g2 keep" aria-hidden="true" data-rate="1.27" data-max="230">Came back</span>
+        <span class="fpill plain hero-float g3" aria-hidden="true" data-min="1000" data-rate="1.38" data-max="230">−150 pts</span>
         <div class="stage">
-          <!-- Business dashboard mock -->
-          <div class="mock stage-dash" data-parallax data-speed="0.035" data-wide="1">
+          <!-- L3 · 0.70–0.80x — the product composition, the main object. -->
+          <div class="mock stage-dash" data-rate-sm="0.76" data-max-sm="70" data-rate="0.74" data-max="150">
+            <div class="stage-cap">Business dashboard</div>
             <div class="frame">
               <div class="frame-bar">
                 <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -488,8 +753,23 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
             </div>
           </div>
 
+          <!-- The product that joins the two sides. -->
+          <div class="stage-hub" aria-hidden="true" data-rate-sm="0.76" data-max-sm="70" data-rate="0.8" data-max="150">
+            <span class="hub-arrows">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+            <span class="hub-core">
+              <span class="hub-badge"><img src="/brand/peekaa-mark.png" alt="" width="120" height="120"></span>
+              <span class="hub-name">Peekaa</span>
+            </span>
+            <span class="hub-arrows">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </div>
+
           <!-- Customer wallet mock -->
-          <div class="mock stage-phone" data-parallax data-speed="-0.045" data-wide="1">
+          <div class="mock stage-phone" data-rate-sm="0.76" data-max-sm="70" data-rate="0.78" data-max="150">
+            <div class="stage-cap">Customer experience</div>
             <div class="phone">
               <div class="phone-screen">
                 <span class="phone-notch" aria-hidden="true"></span>
@@ -526,7 +806,7 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
             </div>
           </div>
         </div>
-        <p class="small muted" style="text-align:center;margin-top:22px">Illustration of the Peekaa business dashboard and the customer's rewards wallet.</p>
+        <p class="small muted" style="text-align:center;margin-top:22px" data-anchor data-rate-sm="0.76" data-max-sm="70" data-rate="0.74" data-max="150">Illustration of the Peekaa business dashboard and the customer's rewards wallet.</p>
       </div>
     </div>
   </div>
@@ -577,7 +857,7 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
           </ul>
         </div>
         <div class="step-art mock reveal" data-delay="1">
-          <div class="frame">
+          <div class="frame" data-rate="0.72" data-max-sm="52" data-max="150">
             <div class="frame-bar">
               <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
               <span class="frame-url">Join Kopi &amp; Co</span>
@@ -625,7 +905,12 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
           </ul>
         </div>
         <div class="step-art mock reveal" data-delay="1">
-          <div class="frame">
+        <span class="fcard step-float violet a keep" aria-hidden="true" data-rate="1.14" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-5M12.5 16V8M17 16v-3"/></svg></span>
+          <span><b>Loyalty progress</b><em>Gold · 180 to Platinum</em></span>
+        </span>
+        <span class="fpill step-float b" data-min="820" aria-hidden="true" data-rate="1.3" data-max="230">+18 pts</span>
+          <div class="frame" data-rate="0.78" data-max-sm="52" data-max="150">
             <div class="frame-bar">
               <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
               <span class="frame-url">Loyalty programme</span>
@@ -689,7 +974,11 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
           </ul>
         </div>
         <div class="step-art mock reveal" data-delay="1">
-          <div class="phone" style="max-width:262px">
+        <span class="fcard step-float amber a" data-min="820" aria-hidden="true" data-rate="1.07" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M16.5 9.5a4 4 0 0 1 0 5"/></svg></span>
+          <span><b>Promotion</b><em>2-for-1 lattes · live</em></span>
+        </span>
+          <div class="phone" style="max-width:262px" data-rate="0.74" data-max-sm="52" data-max="150">
             <div class="phone-screen">
               <span class="phone-notch" aria-hidden="true"></span>
               <div class="phone-inner">
@@ -735,7 +1024,12 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
           </ul>
         </div>
         <div class="step-art mock reveal" data-delay="1">
-          <div class="frame">
+        <span class="fcard step-float c" data-min="820" aria-hidden="true" data-rate="1.11" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <span><b>Customer activity</b><em>Visit 24 · 4 days ago</em></span>
+        </span>
+        <span class="fpill step-float ok b keep" aria-hidden="true" data-rate="1.36" data-max="230">Came back</span>
+          <div class="frame" data-rate="0.79" data-max-sm="52" data-max="150">
             <div class="frame-bar">
               <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
               <span class="frame-url">Customer · Serene Lim</span>
@@ -785,7 +1079,7 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
           </ul>
         </div>
         <div class="step-art mock reveal" data-delay="1">
-          <div class="frame">
+          <div class="frame" data-rate="0.75" data-max-sm="52" data-max="150">
             <div class="frame-bar">
               <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
               <span class="frame-url">Retention · Bring-back</span>
@@ -819,63 +1113,115 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
 </div>
 
 <!-- ══════════════════════════ THE LOOP ══════════════════════════ -->
-<section class="loop section" aria-labelledby="loopTitle">
+<section class="scene section" aria-labelledby="loopTitle">
   <div class="wrap">
     <div class="section-head reveal">
       <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Two sides, one programme</span>
       <h2 id="loopTitle" style="margin-top:18px">What you set up is what they see.</h2>
       <p>There is no second system to keep in sync. You create a reward in your dashboard; it appears in your customers' wallets. They visit and claim it; it appears back in your activity feed.</p>
     </div>
+  </div>
 
-    <div class="loop-stage">
-      <div class="loop-side reveal">
-        <div class="loop-cap">Your dashboard</div>
-        <div class="mock" style="width:100%;max-width:340px">
-          <div class="frame">
-            <div class="frame-bar"><span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="frame-url">New reward</span></div>
-            <div class="frame-body">
-              <div class="mock-h">Free kaya toast set</div>
-              <div class="mock-sub" style="margin-top:4px">Costs 150 points</div>
-              <div class="dash-flow">
-                <span class="flow-node on">Draft</span>
-                <svg class="flow-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                <span class="flow-node on">Live</span>
-              </div>
-              <ul class="feed" style="margin-top:14px">
-                <li><span class="avatar" aria-hidden="true">SL</span><span><span class="who">Serene Lim</span><br><span class="what">Claimed just now</span></span><span class="amt">−150</span></li>
-              </ul>
-            </div>
+  <!-- V283 — the sticky storytelling scene. The track is 340vh, so for three
+       screens of scrolling the stage stays pinned and the SCROLL DRIVES THE
+       STORY instead of the page: the left column holds still while the right
+       composition morphs through four steps and converges on the last one.
+       Every piece is moved by transform and opacity only. -->
+  <div class="scene-track" id="sceneTrack">
+    <div class="scene-sticky" id="sceneSticky">
+      <div class="wrap">
+        <div class="scene-grid">
+          <div class="scene-copy">
+            <span class="eyebrow"><span class="dot" aria-hidden="true"></span>The whole loop</span>
+            <h2 style="margin-top:16px">Turn customers into regulars.</h2>
+            <p class="scene-lede">Four things happen, in this order, and every one of them is the same programme — not four tools you have to keep in step.</p>
+            <ol class="scene-steps" id="sceneSteps">
+              <li class="scene-step"><b>1</b><span><span class="t">Reward customers</span><span class="d">Points on spend, a stamp card or tiers. You set what a reward costs, and switch it live.</span></span></li>
+              <li class="scene-step"><b>2</b><span><span class="t">Keep them engaged</span><span class="d">Their balance and the next reward are the first thing they see when they open it.</span></span></li>
+              <li class="scene-step"><b>3</b><span><span class="t">Bring them back</span><span class="d">Peekaa knows who has gone quiet. Set a bring-back rule and the reward waits for them.</span></span></li>
+              <li class="scene-step"><b>4</b><span><span class="t">Build loyalty</span><span class="d">Every visit, reward and return lands in one profile — and in the numbers you run the shop on.</span></span></li>
+            </ol>
           </div>
-        </div>
-      </div>
 
-      <div class="reveal" data-delay="1">
-        <ol class="loop-steps">
-          <li><b>1</b><span><span class="t">You create a reward</span><span class="d">Name it, set what it costs in points, switch it live.</span></span></li>
-          <li><b>2</b><span><span class="t">Your customer sees it</span><span class="d">It appears in their wallet with how far away they are from it.</span></span></li>
-          <li><b>3</b><span><span class="t">They come in and claim it</span><span class="d">Redeemed at your counter, with you confirming it.</span></span></li>
-          <li><b>4</b><span><span class="t">You see the activity</span><span class="d">The visit, the points spent and the reward land in your dashboard.</span></span></li>
-        </ol>
-      </div>
+          <div class="scene-stage" id="sceneStage" aria-hidden="true">
+            <!-- A · the reward you create -->
+            <div class="scene-piece mock p-a" id="scenePieceA">
+              <div class="frame">
+                <div class="frame-bar"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-url">New reward</span></div>
+                <div class="frame-body">
+                  <div class="mock-row">
+                    <div><div class="mock-h">Free kaya toast set</div><div class="mock-sub" style="margin-top:4px">Costs 150 points</div></div>
+                    <span class="pill ok">Live</span>
+                  </div>
+                  <div class="dash-flow">
+                    <span class="flow-node on">Draft</span>
+                    <svg class="flow-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    <span class="flow-node on">Live</span>
+                  </div>
+                  <ul class="feed" style="margin-top:14px">
+                    <li><span class="avatar">SL</span><span><span class="who">Serene Lim</span><br><span class="what">Claimed just now</span></span><span class="amt">−150</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
 
-      <div class="loop-side reveal" data-delay="2">
-        <div class="loop-cap">Their wallet</div>
-        <div class="mock" style="width:100%">
-          <div class="phone" style="max-width:216px">
-            <div class="phone-screen">
-              <span class="phone-notch" aria-hidden="true"></span>
-              <div class="phone-inner" style="padding-top:32px">
-                <div class="wallet-label" style="margin-top:0">New reward</div>
-                <div class="rwd">
-                  <div class="rwd-card" style="border-color:rgba(194,65,53,.32);background:var(--tint)">
-                    <span class="rwd-ic" aria-hidden="true">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/></svg>
-                    </span>
-                    <span><span class="rwd-n">Free kaya toast set</span><span class="rwd-c">150 points</span></span>
+            <!-- B · what the customer sees -->
+            <div class="scene-piece mock p-b" id="scenePieceB">
+              <div class="phone">
+                <div class="phone-screen">
+                  <span class="phone-notch"></span>
+                  <div class="phone-inner" style="padding-top:30px">
+                    <div class="wallet-label" style="margin-top:0">New reward</div>
+                    <div class="rwd">
+                      <div class="rwd-card" style="border-color:rgba(194,65,53,.32);background:var(--tint)">
+                        <span class="rwd-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/></svg></span>
+                        <span><span class="rwd-n">Free kaya toast set</span><span class="rwd-c">150 points</span></span>
+                      </div>
+                    </div>
+                    <div style="margin-top:11px;font-size:10.5px;color:var(--muted);font-weight:600">You have 1,240 points</div>
+                    <span class="btn sm" style="width:100%;margin-top:10px;font-size:12px;min-height:38px">Claim reward</span>
                   </div>
                 </div>
-                <div style="margin-top:11px;font-size:10.5px;color:var(--muted);font-weight:600">You have 1,240 points</div>
-                <span class="btn sm" style="width:100%;margin-top:10px;font-size:12px;min-height:38px">Claim reward</span>
+              </div>
+            </div>
+
+            <!-- C · the ones who stopped coming -->
+            <div class="scene-piece mock p-c" id="scenePieceC">
+              <div class="frame">
+                <div class="frame-bar"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-url">Bring-back</span></div>
+                <div class="frame-body">
+                  <div class="mock-row">
+                    <div class="mock-h" style="font-size:13.5px">Away 60 days</div>
+                    <span class="pill new">86 customers</span>
+                  </div>
+                  <div style="border:1px solid rgba(194,65,53,.28);background:var(--tint);border-radius:14px;padding:11px 12px;margin-top:11px">
+                    <div style="font-size:11px;font-weight:750;color:var(--coral-deep)">Bring-back reward</div>
+                    <div style="font-size:13px;font-weight:700;margin-top:4px;letter-spacing:-.02em">Free drink on your next visit</div>
+                  </div>
+                  <div class="ins-grid">
+                    <div class="ins"><div class="l">In this group</div><div class="v">86</div></div>
+                    <div class="ins"><div class="l">Came back</div><div class="v" style="color:var(--green)">23</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- D · what it all adds up to -->
+            <div class="scene-piece mock p-d" id="scenePieceD">
+              <div class="frame">
+                <div class="frame-bar"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-url">Serene Lim</span></div>
+                <div class="frame-body">
+                  <div class="c360-head">
+                    <span class="avatar">SL</span>
+                    <div><div class="mock-h" style="font-size:13.5px">Serene Lim</div><div class="mock-sub">24 visits</div></div>
+                    <span class="pill amber" style="margin-left:auto">Gold</span>
+                  </div>
+                  <div class="ins-grid">
+                    <div class="ins"><div class="l">Points</div><div class="v">1,240</div></div>
+                    <div class="ins"><div class="l">Total spend</div><div class="v">SGD 862</div></div>
+                  </div>
+                  <div class="heat" style="margin-top:11px"><i class="a"></i><i class="b"></i><i></i><i class="c"></i><i class="b"></i><i class="c"></i><i class="a"></i></div>
+                </div>
               </div>
             </div>
           </div>
@@ -915,8 +1261,13 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
           </li>
         </ul>
       </div>
-      <div class="mock reveal" data-delay="1">
-        <div class="phone" style="max-width:258px">
+      <div class="mock reveal cx-art" data-delay="1">
+        <span class="fcard step-float ok a keep" aria-hidden="true" data-rate="1.13" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+          <span><b>Reward earned</b><em>Claimed at the counter</em></span>
+        </span>
+        <span class="fpill step-float plain b" data-min="820" aria-hidden="true" data-rate="1.25" data-max="230">Gold tier</span>
+        <div class="phone" style="max-width:258px" data-rate="0.76" data-max-sm="52" data-max="150">
           <div class="phone-screen">
             <span class="phone-notch" aria-hidden="true"></span>
             <div class="phone-inner">
@@ -955,7 +1306,12 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
 </section>
 
 <!-- ══════════════════════════ WHAT'S INSIDE ══════════════════════════ -->
-<section class="section" id="inside" aria-labelledby="insideTitle">
+<section class="section" id="inside" aria-labelledby="insideTitle" style="position:relative">
+  <span class="fcard sec-float a" data-min="940" aria-hidden="true" data-rate="1.09" data-max="190">
+    <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M19 8v6M22 11h-6"/></svg></span>
+    <span><b>New customer</b><em>Joined at the counter</em></span>
+  </span>
+  <span class="fpill sec-float b" data-min="940" aria-hidden="true" data-rate="1.31" data-max="230">+18 pts</span>
   <div class="wrap">
     <div class="section-head reveal">
       <span class="eyebrow"><span class="dot" aria-hidden="true"></span>What's inside</span>
@@ -1018,7 +1374,12 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
 </section>
 
 <!-- ══════════════════════════ PRICING ══════════════════════════ -->
-<section class="section" id="pricing" aria-labelledby="priceTitle">
+<section class="section" id="pricing" aria-labelledby="priceTitle" style="position:relative">
+  <span class="fcard sec-float ok a" data-min="940" aria-hidden="true" data-rate="1.15" data-max="190">
+    <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+    <span><b>Reward earned</b><em>Serene Lim · +82 pts</em></span>
+  </span>
+  <span class="fpill ok sec-float b" data-min="940" aria-hidden="true" data-rate="1.28" data-max="230">Came back</span>
   <div class="wrap">
     <div class="section-head reveal">
       <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Pricing</span>
@@ -1131,18 +1492,32 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
 </script>
 
 <script>
-/* V274 — scroll narrative. Everything here is progressive enhancement: without
-   JavaScript the page is a plain stack of sections with nothing hidden, and with
-   `prefers-reduced-motion: reduce` no element is ever transformed. */
-(function landingMotionV274(){
+/* ============================================================================
+   V283 — the scroll depth engine.
+
+   ONE rAF loop. ONE passive scroll listener. The write phase touches nothing but
+   `transform` and `opacity`, and reads no layout at all — every measurement is
+   taken in measure(), which runs on load, on resize and once after the reveals
+   have settled. Everything here is progressive enhancement: without JavaScript
+   the page is a plain stack of sections with nothing hidden, and with
+   `prefers-reduced-motion: reduce` nothing is ever transformed.
+
+   Layer bands (apparent scroll rate; the page itself is 1.0x):
+     L1 0.15–0.25x  background glows            [data-drift]
+     L2 0.35–0.50x  fragments / reward symbols  [data-drift]
+     L3 0.70–0.80x  product UI composition      [data-rate]
+     L4 1.00–1.20x  floating product cards      [data-rate]
+     L5 1.20–1.40x  small foreground elements   [data-rate]
+   ============================================================================ */
+(function landingDepthV283(){
   'use strict';
   var reduce=false;
   try{reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(error){reduce=false}
 
-  /* --- reveal on scroll --- */
-  var revealables=document.querySelectorAll('.reveal');
+  /* --- reveal on scroll (deliberately small; the depth carries the page) --- */
+  var revealables=document.querySelectorAll('.reveal'),i;
   if(reduce||typeof IntersectionObserver!=='function'){
-    for(var i=0;i<revealables.length;i+=1)revealables[i].classList.add('in');
+    for(i=0;i<revealables.length;i+=1)revealables[i].classList.add('in');
   }else{
     var observer=new IntersectionObserver(function(entries){
       for(var j=0;j<entries.length;j+=1){
@@ -1150,65 +1525,199 @@ html.js .reveal[data-delay="3"]{transition-delay:.24s}
         entries[j].target.classList.add('in');
         observer.unobserve(entries[j].target);
       }
-    },{rootMargin:'0px 0px -8% 0px',threshold:0.06});
-    for(var k=0;k<revealables.length;k+=1)observer.observe(revealables[k]);
+    },{rootMargin:'0px 0px -4% 0px',threshold:0.04});
+    for(i=0;i<revealables.length;i+=1)observer.observe(revealables[i]);
     /* Anything already on screen at load must not wait for a scroll event. */
     window.setTimeout(function(){
       for(var m=0;m<revealables.length;m+=1){
-        var box=revealables[m].getBoundingClientRect();
-        if(box.top<window.innerHeight)revealables[m].classList.add('in');
+        if(revealables[m].getBoundingClientRect().top<window.innerHeight)revealables[m].classList.add('in');
       }
     },60);
   }
 
-  /* --- sticky header hairline --- */
   var head=document.getElementById('siteHead');
+  var fill=document.getElementById('scrollFill');
+  var stuck='';
 
-  /* --- layered depth: translate3d only, one rAF, no layout reads in the loop --- */
-  var layers=[],nodes=document.querySelectorAll('[data-parallax]'),ticking=false;
-  if(!reduce){
-    for(var n=0;n<nodes.length;n+=1){
-      layers.push({
-        el:nodes[n],
-        speed:parseFloat(nodes[n].getAttribute('data-speed')||'0.04'),
-        /* The hero mocks sit side by side on a wide screen but STACK below 900px,
-           where opposing parallax speeds slide them straight into one another. */
-        wideOnly:nodes[n].hasAttribute('data-wide'),
-        top:0,h:0
-      });
+  if(reduce){
+    /* The hairline under the sticky header is not motion — it is a boundary cue,
+       so it survives. Nothing else in this file runs. */
+    if(head){
+      window.addEventListener('scroll',function(){
+        var next=window.pageYOffset>8?'true':'false';
+        if(next!==stuck){stuck=next;head.setAttribute('data-stuck',next)}
+      },{passive:true});
     }
+    return;
   }
+
+  /* ---------------- layer registry ---------------- */
+  var drifts=[],flows=[],nodes,el,k;
+  nodes=document.querySelectorAll('[data-drift]');
+  for(k=0;k<nodes.length;k+=1){
+    el=nodes[k];
+    drifts.push({el:el,
+      rate:parseFloat(el.getAttribute('data-drift'))||0.2,
+      phase:parseFloat(el.getAttribute('data-phase')||'0'),
+      xAmp:parseFloat(el.getAttribute('data-x')||'0'),
+      min:parseFloat(el.getAttribute('data-min')||'0'),
+      h:0,last:''});
+  }
+  nodes=document.querySelectorAll('[data-rate]');
+  for(k=0;k<nodes.length;k+=1){
+    el=nodes[k];
+    flows.push({el:el,
+      rate:parseFloat(el.getAttribute('data-rate'))||1,
+      /* Stacked on a narrow screen, two members of one composition at different
+         rates collide. data-rate-sm makes them travel as a single object. */
+      rateSm:parseFloat(el.getAttribute('data-rate-sm')||'0')||0,
+      maxSm:parseFloat(el.getAttribute('data-max-sm')||'0')||0,
+      max:parseFloat(el.getAttribute('data-max')||'120'),
+      min:parseFloat(el.getAttribute('data-min')||'0'),
+      /* data-anchor pins y0 to scroll 0 — used by hero layers that start just
+         below the fold but must still load exactly where they were designed. */
+      pin:el.hasAttribute('data-anchor'),
+      y0:0,last:''});
+  }
+
+  /* ---------------- the sticky scene ---------------- */
+  var track=document.getElementById('sceneTrack');
+  var stage=document.getElementById('sceneStage');
+  var steps=document.querySelectorAll('#sceneSteps .scene-step');
+  var pieces=[document.getElementById('scenePieceA'),document.getElementById('scenePieceB'),
+              document.getElementById('scenePieceC'),document.getElementById('scenePieceD')];
+  /* Four keyframes per piece — [x as a fraction of the stage width,
+     y as a fraction of its height, scale, opacity]. Step 4 pulls all four
+     together: the four things are one programme, so the composition converges. */
+  var KEYS=[
+    [[ 0.00,-0.03,1.00,1.00],[-0.31,-0.16,0.80,0.34],[-0.34,-0.22,0.72,0.22],[-0.22,-0.18,0.84,0.94]],
+    [[ 0.42, 0.18,0.76,0.18],[ 0.05, 0.02,1.00,1.00],[ 0.30, 0.14,0.80,0.34],[ 0.23, 0.12,0.90,1.00]],
+    [[-0.34, 0.32,0.68,0.00],[-0.32, 0.32,0.72,0.00],[-0.03, 0.05,1.00,1.00],[-0.14, 0.26,0.82,0.92]],
+    [[ 0.34,-0.32,0.70,0.00],[ 0.35,-0.30,0.74,0.18],[ 0.35,-0.32,0.78,0.26],[ 0.18,-0.28,0.86,0.96]]
+  ];
+  var sceneTop=0,sceneH=0,stageW=0,stageH=0,pieceH=[0,0,0,0],pieceLast=['','','',''],stepIdx=-1;
+
+  /* ---------------- measurement (the only place layout is read) ------------- */
+  var vh=0,vw=0,docMax=1,amp=1;
   function measure(){
-    for(var p=0;p<layers.length;p+=1){
-      var rect=layers[p].el.getBoundingClientRect();
-      layers[p].top=rect.top+window.pageYOffset;
-      layers[p].h=rect.height;
+    var y=window.pageYOffset,n,rect;
+    /* Clear every transform first, then read: one write pass, one read pass,
+       so the browser never thrashes layout element by element. */
+    for(n=0;n<drifts.length;n+=1){drifts[n].el.style.transform='';drifts[n].last=''}
+    for(n=0;n<flows.length;n+=1){flows[n].el.style.transform='';flows[n].last=''}
+    for(n=0;n<pieces.length;n+=1)if(pieces[n]){pieces[n].style.transform='';pieceLast[n]=''}
+
+    vh=window.innerHeight;vw=window.innerWidth;
+    docMax=Math.max(1,(document.documentElement.scrollHeight||vh)-vh);
+    /* Amplitude, not presence: the phone keeps all five bands at 60% throw. */
+    amp=vw<700?0.7:(vw<1000?0.85:1);
+
+    for(n=0;n<drifts.length;n+=1)drifts[n].h=drifts[n].el.offsetHeight||0;
+    for(n=0;n<flows.length;n+=1){
+      rect=flows[n].el.getBoundingClientRect();
+      var top=rect.top+y;
+      /* Anything above the fold is anchored at scroll 0, so the page loads
+         exactly as designed and only starts separating once you scroll. */
+      flows[n].y0=(flows[n].pin||top<vh)?0:(top+rect.height/2-vh/2);
+    }
+    if(track&&stage){
+      rect=track.getBoundingClientRect();
+      sceneTop=rect.top+y;sceneH=rect.height;
+      rect=stage.getBoundingClientRect();
+      stageW=rect.width;stageH=rect.height;
+      for(n=0;n<pieces.length;n+=1)pieceH[n]=pieces[n]?pieces[n].offsetHeight:0;
     }
   }
+
+  function smooth(t){return t*t*(3-2*t)}
+
+  /* ---------------- the write phase (transform + opacity only) ------------- */
   function paint(){
     ticking=false;
-    var y=window.pageYOffset;
-    if(head)head.setAttribute('data-stuck',y>8?'true':'false');
-    var wide=window.innerWidth>=900;
-    for(var q=0;q<layers.length;q+=1){
-      var layer=layers[q];
-      if(layer.wideOnly&&!wide){
-        if(layer.el.style.transform)layer.el.style.transform='';
-        continue;
+    var y=window.pageYOffset,n,layer,value,narrow=vw<900;
+
+    var next=y>8?'true':'false';
+    if(head&&next!==stuck){stuck=next;head.setAttribute('data-stuck',next)}
+    if(fill)fill.style.transform='scaleX('+Math.min(1,Math.max(0,y/docMax)).toFixed(4)+')';
+
+    /* L1 + L2 — fixed layers. transform = -(y * rate), recycled over
+       (viewport + own height) so the wrap always happens off-screen and the
+       field never restarts at a section boundary. */
+    for(n=0;n<drifts.length;n+=1){
+      layer=drifts[n];
+      if(vw<layer.min){if(layer.last!==''){layer.last='';layer.el.style.transform=''}continue}
+      var span=vh+layer.h;
+      var u=(y*layer.rate+layer.phase*span)%span;
+      if(u<0)u+=span;
+      value='translate3d('+(layer.xAmp*(u/span-0.5)*2).toFixed(1)+'px,'+(vh-u).toFixed(1)+'px,0)';
+      if(value!==layer.last){layer.last=value;layer.el.style.transform=value}
+    }
+
+    /* L3 + L4 + L5 — in-flow layers. transform = (1 - rate) * (y - y0), so the
+       element travels at exactly `rate` times the page's own rate. */
+    for(n=0;n<flows.length;n+=1){
+      layer=flows[n];
+      if(vw<layer.min){if(layer.last!==''){layer.last='';layer.el.style.transform=''}continue}
+      var rate=(narrow&&layer.rateSm)?layer.rateSm:layer.rate;
+      var off=(1-rate)*(y-layer.y0)*amp;
+      var cap=((narrow&&layer.maxSm)?layer.maxSm:layer.max)*amp;
+      if(off>cap)off=cap;else if(off<-cap)off=-cap;
+      value='translate3d(0,'+off.toFixed(1)+'px,0)';
+      if(value!==layer.last){layer.last=value;layer.el.style.transform=value}
+    }
+
+    /* The sticky scene. Progress through the track is the story's clock. */
+    if(track&&stage&&stageH){
+      var p=(y-sceneTop)/Math.max(1,sceneH-vh);
+      if(p<0)p=0;else if(p>1)p=1;
+      var seg=(p-0.125)/0.25;
+      if(seg<0)seg=0;else if(seg>3)seg=3;
+      var a=Math.floor(seg),t=smooth(seg-a),b=a+1>3?3:a+1;
+      /* A narrow stage compresses the lateral throw rather than clipping it. */
+      var spread=stageW<420?0.78:1;
+      for(n=0;n<pieces.length;n+=1){
+        if(!pieces[n])continue;
+        var f=KEYS[n][a],g=KEYS[n][b];
+        var px=(f[0]+(g[0]-f[0])*t)*stageW*spread;
+        var py=(f[1]+(g[1]-f[1])*t)*stageH-pieceH[n]/2;
+        var ps=f[2]+(g[2]-f[2])*t;
+        /* Opacity arrives well before position does. Cross-fading at the same
+           speed as the move leaves two half-transparent product cards sitting
+           on top of each other, which reads as a mess rather than as depth. */
+        var to=(t-0.05)/0.45;
+        to=smooth(to<0?0:(to>1?1:to));
+        var po=f[3]+(g[3]-f[3])*to;
+        /* A phone stage is too narrow for four components to avoid overlapping,
+           so a parked one has to read as a ghost, not as a second subject. */
+        if(narrow&&po<0.999)po*=0.6;
+        value='translate3d('+px.toFixed(1)+'px,'+py.toFixed(1)+'px,0) scale('+ps.toFixed(3)+')';
+        if(value!==pieceLast[n]){pieceLast[n]=value;pieces[n].style.transform=value;pieces[n].style.opacity=po.toFixed(3)}
       }
-      var centre=layer.top+layer.h/2-(y+window.innerHeight/2);
-      if(Math.abs(centre)>window.innerHeight*1.6)continue;
-      layer.el.style.transform='translate3d(0,'+(centre*layer.speed).toFixed(2)+'px,0)';
+      var idx=Math.min(steps.length-1,Math.floor(p*steps.length));
+      if(idx!==stepIdx){
+        stepIdx=idx;
+        for(n=0;n<steps.length;n+=1){
+          steps[n].classList.toggle('on',n===idx);
+          steps[n].classList.toggle('done',n<idx);
+        }
+      }
     }
   }
+
+  var ticking=false;
   function onScroll(){
     if(ticking)return;
     ticking=true;
     window.requestAnimationFrame(paint);
   }
+
   measure();paint();
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',function(){measure();onScroll()},{passive:true});
+  window.addEventListener('load',function(){measure();onScroll()});
+  /* The reveals settle ~0.7s in and move the page by a few pixels; re-measure
+     once so every y0 is taken against the final layout. */
+  window.setTimeout(function(){measure();onScroll()},900);
 })();
 </script>
 </body>
