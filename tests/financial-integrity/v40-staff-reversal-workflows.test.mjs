@@ -83,7 +83,12 @@ test('staff UI keeps stable keys and confirmation while sale reversal notes are 
   assert.match(app,/Correction note \(optional\)/);
   assert.match(app,/Reason \(required, at least 10 characters\)/);
   assert.match(app,/p_note:reason\|\|null/);
-  assert.match(app,/if\(!isReplay&&!confirm\(/);
+  /* V291 retarget (not a deletion): the confirmation is still exactly one deliberate act before
+     a reversal is written, and it is still skipped on an exact replay — it just runs through the
+     translatable dialog now instead of the browser's untranslatable confirm(). */
+  assert.match(app,/if\(!isReplay\)\{[\s\S]{0,400}confirmDeliberateV288\(\{/);
+  assert.match(app,/title:'Confirm this reversal\?'/);
+  assert.match(app,/acknowledgement:'I understand compensating records will be added\.'/);
   assert.match(app,/reverse_sale_fast_v84':'reverse_loyalty_redemption/);
   assert.match(app,/Changed-request conflict/);
   assert.match(app,/Verify exact replay/);

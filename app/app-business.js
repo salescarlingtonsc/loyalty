@@ -1808,8 +1808,16 @@ function openReversalDialog(kind,item,onDone){
     const args=kind==='sale'
       ?{p_business:S.biz.id,p_sale:item.id,p_note:reason||null,p_idempotency_key:reversalKeys.get(keyId)}
       :{p_business:S.biz.id,p_redemption:item.id,p_reason:reason,p_idempotency_key:reversalKeys.get(keyId)};
-    if(!isReplay&&!confirm(`Confirm ${kind==='sale'?'sale':'loyalty redemption'} reversal? This keeps the original and adds compensating records.`)){
-      btn.disabled=false;btn.textContent='Confirm reversal';return;
+    /* V291: the last money confirmation on this dialog was a native confirm(). It is now the
+       shared translatable dialog; the tick box is a second deliberate act exactly as before. */
+    if(!isReplay){
+      const confirmedReversalV291=await confirmDeliberateV288({
+        title:'Confirm this reversal?',
+        body:kind==='sale'?'This reverses a recorded sale.':'This reverses a recorded loyalty redemption.',
+        summaryHtml:'<b>Nothing is deleted</b><p class="small" style="margin-top:5px">The original record stays exactly as it is. Compensating records are added beside it, so the totals move but the history still shows what happened.</p>',
+        acknowledgement:'I understand compensating records will be added.',
+        confirmLabel:'Confirm reversal',danger:true});
+      if(!confirmedReversalV291){btn.disabled=false;btn.textContent='Confirm reversal';return}
     }
     const {data,error}=await sb.rpc(kind==='sale'?'reverse_sale_fast_v84':'reverse_loyalty_redemption',args);
     if(error){
@@ -1833,6 +1841,69 @@ function bindReversalButtons(onDone){
     const item=reversalItems.get(reversalItemKey(btn.dataset.reverseKind,btn.dataset.reverseId));
     openReversalDialog(btn.dataset.reverseKind,item,onDone);
   });
+}
+
+/* V291 (PDPA erasure, owner-only). A customer may ask for their personal details to be removed.
+   The browser never does the removal: erase_client_v290 is the single server writer, and it
+   REFUSES while the customer still holds value or property, so the refusal below is printed
+   verbatim rather than translated into a guess. This register remembers, for this session only,
+   which profiles were erased through this screen, so the profile can say so honestly on the
+   re-render; it is not a schema claim, and it is deliberately not persisted. */
+const erasedClientsV291=new Map();
+const eraseClientAttemptsV291=new Map();
+/* Deliberately NOT a compliance claim: this dialog says what the software does to the record,
+   and nothing about what any law requires. ⚖️ legal wording stays with the business's counsel. */
+function openEraseClientDialogV291({clientId,clientName,onDone}){
+  const label=String(clientName||'').trim();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="eraseClientModalV291" role="dialog" aria-modal="true" aria-labelledby="eraseClientTitleV291" tabindex="-1"><div class="modal-card" style="max-width:560px">
+    <div class="row"><div><h2 id="eraseClientTitleV291">Erase customer data</h2><p class="muted small" style="margin-top:4px" data-merchant-content>${esc(label||'This customer')}</p></div><span class="spacer"></span><button class="btn ghost sm" id="eraseClientCloseV291" type="button">Close</button></div>
+    <div class="imp-note" style="margin-top:12px"><b>What is erased</b><p class="small" style="margin-top:5px">The name, phone number, email address and date of birth on this profile are replaced with anonymous placeholders, and the customer's own app sign-in for this business stops resolving to them.</p></div>
+    <div class="imp-note" style="margin-top:10px"><b>What stays, and why</b><p class="small" style="margin-top:5px">Sales, points, credit, appointments and every other ledger entry are kept. They are the accounting record of money that changed hands, so they are never deleted \u2014 they simply stop naming a person.</p></div>
+    <p class="muted small" style="margin-top:10px">This cannot be undone, and the details cannot be typed back in afterwards.</p>
+    <label for="eraseClientReasonV291">Why is this being erased? (required, at least 8 characters)</label>
+    <textarea id="eraseClientReasonV291" rows="3" placeholder="e.g. Customer asked us to remove their details"></textarea>
+    <label for="eraseClientNameV291">Type the customer's name exactly to confirm</label>
+    <input id="eraseClientNameV291" autocomplete="off" data-merchant-content placeholder="${esc(label)}">
+    <div id="eraseClientOutcomeV291" role="status" aria-live="polite"></div>
+    <div class="row" style="margin-top:16px"><button class="btn danger" id="eraseClientSubmitV291" type="button" disabled>Erase customer data</button><button class="btn ghost sm" id="eraseClientCancelV291" type="button">Cancel</button></div>
+  </div></div>`);
+  const modal=$('eraseClientModalV291');
+  let deactivate,completed=false;
+  const close=()=>{if(deactivate)deactivate();else modal?.remove();if(completed&&onDone)onDone()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#eraseClientReasonV291'});
+  $('eraseClientCloseV291').onclick=$('eraseClientCancelV291').onclick=close;
+  const reason=$('eraseClientReasonV291'),typed=$('eraseClientNameV291'),submit=$('eraseClientSubmitV291');
+  /* Both gates, together: a reason long enough to mean something, and the name transcribed. The
+     name match is case- and space-insensitive so it is a deliberate act, not a typing test. */
+  const normalise=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+  const sync=()=>{submit.disabled=!(reason.value.trim().length>=8&&normalise(typed.value)===normalise(label)&&normalise(label)!=='')};
+  reason.oninput=sync;typed.oninput=sync;sync();
+  submit.onclick=async()=>{
+    const text=reason.value.trim();
+    if(text.length<8)return toast('Write at least 8 characters');
+    const fingerprint=JSON.stringify({client:clientId,reason:text});
+    let attempt=eraseClientAttemptsV291.get(clientId);
+    if(!attempt||attempt.fingerprint!==fingerprint){
+      attempt={fingerprint,key:crypto.randomUUID()};
+      eraseClientAttemptsV291.set(clientId,attempt);
+    }
+    submit.disabled=true;submit.textContent='Erasing…';
+    const {data,error}=await sb.rpc('erase_client_v290',{
+      p_business:S.biz.id,p_client:clientId,p_reason:text,p_idem:attempt.key});
+    if(!modal.isConnected)return;
+    if(error){
+      /* The server refuses while active value or kept property remains. Its sentence is the
+         truthful one; do not replace it with a generic failure. */
+      $('eraseClientOutcomeV291').innerHTML=`<div class="err"><b>Nothing was erased.</b> ${esc(error.message||'The server refused this request.')}</div>`;
+      submit.disabled=false;submit.textContent='Erase customer data';return;
+    }
+    completed=true;
+    eraseClientAttemptsV291.delete(clientId);
+    erasedClientsV291.set(String(clientId),{reason:text,at:new Date().toISOString(),result:data||null});
+    $('eraseClientOutcomeV291').innerHTML='<div class="imp-note"><b>Personal details erased.</b> The ledger entries for this customer are unchanged.</div>';
+    submit.textContent='Erased';$('eraseClientCancelV291').textContent='Done';
+    toast('Customer data erased');
+  };
 }
 
 const saleCorrectionAttempts=new Map();
@@ -1866,7 +1937,14 @@ function openSaleAmountCorrectionDialog(item,onDone){
     const cents=correctedCents(),note=$('saleCorrectionNote').value.trim();
     if(!(cents>0))return toast('Enter the corrected amount');
     if(cents===Number(item.amount_cents))return toast('The amount has not changed');
-    if(!confirm(`Final check: replace ${money(Number(item.amount_cents))} with ${money(cents)}?`))return;
+    /* V291: translatable final check before an amount is replaced. */
+    const confirmedCorrectionV291=await confirmDeliberateV288({
+      title:'Replace this amount?',
+      body:`${money(Number(item.amount_cents))} \u2192 ${money(cents)}`,
+      summaryHtml:'<b>The original stays in history</b><p class="small" style="margin-top:5px">The original sale is reversed and the corrected one is recorded together, so customer points and the money records stay in step.</p>',
+      acknowledgement:'I have checked the corrected amount.',
+      confirmLabel:'Replace the amount',danger:true});
+    if(!confirmedCorrectionV291||!modal.isConnected)return;
     const fingerprint=JSON.stringify({sale:item.id,amount_cents:cents,note:note||null});
     let attempt=saleCorrectionAttempts.get(item.id);
     if(!attempt||attempt.fingerprint!==fingerprint){
@@ -3586,7 +3664,20 @@ async function clientDetail(id){
       <div class="row" style="margin-top:16px">${CUI.action({id:'ecSave',label:'Save changes',iconName:'check'})}
       ${CUI.action({id:'ecCancel',label:'Cancel',variant:'secondary',className:'sm'})}</div>
     </section>`:'';
+  /* V291: after an erasure the profile must not read like an ordinary one. The banner states
+     what was removed and what deliberately stayed; the fields below already render whatever the
+     server actually left, so nothing here asserts a value it has not read back. */
+  const erasedRecordV291=erasedClientsV291.get(String(id))||null;
+  const erasedBannerV291=erasedRecordV291
+    ?`<div class="imp-note" id="c360ErasedBannerV291" role="status" style="margin-bottom:16px"><b>Personal details erased.</b><p class="small" style="margin-top:5px">Name, contact details and date of birth were replaced with anonymous placeholders on this profile. Sales, points, credit and appointments were kept \u2014 they are the accounting record and are never deleted. This cannot be undone.</p></div>`
+    :'';
+  /* Owner-only. Erasure is not a customer-service action; it destroys identifying data for good. */
+  const eraseCardV291=S.myRole==='owner'&&!erasedRecordV291
+    ?`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Erase customer data</b><p>Replace this customer's name, contact details and date of birth with anonymous placeholders. Sales, points, credit and appointments stay for your accounting.</p></div>
+      <div class="row" style="margin-top:12px"><button class="btn danger sm" type="button" id="c360EraseV291">Erase customer data</button><span class="muted small">Owner only. This cannot be undone.</span></div></section>`
+    :'';
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
+    ${erasedBannerV291}
     ${editCustomerMarkup}
     ${badgesHtml}
     ${staffProfileScopeNote}
@@ -3612,8 +3703,13 @@ async function clientDetail(id){
       ${birthdayCardMarkup}${feedbackStripMarkup}</div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
-    ${activityMarkup}`;
+    ${activityMarkup}
+    ${eraseCardV291}`;
   routeMain.querySelector('.cui-page-title h1')?.setAttribute('data-merchant-content','');
+  const eraseButtonV291=$('c360EraseV291');
+  if(eraseButtonV291)eraseButtonV291.onclick=()=>openEraseClientDialogV291({
+    clientId:id,clientName:c.full_name,
+    onDone:()=>{if(isClientDetailCurrent())clientDetail(id)}});
   /* Header quick actions. Every handler routes to an existing surface — no new write path is
      introduced here. */
   /* V259 (owner: "not clickable to see where the points came from"). The POINTS number now opens
@@ -4786,7 +4882,17 @@ async function tillPage(){
     if(busy||cartLocked())return;
     const owned=catalog?.customerPackages?.find(item=>item.client_package_id===clientPackageId);
     if(!owned)return toast('That package is no longer available');
-    if(!confirm(`Use 1 session from ${owned.plan_name}? ${owned.remaining} remaining now.`))return;
+    /* V291 (audit follow-up): a native confirm() cannot be translated, so the one dialog that
+       takes value off a customer's package spoke English to a workforce CLAUDE.md says may not
+       read it. Same deliberate-confirmation dialog as V288; the fixed sentences are registered in
+       the workspace copy tables, and only the plan name and remaining count are interpolated. */
+    const confirmedSessionV291=await confirmDeliberateV288({
+      title:'Use one session?',
+      body:`${owned.plan_name} \u00b7 ${owned.remaining} remaining now.`,
+      summaryHtml:'<b>What this does</b><p class="small" style="margin-top:5px">One session is taken off this customer\u2019s package straight away. It is recorded as a $0 visit, so nothing is charged and nothing is refunded. If you take it off by mistake, reverse the session record in Sales.</p>',
+      acknowledgement:'I understand one session will be taken off.',
+      confirmLabel:'Use one session'});
+    if(!confirmedSessionV291||!isTillCurrent()||busy||cartLocked())return;
     const attempt=packageUseAttemptKeyV102(packageUseAttemptsV102,clientPackageId,tillBranchId);
     busy=true;
     const {data,error}=await sb.rpc('use_package_session_v102',{
@@ -4809,7 +4915,14 @@ async function tillPage(){
     const offer=catalog?.customerWelcomeOffer;
     if(!offer||busy)return;
     const label=offer.reward_label||'the free item';
-    if(!confirm(`Give ${label} free to ${cust?.full_name||'this customer'}? This can only be done once.`))return;
+    /* V291: translatable confirmation for the one-shot welcome gift (see useCustomerPackage). */
+    const confirmedWelcomeV291=await confirmDeliberateV288({
+      title:'Give the welcome gift?',
+      body:`${label} \u2192 ${cust?.full_name||'this customer'}`,
+      summaryHtml:'<b>This can only be done once</b><p class="small" style="margin-top:5px">The free item is given to this customer now and their welcome offer is used up. There is no way to give it a second time.</p>',
+      acknowledgement:'I understand this can only be given once.',
+      confirmLabel:'Give the free item'});
+    if(!confirmedWelcomeV291||!isTillCurrent()||busy)return;
     busy=true;
     const {data,error}=await sb.rpc('staff_redeem_welcome_offer_v215',{
       p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,
@@ -5777,7 +5890,11 @@ async function salesPage(){
   /* Paint the page shell BEFORE the ledger queries: a blank white main is not a load
      state, and a failed query must leave a retryable card in place, not an empty page. */
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const salesHead=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  /* V291: Export CSV is only offered on the render that has a ledger behind it. The loading,
+     denied and load-error headers reuse the same markup WITHOUT it, so the page never paints a
+     download button that has nothing to download and no handler bound to it. */
+  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  const salesHead=salesHeadHtmlV291(false);
   routeMain.innerHTML=`${salesHead}
     <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
@@ -5812,7 +5929,11 @@ async function salesPage(){
      dates too — it used to reset only the four non-date controls, so a range narrowed down to
      nothing could not be undone by the button whose whole job is undoing filters. */
   const salesDefaultToV266=sgDateInputValue(),salesDefaultFromV266=shiftSgDateInput(salesDefaultToV266,-29);
-  M().innerHTML=`${salesHead}
+  /* V291: the filtered answer in full (counts, export, payment-state filtering) and how much of
+     it is currently painted. */
+  const SALES_PAGE_SIZE_V291=50;
+  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291;
+  M().innerHTML=`${salesHeadHtmlV291(true)}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
         <div class="sales-filter-row">
@@ -5871,20 +5992,15 @@ async function salesPage(){
         paymentStateApplied=true;
       }catch(paymentError){fail(paymentError)}
     }
-    $('recent').innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Gross</th><th>Net</th><th></th></tr>
-      ${rows.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
-        <td>${esc(s.staff?.full_name||'Unattributed')}</td>
-        <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
-        <td>${money(s.amount_cents)}</td><td><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
-        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Correct amount</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>`
-      :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
-    bindReversalButtons(loadRecent);
-    document.querySelectorAll('[data-correct-sale]').forEach(button=>button.onclick=()=>{
-      const sale=(sl||[]).find(row=>row.id===button.dataset.correctSale);
-      if(sale)openSaleAmountCorrectionDialog({
-        ...sale,customer_name:sale.clients?.full_name||'Walk-in'
-      },loadRecent);
-    });
+    /* V291 (audit follow-up). fetchAllRowsResult pages the WHOLE filtered ledger — a year of a
+       busy cafe is tens of thousands of rows — and every one of them was turned into table
+       markup on each Apply. The full set is still fetched, because the count summary, the CSV
+       export and the payment-state filter all have to act on the complete answer; only the
+       PAINT is now bounded. Load more extends the painted window; it never re-queries, so the
+       rows already on screen cannot shuffle underneath the person reading them. */
+    salesFilteredRowsV291=rows;salesWorkflowV291=W;
+    salesVisibleCountV291=Math.min(rows.length,SALES_PAGE_SIZE_V291);
+    renderSalesRowsV291();
     /* V266: pressing Apply with a range that happens to contain the same sales used to change
        nothing at all on screen, which reads as a broken button. State the range that is now in
        force and how many rows it matched, next to the control that set it. */
@@ -5897,6 +6013,53 @@ async function salesPage(){
       if(applyButton?.isConnected)CUI.setButtonBusy(applyButton,{busy:false});
     }
   }
+  function renderSalesRowsV291(){
+    const host=$('recent');if(!host)return;
+    const rows=salesFilteredRowsV291,W=salesWorkflowV291;
+    const shown=rows.slice(0,salesVisibleCountV291);
+    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Gross</th><th>Net</th><th></th></tr>
+      ${shown.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
+        <td>${esc(s.staff?.full_name||'Unattributed')}</td>
+        <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
+        <td>${money(s.amount_cents)}</td><td><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
+        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Correct amount</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
+      <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
+      :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
+    bindReversalButtons(loadRecent);
+    host.querySelectorAll('[data-correct-sale]').forEach(button=>button.onclick=()=>{
+      const sale=rows.find(row=>row.id===button.dataset.correctSale);
+      if(sale)openSaleAmountCorrectionDialog({
+        ...sale,customer_name:sale.clients?.full_name||'Walk-in'
+      },loadRecent);
+    });
+    const more=$('salesLoadMoreV291');
+    if(more)more.onclick=()=>{
+      salesVisibleCountV291=Math.min(rows.length,salesVisibleCountV291+SALES_PAGE_SIZE_V291);
+      renderSalesRowsV291();
+      /* Keep the reader where they were: focus the control they just pressed, or the summary
+         line when the last page has been reached and the button is gone. */
+      ($('salesLoadMoreV291')||$('recent'))?.focus?.();
+    };
+  }
+  /* V291: the export mirrors the Customers export — same csvField/csvRows quoting, same
+     download-prefix naming — and writes exactly the filtered set the summary line counts, not
+     the painted window. */
+  const salesExportV291=$('salesExportV291');
+  if(salesExportV291)salesExportV291.onclick=()=>{
+    const rows=salesFilteredRowsV291,W=salesWorkflowV291;
+    if(!rows.length)return toast('No sales match these filters');
+    const table=[['when','customer','team_member','type','record_status','gross','net'],
+      ...rows.map(s=>{
+        const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);
+        return [`${when.date} ${when.time}`,s.clients?.full_name||'Walk-in',s.staff?.full_name||'Unattributed',
+          s.kind||'',status.label,(Number(s.amount_cents||0)/100).toFixed(2),
+          (Number(w.net_amount_cents??s.amount_cents??0)/100).toFixed(2)];
+      })];
+    const blob=new Blob([csvRows(table)],{type:'text/csv;charset=utf-8'});
+    const link=document.createElement('a');
+    link.href=URL.createObjectURL(blob);link.download=`${BRAND.downloadPrefix}-sales.csv`;link.click();
+    toast('CSV downloaded');
+  };
   ['salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
   /* V266: the dates are committed by Apply filters, not by every keystroke inside the date
      input — a half-typed year would otherwise fire a query the owner never asked for. Editing
@@ -6457,10 +6620,12 @@ async function bookingsPage(){
         <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>`:''}
         ${seatsGuestsV235?`<div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
         <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
-        <div class="row"><input id="tblName" placeholder="e.g. Small (2-seater)">
+        <!-- V291 (audit A2 #21): four controls on one non-wrapping flex row pushed the Add
+             button off the right edge at 390px. Wrapping is the whole fix. -->
+        <div class="row" style="flex-wrap:wrap;gap:8px"><input id="tblName" placeholder="e.g. Small (2-seater)" style="flex:1 1 180px">
           <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
           <input id="tblQty" type="number" min="1" value="1" placeholder="Qty" style="max-width:76px">
-          <button class="btn sm" id="tblAdd">Add</button></div>
+          <button class="btn sm" id="tblAdd" style="flex:0 0 auto">Add</button></div>
         <div id="capBody" style="margin-top:14px">${CUI.tableSkeleton({rows:3,columns:6})}</div>
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">`:''}
         <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
@@ -6592,6 +6757,7 @@ async function bookingsPage(){
   if(!isOwner) return;
 
   /* ---- Tables / capacity (owner only) ---- */
+  let editingTableTypeV291=null;
   async function loadCapacity(){
     if(!$('capBody'))return;
     const [{data:tbl,error:e1},{data:avail,error:e2}]=await Promise.all([
@@ -6600,15 +6766,57 @@ async function bookingsPage(){
     if(!isCurrent())return;
     if(e1||e2){$('capBody').innerHTML=`<div class="err">${esc((e1||e2).message)}</div>`;return}
     const availByType=Object.fromEntries((avail||[]).map(a=>[a.table_type_id,a]));
-    $('capBody').innerHTML=(tbl&&tbl.length)?`<table><tr><th>Name</th><th>Pax</th><th>Qty</th><th>Live</th><th>Status</th><th></th></tr>
+    /* V291 (audit A2 leftover): a table type could be switched off or removed but never
+       corrected — a typo in the name, or two more of the same table arriving, meant deleting the
+       row and re-adding it, which detaches it from the bookings that already name it. Editing is
+       an in-place UPDATE of the same three columns the add form writes. Remove is unchanged.
+       V291 also wraps the table in .cui-table-wrap so it scrolls inside its own box at 390px
+       instead of pushing the page sideways (audit A2 #21). */
+    $('capBody').innerHTML=(tbl&&tbl.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Table types"><table data-responsive="true"><tr><th>Name</th><th>Pax</th><th>Qty</th><th>Live</th><th>Status</th><th></th></tr>
       ${tbl.map(t=>{const a=availByType[t.id];
-        return `<tr><td><b>${esc(t.name)}</b></td><td>${t.pax??'—'}</td><td>${t.quantity}</td>
-        <td class="small">${a?`${a.held} held · ${a.available} free`:'—'}</td>
-        <td><span class="pill ${t.active?'on':'off'}">${t.active?'active':'off'}</span></td>
-        <td><button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Disable':'Enable'}</button>
-        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Remove</button></td></tr>`;
-      }).join('')}</table>`
+        const editingV291=editingTableTypeV291===t.id;
+        return `<tr><td data-label="Name"><b data-merchant-content>${esc(t.name)}</b></td><td data-label="Pax">${t.pax??'—'}</td><td data-label="Qty">${t.quantity}</td>
+        <td class="small" data-label="Live">${a?`${a.held} held · ${a.available} free`:'—'}</td>
+        <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${t.active?'active':'off'}</span></td>
+        <td data-label="Actions"><button class="btn ghost sm" type="button" data-table-edit-v291="${t.id}">${editingV291?'Close':'Edit'}</button>
+        <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Disable':'Enable'}</button>
+        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Remove</button></td></tr>${editingV291?`<tr><td colspan="6">
+          <div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">
+            <div style="flex:1 1 180px"><label for="tblEditNameV291">Name</label><input id="tblEditNameV291" value="${esc(t.name||'')}"></div>
+            <div><label for="tblEditPaxV291">Pax</label><input id="tblEditPaxV291" type="number" min="1" style="max-width:90px" value="${t.pax??''}"></div>
+            <div><label for="tblEditQtyV291">Qty</label><input id="tblEditQtyV291" type="number" min="1" style="max-width:90px" value="${Number(t.quantity)||1}"></div>
+            <button class="btn sm" type="button" data-table-save-v291="${t.id}">Save changes</button>
+            <button class="btn ghost sm" type="button" data-table-cancel-v291="1">Cancel</button>
+          </div>
+          <p class="muted small" style="margin-top:8px">Renaming or re-counting a table type changes it everywhere it is offered. Bookings already held keep this table type.</p>
+          <p class="err small" id="tblEditErrV291" role="alert" hidden></p></td></tr>`:''}`;
+      }).join('')}</table></div>`
       :CUI.emptyState({iconName:'appointments',title:'No tables yet',body:'Add your tables so customers can reserve them.'});
+    $('capBody').querySelectorAll('[data-table-edit-v291]').forEach(button=>button.onclick=()=>{
+      editingTableTypeV291=editingTableTypeV291===button.dataset.tableEditV291?null:button.dataset.tableEditV291;
+      loadCapacity();
+    });
+    $('capBody').querySelectorAll('[data-table-cancel-v291]').forEach(button=>button.onclick=()=>{
+      editingTableTypeV291=null;loadCapacity();
+    });
+    $('capBody').querySelectorAll('[data-table-save-v291]').forEach(button=>button.onclick=async()=>{
+      const name=$('tblEditNameV291').value.trim();
+      const paxRaw=$('tblEditPaxV291').value.trim(),qty=parseInt($('tblEditQtyV291').value||'0',10);
+      const errorHost=$('tblEditErrV291');
+      const showError=message=>{if(errorHost){errorHost.textContent=message;errorHost.hidden=false}};
+      if(errorHost)errorHost.hidden=true;
+      if(name.length<2)return showError('Name the table type.');
+      if(!(qty>=1))return showError('How many of this table do you have? Enter 1 or more.');
+      if(paxRaw!==''&&!(parseInt(paxRaw,10)>=1))return showError('Seats must be 1 or more, or left blank.');
+      CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
+      const {error}=await sb.from('booking_tables')
+        .update({name,pax:paxRaw===''?null:parseInt(paxRaw,10),quantity:qty})
+        .eq('id',button.dataset.tableSaveV291).eq('business_id',S.biz.id);
+      if(!isCurrent())return;
+      CUI.setButtonBusy(button,{busy:false});
+      if(error)return showError(ownerErrorText(error));
+      editingTableTypeV291=null;toast('Table type updated');loadCapacity();
+    });
   }
   /* V223: these elements only exist for a business that seats guests. */
   if($('tblAdd'))$('tblAdd').onclick=async()=>{
@@ -8480,7 +8688,9 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
         <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?(draftVersionId?'will be live':'live'):'paused'}</span>
         ${draftVersionId&&isOwner&&!exactProgramMissing?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
-          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
+          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}
+        ${!draftVersionId&&isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
+          <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
         :CUI.emptyState({iconName:'retention',title:'No retention programs',body:`There are no programs in this ${draftVersionId?'draft':'configuration'}.`})}</div></div></div>
     ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
       <div style="margin-top:8px">${taxonomy.map(t=>`<div class="retention-taxonomy-row"><div class="retention-taxonomy-copy"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span></div><div class="retention-taxonomy-actions"><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
@@ -8488,7 +8698,55 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       <details><summary>Add a new reward type</summary><label>Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label>Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option><option value="credit">Add store credit</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
     </div>`:''}`;
 
+  /* V291 (audit A2 #13). On the published view a rule could only be READ: Edit and Pause were
+     hidden until an editing draft existed, and creating one was a separate button somewhere else
+     on the page. Every change here has to go through a draft — that is the versioning contract
+     and V291 does not weaken it — so the controls now MAKE the draft on the first tap using the
+     same create_loyalty_config_draft RPC the manual button calls, resume an existing draft when
+     there is one rather than opening a second, and land the owner in the draft editor with the
+     rule already open. Nothing publishes; the review gate is still the only way live.
+     There is deliberately still NO delete: a published rule with grant history cannot be
+     unmade without rewriting what customers were given, so pausing is the honest ending. */
   if(isOwner&&!draftVersionId){
+    const ensureRetentionDraftV291=async()=>{
+      if(resumableDraft?.id)return resumableDraft.id;
+      const {data,error}=await sb.rpc('create_loyalty_config_draft',
+        {p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});
+      if(error)throw error;
+      return data?.version_id||null;
+    };
+    document.querySelectorAll('.retentionEditLiveV291').forEach(button=>button.onclick=async()=>{
+      CUI.setButtonBusy(button,{busy:true,label:'Opening…'});
+      let draft=null;
+      try{draft=await ensureRetentionDraftV291()}
+      catch(error){if(button.isConnected)CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      if(!isRetentionCurrent())return;
+      if(!draft){CUI.setButtonBusy(button,{busy:false});return toast('An editing draft could not be created')}
+      toast(resumableDraft?.id?'Opened your existing draft — nothing is live until you publish':'Editing draft created — nothing is live until you publish');
+      refreshRetentionPanel(draft,button.dataset.id,'Bring-back rule opened in a draft.',false);
+    });
+    document.querySelectorAll('.retentionToggleLiveV291').forEach(button=>button.onclick=async()=>{
+      CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
+      let draft=null;
+      try{draft=await ensureRetentionDraftV291()}
+      catch(error){if(button.isConnected)CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      if(!isRetentionCurrent())return;
+      if(!draft){CUI.setButtonBusy(button,{busy:false});return toast('An editing draft could not be created')}
+      /* The draft's own hash is read back rather than guessed: save_retention_program_draft
+         checks it, and a stale hash is exactly the collision the check exists to catch. */
+      const {data:draftDetail,error:draftDetailError}=await sb.rpc('get_retention_config_draft',{p_config_version:draft});
+      if(!isRetentionCurrent())return;
+      if(draftDetailError){CUI.setButtonBusy(button,{busy:false});return fail(draftDetailError)}
+      const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draft,
+        p_program_id:button.dataset.id,p_program:{active:button.dataset.to==='true'},
+        p_expected_snapshot_hash:draftDetail?.snapshot_hash||null});
+      if(!isRetentionCurrent())return;
+      if(error){CUI.setButtonBusy(button,{busy:false});return fail(error)}
+      toast(button.dataset.to==='true'
+        ?'Saved in your draft — the rule resumes when you publish'
+        :'Saved in your draft — the rule pauses when you publish');
+      refreshRetentionPanel(draft,null,'Bring-back rule status saved in the draft.');
+    });
     if($('beginRetentionDraft'))$('beginRetentionDraft').onclick=async()=>{const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});if(!isRetentionCurrent())return;if(error)return fail(error);nav(`#/retention/${data.version_id}`)};
     if($('createRetentionRollback'))$('createRetentionRollback').onclick=async()=>{const base=$('retentionRollback').value;if(!base)return toast('Choose a prior version');const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:base,p_source:'retention_rollback'});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Rollback draft created — review before publishing');nav(`#/retention/${data.version_id}`)};
   }
@@ -8543,9 +8801,26 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
   const loyaltyRequest=canRewards
     ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_per_cents,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
+  /* V291: credit_cents, entitlement_expiry_days, usage_limit and the tier gate join the read.
+     They were already stored and already editable; only the comparison could not see them, which
+     is exactly why a change to them published silently. */
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
+    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
+  /* Live reward eligibility, plus the names the diff prints. All four are fail-soft: a failed
+     read drops the branch/service rows from the comparison rather than claiming "All branches". */
+  const rewardBranchesRequest=canRewards
+    ?sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id)
+    :Promise.resolve(none);
+  const rewardServicesRequest=canRewards
+    ?sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id)
+    :Promise.resolve(none);
+  const eligibilityNamesRequest=canRewards
+    ?Promise.all([
+      sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+      sb.from('services').select('id,name').eq('business_id',S.biz.id),
+      sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id)])
+    :Promise.resolve([none,none,none]);
   const productsRequest=S.myRole==='owner'
     ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
     :Promise.resolve(none);
@@ -8564,9 +8839,12 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
   const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},
     {data:rewards,error:rewardsError},{data:products,error:productsError},
     {data:referrals,error:referralsError},{data:memberships,error:membershipsError},
-    {data:giftcardPreferences,error:giftcardsError},{data:promotions,error:promotionsError}]
+    {data:giftcardPreferences,error:giftcardsError},{data:promotions,error:promotionsError},
+    {data:rewardBranches,error:rewardBranchesError},{data:rewardServices,error:rewardServicesError},
+    [{data:branchNames,error:branchNamesError},{data:serviceNames,error:serviceNamesError},{data:tierNames,error:tierNamesError}]]
     =await Promise.all([businessRequest,loyaltyRequest,rewardsRequest,productsRequest,
-      referralsRequest,membershipsRequest,giftcardsRequest,promotionsRequest]);
+      referralsRequest,membershipsRequest,giftcardsRequest,promotionsRequest,
+      rewardBranchesRequest,rewardServicesRequest,eligibilityNamesRequest]);
   if(!isCurrent())return null;
   if(businessError)throw businessError;
   const currentVersion=business?.active_config_version_id||null;
@@ -8596,11 +8874,20 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
      raises 42501 otherwise) and fail-soft: a failed read leaves the page exactly as it was. */
   const draftHeaderV268=draftError?null:(drafts||[])[0]||null;
   let draftDetailV268=null,draftDetailErrorV268=null;
+  /* V291: the birthday benefit and the bring-back rules are versioned in the SAME draft as the
+     rewards, so an edit to either was equally invisible on this page. Both draft readers are
+     owner-gated and fail-soft, exactly like the reward one. */
+  let draftRetentionV291=null,draftBirthdayV291=null;
   if(draftHeaderV268?.id&&canSetupGrow){
-    const {data:draftDetail,error:draftDetailError}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftHeaderV268.id});
+    const [{data:draftDetail,error:draftDetailError},retentionDraft,birthdayDraft]=await Promise.all([
+      sb.rpc('get_loyalty_reward_draft',{p_config_version:draftHeaderV268.id}),
+      sb.rpc('get_retention_config_draft',{p_config_version:draftHeaderV268.id}),
+      sb.rpc('get_birthday_program_draft',{p_config_version:draftHeaderV268.id})]);
     if(!isCurrent())return null;
     draftDetailErrorV268=draftDetailError||null;
     draftDetailV268=draftDetailError?null:draftDetail||null;
+    draftRetentionV291=retentionDraft.error?null:(Array.isArray(retentionDraft.data?.programs)?retentionDraft.data.programs:null);
+    draftBirthdayV291=birthdayDraft.error?null:(Array.isArray(birthdayDraft.data?.programs)?birthdayDraft.data.programs[0]||null:null);
   }
   /* Overview reads are intentionally fail-soft. A failed optional-engine read must not hide the
      rest of Grow or be mistaken for an unconfigured programme; its row remains Unavailable. */
@@ -8621,6 +8908,15 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     draft:draftHeaderV268,
     draftDetail:draftDetailV268,
     draftDetailError:Boolean(draftDetailErrorV268),
+    draftRetention:draftRetentionV291,
+    draftBirthday:draftBirthdayV291,
+    rewardEligibility:{
+      branches:rewardBranchesError?null:rewardBranches||[],
+      services:rewardServicesError?null:rewardServices||[]},
+    eligibilityNames:{
+      branches:branchNamesError?null:branchNames||[],
+      services:serviceNamesError?null:serviceNames||[],
+      tiers:tierNamesError?null:tierNames||[]},
     overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError),
       retention:Boolean(retentionError),referrals:Boolean(referralsError),memberships:Boolean(membershipsError),
       promotions:Boolean(promotionsError),
@@ -8633,7 +8929,11 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
    minimum spend and free xx product."
    It lives in the Programmes list next to the other rewards because that is where an owner
    looks for "what do my customers get", not in Settings. */
-function welcomeOfferRowV215(status,canSetup,canRewards){
+/* V291: the welcome offer is the one lifestyle reward that is NOT versioned — it is stored in
+   business_welcome_offers_v215 and a save is live immediately, with no draft and no publish
+   step. When a draft is open, saying so is the honest marker; inventing a pending state for it
+   would be a lie in the other direction. */
+function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
   if(!canRewards)return '';
   const configured=!!status?.configured;
   const active=configured&&status.active===true;
@@ -8654,7 +8954,7 @@ function welcomeOfferRowV215(status,canSetup,canRewards){
   const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
     ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
   const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
-    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p></div>`
+    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p>${draftOpen?'<p class="muted small" data-welcome-not-versioned-v291>Not part of your draft \u2014 changes here go live as soon as you save them.</p>':''}</div>`
     +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
     +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
   return canSetup
@@ -9768,11 +10068,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(href)return `<a class="grow-programme-row" data-programme-kind="${esc(kind)}" href="${esc(href)}">`;
     return `<button type="button" class="grow-programme-row" data-programme-kind="${esc(kind)}" data-rewards-overview-edit="${esc(editKind)}"${rewardId?` data-reward-id="${esc(rewardId)}"`:''}${programId?` data-program-id="${esc(programId)}"`:''}>`;
   };
-  const programmeRow=({kind,icon,title,copy,status,statusTone='off',canWrite=false,readOnly=false,access=null,href=null,editKind=null,rewardId=null,programId=null,actionLabel='Open',merchant=false})=>{
+  /* V291: `pending` is the same "Edited · not live yet" block the reward cards carry, so a
+     bring-back rule or the birthday benefit can say what it becomes without borrowing a banner
+     that cannot name it. */
+  const programmeRow=({kind,icon,title,copy,status,statusTone='off',canWrite=false,readOnly=false,access=null,href=null,editKind=null,rewardId=null,programId=null,actionLabel='Open',merchant=false,pending=null})=>{
     const actionOpen=programmeAction({canWrite,kind,href,editKind,rewardId,programId,label:actionLabel});
     const tagClose=actionOpen?(href?'</a>':'</button>'):'</article>';
     const accessLabel=access?`<span class="grow-programme-access">${esc(access)}</span>`:readOnly?'<span class="grow-programme-access">Read only</span>':'';
-    return `${actionOpen||`<article class="grow-programme-row" data-programme-kind="${esc(kind)}">`}<span class="grow-programme-icon">${icon}</span><div><b${merchant?' data-merchant-content':''}>${esc(title)}</b><p class="muted small"${merchant?' data-merchant-content':''}>${esc(copy)}</p></div><span class="grow-programme-meta">${programmeStatus(status,statusTone)}${accessLabel}${actionOpen?`<span class="grow-programme-action">${esc(actionLabel)} →</span>`:''}</span>${tagClose}`;
+    return `${actionOpen||`<article class="grow-programme-row" data-programme-kind="${esc(kind)}">`}<span class="grow-programme-icon">${icon}</span><div><b${merchant?' data-merchant-content':''}>${esc(title)}</b><p class="muted small"${merchant?' data-merchant-content':''}>${esc(copy)}</p>${growPendingBlockV268(pending)}</div><span class="grow-programme-meta">${programmeStatus(status,statusTone)}${accessLabel}${actionOpen?`<span class="grow-programme-action">${esc(actionLabel)} →</span>`:''}</span>${tagClose}`;
   };
   function growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId}={}){
     if(surface==='rewards'&&rewardId)return `reward~${encodeURIComponent(rewardId)}`;
@@ -9823,31 +10126,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growDraftDetailV268=snapshot.draftDetail||null;
   const growDraftDetailErrorV268=Boolean(snapshot.draftDetailError);
   const growRewardLabelV268=row=>String(row?.customer_name||row?.name||'Reward').trim();
-  const growPendingRewardsV268=new Map();
-  const growPendingNewRewardsV268=[];
-  if(growDraftDetailV268){
-    const publishedByIdV268=new Map((snapshot.rewards||[]).map(reward=>[String(reward.id),reward]));
-    (Array.isArray(growDraftDetailV268.rewards)?growDraftDetailV268.rewards:[]).forEach(draftReward=>{
-      const key=String(draftReward.reward_id||draftReward.id||'');
-      const live=publishedByIdV268.get(key);
-      if(!live){
-        /* A reward the draft creates does not exist for customers at all, so it gets its own
-           card marked as not live rather than a pending line on somebody else's card. */
-        if(draftReward.active!==false)growPendingNewRewardsV268.push({
-          name:growRewardLabelV268(draftReward),cost:Math.max(0,Number(draftReward.cost_points||0))});
-        return;
-      }
-      const changes=[];
-      if(growRewardLabelV268(draftReward)!==growRewardLabelV268(live))
-        changes.push({label:'Name',live:growRewardLabelV268(live),pending:growRewardLabelV268(draftReward)});
-      if(Number(draftReward.cost_points||0)!==Number(live.cost_points||0))
-        changes.push({label:'Cost',live:`${Math.max(0,Number(live.cost_points||0))} ${rewardJourney.unit}`,
-          pending:`${Math.max(0,Number(draftReward.cost_points||0))} ${rewardJourney.unit}`});
-      if((draftReward.active!==false)!==(live.active!==false))
-        changes.push({label:'Offered',live:live.active!==false?'Yes':'No',pending:draftReward.active!==false?'Yes':'No'});
-      if(changes.length)growPendingRewardsV268.set(key,changes);
-    });
-  }
+  /* V291: the three-field comparison this block used to inline now lives in
+     growRewardPendingChangesV291, which the publish gate reads too, and it covers every field a
+     draft can change — credit, expiry, usage limit, tier gate and branch/service eligibility. */
+  const growDiffOptionsV291=growRewardDiffOptionsFromSnapshotV291(snapshot,rewardJourney.unit);
+  const growRewardDiffV291=growRewardPendingChangesV291({
+    liveRewards:growDraftDetailV268?growAttachEligibilityV291(snapshot.rewards||[],snapshot.rewardEligibility):[],
+    draftRewards:growDraftDetailV268?growAttachDraftEligibilityV291(Array.isArray(growDraftDetailV268.rewards)?growDraftDetailV268.rewards:[]):[],
+    options:growDiffOptionsV291});
+  const growPendingRewardsV268=growRewardDiffV291.changed;
+  const growPendingNewRewardsV268=growRewardDiffV291.added;
+  /* V291: the birthday benefit and each bring-back rule get their own pending marker for the
+     same reason the reward cards do — a banner that cannot name the row it means reads as a lost
+     edit. Both are null when the draft reader could not be read, and a null marks nothing. */
+  const growPendingBirthdayV291=growDraftDetailV268&&snapshot.draftBirthday
+    ?growBirthdayPendingChangesV291(snapshot.birthday||null,snapshot.draftBirthday)
+    :[];
+  const growRetentionDiffV291=Array.isArray(snapshot.draftRetention)
+    ?growRetentionPendingChangesV291({livePrograms:snapshot.retention||[],draftPrograms:snapshot.draftRetention})
+    :{changed:new Map(),added:[]};
   const growPendingEarningV268=(()=>{
     const draft=growDraftDetailV268?.program||null,live=snapshot.loyalty||null;
     if(!draft||!live)return [];
@@ -10191,13 +10488,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </div></div>`:''}
       ${topicOnV229('lifestyle')?`
       <div class="programme-category" data-programme-category-v268="lifestyle"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
-        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
+        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards,Boolean(growDraftPendingId))}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
-          <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`)
+          <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p>${growPendingBlockV268(growPendingBirthdayV291)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p>${growPendingBlockV268(growPendingBirthdayV291)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
-        ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
+        ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true,pending:growRetentionDiffV291.changed.get(String(program.id))||null})}).join('')
+        +growRetentionDiffV291.added.map(rule=>programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:rule.name,copy:'Customers see this bring-back rule once you publish.',status:'Not live yet',statusTone:'new',merchant:true})).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
       `:''}
       ${topicOnV229('promotions')?`
@@ -11797,6 +12095,163 @@ function studioEstimate(rule,agg){
 const GROW_PUBLISH_MODEL_LABEL_V170={classic:'Simple points',points_tiers:'Points, rewards and tiers',stamps:'Stamp card'};
 const GROW_PUBLISH_EXPIRY_LABEL_V170={none:'Never expire',inactivity:'Expire after inactivity',fixed:'Fixed shelf life from earn'};
 const GROW_PUBLISH_TIER_BASIS_LABEL_V175={visits:'Number of visits',spend:'Lifetime spend',points_earned:'Lifetime points earned'};
+/* V291 (audit A2 #9/#10). The pending-change diff compared THREE fields — name, cost and
+   whether the reward is offered — so an owner could change the store credit a reward mints, its
+   expiry, how many times a customer may use it, the tier that unlocks it, or which branches and
+   services it applies to, and both the programme list and the publish gate would report "no
+   changes". Publishing then moved real money with no warning. The comparison now covers every
+   field the draft reader returns. One function, used by the programme list AND by the publish
+   gate, so the two can never disagree about what is about to change.
+   Anything the caller could not read is passed as null and simply produces no row for that
+   field — an unread value must never be rendered as "not set", which reads as a deletion. */
+function growRewardDiffFieldsV291({unit='points',tierName=()=>null,branchName=null,serviceName=null}={}){
+  const num=value=>(value==null||value===''||!Number.isFinite(Number(value)))?null:Number(value);
+  const nameList=(ids,lookup,allLabel)=>{
+    if(!Array.isArray(ids)||!ids.length)return allLabel;
+    const names=ids.map(id=>lookup?lookup(id):null).filter(Boolean);
+    return names.length===ids.length?names.join(', '):`${ids.length} selected`;
+  };
+  const idSet=ids=>[...new Set((Array.isArray(ids)?ids:[]).map(String))].sort();
+  return [
+    {label:'Name',read:reward=>String(reward.customer_name||reward.name||'Reward').trim(),show:value=>value},
+    {label:'Cost',read:reward=>Math.max(0,num(reward.cost_points)||0),show:value=>`${value} ${unit}`},
+    {label:'Offered',read:reward=>reward.active!==false,show:value=>value?'Yes':'No'},
+    {label:'Store credit',read:reward=>Math.max(0,num(reward.credit_cents)||0),show:value=>value>0?money(value):'None'},
+    {label:'Expires after',read:reward=>num(reward.entitlement_expiry_days),show:value=>value==null?'No expiry':`${value} day${value===1?'':'s'}`},
+    {label:'Uses per customer',read:reward=>num(reward.usage_limit),show:value=>value==null?'Unlimited':String(value)},
+    {label:'Who can redeem',read:reward=>{
+      const tier=reward.min_tier_id?String(reward.min_tier_id):null;
+      const threshold=num(reward.min_tier_threshold);
+      return tier?`tier:${tier}`:(threshold==null?'everyone':`threshold:${threshold}`);
+    },show:value=>{
+      if(value==='everyone')return 'Everyone';
+      if(value.startsWith('tier:'))return `${tierName(value.slice(5))||'A membership tier'} and above`;
+      return `From ${value.slice(10)}`;
+    }},
+    {label:'Branches',read:reward=>idSet(reward.__branchIds).join('|'),
+      show:value=>nameList(value?value.split('|'):[],branchName,'All branches'),when:branchName!==null},
+    {label:'Services',read:reward=>idSet(reward.__serviceIds).join('|'),
+      show:value=>nameList(value?value.split('|'):[],serviceName,'All services'),when:serviceName!==null}
+  ].filter(field=>field.when!==false);
+}
+/* The three shapes the diff needs, derived from whatever the caller managed to read. Branch and
+   service comparison is switched OFF (null) when its read failed, so an unread restriction is
+   never printed as "All branches". */
+function growRewardDiffOptionsFromSnapshotV291(snapshot,unit='points'){
+  const names=snapshot?.eligibilityNames||{};
+  const eligibility=snapshot?.rewardEligibility||{};
+  const lookup=rows=>{
+    if(!Array.isArray(rows))return null;
+    const map=new Map(rows.map(row=>[String(row.id),row.name]));
+    return id=>map.get(String(id))||null;
+  };
+  const tierLookup=lookup(names.tiers);
+  return {
+    unit,
+    tierName:id=>(tierLookup?tierLookup(id):null),
+    branchName:Array.isArray(eligibility.branches)?lookup(names.branches)||(()=>null):null,
+    serviceName:Array.isArray(eligibility.services)?lookup(names.services)||(()=>null):null
+  };
+}
+/* Published rewards carry their eligibility in separate tables; the draft reader nests it. Both
+   are folded onto the reward as __branchIds/__serviceIds so one comparison reads both. */
+function growAttachEligibilityV291(rewards,eligibility){
+  const group=(rows,key)=>{
+    if(!Array.isArray(rows))return null;
+    const map=new Map();
+    rows.forEach(row=>{
+      const id=String(row.reward_id);
+      if(!map.has(id))map.set(id,[]);
+      map.get(id).push(row[key]);
+    });
+    return map;
+  };
+  const branches=group(eligibility?.branches,'branch_id'),services=group(eligibility?.services,'service_id');
+  return (rewards||[]).map(reward=>({...reward,
+    __branchIds:branches?branches.get(String(reward.id))||[]:[],
+    __serviceIds:services?services.get(String(reward.id))||[]:[]}));
+}
+function growAttachDraftEligibilityV291(rewards){
+  return (rewards||[]).map(reward=>({...reward,
+    __branchIds:reward.eligibility?.branches||[],
+    __serviceIds:reward.eligibility?.services||[]}));
+}
+/* Live and draft rewards in the SAME shape, keyed by reward id; returns the per-reward change
+   list the pending markers render, plus rewards the draft creates and rewards it removes. */
+function growRewardPendingChangesV291({liveRewards=[],draftRewards=[],options={}}={}){
+  const fields=growRewardDiffFieldsV291(options);
+  const changed=new Map(),added=[],removed=[];
+  const key=reward=>String(reward?.reward_id||reward?.id||'');
+  const liveById=new Map((liveRewards||[]).map(reward=>[key(reward),reward]));
+  const seen=new Set();
+  (draftRewards||[]).forEach(draftReward=>{
+    const id=key(draftReward);
+    seen.add(id);
+    const live=liveById.get(id);
+    if(!live){
+      if(draftReward.active!==false)added.push({
+        id,name:String(draftReward.customer_name||draftReward.name||'Reward').trim(),
+        cost:Math.max(0,Number(draftReward.cost_points||0))});
+      return;
+    }
+    const changes=[];
+    fields.forEach(field=>{
+      const before=field.read(live),after=field.read(draftReward);
+      if(before!==after)changes.push({label:field.label,live:String(field.show(before)),pending:String(field.show(after))});
+    });
+    if(changes.length)changed.set(id,changes);
+  });
+  (liveRewards||[]).forEach(live=>{
+    const id=key(live);
+    if(!seen.has(id)&&live.active!==false)removed.push({id,name:String(live.customer_name||live.name||'Reward').trim()});
+  });
+  return {changed,added,removed};
+}
+/* Bring-back rules are versioned exactly like rewards, so the same shape of answer applies. */
+function growRetentionPendingChangesV291({livePrograms=[],draftPrograms=[]}={}){
+  const key=program=>String(program?.program_id||program?.id||'');
+  const liveById=new Map((livePrograms||[]).map(program=>[key(program),program]));
+  const changed=new Map(),added=[],seen=new Set();
+  const fields=[
+    {label:'Name',read:program=>String(program.name||'Bring-back rule').trim(),show:value=>value},
+    {label:'Goal visits',read:program=>Math.max(0,Number(program.goal_visits||0)),show:String},
+    {label:'Within days',read:program=>Math.max(0,Number(program.period_days||0)),show:String},
+    {label:'Running',read:program=>program.active!==false,show:value=>value?'Yes':'No'}
+  ];
+  (draftPrograms||[]).forEach(draftProgram=>{
+    const id=key(draftProgram);seen.add(id);
+    const live=liveById.get(id);
+    if(!live){
+      if(draftProgram.active!==false)added.push({id,name:String(draftProgram.name||'Bring-back rule').trim()});
+      return;
+    }
+    const changes=[];
+    fields.forEach(field=>{
+      const before=field.read(live),after=field.read(draftProgram);
+      if(before!==after)changes.push({label:field.label,live:String(field.show(before)),pending:String(field.show(after))});
+    });
+    if(changes.length)changed.set(id,changes);
+  });
+  return {changed,added};
+}
+/* The birthday benefit is one row, not a list, so it answers with a plain change array. */
+function growBirthdayPendingChangesV291(live,draft){
+  if(!draft)return [];
+  const fields=[
+    {label:'Name',read:program=>String(program.name||'Birthday benefit').trim(),show:value=>value},
+    {label:'Running',read:program=>program.active!==false,show:value=>value?'Yes':'No'},
+    {label:'Reward',read:program=>String(program.reward_value??program.reward_item??program.reward_type??'').trim(),show:value=>value||'not set'},
+    {label:'Eligibility window',read:program=>{
+      const days=Number(program.window_days);
+      return Number.isFinite(days)?days:null;
+    },show:value=>value==null?'not set':`${value} day${value===1?'':'s'}`}
+  ];
+  if(!live)return fields.map(field=>({label:field.label,live:'not published',pending:String(field.show(field.read(draft)))}));
+  return fields
+    .map(field=>({label:field.label,before:field.read(live),after:field.read(draft),show:field.show}))
+    .filter(row=>row.before!==row.after)
+    .map(row=>({label:row.label,live:String(row.show(row.before)),pending:String(row.show(row.after))}));
+}
 function growPublishFieldRowsV170(live,draft){
   /* No draft programme row means publication changes none of these fields — say nothing changed
      rather than rendering every live value as "→ not set". */
@@ -11855,7 +12310,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
   }
   routeMain.innerHTML=`${CUI.pageHeader({title:'Publish Grow draft',subtitle:'Confirm the selected draft after reviewing each changed programme in its editor.',iconName:'loyalty',canWrite:true,moduleLabel:'Grow publishing'})}
     <section class="card" id="growPublishDiffCard"><h2>What changes for customers</h2><p class="muted small" style="margin-top:6px">Draft v${Number(draft?.version_no||0)} compared with the programme customers earn on today.</p><div id="growPublishDiffBody" role="status" aria-live="polite" style="margin-top:12px"><p class="muted small">Loading what changes for customers…</p></div><div id="growPublishPauseV258" style="margin-top:12px"></div></section>
-    <section class="card"><h2>Draft v${Number(draft?.version_no||0)}</h2><p class="muted small" style="margin-top:6px">This page is the final publication gate. It summarises the programme numbers above and checks advanced-action safety below; it does not summarise reward, birthday or bring-back field values. Review those values in their programme editors first.</p><div id="growPublishStatus" role="status" aria-live="polite" style="margin-top:12px"></div><div class="row" style="margin-top:16px"><button class="btn" id="growPublishReview">Confirm &amp; publish</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></section>`;
+    <section class="card"><h2>Draft v${Number(draft?.version_no||0)}</h2><p class="muted small" style="margin-top:6px">This page is the final publication gate. It lists every programme, reward, birthday and bring-back value this draft changes, and checks advanced-action safety below.</p><div id="growPublishStatus" role="status" aria-live="polite" style="margin-top:12px"></div><div class="row" style="margin-top:16px"><button class="btn" id="growPublishReview">Confirm &amp; publish</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></section>`;
   const reviewKey=`nestly:grow-publish-review:${draftVersionId}`;
   const back=$('growPublishBack');if(back)back.onclick=()=>sessionStorage.removeItem(reviewKey);
   /* V258 (owner item 6, "published points system, but still shows paused"). Publishing is NOT
@@ -11886,13 +12341,58 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
   const loadPublishComparison=async()=>{
     const host=$('growPublishDiffBody');if(!host)return;
     host.innerHTML='<p class="muted small">Loading what changes for customers…</p>';
-    let draftResult=null,liveResult=null;
+    let draftResult=null,liveResult=null,rewardDiffV291=null;
     try{
-      [draftResult,liveResult]=await Promise.all([
+      /* V291 (audit A2 #10). This gate's own copy admitted it "does not summarise reward,
+         birthday or bring-back field values" — so the one screen whose whole job is to say what
+         publishing does deliberately did not say most of it. The same comparison the programme
+         list uses is now computed here and rendered above the confirmation, and the dialog
+         mirrors it (it already copies this block). Every extra read is fail-soft and additive:
+         if one cannot be read, its section is omitted rather than reported as "no change". */
+      const [loyaltyDraft,liveProgram,liveRewards,liveBranchRows,liveServiceRows,
+        branchRows,serviceRows,tierRows,liveRetention,liveBirthday,draftRetention,draftBirthday]=await Promise.all([
         sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId}),
         sb.from('loyalty_programs').select('active,loyalty_model,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,expiry_mode,expiry_days')
-          .eq('business_id',S.biz.id).limit(1)]);
-    }catch(e){draftResult={data:null,error:e};liveResult={data:null,error:e}}
+          .eq('business_id',S.biz.id).limit(1),
+        sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold').eq('business_id',S.biz.id),
+        sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
+        sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
+        sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+        sb.from('services').select('id,name').eq('business_id',S.biz.id),
+        sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id),
+        sb.from('businesses').select('active_config_version_id').eq('id',S.biz.id).single()
+          .then(row=>row.error||!row.data?.active_config_version_id
+            ?{data:[],error:row.error||null}
+            :sb.from('retention_programs').select('id,name,active,goal_visits,period_days')
+              .eq('business_id',S.biz.id).eq('current_config_version_id',row.data.active_config_version_id)),
+        sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id}),
+        sb.rpc('get_retention_config_draft',{p_config_version:draftVersionId}),
+        sb.rpc('get_birthday_program_draft',{p_config_version:draftVersionId}),
+      ]);
+      draftResult=loyaltyDraft;liveResult=liveProgram;
+      const pseudoSnapshotV291={
+        rewards:liveRewards.error?[]:(liveRewards.data||[]),
+        rewardEligibility:{
+          branches:liveBranchRows.error?null:(liveBranchRows.data||[]),
+          services:liveServiceRows.error?null:(liveServiceRows.data||[])},
+        eligibilityNames:{
+          branches:branchRows.error?null:(branchRows.data||[]),
+          services:serviceRows.error?null:(serviceRows.data||[]),
+          tiers:tierRows.error?null:(tierRows.data||[])}};
+      const unitV291=String(draftResult?.data?.program?.loyalty_model||'')==='stamps'?'stamps':'points';
+      rewardDiffV291={
+        rewards:(draftResult?.error||liveRewards.error)?null:growRewardPendingChangesV291({
+          liveRewards:growAttachEligibilityV291(pseudoSnapshotV291.rewards,pseudoSnapshotV291.rewardEligibility),
+          draftRewards:growAttachDraftEligibilityV291(Array.isArray(draftResult?.data?.rewards)?draftResult.data.rewards:[]),
+          options:growRewardDiffOptionsFromSnapshotV291(pseudoSnapshotV291,unitV291)}),
+        retention:(draftRetention.error||liveRetention.error)?null:growRetentionPendingChangesV291({
+          livePrograms:liveRetention.data||[],
+          draftPrograms:Array.isArray(draftRetention.data?.programs)?draftRetention.data.programs:[]}),
+        birthday:(draftBirthday.error||liveBirthday.error)?null:growBirthdayPendingChangesV291(
+          (Array.isArray(liveBirthday.data?.programs)?liveBirthday.data.programs[0]:null)||null,
+          (Array.isArray(draftBirthday.data?.programs)?draftBirthday.data.programs[0]:null)||null)
+      };
+    }catch(e){draftResult={data:null,error:e};liveResult={data:null,error:e};rewardDiffV291=null}
     if(!isCurrent())return;
     const target=$('growPublishDiffBody');if(!target)return;
     if(draftResult?.error||liveResult?.error){
@@ -11903,10 +12403,46 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     draftProgrammeActiveV258=draftResult.data?.program?.active??null;
     renderPublishPauseWarningV258();
     const rows=growPublishFieldRowsV170((liveResult.data||[])[0]||null,draftResult.data?.program||null);
+    /* V291: one renderer for every changed thing, in the order an owner reads them. A section is
+       only drawn when it has something to say; a section that could not be read says that. */
+    const changeBlockV291=(heading,changes)=>`<div class="studio-impact-rule"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b><span data-merchant-content>${esc(heading)}</span></b></div>${changes.map(change=>`<div class="studio-impact-eff"><span>${esc(change.label)}</span><span><s>${esc(change.live)}</s> → <b>${esc(change.pending)}</b></span></div>`).join('')}</div>`;
+    const rewardSectionsV291=[];
+    if(rewardDiffV291?.rewards){
+      const draftRewardsById=new Map((Array.isArray(draftResult.data?.rewards)?draftResult.data.rewards:[])
+        .map(reward=>[String(reward.reward_id||reward.id||''),reward]));
+      rewardDiffV291.rewards.changed.forEach((changes,rewardId)=>{
+        const reward=draftRewardsById.get(String(rewardId));
+        rewardSectionsV291.push(changeBlockV291(String(reward?.customer_name||reward?.name||'Reward').trim(),changes));
+      });
+      rewardDiffV291.rewards.added.forEach(reward=>rewardSectionsV291.push(
+        changeBlockV291(reward.name,[{label:'New reward',live:'not offered',pending:`${reward.cost} ${String(draftResult.data?.program?.loyalty_model||'')==='stamps'?'stamps':'points'}`}])));
+      rewardDiffV291.rewards.removed.forEach(reward=>rewardSectionsV291.push(
+        changeBlockV291(reward.name,[{label:'Reward',live:'offered',pending:'removed from the draft'}])));
+    }
+    const retentionSectionsV291=[];
+    if(rewardDiffV291?.retention){
+      rewardDiffV291.retention.changed.forEach(changes=>retentionSectionsV291.push(
+        changeBlockV291(changes.find(change=>change.label==='Name')?.pending||'Bring-back rule',changes)));
+      rewardDiffV291.retention.added.forEach(rule=>retentionSectionsV291.push(
+        changeBlockV291(rule.name,[{label:'New bring-back rule',live:'not running',pending:'starts when you publish'}])));
+    }
+    const birthdaySectionV291=rewardDiffV291?.birthday?.length
+      ?changeBlockV291('Birthday benefit',rewardDiffV291.birthday):'';
+    const unreadableV291=[
+      rewardDiffV291&&!rewardDiffV291.rewards?'rewards':'',
+      rewardDiffV291&&!rewardDiffV291.retention?'bring-back rules':'',
+      rewardDiffV291&&!rewardDiffV291.birthday?'the birthday benefit':''
+    ].filter(Boolean);
     target.innerHTML=`${rows.length
       ?`<div class="studio-impact-rule">${rows.map(row=>`<div class="studio-impact-eff"><span>${esc(row.label)}</span><span><s>${esc(row.before)}</s> → <b>${esc(row.after)}</b></span></div>`).join('')}</div>`
       :'<p class="muted small">No changes to earning or programme numbers in this draft.</p>'}
-      <p class="muted small" style="margin-top:10px">Reward and birthday changes are listed in their editors.</p>`;
+      ${rewardSectionsV291.length?`<h3 class="small" style="margin:14px 0 6px">Rewards</h3>${rewardSectionsV291.join('')}`:''}
+      ${birthdaySectionV291?`<h3 class="small" style="margin:14px 0 6px">Birthday benefit</h3>${birthdaySectionV291}`:''}
+      ${retentionSectionsV291.length?`<h3 class="small" style="margin:14px 0 6px">Bring-back rules</h3>${retentionSectionsV291.join('')}`:''}
+      ${(!rewardSectionsV291.length&&!birthdaySectionV291&&!retentionSectionsV291.length&&!unreadableV291.length)
+        ?'<p class="muted small" style="margin-top:10px">No reward, birthday or bring-back changes in this draft.</p>':''}
+      ${unreadableV291.length?`<p class="muted small" style="margin-top:10px">Changes to ${esc(unreadableV291.join(' and '))} could not be read, so they are not listed here. Review them in their editors before publishing.</p>`:''}
+      <p class="muted small" style="margin-top:10px">The welcome offer is not part of this draft \u2014 it goes live when it is saved.</p>`;
   };
   /* The confirmation auto-opens below; it must not race the read that decides whether the
      paused warning belongs in it. */
@@ -11930,7 +12466,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
        control cannot be duplicated by id or left wired to nothing. */
     const publishDiffHtml=String($('growPublishDiffBody')?.innerHTML||'')
       .replace(/<button[\s\S]*?<\/button>/gi,'');
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div>${publishDiffHtml?`<section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml}</div></section>`:''}<div class="imp-note"><b>Server-confirmed advanced-action safety</b><p class="muted small" style="margin-top:4px">${live} running action${live===1?'':'s'} · ${shadow} shadow-only · ${unbuilt} unavailable. This check does not display ordinary reward, earning, birthday or bring-back field changes.</p></div><div style="margin-top:10px">${ruleBlocks}</div>${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}<div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">Safety check complete. The programme numbers changing are listed above. Tick the box to make them live for customers.</div><label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div>${publishDiffHtml?`<section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml}</div></section>`:''}<div class="imp-note"><b>Server-confirmed advanced-action safety</b><p class="muted small" style="margin-top:4px">${live} running action${live===1?'':'s'} · ${shadow} shadow-only · ${unbuilt} unavailable. Ordinary reward, earning, birthday and bring-back changes are listed above.</p></div><div style="margin-top:10px">${ruleBlocks}</div>${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}<div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">Safety check complete. The programme numbers changing are listed above. Tick the box to make them live for customers.</div><label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
     let deactivate;const close=()=>{if(deactivate)deactivate();else $('growPubModal')?.remove()};
     deactivate=CUI.activateDialog($('growPubModal'),{onClose:close,initialFocus:'#growPubType'});
     $('growPubClose').onclick=$('growPubCancel').onclick=close;
@@ -13493,19 +14029,34 @@ async function appointmentsPage(){
     if(!closeBlockDialog)return;
     const close=closeBlockDialog;closeBlockDialog=null;close({restoreFocus});
   }
-  function openBlockedTimeDialog({date=addDays(todaySg,dayOffset)}={}){
+  /* V291 (audit A2 leftover). Blocked time could be created and removed but never corrected, so
+     a wrong hour or the wrong team member meant deleting the record and typing it again — and if
+     the retype was refused, the block was simply gone. The SAME dialog now edits: it opens with
+     the existing values, and saving replaces the block by removing the old one and writing the
+     new one through the existing v120 writers (there is no update RPC, and the server's overlap
+     guard would refuse a new block that overlaps the one being edited, so the removal has to come
+     first). If the replacement is refused, the original is written back before the error is
+     shown, so an edit can never end with less than it started. Remove is unchanged. */
+  function openBlockedTimeDialog({date=addDays(todaySg,dayOffset),block=null}={}){
     closeBlockedTimeDialog();
     const people=branchStaff(branchId);
+    const editingBlockV291=block&&block.id?block:null;
+    const editParts=editingBlockV291?{
+      date:eventParts(editingBlockV291.starts_at).date,
+      start:minuteClock(eventParts(editingBlockV291.starts_at).minutes),
+      end:minuteClock(eventParts(editingBlockV291.ends_at).minutes)
+    }:null;
     const dialog=document.createElement('div');
     dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
     dialog.setAttribute('aria-labelledby','blockTimeTitle');dialog.tabIndex=-1;
-    dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)"><div class="row"><div><h2 id="blockTimeTitle">Block time</h2><p class="muted small" style="margin-top:4px">Mark one team member unavailable in this branch. Customers never see the reason.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="blockTimeClose" aria-label="Close blocked time">Close</button></div>
+    dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)"><div class="row"><div><h2 id="blockTimeTitle">${editingBlockV291?'Edit blocked time':'Block time'}</h2><p class="muted small" style="margin-top:4px">Mark one team member unavailable in this branch. Customers never see the reason.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="blockTimeClose" aria-label="Close blocked time">Close</button></div>
       ${people.length?`<form id="blockTimeForm" style="margin-top:16px">
-        <label for="blockTimeStaff">Team member</label><select id="blockTimeStaff" required>${people.map(person=>`<option value="${person.id}">${esc(staffLabel(person))}</option>`).join('')}</select>
-        <label for="blockTimeDate">Date</label><input id="blockTimeDate" type="date" required value="${esc(date)}">
-        <div class="split"><div><label for="blockTimeStart">Start</label><input id="blockTimeStart" type="time" step="900" required value="14:00"></div><div><label for="blockTimeEnd">End</label><input id="blockTimeEnd" type="time" step="900" required value="15:00"></div></div>
-        <label for="blockTimeReason">Reason (optional)</label><input id="blockTimeReason" maxlength="160" autocomplete="off" placeholder="e.g. Supplier training">
-        <div id="blockTimeError" role="alert"></div><div class="row" style="margin-top:16px"><span class="spacer"></span><button type="button" class="btn ghost" id="blockTimeCancel">Cancel</button><button type="submit" class="btn" id="blockTimeSave">Save block</button></div>
+        <label for="blockTimeStaff">Team member</label><select id="blockTimeStaff" required>${people.map(person=>`<option value="${person.id}" ${editingBlockV291&&editingBlockV291.staff_id===person.id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select>
+        <label for="blockTimeDate">Date</label><input id="blockTimeDate" type="date" required value="${esc(editParts?editParts.date:date)}">
+        <div class="split"><div><label for="blockTimeStart">Start</label><input id="blockTimeStart" type="time" step="900" required value="${esc(editParts?editParts.start:'14:00')}"></div><div><label for="blockTimeEnd">End</label><input id="blockTimeEnd" type="time" step="900" required value="${esc(editParts?editParts.end:'15:00')}"></div></div>
+        <label for="blockTimeReason">Reason (optional)</label><input id="blockTimeReason" maxlength="160" autocomplete="off" placeholder="e.g. Supplier training" value="${esc(editingBlockV291?.reason||'')}">
+        ${editingBlockV291?'<p class="muted small" style="margin-top:8px">Saving removes this blocked time and writes the corrected one. If the new time is refused, the original is put back.</p>':''}
+        <div id="blockTimeError" role="alert"></div><div class="row" style="margin-top:16px"><span class="spacer"></span><button type="button" class="btn ghost" id="blockTimeCancel">Cancel</button><button type="submit" class="btn" id="blockTimeSave">${editingBlockV291?'Save changes':'Save block'}</button></div>
       </form>`:`<div class="cui-empty" style="margin-top:18px">${CUI.icon('staff',{size:38})}<h3>No team member assigned</h3><p>Assign an active team member to this branch before blocking time.</p></div>`}
     </div>`;
     document.body.append(dialog);
@@ -13529,16 +14080,36 @@ async function appointmentsPage(){
         blockCreateAttempt={fingerprint,key:crypto.randomUUID()};
       }
       save.disabled=true;errorHost.innerHTML='';
+      if(editingBlockV291){
+        const removal=await sb.rpc('delete_staff_blocked_time_v120',{
+          p_business:S.biz.id,p_block:editingBlockV291.id,p_idempotency_key:crypto.randomUUID()});
+        if(!isCurrent()||!dialog.isConnected)return;
+        if(removal.error){
+          save.disabled=false;
+          errorHost.innerHTML=`<div class="err">${esc(removal.error.message||'This blocked time could not be changed. Nothing was altered.')}</div>`;return;
+        }
+      }
       const {data,error}=await sb.rpc('create_staff_blocked_time_v120',{
         ...request,p_idempotency_key:blockCreateAttempt.key
       });
       if(!isCurrent()||!dialog.isConnected)return;
       save.disabled=false;
       if(error){
-        errorHost.innerHTML=`<div class="err">${esc(error.message||'Blocked time could not be saved. Retry keeps the same request.')}</div>`;return;
+        let restoredV291=true;
+        if(editingBlockV291){
+          const restore=await sb.rpc('create_staff_blocked_time_v120',{
+            p_business:S.biz.id,p_branch:branchId,p_staff:editingBlockV291.staff_id,
+            p_starts:editingBlockV291.starts_at,p_ends:editingBlockV291.ends_at,
+            p_reason:editingBlockV291.reason||null,p_idempotency_key:crypto.randomUUID()});
+          restoredV291=!restore.error;
+          if(!isCurrent()||!dialog.isConnected)return;
+        }
+        errorHost.innerHTML=`<div class="err">${esc(error.message||'Blocked time could not be saved. Retry keeps the same request.')}</div>${editingBlockV291?`<div class="${restoredV291?'muted small':'err'}" style="margin-top:6px">${restoredV291?'The original blocked time was put back.':'The original blocked time could NOT be put back \u2014 check the calendar before leaving this page.'}</div>`:''}`;
+        if(editingBlockV291)loadCalendar().catch(fail);
+        return;
       }
       blockCreateAttempt=null;close();
-      toast(data?.replayed?'Blocked time was already saved':'Time blocked');
+      toast(editingBlockV291?'Blocked time changed':(data?.replayed?'Blocked time was already saved':'Time blocked'));
       loadCalendar().catch(fail);
     };
   }
@@ -14009,6 +14580,11 @@ async function appointmentsPage(){
     routeMain.querySelectorAll('.statusAction[data-id]').forEach(button=>button.onclick=()=>setStatus(button.dataset.id,button.dataset.status));
   }
   function wireBlockedTimeActions(){
+    /* V291: Edit opens the same dialog the create button opens, prefilled from the block. */
+    routeMain.querySelectorAll('[data-edit-block]').forEach(button=>button.onclick=()=>{
+      const block=calendarBlocks.find(item=>item.id===button.dataset.editBlock);
+      if(block)openBlockedTimeDialog({block});
+    });
     routeMain.querySelectorAll('[data-delete-block]').forEach(button=>button.onclick=async()=>{
       const blockId=button.dataset.deleteBlock;
       const block=calendarBlocks.find(item=>item.id===blockId);
@@ -14085,16 +14661,43 @@ async function appointmentsPage(){
     if(calendarServiceId)query=query.eq('service_id',calendarServiceId);
     if(status)query=query.eq('status',status);
     query=query.order('starts_at',{ascending:false}).order('id');
-    const {data,error,count}=await query.range(listPage*APPOINTMENT_LIST_PAGE_SIZE,(listPage+1)*APPOINTMENT_LIST_PAGE_SIZE-1);
+    /* V291 (audit A2 leftover): blocked time existed in the Day and Week views but not in the
+       List, so the one view an owner uses to scan a whole period simply did not show that a team
+       member was unavailable. The v120 reader demands a bounded window of at most 366 days, so
+       when a filter bound is missing the window is named in words rather than guessed at
+       silently. A failed block read never takes the appointment list down with it. */
+    const blockedFromV291=$('appointmentListFrom')?.value||todaySg;
+    const blockedToV291=$('appointmentListTo')?.value||addDays(blockedFromV291,90);
+    const blockedWindowV291=`${blockedFromV291} → ${blockedToV291}`;
+    const listAndBlocksV291=await Promise.all([
+      query.range(listPage*APPOINTMENT_LIST_PAGE_SIZE,(listPage+1)*APPOINTMENT_LIST_PAGE_SIZE-1),
+      sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:branchId,
+        p_from:sgDateBoundary(blockedFromV291),p_to:sgDateBoundary(blockedToV291,1)})
+        .order('starts_at').order('staff_id')
+    ]);
+    const {data,error,count}=listAndBlocksV291[0];
+    const blockedResultV291=listAndBlocksV291[1];
     if(!stillCurrent())return;
     if(error){renderAppointmentLoadErrorV288(error,loadAppointmentsGuardedV288);return}
     calendarItems=data||[];
+    calendarBlocks=blockedResultV291.error?[]:(blockedResultV291.data||[])
+      .filter(block=>staffFilter==='all'||block.staff_id===staffFilter);
+    const blockedListHtmlV291=blockedResultV291.error
+      ?`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time</b><p>Blocked time could not be read for ${esc(blockedWindowV291)}. The appointments above are unaffected.</p></div></section>`
+      :`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time</b><p>${esc(blockedWindowV291)} \u00b7 time your team is marked unavailable. Customers never see the reason.</p></div>
+        ${calendarBlocks.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Blocked time"><table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>Team member</th><th>Reason</th><th>Actions</th></tr></thead><tbody>
+          ${calendarBlocks.map(block=>{const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
+            return `<tr><td data-label="When"><b>${esc(from.date)}</b><br><span class="small">${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></td><td data-label="Team member"><span data-merchant-content>${esc(staffName[block.staff_id]||'\u2014')}</span></td><td data-label="Reason">${esc(block.reason||(block.id?'Unavailable':'Busy at another branch'))}</td><td data-label="Actions">${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button> <button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:'<span class="muted small">Another branch</span>'}</td></tr>`;
+          }).join('')}</tbody></table></div>`
+          :'<p class="muted small" style="margin-top:10px">No blocked time in this window.</p>'}</section>`;
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
     if(listPage>=pages&&listPage>0){listPage=pages-1;loadAppointmentsGuardedV288();return}
     $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>Date & time</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody>
       ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${a.client_id?`<a class="customer-link" href="#/client/${a.client_id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:a.clients?.full_name||'—'})}>${esc(a.clients?.full_name||'—')}</a>`:esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}"><span data-workspace-i18n>${esc(statusLabelV288(a.status))}</span></span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
       :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`;
+    $('alist').insertAdjacentHTML('beforeend',blockedListHtmlV291);
     wireAppointmentActions();
+    wireBlockedTimeActions();
     if($('appointmentPrev'))$('appointmentPrev').onclick=()=>{if(listPage>0){listPage--;loadAppointmentsGuardedV288()}};
     if($('appointmentNext'))$('appointmentNext').onclick=()=>{if(listPage+1<pages){listPage++;loadAppointmentsGuardedV288()}};
   }
@@ -14240,7 +14843,23 @@ async function appointmentsPage(){
        same misdirection in words, so say which it is. */
     const dayEarliestV217=day===todaySg?(Number.isFinite(todayMinutes)?todayMinutes:-Infinity):(day<todaySg?Infinity:-Infinity);
     const hasBookableV217=canWrite&&columns.some(column=>column.id&&availableCalendarStarts(column,dayEarliestV217).length);
-    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small">${hasBookableV217
+    /* V291 (audit A2 #20). The Day view is an absolutely-positioned pixel timeline: at 390px it
+       needs a horizontal scroller per team member and the events collapse to unreadable slivers.
+       The Week view already solves this by hiding its grid and showing a linear agenda below
+       900px; the Day view now carries the same fallback, built from the same columns so it can
+       never disagree with the grid, and it keeps the appointment and blocked-time controls. */
+    const dayAgendaRowsV291=columns.flatMap(column=>[
+      ...column.items.map(item=>({sort:eventParts(item.starts_at).minutes,html:`<div class="calendar-agenda-row"><button type="button" class="calendar-agenda-item" data-appointment="${item.id}" data-appointment-branch="${esc(item.branch_id||'')}" style="width:100%;background:transparent;text-align:left" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:item.services?.name||'—',customer:item.clients?.full_name||'—',time:appointmentTimeRange(item),duration:appointmentDuration(item),staff:column.label})}><span class="calendar-agenda-time"><b>${esc(appointmentTimeRange(item))}</b><br><span class="muted small">${appointmentDuration(item)} <span data-workspace-i18n>min</span></span></span><span><b>${esc(item.clients?.full_name||'Walk-in')}</b><br><span class="muted small">${esc(item.services?.name||'General visit')} · <span data-merchant-content>${esc(column.label)}</span></span></span></button></div>`})),
+      ...column.blocks.map(block=>{
+        const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
+        const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
+        return {sort:from.minutes,html:`<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</b></span><span><b>Blocked time</b><br><span class="muted small"><span data-merchant-content>${esc(column.label)}</span> · ${esc(reason)}</span></span></span>${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:''}</div>`};
+      })
+    ]).sort((a,b)=>a.sort-b.sort);
+    const dayAgendaV291=dayAgendaRowsV291.length
+      ?dayAgendaRowsV291.map(row=>row.html).join('')
+      :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>Nothing scheduled</h2><p>No appointments or blocked time on this day.</p></div>`;
+    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small day-timeline-slot-hint-v291">${hasBookableV217
       ?`Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.`
       :day<todaySg
         ?'This day has already passed — appointments can only be booked for a time still to come.'
@@ -14267,7 +14886,7 @@ async function appointmentsPage(){
           const blocks=column.blocks.map(block=>{
             const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;
             const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
-            return `<div class="day-blocked-window" style="top:${(from-rangeStart)/60*hourHeight}px;height:${Math.max(44,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span>${canWrite&&block.id?`<button type="button" data-delete-block="${block.id}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:reason})}>Remove</button>`:''}</div>`;
+            return `<div class="day-blocked-window" style="top:${(from-rangeStart)/60*hourHeight}px;height:${Math.max(44,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span>${canWrite&&block.id?`<button type="button" data-edit-block="${block.id}">Edit</button><button type="button" data-delete-block="${block.id}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:reason})}>Remove</button>`:''}</div>`;
           }).join('');
           const state=schedule.state!=='working'?`<div class="day-track-state"><b>${esc(schedule.label)}</b>${schedule.reason?`<span>${esc(schedule.reason)}</span>`:''}</div>`:'';
           const working=schedule.state==='working'?`<div class="day-schedule-window" style="top:${workingTop}px;height:${workingHeight}px" aria-hidden="true"></div>`:'';
@@ -14277,7 +14896,8 @@ async function appointmentsPage(){
           const now=Number.isFinite(todayMinutes)&&todayMinutes>=rangeStart&&todayMinutes<=rangeEnd?`<div class="day-now-line" style="top:${(todayMinutes-rangeStart)/60*hourHeight}px"><span>${minuteClock(todayMinutes)}</span></div>`:'';
           return `<div class="day-team-track" style="height:${bodyHeight}px">${working}${slots}${breaks}${blocks}${now}${state}${events}</div>`;
         }).join('')}
-      </div></div>`;
+      </div></div>
+      <div class="calendar-agenda">${dayAgendaV291}</div>`;
     if(day===todaySg&&!dayAutoScrolled){
       requestAnimationFrame(()=>{
         const scroller=routeMain.querySelector('.day-timeline-scroll');
@@ -14313,12 +14933,22 @@ async function appointmentsPage(){
        same day-blocked-window treatment the Day view uses. */
     const dayBlocks=days.map(day=>calendarBlocks.filter(block=>eventParts(block.starts_at).date===day));
     const agenda=calendarItems.map(a=>`<div class="calendar-agenda-row"><button type="button" class="calendar-agenda-item" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="width:100%;background:transparent;text-align:left" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentAgenda',{service:a.services?.name||'—',customer:a.clients?.full_name||'—',day:calendarDayLabel(a.starts_at),time:appointmentTimeRange(a),duration:appointmentDuration(a)})}><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(a.starts_at))}</b><br><span>${esc(appointmentTimeRange(a))}</span><br><span class="muted small">${appointmentDuration(a)} min</span></span><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(a.services?.name||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>${a.status==='booked'&&canWrite?`<button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}</div>`).join('');
+    /* V291 (audit A2 leftover): below 900px the week grid is hidden and .calendar-agenda IS the
+       week view, so blocked time — drawn in the grid since V185 — was invisible on a phone. The
+       same rows now appear in the agenda, with the same Edit and Remove controls the Day view
+       carries, so a phone can correct a block without finding a desktop. */
+    const blockedAgendaV291=canWrite?calendarBlocks.map(block=>{
+      const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
+      const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
+      return `<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(block.starts_at))}</b><br><span>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></span><span><b>Blocked time</b><br><span class="muted small" data-merchant-content>${esc(staffName[block.staff_id]||'Team member')} · ${esc(reason)}</span></span></span>${block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:''}</div>`;
+    }).join(''):'';
     $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
       <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div aria-hidden="true"></div>${days.map((day,i)=>`<div class="${day===todaySg?'is-today':''}" ${day===todaySg?'aria-current="date"':''}><span>${dayNames[i]}</span><br><span class="calendar-date">${Number(day.slice(8))}</span></div>`).join('')}</div>
       <div class="calendar-week-body" style="height:${bodyHeight}px"><div class="calendar-time-axis" style="height:${bodyHeight}px">${[...Array(endHour-startHour+1)].map((_,i)=>`<span class="calendar-time-label" style="top:${i*hourHeight}px">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>
       ${days.map((day,index)=>`<div class="calendar-day ${day===todaySg?'is-today':''}" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayBlocks[index].map(block=>{const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');return `<div class="day-blocked-window week-blocked-window" style="top:${Math.max(0,(from-startHour*60)/60*hourHeight)}px;height:${Math.max(24,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span></div>`;}).join('')}${dayEvents[index].map(({item:a,from,to,lane,laneCount,inactiveV288})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=(to-from)/60*hourHeight,color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event${inactiveV288?' appointment-inactive-v288':''}" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:a.services?.name||'—',customer:a.clients?.full_name||'—',time:appointmentTimeRange(a),duration:appointmentDuration(a),staff:staffName[a.staff_id]||'—'})}><b>${esc(a.services?.name||'General visit')} · ${esc(a.clients?.full_name||'—')}</b><span class="calendar-event-time">${esc(appointmentTimeRange(a))}</span>${staffFilter==='all'?`<span>${esc(staffName[a.staff_id]||'Unassigned')}</span>`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
-      <div class="calendar-agenda">${agenda||`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments this week</h2></div>`}</div>`;
+      <div class="calendar-agenda">${agenda||(blockedAgendaV291?'':`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments this week</h2></div>`)}${blockedAgendaV291}</div>`;
     wireAppointmentActions();
+    wireBlockedTimeActions();
   }
   /* V288 (audit A2, HIGH 4): '#/appointments?view=list&preset=today' — the link the Dashboard
      schedule strip has been publishing all along — now lands on the List view for today rather
@@ -15678,6 +16308,10 @@ async function waitlistPage(){
     return;
   }
   const svOpts=(sv||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  const tableTypesResultV291=await sb.from('booking_tables')
+    .select('id,name,pax').eq('business_id',S.biz.id).eq('active',true).order('sort').order('name');
+  if(!isCurrent())return;
+  const tableTypesV291=tableTypesResultV291.error?[]:(tableTypesResultV291.data||[]);
   /* V288 (audit A2, MEDIUM 8): in a seated sector "Start booking" cannot open an appointment
      form the workspace does not have. It opens Bookings instead, which is where a seated
      business turns a walk-in into a held reservation. */
@@ -15690,7 +16324,11 @@ async function waitlistPage(){
   const canDeclineLinked=canWriteModule('bookings');
   const linkedDecisionPending=new Set();
   let currentRows=[]; // queue rows the row-action handlers resolve ids against (reassigned per load)
+  /* V291: the seating list, read once and fail-soft — a business with no table types simply gets
+     no table control on the edit form rather than an error. */
+  let waitlistTableTypesV291=[];
   const waitlistLoadGate=createLatestRequestGate(isCurrent);
+  waitlistTableTypesV291=tableTypesV291;
 
   routeMain.innerHTML=
     CUI.pageHeader({title:'Waitlist',subtitle:"Catch demand you can't seat now — win it back when a spot frees up.",iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
@@ -15773,6 +16411,40 @@ async function waitlistPage(){
     toast(seatedWithoutAppointmentsV288?'Bookings write access is required.':'Appointment write access is required.');
   };
   window.wlCalled=async id=>{if(await updateWl(id,'contacted')){toast('Marked called');loadWl()}};
+  /* V291 (audit A2 leftover): a walk-in row could only be seated, called or removed. The two
+     things that actually change while somebody waits — the party grew, or they said something
+     worth writing down — could not be corrected at all, so staff removed the row and re-added
+     it, losing the wait time the queue is ordered by. This edits the row in place; the created_at
+     the queue sorts on is untouched. */
+  let editingWaitlistIdV291=null;
+  window.wlEdit=id=>{
+    editingWaitlistIdV291=editingWaitlistIdV291===id?null:id;
+    loadWl();
+  };
+  async function saveWaitlistEditV291(id,button){
+    const row=currentRows.find(item=>item.id===id);
+    if(!row)return;
+    const preferred=String($('wlEditPreferredV291')?.value||'').trim();
+    const notes=String($('wlEditNotesV291')?.value||'').trim();
+    const host=$('wlEditErrV291');
+    if(host){host.textContent='';host.hidden=true}
+    /* Party size is not a column on a waitlist row; the TABLE TYPE is where this product records
+       how many people a waiting group needs seats for, and it is the same list Bookings uses.
+       Inventing a party_size field here would be a number nothing else in the product reads. */
+    const patch={preferred:preferred||null,notes:notes||null};
+    if(waitlistTableTypesV291.length)patch.table_type_id=$('wlEditTableV291')?.value||null;
+    CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
+    const {error}=await sb.from('waitlist')
+      .update(patch)
+      .eq('id',id).eq('business_id',S.biz.id);
+    if(!isCurrent())return;
+    CUI.setButtonBusy(button,{busy:false});
+    if(error){
+      if(host){host.textContent=ownerErrorText(error);host.hidden=false}
+      return;
+    }
+    editingWaitlistIdV291=null;toast('Waitlist entry updated');loadWl();
+  }
   window.wlRemove=async id=>{
     const row=currentRows.find(r=>r.id===id);
     if(!confirm(`Remove ${row?.name||'this person'} from the waitlist? They'll drop out of the queue.`))return;
@@ -15814,8 +16486,10 @@ async function waitlistPage(){
         ?`<button class="btn ghost sm" onclick="wlBook('${w.id}')" title="Open Bookings; queue status stays waiting">${CUI.icon('bookings',{size:16})}<span>Start booking</span></button>`
         :`<button class="btn ghost sm" onclick="wlBook('${w.id}')" title="Open the appointment form; queue status stays waiting">${CUI.icon('appointments',{size:16})}<span>Start booking</span></button>`;
     const called=w.status==='waiting'?`<button class="btn ghost sm" onclick="wlCalled('${w.id}')" title="Mark as called"><span>Called</span></button>`:'';
+    /* V291: the correction control, next to the actions that already change this row. */
+    const edit=`<button class="btn ghost sm" onclick="wlEdit('${w.id}')" title="Change party size or note"><span>${editingWaitlistIdV291===w.id?'Close':'Edit'}</span></button>`;
     const remove=`<button class="btn ghost sm wl-x" onclick="wlRemove('${w.id}')" title="Remove from waitlist" ${workspaceTemplateAttributeV97('aria-label','removeFromWaitlist',{customer:w.name})}><span aria-hidden="true">×</span></button>`;
-    return seat+book+called+remove;
+    return seat+edit+book+called+remove;
   }
   function rowHtml(w,pos){
     const mins=Math.max(0,Math.round((Date.now()-new Date(w.created_at).getTime())/60000));
@@ -15831,6 +16505,13 @@ async function waitlistPage(){
         <div class="wl-name"><b data-merchant-content>${esc(w.name)}</b>${pill}</div>
         <div class="wl-meta muted small">${bits.map((b,i)=>`${i?'<span class="sep">·</span>':''}<span data-merchant-content>${b}</span>`).join('')}${bits.length?'<span class="sep">·</span>':''}<span class="wl-wait" data-since="${esc(w.created_at)}" ${workspaceTemplateAttributeV97('title','joinedAt',{date:sgt(w.created_at)||''})}>${waitLabel(mins)}</span></div>
         ${detail?`<div class="wl-notes muted small" data-merchant-content>${detail}</div>`:''}
+        ${canWrite&&editingWaitlistIdV291===w.id?`<div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:10px">
+          ${waitlistTableTypesV291.length?`<div style="flex:1 1 160px"><label for="wlEditTableV291">Party size (table)</label><select id="wlEditTableV291"><option value="">No preference</option>${waitlistTableTypesV291.map(type=>`<option value="${esc(type.id)}" ${w.table_type_id===type.id?'selected':''}>${esc(type.name)}${type.pax?` \u00b7 ${type.pax} seats`:''}</option>`).join('')}</select></div>`:''}
+          <div style="flex:1 1 160px"><label for="wlEditPreferredV291">Preferred window</label><input id="wlEditPreferredV291" value="${esc(w.preferred||'')}"></div>
+          <div style="flex:2 1 200px"><label for="wlEditNotesV291">Note</label><input id="wlEditNotesV291" value="${esc(w.notes||'')}"></div>
+          <button class="btn sm" type="button" data-wl-save-v291="${w.id}">Save changes</button>
+          <button class="btn ghost sm" type="button" data-wl-cancel-v291="1">Cancel</button>
+        </div><p class="err small" id="wlEditErrV291" role="alert" hidden></p>`:''}
       </div>
       <div class="wl-actions">${actionsHtml(w)}</div>
     </li>`;
@@ -15870,6 +16551,11 @@ async function waitlistPage(){
       return;
     }
     wlist.innerHTML=`<ul class="wl-list">${queue.map((w,i)=>rowHtml(w,i+1)).join('')}</ul>`;
+    wlist.querySelectorAll('[data-wl-save-v291]').forEach(button=>button.onclick=()=>
+      saveWaitlistEditV291(button.dataset.wlSaveV291,button));
+    wlist.querySelectorAll('[data-wl-cancel-v291]').forEach(button=>button.onclick=()=>{
+      editingWaitlistIdV291=null;loadWl();
+    });
     paintWaits();
   }
 
@@ -18592,8 +19278,22 @@ async function settingsPage(){
   let myStaffId=null;   // this signed-in user's own staff.id
   let teamRowsById=new Map();
 
-  const enabledAssignableModules=()=>Object.keys(MODULES)
-    .filter(module=>(S.biz.enabled_modules||[]).includes(module)&&!OWNER_ONLY_MODULES.has(module));
+  /* V291 (audit A2 leftover): the permission grid listed every enabled module, and
+     enabled_modules can legitimately carry a module this SECTOR does not use — 'bottles' is the
+     clearest case, a bar-only surface that a salon or cafe must never be able to hand out. The
+     sector's own module bundle is the same list onboarding writes, so filtering by it cannot
+     take away anything the sector actually runs. An unknown industry is treated permissively
+     rather than stripping a real permission from a real workspace. */
+  const sectorAssignableModulesV291=()=>{
+    const sector=INDUSTRIES[String(S.biz?.industry||'').toLowerCase()];
+    return Array.isArray(sector?.mods)?sector.mods:null;
+  };
+  const enabledAssignableModules=()=>{
+    const sectorModules=sectorAssignableModulesV291();
+    return Object.keys(MODULES)
+      .filter(module=>(S.biz.enabled_modules||[]).includes(module)&&!OWNER_ONLY_MODULES.has(module)
+        &&(!sectorModules||sectorModules.includes(module)));
+  };
   const defaultInheritedPerms=role=>Object.fromEntries(
     enabledAssignableModules().filter(module=>roleCanUseModule(role,module)).map(module=>[module,'rw'])
   );
@@ -19564,7 +20264,12 @@ function customerInterfaceSectionsHtmlV243(fieldDefs){
       <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
     <div class="card" style="margin-top:16px"><b>Customer fields</b>
       <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
-      <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" data-merchant-content style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
+      <!-- V291 (audit A2 leftover): a custom field could be added and retired but never renamed,
+           so a typo in a question every customer profile asks was permanent — retiring and
+           re-adding orphans every answer already recorded. Only the LABEL is editable: the field
+           key, its answer type and its data classification are what the stored answers mean, and
+           changing those under existing values would rewrite history. -->
+      <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" data-merchant-content style="padding:7px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="cfRenameV291 btn ghost sm" data-id="${f.id}" data-label="${esc(f.label)}">Rename</button><button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
       <details><summary>Add a customer field</summary>
         <div class="field-grid"><div><label for="cfLabel">Field name</label><input id="cfLabel" placeholder="e.g. Preferred therapist"></div>
         <div><label for="cfType">Answer type</label><select id="cfType"><option value="text">Short text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / no</option><option value="select">Choose from a list</option></select></div>
@@ -19637,6 +20342,17 @@ function wireCustomerInterfaceV243(rerender){
     if(error)return fail(error);
     toast('Customer field added');rerender();
   };
+  /* V291: rename only. Answers already recorded keep their value and their meaning; the
+     question is simply asked in better words. */
+  document.querySelectorAll('.cfRenameV291').forEach(b=>b.onclick=async()=>{
+    const label=prompt('New field name',b.dataset.label)?.trim();
+    if(!label||label===b.dataset.label)return;
+    if(label.length<2)return toast('Give the field a clear name');
+    const {error}=await sb.from('client_field_definitions').update({label})
+      .eq('id',b.dataset.id).eq('business_id',S.biz.id);
+    if(error)return fail(error);
+    toast('Field renamed; existing answers are unchanged');rerender();
+  });
   document.querySelectorAll('.cfRetire').forEach(b=>b.onclick=async()=>{
     const {error}=await sb.from('client_field_definitions').update({active:false}).eq('id',b.dataset.id).eq('business_id',S.biz.id);
     if(error)return fail(error);toast('Field retired; existing answers remain in history');rerender();

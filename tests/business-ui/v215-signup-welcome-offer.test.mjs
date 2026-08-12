@@ -45,7 +45,9 @@ test('V215 appears in Programmes with a state an owner can act on', () => {
   // Uses the shared pill, not an invented status class.
   assert.match(row, /class="pill \$\{esc\(tone\)\}"/);
   assert.match(app, /\[data-welcome-offer-edit-v215\]/);
-  assert.match(app, /welcomeOfferRowV215\(welcomeOfferStatusV215,canSetupGrow,canRewards\)/);
+  /* V291 retarget (not a deletion): the row now also receives whether an editing draft is open,
+     so it can say the welcome offer is NOT part of that draft. Same call site, one argument more. */
+  assert.match(app, /welcomeOfferRowV215\(welcomeOfferStatusV215,canSetupGrow,canRewards,Boolean\(growDraftPendingId\)\)/);
   // A failed status read must not blank the whole programme overview.
   assert.match(app, /business_get_welcome_offer_v215[\s\S]{0,200}catch\(\(\)=>null\)/);
 });

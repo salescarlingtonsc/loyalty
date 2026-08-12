@@ -1761,6 +1761,15 @@
       "kernel_migratability": "delegating \u2014 the value handover is the db.fn of the same name; this binding carries no pricing of its own."
     },
     {
+      "id": "browser.rpc:app/app.js:erase_client_v290",
+      "surface": "browser_rpc_binding",
+      "rpc": "erase_client_v290",
+      "resolves_to": "erase_client_v290/4",
+      "rows_written": "(delegates) public.clients (anonymisation of the identifying columns of ONE client row) + the erasure evidence the V290 writer records. No ledger, sale, points, credit or stored-value row is written, updated or deleted.",
+      "call_site_finding": "OK - owner-only affordance on Customer 360 (S.myRole==='owner'), behind a typed-name confirmation and a reason of at least 8 characters, with a per-attempt idempotency key that is reused verbatim on retry. The browser supplies only the business, the client, the reason and the key; every authority test (owner role, tenant, and the refusal while the customer still holds active value or kept property) is the server's, and the server's refusal message is rendered verbatim rather than reinterpreted. The browser never deletes or rewrites a ledger row itself.",
+      "kernel_migratability": "non-value - anonymises identifying customer columns and records why. Points, credit, stored value, sales and every other VALUE_TABLE are deliberately left intact, because they are the accounting record of money that changed hands; this writer never reaches the value kernel."
+    },
+    {
       "id": "browser.rpc:app/app.js:customer_set_communication_preference_v263",
       "surface": "browser_rpc_binding",
       "rpc": "customer_set_communication_preference_v263",
