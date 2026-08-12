@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="249a947595c741d4896b63a42e53afed7d37474f4503c99c63012d51a1e2a89d">
+<meta name="v104-production-source-sha256" content="1928a09279316e07be7ea64b7d69f4c480dcc041148ca461f6cac8459d739615">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -21,6 +21,8 @@
   --line:#EAE6DF; --control-border:#817B88; --hair:rgba(23,22,26,.06);
   --coral:#C24135; --coral-hover:#9D352C; --amber:#A75514; --green:#1F6B48; --red:#9D352C;
   --grad:linear-gradient(135deg,#C24135,#9D352C);
+  /* V299: the one categorical palette for DOM proportion bars (reports, playbooks). */
+  --chart-1:#C24135; --chart-2:#1F6B48; --chart-3:#1F5199; --chart-4:#8A5A12; --chart-5:#7A2E9D; --chart-6:#6B6673;
   --tint:#FFF0EC;            /* coral wash for selected/active surfaces */
   /* iOS uses generous, continuous corner radii */
   --r:18px; --r-sm:12px; --r-lg:24px;
@@ -165,7 +167,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .reporting-scope-branches label{display:inline-flex;align-items:center;gap:5px;min-height:36px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;font-size:12px;font-weight:700}
 .reporting-scope-branches input{width:auto;min-height:auto}
 .scope-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#F7F1EA;border:1px solid var(--line);padding:5px 9px;font-size:11px;font-weight:750;color:var(--muted)}
-.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(4,minmax(150px,1fr))}
+.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
 .dashboard-chart-head>svg{margin-top:2px}.dashboard-chart-head b{display:block;line-height:1.25;overflow-wrap:anywhere}.dashboard-chart-head p{line-height:1.35}
@@ -1255,6 +1257,15 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .report-share-v297{margin-top:12px}
 .report-share-bar-v297{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--line)}
 .report-share-bar-v297>span{display:block;height:100%}
+/* V299: Business Insights depended on two classes that had no rules at all — every tab's
+   headline number rendered at body size one card under the 1.85rem verdict value. */
+.metric{font-size:1.6rem;font-weight:750;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+@media(max-width:720px){.metric{font-size:1.4rem}}
+.report-scope-card{padding:16px 18px}
+.report-scope-card .range{align-items:center;row-gap:10px}
+.report-scope-card .range label{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:12.5px;font-weight:650;color:var(--muted)}
+.report-scope-card .range input[type=date]{width:auto;min-width:150px}
+.report-scope-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .report-share-legend-v297{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
 .report-share-legend-v297 li{display:flex;align-items:center;gap:6px}
 .report-share-dot-v297{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
@@ -1622,6 +1633,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
+/* V299: when a firm runs tiers AND spendable points, the balance is visible on the tab bar
+   itself — the customer's number one fact must not hide behind the unselected tab. */
+.customer-programme-tablist--with-balance{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.customer-programme-tab-balance{display:inline-flex;align-items:baseline;gap:4px;align-self:center;padding:0 10px 0 6px;font-weight:750;font-size:14.5px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.customer-programme-tab-balance small{font-weight:600;font-size:11px;color:var(--muted);letter-spacing:0}
 .customer-programme-single{padding:16px}
 .customer-programme-single-head{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:1.05rem}
 .customer-programme-single .customer-tier-now{margin-top:14px}
@@ -1672,7 +1688,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-expiring-list .muted{min-width:0;overflow-wrap:anywhere}
 .customer-expiring-when{margin-left:auto;font-size:.82rem;color:var(--muted);white-space:nowrap}
 .customer-expiring-when.is-urgent{color:var(--red);font-weight:600}
-.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
+.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}.customer-home-offer-media--fallback span{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);font-size:17px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
 /* V243 customer-app preview — restored after a rebase conflict resolution dropped it */
 .customer-preview-phone-v243{width:390px;max-width:100%;margin:14px auto 0;border:10px solid var(--ink);border-radius:34px;background:var(--ink);box-shadow:0 12px 30px rgba(23,22,26,.18)}
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
@@ -1728,7 +1744,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    contain at natural ratio (height-capped) with the card's copy strictly below.
    Only the no-photo fallback keeps a fixed ratio and decorative gradient. */
 .customer-promotion-card-media{position:relative;width:100%;flex:0 0 auto;overflow:hidden;background:linear-gradient(135deg,#3b2a45,#17161a)}.customer-promotion-card-media img{display:block;width:100%;height:auto;max-height:clamp(140px,34vw,220px);object-fit:contain;margin:0 auto}
-.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9}.customer-promotion-card-media--fallback span{position:relative;z-index:1;font-size:clamp(1.7rem,6vw,2.4rem);font-weight:750;letter-spacing:-.04em;color:rgba(255,255,255,.92)}
+.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9;background:radial-gradient(circle at 80% 14%,rgba(255,255,255,.14),transparent 55%),radial-gradient(circle at 14% 86%,rgba(255,255,255,.08),transparent 45%)}.customer-promotion-card-media--fallback span{position:relative;z-index:1;display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);font-size:19px;font-weight:750;letter-spacing:-.03em;color:rgba(255,255,255,.95)}
 .customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;padding:15px 16px 16px}
 .customer-promotion-card-copy .customer-promotion-card-facts{margin-top:5px;font-size:clamp(.98rem,2.9vw,1.12rem);font-weight:750;line-height:1.25;letter-spacing:-.015em;color:#fff}.customer-promotion-card-copy h3{font-size:clamp(1.15rem,3.2vw,1.4rem);line-height:1.15;letter-spacing:-.02em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
 .customer-promotion-validity{font-weight:750}.customer-promotion-detail-list{display:grid;gap:10px;margin:16px 0}.customer-promotion-detail-list>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px}.customer-promotion-detail-list dt{color:var(--muted);font-size:.78rem;font-weight:750}.customer-promotion-detail-list dd{margin:0;overflow-wrap:anywhere}
@@ -1784,7 +1800,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-section h2{font-size:18px;margin-bottom:4px}
 .wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
-.wallet-reward{border:1px solid var(--hair);border-radius:7px;padding:14px;background:#fff;min-width:0}
+.wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:#fff;min-width:0}
 .wallet-reward-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}
@@ -1793,8 +1809,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 .customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
 .customer-offer-detail-media img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;margin:0 auto}
-.customer-offer-detail-media--fallback{display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
-.customer-offer-detail-media--fallback span{font-size:2.6rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
+.customer-offer-detail-media--fallback{position:relative;display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
+.customer-offer-detail-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}
+.customer-offer-detail-media--fallback span{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
 .customer-offer-detail h2{margin-top:2px;font-size:clamp(1.35rem,4vw,1.7rem);letter-spacing:-.02em}
 .customer-offer-detail-facts{margin-top:6px;font-size:clamp(1.05rem,3.2vw,1.25rem);font-weight:760;letter-spacing:-.015em;color:var(--ink)}
 .customer-offer-detail-meta{display:grid;gap:5px;margin-top:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--bg)}
@@ -1966,7 +1983,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 249a947595c741d4896b63a42e53afed7d37474f4503c99c63012d51a1e2a89d</p>
+  <p class="v104-provenance">Local production-render harness · source 1928a09279316e07be7ea64b7d69f4c480dcc041148ca461f6cac8459d739615</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -1978,7 +1995,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="249a947595c741d4896b63a42e53afed7d37474f4503c99c63012d51a1e2a89d";
+const PRODUCTION_SOURCE_SHA256="1928a09279316e07be7ea64b7d69f4c480dcc041148ca461f6cac8459d739615";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -2210,7 +2227,8 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
     facts=customerOfferTaglineV194(item?.name,String(item?.metadata?.offer_facts||'')),
     description=customerOfferDescriptionV195(item?.description),
     terms=String(item?.terms||'').trim();
-  const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
+  /* V299: business monogram coin, not the offer name's first letter (see home shelf). */
+  const initial=(String(business?.name||item?.name||'P').trim()[0]||'P').toUpperCase();
   return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
     ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:`<div class="customer-promotion-card-media customer-promotion-card-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <div class="customer-promotion-card-copy">
@@ -2520,10 +2538,17 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
       ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
     </section>`;
   }
+  /* V299: with tiers AND spendable points, the balance sat entirely behind the unselected
+     "Reward points" tab — the customer's number one fact was invisible on first paint. It now
+     reads on the tab bar itself. Hidden while the programme is paused: the points panel says
+     "Programme paused" there, and a bare 0 beside it would contradict that sentence. */
+  const tabBalanceV299=loyalty.enabled===false?''
+    :`<span class="customer-programme-tab-balance" aria-label="${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))} ${esc(ct(presentation.unit))} to spend">${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}<small>${esc(ct(presentation.unit))}</small></span>`;
   return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
-    <div class="customer-programme-tablist" role="tablist" aria-label="Tier and reward points">
+    <div class="customer-programme-tablist${tabBalanceV299?' customer-programme-tablist--with-balance':''}" role="tablist" aria-label="Tier and reward points">
       <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('star',{size:17})}<span>Tier</span></button>
       <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">${CUI.icon('redeem',{size:17})}<span>Reward points</span></button>
+      ${tabBalanceV299}
     </div>
     <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
       <div data-programme-panel="tier">${customerTierPanelMarkupV194(tier)}</div>

@@ -52,7 +52,7 @@ test('a redeemable reward is chipped Ready and keeps the QR redemption contract'
 test('promotion cards surface the offer facts hook and never render a broken media area',()=>{
   assert.match(promotion,/facts\?`<p class="customer-promotion-card-facts">\$\{esc\(facts\)\}<\/p>`:''/);
   assert.match(promotion,/customer-promotion-card-media--fallback/);
-  assert.match(promotion,/initial=\(String\(item\?\.name\|\|'Offer'\)\.trim\(\)\[0\]\|\|'O'\)\.toUpperCase\(\)/);
+  assert.match(promotion,/initial=\(String\(business\?\.name\|\|item\?\.name\|\|'P'\)\.trim\(\)\[0\]\|\|'P'\)\.toUpperCase\(\)/);
   assert.match(promotion,/data-promotion-id="\$\{esc\(item\?\.id\|\|''\)\}"/);
   assert.match(promotion,/customerPromotionCtaV104\(item,business,bookingEnabled\)/);
   assert.match(promotion,/data-promotion-status/);

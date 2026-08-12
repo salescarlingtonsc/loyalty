@@ -2303,7 +2303,9 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
   if(change===null||change===undefined||!Number.isFinite(change))return '';
   const word=change>0?'up':change<0?'down':'level';
   const glyph=change>0?'▲':change<0?'▼':'▬';
-  return `<span class="metric-delta pill ${change>0?'ok':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${Math.abs(change)}% ${word} versus ${esc(previousFrom)} to ${esc(previousTo)}</span></span>`;
+  /* V299: a fall now reads in the same three-tone language Business Insights already uses —
+     a −18% and a 0% were both the identical grey pill, distinguished only by the glyph. */
+  return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${Math.abs(change)}% ${word} versus ${esc(previousFrom)} to ${esc(previousTo)}</span></span>`;
 }
 function dashboardLoyaltyRowV170(cards){
   return `<section class="dashboard-loyalty" aria-labelledby="dashboardLoyaltyTitle"><div class="dashboard-loyalty-head">${CUI.icon('loyalty',{size:20})}<div><h3 id="dashboardLoyaltyTitle">Loyalty this period</h3><p class="muted small">Programme activity for the selected dates.</p></div></div><div class="dashboard-loyalty-grid">${cards.map(card=>`<div class="dashboard-loyalty-card"><b>${esc(card.label)}</b><span class="v">${esc(card.value)}</span><span class="metric-hint">${esc(card.hint)}</span>${card.retryId?`<button type="button" class="btn ghost sm" id="${card.retryId}">Retry</button>`:''}</div>`).join('')}</div></section>`;
@@ -3410,7 +3412,7 @@ async function clientDetail(id){
   const [{data:c,error},{data:loyaltyProjection,error:loyaltyProjectionError},{data:rg,error:rgError},{data:allSl,error:salesError},{data:redemptionRows,error:redemptionHistoryError},{data:allAp,error:appointmentsError},{data:stAll,error:staffError},{data:cfDefs,error:cfDefsError},{data:cfVals,error:cfValsError},{data:cfOpts,error:cfOptsError},{data:birthdayBenefit,error:birthdayError},{data:feedbackResult,error:feedbackError},{data:msRows,error:membershipsError},{data:cpRows,error:packagesError}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
-    sb.from('clients').select('id,business_id,full_name,phone,email,referral_code,marketing_consent').eq('id',id).single(),
+    sb.from('clients').select('id,business_id,full_name,phone,email,referral_code,marketing_consent,created_at').eq('id',id).single(),
     canReadLoyalty?sb.rpc('staff_get_customer_actionable_loyalty_v145',{
       p_business:S.biz.id,p_client:id,p_branch:loyaltyProjectionBranch
     }):Promise.resolve({data:null}),
@@ -3805,6 +3807,9 @@ async function clientDetail(id){
         `${pointsPausedNoteV259}${pointsExpiryMarkup}`)
       +summaryRowV294(wholeBusinessLabels?'Spendable credit':'Business-wide spendable credit',`<b>${money(cred)}</b>`):''}
     ${summaryRowV294('PDPA consent',c.marketing_consent?'<span class="pill on">Yes</span>':'<span class="pill off">No</span>')}
+    ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
+         though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
+      c.created_at?summaryRowV294('Member since',`<b>${esc(formatCustomerJoinedDateV141(c.created_at))}</b>`):''}
     ${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}
   </aside>`;
   /* V294: one compact row per programme this customer can use — name + one line of what the
@@ -11652,8 +11657,10 @@ function pbResultsHtml(r,ctx){
   const hasWindow=!!(r.measurement_started_at&&r.measurement_ends_at);
   const awaiting=measurementStatus==='awaiting_verified_exposure';
   const scale=Math.max(tRate??0,hRate??0,1);
+  /* V299: same proportion-bar component the V297 report cards use — this was the third
+     hand-rolled bar idiom in the product. */
   const bar=(label,value,colour,extra)=>`<div style="margin-top:8px"><div class="row" style="justify-content:space-between"><span class="small">${esc(label)}</span><b class="small">${value.toFixed(1)}%${extra?` · ${esc(extra)}`:''}</b></div>
-    <div style="height:12px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:3px"><div style="height:100%;width:${Math.max(value/scale*100,value>0?4:0)}%;background:${colour}"></div></div></div>`;
+    <div class="report-share-bar-v297" style="margin-top:4px"><span style="width:${Math.max(value/scale*100,value>0?4:0)}%;background:${colour}"></span></div></div>`;
   let headline,headSub;
   if(awaiting){
     headline='Measurement not started';
@@ -11680,7 +11687,7 @@ function pbResultsHtml(r,ctx){
   const canComplete=ctx.isOwner&&hasWindow&&campaignStatus==='active';
   const differenceText=observedDifference==null?'—':`${observedDifference>0?'+':''}${observedDifference.toFixed(1)} points`;
   const windowEnds=hasWindow?walletDate(r.measurement_ends_at,true):'Not sealed';
-  return `<div style="font-size:1.7rem;font-weight:700;color:var(--muted);line-height:1.15">${esc(headline)}</div>
+  return `<div class="metric">${esc(headline)}</div>
     <p class="muted small" style="margin-top:4px">${esc(headSub)}</p>
     ${tRate==null?'':bar('Treatment observed return rate',tRate,'var(--green)',`${Number(t.returned||0)}/${treatmentMembers}`)}
     ${hRate==null?'':bar('Held-back observed return rate',hRate,'var(--coral)',`${Number(h.returned||0)}/${holdoutMembers}`)}
@@ -17878,7 +17885,9 @@ function reportVerdictBandV297({label,valueText,current,previous,previousText=''
    plain CSS bar built from the very numbers in the table beside it — no charting dependency and
    no network fetch, both of which the app's CSP forbids anyway. Negative or zero parts are left
    out of the bar (a reversal is not a share of anything) while the table above keeps them. */
-const REPORT_SHARE_COLOURS_V297=['#C24135','#1F6B48','#1F5199','#8A5A12','#7A2E9D','#6B6673'];
+/* V299: the palette moved onto :root tokens (--chart-1..6) so every DOM proportion bar in the
+   product reads from one place instead of six literals only this file knew about. */
+const REPORT_SHARE_COLOURS_V297=['var(--chart-1)','var(--chart-2)','var(--chart-3)','var(--chart-4)','var(--chart-5)','var(--chart-6)'];
 function reportShareBarV297(entries,{format=value=>String(value)}={}){
   const usable=(entries||[]).filter(([,value])=>Number(value)>0);
   const sum=usable.reduce((total,[,value])=>total+Number(value||0),0);
@@ -17931,6 +17940,10 @@ async function reportsPage(){
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
       <button class="btn sm" id="rgo">Run report</button>
       <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div>
+      ${/* V299: quick ranges fill the SAME From/To pair and press the same Run — nothing new is
+           computed, the owner just stops hand-typing "last quarter". The comparison stays the
+           derived previous equal-length window on every choice. */''}
+      <div class="report-scope-presets" role="group" aria-label="Quick date ranges">${[[7,'7 days'],[30,'30 days'],[90,'90 days'],[182,'6 months'],[365,'12 months']].map(([presetDays,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-days="${presetDays}">${presetLabel}</button>`).join('')}</div>
       <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div class="v150-segment section-subtabs-v200 report-tabbar-v294" role="group" aria-label="Report categories">${decisions.map(item=>item.href
       ?`<button type="button" data-report-tab-href-v294="${item.href}" aria-pressed="false">${CUI.icon(item.icon,{size:16})} ${esc(item.title)}</button>`
@@ -18206,7 +18219,7 @@ async function reportsPage(){
         note:busyNoteV297
       });
       target.innerHTML=`${busyVerdictV297}<div class="card"><b>Booked work</b><div class="metric" style="margin-top:8px">${current.serviceHours.toFixed(1)} hours</div>
-          <p class="muted small">${current.total} appointments in this period · ${prior.serviceHours.toFixed(1)} booked hours in the previous ${scope.days}-day period.</p></div>
+          <p class="muted small">${current.total} appointments in this period.</p></div>
         <div class="card"><b>Appointment outcomes</b><table style="margin-top:8px">
           <tr><td>Booked</td><td style="text-align:right"><b>${current.booked}</b></td></tr>
           <tr><td>Completed</td><td style="text-align:right"><b>${current.completed}</b></td></tr>
@@ -18273,7 +18286,7 @@ async function reportsPage(){
       note:priorReturningV297===null?'':`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`
     });
     target.innerHTML=`${returningVerdictV297}<div class="card"><b>Returning customers</b><div class="metric" style="margin-top:8px">${Number(cm.existing_returning_customers||0)}</div>
-        <p class="muted small">${pct(cm.existing_customer_share_pct)} of identified customers in this period · ${previousReturning} in the previous ${scope.days}-day period.</p>
+        <p class="muted small">${pct(cm.existing_customer_share_pct)} of identified customers in this period.</p>
         <p class="muted small">Identity coverage: ${c.identifiedTransactions} of ${c.eligibleTransactions} eligible recorded purchases${c.identifiedTransactionPct===null?'':` (${pct(c.identifiedTransactionPct)})`}.</p></div>
       <div class="card"><b>New and reactivated</b><table style="margin-top:8px">
         <tr><td>New customers</td><td style="text-align:right"><b>${Number(cm.new_customers||0)}</b></td></tr>
@@ -18315,6 +18328,12 @@ async function reportsPage(){
     ensureMoneyRanV297();
     if(key&&!reportTabsRunV294.has(key)){reportTabsRunV294.add(key);runAnswer(reportRunnersV294[key])}
   };
+  routeMain.querySelectorAll('[data-report-preset-days]').forEach(presetButton=>presetButton.onclick=()=>{
+    const presetDays=Math.max(1,Number(presetButton.dataset.reportPresetDays)||30);
+    $('rt2').value=today;
+    $('rf').value=shiftSgDateInput(today,-(presetDays-1));
+    $('rgo').click();
+  });
   if(reportTabsV294.length)selectReportTabV294(reportTabsV294[0].dataset.reportTabV294);
   $('rcsv').onclick=async()=>{
     if(!lastScope||$('rcsv').hidden) return toast('Sales export is unavailable for this report scope');

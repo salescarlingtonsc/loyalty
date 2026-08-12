@@ -69,9 +69,9 @@ test('package session history requires explicit immutable provenance',()=>{
 });
 
 test('history keeps individual rows, adds recent activity, and retains full history',()=>{
-  assert.match(app,/<h2>Recent activity<\/h2>/);
+  assert.match(app,/<h2>\$\{esc\(ct\('Recent activity'\)\)\}<\/h2>/);
   assert.match(app,/transactionState\.items\.slice\(0,3\)\.map\(historyItemMarkup\)/);
-  assert.match(app,/<span>Full history<\/span>/);
+  assert.match(app,/<span>\$\{esc\(ct\('Full history'\)\)\}<\/span>/);
   assert.match(app,/transactionState\.items\.map\(historyItemMarkup\)/);
   assert.doesNotMatch(app,/groupBy\([^)]*event_at|new Map\([^)]*event_at/);
 });

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="f4f9658757aa4e8f81ca4c121f0ecf12b53d93474faca6b77c6a913649f79683"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="12b9ed38a430472d8c1cd0996fd7044a04e6fa50169517a956fbbf9bd523931a"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -14,6 +14,8 @@
   --line:#EAE6DF; --control-border:#817B88; --hair:rgba(23,22,26,.06);
   --coral:#C24135; --coral-hover:#9D352C; --amber:#A75514; --green:#1F6B48; --red:#9D352C;
   --grad:linear-gradient(135deg,#C24135,#9D352C);
+  /* V299: the one categorical palette for DOM proportion bars (reports, playbooks). */
+  --chart-1:#C24135; --chart-2:#1F6B48; --chart-3:#1F5199; --chart-4:#8A5A12; --chart-5:#7A2E9D; --chart-6:#6B6673;
   --tint:#FFF0EC;            /* coral wash for selected/active surfaces */
   /* iOS uses generous, continuous corner radii */
   --r:18px; --r-sm:12px; --r-lg:24px;
@@ -158,7 +160,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .reporting-scope-branches label{display:inline-flex;align-items:center;gap:5px;min-height:36px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;font-size:12px;font-weight:700}
 .reporting-scope-branches input{width:auto;min-height:auto}
 .scope-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#F7F1EA;border:1px solid var(--line);padding:5px 9px;font-size:11px;font-weight:750;color:var(--muted)}
-.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(4,minmax(150px,1fr))}
+.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
 .dashboard-chart-head>svg{margin-top:2px}.dashboard-chart-head b{display:block;line-height:1.25;overflow-wrap:anywhere}.dashboard-chart-head p{line-height:1.35}
@@ -1248,6 +1250,15 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .report-share-v297{margin-top:12px}
 .report-share-bar-v297{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--line)}
 .report-share-bar-v297>span{display:block;height:100%}
+/* V299: Business Insights depended on two classes that had no rules at all — every tab's
+   headline number rendered at body size one card under the 1.85rem verdict value. */
+.metric{font-size:1.6rem;font-weight:750;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+@media(max-width:720px){.metric{font-size:1.4rem}}
+.report-scope-card{padding:16px 18px}
+.report-scope-card .range{align-items:center;row-gap:10px}
+.report-scope-card .range label{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:12.5px;font-weight:650;color:var(--muted)}
+.report-scope-card .range input[type=date]{width:auto;min-width:150px}
+.report-scope-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .report-share-legend-v297{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
 .report-share-legend-v297 li{display:flex;align-items:center;gap:6px}
 .report-share-dot-v297{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
@@ -1615,6 +1626,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
+/* V299: when a firm runs tiers AND spendable points, the balance is visible on the tab bar
+   itself — the customer's number one fact must not hide behind the unselected tab. */
+.customer-programme-tablist--with-balance{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.customer-programme-tab-balance{display:inline-flex;align-items:baseline;gap:4px;align-self:center;padding:0 10px 0 6px;font-weight:750;font-size:14.5px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.customer-programme-tab-balance small{font-weight:600;font-size:11px;color:var(--muted);letter-spacing:0}
 .customer-programme-single{padding:16px}
 .customer-programme-single-head{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:1.05rem}
 .customer-programme-single .customer-tier-now{margin-top:14px}
@@ -1665,7 +1681,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-expiring-list .muted{min-width:0;overflow-wrap:anywhere}
 .customer-expiring-when{margin-left:auto;font-size:.82rem;color:var(--muted);white-space:nowrap}
 .customer-expiring-when.is-urgent{color:var(--red);font-weight:600}
-.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
+.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}.customer-home-offer-media--fallback span{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);font-size:17px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
 /* V243 customer-app preview — restored after a rebase conflict resolution dropped it */
 .customer-preview-phone-v243{width:390px;max-width:100%;margin:14px auto 0;border:10px solid var(--ink);border-radius:34px;background:var(--ink);box-shadow:0 12px 30px rgba(23,22,26,.18)}
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
@@ -1721,7 +1737,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    contain at natural ratio (height-capped) with the card's copy strictly below.
    Only the no-photo fallback keeps a fixed ratio and decorative gradient. */
 .customer-promotion-card-media{position:relative;width:100%;flex:0 0 auto;overflow:hidden;background:linear-gradient(135deg,#3b2a45,#17161a)}.customer-promotion-card-media img{display:block;width:100%;height:auto;max-height:clamp(140px,34vw,220px);object-fit:contain;margin:0 auto}
-.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9}.customer-promotion-card-media--fallback span{position:relative;z-index:1;font-size:clamp(1.7rem,6vw,2.4rem);font-weight:750;letter-spacing:-.04em;color:rgba(255,255,255,.92)}
+.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9;background:radial-gradient(circle at 80% 14%,rgba(255,255,255,.14),transparent 55%),radial-gradient(circle at 14% 86%,rgba(255,255,255,.08),transparent 45%)}.customer-promotion-card-media--fallback span{position:relative;z-index:1;display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);font-size:19px;font-weight:750;letter-spacing:-.03em;color:rgba(255,255,255,.95)}
 .customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;padding:15px 16px 16px}
 .customer-promotion-card-copy .customer-promotion-card-facts{margin-top:5px;font-size:clamp(.98rem,2.9vw,1.12rem);font-weight:750;line-height:1.25;letter-spacing:-.015em;color:#fff}.customer-promotion-card-copy h3{font-size:clamp(1.15rem,3.2vw,1.4rem);line-height:1.15;letter-spacing:-.02em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
 .customer-promotion-validity{font-weight:750}.customer-promotion-detail-list{display:grid;gap:10px;margin:16px 0}.customer-promotion-detail-list>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px}.customer-promotion-detail-list dt{color:var(--muted);font-size:.78rem;font-weight:750}.customer-promotion-detail-list dd{margin:0;overflow-wrap:anywhere}
@@ -1777,7 +1793,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-section h2{font-size:18px;margin-bottom:4px}
 .wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
-.wallet-reward{border:1px solid var(--hair);border-radius:7px;padding:14px;background:#fff;min-width:0}
+.wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:#fff;min-width:0}
 .wallet-reward-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}
@@ -1786,8 +1802,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 .customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
 .customer-offer-detail-media img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;margin:0 auto}
-.customer-offer-detail-media--fallback{display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
-.customer-offer-detail-media--fallback span{font-size:2.6rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
+.customer-offer-detail-media--fallback{position:relative;display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
+.customer-offer-detail-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}
+.customer-offer-detail-media--fallback span{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
 .customer-offer-detail h2{margin-top:2px;font-size:clamp(1.35rem,4vw,1.7rem);letter-spacing:-.02em}
 .customer-offer-detail-facts{margin-top:6px;font-size:clamp(1.05rem,3.2vw,1.25rem);font-weight:760;letter-spacing:-.015em;color:var(--ink)}
 .customer-offer-detail-meta{display:grid;gap:5px;margin-top:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--bg)}
@@ -1955,7 +1972,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f4f9658757aa4e8f81ca4c121f0ecf12b53d93474faca6b77c6a913649f79683</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 12b9ed38a430472d8c1cd0996fd7044a04e6fa50169517a956fbbf9bd523931a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -4054,7 +4071,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'f4f9658757aa4e8f81ca4c121f0ecf12b53d93474faca6b77c6a913649f79683',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'12b9ed38a430472d8c1cd0996fd7044a04e6fa50169517a956fbbf9bd523931a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

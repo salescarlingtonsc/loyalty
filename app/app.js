@@ -2769,7 +2769,7 @@ function customerRegistrationShell(body){
   setCustomerSurfaceDocumentV167();
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks()}</footer></div></main>`;
+    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
@@ -3495,6 +3495,12 @@ const CUSTOMER_COPY=Object.freeze({
     noFeatured:'This business has not published featured items yet.',
     /* v295: wallet detail sections + claim flow. */
     'Transactions & points':'Transactions & points',
+    'Recent activity':'Recent activity',
+    'Full history':'Full history',
+    'Rate your visit':'Rate your visit',
+    'Your latest events with this business.':'Your latest events with this business.',
+    'Your review helps other people find this business.':'Your review helps other people find this business.',
+    'No purchases or points activity has been recorded for this programme yet.':'No purchases or points activity has been recorded for this programme yet.',
     'Every purchase, reversal, correction, and points event kept in time order.':'Every purchase, reversal, correction, and points event kept in time order.',
     'Loyalty activity':'Loyalty activity',
     'Your loyalty history with this business.':'Your loyalty history with this business.',
@@ -3655,6 +3661,12 @@ const CUSTOMER_COPY=Object.freeze({
     'That image could not be read. Try a clearer QR image.':'无法读取该图片。请尝试更清晰的二维码图片。',
     /* v295: wallet detail sections + claim flow. */
     'Transactions & points':'交易与积分',
+    'Recent activity':'最近动态',
+    'Full history':'完整记录',
+    'Rate your visit':'评价这次光临',
+    'Your latest events with this business.':'您在本店的最新记录。',
+    'Your review helps other people find this business.':'您的评价能帮助更多人找到这家店。',
+    'No purchases or points activity has been recorded for this programme yet.':'此计划还没有任何消费或积分记录。',
     'Every purchase, reversal, correction, and points event kept in time order.':'每一笔购买、冲正、更正和积分事件均按时间顺序保存。',
     'Loyalty activity':'积分活动',
     'Your loyalty history with this business.':'你在该商家的积分历史。',
@@ -3812,6 +3824,12 @@ const CUSTOMER_COPY=Object.freeze({
     'That image could not be read. Try a clearer QR image.':'Imej itu tidak dapat dibaca. Cuba imej QR yang lebih jelas.',
     /* v295: wallet detail sections + claim flow. */
     'Transactions & points':'Transaksi & mata',
+    'Recent activity':'Aktiviti terkini',
+    'Full history':'Sejarah penuh',
+    'Rate your visit':'Nilai lawatan anda',
+    'Your latest events with this business.':'Rekod terkini anda dengan perniagaan ini.',
+    'Your review helps other people find this business.':'Ulasan anda membantu orang lain menemui perniagaan ini.',
+    'No purchases or points activity has been recorded for this programme yet.':'Belum ada pembelian atau aktiviti mata direkodkan untuk program ini.',
     'Every purchase, reversal, correction, and points event kept in time order.':'Setiap pembelian, pembalikan, pembetulan dan peristiwa mata disimpan mengikut susunan masa.',
     'Loyalty activity':'Aktiviti kesetiaan',
     'Your loyalty history with this business.':'Sejarah kesetiaan anda dengan perniagaan ini.',
@@ -3969,6 +3987,12 @@ const CUSTOMER_COPY=Object.freeze({
     'That image could not be read. Try a clearer QR image.':'அந்தப் படத்தைப் படிக்க முடியவில்லை. தெளிவான QR படத்தை முயற்சிக்கவும்.',
     /* v295: wallet detail sections + claim flow. */
     'Transactions & points':'பரிவர்த்தனைகள் & புள்ளிகள்',
+    'Recent activity':'சமீபத்திய செயல்பாடு',
+    'Full history':'முழு வரலாறு',
+    'Rate your visit':'உங்கள் வருகையை மதிப்பிடுங்கள்',
+    'Your latest events with this business.':'இந்த வணிகத்துடனான உங்கள் சமீபத்திய பதிவுகள்.',
+    'Your review helps other people find this business.':'உங்கள் மதிப்புரை மற்றவர்கள் இந்த வணிகத்தைக் கண்டறிய உதவுகிறது.',
+    'No purchases or points activity has been recorded for this programme yet.':'இந்தத் திட்டத்தில் இதுவரை கொள்முதல் அல்லது புள்ளிகள் செயல்பாடு பதிவாகவில்லை.',
     'Every purchase, reversal, correction, and points event kept in time order.':'ஒவ்வொரு வாங்குதல், மாற்றியமைப்பு, திருத்தம் மற்றும் புள்ளி நிகழ்வும் கால வரிசையில் வைக்கப்படுகிறது.',
     'Loyalty activity':'லாயல்டி செயல்பாடு',
     'Your loyalty history with this business.':'இந்த வணிகத்துடனான உங்கள் லாயல்டி வரலாறு.',
@@ -4317,7 +4341,7 @@ function renderNoCustomerDestination(staffWorkspaces=[]){
     ${relationshipRetry?`<div class="row" style="margin-top:16px">${customerRelationshipCheckActionHtml()}</div>`:''}
     ${workspaces.length?`<div style="margin-top:16px"><b>Open a staff workspace</b><div class="row" style="margin-top:10px">${workspaces.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div>`:''}
     <a class="btn" href="#/customer" style="margin-top:18px">Set up ${esc(BRAND.customerLabel)}</a>
-    ${legalLinks()}</section></main>`;
+    ${legalLinks(customerLocale)}</section></main>`;
   if(relationshipRetry)wireCustomerRelationshipCheck(()=>route());
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
@@ -4346,7 +4370,7 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
          actions behind a tap is exactly the pattern this navigation was rebuilt to remove. -->
     </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
     <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
-    ${legalLinks()}</div></div>`;
+    ${legalLinks(customerLocale)}</div></div>`;
   if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
   if($('walletBack'))$('walletBack').onclick=()=>nav(backHref);
 }
@@ -5607,7 +5631,7 @@ function renderCustomerWalletUnavailable(message='Customer wallet access is not 
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
-    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+    </div>${accountDeletionCardHtml()}${legalLinks(customerLocale)}</div></div>`;
   wireAccountDeletionButton();
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
@@ -5619,7 +5643,7 @@ function renderCustomerCapabilityRetry(message){
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
       <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
-    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+    </div>${accountDeletionCardHtml()}${legalLinks(customerLocale)}</div></div>`;
   wireAccountDeletionButton();
   $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -5895,10 +5919,11 @@ function customerHomeOfferMarkupV167(item,seen){
     /* v194 (owner: "put company category"): a customer with several businesses needs to know what
        KIND of business an offer is from, not only its name. */
     category=String(business.industry||'').trim();
-  const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
+  /* V299: the artwork fallback shows the BUSINESS monogram as a small coin, never a giant
+     first letter of the offer name — "2-for-1 lattes" was rendering a huge lone "2". */
   const businessInitial=(String(business.name||'B').trim()[0]||'B').toUpperCase();
   return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
-    ${image?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`:`<div class="customer-home-offer-media customer-home-offer-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
+    ${image?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`:`<div class="customer-home-offer-media customer-home-offer-media--fallback" aria-hidden="true"><span>${esc(businessInitial)}</span></div>`}
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
     <p class="customer-home-offer-business">${logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
@@ -6120,7 +6145,7 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
     taglineV194=customerOfferTaglineV194(item?.name,item?.tagline),
     factsV195=customerOfferTaglineV194(item?.name,String(item?.metadata?.offer_facts||'')),
     descriptionV195=customerOfferDescriptionV195(item?.description),
-    initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase(),
+    initial=(String(business.name||item?.name||'P').trim()[0]||'P').toUpperCase(),
     ctaLabel=String(cta.label||'').trim();
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-offer-detail-modal';overlay.setAttribute('role','dialog');
@@ -6434,7 +6459,8 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
     facts=customerOfferTaglineV194(item?.name,String(item?.metadata?.offer_facts||'')),
     description=customerOfferDescriptionV195(item?.description),
     terms=String(item?.terms||'').trim();
-  const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
+  /* V299: business monogram coin, not the offer name's first letter (see home shelf). */
+  const initial=(String(business?.name||item?.name||'P').trim()[0]||'P').toUpperCase();
   return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
     ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:`<div class="customer-promotion-card-media customer-promotion-card-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <div class="customer-promotion-card-copy">
@@ -6744,10 +6770,17 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
       ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
     </section>`;
   }
+  /* V299: with tiers AND spendable points, the balance sat entirely behind the unselected
+     "Reward points" tab — the customer's number one fact was invisible on first paint. It now
+     reads on the tab bar itself. Hidden while the programme is paused: the points panel says
+     "Programme paused" there, and a bare 0 beside it would contradict that sentence. */
+  const tabBalanceV299=loyalty.enabled===false?''
+    :`<span class="customer-programme-tab-balance" aria-label="${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))} ${esc(ct(presentation.unit))} to spend">${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}<small>${esc(ct(presentation.unit))}</small></span>`;
   return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
-    <div class="customer-programme-tablist" role="tablist" aria-label="Tier and reward points">
+    <div class="customer-programme-tablist${tabBalanceV299?' customer-programme-tablist--with-balance':''}" role="tablist" aria-label="Tier and reward points">
       <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('star',{size:17})}<span>Tier</span></button>
       <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">${CUI.icon('redeem',{size:17})}<span>Reward points</span></button>
+      ${tabBalanceV299}
     </div>
     <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
       <div data-programme-panel="tier">${customerTierPanelMarkupV194(tier)}</div>
@@ -6865,7 +6898,7 @@ function renderCustomerFirstProgrammeQuest(){
       owner asked to remove. "Profile & passkeys" is dropped: a customer who has not joined a
       business yet has nothing to open there. -->
       <button class="btn ghost sm" id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button></header>
-    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks()}</div></div>`;
+    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks(customerLocale)}</div></div>`;
   $('customerFirstScan').onclick=openCustomerJoinScanner;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   focusCustomerRoute();
@@ -7655,7 +7688,7 @@ async function renderCustomerWallet(businessSlug=null){
     transactionState.nextCursor=data?.next_cursor||null;
     host.setAttribute('aria-busy','false');
     if(!transactionState.items.length){
-      host.innerHTML='<div class="wallet-section-head"><div><h2>Transactions &amp; points</h2><p class="muted small">No purchases or points activity has been recorded for this programme yet.</p></div></div>';
+      host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Transactions & points'))}</h2><p class="muted small">${esc(ct('No purchases or points activity has been recorded for this programme yet.'))}</p></div></div>`;
       return;
     }
     const historyCurrency=String(data?.business?.currency||currency);
@@ -7673,9 +7706,9 @@ async function renderCustomerWallet(businessSlug=null){
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
         </div></article>`;
       };
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Recent activity</h2><p class="muted small">Your latest ${Math.min(3,transactionState.items.length)} useful event${Math.min(3,transactionState.items.length)===1?'':'s'}.</p></div></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Recent activity'))}</h2><p class="muted small">${esc(ct('Your latest events with this business.'))}</p></div></div>
       <div class="wallet-history">${transactionState.items.slice(0,3).map(historyItemMarkup).join('')}</div>
-      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>Full history</span><span class="muted small">${transactionState.items.length} event${transactionState.items.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${transactionState.items.map(historyItemMarkup).join('')}</div></div></details>
+      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>${esc(ct('Full history'))}</span><span class="muted small">${transactionState.items.length} event${transactionState.items.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${transactionState.items.map(historyItemMarkup).join('')}</div></div></details>
       ${transactionState.nextCursor?'<button class="btn ghost sm" id="walletTransactionsMore" style="margin-top:12px">Load more history</button>':''}`;
     const more=$('walletTransactionsMore');
     if(more)more.onclick=()=>{more.disabled=true;more.textContent='Loading…';loadTransactions(transactionState.nextCursor)};
@@ -7724,7 +7757,7 @@ async function renderCustomerWallet(businessSlug=null){
     packageState.items=cursor?[...packageState.items,...next]:next;packageState.nextCursor=data?.next_cursor||null;
     if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages',ct('No packages are available for this account.'),businessSlug,'packages',()=>loadPackages(null),isWalletCurrent);
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Packages</h2><p class="muted small">Session balances and recent usage.</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Packages'))}</h2><p class="muted small">${esc(ct('Session balances and recent usage.'))}</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
       ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
       ${packageState.nextCursor?`<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
@@ -7738,7 +7771,7 @@ async function renderCustomerWallet(businessSlug=null){
     const memberships=Array.isArray(data)?data:[];
     if(!memberships.length)return walletSectionEmpty('walletMemberships','Membership',ct('No membership is available for this account.'),businessSlug,'membership',loadMemberships,isWalletCurrent);
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Membership</h2><p class="muted small">Current plan and period status.</p></div></div>${memberships.map(item=>`<div class="wallet-line"><div><b>${esc(item.plan_name||'Membership')}</b><p class="muted small" style="margin-top:3px">${esc(String(item.cadence||'').replaceAll('_',' '))}${item.current_period_start?' · '+esc(walletDate(item.current_period_start))+' to '+esc(walletDate(item.current_period_end)):''}</p></div><span class="spacer"></span><span class="pill">${esc(String(item.status||'').replaceAll('_',' '))}</span></div>`).join('')}`;
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Membership'))}</h2><p class="muted small">${esc(ct('Current plan and period status.'))}</p></div></div>${memberships.map(item=>`<div class="wallet-line"><div><b>${esc(item.plan_name||'Membership')}</b><p class="muted small" style="margin-top:3px">${esc(String(item.cadence||'').replaceAll('_',' '))}${item.current_period_start?' · '+esc(walletDate(item.current_period_start))+' to '+esc(walletDate(item.current_period_end)):''}</p></div><span class="spacer"></span><span class="pill">${esc(String(item.status||'').replaceAll('_',' '))}</span></div>`).join('')}`;
   };
   const appointmentState={items:[],nextCursor:null};
   const loadAppointments=async(cursor=null)=>{
@@ -7817,7 +7850,7 @@ async function renderCustomerWallet(businessSlug=null){
   const loadFeedback=async()=>{
     const host=$('walletFeedback');if(!host||!walletReviewUrl)return;
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Rate your visit</h2><p class="muted small">Your review helps other people find ${esc(b.name||'this business')}.</p></div></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Rate your visit'))}</h2><p class="muted small">${esc(ct('Your review helps other people find this business.'))}</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
   };
   await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
@@ -11508,7 +11541,9 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
   if(change===null||change===undefined||!Number.isFinite(change))return '';
   const word=change>0?'up':change<0?'down':'level';
   const glyph=change>0?'▲':change<0?'▼':'▬';
-  return `<span class="metric-delta pill ${change>0?'ok':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${Math.abs(change)}% ${word} versus ${esc(previousFrom)} to ${esc(previousTo)}</span></span>`;
+  /* V299: a fall now reads in the same three-tone language Business Insights already uses —
+     a −18% and a 0% were both the identical grey pill, distinguished only by the glyph. */
+  return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${Math.abs(change)}% ${word} versus ${esc(previousFrom)} to ${esc(previousTo)}</span></span>`;
 }
 function dashboardLoyaltyRowV170(cards){
   return `<section class="dashboard-loyalty" aria-labelledby="dashboardLoyaltyTitle"><div class="dashboard-loyalty-head">${CUI.icon('loyalty',{size:20})}<div><h3 id="dashboardLoyaltyTitle">Loyalty this period</h3><p class="muted small">Programme activity for the selected dates.</p></div></div><div class="dashboard-loyalty-grid">${cards.map(card=>`<div class="dashboard-loyalty-card"><b>${esc(card.label)}</b><span class="v">${esc(card.value)}</span><span class="metric-hint">${esc(card.hint)}</span>${card.retryId?`<button type="button" class="btn ghost sm" id="${card.retryId}">Retry</button>`:''}</div>`).join('')}</div></section>`;
@@ -12621,7 +12656,7 @@ async function clientDetail(id){
   const [{data:c,error},{data:loyaltyProjection,error:loyaltyProjectionError},{data:rg,error:rgError},{data:allSl,error:salesError},{data:redemptionRows,error:redemptionHistoryError},{data:allAp,error:appointmentsError},{data:stAll,error:staffError},{data:cfDefs,error:cfDefsError},{data:cfVals,error:cfValsError},{data:cfOpts,error:cfOptsError},{data:birthdayBenefit,error:birthdayError},{data:feedbackResult,error:feedbackError},{data:msRows,error:membershipsError},{data:cpRows,error:packagesError}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
-    sb.from('clients').select('id,business_id,full_name,phone,email,referral_code,marketing_consent').eq('id',id).single(),
+    sb.from('clients').select('id,business_id,full_name,phone,email,referral_code,marketing_consent,created_at').eq('id',id).single(),
     canReadLoyalty?sb.rpc('staff_get_customer_actionable_loyalty_v145',{
       p_business:S.biz.id,p_client:id,p_branch:loyaltyProjectionBranch
     }):Promise.resolve({data:null}),
@@ -13016,6 +13051,9 @@ async function clientDetail(id){
         `${pointsPausedNoteV259}${pointsExpiryMarkup}`)
       +summaryRowV294(wholeBusinessLabels?'Spendable credit':'Business-wide spendable credit',`<b>${money(cred)}</b>`):''}
     ${summaryRowV294('PDPA consent',c.marketing_consent?'<span class="pill on">Yes</span>':'<span class="pill off">No</span>')}
+    ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
+         though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
+      c.created_at?summaryRowV294('Member since',`<b>${esc(formatCustomerJoinedDateV141(c.created_at))}</b>`):''}
     ${pointsPanelDetailsV249?`<div class="customer360-points-panel-v249">${pointsPanelDetailsV249}</div>`:''}
   </aside>`;
   /* V294: one compact row per programme this customer can use — name + one line of what the
@@ -20893,8 +20931,10 @@ function pbResultsHtml(r,ctx){
   const hasWindow=!!(r.measurement_started_at&&r.measurement_ends_at);
   const awaiting=measurementStatus==='awaiting_verified_exposure';
   const scale=Math.max(tRate??0,hRate??0,1);
+  /* V299: same proportion-bar component the V297 report cards use — this was the third
+     hand-rolled bar idiom in the product. */
   const bar=(label,value,colour,extra)=>`<div style="margin-top:8px"><div class="row" style="justify-content:space-between"><span class="small">${esc(label)}</span><b class="small">${value.toFixed(1)}%${extra?` · ${esc(extra)}`:''}</b></div>
-    <div style="height:12px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:3px"><div style="height:100%;width:${Math.max(value/scale*100,value>0?4:0)}%;background:${colour}"></div></div></div>`;
+    <div class="report-share-bar-v297" style="margin-top:4px"><span style="width:${Math.max(value/scale*100,value>0?4:0)}%;background:${colour}"></span></div></div>`;
   let headline,headSub;
   if(awaiting){
     headline='Measurement not started';
@@ -20921,7 +20961,7 @@ function pbResultsHtml(r,ctx){
   const canComplete=ctx.isOwner&&hasWindow&&campaignStatus==='active';
   const differenceText=observedDifference==null?'—':`${observedDifference>0?'+':''}${observedDifference.toFixed(1)} points`;
   const windowEnds=hasWindow?walletDate(r.measurement_ends_at,true):'Not sealed';
-  return `<div style="font-size:1.7rem;font-weight:700;color:var(--muted);line-height:1.15">${esc(headline)}</div>
+  return `<div class="metric">${esc(headline)}</div>
     <p class="muted small" style="margin-top:4px">${esc(headSub)}</p>
     ${tRate==null?'':bar('Treatment observed return rate',tRate,'var(--green)',`${Number(t.returned||0)}/${treatmentMembers}`)}
     ${hRate==null?'':bar('Held-back observed return rate',hRate,'var(--coral)',`${Number(h.returned||0)}/${holdoutMembers}`)}
@@ -27446,7 +27486,9 @@ function reportVerdictBandV297({label,valueText,current,previous,previousText=''
    plain CSS bar built from the very numbers in the table beside it — no charting dependency and
    no network fetch, both of which the app's CSP forbids anyway. Negative or zero parts are left
    out of the bar (a reversal is not a share of anything) while the table above keeps them. */
-const REPORT_SHARE_COLOURS_V297=['#C24135','#1F6B48','#1F5199','#8A5A12','#7A2E9D','#6B6673'];
+/* V299: the palette moved onto :root tokens (--chart-1..6) so every DOM proportion bar in the
+   product reads from one place instead of six literals only this file knew about. */
+const REPORT_SHARE_COLOURS_V297=['var(--chart-1)','var(--chart-2)','var(--chart-3)','var(--chart-4)','var(--chart-5)','var(--chart-6)'];
 function reportShareBarV297(entries,{format=value=>String(value)}={}){
   const usable=(entries||[]).filter(([,value])=>Number(value)>0);
   const sum=usable.reduce((total,[,value])=>total+Number(value||0),0);
@@ -27499,6 +27541,10 @@ async function reportsPage(){
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
       <button class="btn sm" id="rgo">Run report</button>
       <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div>
+      ${/* V299: quick ranges fill the SAME From/To pair and press the same Run — nothing new is
+           computed, the owner just stops hand-typing "last quarter". The comparison stays the
+           derived previous equal-length window on every choice. */''}
+      <div class="report-scope-presets" role="group" aria-label="Quick date ranges">${[[7,'7 days'],[30,'30 days'],[90,'90 days'],[182,'6 months'],[365,'12 months']].map(([presetDays,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-days="${presetDays}">${presetLabel}</button>`).join('')}</div>
       <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div class="v150-segment section-subtabs-v200 report-tabbar-v294" role="group" aria-label="Report categories">${decisions.map(item=>item.href
       ?`<button type="button" data-report-tab-href-v294="${item.href}" aria-pressed="false">${CUI.icon(item.icon,{size:16})} ${esc(item.title)}</button>`
@@ -27774,7 +27820,7 @@ async function reportsPage(){
         note:busyNoteV297
       });
       target.innerHTML=`${busyVerdictV297}<div class="card"><b>Booked work</b><div class="metric" style="margin-top:8px">${current.serviceHours.toFixed(1)} hours</div>
-          <p class="muted small">${current.total} appointments in this period · ${prior.serviceHours.toFixed(1)} booked hours in the previous ${scope.days}-day period.</p></div>
+          <p class="muted small">${current.total} appointments in this period.</p></div>
         <div class="card"><b>Appointment outcomes</b><table style="margin-top:8px">
           <tr><td>Booked</td><td style="text-align:right"><b>${current.booked}</b></td></tr>
           <tr><td>Completed</td><td style="text-align:right"><b>${current.completed}</b></td></tr>
@@ -27841,7 +27887,7 @@ async function reportsPage(){
       note:priorReturningV297===null?'':`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`
     });
     target.innerHTML=`${returningVerdictV297}<div class="card"><b>Returning customers</b><div class="metric" style="margin-top:8px">${Number(cm.existing_returning_customers||0)}</div>
-        <p class="muted small">${pct(cm.existing_customer_share_pct)} of identified customers in this period · ${previousReturning} in the previous ${scope.days}-day period.</p>
+        <p class="muted small">${pct(cm.existing_customer_share_pct)} of identified customers in this period.</p>
         <p class="muted small">Identity coverage: ${c.identifiedTransactions} of ${c.eligibleTransactions} eligible recorded purchases${c.identifiedTransactionPct===null?'':` (${pct(c.identifiedTransactionPct)})`}.</p></div>
       <div class="card"><b>New and reactivated</b><table style="margin-top:8px">
         <tr><td>New customers</td><td style="text-align:right"><b>${Number(cm.new_customers||0)}</b></td></tr>
@@ -27883,6 +27929,12 @@ async function reportsPage(){
     ensureMoneyRanV297();
     if(key&&!reportTabsRunV294.has(key)){reportTabsRunV294.add(key);runAnswer(reportRunnersV294[key])}
   };
+  routeMain.querySelectorAll('[data-report-preset-days]').forEach(presetButton=>presetButton.onclick=()=>{
+    const presetDays=Math.max(1,Number(presetButton.dataset.reportPresetDays)||30);
+    $('rt2').value=today;
+    $('rf').value=shiftSgDateInput(today,-(presetDays-1));
+    $('rgo').click();
+  });
   if(reportTabsV294.length)selectReportTabV294(reportTabsV294[0].dataset.reportTabV294);
   $('rcsv').onclick=async()=>{
     if(!lastScope||$('rcsv').hidden) return toast('Sales export is unavailable for this report scope');
@@ -31067,7 +31119,7 @@ async function renderPortal(slug){
           <div id="merr"></div>
           <div id="mlist" style="margin-top:12px"></div>
         </details>
-      </div>${legalLinks()}</div>`;
+      </div>${legalLinks(customerLocale)}</div>`;
     const buildSummary=()=>{
       const el=$('pfSummary');if(!el)return;
       const s=svcObj();

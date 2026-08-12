@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="e2a796ad00f122a109bdfe6ab96f38c93413e2d571fb850b35d660e69e1b733d"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="f8c996c2d1ed0a8b05ab36b286fbd3a420352ee68b6eec0b493a2774eaff6df6"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -14,6 +14,8 @@
   --line:#EAE6DF; --control-border:#817B88; --hair:rgba(23,22,26,.06);
   --coral:#C24135; --coral-hover:#9D352C; --amber:#A75514; --green:#1F6B48; --red:#9D352C;
   --grad:linear-gradient(135deg,#C24135,#9D352C);
+  /* V299: the one categorical palette for DOM proportion bars (reports, playbooks). */
+  --chart-1:#C24135; --chart-2:#1F6B48; --chart-3:#1F5199; --chart-4:#8A5A12; --chart-5:#7A2E9D; --chart-6:#6B6673;
   --tint:#FFF0EC;            /* coral wash for selected/active surfaces */
   /* iOS uses generous, continuous corner radii */
   --r:18px; --r-sm:12px; --r-lg:24px;
@@ -158,7 +160,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .reporting-scope-branches label{display:inline-flex;align-items:center;gap:5px;min-height:36px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;font-size:12px;font-weight:700}
 .reporting-scope-branches input{width:auto;min-height:auto}
 .scope-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#F7F1EA;border:1px solid var(--line);padding:5px 9px;font-size:11px;font-weight:750;color:var(--muted)}
-.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(4,minmax(150px,1fr))}
+.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
 .dashboard-chart-head>svg{margin-top:2px}.dashboard-chart-head b{display:block;line-height:1.25;overflow-wrap:anywhere}.dashboard-chart-head p{line-height:1.35}
@@ -1248,6 +1250,15 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .report-share-v297{margin-top:12px}
 .report-share-bar-v297{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--line)}
 .report-share-bar-v297>span{display:block;height:100%}
+/* V299: Business Insights depended on two classes that had no rules at all — every tab's
+   headline number rendered at body size one card under the 1.85rem verdict value. */
+.metric{font-size:1.6rem;font-weight:750;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+@media(max-width:720px){.metric{font-size:1.4rem}}
+.report-scope-card{padding:16px 18px}
+.report-scope-card .range{align-items:center;row-gap:10px}
+.report-scope-card .range label{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:12.5px;font-weight:650;color:var(--muted)}
+.report-scope-card .range input[type=date]{width:auto;min-width:150px}
+.report-scope-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .report-share-legend-v297{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
 .report-share-legend-v297 li{display:flex;align-items:center;gap:6px}
 .report-share-dot-v297{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
@@ -1615,6 +1626,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
+/* V299: when a firm runs tiers AND spendable points, the balance is visible on the tab bar
+   itself — the customer's number one fact must not hide behind the unselected tab. */
+.customer-programme-tablist--with-balance{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.customer-programme-tab-balance{display:inline-flex;align-items:baseline;gap:4px;align-self:center;padding:0 10px 0 6px;font-weight:750;font-size:14.5px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.customer-programme-tab-balance small{font-weight:600;font-size:11px;color:var(--muted);letter-spacing:0}
 .customer-programme-single{padding:16px}
 .customer-programme-single-head{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:1.05rem}
 .customer-programme-single .customer-tier-now{margin-top:14px}
@@ -1665,7 +1681,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-expiring-list .muted{min-width:0;overflow-wrap:anywhere}
 .customer-expiring-when{margin-left:auto;font-size:.82rem;color:var(--muted);white-space:nowrap}
 .customer-expiring-when.is-urgent{color:var(--red);font-weight:600}
-.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
+.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}.customer-home-offer-media--fallback span{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);font-size:17px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
 /* V243 customer-app preview — restored after a rebase conflict resolution dropped it */
 .customer-preview-phone-v243{width:390px;max-width:100%;margin:14px auto 0;border:10px solid var(--ink);border-radius:34px;background:var(--ink);box-shadow:0 12px 30px rgba(23,22,26,.18)}
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
@@ -1721,7 +1737,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    contain at natural ratio (height-capped) with the card's copy strictly below.
    Only the no-photo fallback keeps a fixed ratio and decorative gradient. */
 .customer-promotion-card-media{position:relative;width:100%;flex:0 0 auto;overflow:hidden;background:linear-gradient(135deg,#3b2a45,#17161a)}.customer-promotion-card-media img{display:block;width:100%;height:auto;max-height:clamp(140px,34vw,220px);object-fit:contain;margin:0 auto}
-.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9}.customer-promotion-card-media--fallback span{position:relative;z-index:1;font-size:clamp(1.7rem,6vw,2.4rem);font-weight:750;letter-spacing:-.04em;color:rgba(255,255,255,.92)}
+.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9;background:radial-gradient(circle at 80% 14%,rgba(255,255,255,.14),transparent 55%),radial-gradient(circle at 14% 86%,rgba(255,255,255,.08),transparent 45%)}.customer-promotion-card-media--fallback span{position:relative;z-index:1;display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);font-size:19px;font-weight:750;letter-spacing:-.03em;color:rgba(255,255,255,.95)}
 .customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;padding:15px 16px 16px}
 .customer-promotion-card-copy .customer-promotion-card-facts{margin-top:5px;font-size:clamp(.98rem,2.9vw,1.12rem);font-weight:750;line-height:1.25;letter-spacing:-.015em;color:#fff}.customer-promotion-card-copy h3{font-size:clamp(1.15rem,3.2vw,1.4rem);line-height:1.15;letter-spacing:-.02em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
 .customer-promotion-validity{font-weight:750}.customer-promotion-detail-list{display:grid;gap:10px;margin:16px 0}.customer-promotion-detail-list>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px}.customer-promotion-detail-list dt{color:var(--muted);font-size:.78rem;font-weight:750}.customer-promotion-detail-list dd{margin:0;overflow-wrap:anywhere}
@@ -1777,7 +1793,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-section h2{font-size:18px;margin-bottom:4px}
 .wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
-.wallet-reward{border:1px solid var(--hair);border-radius:7px;padding:14px;background:#fff;min-width:0}
+.wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:#fff;min-width:0}
 .wallet-reward-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}
@@ -1786,8 +1802,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 .customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
 .customer-offer-detail-media img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;margin:0 auto}
-.customer-offer-detail-media--fallback{display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
-.customer-offer-detail-media--fallback span{font-size:2.6rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
+.customer-offer-detail-media--fallback{position:relative;display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
+.customer-offer-detail-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}
+.customer-offer-detail-media--fallback span{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
 .customer-offer-detail h2{margin-top:2px;font-size:clamp(1.35rem,4vw,1.7rem);letter-spacing:-.02em}
 .customer-offer-detail-facts{margin-top:6px;font-size:clamp(1.05rem,3.2vw,1.25rem);font-weight:760;letter-spacing:-.015em;color:var(--ink)}
 .customer-offer-detail-meta{display:grid;gap:5px;margin-top:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--bg)}
@@ -1954,7 +1971,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e2a796ad00f122a109bdfe6ab96f38c93413e2d571fb850b35d660e69e1b733d</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · f8c996c2d1ed0a8b05ab36b286fbd3a420352ee68b6eec0b493a2774eaff6df6</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2623,6 +2640,179 @@ async function openWelcomeOfferEditorV215(current,onSaved){
 }
     function growStatus(label,tone=''){
   return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
+}
+    function promotionEditorItemV104(raw={}){
+  const metadata=raw.metadata||{},cta=metadata.cta||{},
+    media=raw.media||raw.media_asset||{};
+  return {
+    ...raw,
+    id:raw.id||raw.promotion_id||'',
+    name:raw.name||raw.copy?.name||'',
+    tagline:raw.tagline||raw.copy?.tagline||'',
+    description:raw.description||raw.copy?.description||'',
+    terms:raw.terms||raw.copy?.terms||'',
+    offerFacts:raw.offer_facts||metadata.offer_facts||'',
+    occasion:raw.occasion||metadata.occasion||'',
+    ctaKind:raw.cta_kind||cta.kind||metadata.cta_kind||'programme',
+    ctaLabel:raw.cta_label||cta.label||metadata.cta_label||'View offer',
+    contentVersion:Number(raw.content_version||raw.version||0),
+    copyVersion:Number(raw.copy_version||raw.copy?.version||0),
+    imageUrl:raw.image_url||media.url||'',
+    imageAlt:raw.image_alt||media.alt_en||'',
+    mediaVersion:Number(raw.media_version||media.version||0),
+    imageCustomerVisible:raw.image_customer_visible===true||
+      media.customer_visible===true,
+    mediaVersionsByScope:raw.media_versions_by_scope||{},
+    branchScope:raw.branch_scope||metadata.branch_scope||{mode:'all',branch_ids:[],branch_names:[],label:'All branches'}
+  };
+}
+    function growRewardDiffFieldsV291({unit='points',tierName=()=>null,branchName=null,serviceName=null}={}){
+  const num=value=>(value==null||value===''||!Number.isFinite(Number(value)))?null:Number(value);
+  const nameList=(ids,lookup,allLabel)=>{
+    if(!Array.isArray(ids)||!ids.length)return allLabel;
+    const names=ids.map(id=>lookup?lookup(id):null).filter(Boolean);
+    return names.length===ids.length?names.join(', '):`${ids.length} selected`;
+  };
+  const idSet=ids=>[...new Set((Array.isArray(ids)?ids:[]).map(String))].sort();
+  return [
+    {label:'Name',read:reward=>String(reward.customer_name||reward.name||'Reward').trim(),show:value=>value},
+    {label:'Cost',read:reward=>Math.max(0,num(reward.cost_points)||0),show:value=>`${value} ${unit}`},
+    {label:'Offered',read:reward=>reward.active!==false,show:value=>value?'Yes':'No'},
+    {label:'Store credit',read:reward=>Math.max(0,num(reward.credit_cents)||0),show:value=>value>0?money(value):'None'},
+    {label:'Expires after',read:reward=>num(reward.entitlement_expiry_days),show:value=>value==null?'No expiry':`${value} day${value===1?'':'s'}`},
+    {label:'Uses per customer',read:reward=>num(reward.usage_limit),show:value=>value==null?'Unlimited':String(value)},
+    {label:'Who can redeem',read:reward=>{
+      const tier=reward.min_tier_id?String(reward.min_tier_id):null;
+      const threshold=num(reward.min_tier_threshold);
+      return tier?`tier:${tier}`:(threshold==null?'everyone':`threshold:${threshold}`);
+    },show:value=>{
+      if(value==='everyone')return 'Everyone';
+      if(value.startsWith('tier:'))return `${tierName(value.slice(5))||'A membership tier'} and above`;
+      return `From ${value.slice(10)}`;
+    }},
+    {label:'Branches',read:reward=>idSet(reward.__branchIds).join('|'),
+      show:value=>nameList(value?value.split('|'):[],branchName,'All branches'),when:branchName!==null},
+    {label:'Services',read:reward=>idSet(reward.__serviceIds).join('|'),
+      show:value=>nameList(value?value.split('|'):[],serviceName,'All services'),when:serviceName!==null}
+  ].filter(field=>field.when!==false);
+}
+/* The three shapes the diff needs, derived from whatever the caller managed to read. Branch and
+   service comparison is switched OFF (null) when its read failed, so an unread restriction is
+   never printed as "All branches". */
+function growRewardDiffOptionsFromSnapshotV291(snapshot,unit='points'){
+  const names=snapshot?.eligibilityNames||{};
+  const eligibility=snapshot?.rewardEligibility||{};
+  const lookup=rows=>{
+    if(!Array.isArray(rows))return null;
+    const map=new Map(rows.map(row=>[String(row.id),row.name]));
+    return id=>map.get(String(id))||null;
+  };
+  const tierLookup=lookup(names.tiers);
+  return {
+    unit,
+    tierName:id=>(tierLookup?tierLookup(id):null),
+    branchName:Array.isArray(eligibility.branches)?lookup(names.branches)||(()=>null):null,
+    serviceName:Array.isArray(eligibility.services)?lookup(names.services)||(()=>null):null
+  };
+}
+/* Published rewards carry their eligibility in separate tables; the draft reader nests it. Both
+   are folded onto the reward as __branchIds/__serviceIds so one comparison reads both. */
+function growAttachEligibilityV291(rewards,eligibility){
+  const group=(rows,key)=>{
+    if(!Array.isArray(rows))return null;
+    const map=new Map();
+    rows.forEach(row=>{
+      const id=String(row.reward_id);
+      if(!map.has(id))map.set(id,[]);
+      map.get(id).push(row[key]);
+    });
+    return map;
+  };
+  const branches=group(eligibility?.branches,'branch_id'),services=group(eligibility?.services,'service_id');
+  return (rewards||[]).map(reward=>({...reward,
+    __branchIds:branches?branches.get(String(reward.id))||[]:[],
+    __serviceIds:services?services.get(String(reward.id))||[]:[]}));
+}
+function growAttachDraftEligibilityV291(rewards){
+  return (rewards||[]).map(reward=>({...reward,
+    __branchIds:reward.eligibility?.branches||[],
+    __serviceIds:reward.eligibility?.services||[]}));
+}
+/* Live and draft rewards in the SAME shape, keyed by reward id; returns the per-reward change
+   list the pending markers render, plus rewards the draft creates and rewards it removes. */
+function growRewardPendingChangesV291({liveRewards=[],draftRewards=[],options={}}={}){
+  const fields=growRewardDiffFieldsV291(options);
+  const changed=new Map(),added=[],removed=[];
+  const key=reward=>String(reward?.reward_id||reward?.id||'');
+  const liveById=new Map((liveRewards||[]).map(reward=>[key(reward),reward]));
+  const seen=new Set();
+  (draftRewards||[]).forEach(draftReward=>{
+    const id=key(draftReward);
+    seen.add(id);
+    const live=liveById.get(id);
+    if(!live){
+      if(draftReward.active!==false)added.push({
+        id,name:String(draftReward.customer_name||draftReward.name||'Reward').trim(),
+        cost:Math.max(0,Number(draftReward.cost_points||0))});
+      return;
+    }
+    const changes=[];
+    fields.forEach(field=>{
+      const before=field.read(live),after=field.read(draftReward);
+      if(before!==after)changes.push({label:field.label,live:String(field.show(before)),pending:String(field.show(after))});
+    });
+    if(changes.length)changed.set(id,changes);
+  });
+  (liveRewards||[]).forEach(live=>{
+    const id=key(live);
+    if(!seen.has(id)&&live.active!==false)removed.push({id,name:String(live.customer_name||live.name||'Reward').trim()});
+  });
+  return {changed,added,removed};
+}
+/* Bring-back rules are versioned exactly like rewards, so the same shape of answer applies. */
+function growRetentionPendingChangesV291({livePrograms=[],draftPrograms=[]}={}){
+  const key=program=>String(program?.program_id||program?.id||'');
+  const liveById=new Map((livePrograms||[]).map(program=>[key(program),program]));
+  const changed=new Map(),added=[],seen=new Set();
+  const fields=[
+    {label:'Name',read:program=>String(program.name||'Bring-back rule').trim(),show:value=>value},
+    {label:'Goal visits',read:program=>Math.max(0,Number(program.goal_visits||0)),show:String},
+    {label:'Within days',read:program=>Math.max(0,Number(program.period_days||0)),show:String},
+    {label:'Running',read:program=>program.active!==false,show:value=>value?'Yes':'No'}
+  ];
+  (draftPrograms||[]).forEach(draftProgram=>{
+    const id=key(draftProgram);seen.add(id);
+    const live=liveById.get(id);
+    if(!live){
+      if(draftProgram.active!==false)added.push({id,name:String(draftProgram.name||'Bring-back rule').trim()});
+      return;
+    }
+    const changes=[];
+    fields.forEach(field=>{
+      const before=field.read(live),after=field.read(draftProgram);
+      if(before!==after)changes.push({label:field.label,live:String(field.show(before)),pending:String(field.show(after))});
+    });
+    if(changes.length)changed.set(id,changes);
+  });
+  return {changed,added};
+}
+/* The birthday benefit is one row, not a list, so it answers with a plain change array. */
+function growBirthdayPendingChangesV291(live,draft){
+  if(!draft)return [];
+  const fields=[
+    {label:'Name',read:program=>String(program.name||'Birthday benefit').trim(),show:value=>value},
+    {label:'Running',read:program=>program.active!==false,show:value=>value?'Yes':'No'},
+    {label:'Reward',read:program=>String(program.reward_value??program.reward_item??program.reward_type??'').trim(),show:value=>value||'not set'},
+    {label:'Eligibility window',read:program=>{
+      const days=Number(program.window_days);
+      return Number.isFinite(days)?days:null;
+    },show:value=>value==null?'not set':`${value} day${value===1?'':'s'}`}
+  ];
+  if(!live)return fields.map(field=>({label:field.label,live:'not published',pending:String(field.show(field.read(draft)))}));
+  return fields
+    .map(field=>({label:field.label,before:field.read(live),after:field.read(draft),show:field.show}))
+    .filter(row=>row.before!==row.after)
+    .map(row=>({label:row.label,live:String(row.show(row.before)),pending:String(row.show(row.after))}));
 }
     async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false}={}){
   /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
@@ -3885,7 +4075,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'e2a796ad00f122a109bdfe6ab96f38c93413e2d571fb850b35d660e69e1b733d',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'f8c996c2d1ed0a8b05ab36b286fbd3a420352ee68b6eec0b493a2774eaff6df6',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
