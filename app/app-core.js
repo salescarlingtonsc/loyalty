@@ -423,12 +423,14 @@ let settingsActiveTab='modules';
 let profileOpen=false;
 let routeDispose=()=>{};
 let activeCustomerRedemptionCleanup=()=>{};
+let activeCustomerWalletLiveCleanupV295=()=>{};
 function disposeCurrentRoute(){
   const dispose=routeDispose;routeDispose=()=>{};
   dispose({restoreFocus:false});
   activeMerchantScannerCleanup();
   activeCustomerRedemptionCleanup({restoreFocus:false});
   activeCustomerJoinScannerCleanup({restoreFocus:false});
+  activeCustomerWalletLiveCleanupV295();
   document.querySelectorAll('.appointment-detail-modal').forEach(dialog=>dialog.remove());
 }
 let rtChannel=null;       // the single realtime channel for this session
@@ -2867,6 +2869,56 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       </template>
     </div>
   </article>`;
+}
+/* v295 (owner: the counter moment — "staff records the sale, the customer is holding the phone").
+   The customer surface only ever read on render, so a balance earned while the app sat open was
+   invisible until the customer navigated, and a balance earned while it sat in a pocket was
+   stale on return.
+
+   Deliberately NOT a realtime socket: a customer holds no SELECT policy on points_ledger or
+   credit_ledger (staff-only, by design — app.has_perm(business_id,'view_sales')), so
+   postgres_changes would deliver nothing to them, and widening the ledger's read policy to feed
+   a UI nicety would trade the system's most sensitive table for an animation. Refresh instead:
+
+     * FOREGROUND — returning to the app re-reads immediately. This is the common case: the
+       customer opens the app to show a QR, the sale lands, they look back.
+     * WHILE WATCHING — a slow poll covers the case the app never left the foreground, and it
+       stops itself. Bounded by design: paused whenever the tab is hidden (a phone left face-up
+       on a counter costs nothing), and capped, because a wallet nobody is looking at must not
+       poll the database until the battery dies. Any customer action re-arms it by re-rendering.
+
+   Every tick is epoch-guarded and DOM-guarded, so a stale page can never repaint over a newer
+   one — the same discipline every other async path on this surface uses. */
+const CUSTOMER_WALLET_POLL_MS_V295=20000;
+const CUSTOMER_WALLET_POLL_LIMIT_V295=9; // ≈3 minutes of active watching, then quiet
+function watchCustomerWalletV295(isCurrent,refresh){
+  activeCustomerWalletLiveCleanupV295();
+  let ticks=0,timer=0,stopped=false;
+  const stop=()=>{
+    if(stopped)return;stopped=true;
+    if(timer)clearTimeout(timer);timer=0;
+    document.removeEventListener('visibilitychange',onVisibility);
+    if(activeCustomerWalletLiveCleanupV295===stop)activeCustomerWalletLiveCleanupV295=()=>{};
+  };
+  const alive=()=>!stopped&&isCurrent()&&!!$('walletBody')?.isConnected;
+  const arm=()=>{
+    if(timer)clearTimeout(timer);
+    if(!alive()||ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295||document.visibilityState!=='visible')return;
+    timer=setTimeout(()=>{
+      timer=0;
+      if(!alive()||document.visibilityState!=='visible')return;
+      ticks+=1;refresh();
+    },CUSTOMER_WALLET_POLL_MS_V295);
+  };
+  function onVisibility(){
+    if(!alive())return stop();
+    if(document.visibilityState!=='visible'){if(timer)clearTimeout(timer);timer=0;return}
+    ticks=0;refresh();          // back in the customer's hand: read now, and re-arm the window
+  }
+  document.addEventListener('visibilitychange',onVisibility);
+  activeCustomerWalletLiveCleanupV295=stop;
+  arm();
+  return {stop,rearm:arm};
 }
 async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
   const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;

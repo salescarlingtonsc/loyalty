@@ -639,6 +639,7 @@ let customerUiObserver=null;
 let shellRenderEpoch=0;
 let routeDispose=()=>{};
 let activeCustomerRedemptionCleanup=()=>{};
+let activeCustomerWalletLiveCleanupV295=()=>{};
 let waitlistActiveCount=0;
 let waitlistBadgeRequest=0;
 function disposeCurrentRoute(){
@@ -647,6 +648,7 @@ function disposeCurrentRoute(){
   activeMerchantScannerCleanup();
   activeCustomerRedemptionCleanup({restoreFocus:false});
   activeCustomerJoinScannerCleanup({restoreFocus:false});
+  activeCustomerWalletLiveCleanupV295();
   document.querySelectorAll('.appointment-detail-modal').forEach(dialog=>dialog.remove());
 }
 /* realtime notifications (bell) — module-level, plain JS vars only (no localStorage) */
@@ -5252,7 +5254,7 @@ async function renderCustomerProfile(){
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Update password</span></button>
     </section>
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
-    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">This switch controls whether this device can show notifications at all. Which ones you actually receive is set in <a href="#/customer/communications">Communications</a> — offers, rewards and points, and Peekaa updates each have their own channels there.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
+    ${NestlyNativeBridge.isNative?`<section class="card" id="customerDeviceNotificationsNative" style="margin-top:14px"><h2>Notifications</h2><p class="muted small" style="margin-top:6px">Reward, offer and booking updates arrive in your Peekaa inbox — tap the bell at the top of any screen. Alerts on your lock screen are not switched on for this app yet.</p><a class="btn ghost sm" href="#/customer/messages" style="margin-top:12px">Open inbox</a></section>`:`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">This switch controls whether this device can show notifications at all. Which ones you actually receive is set in <a href="#/customer/communications">Communications</a> — offers, rewards and points, and Peekaa updates each have their own channels there.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
     ${accountDeletionCardHtml()}`;
   bindPasswordVisibility($('walletBody'));
   /* v190: applied immediately on change — the person is looking at the surface they just picked,
@@ -7010,6 +7012,56 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));
   wireCustomerHomeOffersV167(repaint);
 }
+/* v295 (owner: the counter moment — "staff records the sale, the customer is holding the phone").
+   The customer surface only ever read on render, so a balance earned while the app sat open was
+   invisible until the customer navigated, and a balance earned while it sat in a pocket was
+   stale on return.
+
+   Deliberately NOT a realtime socket: a customer holds no SELECT policy on points_ledger or
+   credit_ledger (staff-only, by design — app.has_perm(business_id,'view_sales')), so
+   postgres_changes would deliver nothing to them, and widening the ledger's read policy to feed
+   a UI nicety would trade the system's most sensitive table for an animation. Refresh instead:
+
+     * FOREGROUND — returning to the app re-reads immediately. This is the common case: the
+       customer opens the app to show a QR, the sale lands, they look back.
+     * WHILE WATCHING — a slow poll covers the case the app never left the foreground, and it
+       stops itself. Bounded by design: paused whenever the tab is hidden (a phone left face-up
+       on a counter costs nothing), and capped, because a wallet nobody is looking at must not
+       poll the database until the battery dies. Any customer action re-arms it by re-rendering.
+
+   Every tick is epoch-guarded and DOM-guarded, so a stale page can never repaint over a newer
+   one — the same discipline every other async path on this surface uses. */
+const CUSTOMER_WALLET_POLL_MS_V295=20000;
+const CUSTOMER_WALLET_POLL_LIMIT_V295=9; // ≈3 minutes of active watching, then quiet
+function watchCustomerWalletV295(isCurrent,refresh){
+  activeCustomerWalletLiveCleanupV295();
+  let ticks=0,timer=0,stopped=false;
+  const stop=()=>{
+    if(stopped)return;stopped=true;
+    if(timer)clearTimeout(timer);timer=0;
+    document.removeEventListener('visibilitychange',onVisibility);
+    if(activeCustomerWalletLiveCleanupV295===stop)activeCustomerWalletLiveCleanupV295=()=>{};
+  };
+  const alive=()=>!stopped&&isCurrent()&&!!$('walletBody')?.isConnected;
+  const arm=()=>{
+    if(timer)clearTimeout(timer);
+    if(!alive()||ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295||document.visibilityState!=='visible')return;
+    timer=setTimeout(()=>{
+      timer=0;
+      if(!alive()||document.visibilityState!=='visible')return;
+      ticks+=1;refresh();
+    },CUSTOMER_WALLET_POLL_MS_V295);
+  };
+  function onVisibility(){
+    if(!alive())return stop();
+    if(document.visibilityState!=='visible'){if(timer)clearTimeout(timer);timer=0;return}
+    ticks=0;refresh();          // back in the customer's hand: read now, and re-arm the window
+  }
+  document.addEventListener('visibilitychange',onVisibility);
+  activeCustomerWalletLiveCleanupV295=stop;
+  arm();
+  return {stop,rearm:arm};
+}
 async function renderCustomerWallet(businessSlug=null){
   const walletRenderEpoch=++customerWalletRenderEpoch;
   const isWalletCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
@@ -7124,6 +7176,8 @@ async function renderCustomerWallet(businessSlug=null){
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
     focusCustomerRoute();
+    /* v295: Home carries balances too — same watcher, same bounds. */
+    watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet());
     return;
   }
   const args={p_business_slug:businessSlug};
@@ -7326,6 +7380,8 @@ async function renderCustomerWallet(businessSlug=null){
     prompt:promotionPromptResult.error?null:promotionPromptResult.data
   });
   focusCustomerRoute();
+  /* v295: keep the balance honest while the customer is looking at it. */
+  watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug));
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
      rating; a high rating only adds an extra prominent share card. review_url rides the existing
