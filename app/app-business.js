@@ -20213,6 +20213,20 @@ async function loadCustomerCapabilitiesV223(){
       $('customerRedemptionEnabled').checked=value.redemption_enabled===true;
       $('customerAppointmentChangesEnabled').checked=value.appointment_changes_enabled===true;
       controls.forEach(id=>$(id).disabled=false);save.disabled=false;status.textContent='All customer actions start off until you enable them.';
+      /* v294: the booking switch depends on a bookable service existing. Count it once and keep
+         the warning in lockstep with the checkbox, so an owner is told at the moment of ticking
+         — not weeks later by a customer — why nothing appeared. A failed count stays silent
+         rather than crying wolf. */
+      const bookableServiceCount=await sb.from('services').select('id',{count:'exact',head:true})
+        .eq('business_id',S.biz.id).eq('active',true).eq('show_on_booking_page',true)
+        .then(result=>result.error?null:Number(result.count)||0,()=>null);
+      if(!$('businessCustomerCapabilities')?.isConnected)return;
+      const refreshBookingInertWarningV294=()=>{
+        const warning=$('customerBookingInertWarning');if(!warning)return;
+        warning.hidden=!($('customerBookingEnabled').checked&&bookableServiceCount===0);
+      };
+      $('customerBookingEnabled').addEventListener('change',refreshBookingInertWarningV294);
+      refreshBookingInertWarningV294();
       save.onclick=async()=>{
         save.disabled=true;controls.forEach(id=>$(id).disabled=true);status.textContent='Saving customer actions…';
         const {data,error}=await sb.rpc('business_set_customer_capabilities_v89',{
@@ -20225,6 +20239,7 @@ async function loadCustomerCapabilitiesV223(){
         controls.forEach(id=>$(id).disabled=false);save.disabled=false;
         if(error){status.textContent='Customer actions were not changed. Review the settings and try again.';return}
         status.textContent='Customer actions saved. Existing bookings, redemptions, and appointment history remain visible.';
+        refreshBookingInertWarningV294();
         toast(data?.replayed===true?'Customer actions were already saved':'Customer actions saved');
       };
     }
@@ -20504,6 +20519,11 @@ function customerInterfaceSectionsHtmlV243(fieldDefs){
          already lives (sign-up QR, customer fields, import). -->
     <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
       <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
+      <!-- v294 (owner: "Why only one company showed when i already enable qrcode?" — the ticked
+           box was real but INERT: booking is only offered to customers when at least one active
+           service is shown on the booking page, and this screen never said so. The dependency is
+           now stated the moment it bites, with the exact next step.) -->
+      <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one) and tick “Show on booking page”.</p>
       <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
       <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
       <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
