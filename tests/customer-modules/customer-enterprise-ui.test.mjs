@@ -268,7 +268,9 @@ test('foreign workspace denials expose a focused main landmark and page heading'
 });
 
 test('progressive enhancement is scoped to approved customer routes',()=>{
-  assert.match(app,/const customerUiRoutes=new Set\(\['till','clients','client','grow','loyalty','retention','promotions','referrals','memberships','giftcards'\]\)/);
+  /* V287 retarget: 'sales' joined the set so the Sales ledger's responsive table gets the same
+     mobile data-labels every other customer-facing table already had. */
+  assert.match(app,/const customerUiRoutes=new Set\(\['till','clients','client','sales','grow','loyalty','retention','promotions','referrals','memberships','giftcards'\]\)/);
   assert.match(app,/if\(enhanceCustomerUi\)customerUiObserver=CUI\.mountMain\(main\)/);
 });
 

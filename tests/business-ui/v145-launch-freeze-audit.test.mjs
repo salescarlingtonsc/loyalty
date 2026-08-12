@@ -35,7 +35,11 @@ test('dashboard uses Singapore dates and labels every mixed metric scope', () =>
     'customer-count detail must be omitted when Clients is unavailable');
   assert.match(dashboard, /dashboardReportRetry/);
   assert.match(dashboard, /requestGate\.begin\(\)/);
-  assert.match(dashboard, /await renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\);[\s\S]*if\(isDashboardCurrent\(\)\)await load\(\)/,
+  /* V287 retarget: the ordering this asserted only existed because of an orphaned selector
+     call whose immediate onChange double-loaded the page. One load, gated on the route still
+     being current, is the contract. */
+  assert.doesNotMatch(dashboard, /renderReportingScopeSelectorV155\(load,isDashboardCurrent/);
+  assert.match(dashboard, /if\(isDashboardCurrent\(\)\)await load\(\)/,
     'the dashboard must load once after its reporting scope is initialized');
   // V252: the handler is now scoped to `.dashboard-range`. Unscoped, it also captured the new
   // Today-schedule date picker and invalidated the Performance panel on every schedule day change.

@@ -112,8 +112,12 @@ test('V151 Stripe return polls provider-confirmed self-service status and never 
 
 test('V151 dashboard charts show empty states instead of misleading axes', () => {
   assert.match(dashboard, /dashboard-chart-empty/);
-  assert.match(dashboard, /dashboardReportingScopeWrap/);
-  assert.match(dashboard, /renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\)/);
+  /* V287 retarget: V225 deleted #dashboardReportingScopeWrap from the markup but left the
+     selector call behind, and renderReportingScopeSelectorV155 fires onChange immediately when
+     its target is missing — so the Dashboard ran its whole load twice per open. The call is
+     gone; what this test actually guards is that the reporting scope still reaches the RPCs. */
+  assert.doesNotMatch(dashboard, /renderReportingScopeSelectorV155\(/);
+  assert.match(dashboard, /currentReportingScopePayloadV155/);
   assert.match(dashboard, /No revenue recorded in this period/);
   assert.match(dashboard, /More activity is needed to show a trend/);
   // Chart empty states were reworded to say what to do next, not just what is missing.
