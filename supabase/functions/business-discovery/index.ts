@@ -302,14 +302,54 @@ async function applyOnemapGeo(places: NormalizedBusiness[]): Promise<NormalizedB
   return out;
 }
 
+/** Browsers send a CORS preflight (OPTIONS) before any cross-origin POST that
+ *  carries an Authorization header. This function used to answer that preflight
+ *  with 405, so the browser aborted before the real request was ever sent and
+ *  the console could only report a generic failure. curl never reproduced it,
+ *  because curl does not preflight.
+ *
+ *  The origin allowlist mirrors NESTLY_PUBLIC_ORIGINS in _shared/validation.ts;
+ *  it is inlined so this function remains a single deployable file. CORS is not
+ *  the security boundary here — the caller's JWT and the database role check
+ *  are — but an unknown origin is still refused rather than reflected. */
+const ALLOWED_ORIGINS = [
+  'https://peekaa.asia',
+  'https://www.peekaa.asia',
+  'https://nestly.asia',
+  'https://www.nestly.asia',
+  'capacitor://localhost',
+  'https://localhost',
+  ...(Deno.env.get('PUBLIC_GATEWAY_ALLOWED_ORIGINS') ?? '')
+    .split(',').map((o) => o.trim()).filter(Boolean),
+];
+
+function corsFor(request: Request): Record<string, string> | null {
+  const origin = request.headers.get('origin') ?? '';
+  if (!origin || !ALLOWED_ORIGINS.includes(origin)) return null;
+  return {
+    'access-control-allow-origin': origin,
+    'access-control-allow-headers': 'content-type, x-client-info, authorization, apikey',
+    'access-control-allow-methods': 'POST, OPTIONS',
+    'access-control-max-age': '600',
+    'vary': 'Origin',
+  };
+}
+
 Deno.serve(async (request) => {
+  const cors = corsFor(request);
+
+  if (request.method === 'OPTIONS') {
+    return cors
+      ? new Response(null, { status: 204, headers: cors })
+      : json({ error: 'origin_not_allowed' }, 403);
+  }
   if (request.method !== 'POST') {
-    return json({ error: 'method_not_allowed' }, 405);
+    return json({ error: 'method_not_allowed' }, 405, cors);
   }
   // The caller's own JWT is forwarded to the RPC, so the database applies the SAME
   // role checks it would for any other call. This function grants no extra authority.
   const authorization = request.headers.get('Authorization');
-  if (!authorization) return json({ error: 'authentication_required' }, 401);
+  if (!authorization) return json({ error: 'authentication_required' }, 401, cors);
 
   let body: {
     query?: DiscoveryQuery;
@@ -323,23 +363,23 @@ Deno.serve(async (request) => {
   try {
     body = await request.json();
   } catch {
-    return json({ error: 'invalid_json' }, 400);
+    return json({ error: 'invalid_json' }, 400, cors);
   }
 
   const providerKey = body.provider ?? 'google_places';
   const provider = PROVIDERS[providerKey];
-  if (!provider) return json({ error: 'unknown_provider' }, 400);
+  if (!provider) return json({ error: 'unknown_provider' }, 400, cors);
   const mode = body.refresh ? 'refresh' : body.sweep ? 'sweep' : 'query';
-  if (mode === 'query' && !body.query?.query) return json({ error: 'query_required' }, 400);
+  if (mode === 'query' && !body.query?.query) return json({ error: 'query_required' }, 400, cors);
   if (mode === 'sweep' && (!body.sweep?.planningArea || !(body.sweep?.categories?.length))) {
-    return json({ error: 'sweep_scope_required' }, 400);
+    return json({ error: 'sweep_scope_required' }, 400, cors);
   }
   if (mode === 'refresh' && !(body.refresh?.source_ids?.length)) {
-    return json({ error: 'refresh_ids_required' }, 400);
+    return json({ error: 'refresh_ids_required' }, 400, cors);
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  if (!supabaseUrl) return json({ error: 'server_misconfigured' }, 500);
+  if (!supabaseUrl) return json({ error: 'server_misconfigured' }, 500, cors);
 
   // GATE FIRST, SPEND SECOND. The first cut called Google and THEN asked the database
   // whether the caller was allowed — so anyone holding the public anon key could burn
@@ -349,7 +389,7 @@ Deno.serve(async (request) => {
   try {
     await callRpc(supabaseUrl, authorization, 'platform_crm_prospecting_taxonomy_v297', {});
   } catch {
-    return json({ error: 'prospecting_access_required' }, 403);
+    return json({ error: 'prospecting_access_required' }, 403, cors);
   }
 
   try {
@@ -366,7 +406,7 @@ Deno.serve(async (request) => {
         p_detail_calls: refreshed.calls,
       });
       return json({ stage: 'refreshed', provider: providerKey, requested: ids.length,
-        ...committed, detail_calls: refreshed.calls });
+        ...committed, detail_calls: refreshed.calls }, 200, cors);
     }
 
     // 1. DISCOVERY — cheap, always scoped, never unbounded. A sweep is just the
@@ -410,7 +450,7 @@ Deno.serve(async (request) => {
     });
 
     if (!body.commit) {
-      return json({ stage: 'preview', provider: providerKey, ...preview, search_calls: search.calls });
+      return json({ stage: 'preview', provider: providerKey, ...preview, search_calls: search.calls }, 200, cors);
     }
 
     // 3. ENRICHMENT — Details ONLY for places the DB says are new. This is the whole
@@ -444,13 +484,13 @@ Deno.serve(async (request) => {
       ...committed,
       search_calls: search.calls,
       detail_calls: detailCalls,
-    });
+    }, 200, cors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'discovery_failed';
     // 'provider_not_configured' is the honest signal that the API key is absent —
     // the console shows a specific "not configured yet" state rather than a crash.
     const status = message === 'provider_not_configured' ? 503 : 502;
-    return json({ error: message }, status);
+    return json({ error: message }, status, cors);
   }
 });
 
@@ -470,9 +510,9 @@ async function callRpc(url: string, authorization: string, fn: string, args: unk
   return await response.json();
 }
 
-function json(payload: unknown, status = 200) {
+function json(payload: unknown, status = 200, cors: Record<string, string> | null = null) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(cors ?? {}) },
   });
 }
