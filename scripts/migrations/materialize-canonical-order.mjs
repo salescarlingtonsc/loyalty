@@ -134,7 +134,7 @@ async function loadPlan() {
   assert.equal(plan.requireCatalogEvidenceForAllApplied, true,
     'every applied migration must retain catalog byte/hash evidence');
   assert.ok(Array.isArray(plan.items));
-assert.equal(plan.items.length, 308, 'canonical plan must contain 45 catalog and 263 pending migrations'); // + v311/v312 money wave (W5a/W5b) + v315 lead score repair
+assert.equal(plan.items.length, 309, 'canonical plan must contain 45 catalog and 264 pending migrations'); // + v311/v312 money wave (W5a/W5b) + v315 lead score repair + v316 taxonomy/match queue repair
 
   const seenVersions = new Set();
   const seenNames = new Set();
@@ -176,7 +176,7 @@ assert.equal(plan.items.length, 308, 'canonical plan must contain 45 catalog and
   const applied = plan.items.filter(({ kind }) => kind === 'catalog-applied');
   const pending = plan.items.filter(({ kind }) => kind === 'pending');
   assert.equal(applied.length, 45);
-assert.equal(pending.length, 263); // + v311/v312 money wave (W5a/W5b) + v315 lead score repair
+assert.equal(pending.length, 264); // + v311/v312 money wave (W5a/W5b) + v315 lead score repair + v316 taxonomy/match queue repair
   assert.deepEqual(applied.map(({ version, name }) => `${version}_${name}`), expectedCatalogIdentities,
     'catalog versions and names must match the trusted remote inventory exactly');
   assert.equal(applied.at(-1).version, plan.catalogCutoffVersion);

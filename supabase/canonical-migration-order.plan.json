@@ -1852,6 +1852,12 @@
       "version": "20260814001200",
       "name": "nestly_v315_repair_dropped_lead_score_references",
       "sourcePath": "db/migrations/20260814_nestly_v315_repair_dropped_lead_score_references.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814001300",
+      "name": "nestly_v316_repair_taxonomy_and_match_queue",
+      "sourcePath": "db/migrations/20260814_nestly_v316_repair_taxonomy_and_match_queue.sql"
     }
   ]
 }

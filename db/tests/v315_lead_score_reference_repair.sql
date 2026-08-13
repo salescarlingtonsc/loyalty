@@ -31,9 +31,11 @@ begin
   select string_agg(n.nspname||'.'||p.proname, ', ') into v_bad
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace
    where n.nspname in ('public','app') and p.prokind='f'
-     and (pg_get_functiondef(p.oid) like '%sme_lead_scores%'
-       or pg_get_functiondef(p.oid) like '%v297_lead_score%'
-       or pg_get_functiondef(p.oid) like '%v297_refresh_lead_score%');
+     -- Match the whole lead-score FAMILY, not three exact names. The first cut
+     -- of this guard searched for 'sme_lead_scores' and therefore could not see
+     -- 'sme_lead_score_weights', which was still referenced by the taxonomy RPC
+     -- and took the entire Prospecting route down.
+     and pg_get_functiondef(p.oid) like '%lead_score%';
   if v_bad is not null then
     raise exception 'A: lead-score references still present in: %', v_bad;
   end if;
@@ -108,6 +110,21 @@ begin
 
   -- 8. The conversion funnel must execute.
   perform public.platform_conversion_funnel_v312(null, null);
+
+  -- 9. Every remaining RPC the Prospecting route calls on load. The taxonomy one
+  --    is first in that route, so when it raised, the whole page rendered
+  --    "Prospecting unavailable" and nothing else got a chance to run.
+  d := public.platform_crm_prospecting_taxonomy_v297();
+  if d::text like '%score%' then
+    raise exception 'B9: taxonomy still exposes a scoring key: %', d::text;
+  end if;
+  perform public.platform_crm_prospecting_summary_v297();
+  perform public.platform_crm_saved_filters_v297();
+  perform public.platform_crm_stale_google_sources_v297(50);
+  perform public.platform_merchant_matches_v312(50);
+  perform public.platform_explorer_search_v312('{}'::jsonb,'markers','added_desc',500,0);
+  perform public.platform_explorer_search_v312('{}'::jsonb,'ids','added_desc',25,0);
+  perform public.platform_explorer_search_v312('{}'::jsonb,'count','name_asc',25,0);
 
   raise notice 'v315 lead-score reference repair: all assertions passed';
 end $v315$;

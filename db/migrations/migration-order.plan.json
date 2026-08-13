@@ -1857,6 +1857,12 @@
       "path": "db/migrations/20260814_nestly_v315_repair_dropped_lead_score_references.sql",
       "semanticVersion": "v315",
       "proposedDeployVersion": "20260814001200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v316_repair_taxonomy_and_match_queue.sql",
+      "semanticVersion": "v316",
+      "proposedDeployVersion": "20260814001300"
     }
   ]
 }

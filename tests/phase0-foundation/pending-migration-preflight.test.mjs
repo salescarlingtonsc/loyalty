@@ -288,7 +288,8 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v255_marketing_send_records_and_taxonomy', 'db/tests/v255_marketing_send_records_and_reads.sql'],
   ['nestly_v255a_client_interaction_batch', 'db/tests/v255_marketing_send_records_and_reads.sql'],
   ['nestly_v255b_platform_marketing_reads', 'db/tests/v255_marketing_send_records_and_reads.sql'],
-  ['nestly_v315_repair_dropped_lead_score_references', 'db/tests/v315_lead_score_reference_repair.sql']
+  ['nestly_v315_repair_dropped_lead_score_references', 'db/tests/v315_lead_score_reference_repair.sql'],
+  ['nestly_v316_repair_taxonomy_and_match_queue', 'db/tests/v315_lead_score_reference_repair.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -792,7 +793,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 263); // + v311 money kernel + v312 pot migration + v315 lead score repair
+  assert.equal(pending.length, 264); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
