@@ -1,4 +1,4 @@
--- Rollback-only acceptance for v311 + v312: the conversion-first prospecting system.
+-- Rollback-only acceptance for v313 + v314: the conversion-first prospecting system.
 --
 -- The assertions that matter are the ones about NOT doing things:
 --   * a name-only agreement must NOT auto-link (two shops share a name);
@@ -7,7 +7,7 @@
 --   * the funnel must count real stage history, not guesses.
 begin;
 
-do $v311$
+do $v313$
 declare
   v_sa uuid; v_b1 uuid; v_b2 uuid; v_b3 uuid; v_c1 uuid; v_c2 uuid; v_c3 uuid;
   v_p uuid; d jsonb; n int;
@@ -98,7 +98,7 @@ begin
               where ns.nspname='app' and p.proname like '%lead_score%') then
     raise exception 'G: lead scoring functions survived'; end if;
 
-  raise notice 'v311 conversion-first prospecting: all assertions passed';
-end $v311$;
+  raise notice 'v313 conversion-first prospecting: all assertions passed';
+end $v313$;
 
 rollback;

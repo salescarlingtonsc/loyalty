@@ -22,6 +22,8 @@
 -- public.sme_lead_scores was empty at capture time.
 
 -- public.sme_data_quality_rule_versions (11 rows), all version 1, active.
+begin;
+
 insert into public.sme_data_quality_rule_versions
   (rule_key, label, severity, weight, version, active) values
   ('company_name','Company name','blocking',15,1,true),
@@ -44,3 +46,5 @@ insert into public.sme_data_quality_rule_versions
 --   call_back 'Call Back' 9 | reschedule 'Reschedule' 10
 --   meeting_sent 'Meeting Link Sent / Calendar Set' 11 | site_visit 'Site Visit' 12
 --   quotation_sent 'Quotation Sent' 13 | pending_decision 'Pending Decision' 14
+
+commit;

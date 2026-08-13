@@ -1824,20 +1824,32 @@
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260814_nestly_v311_conversion_first_prospecting.sql",
+      "path": "db/migrations/20260813_nestly_v311_programme_money_kernel.sql",
       "semanticVersion": "v311",
+      "proposedDeployVersion": "20260813001400"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v312_programme_pot_migration.sql",
+      "semanticVersion": "v312",
+      "proposedDeployVersion": "20260813001500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v313_conversion_first_prospecting.sql",
+      "semanticVersion": "v313",
       "proposedDeployVersion": "20260814001000"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260814_nestly_v311_rollback_data_snapshot.sql",
-      "semanticVersion": "v311",
+      "path": "db/migrations/20260814_nestly_v313_rollback_data_snapshot.sql",
+      "semanticVersion": "v313",
       "proposedDeployVersion": "20260814001050"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260814_nestly_v312_business_explorer_and_funnel.sql",
-      "semanticVersion": "v312",
+      "path": "db/migrations/20260814_nestly_v314_business_explorer_and_funnel.sql",
+      "semanticVersion": "v314",
       "proposedDeployVersion": "20260814001100"
     }
   ]

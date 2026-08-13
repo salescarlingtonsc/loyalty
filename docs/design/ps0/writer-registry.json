@@ -486,10 +486,11 @@
     {
       "id": "db.fn:app.on_sale_recorded/0",
       "surface": "db_trigger_function",
-      "latest_file": "20260721000017_frenly_v37b_versioned_retention_taxonomy.sql",
+      "latest_file": "20260813001400_nestly_v311_programme_money_kernel.sql",
       "rows_written": "credit_ledger:INSERT, points_batches:INSERT, points_ledger:INSERT, reward_grants:INSERT",
       "detected_signals": "idem-signal, config-version, sale-policy, effective-branch-module",
-      "loyalty_boundary": "V121 permits a new points/stamps earn only when app.effective_platform_module_mode_v94(sale.business_id,sale.branch_id,'loyalty') resolves exactly rw. Disabled or read-only Loyalty preserves the sale, visit/retention processing and existing balances but creates no new points_ledger or points_batches earn."
+      "loyalty_boundary": "V121 permits a new points/stamps earn only when app.effective_platform_module_mode_v94(sale.business_id,sale.branch_id,'loyalty') resolves exactly rw. Disabled or read-only Loyalty preserves the sale, visit/retention processing and existing balances but creates no new points_ledger or points_batches earn.",
+      "programme_scope": "V311 W5a replaced the if/elsif engine picker with a LOOP over the business's active accruing spine rows (public.business_programmes, kinds points and stamps, in sort order): one earn row and one batch PER PROGRAMME per sale, each carrying programme_id resolved inside the trigger and never supplied by a caller. Idempotency comes from get diagnostics row_count on an insert whose ON CONFLICT arbiter NAMES points_earn_once_per_sale_per_programme (the v2 points_earn_once_per_sale index was dropped in the same transaction), and the batch insert is gated on that row_count. A post-loop assertion compares the sale's earn rows against its batch rows and raises XX001 rather than leaving a silent desync. The tier multiplier now applies in the points branch only (owner decision D1); stamp batches are written with expires_at NULL (D8)."
     },
     {
       "id": "db.fn:app.on_sale_stock_deduct/0",
@@ -572,7 +573,7 @@
     {
       "id": "db.fn:app.run_points_expiry_for_business/1",
       "surface": "db_function",
-      "latest_file": "20260719034201_frenly_v20_financial_engine.sql",
+      "latest_file": "20260813001500_nestly_v312_programme_pot_migration.sql",
       "rows_written": "points_batches:UPDATE, points_ledger:INSERT",
       "detected_signals": "for-update",
       "entry_point": "app.run_points_expiry_for_business(p_business)  [daily pg_cron sweep, per business]",
@@ -581,19 +582,21 @@
       "locking": "for-update on batches",
       "loyalty": "expires points_batches (sets remaining 0) + points_ledger negative expiry entries",
       "ui": "n/a (cron) / owner manual run",
-      "kernel": "SAFE \u2014 automation subscriber, not a checkout writer; stays outside the money kernel."
+      "kernel": "SAFE \u2014 automation subscriber, not a checkout writer; stays outside the money kernel.",
+      "programme_scope": "V311 W5a made the sweep programme-scoped and FAIL-CLOSED (no points spine row means expire nothing): both the client selection and the inner batch loop are filtered to the points programme's batches, the inactivity clock is read per programme, and the expire row is tagged with the batch's programme. Without the inner-loop filter a points inactivity policy would zero a customer's STAMP CARD, because that branch has no date condition. V312 W5b re-stated it once more to teach the clock the pot-transfer lineage: the transfer row itself is not activity (it would postpone every switched customer's expiry), but the activity the pot INHERITED from the source programme is."
     },
     {
       "id": "db.fn:app.run_points_expiry/0",
       "surface": "db_delegating_entrypoint",
-      "latest_file": "20260719034201_frenly_v20_financial_engine.sql",
+      "latest_file": "20260813001400_nestly_v311_programme_money_kernel.sql",
       "rows_written": "(delegates to app.run_points_expiry_for_business)",
       "detected_signals": "none",
       "delegates_to": [
         "app.run_points_expiry_for_business"
       ],
       "entry_point": "app.run_points_expiry() \u2192 run_points_expiry_for_business (all tenants)",
-      "kernel": "SAFE \u2014 cron fan-out."
+      "kernel": "SAFE \u2014 cron fan-out.",
+      "programme_scope": "V311 W5a additionally requires an ACTIVE points spine row before fanning out, so a stamps-only firm is not swept at all (hygiene; after the per-business scoping the sweep was already a no-op for it)."
     },
     {
       "id": "db.fn:public.activate_retention_campaign/4",
@@ -612,7 +615,7 @@
     {
       "id": "db.fn:public.adjust_points/4",
       "surface": "db_function",
-      "latest_file": "20260806085000_nestly_v173_pause_enforcement_gaps.sql",
+      "latest_file": "20260813001400_nestly_v311_programme_money_kernel.sql",
       "rows_written": "points_batches:INSERT/UPDATE, points_ledger:INSERT",
       "detected_signals": "for-update",
       "entry_point": "adjust_points(p_business,p_client,p_points,p_reason) V173 (pause enforcement) re-created this function; the rows it writes are unchanged (points_batches INSERT/UPDATE, points_ledger INSERT), only the defining migration moved.",
@@ -623,7 +626,8 @@
       "reporting": "affects points liability; per \u00a712 manual adjustments default non-qualifying for tiers",
       "reversal": "reversed by an opposite manual adjustment (no dedicated reversal)",
       "ui": "Customer detail \u2192 Adjust points",
-      "kernel": "NEEDS-WORK \u2014 MEDIUM FINDING: no idempotency on a ledger-moving manual action; the kernel/loyalty write guard should key it."
+      "kernel": "NEEDS-WORK \u2014 MEDIUM FINDING: no idempotency on a ledger-moving manual action; the kernel/loyalty write guard should key it.",
+      "programme_scope": "V311 W5a scoped every points read and write in this function to the POINTS programme resolved from the spine (balance, overdraw check, batch proof, FEFO drain) and tags both the new batch and the ledger row with it \u2014 without this an owner granting or removing points would drain a customer's STAMP batches. The RPC signature is deliberately unchanged (a signature change is a client change); owner adjustment of a stamp count is a W6 feature with its own UI. Fails closed when the business has no points programme."
     },
     {
       "id": "db.fn:public.close_drawer/4",
@@ -2051,6 +2055,65 @@
       "rows_written": "(delegates) demo_requests_v292 append (rate-capped 200/hr platform-wide, 30-min contact dedupe)",
       "call_site_finding": "OK - anon-callable write-only capture; reads nothing, answers identically for every input so it cannot be a membership oracle; validation and caps live server-side.",
       "kernel_migratability": "non-value - a sales lead record; no points, credit or stored value."
+    },
+    {
+      "id": "db.fn:app.migrate_programme_pot_v312/4",
+      "surface": "db_function",
+      "latest_file": "20260813001500_nestly_v312_programme_pot_migration.sql",
+      "rows_written": "points_ledger:INSERT, points_batches:UPDATE, audit_log:INSERT",
+      "detected_signals": "row-lock",
+      "entry_point": "app.migrate_programme_pot_v312(business, from_programme, to_programme, limit) \u2014 v312 W5b. The ONE code path that moves a business's live points pot from one programme to another after its accruing programme changes identity. Reached only through app.enqueue_programme_pot_migration_v312 (the loyalty_model switch trigger, W6's switchboard) or app.run_programme_pot_migrations_v312 (the bounded cron worker). service_role EXECUTE only; revoked from public/anon/authenticated.",
+      "idempotency": "Idempotent and resumable by construction rather than by key: it selects only clients whose SOURCE-programme sum is nonzero, so a second run over a finished business transfers nothing and retags nothing. One open migration per business is enforced by the partial unique index programme_pot_migrations_one_open. Takes the businesses row FOR UPDATE first and each client row FOR UPDATE in turn (V308 standing invariant 1 lock order).",
+      "value": "VALUE-NEUTRAL BY CONSTRUCTION, value-impacting in scope. Writes an append-only TRANSFER PAIR per client (adjust -S tagged to the source programme, adjust +S tagged to the destination, both actor NULL under the new programme_pot_transfer write scope) so the business pot is unchanged to the cent, and retags OPEN batches (remaining > 0) to the destination so the destination's FEFO proof exists. Drained batches keep their original tag, contribute 0 to sum(remaining), and keep their reversal provenance. It UPDATEs no points_ledger row, disables no append-only trigger, and retags no historical ledger row.",
+      "authority": "SECURITY DEFINER, service_role only. Refuses unless both programmes belong to the named business (42501) and they differ (22023). No browser role can reach it, and public.programme_pot_migrations carries SELECT-only policies.",
+      "kernel": "POINTS KERNEL \u2014 same append-only points_ledger and points_batches as the earn/redeem/expiry paths, entered through the same v20/v84 token-and-scope write guard. Adds no ledger, no balance column and no fifth entry_type: the transfer is entry_type='adjust' distinguished by write scope and a NULL actor."
+    },
+    {
+      "id": "db.fn:app.enqueue_programme_pot_migration_v312/4",
+      "surface": "db_function",
+      "latest_file": "20260813001500_nestly_v312_programme_pot_migration.sql",
+      "rows_written": "programme_pot_migrations:INSERT/UPDATE; via app.migrate_programme_pot_v312: points_ledger:INSERT, points_batches:UPDATE",
+      "detected_signals": "idem-signal",
+      "entry_point": "app.enqueue_programme_pot_migration_v312(business, from_programme, to_programme, inline_limit) \u2014 v312 W5b. The one entry point for 'this business's accruing programme changed identity'. Called by the loyalty_programs switch trigger today and directly by W6's per-programme switchboard.",
+      "idempotency": "Inserts the migration row with ON CONFLICT DO NOTHING against programme_pot_migrations_one_open, so a concurrent switch does not start a second transfer; returns null when one is already open (the worker owns it) and when there is nothing to move.",
+      "value": "DELEGATES the money write to app.migrate_programme_pot_v312 and owns the coherence contract around it: runs inline when the affected-client count is within the bound (instant coherence, no window), otherwise leaves a pending row for the cron worker. Asserts app.detect_programme_pot_split_v312() is empty for the business before marking the row complete, so a migration can never report success over an incoherent pot.",
+      "authority": "SECURITY DEFINER, service_role only; revoked from public/anon/authenticated.",
+      "kernel": "POINTS KERNEL \u2014 see app.migrate_programme_pot_v312."
+    },
+    {
+      "id": "db.fn:app.run_programme_pot_migrations_v312/1",
+      "surface": "db_function",
+      "latest_file": "20260813001500_nestly_v312_programme_pot_migration.sql",
+      "rows_written": "programme_pot_migrations:UPDATE; via app.migrate_programme_pot_v312: points_ledger:INSERT, points_batches:UPDATE",
+      "detected_signals": "row-lock",
+      "entry_point": "app.run_programme_pot_migrations_v312(batch) \u2014 v312 W5b bounded cron worker (pg_cron job frenly-programme-pot-migrations, */10 * * * *), for the pot migrations too large to run inline inside the switch transaction.",
+      "idempotency": "Claims jobs FOR UPDATE SKIP LOCKED, so two workers never drain the same migration; each pass calls the resumable migrator and marks the row complete only when it moved zero clients.",
+      "value": "DELEGATES the money write to app.migrate_programme_pot_v312; writes no ledger row itself.",
+      "authority": "SECURITY DEFINER, service_role only; revoked from public/anon/authenticated.",
+      "kernel": "POINTS KERNEL \u2014 see app.migrate_programme_pot_v312."
+    },
+    {
+      "id": "db.fn:app.programme_pot_switch_v312/0",
+      "surface": "db_function",
+      "latest_file": "20260813001500_nestly_v312_programme_pot_migration.sql",
+      "rows_written": "via app.enqueue_programme_pot_migration_v312: programme_pot_migrations:INSERT/UPDATE, points_ledger:INSERT, points_batches:UPDATE",
+      "detected_signals": "",
+      "entry_point": "app.programme_pot_switch_v312() \u2014 v312 W5b trigger function behind trg_programme_pot_switch_v312 on public.loyalty_programs.",
+      "idempotency": "Inherited from app.enqueue_programme_pot_migration_v312's one-open-migration constraint.",
+      "value": "DELEGATES. Fires only when a business crosses the stamps boundary \u2014 the exact and only change that moves app.resolve_ledger_programme_v309's answer; classic <-> points_tiers is not a switch. Resolves the source and destination spine rows by kind and hands off.",
+      "authority": "SECURITY DEFINER; revoked from public/anon/authenticated. Inherits the V308 lock order for free because publish_loyalty_config already takes the businesses row FOR UPDATE before it updates loyalty_programs.",
+      "kernel": "POINTS KERNEL \u2014 see app.migrate_programme_pot_v312."
+    },
+    {
+      "id": "db.trigger:loyalty_programs:trg_programme_pot_switch_v312",
+      "surface": "db_trigger",
+      "table": "loyalty_programs",
+      "timing": "after",
+      "events": [
+        "update of loyalty_model"
+      ],
+      "function": "app.programme_pot_switch_v312",
+      "latest_file": "20260813001500_nestly_v312_programme_pot_migration.sql"
     }
   ],
   "allowlist": [
@@ -3133,6 +3196,14 @@
     {
       "id": "browser.rpc:app/app.js:business_reward_redemption_counts_v300",
       "reason": "V300 read-only aggregate. It writes nothing: per-reward counts over the append-only loyalty_redemptions ledger (classic reward-less rows reported separately). Gated by require_module_scope_v145(loyalty); returns counts only, no customer identities."
+    },
+    {
+      "id": "db.backfill:20260813001400_nestly_v311_programme_money_kernel.sql:points_ledger",
+      "reason": "NOT A WRITE AT ALL: v311 W5a writes no points_ledger row at migration time. The scanner matches `points_ledger:INSERT` text carried as the OLD/NEW needle strings of the count-asserted, fail-closed splices that programme-scope app.redeem_reward_core, app.redeem_points_v40_internal, public.redeem_points(uuid,uuid), public.reverse_loyalty_redemption_v34_base and public.correct_quick_sale_amount_v84 \u2014 needle text inside a DO block, not a statement. The runtime writers those needles produce are already curated under their own db.fn identities. Verified by reading the migration: its only DML is the (zero-row on production) pot-migration backfill in v312."
+    },
+    {
+      "id": "db.backfill:20260813001400_nestly_v311_programme_money_kernel.sql:points_batches",
+      "reason": "NOT A WRITE AT ALL: v311 W5a writes no points_batches row at migration time. The scanner matches `points_batches:UPDATE` text carried as the OLD/NEW needle strings of the count-asserted, fail-closed splices that programme-scope app.redeem_reward_core, app.redeem_points_v40_internal, public.redeem_points(uuid,uuid), public.reverse_loyalty_redemption_v34_base and public.correct_quick_sale_amount_v84 \u2014 needle text inside a DO block, not a statement. The runtime writers those needles produce are already curated under their own db.fn identities. Verified by reading the migration: its only DML is the (zero-row on production) pot-migration backfill in v312."
     }
   ]
 }

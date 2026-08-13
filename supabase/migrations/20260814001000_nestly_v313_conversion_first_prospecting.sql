@@ -1,4 +1,10 @@
--- nestly_v311_conversion_first_prospecting
+-- nestly_v313_conversion_first_prospecting
+--
+-- Renumbered from v311 after a parallel session claimed that label the same day.
+-- The DATABASE OBJECTS keep their v311 names (app.v311_match_merchants and the
+-- businesses_v311_merchant_link trigger) because they were already applied to
+-- production under those names; renaming live objects to match a file label
+-- would be churn with no benefit.
 --
 -- Owner directive 2026-08-14: the prospecting system exists for ONE purpose —
 -- converting non-Peekaa businesses into Peekaa merchants. Not for predicting

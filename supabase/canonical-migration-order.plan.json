@@ -1819,21 +1819,33 @@
     },
     {
       "kind": "pending",
+      "version": "20260813001400",
+      "name": "nestly_v311_programme_money_kernel",
+      "sourcePath": "db/migrations/20260813_nestly_v311_programme_money_kernel.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260813001500",
+      "name": "nestly_v312_programme_pot_migration",
+      "sourcePath": "db/migrations/20260813_nestly_v312_programme_pot_migration.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260814001000",
-      "name": "nestly_v311_conversion_first_prospecting",
-      "sourcePath": "db/migrations/20260814_nestly_v311_conversion_first_prospecting.sql"
+      "name": "nestly_v313_conversion_first_prospecting",
+      "sourcePath": "db/migrations/20260814_nestly_v313_conversion_first_prospecting.sql"
     },
     {
       "kind": "pending",
       "version": "20260814001050",
-      "name": "nestly_v311_rollback_data_snapshot",
-      "sourcePath": "db/migrations/20260814_nestly_v311_rollback_data_snapshot.sql"
+      "name": "nestly_v313_rollback_data_snapshot",
+      "sourcePath": "db/migrations/20260814_nestly_v313_rollback_data_snapshot.sql"
     },
     {
       "kind": "pending",
       "version": "20260814001100",
-      "name": "nestly_v312_business_explorer_and_funnel",
-      "sourcePath": "db/migrations/20260814_nestly_v312_business_explorer_and_funnel.sql"
+      "name": "nestly_v314_business_explorer_and_funnel",
+      "sourcePath": "db/migrations/20260814_nestly_v314_business_explorer_and_funnel.sql"
     }
   ]
 }

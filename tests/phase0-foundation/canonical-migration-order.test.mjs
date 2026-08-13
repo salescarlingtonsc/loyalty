@@ -99,7 +99,7 @@ test('checked-in canonical plan preserves 45 trusted catalog versions then 216 u
   assert.equal(result.status, 0, result.stderr);
 });
 
-test('materializer creates one byte-preserving 302-file chain and deterministic manifests', async (t) => {
+test('materializer creates one byte-preserving 307-file chain and deterministic manifests', async (t) => {
   const { root, plan } = await fixture(t);
   await addRecoveryEvidence(root, plan);
   const materialized = run(root, '--materialize');
@@ -109,14 +109,14 @@ test('materializer creates one byte-preserving 302-file chain and deterministic 
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 260); // + v311 conversion-first prospecting + v311 rollback snapshot + v312 business explorer/funnel
-  assert.equal(manifest.itemCount, 305); // + v311 conversion-first prospecting + v311 rollback snapshot + v312 business explorer/funnel
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 305); // + v311 conversion-first prospecting + v311 rollback snapshot + v312 business explorer/funnel
+  assert.equal(manifest.pendingCount, 262); // + v311 money kernel + v312 pot migration
+  assert.equal(manifest.itemCount, 307); // + v311 money kernel + v312 pot migration
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 307); // + v311 money kernel + v312 pot migration
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v312_business_explorer_and_funnel' // tail
+    'nestly_v314_business_explorer_and_funnel' // tail
   );
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);

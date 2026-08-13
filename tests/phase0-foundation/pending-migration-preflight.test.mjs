@@ -171,11 +171,24 @@ const sqlTestBySemanticVersion = new Map([
   ['v308', 'db/tests/v308_programme_spine.sql'],
   ['v309', 'db/tests/v309_ledger_programme_tag.sql'],
   ['v310', 'db/tests/v310_google_content_retention.sql'],
-  ['v311', 'db/tests/v311_conversion_first_prospecting.sql'],
-  ['v312', 'db/tests/v311_conversion_first_prospecting.sql']
+  /* v311 (the money kernel) and v312 (the pot machinery) are ONE wave applied
+     back-to-back and are exercised by the same rolled-back suite: v312's fixtures are
+     v311's four tenant shapes, and the S4/S5 cells only mean anything with both
+     applied. Both semantic versions are unique, so these bind by version, not by name. */
+  ['v311', 'db/tests/v311_v312_programme_money_kernel.sql'],
+  ['v312', 'db/tests/v311_v312_programme_money_kernel.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
+  // The conversion-first prospecting work was renumbered v313/v314 after the
+  // parallel programme session claimed v311/v312; bound BY NAME so the mapping
+  // survives any future semantic-label reuse.
+  ['nestly_v313_conversion_first_prospecting', 'db/tests/v313_conversion_first_prospecting.sql'],
+  // The recovery snapshot is a data-only artefact captured from production before
+  // v313 dropped those rows; it shares the v313 suite because it has no behaviour
+  // of its own to assert.
+  ['nestly_v313_rollback_data_snapshot', 'db/tests/v313_conversion_first_prospecting.sql'],
+  ['nestly_v314_business_explorer_and_funnel', 'db/tests/v313_conversion_first_prospecting.sql'],
   // v310 semantic label is shared by two applied migrations (programme read path 20260813000600
   // and google content retention 20260813001300); the read-path suite binds BY NAME so the
   // semantic fallback keeps serving the retention entry.
@@ -298,15 +311,6 @@ const appliedPreflightExceptions = new Map([
   }],
   ['20260804170000_nestly_v162_stripe_launch_price_148', {
     sha256: '9d140deebd7d7ed6303fffb47928caa1548c3123aff9267d86d97294120f4efd',
-    rollbackSuite: true,
-    outerTransaction: false
-  }],
-  // Not a migration in the applied-history sense: a manual recovery reference
-  // for v311's data drop, deliberately never executed automatically (no
-  // begin/commit envelope). Registered in the plan only so every file under
-  // db/migrations/ is accounted for.
-  ['20260814001050_nestly_v311_rollback_data_snapshot', {
-    sha256: '8cdeeb5ca4ceed9ebda6f2c7d7818c6e7f71b2fc3250957119536d39c7aef786',
     rollbackSuite: true,
     outerTransaction: false
   }]
@@ -787,7 +791,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 260); // + v311 conversion-first prospecting + v311 rollback snapshot + v312 business explorer/funnel
+  assert.equal(pending.length, 262); // + v311 money kernel + v312 pot migration
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

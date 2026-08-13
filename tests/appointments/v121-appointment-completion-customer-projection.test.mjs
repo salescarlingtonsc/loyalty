@@ -128,11 +128,16 @@ test('writer registry and both migration plans bind v121',()=>{
     ({id})=>id==='db.fn:app.on_sale_recorded/0'
   );
   assert.ok(saleWriter);
+  // V311 (W5a) re-stated app.on_sale_recorded from the v37b + v121 lineage to land the
+  // per-programme earn loop, so it is now the defining migration. The v121 boundary itself
+  // is unchanged and still asserted — the re-state kept the predicate verbatim, and the
+  // migration re-runs v121's own postcondition battery.
   assert.equal(
     saleWriter.latest_file,
-    '20260721000017_frenly_v37b_versioned_retention_taxonomy.sql'
+    '20260813001400_nestly_v311_programme_money_kernel.sql'
   );
   assert.match(saleWriter.loyalty_boundary,/resolves exactly rw/);
+  assert.match(saleWriter.programme_scope,/ON CONFLICT arbiter NAMES/);
   assert.match(
     sourcePlan,
     /20260731_nestly_v121_effective_loyalty_sale_earn_boundary\.sql/
