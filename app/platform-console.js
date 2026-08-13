@@ -2935,6 +2935,11 @@
   });
   const PLATFORM_COPY_V297=Object.freeze({
     'zh-CN':Object.freeze({
+      /* v297: drawer assignment (zh-CN). */
+      'Assign to':'分配给',
+      'Choose a consultant':'选择顾问',
+      'Assign':'分配',
+      'Prospect assigned.':'潜在客户已分配。',
       /* v297: provider discovery / import panel (zh-CN). */
       'Find businesses':'查找商家',
       'Search a provider for businesses in one area and category, preview what is new, then import. Preview never writes and never spends a details lookup.':'按区域和类别向数据源搜索商家，先预览新增结果，再导入。预览不会写入数据，也不会消耗详情查询。',
@@ -3022,6 +3027,11 @@
       'Saved filter updated.':'已保存的筛选已更新。'
     }),
     ms:Object.freeze({
+      /* v297: drawer assignment (ms). */
+      'Assign to':'Tugaskan kepada',
+      'Choose a consultant':'Pilih perunding',
+      'Assign':'Tugaskan',
+      'Prospect assigned.':'Prospek telah ditugaskan.',
       /* v297: provider discovery / import panel (ms). */
       'Find businesses':'Cari perniagaan',
       'Search a provider for businesses in one area and category, preview what is new, then import. Preview never writes and never spends a details lookup.':'Cari perniagaan daripada penyedia mengikut satu kawasan dan kategori, pratonton apa yang baharu, kemudian import. Pratonton tidak pernah menulis dan tidak membelanjakan carian butiran.',
@@ -9237,7 +9247,7 @@
     const found=asArray(sources).find(source=>/^https?:\/\//i.test(String(source.url||'')));
     return found?String(found.url):'';
   }
-  function prospectingDetailHtml(detail,CUI) {
+  function prospectingDetailHtml(detail,CUI,consultants=[]) {
     const prospect=asObject(detail.prospect);
     const business=asObject(detail.business);
     const location=asObject(detail.location);
@@ -9374,7 +9384,7 @@
         const title=overlay.querySelector('#prospectingDetailTitle');
         const name=String(asObject(detail.business).name||asObject(detail.prospect).name||'');
         if(title&&name)title.textContent=name;
-        overlay.querySelector('[data-detail]').innerHTML=prospectingDetailHtml(detail,CUI);
+        overlay.querySelector('[data-detail]').innerHTML=prospectingDetailHtml(detail,CUI,asArray(options.consultants));
         const afterSave=async()=>{
           await load();
           if(typeof options.onChanged==='function')await options.onChanged();
@@ -9383,6 +9393,22 @@
         if(log)log.onclick=()=>prospectingOutreachModal(context,prospectId,{onSaved:afterSave});
         const followUp=overlay.querySelector('[data-prospecting-follow-up]');
         if(followUp)followUp.onclick=()=>prospectingOutreachModal(context,prospectId,{followUpOnly:true,onSaved:afterSave});
+        /* Assignment honours the standing owner rule: ONLY the super admin assigns.
+           detail.can_assign mirrors app.is_super_admin() and the RPC re-checks it. */
+        const assign=overlay.querySelector('[data-prospecting-assign]');
+        if(assign)assign.onclick=async()=>{
+          const chosen=String(overlay.querySelector('#prospectingAssignSelect')?.value||'');
+          if(!chosen)return;
+          assign.disabled=true;
+          try{
+            await rpc(sb,'platform_assign_prospect_v89',{p_prospect:prospectId,p_consultant:chosen,p_reason:'Assigned from prospecting'});
+            CUI.announce(pt('Prospect assigned.'));
+            await afterSave();
+          }catch(error){
+            assign.disabled=false;
+            CUI.announce(platformErrorMessage(error,'That assignment could not be saved.'),{assertive:true});
+          }
+        };
       }catch(error){
         if(!overlay.isConnected)return;
         overlay.querySelector('[data-detail]').innerHTML=error?.platformUpdateRequired
@@ -9430,7 +9456,7 @@
       function openRow(prospectId,name) {
         state.selected=String(prospectId||'');
         paintMap();
-        openProspectingDetail(state.selected,context,{name:String(name||''),onChanged:refreshAll});
+        openProspectingDetail(state.selected,context,{name:String(name||''),consultants:asArray(taxonomy.consultants),onChanged:refreshAll});
       }
       function paintList() {
         const host=listHost();
@@ -9537,7 +9563,7 @@
           try{
             const {data,error}=await sb.functions.invoke('business-discovery',{body:{
               query:{query:categoryLabel()+' in '+area()+' Singapore',
-                     planningArea:area(),categoryKey:category()},
+                     planningArea:area(),categoryKey:category(),maxPages:3},
               commit
             }});
             if(error)throw error;
@@ -9798,7 +9824,13 @@
               ['Consultant',consultant.display_name?escapeHtml(consultant.display_name):null]
             ])
           : `<div class="wide">${localizedEmptyHtml('This firm has no subscription yet.')}</div>`
-      }</dl>`})}
+      }</dl>${detail.can_assign===true?`<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1 1 200px">${CUI.field({id:'prospectingAssignSelect',label:pt('Assign to'),control:'select',
+          options:[{value:'',label:pt('Choose a consultant')}].concat(consultants.map(entry=>({
+            value:String(entry.id||''),label:String(entry.name||''),
+            selected:String(entry.id||'')===String(prospect.assigned_consultant_id||'')})))})}</div>
+        <button type="button" class="btn sm" data-prospecting-assign>${escapeHtml(pt('Assign'))}</button>
+      </div>`:''}`})}
       ${CUI.card({title:'Contacts',description:'Call or message the people who answer for this firm.',
         body:contacts.length
           ? CUI.table({caption:'Contacts',headers:['Name','Role','Email','Contact'],rows:companyDetailContactRows(contacts,CUI)})
