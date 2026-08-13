@@ -46,6 +46,15 @@
  *      auto-saves ~900ms later with no button pressed; Remove writes active:false and leaves the
  *      row in place with Undo (which writes active:true back); and removing the last tier of a
  *      tier model is refused inline. Zero dialogs throughout — the undo is the safety.
+ *   o. V305: the four scenarios run the steps their own semantics allow. Tiered membership reads
+ *      Choose · Climbing · Tiers · Go live with NO Reward chip (points_mode='tiers' refuses
+ *      catalogue claims); Climbing defaults to Visits with no earn input, and choosing "Points
+ *      earned" reveals it inline; Next records {tier_basis:'points', earn_points_per_dollar};
+ *      step 1 carries the integrity line for the direction being taken; Go live carries the
+ *      cannot-claim line beside a mode line that names what is preserved; publish records
+ *      points_mode='tiers' AFTER publish_loyalty_config; and NOT ONE reward write is recorded
+ *      across the whole switch, with all four rewards still in the table afterwards. Then
+ *      Points + tiers: five steps, Earning untouched, and the basis control on the Tiers step.
  *
  * Serves on 4303 deliberately: sibling worktrees use 4173/4196 and a parallel session was found
  * squatting 4203, and evidence has been captured from the wrong tree that way before. The probe
@@ -272,8 +281,24 @@ const stubSource=`(()=>{
         window.__V301.published.push(args&&args.p_version);
         TABLES.loyalty_programs=[{...draft.program,id:'prog-1',business_id:BIZ,current_config_version_id:draft.id,configuration_status:'published'}];
         TABLES.businesses=[{...bizRow,active_config_version_id:draft.id}];
-        TABLES.loyalty_rewards=draft.rewards.map(r=>({...r,id:r.reward_id}));
-        TABLES.loyalty_tiers=draft.tiers.map(t=>({...t,id:t.tier_id||t.id}));
+        /* V305: UPSERT, not replace. publish_loyalty_config UPDATEs loyalty_rewards and
+           loyalty_tiers FROM the versions the draft carries and leaves every row the draft does
+           not carry untouched — a draft legitimately holds only what it has been made to hold,
+           because create_loyalty_config_draft copies the programme row and the tiers but not the
+           reward versions. The old wholesale replace made publishing a draft that touched no
+           reward look like it deleted the whole catalogue, which is the opposite of what the
+           server does and made "programs integrity" untestable here. */
+        const upsertV305=(rows,versions,key)=>{
+          const byId=new Map(rows.map(row=>[String(row.id),row]));
+          versions.forEach(version=>{
+            const id=String(version[key]||version.id||'');
+            if(!id)return;
+            byId.set(id,{...(byId.get(id)||{}),...version,id});
+          });
+          return [...byId.values()];
+        };
+        TABLES.loyalty_rewards=upsertV305(TABLES.loyalty_rewards,draft.rewards,'reward_id');
+        TABLES.loyalty_tiers=upsertV305(TABLES.loyalty_tiers,draft.tiers,'tier_id');
         TABLES.firm_config_versions=[];
         draft.id=null;draft.rewards=draft.rewards.slice();draft.tiers=draft.tiers.slice();
         return {status:'ok'};
@@ -605,7 +630,13 @@ try{
     await go('#/grow');
     await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
   };
-  const cardsV303=[['points','redeem','Points System',4],['tiers','tiers','Tiered membership',5],
+  /* V305 (owner: "when i press 'tiered membership' - it shows both tier & points? can you explain
+     the logic?"): Tiered membership runs FOUR steps now, not five — Choose · Climbing · Tiers ·
+     Go live. The Reward step it used to carry offered rewards points_mode='tiers' refuses to let
+     customers claim, and the points earn rate only means climbing speed under a points basis, so
+     it moved inside Climbing. Points System and Stamp card are unchanged at four; Points + tiers
+     keeps all five and is exercised in step (o). */
+  const cardsV303=[['points','redeem','Points System',4],['tiers','tiers','Tiered membership',4],
     ['stamps','stamps','Stamp card',4]];
   for(const [topic,model,label,stepCount] of cardsV303){
     await reloadGrowV303();
@@ -676,6 +707,8 @@ try{
   await reloadGrowV303();
   await page.click('[data-grow-topic-v229="tiers"]');
   await waitStep(1);
+  /* V305: step 2 is Climbing now, not Earning. Pressing Next through it with the default Visits
+     basis is what an owner who accepts the default does, and the ladder is still step 3. */
   await page.click('#growSetupNextV301');await waitStep(2);
   await page.click('#growSetupNextV301');await waitStep(3);
   const tiersBody=await page.locator('#growSetupBodyV301').innerText();
@@ -701,9 +734,12 @@ try{
     'and the whole tier row, so an advanced-editor field is never blanked by a two-field form');
   assertTrue(typeof tierSave[0].p_expected_snapshot_hash==='string',
     'the write carries the snapshot hash it read');
-  assertTrue(await page.locator('#growSetupBodyV301').innerText().then(t=>/Free flat white/.test(t)),
-    'step 4 is the Reward step, carrying the live catalogue');
-  await page.click('#growSetupNextV301');await waitStep(5);
+  /* V305: step 4 is Go live. It used to be a Reward step listing the live catalogue — the exact
+     thing the owner asked about, because points_mode='tiers' will not let a customer claim any of
+     it. The catalogue is not lost, it is simply not this programme's question. */
+  assertTrue(/Go live/.test(await page.locator('.grow-setup-step-v301.is-current').innerText())
+    &&await page.locator('[data-grow-setup-rewardform-v301]').count()===0,
+    'step 4 is the Go-live step, and does NOT re-offer the reward catalogue tiers-only cannot claim');
   await page.waitForFunction(()=>!/Checking what changes/.test(
     document.getElementById('growSetupChangesV301')?.textContent||''),null,{timeout:20000});
   const goLiveText=await page.locator('#growSetupBodyV301').innerText();
@@ -887,6 +923,8 @@ try{
     'none of add / edit / auto-save / remove / undo moved the owner off the Reward step');
 
   /* n4. The Tiers step, same three abilities. */
+  /* V305: the ladder is still step 3 on a tiers-only programme — step 2 is Climbing now rather
+     than Earning, so the walk to it is unchanged. */
   await reloadGrowV303();
   await page.click('[data-grow-topic-v229="tiers"]');
   await waitStep(1);
@@ -930,8 +968,207 @@ try{
     'and the refusal names the way out rather than being a dead end');
   await noModal('after the refused last-tier removal');
 
+  /* ---- o. V305: four scenarios, four step lists, and integrity said out loud ---- */
+  /* Owner, 2026-08-13, on the shipped V304 build:
+       "when i press 'tiered membership' - it shows both tier & points? can you explain the logic?"
+       "firms should be able to choose either they wants points only / tiered only / tier + points
+        / stamps - these are 4 scenarios"
+       "so if the points only rewards is already activated and firms press tier + points
+        (technically the points structure remains the same and just needs to edit the tiered
+        membership) - vice versa"
+       "you need to ensure programs integrity"
+     The logic could not be explained because it was wrong: Tiered membership ran a Reward step
+     under a mode (points_mode='tiers') that refuses catalogue claims, and a points earn-rate step
+     under a basis (tier_basis='visits') the rate does not touch. This step walks the corrected
+     tiers-only list on the LIVE points fixture, and proves the promise in the fourth quote the
+     only way that counts: no reward write is recorded anywhere in the walk, and the catalogue is
+     still in the table when the programme has been republished as tiers. */
+  say('o. Tiered membership runs Choose·Climbing·Tiers·Go live, and preserves every reward');
+  await page.evaluate(()=>{location.hash='#/grow'});
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
+  /* Back to the LIVE POINTS shape — the state the owner's own workspace is in when they press
+     Tiered membership, which is what makes the integrity question real. */
+  const seedLivePointsV305=async()=>page.evaluate(()=>{
+    const T=window.__V301.tables,biz=window.__V301.biz,D=window.__V301.draft;
+    D.id=null;D.rewards.length=0;D.tiers.length=0;
+    T.firm_config_versions.length=0;
+    T.businesses[0].active_config_version_id='pub-1';
+    T.businesses[0].points_mode='redeem';
+    T.loyalty_programs[0]={...T.loyalty_programs[0],active:true,current_config_version_id:'pub-1',
+      configuration_status:'published',loyalty_model:'points_tiers',tier_basis:'visits'};
+    T.loyalty_rewards.length=0;
+    ['Free flat white','Free pastry','5 off','Free tote'].forEach((name,index)=>{
+      T.loyalty_rewards.push({id:`lr-${index+1}`,business_id:biz,active:true,customer_name:name,
+        name,cost_points:200*(index+1),credit_cents:0,entitlement_expiry_days:null,usage_limit:null,
+        min_tier_id:null,min_tier_threshold:null,estimated_cost_cents:300*(index+1),sort:index,
+        claim_available_from:null,claim_available_until:null,created_at:'2026-06-01T00:00:00Z'});
+    });
+    T.loyalty_tiers.length=0;
+    [['Bronze',0],['Silver',10],['Gold',25]].forEach(([name,threshold],index)=>{
+      T.loyalty_tiers.push({id:`tier-${index+1}`,business_id:biz,name,threshold,
+        points_multiplier:1,perk_note:null,sort:index,active:true,
+        effective_from:null,expires_at:null});
+    });
+  });
+  await seedLivePointsV305();
+  /* Every reward write the wizard could possibly make, from this point on. The count is taken
+     BEFORE the walk and compared after publishing — "programs integrity" is not a claim about
+     intent, it is a claim about which writes happen. */
+  const rewardWriteCountV305=()=>page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft'
+      &&call.args&&call.args.p_config&&call.args.p_config.reward).length
+    +window.__V301.rpc.filter(call=>call.name==='ensure_published_reward_in_draft_v138').length);
+  const rewardWritesAtStartV305=await rewardWriteCountV305();
+  await reloadGrowV303();
+  await page.click('[data-grow-topic-v229="tiers"]');
+  await waitStep(1);
+  await noModal('on step 1 of the tiers-only wizard');
+
+  /* o1. The stepper itself is the answer to "can you explain the logic?". */
+  const stepLabelsV305=await page.locator('.grow-setup-step-v301').allInnerTexts();
+  const cleanLabelsV305=stepLabelsV305.map(text=>text.replace(/[0-9✓\s]+/g,' ').trim());
+  assertTrue(cleanLabelsV305.length===4,
+    `Tiered membership runs FOUR steps (${JSON.stringify(cleanLabelsV305)})`);
+  assertTrue(cleanLabelsV305.join('|')==='Choose|Climbing|Tiers|Go live',
+    `and they read Choose · Climbing · Tiers · Go live (${JSON.stringify(cleanLabelsV305)})`);
+  assertTrue(!cleanLabelsV305.some(label=>/Reward/.test(label)),
+    'there is NO Reward chip — points_mode=tiers refuses catalogue claims, so a Reward step would offer what the engine will not honour');
+
+  /* o2. Integrity, said out loud, before anything is written. */
+  const integrityV305=page.locator('[data-grow-setup-integrity-v305]');
+  assertTrue(await integrityV305.count()===1,
+    'step 1 carries an integrity line, because the highlighted card differs from what is LIVE');
+  assertTrue((await integrityV305.getAttribute('data-grow-setup-integrity-v305'))==='redeem>tiers',
+    'and it is the line for THIS direction — live points → tiers only');
+  const integrityTextV305=await integrityV305.innerText();
+  assertTrue(/rewards stay saved/.test(integrityTextV305)&&/cannot claim/.test(integrityTextV305),
+    `naming both halves of the truth (${JSON.stringify(integrityTextV305)})`);
+  await page.click('[data-grow-setup-model-v303="both"]');
+  await page.waitForTimeout(150);
+  assertTrue((await page.locator('[data-grow-setup-integrity-v305]')
+    .getAttribute('data-grow-setup-integrity-v305'))==='redeem>both',
+    'switching the highlighted card switches the line — points → points + tiers is its own promise');
+  assertTrue(/stays exactly as it is/.test(await page.locator('[data-grow-setup-integrity-v305]').innerText()),
+    'and it answers the owner’s own question: the points structure remains the same');
+  await page.click('[data-grow-setup-model-v303="redeem"]');
+  await page.waitForTimeout(150);
+  assertTrue(await page.locator('[data-grow-setup-integrity-v305]').count()===0,
+    'choosing the model that is already live shows no line at all — nothing is changing');
+  await page.click('[data-grow-setup-model-v303="tiers"]');
+  await page.waitForTimeout(150);
+
+  /* o3. Climbing: the one question that decides the ladder. */
+  await page.click('#growSetupNextV301');await waitStep(2);
+  assertTrue(/Climbing/.test(await page.locator('.grow-setup-step-v301.is-current').innerText()),
+    'step 2 is Climbing');
+  assertTrue((await page.locator('#growSetupBodyV301').innerText()).includes('How do customers climb tiers?'),
+    'and it asks how customers climb tiers');
+  assertTrue(await page.locator('[data-grow-setup-basis-v305="visits"][aria-checked="true"]').count()===1,
+    'Visits is selected by default, matching the stored tier_basis');
+  assertTrue(await page.locator('#growSetupEarnV301').count()===0,
+    'and NO points earn-rate input is shown — under a visits basis the rate does not touch climbing (owner: "it shows both tier & points?")');
+  await noModal('on the Climbing step');
+  await page.click('[data-grow-setup-basis-v305="points"]');
+  await page.waitForSelector('#growSetupEarnV301',{timeout:20000});
+  assertTrue(await page.locator('[data-grow-setup-climbearn-v305]').count()===1,
+    'choosing "Points earned" reveals the earn rate INLINE on the same step — under a points basis it IS the climbing speed');
+  await page.fill('#growSetupEarnV301','3');
+  const configWritesBeforeV305=await page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft').length);
+  await page.click('#growSetupNextV301');await waitStep(3);
+  const climbWriteV305=await page.evaluate(before=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft').slice(before)
+    .map(call=>call.args.p_config).find(config=>config&&config.tier_basis),configWritesBeforeV305);
+  assertTrue(Boolean(climbWriteV305)&&climbWriteV305.tier_basis==='points',
+    `Next saved the basis through save_loyalty_config_draft (${JSON.stringify(climbWriteV305&&climbWriteV305.tier_basis)})`);
+  assertTrue(Number(climbWriteV305.earn_points_per_dollar)===3,
+    `and the earn rate with it (${JSON.stringify(climbWriteV305.earn_points_per_dollar)})`);
+
+  /* o4. The ladder re-units itself, because the threshold now means points. */
+  assertTrue(/Tiers/.test(await page.locator('.grow-setup-step-v301.is-current').innerText()),
+    'step 3 is the ladder');
+  assertTrue((await page.locator('label[for="growSetupTierThresholdV303"]').innerText()).includes('Points'),
+    'and its threshold is labelled in POINTS, because that is what the owner just chose');
+  assertTrue(await page.locator('[data-grow-setup-basisrow-v305]').count()===0,
+    'tiers-only does not repeat the basis control here — its own Climbing step already asked');
+  await page.click('#growSetupNextV301');await waitStep(4);
+
+  /* o5. Go live carries the mode change AND what survives it. */
+  await page.waitForFunction(()=>!/Checking what changes/.test(
+    document.getElementById('growSetupChangesV301')?.textContent||''),null,{timeout:20000});
+  const goLiveV305=await page.locator('#growSetupBodyV301').innerText();
+  assertTrue(/Points will now build tier membership/.test(goLiveV305),
+    'the mode change is stated in plain words before Publish');
+  assertTrue(/Every reward you set up stays saved/.test(goLiveV305),
+    'and the same sentence NAMES what is preserved (owner: "you need to ensure programs integrity")');
+  assertTrue(await page.locator('[data-grow-setup-claimline-v305]').count()===1,
+    'a tiers-only programme also carries the cannot-claim line, beside the mode line');
+  const claimLineV305=await page.locator('[data-grow-setup-claimline-v305]').innerText();
+  assertTrue(/cannot claim point rewards/.test(claimLineV305)&&/stay saved/.test(claimLineV305),
+    `which says both halves too (${JSON.stringify(claimLineV305)})`);
+  assertTrue(!/Free flat white/.test(goLiveV305),
+    'and the summary describes the LADDER, not a catalogue this mode will not let customers claim');
+
+  /* o6. Publish — mode after publish, and not one reward touched anywhere in the walk. */
+  const publishedBeforeV305=await page.evaluate(()=>window.__V301.published.length);
+  await page.click('#growSetupNextV301');
+  await page.waitForSelector('.grow-setup-done-v301',{timeout:20000});
+  await noModal('after publishing a tiers-only programme');
+  const orderV305=await page.evaluate(()=>({
+    published:window.__V301.published.length,
+    publishSeq:Math.max(...window.__V301.rpc.filter(c=>c.name==='publish_loyalty_config').map(c=>c.seq)),
+    modeWrites:window.__V301.writes.filter(w=>w.table==='businesses'&&w.payload&&w.payload.points_mode),
+    rewardRows:window.__V301.tables.loyalty_rewards.map(reward=>reward.customer_name)}));
+  assertTrue(orderV305.published===publishedBeforeV305+1,'publish_loyalty_config ran exactly once');
+  const lastModeV305=orderV305.modeWrites[orderV305.modeWrites.length-1];
+  assertTrue(lastModeV305&&lastModeV305.payload.points_mode==='tiers',
+    `points_mode was switched to tiers (${JSON.stringify(lastModeV305&&lastModeV305.payload)})`);
+  assertTrue(lastModeV305.seq>orderV305.publishSeq,
+    `and AFTER publish_loyalty_config (mode ${lastModeV305.seq} vs publish ${orderV305.publishSeq})`);
+  assertTrue(await rewardWriteCountV305()===rewardWritesAtStartV305,
+    'NOT ONE reward write was recorded across the whole model switch — no save, no materialise, no archive');
+  assertTrue(orderV305.rewardRows.length===4
+    &&['Free flat white','Free pastry','5 off','Free tote'].every(name=>orderV305.rewardRows.includes(name)),
+    `and all four rewards are still in the table (${JSON.stringify(orderV305.rewardRows)})`);
+  assertTrue(await page.locator('#growSetupAddAnotherV301').count()===0,
+    'the success panel offers no "Add another reward" — there is no Reward step, and this mode would not let a customer claim it');
+
+  /* o7. Points + tiers: five steps, and the basis control on the ladder step instead. */
+  /* The owner's third question, from the other direction: adding tiers to a live points programme
+     must not disturb the points half, so that path keeps its Earning and Reward steps and gains
+     only the one control the tier half was missing. */
+  await page.evaluate(()=>{location.hash='#/grow'});
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
+  await seedLivePointsV305();
+  await reloadGrowV303();
+  await page.click('[data-grow-topic-v229="points"]');
+  await waitStep(1);
+  await page.click('[data-grow-setup-model-v303="both"]');
+  await page.waitForTimeout(200);
+  const bothLabelsV305=(await page.locator('.grow-setup-step-v301').allInnerTexts())
+    .map(text=>text.replace(/[0-9✓\s]+/g,' ').trim());
+  assertTrue(bothLabelsV305.join('|')==='Choose|Earning|Tiers|Reward|Go live',
+    `Points + tiers keeps all five steps (${JSON.stringify(bothLabelsV305)})`);
+  await page.click('#growSetupNextV301');await waitStep(2);
+  assertTrue(await page.locator('#growSetupEarnV301').count()===1,
+    'its Earning step is untouched — the points structure remains the same');
+  await page.click('#growSetupNextV301');await waitStep(3);
+  assertTrue(await page.locator('[data-grow-setup-basisrow-v305]').count()===1,
+    'and the Tiers step carries the compact "Tier level is earned by" control at its top');
+  assertTrue(await page.locator('[data-grow-setup-basis-v305="visits"][aria-checked="true"]').count()===1,
+    'defaulted from the stored basis, not guessed');
+  assertTrue((await page.locator('label[for="growSetupTierThresholdV303"]').innerText()).includes('Visits'),
+    'so the threshold below it is labelled in the unit that control names');
+  await page.click('[data-grow-setup-basis-v305="points"]');
+  await page.waitForTimeout(200);
+  assertTrue((await page.locator('label[for="growSetupTierThresholdV303"]').innerText()).includes('Points'),
+    'and changing it re-labels the threshold immediately, before any number is typed');
+  await noModal('on the Points + tiers ladder step');
+
   if(pageErrors.length)process.stdout.write(`note: page errors observed (non-fatal): ${JSON.stringify(pageErrors)}\n`);
-  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-n)\n');
+  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-o)\n');
 }catch(error){
   process.stdout.write(`V301 walkthrough FAIL at ${step}\n${error?.stack||error}\n`);
   if(pageErrors.length)process.stdout.write(`page errors: ${JSON.stringify(pageErrors)}\n`);

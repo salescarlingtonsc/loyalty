@@ -91,10 +91,17 @@ test('V301 (b) the stepper renders exactly the steps the owner named, four or fi
      instead of being written down; the ids and the data-grow-setup-step-v301 contract are
      unchanged and simply count against whichever list is active. */
   assert.match(app, /const GROW_SETUP_STEPS_TIERS_V303=\[\[1,'Choose'\],\[2,'Earning'\],\[3,'Tiers'\],\[4,'Reward'\],\[5,'Go live'\]\];/);
-  assert.match(wizard, /const stepListV303=\(\)=>state\.pick==='tiers'\|\|state\.pick==='both'\s*\r?\n?\s*\?GROW_SETUP_STEPS_TIERS_V303:GROW_SETUP_STEPS_V301;/);
+  /* V305 (owner 2026-08-13: "when i press 'tiered membership' - it shows both tier & points? can
+     you explain the logic?"). The five-step list stays — for Points + tiers, where both halves are
+     real. Tiers-ONLY gets its own four, because two of those five were wrong for it: a Reward step
+     under points_mode='tiers', where redemption is OFF, and a points earn-rate step under
+     tier_basis='visits', where the rate does not touch climbing at all. */
+  assert.match(app, /const GROW_SETUP_STEPS_TIERSONLY_V305=\[\[1,'Choose'\],\[2,'Climbing'\],\[3,'Tiers'\],\[4,'Go live'\]\];/);
+  assert.match(wizard, /const stepListV303=\(\)=>state\.pick==='tiers'\?GROW_SETUP_STEPS_TIERSONLY_V305\s*\r?\n?\s*:state\.pick==='both'\?GROW_SETUP_STEPS_TIERS_V303:GROW_SETUP_STEPS_V301;/);
   assert.match(wizard, /stepListV303\(\)\.map\(\(\[number,label\]\)=>\{/);
   // The body follows the step's KIND, never its number — on a tier model step 3 is the ladder.
   assert.match(wizard, /return kind==='choose'\?stepOneHtml\(\):kind==='earn'\?stepTwoHtml\(\)/);
+  assert.match(wizard, /:kind==='climb'\?climbStepHtmlV305\(\)/);
   assert.match(wizard, /:kind==='tiers'\?tiersStepHtml\(\):kind==='reward'\?stepThreeHtml\(\):stepFourHtml\(\);/);
   assert.match(wizard, /data-grow-setup-goto-v301="\$\{number\}"/);
   // Completed steps carry a tick and stay clickable; unvisited ones are not yet reachable.
@@ -195,21 +202,33 @@ test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier
 });
 
 test('V301 (b) step 2 mirrors the #lsave field set, minus what belongs to publishing', () => {
+  /* V305: the row build moved out of the Earning branch into programRowV305, so the tiers-only
+     Climbing step writes the IDENTICAL row rather than a second, nearly-identical one. Same
+     fields, one writer — the assertions follow it there. */
+  assert.match(wizard, /const programRowV305=model=>\{/);
   assert.match(wizard, /const row=\{business_id:S\.biz\.id,kind:'points',loyalty_model:model,\s*\r?\n?\s*expiry_mode:String\(base\?\.expiry_mode\|\|'none'\)\};/);
   assert.match(wizard, /if\(model==='stamps'\)row\.stamp_per_cents=Math\.round\(state\.stampSpend\*100\);/);
   assert.match(wizard, /else row\.earn_points_per_dollar=state\.earn;/);
   // V262's stored cost-per-point pair, written for a fresh programme exactly as #lsave would.
   assert.match(wizard, /else if\(writesCostDefault\(\)\)\{row\.redeem_points=costBasis;row\.reward_credit_cents=Math\.round\(0\.01\*100\*costBasis\)\}/);
   assert.match(wizard, /const costBasis=Number\(base\?\.redeem_points\)>0\?Math\.round\(Number\(base\.redeem_points\)\):800;/);
-  assert.match(wizard, /if\(model==='points_tiers'&&base\?\.tier_basis\)row\.tier_basis=String\(base\.tier_basis\);/);
+  /* V305: tier_basis is read from STATE now, not straight off the stored row — the Climbing step
+     and the Points + tiers basis control are how the owner sets it, and state carries the stored
+     value until they do. */
+  assert.match(wizard, /if\(model==='points_tiers'&&state\.tierBasis\)row\.tier_basis=state\.tierBasis;/);
+  assert.match(wizard, /tierBasis:String\(base\?\.tier_basis\|\|'visits'\)==='points'\?'points':'visits',/);
   /* configuration_status and active are NOT written here — publishing owns them, and a wizard
      that set them would publish a paused programme by accident (the V258 defect). Comments are
-     stripped before the check so the explanatory prose above does not satisfy it. */
-  const stepTwo = wizard
-    .slice(wizard.indexOf('if(state.step===2)return withBusy'), wizard.indexOf('if(state.step===3)return withBusy'))
+     stripped before the check so the explanatory prose above does not satisfy it.
+     V305: sliced on the helper the branch now calls, which is where those keys would have to
+     appear; the V303 kind-based dispatch had already left the old `state.step===2` slice matching
+     nothing at all, so this check was passing vacuously. */
+  const programRow = wizard
+    .slice(wizard.indexOf('const programRowV305=model=>{'), wizard.indexOf('async function advance(){'))
     .replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.doesNotMatch(stepTwo, /configuration_status/);
-  assert.doesNotMatch(stepTwo, /row\.active|active:/);
+  assert.ok(programRow.length > 200, 'the programme-row helper was found and sliced');
+  assert.doesNotMatch(programRow, /configuration_status/);
+  assert.doesNotMatch(programRow, /row\.active|active:/);
 });
 
 test('V301 (b) step 3 writes the reward through the saveReward envelope', () => {
@@ -498,12 +517,17 @@ test('V303 (e) Add reward and per-reward Edit never open a dialog again', () => 
      armed, and the deep editor keeps its dialogs behind "More reward settings". */
   assert.match(grow, /if\(canSetupGrow&&\(kind==='add'\|\|kind==='catalogue'\)&&!button\.closest\('\[data-reward-history-v294\]'\)\)\{/);
   assert.match(grow, /pendingGrowSetupRewardV303=kind==='add'\s*\r?\n?\s*\?\{mode:'add'\}\s*\r?\n?\s*:\{mode:'edit',id:button\.dataset\.rewardId\|\|null\};/);
-  // The wizard consumes it ONCE and opens on the Reward step with that reward loaded.
-  assert.match(wizard, /const rewardHandoffV303=pendingGrowSetupRewardV303;pendingGrowSetupRewardV303=null;/);
+  /* The wizard consumes it ONCE and opens on the Reward step with that reward loaded.
+     V305: and only when the chosen model HAS a Reward step. Tiers-only does not, and the old
+     stepNumberForV303 fallback ("the last step") would have dropped the owner on the publish gate
+     with a reward form armed. */
+  assert.match(wizard, /const rewardHandoffV303=stepNumberOrNullV305\('reward'\)===null\?null:pendingGrowSetupRewardV303;\s*\r?\n?\s*pendingGrowSetupRewardV303=null;/);
   assert.match(wizard, /state\.step=stepNumberForV303\('reward'\);/);
   assert.match(wizard, /\?state\.rewards\.find\(reward=>reward\.id===String\(rewardHandoffV303\.id\|\|''\)\)/);
   // "Add another reward" on the success panel lands on the same step, wherever it is numbered.
   assert.match(wizard, /goto\(stepNumberForV303\('reward'\)\);/);
+  // ...and is not offered at all where there is no Reward step to go back to.
+  assert.match(wizard, /\$\{stepNumberOrNullV305\('reward'\)===null\?'':'<button type="button" class="btn ghost sm" id="growSetupAddAnotherV301">Add another reward<\/button>'\}/);
   /* Reward HISTORY cards carry the same contract but the job there is un-archiving, which the
      wizard's three-field form cannot do and does not show — so those keep the full editor. */
   assert.match(app, /data-reward-history-v294/);
@@ -541,6 +565,180 @@ test('V301 (f) the Studio rule builder’s publish flow carries the same guard',
   assert.match(app, /const studioPublishTriggerV301=\$\('studioPublish'\);/);
   assert.match(app, /function renderPublishImpactDialog\(impact,releaseTriggerV301=\(\)=>\{\}\)\{/);
   assert.match(app, /const close=\(\)=>\{if\(deactivate\)deactivate\(\);else \$\('studioPubModal'\)\?\.remove\(\);releaseTriggerV301\(\);\};/);
+});
+
+/* ---------------- G. V305: four scenarios, four step lists, and integrity said out loud ------- */
+
+test('V305 (g) each of the owner’s four scenarios runs the steps its own semantics allow', () => {
+  /* Owner 2026-08-13: "when i press 'tiered membership' - it shows both tier & points? can you
+     explain the logic?" and "firms should be able to choose either they wants points only /
+     tiered only / tier + points / stamps - these are 4 scenarios".
+     The logic could not be explained because it was wrong. Tiered membership ran
+     Choose · Earning · Tiers · Reward · Go live, and two of those steps contradict the engine the
+     card selects:
+       · points_mode='tiers' turns redemption OFF (growTiersModeNoteV229 states this on the
+         Programmes page: rewards stay saved, customers cannot claim them while tiers run alone),
+         so a Reward step offered rewards the engine would refuse;
+       · tier_basis='visits' — the default — means the points earn rate has no effect on climbing,
+         so an earn-rate step asked for a number that changes nothing.
+     Four lists now, one per scenario. */
+  assert.match(app, /const GROW_SETUP_STEPS_V301=\[\[1,'Choose'\],\[2,'Earning'\],\[3,'Reward'\],\[4,'Go live'\]\];/);
+  assert.match(app, /const GROW_SETUP_STEPS_TIERSONLY_V305=\[\[1,'Choose'\],\[2,'Climbing'\],\[3,'Tiers'\],\[4,'Go live'\]\];/);
+  assert.match(app, /const GROW_SETUP_STEPS_TIERS_V303=\[\[1,'Choose'\],\[2,'Earning'\],\[3,'Tiers'\],\[4,'Reward'\],\[5,'Go live'\]\];/);
+  // Tiers-only carries NO Reward step and NO separate Earning step — that is the whole report.
+  const tiersOnly = app.match(/const GROW_SETUP_STEPS_TIERSONLY_V305=\[\[[\s\S]*?\]\];/)[0];
+  assert.ok(!/Reward/.test(tiersOnly), 'tiers-only has no Reward step');
+  assert.ok(!/'Earning'/.test(tiersOnly), 'tiers-only has no standalone Earning step');
+  assert.ok(/'Climbing'/.test(tiersOnly), 'tiers-only asks the Climbing question instead');
+  // Points System and Stamp card are untouched; Points + tiers keeps all five.
+  assert.match(wizard, /const stepListV303=\(\)=>state\.pick==='tiers'\?GROW_SETUP_STEPS_TIERSONLY_V305\s*\r?\n?\s*:state\.pick==='both'\?GROW_SETUP_STEPS_TIERS_V303:GROW_SETUP_STEPS_V301;/);
+  // The new kind is a first-class step kind, not a special case bolted onto 'earn'.
+  assert.match(wizard, /label==='Climbing'\?'climb'/);
+  assert.match(wizard, /kind==='climb'\?'Climbing'/);
+  // Step numbering still comes from whichever list is active — nothing is written down.
+  assert.match(wizard, /data-grow-setup-step-v301="\$\{state\.step\}"/);
+  assert.match(wizard, /Step \$\{state\.step\} of \$\{stepCountV303\(\)\}/);
+});
+
+test('V305 (g) the Climbing step asks the one question that decides the ladder', () => {
+  assert.match(app, /const GROW_SETUP_CLIMB_V305=\[\s*\r?\n?\s*\['visits','Visits',/);
+  assert.match(app, /\['points','Points earned',/);
+  // Visits is the default, exactly as tier_basis already defaults.
+  assert.match(wizard, /tierBasis:String\(base\?\.tier_basis\|\|'visits'\)==='points'\?'points':'visits',/);
+  assert.match(wizard, /const climbStepHtmlV305=\(\)=>`<p class="grow-setup-lead-v301">How do customers climb tiers\?<\/p>/);
+  /* The earn rate is revealed INLINE on the same step, and only under a points basis — that is the
+     only basis under which an earn rate means climbing speed. It reuses the Earning step's own id,
+     so readStepFields, the live example and the input listener are one implementation. */
+  assert.match(wizard, /\$\{state\.tierBasis==='points'\s*\r?\n?\s*\?`<div data-grow-setup-climbearn-v305/);
+  assert.match(wizard, /data-grow-setup-climbearn-v305[\s\S]{0,400}?id="growSetupEarnV301"/);
+  assert.match(wizard, /Tier levels are counted from completed visits, so there is no points rate to set here\./);
+  assert.match(wizard, /if\(kind==='earn'\|\|kind==='climb'\)\{/);
+  // Next writes tier_basis (and the earn fields) through the SAME draft writer every step uses.
+  assert.match(wizard, /if\(kind==='climb'\)return withBusy\(async\(\)=>\{/);
+  assert.match(wizard, /const result=await saveDraft\(programRowV305\(model\)\);/);
+  assert.match(wizard, /if\(state\.tierBasis==='points'&&!\(state\.earn>0\)\)\{/);
+  // Selecting a basis only re-renders; nothing is written until Next, like the model cards.
+  assert.match(wizard, /host\.querySelectorAll\('\[data-grow-setup-basis-v305\]'\)\.forEach\(button=>button\.onclick=\(\)=>\{/);
+  assert.match(wizard, /state\.tierBasis=button\.dataset\.growSetupBasisV305==='points'\?'points':'visits';/);
+  // The threshold label re-reads the chosen basis, so a typed number never silently changes unit.
+  assert.match(wizard, /const tierBasisV303=\(\)=>state\.tierBasis;/);
+  assert.match(wizard, /const tierUnitLabelV303=\(\)=>tierBasisV303\(\)==='visits'\?'Visits to reach it':'Points to reach it';/);
+});
+
+test('V305 (g) Points + tiers keeps five steps and gains the basis control on the ladder step', () => {
+  /* Owner: "so if the points only rewards is already activated and firms press tier + points
+     (technically the points structure remains the same and just needs to edit the tiered
+     membership) - vice versa". The Points + tiers path is therefore unchanged except for the one
+     thing the tier half needs and did not have: a way to say how the tier is earned. */
+  assert.match(wizard, /const basis=state\.pick==='both'/);
+  assert.match(wizard, /data-grow-setup-basisrow-v305><b class="grow-setup-basislabel-v305">Tier level is earned by<\/b>\$\{climbOptionsHtmlV305\(true\)\}/);
+  // It sits ABOVE the ladder, so it is answered before the thresholds it re-units are typed.
+  assert.match(wizard, /return `<p class="grow-setup-lead-v301">What tiers do customers climb\?<\/p>\$\{basis\}\$\{rows\}/);
+  // ONE control, two placements — the compact flag changes chrome only.
+  assert.match(wizard, /const climbOptionsHtmlV305=compact=>/);
+  assert.match(wizard, /data-grow-setup-basis-v305="\$\{key\}"/);
+  // Saved with the tiers step's own Next, and only when it changed.
+  assert.match(wizard, /if\(state\.tierBasis!==initialTierBasisV305\)\{\s*\r?\n?\s*const basisResult=await runSaveV304\(\(\)=>saveDraft\(\{tier_basis:state\.tierBasis\}\)\);/);
+  assert.match(wizard, /const initialTierBasisV305=String\(base\?\.tier_basis\|\|'visits'\)==='points'\?'points':'visits';/);
+});
+
+test('V305 (g) reward validation is scoped away from tiers-only, tier validation is not', () => {
+  /* The "add one reward" rule lives INSIDE the reward branch, and tiers-only never reaches a
+     reward kind because its list has no Reward label — so the rule cannot strand an owner on a
+     step that does not exist. The tier rule applies to both tier models, unchanged. */
+  const rewardBranch = wizard.slice(wizard.indexOf("if(kind==='reward')return withBusy"),
+    wizard.indexOf('return withBusy(async()=>{\n      const activeResult=await saveDraft'));
+  assert.ok(rewardBranch.length > 200, 'the reward branch was found and sliced');
+  assert.match(rewardBranch, /if\(!hasForm&&!activeRewardsV304\(\)\.length\)\{/);
+  assert.match(rewardBranch, /state\.error='Add one reward customers can get\. Give it a name and a cost\.';/);
+  // The tier rule stays where it was, on the step both tier models run.
+  assert.match(wizard, /state\.error='Add at least one tier customers can reach\.';/);
+  assert.match(wizard, /const tierModelV303=\(\)=>state\.pick==='tiers'\|\|state\.pick==='both';/);
+  // And the Go-live summary describes the ladder rather than a catalogue tiers-only cannot claim.
+  assert.match(wizard, /const rewardOrLadderLineV305=\(\)=>state\.pick!=='tiers'\?rewardLine\(\)/);
+  assert.match(wizard, /const earnOrClimbLineV305=\(\)=>state\.pick==='tiers'&&state\.tierBasis==='visits'/);
+});
+
+test('V305 (g) integrity is SAID: step 1 names what a model switch preserves', () => {
+  /* Owner: "you need to ensure programs integrity". The engine already preserves everything — a
+     points_mode switch is a switch, never a delete — but an owner cannot see that, so a correct
+     switch still reads as "am I about to lose my rewards?". The full twelve-direction matrix is
+     written down and shown under the cards whenever the highlighted card differs from what is
+     live. Every one of them names what SURVIVES. */
+  const matrix = app.slice(app.indexOf('const GROW_SETUP_INTEGRITY_V305={'),
+    app.indexOf('const GROW_SETUP_CLIMB_V305='));
+  const models = ['redeem', 'tiers', 'both', 'stamps'];
+  for (const from of models) for (const to of models) {
+    if (from === to) continue;
+    assert.match(matrix, new RegExp(`'${from}>${to}':'`), `the ${from} → ${to} line is written down`);
+  }
+  assert.ok(matrix.match(/'[a-z]+>[a-z]+':'/g).length === 12, 'twelve directions, no diagonal');
+  // The owner's own examples, verbatim in intent.
+  assert.match(matrix, /'redeem>both':'Your points set-up stays exactly as it is — you are only adding tiers\.'/);
+  assert.match(matrix, /'redeem>tiers':'Your rewards stay saved, but customers cannot claim them while Tiered membership runs alone\.'/);
+  assert.match(matrix, /'both>redeem':'Tiers stop showing to customers but stay saved\. Points continue unchanged\.'/);
+  assert.match(matrix, /'redeem>stamps':'Your points programme stays saved\. The stamp card replaces it for customers\.'/);
+  // Shown only when the choice differs from LIVE, and never invented for a direction not listed.
+  assert.match(wizard, /const line=GROW_SETUP_INTEGRITY_V305\[`\$\{derivedModelV303\}>\$\{state\.pick\}`\];/);
+  assert.match(wizard, /return line\?`<p class="grow-setup-integrity-v305" data-grow-setup-integrity-v305=/);
+  assert.match(wizard, /\$\{integrityLineHtmlV305\(\)\}/);
+  // The Go-live mode lines name what is preserved too, and tiers-only carries the claim line
+  // whether or not the mode is CHANGING — it is true of the state being published either way.
+  assert.match(wizard, /Every reward you set up stays saved\./);
+  assert.match(wizard, /Nothing you have already set up changes\./);
+  assert.match(wizard, /const tiersOnlyClaimLineV305=\(\)=>state\.pick!=='tiers'\?''/);
+  assert.match(wizard, /While Tiered membership runs on its own, customers cannot claim point rewards\./);
+  assert.match(wizard, /data-grow-setup-claimline-v305/);
+  assert.match(html, /\.grow-setup-integrity-v305\{/);
+  assert.match(html, /\.grow-setup-basisopt-v305\{[^}]*min-height:44px/);
+});
+
+test('V305 (g) the Go-live change list cannot contradict the integrity promise', () => {
+  /* Found while pinning the tiers-only walk. A draft carries only the reward versions it has been
+     made to carry — create_loyalty_config_draft copies the programme row and the tiers, never the
+     rewards — and publish_loyalty_config UPDATEs from those versions, leaving untouched rows
+     alone. growRewardPendingChangesV291 does not know that: it puts anything live and absent from
+     the draft into `removed`. So a tiers-only draft over a live catalogue printed "Free flat white
+     — no longer offered" for every reward, directly beneath a line promising they stay saved. Two
+     statements, one screen, opposite meanings — and the wrong one was the scarier one.
+     The comparison is now scoped to the rewards the draft actually carries, which is precisely the
+     set publishing can change. An archived reward is still reported, because the draft carries
+     that version: it appears as "Offered: Yes → No" rather than vanishing. */
+  assert.match(comparison, /const draftRewardIdsV305=new Set\(\(Array\.isArray\(draftResult\?\.data\?\.rewards\)\?draftResult\.data\.rewards:\[\]\)\s*\r?\n?\s*\.map\(reward=>String\(reward\.reward_id\|\|reward\.id\|\|''\)\)\.filter\(Boolean\)\);/);
+  assert.match(comparison, /liveRewards:growAttachEligibilityV291\(\s*\r?\n?\s*pseudoSnapshot\.rewards\.filter\(reward=>draftRewardIdsV305\.has\(String\(reward\.id\|\|''\)\)\),\s*\r?\n?\s*pseudoSnapshot\.rewardEligibility\),/);
+  // The archive path is a FIELD change, so scoping the live side cannot hide a real removal.
+  assert.match(app, /\{label:'Offered',read:reward=>reward\.active!==false,show:value=>value\?'Yes':'No'\},/);
+  // The name lookups still see the whole catalogue — only the diff's live side is narrowed.
+  assert.match(comparison, /options:growRewardDiffOptionsFromSnapshotV291\(pseudoSnapshot,unit\)\}\),/);
+});
+
+test('V305 (g) a model switch NEVER deletes: the wizard writes through an exact allowlist', () => {
+  /* Owner: "you need to ensure programs integrity". The strongest form of that promise is that
+     there is nothing in this surface that COULD destroy a reward, a tier or an earn rule. Every
+     data call the wizard makes is enumerated here; a new one has to be added deliberately, with a
+     reason, rather than arriving unnoticed inside a step. */
+  const rpcNames = [...new Set([...wizard.matchAll(/sb\.rpc\('([a-z0-9_]+)'/g)].map(m => m[1]))].sort();
+  assert.deepEqual(rpcNames, [
+    'create_loyalty_config_draft',        // the draft, created on the first save only
+    'ensure_published_reward_in_draft_v138', // materialise-before-edit, never a delete
+    'get_loyalty_reward_draft',           // read-back
+    'preview_publish_impact',             // read-only gate
+    'publish_loyalty_config',             // the publish itself
+    'save_loyalty_config_draft',          // programme row / tier_basis / reward envelope
+    'save_loyalty_tier_draft_v143'        // one tier row at a time
+  ].sort(), `wizard RPC allowlist drifted: ${JSON.stringify(rpcNames)}`);
+  // The ONE table write, and it is the points_mode switch — a mode column, not a row deletion.
+  const tableWrites = [...new Set([...wizard.matchAll(/sb\.from\('([a-z_]+)'\)\.([a-z]+)\(/g)]
+    .map(m => `${m[1]}.${m[2]}`))].sort();
+  assert.deepEqual(tableWrites, ['businesses.update'], `wizard table access drifted: ${JSON.stringify(tableWrites)}`);
+  assert.match(wizard, /sb\.from\('businesses'\)\.update\(\{points_mode:target\}\)\.eq\('id',S\.biz\.id\)/);
+  // No delete, in any spelling, anywhere in the wizard.
+  assert.doesNotMatch(wizard, /\.delete\(\)/);
+  assert.doesNotMatch(wizard, /sb\.rpc\('[a-z0-9_]*(delete|remove|archive|purge)[a-z0-9_]*'/);
+  /* Removal is an ARCHIVE write through the same save helper — active:false, with Undo writing
+     active:true back — so even the owner-facing "Remove" cannot destroy a row. */
+  assert.match(wizard, /const result=await runSaveV304\(\(\)=>saveRewardFormV304\(\{id:reward\.id,name:reward\.name,\s*\r?\n?\s*budget:\(reward\.budgetCents\/100\)\.toFixed\(2\),points:String\(reward\.points\)\},\{active:false\}\)\);/);
+  assert.match(wizard, /\{active:true\}\)\);/);
 });
 
 /* ---------------- housekeeping ---------------- */

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9dfad6ceffc79c3225211d81ded031cd110c670a78b6fe044036b68da0722dad"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="e4f2b99ed3475998dc95c918e5ac9d79f0ff330a18118bcb3ac58cb789451446"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1051,6 +1051,21 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-option-v301.is-picked{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3px rgba(201,67,51,.14)}
 .grow-setup-option-icon-v301{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--tint);color:var(--coral)}
 .grow-setup-option-v301>b{font-size:1.02rem}
+/* V305 (owner: "when i press 'tiered membership' - it shows both tier & points? can you explain
+   the logic?" and "you need to ensure programs integrity"). Two new controls on this surface:
+   the integrity line under step 1's cards, which states what a model switch PRESERVES, and the
+   climbing-basis picker — full width as the tiers-only Climbing step, compact at the top of the
+   Points + tiers ladder step. Both keep the 44px tap target the rest of the wizard holds to. */
+.grow-setup-integrity-v305{margin:14px 0 0;padding:11px 13px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.9rem;line-height:1.5}
+.grow-setup-basis-v305{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.grow-setup-basisopt-v305{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-height:44px;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:inherit;font:inherit;cursor:pointer}
+.grow-setup-basisopt-v305:hover{border-color:var(--coral);background:var(--tint)}
+.grow-setup-basisopt-v305.is-picked{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3px rgba(201,67,51,.14)}
+.grow-setup-basisopt-v305>b{font-size:.98rem}
+.grow-setup-basisrow-v305{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+.grow-setup-basislabel-v305{display:block;margin-bottom:9px;font-size:.88rem}
+.grow-setup-basis-v305.is-compact-v305{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.grow-setup-basis-v305.is-compact-v305 .grow-setup-basisopt-v305{padding:10px 12px;border-radius:12px}
 .grow-setup-sentence-v301{margin:0 0 10px;font-size:1rem;line-height:2;overflow-wrap:anywhere}
 .grow-setup-input-v301{display:inline-block;width:6.5em;min-height:44px;margin:0 4px;padding:6px 10px;text-align:center;font-weight:700}
 .grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
@@ -2039,7 +2054,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 9dfad6ceffc79c3225211d81ded031cd110c670a78b6fe044036b68da0722dad</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · e4f2b99ed3475998dc95c918e5ac9d79f0ff330a18118bcb3ac58cb789451446</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -12600,6 +12615,55 @@ const GROW_SETUP_STEPS_V301=[[1,'Choose'],[2,'Earning'],[3,'Reward'],[4,'Go live
    numbering follows; the ids and the data-grow-setup-step-v301 contract are unchanged, they just
    count against whichever list is active. */
 const GROW_SETUP_STEPS_TIERS_V303=[[1,'Choose'],[2,'Earning'],[3,'Tiers'],[4,'Reward'],[5,'Go live']];
+/* V305 (owner 2026-08-13: "when i press 'tiered membership' - it shows both tier & points? can you
+   explain the logic?"). The honest answer was that the logic was wrong: two of those five steps do
+   not belong on a tiers-ONLY programme.
+     · A Reward step, when points_mode='tiers' switches redemption OFF — growTiersModeNoteV229 says
+       so on the Programmes page itself: rewards stay saved, customers cannot claim them while
+       tiers run alone. A step offering rewards the engine will refuse is exactly the "why am I
+       being shown points?" the owner asked about.
+     · A points EARN-RATE step, when tier_basis='visits' — the default — means the earn rate has no
+       effect whatsoever on how a customer climbs.
+   So tiers-only runs its own list: Choose · Climbing · Tiers · Go live. "Climbing" asks the one
+   question that actually decides the ladder — visits or points earned — and reveals the earn-rate
+   sentence inline only when the answer is points, because that is the only answer under which an
+   earn rate MEANS climbing speed.
+   Owner, same message: "firms should be able to choose either they wants points only / tiered only
+   / tier + points / stamps - these are 4 scenarios". Four scenarios, four step lists — the cards
+   already existed; the STEPS behind each now match its semantics. */
+const GROW_SETUP_STEPS_TIERSONLY_V305=[[1,'Choose'],[2,'Climbing'],[3,'Tiers'],[4,'Go live']];
+/* V305: what switching model PRESERVES, said out loud on step 1, one line per direction (owner:
+   "you need to ensure programs integrity"). Nothing in this matrix is aspirational — it restates
+   what the engine already does. points_mode is a switch on `businesses`, never a delete: rewards,
+   tiers and the earn rate all survive every one of these moves, and the stamp engine is a
+   different column again (loyalty_programs.loyalty_model), so choosing it hides the points
+   programme rather than dropping it. The owner's third question — "so if the points only rewards
+   is already activated and firms press tier + points (technically the points structure remains the
+   same and just needs to edit the tiered membership) - vice versa" — IS the redeem>both and
+   both>redeem rows, and they say exactly that. Keyed live>chosen; the diagonal is absent because
+   a line is only shown when the two differ. */
+const GROW_SETUP_INTEGRITY_V305={
+  'redeem>tiers':'Your rewards stay saved, but customers cannot claim them while Tiered membership runs alone.',
+  'redeem>both':'Your points set-up stays exactly as it is — you are only adding tiers.',
+  'redeem>stamps':'Your points programme stays saved. The stamp card replaces it for customers.',
+  'tiers>redeem':'Your tiers stay saved and stop being what customers see. Customers can claim point rewards again.',
+  'tiers>both':'Your tiers stay exactly as they are — you are only letting customers claim rewards again.',
+  'tiers>stamps':'Your tiers and points stay saved. The stamp card replaces them for customers.',
+  'both>redeem':'Tiers stop showing to customers but stay saved. Points continue unchanged.',
+  'both>tiers':'Your tiers continue unchanged. Rewards stay saved, but customers cannot claim them while Tiered membership runs alone.',
+  'both>stamps':'Your points and tiers stay saved. The stamp card replaces them for customers.',
+  'stamps>redeem':'Your stamp card stays saved. Customers collect points for rewards instead.',
+  'stamps>tiers':'Your stamp card stays saved. Points build tiers instead, and rewards cannot be claimed while tiers run alone.',
+  'stamps>both':'Your stamp card stays saved. Points buy rewards and build tiers instead.'
+};
+/* V305: the one question the Climbing step asks, and the same two options the Points + tiers Tiers
+   step carries as a compact control at its top. tier_basis measures LIFETIME earn (V229), so
+   redemption never drops a customer a tier — stated on the option itself rather than left for the
+   owner to discover from a customer complaint. */
+const GROW_SETUP_CLIMB_V305=[
+  ['visits','Visits','Every completed visit moves a customer up the ladder.'],
+  ['points','Points earned','Points earned move a customer up. Spending points never drops a tier.']
+];
 /* The four models the deep editor offers, as the owner's own screenshot lists them. Three of them
    are the SAME points engine under businesses.points_mode; the fourth is the stamp engine, which
    is loyalty_programs.loyalty_model. Keeping both facts in one table is what stops step 1 from
@@ -12669,9 +12733,24 @@ async function growSetupComparisonV301(draftVersionId){
         services:serviceRows.error?null:(serviceRows.data||[]),
         tiers:tierRows.error?null:(tierRows.data||[])}};
     const unit=String(draftResult?.data?.program?.loyalty_model||'')==='stamps'?'stamps':'points';
+    /* V305 (owner: "you need to ensure programs integrity"). A draft legitimately carries ONLY the
+       rewards it has been made to carry — create_loyalty_config_draft copies the programme row and
+       the tiers, never the reward versions (see the V302 note on refreshRewards) — and
+       publish_loyalty_config UPDATEs from the versions the draft holds, leaving every row it does
+       not carry untouched. growRewardPendingChangesV291 does not know that: anything live and
+       absent from the draft lands in `removed`, so publishing a tiers-only draft over a live
+       catalogue printed "Free flat white — no longer offered" for all four rewards, directly under
+       a line promising they stay saved. The comparison is therefore scoped to the rewards the
+       draft actually carries, which is exactly the set publishing can change. An ARCHIVED reward
+       still shows correctly — the draft carries that version, so it appears as
+       "Offered: Yes → No", not as a silent disappearance. */
+    const draftRewardIdsV305=new Set((Array.isArray(draftResult?.data?.rewards)?draftResult.data.rewards:[])
+      .map(reward=>String(reward.reward_id||reward.id||'')).filter(Boolean));
     diff={unit,
       rewards:(draftResult?.error||liveRewards.error)?null:growRewardPendingChangesV291({
-        liveRewards:growAttachEligibilityV291(pseudoSnapshot.rewards,pseudoSnapshot.rewardEligibility),
+        liveRewards:growAttachEligibilityV291(
+          pseudoSnapshot.rewards.filter(reward=>draftRewardIdsV305.has(String(reward.id||''))),
+          pseudoSnapshot.rewardEligibility),
         draftRewards:growAttachDraftEligibilityV291(Array.isArray(draftResult?.data?.rewards)?draftResult.data.rewards:[]),
         options:growRewardDiffOptionsFromSnapshotV291(pseudoSnapshot,unit)}),
       retention:(draftRetention.error||liveRetention.error)?null:growRetentionPendingChangesV291({
@@ -12784,6 +12863,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     :(livePointsModeV303==='tiers'?'tiers':livePointsModeV303==='both'?'both':'redeem');
   const pickV303=GROW_SETUP_MODELS_V303.some(model=>model[0]===handoffModelV303)
     ?handoffModelV303:derivedModelV303;
+  /* V305: what tier_basis was when this visit opened, kept so the Tiers step writes it only when
+     the owner actually changed it — a no-op save is still a draft write, and V301's own rule is
+     that nothing is written when nothing changed. */
+  const initialTierBasisV305=String(base?.tier_basis||'visits')==='points'?'points':'visits';
   const state={
     step:1,
     visited:new Set([1]),
@@ -12815,6 +12898,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        that re-saved every listed tier would bump the snapshot hash of rows nobody edited and put
        a wizard-shaped write on the audit trail for each of them. */
     tiersDirty:new Set(),tierForm:null,
+    /* V305: tier_basis is now a value the owner SETS here, not one the wizard only reads. It lives
+       on state so the Climbing step (tiers-only) and the compact control on the Tiers step (points
+       + tiers) are two views of one answer, and so the threshold labels re-read it the moment it
+       changes. The saved default is the live/draft one — the owner is never silently re-basised. */
+    tierBasis:String(base?.tier_basis||'visits')==='points'?'points':'visits',
     /* V304: which listed row the open form is EDITING. It drives the "· editing" affix the owner
        asked for ("it needs to reflect as i change it, so will not have confusion") and nothing
        else — the row's own name and number are patched straight into the DOM as they are typed. */
@@ -12831,20 +12919,28 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      from it rather than written down. `startStep:'review'` means "the last step", whichever that
      is — a five-step tier wizard would otherwise open its Reward step and call it the publish
      gate. Ids are unchanged; they simply count against the active list. */
-  const stepListV303=()=>state.pick==='tiers'||state.pick==='both'
-    ?GROW_SETUP_STEPS_TIERS_V303:GROW_SETUP_STEPS_V301;
+  /* V305: FOUR lists now, one per scenario the owner named — tiers-only drops the Reward step it
+     could never honour and trades the points earn-rate step for the Climbing question that
+     actually decides the ladder. Everything downstream still reads the active list, so this is
+     still one edit and the numbering follows. */
+  const stepListV303=()=>state.pick==='tiers'?GROW_SETUP_STEPS_TIERSONLY_V305
+    :state.pick==='both'?GROW_SETUP_STEPS_TIERS_V303:GROW_SETUP_STEPS_V301;
   const stepCountV303=()=>stepListV303().length;
   const stepKindV303=()=>{
     const label=(stepListV303()[state.step-1]||[])[1]||'Go live';
-    return label==='Choose'?'choose':label==='Earning'?'earn':label==='Tiers'?'tiers'
-      :label==='Reward'?'reward':'live';
+    return label==='Choose'?'choose':label==='Earning'?'earn':label==='Climbing'?'climb'
+      :label==='Tiers'?'tiers':label==='Reward'?'reward':'live';
   };
-  const stepNumberForV303=kind=>{
-    const label=kind==='choose'?'Choose':kind==='earn'?'Earning':kind==='tiers'?'Tiers'
-      :kind==='reward'?'Reward':'Go live';
+  /* V305: `null` when the active list has no such step, so a caller can tell "there is no Reward
+     step on this model" apart from "the Reward step is the last one". Returning stepCount for both
+     is how a reward hand-off would have landed the owner on the publish gate. */
+  const stepNumberOrNullV305=kind=>{
+    const label=kind==='choose'?'Choose':kind==='earn'?'Earning':kind==='climb'?'Climbing'
+      :kind==='tiers'?'Tiers':kind==='reward'?'Reward':'Go live';
     const index=stepListV303().findIndex(step=>step[1]===label);
-    return index<0?stepCountV303():index+1;
+    return index<0?null:index+1;
   };
+  const stepNumberForV303=kind=>stepNumberOrNullV305(kind)??stepCountV303();
   const tierModelV303=()=>state.pick==='tiers'||state.pick==='both';
   /* V294's editor entry context, decided by the CARD the owner pressed where there was one, and
      by the chosen model otherwise. Which programme they came about is the question that block
@@ -12865,7 +12961,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      below costPerPointCents deliberately: a template hand-off carries a company cost, and the
      points price is derived from it by the SAME one programme-wide rate the form's own maths uses,
      rather than being left blank for the owner to work out. */
-  const rewardHandoffV303=pendingGrowSetupRewardV303;pendingGrowSetupRewardV303=null;
+  /* V305: and only when the chosen model HAS a Reward step. Tiers-only does not, and sending the
+     owner to "the last step" instead would have opened the publish gate with a reward form they
+     never asked for. */
+  const rewardHandoffV303=stepNumberOrNullV305('reward')===null?null:pendingGrowSetupRewardV303;
+  pendingGrowSetupRewardV303=null;
   if(rewardHandoffV303){
     state.step=stepNumberForV303('reward');
     const wanted=rewardHandoffV303.mode==='edit'
@@ -13165,7 +13265,38 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         <span class="grow-setup-option-icon-v301">${CUI.icon(icon,{size:26})}</span><b>${esc(title)}</b>
         <span class="muted small">${esc(blurb)}</span></button>`).join('')}
     </div>
+    ${integrityLineHtmlV305()}
     <p class="muted small" style="margin-top:12px">You can change this later.</p>`;
+  /* V305 (owner: "you need to ensure programs integrity"). Integrity is not only a property of the
+     writes — it is something the owner has to be ABLE TO SEE before they commit, or a correct
+     switch still reads as "am I about to lose my rewards?". One plain line, under the cards, only
+     when the highlighted card differs from what is LIVE, naming what survives the move. It is the
+     matrix and nothing else: no line is invented here, so a direction that is not in the table
+     shows nothing rather than a guess. */
+  const integrityLineHtmlV305=()=>{
+    const line=GROW_SETUP_INTEGRITY_V305[`${derivedModelV303}>${state.pick}`];
+    return line?`<p class="grow-setup-integrity-v305" data-grow-setup-integrity-v305="${esc(derivedModelV303)}>${esc(state.pick)}" role="status">${esc(line)}</p>`:'';
+  };
+  /* V305: the Climbing question, and the same two options re-used as a compact control on the
+     Points + tiers Tiers step. `compact` only changes the chrome — the ids, the data attribute and
+     the write are identical, because two spellings of one control is how the two steps would start
+     disagreeing about what the owner chose. */
+  const climbOptionsHtmlV305=compact=>`<div class="grow-setup-basis-v305${compact?' is-compact-v305':''}" role="radiogroup" aria-label="How customers climb tiers">
+      ${GROW_SETUP_CLIMB_V305.map(([key,title,blurb])=>`<button type="button" class="grow-setup-basisopt-v305${state.tierBasis===key?' is-picked':''}" role="radio" aria-checked="${state.tierBasis===key}" data-grow-setup-basis-v305="${key}">
+        <b>${esc(title)}</b><span class="muted small">${esc(blurb)}</span></button>`).join('')}
+    </div>`;
+  /* The earn-rate sentence is the SAME control the Earning step renders — same id, so
+     readStepFields, the live example and the input listener all keep working — shown here only
+     under a points basis, because that is the only basis under which the earn rate is what
+     climbing speed means. Under visits it is not hidden to be tidy: it genuinely has no effect on
+     the ladder, and showing it was the owner's "it shows both tier & points?". */
+  const climbStepHtmlV305=()=>`<p class="grow-setup-lead-v301">How do customers climb tiers?</p>
+    ${climbOptionsHtmlV305(false)}
+    ${state.tierBasis==='points'
+      ?`<div data-grow-setup-climbearn-v305 style="margin-top:16px">
+        <p class="grow-setup-sentence-v301">Customer spends ${esc(currency)} <b>1</b> → earns <input id="growSetupEarnV301" class="grow-setup-input-v301" inputmode="decimal" data-merchant-content value="${esc(String(state.earn))}" aria-label="Points earned per ${esc(currency)} 1"> point(s)</p>
+        <p class="grow-setup-example-v301" id="growSetupExampleV301" role="status">${esc(exampleText())}</p></div>`
+      :'<p class="muted small" style="margin-top:14px">Tier levels are counted from completed visits, so there is no points rate to set here.</p>'}`;
   const stepTwoHtml=()=>state.family==='stamps'
     ?`<p class="grow-setup-lead-v301">How fast do customers collect a stamp?</p>
       <p class="grow-setup-sentence-v301">Customer spends ${esc(currency)} <input id="growSetupStampV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.stampSpend||0).toFixed(2))}" aria-label="Spend needed for one stamp"> → collects <b>1 stamp</b></p>
@@ -13183,7 +13314,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      numbers per rung is the surface this wizard replaced.
      The threshold's unit is tier_basis, so it is LABELLED with that unit rather than left as a
      bare number the owner has to guess the meaning of. */
-  const tierBasisV303=()=>String(base?.tier_basis||'visits');
+  /* V305: reads the owner's own answer now, not only the stored one, so the "Visits to reach it" /
+     "Points to reach it" label and every row's unit change the instant Climbing is answered — the
+     threshold they are about to type means a different thing under each basis. */
+  const tierBasisV303=()=>state.tierBasis;
   const tierUnitLabelV303=()=>tierBasisV303()==='visits'?'Visits to reach it':'Points to reach it';
   const TIER_DEFAULTS_V303=[['Bronze',0],['Silver',10],['Gold',25]];
   /* V304: the affix a row carries while the form below is editing it. It says "· editing" until
@@ -13209,7 +13343,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :`<p class="muted small">No tier yet. Add the first one below${TIER_DEFAULTS_V303.length?', or start from a ready-made ladder':''}.</p>
         <div class="grow-setup-chips-v301" aria-label="Suggested tier ladder"><button type="button" class="grow-setup-chip-v301" data-grow-setup-tier-default-v303="1">${esc(TIER_DEFAULTS_V303.map(([name,threshold])=>`${name} ${threshold}`).join(' · '))}</button></div>`;
     const editing=Boolean(state.tierForm?.id);
-    return `<p class="grow-setup-lead-v301">What tiers do customers climb?</p>${rows}
+    /* V305: on Points + tiers the ladder step carries the basis control at its TOP, because the
+       threshold typed below it means visits under one answer and points under the other — asking
+       after the numbers are typed would silently re-unit them. Tiers-only does not repeat it: its
+       own Climbing step already asked, and one question in two places is how the two answers start
+       to disagree. */
+    const basis=state.pick==='both'
+      ?`<div class="grow-setup-basisrow-v305" data-grow-setup-basisrow-v305><b class="grow-setup-basislabel-v305">Tier level is earned by</b>${climbOptionsHtmlV305(true)}</div>`
+      :'';
+    return `<p class="grow-setup-lead-v301">What tiers do customers climb?</p>${basis}${rows}
       <div class="grow-setup-rewardform-v301" data-grow-setup-tierform-v303>
         <div class="field-grid">
           <div class="full"><label for="growSetupTierNameV303">Tier name customers see</label>
@@ -13260,10 +13402,30 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   };
   /* V303: what the chosen model does to points_mode, in the owner's words, so the Go-live step
      lists it with the rest of "what changes for customers" rather than springing it. */
+  /* V305: each mode line now NAMES what is preserved (owner: "you need to ensure programs
+     integrity"). The switch is a switch on `businesses`, not a delete, and the sentence that
+     announces it has to say so — an owner reading "customers stop claiming point rewards" with no
+     second clause reasonably concludes their catalogue is being thrown away. */
   const modeChangeLineV303=()=>!pointsModeChangesV303()?''
-    :state.pick==='tiers'?'Points will now build tier membership — customers stop claiming point rewards.'
-    :state.pick==='both'?'Points will buy rewards AND build tier membership, side by side.'
+    :state.pick==='tiers'?'Points will now build tier membership — customers stop claiming point rewards. Every reward you set up stays saved.'
+    :state.pick==='both'?'Points will buy rewards AND build tier membership, side by side. Nothing you have already set up changes.'
     :'Points will be spent on rewards again — tiers stay saved, and stop being what customers see.';
+  /* V305: and on a tiers-ONLY programme the consequence is stated whether or not the mode is
+     CHANGING, because it is true of the state the owner is publishing into either way. A firm
+     already running tiers gets no mode line at all — that is what the "not published yet" owner
+     was missing when they asked why the wizard was showing them rewards. */
+  const tiersOnlyClaimLineV305=()=>state.pick!=='tiers'?''
+    :'While Tiered membership runs on its own, customers cannot claim point rewards. Your rewards stay saved and come back the moment you add points redemption.';
+  /* V305: the Go-live summary describes the programme the owner actually chose. On tiers-only that
+     is the LADDER — restating the reward catalogue as what customers "get" is precisely the
+     "it shows both tier & points?" confusion — and under a visits basis there is no points rate to
+     summarise either. */
+  const earnOrClimbLineV305=()=>state.pick==='tiers'&&state.tierBasis==='visits'
+    ?'Tier level is earned by completed visits.':earnLine();
+  const rewardOrLadderLineV305=()=>state.pick!=='tiers'?rewardLine()
+    :(activeTiersV304().length
+      ?activeTiersV304().map(tier=>`${tier.name} — ${tier.threshold} ${tierBasisV303()==='visits'?'visits':'points'}`).join(' · ')
+      :'No tier yet');
   const modeErrorBlockV303=()=>state.modeError
     ?`<div class="err" role="alert" style="margin-top:14px">${esc(state.modeError)}<div class="row" style="margin-top:10px"><button type="button" class="btn ghost sm" id="growSetupModeRetryV303">Retry</button></div></div>`
     :'';
@@ -13275,7 +13437,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <p class="grow-setup-sentence-v301" data-merchant-content>${esc(state.publishedSummary?.reward||'')}</p>
       ${modeErrorBlockV303()}
       <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap"><a class="btn" href="#/grow/overview" id="growSetupDoneV301">Back to Programmes</a>
-      <button type="button" class="btn ghost sm" id="growSetupAddAnotherV301">Add another reward</button></div></div>`;
+      <!-- V305: no "Add another reward" on a tiers-only programme. That list has no Reward step to
+           go back to, and the reward it would add is one this mode refuses to let customers
+           claim — the button would be an invitation into the exact confusion the owner reported. -->
+      ${stepNumberOrNullV305('reward')===null?'':'<button type="button" class="btn ghost sm" id="growSetupAddAnotherV301">Add another reward</button>'}</div></div>`;
     const changes=state.comparison;
     const changeBlock=!changes
       ?'<p class="muted small">Checking what changes for customers…</p>'
@@ -13286,15 +13451,16 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        draft against live — cannot see it. It is stated here, beside the changes it belongs with,
        because it is the biggest thing publishing this choice does to a customer. */
     const modeLine=modeChangeLineV303();
+    const claimLine=tiersOnlyClaimLineV305();
     const ackBlock=state.needAck
       ?`<div class="imp-note" style="margin-top:12px">${state.impactRules.length?`<b>Advanced rules this draft turns on</b><div style="margin-top:6px">${state.impactRules.map(rule=>`<div class="studio-impact-rule"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b></div>`).join('')}</div>`:'<b>This draft turns on a rule that moves money or reaches customers.</b>'}
         <label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupAckV301" style="width:auto;margin-top:3px"${state.ack?' checked':''}> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label></div>`
       :'';
     return `<p class="grow-setup-lead-v301">Ready to go live</p>
-      <p class="grow-setup-sentence-v301">${esc(earnLine())}</p>
-      <p class="grow-setup-sentence-v301" data-merchant-content>${esc(rewardLine())}</p>
+      <p class="grow-setup-sentence-v301">${esc(earnOrClimbLineV305())}</p>
+      <p class="grow-setup-sentence-v301" data-merchant-content>${esc(rewardOrLadderLineV305())}</p>
       <section class="grow-setup-changes-v301" aria-label="What changes for customers"><b>What changes for customers</b>
-      <div style="margin-top:8px" id="growSetupChangesV301">${modeLine?`<p class="grow-setup-modechange-v303" data-grow-setup-modechange-v303><b>${esc(modeLine)}</b></p>`:''}${changeBlock}</div></section>
+      <div style="margin-top:8px" id="growSetupChangesV301">${modeLine?`<p class="grow-setup-modechange-v303" data-grow-setup-modechange-v303><b>${esc(modeLine)}</b></p>`:''}${claimLine?`<p class="grow-setup-modechange-v303" data-grow-setup-claimline-v305>${esc(claimLine)}</p>`:''}${changeBlock}</div></section>
       <div class="imp-note" style="margin-top:12px"><b>${state.keepPaused?'Programme will stay PAUSED — customers earn nothing.':'Programme will be ON — customers start earning when you publish.'}</b>
       <label style="display:flex;align-items:center;gap:9px;margin-top:10px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupPauseV301" style="width:auto"${state.keepPaused?' checked':''}> <span>Keep it paused for now</span></label></div>${ackBlock}`;
   };
@@ -13303,6 +13469,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const bodyHtml=()=>{
     const kind=stepKindV303();
     return kind==='choose'?stepOneHtml():kind==='earn'?stepTwoHtml()
+      /* V305: 'climb' is the tiers-only replacement for 'earn' — one question, and the earn rate
+         only when the answer makes it mean something. */
+      :kind==='climb'?climbStepHtmlV305()
       :kind==='tiers'?tiersStepHtml():kind==='reward'?stepThreeHtml():stepFourHtml();
   };
   function render(){
@@ -13350,7 +13519,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   }
   const readStepFields=()=>{
     const kind=stepKindV303();
-    if(kind==='earn'){
+    /* V305: the Climbing step renders the SAME earn input under a points basis, so it reads the
+       same field. Under a visits basis there is no input to read and nothing to carry. */
+    if(kind==='earn'||kind==='climb'){
       if(state.family==='stamps')state.stampSpend=parseFloat($('growSetupStampV301')?.value||'')||state.stampSpend;
       else state.earn=parseFloat($('growSetupEarnV301')?.value||'')||state.earn;
     }
@@ -13383,6 +13554,14 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     host.querySelectorAll('[data-grow-setup-model-v303]').forEach(button=>button.onclick=()=>{
       state.pick=button.dataset.growSetupModelV303;
       state.family=state.pick==='stamps'?'stamps':'points';
+      render();
+    });
+    /* V305: the climbing basis. Selecting only sets state and re-renders — like the model cards on
+       step 1, nothing is written until Next — and the re-render is what re-labels every threshold
+       on the ladder and reveals or hides the earn-rate sentence. */
+    host.querySelectorAll('[data-grow-setup-basis-v305]').forEach(button=>button.onclick=()=>{
+      readStepFields();
+      state.tierBasis=button.dataset.growSetupBasisV305==='points'?'points':'visits';
       render();
     });
     const rateInput=$('growSetupEarnV301')||$('growSetupStampV301');
@@ -13663,6 +13842,25 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(fromRetry)render();
     return true;
   }
+  /* V305: the programme row the Earning step has always written, lifted out so the Climbing step
+     writes the IDENTICAL row rather than a second, nearly-identical one — a tiers-only draft that
+     carried a different field set from a points draft is how the two engines start to disagree.
+     The only change to its contents is tier_basis: it now comes from state.tierBasis, which is the
+     stored value until the owner answers Climbing (or the Tiers step's compact control) and their
+     answer afterwards. */
+  const programRowV305=model=>{
+    /* The same field set #lsave writes for this model, so a wizard save is never a partial
+       row — minus configuration_status and active, which belong to publishing and to the last step. */
+    const row={business_id:S.biz.id,kind:'points',loyalty_model:model,
+      expiry_mode:String(base?.expiry_mode||'none')};
+    row.expiry_days=row.expiry_mode==='none'?null:(Number(base?.expiry_days)>0?Math.round(Number(base.expiry_days)):null);
+    if(model==='stamps')row.stamp_per_cents=Math.round(state.stampSpend*100);
+    else row.earn_points_per_dollar=state.earn;
+    if(model==='classic'){row.redeem_points=state.classicRedeem;row.reward_credit_cents=Math.round(state.classicCredit*100)}
+    else if(writesCostDefault()){row.redeem_points=costBasis;row.reward_credit_cents=Math.round(0.01*100*costBasis)}
+    if(model==='points_tiers'&&state.tierBasis)row.tier_basis=state.tierBasis;
+    return row;
+  };
   async function advance(){
     readStepFields();
     const kind=stepKindV303();
@@ -13684,17 +13882,22 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         state.error=state.family==='stamps'?'Enter the spend needed for one stamp.':'Enter how many points a customer earns.';
         return render();
       }
-      /* The same field set #lsave writes for this model, so a wizard save is never a partial
-         row — minus configuration_status and active, which belong to publishing and to step 4. */
-      const row={business_id:S.biz.id,kind:'points',loyalty_model:model,
-        expiry_mode:String(base?.expiry_mode||'none')};
-      row.expiry_days=row.expiry_mode==='none'?null:(Number(base?.expiry_days)>0?Math.round(Number(base.expiry_days)):null);
-      if(model==='stamps')row.stamp_per_cents=Math.round(state.stampSpend*100);
-      else row.earn_points_per_dollar=state.earn;
-      if(model==='classic'){row.redeem_points=state.classicRedeem;row.reward_credit_cents=Math.round(state.classicCredit*100)}
-      else if(writesCostDefault()){row.redeem_points=costBasis;row.reward_credit_cents=Math.round(0.01*100*costBasis)}
-      if(model==='points_tiers'&&base?.tier_basis)row.tier_basis=String(base.tier_basis);
-      const result=await saveDraft(row);
+      /* V305: the row build moved to programRowV305 so the Climbing step writes the same one. */
+      const result=await saveDraft(programRowV305(model));
+      if(!isCurrent())return;
+      if(!result.ok)return failStep(result.error,'Nothing was saved.');
+      goto(state.step+1);
+    });
+    /* V305: the Climbing step (tiers-only). It saves the basis the owner just answered — plus the
+       earn rate, which under a points basis IS the climbing speed — through the SAME
+       save_loyalty_config_draft every other step writes through. Nothing new writes here: the
+       whole change is which question was asked and which fields the answer fills in. */
+    if(kind==='climb')return withBusy(async()=>{
+      const model=state.model||modelForFamily();
+      if(state.tierBasis==='points'&&!(state.earn>0)){
+        state.error='Enter how many points a customer earns.';return render();
+      }
+      const result=await saveDraft(programRowV305(model));
       if(!isCurrent())return;
       if(!result.ok)return failStep(result.error,'Nothing was saved.');
       goto(state.step+1);
@@ -13726,6 +13929,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         const result=await runSaveV304(()=>writeTierRowV304(tier));
         if(!isCurrent())return;
         if(!result.ok)return reportSaveV304(result,'Not every tier was saved.');
+      }
+      /* V305: the basis the compact control at the top of this step carries, saved with the step it
+         sits on — and ONLY when the owner changed it, because a no-op save is still a draft write.
+         Tiers-only never reaches this line: its Climbing step already wrote the basis with the rest
+         of the programme row. */
+      if(state.tierBasis!==initialTierBasisV305){
+        const basisResult=await runSaveV304(()=>saveDraft({tier_basis:state.tierBasis}));
+        if(!isCurrent())return;
+        if(!basisResult.ok)return reportSaveV304(basisResult,'The tier basis was not saved.');
       }
       goto(state.step+1);
     });
@@ -13791,7 +14003,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       /* The version just published is no longer a draft, so a further edit has to start a new
          one — based on whatever is active now, which is exactly what a null p_based_on resolves. */
       state.published=true;state.versionId=null;state.snapshotHash=null;state.basedOn=null;
-      state.publishedSummary={earn:earnLine(),reward:rewardLine()};
+      state.publishedSummary={earn:earnOrClimbLineV305(),reward:rewardOrLadderLineV305()};
       toast('Grow changes published');
       render();
       /* V303: and only now the mode. AFTER publish, never before — see applyPointsModeV303. It
@@ -17045,6 +17257,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'9dfad6ceffc79c3225211d81ded031cd110c670a78b6fe044036b68da0722dad',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'e4f2b99ed3475998dc95c918e5ac9d79f0ff330a18118bcb3ac58cb789451446',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

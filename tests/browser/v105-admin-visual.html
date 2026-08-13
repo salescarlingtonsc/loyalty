@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="3957cf3f2f426e6c1b8b3d54eb498ae6f7d9949568a2ad6958084649755451e4">
+<meta name="v105-production-component-sha256" content="4e2d0f13b3a6fbf103c27c6a72d9c3fc16f2936838070e3497eeaef88b39a314">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1057,6 +1057,21 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-option-v301.is-picked{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3px rgba(201,67,51,.14)}
 .grow-setup-option-icon-v301{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--tint);color:var(--coral)}
 .grow-setup-option-v301>b{font-size:1.02rem}
+/* V305 (owner: "when i press 'tiered membership' - it shows both tier & points? can you explain
+   the logic?" and "you need to ensure programs integrity"). Two new controls on this surface:
+   the integrity line under step 1's cards, which states what a model switch PRESERVES, and the
+   climbing-basis picker — full width as the tiers-only Climbing step, compact at the top of the
+   Points + tiers ladder step. Both keep the 44px tap target the rest of the wizard holds to. */
+.grow-setup-integrity-v305{margin:14px 0 0;padding:11px 13px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.9rem;line-height:1.5}
+.grow-setup-basis-v305{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.grow-setup-basisopt-v305{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-height:44px;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:inherit;font:inherit;cursor:pointer}
+.grow-setup-basisopt-v305:hover{border-color:var(--coral);background:var(--tint)}
+.grow-setup-basisopt-v305.is-picked{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3px rgba(201,67,51,.14)}
+.grow-setup-basisopt-v305>b{font-size:.98rem}
+.grow-setup-basisrow-v305{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+.grow-setup-basislabel-v305{display:block;margin-bottom:9px;font-size:.88rem}
+.grow-setup-basis-v305.is-compact-v305{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.grow-setup-basis-v305.is-compact-v305 .grow-setup-basisopt-v305{padding:10px 12px;border-radius:12px}
 .grow-setup-sentence-v301{margin:0 0 10px;font-size:1rem;line-height:2;overflow-wrap:anywhere}
 .grow-setup-input-v301{display:inline-block;width:6.5em;min-height:44px;margin:0 4px;padding:6px 10px;text-align:center;font-weight:700}
 .grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
@@ -2758,7 +2773,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 3957cf3f2f42</span>
+<span class="v105-provenance">v105 production-component harness · 4e2d0f13b3a6</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2883,7 +2898,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'3957cf3f2f426e6c1b8b3d54eb498ae6f7d9949568a2ad6958084649755451e4',
+  sourceHash:'4e2d0f13b3a6fbf103c27c6a72d9c3fc16f2936838070e3497eeaef88b39a314',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

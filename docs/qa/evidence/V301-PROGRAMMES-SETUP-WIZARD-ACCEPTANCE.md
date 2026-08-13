@@ -64,7 +64,7 @@ overview. Chrome captures were re-run for `v142-connect-paynow-pos/metrics.json`
 
 Regenerated `tests/browser/reward-overview-owner-visual.html` production-source-sha256:
 
-    01e8b7236962731446eeb27ddc63d568f527577b4c949ea76317236633980d10
+    909465a464dfd950d89cac3c8bac2e114f03e0d63adf619586560ce16b959750
 
 ## Same release: the phantom "Gift cards" Overview row
 
@@ -294,3 +294,163 @@ Walkthrough step (n) pins it on the LIVE fixture: add-in-place without leaving t
 updating before any save, the auto-save firing with the typed cost, Remove/Undo writing
 `active:false`/`true`, and the last-tier guard. Suite 2846/2846; V301 (a–n), V293, V294, V296
 walkthroughs pass on the V304 bundles.
+
+## V305 — four scenarios, four step lists, and integrity said out loud
+
+Owner, 2026-08-13, on the shipped V304 build:
+
+> "when i press 'tiered membership' - it shows both tier & points? can you explain the logic?"
+> "firms should be able to choose either they wants points only / tiered only / tier + points /
+> stamps - these are 4 scenarios"
+> "so if the points only rewards is already activated and firms press tier + points (technically
+> the points structure remains the same and just needs to edit the tiered membership) - vice versa"
+> "you need to ensure programs integrity"
+
+**The logic could not be explained because it was wrong.** Tiered membership ran
+Choose · Earning · Tiers · Reward · Go live, and two of those five steps contradict the engine the
+card selects:
+
+- **`points_mode='tiers'` turns redemption OFF.** `growTiersModeNoteV229` already says so on the
+  Programmes page itself — rewards stay saved, customers cannot claim them while tiers run alone.
+  A Reward step was therefore inviting the owner to price rewards the engine will refuse.
+- **`tier_basis='visits'` — the default — means the points earn rate does not touch climbing.**
+  An earn-rate step asked for a number that changes nothing about the ladder being built.
+
+### Shipped
+
+**A. Per-scenario step lists.** The step-list mechanism V303 introduced now carries four lists, and
+`data-grow-setup-step-v301` still numbers against whichever is active:
+
+| Card | Steps |
+| --- | --- |
+| Points System (`redeem`) | Choose · Earning · Reward · Go live (unchanged) |
+| **Tiered membership (`tiers`)** | **Choose · Climbing · Tiers · Go live — no Reward step** |
+| Points + tiers (`both`) | Choose · Earning · Tiers · Reward · Go live (unchanged five) |
+| Stamp card (`stamps`) | Choose · Earning · Reward · Go live (unchanged) |
+
+New step kind `climb` — "How do customers climb tiers?" — offers **Visits** (default, from the
+stored `tier_basis`) and **Points earned**. Choosing Points reveals the earn-rate sentence inline
+on the same step, reusing the Earning step's own `#growSetupEarnV301` input so `readStepFields`,
+the live example and the input listener stay one implementation. Next saves `{tier_basis}` plus the
+earn fields through `save_loyalty_config_draft` — the row build is now `programRowV305`, shared with
+the Earning step so a tiers-only draft and a points draft carry the identical field set. Points +
+tiers instead carries a compact **"Tier level is earned by"** control at the *top* of the Tiers
+step (above the thresholds it re-units), saved with that step's Next and only when it changed.
+The "at least one reward" rule lives inside the reward branch, which tiers-only never reaches; the
+"at least one tier" rule applies to both tier models, unchanged. The reward hand-off
+(`pendingGrowSetupRewardV303`) and the success panel's "Add another reward" are both suppressed
+where the active list has no Reward step — `stepNumberOrNullV305` distinguishes "no such step" from
+"the last step", which the old fallback could not.
+
+**B. Integrity said out loud.** `GROW_SETUP_INTEGRITY_V305` is the full twelve-direction matrix,
+shown as one plain line under step 1's cards whenever the highlighted card differs from what is
+live:
+
+| live → chosen | line |
+| --- | --- |
+| points → tiers only | Your rewards stay saved, but customers cannot claim them while Tiered membership runs alone. |
+| points → points + tiers | Your points set-up stays exactly as it is — you are only adding tiers. |
+| points → stamps | Your points programme stays saved. The stamp card replaces it for customers. |
+| tiers only → points | Your tiers stay saved and stop being what customers see. Customers can claim point rewards again. |
+| tiers only → points + tiers | Your tiers stay exactly as they are — you are only letting customers claim rewards again. |
+| tiers only → stamps | Your tiers and points stay saved. The stamp card replaces them for customers. |
+| points + tiers → points | Tiers stop showing to customers but stay saved. Points continue unchanged. |
+| points + tiers → tiers only | Your tiers continue unchanged. Rewards stay saved, but customers cannot claim them while Tiered membership runs alone. |
+| points + tiers → stamps | Your points and tiers stay saved. The stamp card replaces them for customers. |
+| stamps → points | Your stamp card stays saved. Customers collect points for rewards instead. |
+| stamps → tiers only | Your stamp card stays saved. Points build tiers instead, and rewards cannot be claimed while tiers run alone. |
+| stamps → points + tiers | Your stamp card stays saved. Points buy rewards and build tiers instead. |
+
+The Go-live mode lines (`modeChangeLineV303`) now name what survives too — "…customers stop
+claiming point rewards. **Every reward you set up stays saved.**" / "…side by side. **Nothing you
+have already set up changes.**" — and a tiers-only programme additionally carries
+`data-grow-setup-claimline-v305` whether or not the mode is *changing*, because the consequence is
+true of the state being published either way. The Go-live summary for tiers-only describes the
+**ladder**, not the catalogue this mode will not let customers claim.
+
+**C. No destructive writes.** The wizard's data surface is now pinned by an exact allowlist test:
+RPCs are precisely `create_loyalty_config_draft`, `save_loyalty_config_draft`,
+`save_loyalty_tier_draft_v143`, `ensure_published_reward_in_draft_v138`,
+`get_loyalty_reward_draft`, `preview_publish_impact`, `publish_loyalty_config`; table access is
+precisely `businesses.update` (the `points_mode` switch). No `.delete()`, in any spelling. Removal
+remains an archive write (`active:false`) through the same helper, with Undo writing `active:true`.
+
+### Fixed en route — the change list contradicted the promise
+
+`growSetupComparisonV301` fed **every** live reward into `growRewardPendingChangesV291`. A draft
+legitimately carries only the reward versions it has been made to carry —
+`create_loyalty_config_draft` copies the programme row and the tiers, never the rewards — so every
+untouched reward landed in the helper's `removed` bucket and the Go-live step printed
+"Free flat white — no longer offered" for the whole catalogue, directly beneath a line promising
+they stay saved. `publish_loyalty_config` does no such thing: it UPDATEs from the versions the draft
+holds and leaves untouched rows alone. The comparison's live side is now scoped to the ids the
+draft actually carries — exactly the set publishing can change. An archived reward is still
+reported, as "Offered: Yes → No", because the draft carries that version.
+
+The walkthrough stub carried the same misconception (`publish_loyalty_config` replaced
+`loyalty_rewards`/`loyalty_tiers` wholesale with the draft's versions). It now upserts, matching the
+server, which is what makes the "nothing was destroyed" assertion in step (o) meaningful rather
+than a test of the stub's shortcut.
+
+### Verification (this tree)
+
+- `node --check app/app.js` OK; `npm run bundle-stamp:check` current
+  (core 332KB · auth 23KB · customer 380KB · business 1728KB · i18n 208KB).
+- `npm test`: **2853 pass / 0 fail** (2846 at the V304 baseline; the seven new V305 tests are the
+  delta — six in the wizard suite plus the change-list scoping pin).
+- `tests/business-ui/v301-programmes-setup-wizard.test.mjs`: **37 tests** (30 at V304). Three
+  existing pins were updated with V305 comments (the step-list shape, the programme-row helper the
+  Earning branch now calls, and the gated reward hand-off), and one of them —
+  `V301 (b) step 2 mirrors the #lsave field set` — was found to be passing **vacuously**: its
+  `state.step===2` slice had matched nothing since V303 moved to kind-based dispatch. It now slices
+  `programRowV305` and asserts the slice is non-empty. `tests/business-ui/v172-reward-templates.test.mjs`
+  re-anchored on the hand-off declaration name.
+- Browser walkthroughs (real bundles, stubbed client): **v301 a–o PASS**, v296 1–7 PASS,
+  v294 1–9 PASS, v293 a–g PASS. Zero page errors in all runs.
+- Nine fixtures regenerated from source; Chrome captures re-run on 4173 for
+  `v142-connect-paynow-pos/metrics.json` (PASS) and
+  `v104-promotions-production-render-metrics.json` (PASS).
+
+Walkthrough step **(o)** pins the report on the LIVE points fixture: the Tiered membership stepper
+reads Choose · Climbing · Tiers · Go live with **no Reward chip**; the integrity line on step 1
+carries `data-grow-setup-integrity-v305="redeem>tiers"` and switches to `redeem>both` when the
+highlighted card does, and disappears entirely on the model that is already live; Climbing defaults
+to Visits with **no earn input rendered**, and choosing "Points earned" reveals it; Next records
+`{tier_basis:'points', earn_points_per_dollar:3}`; the ladder's threshold label flips to Points;
+Go live carries both the preserved-wording mode line and the cannot-claim line; publish records
+`points_mode='tiers'` **after** `publish_loyalty_config`; **not one reward write of any kind** is
+recorded across the whole switch and all four rewards are still in the table afterwards; and the
+success panel offers no "Add another reward". Then Points + tiers: five steps, Earning untouched,
+the basis control present on the Tiers step and re-labelling the threshold on the spot.
+
+**Known limitation, unchanged:** tier changes are still not itemised in the Go-live change list —
+`growSetupComparisonV301` compares the programme row, rewards, birthday and bring-back, and has
+never carried tiers. Flagged rather than fixed; out of scope here.
+
+## V305 follow-up — four scenarios, four step lists, integrity said out loud
+
+Owner: "when i press 'tiered membership' - it shows both tier & points? can you explain the
+logic?" / the four scenarios (points only / tiered only / tier + points / stamps) / switching
+must preserve the other engine's structure / "you need to ensure programs integrity".
+
+The logic WAS wrong for tiers-only: a Reward step priced rewards `points_mode='tiers'` refuses,
+and the earn-rate step changed nothing under the default `tier_basis='visits'`. Tiers-only now
+runs Choose · **Climbing** · Tiers · Go live — Climbing asks the one deciding question (visits or
+points earned) and reveals the earn-rate sentence only under a points basis. Points + tiers keeps
+its five steps and gains the same basis control atop its Tiers step. Step 1 shows a 12-direction
+integrity line whenever the highlighted card differs from the live model (each line restates what
+the engine already preserves — nothing is deleted by any switch), and the Go-live mode lines name
+what survives; tiers-only carries the cannot-claim line always.
+
+Fixed en route (integrity would have been contradicted on the very screen promising it): the
+Go-live comparison fed EVERY live reward into the V291 differ, so a draft carrying no reward
+versions — the normal case — printed the whole catalogue as "no longer offered".
+`publish_loyalty_config` updates only from draft-carried versions, so the comparison is now
+scoped to exactly that set; an archived reward still shows as "Offered: Yes → No". The
+walkthrough stub's publish was also corrected from wholesale replace to production's upsert
+semantics so "nothing destroyed" is a real assertion, not a measurement of the stub.
+
+Walkthrough step (o) pins it on the LIVE points fixture: tiers-only stepper has no Reward chip,
+Climbing defaults to Visits with no earn input, Points reveals it and Next records tier_basis,
+the step-1 integrity line renders, publish applies mode after publish, and the reward table
+survives untouched. Suite 2853/2853; V301 (a–o), V293, V294, V296 pass on the V305 bundles.

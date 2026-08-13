@@ -49,9 +49,16 @@ test('choosing a template reuses the same one add-reward path, no new writers', 
 });
 
 test('template prefill fills the wizard form and lets the wizard derive points', () => {
-  const start = app.indexOf('const rewardHandoffV303=pendingGrowSetupRewardV303');
+  /* V305: the hand-off is now gated on the chosen model HAVING a Reward step — a tiers-only
+     programme has none, and the old "fall back to the last step" would have dropped the owner on
+     the publish gate with a reward form armed. The slice therefore anchors on the declaration name
+     rather than on its right-hand side. */
+  const start = app.indexOf('const rewardHandoffV303=');
   assert.ok(start > 0, 'the wizard must consume the hand-off');
-  const fn = app.slice(start, start + 1400);
+  assert.match(app.slice(start, start + 200),
+    /const rewardHandoffV303=stepNumberOrNullV305\('reward'\)===null\?null:pendingGrowSetupRewardV303;/,
+    'and only where there is a Reward step to consume it on');
+  const fn = app.slice(start, start + 1600);
   assert.match(fn, /pendingGrowSetupRewardV303=null/, 'prefill must be consumed once');
   assert.match(fn, /name:String\(rewardHandoffV303\.name\|\|''\)/);
   assert.match(fn, /Math\.ceil\(budgetCents\/Math\.max\(1,costPerPointCents\(\)\)\)/,
