@@ -95,11 +95,19 @@ test('a lane drop resolves to hand-writable stages only', async () => {
   // Conversion- and onboarding-controlled stages are never drop targets.
   const stagesFor = lane => Array.from(Console.laneMoveStages(lane));
   assert.deepEqual(stagesFor('case_won'), ['client']);
-  assert.deepEqual(stagesFor('closed'), ['lost']);
+  // The closed lane now legitimately holds all six closed-without-activation
+  // stages introduced by the pipeline vocabulary change (was just ['lost']
+  // under the old 19-stage set); all six are still hand-writable drop
+  // targets, unlike the conversion/onboarding-controlled case_won stages.
+  assert.deepEqual(stagesFor('closed'), [
+    'lost', 'not_interested', 'no_response', 'invalid_contact', 'closed_business', 'do_not_contact'
+  ]);
   assert.deepEqual(stagesFor('inbox'), ['new_lead']);
+  // The pipeline vocabulary change collapsed the old multi-stage "decision"
+  // grouping (which included quotation_sent) down to a single 'appointment'
+  // stage; it is still a valid, hand-writable drop target.
   const decision = stagesFor('decision');
-  assert.ok(decision.includes('quotation_sent') && decision.length > 1,
-    'decision offers a choice of stages');
+  assert.deepEqual(decision, ['appointment']);
   for (const lane of Console.operationalLanes) {
     for (const stage of stagesFor(lane.key)) {
       assert.ok(!['account_created', 'onboarding', 'activated', 'unmapped'].includes(stage),

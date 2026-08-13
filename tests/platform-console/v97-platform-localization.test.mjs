@@ -308,9 +308,9 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   const explicit=[...new Set([...source.matchAll(/\bpt\((['"])(.*?)\1/g)].map(match=>match[2]))];
   const metadata=[...new Set([...source.matchAll(/\b(?:title|subtitle|description|caption|label|hint|placeholder|body|message|actionLabel|submitLabel)\s*:\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
   const announcements=[...new Set([...source.matchAll(/\.announce\(\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
-  assert.equal(explicit.length,972,'update the audited explicit-copy inventory when adding runtime UI'); // V292
-  assert.equal(metadata.length,786,'update the audited CUI metadata inventory when adding UI metadata'); // V292
-  assert.equal(announcements.length,49,'update the audited static announcement inventory when adding announcements'); // V292
+  assert.equal(explicit.length,997,'update the audited explicit-copy inventory when adding runtime UI'); // V312
+  assert.equal(metadata.length,782,'update the audited CUI metadata inventory when adding UI metadata'); // V312
+  assert.equal(announcements.length,49,'update the audited static announcement inventory when adding announcements'); // V312
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
   const directErrorDisplays=[...source.matchAll(/error\??\.message/g)]
@@ -408,7 +408,7 @@ test('every literal accessibility and input attribute is localized or an audited
 test('every plainLabel use is classified behind localization or structured metadata rendering',async()=>{
   const source=await read('app/platform-console.js');
   const uses=[...source.matchAll(/plainLabel\(/g)];
-  assert.equal(uses.length,4,'new plainLabel rendering must be classified as controlled UI, sector data, or structured metadata');
+  assert.equal(uses.length,5,'new plainLabel rendering must be classified as controlled UI, sector data, or structured metadata');
   assert.match(source,/const platformStatus=value=>pt\(plainLabel\(value\)\)/);
   assert.match(source,/function plainLabel\(value\)/);
   assert.match(source,/sectorModuleByKey\.get\(key\)\?\.label\|\|plainLabel\(key\)/);
@@ -677,16 +677,16 @@ test('mixed dynamic template inventory is explicitly classified',async()=>{
   const classifications=[
     {kind:'localized-ui',pattern:/^(?:disabled title="§"|name="bank_account_number" inputmode="numeric" placeholder="§")$/},
     {kind:'data-only',pattern:/^(?:§ (?:KB|MB)|Platform import review: §|NPU: §)$/},
-    {kind:'technical',pattern:/^(?:nestly:v133:privacy:§:§|platform-§-§|platformNavGroup-§|cursor:§|(?:stage|consultant)=§|#\/platform\/(?:firms|reports|onboarding|crm)§|#\/platform\/(?:billing\?business|commissions\?accrual|automation\?incident)=§|#\/platform\/firms\?firm=§|module_mode_§|\[data-module-row="§"\] select|data-platform-scope="§"|\[data-(?:prospect|business-application|accrual-id|incident-id)="§"\]|§-enterprise-(?:report|cross-domain)-§-§\.csv|peekaa-(?:platform-finance|accounting-books)-§-§\.csv|custom__§|§-import-§-errors\.csv|name="§"§+|name="amount" min="0\.01" max="§" step="0\.01"|§_cents|(?:business|prospect):§|permission_§|receipts\/§\/§-§|title=\"§\")$/}
+    {kind:'technical',pattern:/^(?:nestly:v133:privacy:§:§|platform-§-§|platformNavGroup-§|cursor:§|(?:stage|consultant)=§|#\/platform\/(?:firms|reports|onboarding|crm)§|#\/platform\/(?:billing\?business|commissions\?accrual|automation\?incident)=§|#\/platform\/firms\?firm=§|module_mode_§|\[data-module-row="§"\] select|data-platform-scope="§"|\[data-(?:prospect|business-application|accrual-id|incident-id)="§"\]|§-enterprise-(?:report|cross-domain)-§-§\.csv|peekaa-(?:platform-finance|accounting-books)-§-§\.csv|custom__§|§-import-§-errors\.csv|§-business-explorer-§\.csv|name="§"§+|name="amount" min="0\.01" max="§" step="0\.01"|§_cents|(?:business|prospect):§|permission_§|receipts\/§\/§-§|title=\"§\")$/}
   ];
   const classified=inventory.map(entry=>({
     ...entry,kind:classifications.find(rule=>rule.pattern.test(entry.text))?.kind||'unclassified'
   }));
-  assert.equal(classified.length,46,'review every interpolated template segment when the inventory changes');
+  assert.equal(classified.length,47,'review every interpolated template segment when the inventory changes');
   assert.deepEqual(classified.filter(entry=>entry.kind==='unclassified'),[]);
   assert.equal(classified.filter(entry=>entry.kind==='localized-ui').length,5);
   assert.equal(classified.filter(entry=>entry.kind==='data-only').length,4);
-  assert.equal(classified.filter(entry=>entry.kind==='technical').length,37);
+  assert.equal(classified.filter(entry=>entry.kind==='technical').length,38);
 });
 
 test('every mixed UI grammar template localizes arbitrary values in Chinese and Malay',async()=>{

@@ -68,17 +68,23 @@ test('v86 drawer binds typed firm CRM and governed stage contracts',async()=>{
   ])assert.match(source,new RegExp(section));
 });
 
-test('all seventeen pipeline stages have visible gates and system stages stay managed',async()=>{
+test('all fifteen pipeline stages have visible gates and system stages stay managed',async()=>{
   const source=await read('app/platform-console.js');
+  // Owner directive replaced the old 19-stage vocabulary (six "no pick up"
+  // stages, site visits, quotations) with a 15-stage conversion funnel.
   const stages=[
-    'new_lead','appt_set','npu_1','npu_2','npu_3','npu_4','npu_5','npu_6',
-    'call_back','reschedule','meeting_sent','pending_decision','client',
-    'account_created','onboarding','activated','lost'
+    'new_lead','assigned','contacted','interested','appointment','client',
+    'account_created','onboarding','activated','not_interested',
+    'no_response','invalid_contact','closed_business','do_not_contact','lost'
   ];
   for(const stage of stages)assert.match(source,new RegExp(`${stage}:|\\['${stage}'`));
   assert.match(source,/stageGateDefinitions/);
+  // client and account_created stay system-managed: client is only reachable
+  // through the dedicated commercial-terms conversion flow, and moving
+  // directly into account_created/onboarding/activated is blocked outright.
+  assert.match(source,/toStage==='client'\)return commercialTermsModal/);
   assert.match(source,/This stage is controlled by account conversion and onboarding evidence/i);
-  assert.match(source,/Next attempt or terminal disposition/);
+  assert.match(source,/Reason or context/);
   assert.match(source,/Accepted product, seats, billing cycle, value and currency/);
 });
 

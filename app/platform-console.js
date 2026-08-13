@@ -100,6 +100,15 @@
       'Reschedule':'重新安排','Meeting Link Sent / Calendar Set':'已发送会议链接／已加入日历',
       'Pending Decision':'待决定','Client / Deal Won':'客户／已成交','Account Created':'账户已创建',
       'Onboarding in Progress':'入驻进行中','Activated':'已激活','Lost':'流失',
+      'Prospect':'潜在商户','Assigned':'已分配','Contacted':'已联系','Interested':'有意向',
+      'Appointment':'预约','Deal agreed':'已达成协议','Workspace created':'工作空间已创建',
+      'Onboarding':'客户入驻','Peekaa merchant':'Peekaa商户','Not interested':'无意向',
+      'No response':'无回应','Invalid contact':'联系方式无效','Closed business':'企业已结业',
+      'Do not contact':'请勿联系',
+      'Assignment reason':'分配原因','Contact channel and timestamp':'联系渠道与时间',
+      'Outcome or next step':'结果或下一步','Interest notes':'意向备注','Next follow-up':'下次跟进',
+      'Appointment date and owner':'预约日期与负责人','Channel, location or meeting URL':'渠道、地点或会议链接',
+      'Reason or context':'原因或背景','Contacted at':'联系时间','Outcome / next step':'结果／下一步',
       'Loading complete prospect detail…':'正在加载完整潜在客户资料…','Prospect detail':'潜在客户详情',
       'Loading contacts, activities, tasks and commercial context…':'正在加载联系人、活动、任务和商务背景…',
       'Prospect unavailable':'潜在客户不可用','Try again.':'请重试。',
@@ -243,6 +252,15 @@
       'Pending Decision':'Menunggu Keputusan','Client / Deal Won':'Pelanggan / Urus Niaga Berjaya',
       'Account Created':'Akaun Dicipta','Onboarding in Progress':'Penerimaan Sedang Berjalan',
       'Activated':'Diaktifkan','Lost':'Hilang',
+      'Prospect':'Prospek','Assigned':'Ditugaskan','Contacted':'Dihubungi','Interested':'Berminat',
+      'Appointment':'Janji temu','Deal agreed':'Urus niaga dipersetujui','Workspace created':'Ruang kerja dicipta',
+      'Onboarding':'Penerimaan','Peekaa merchant':'Peniaga Peekaa','Not interested':'Tidak berminat',
+      'No response':'Tiada respons','Invalid contact':'Hubungan tidak sah','Closed business':'Perniagaan ditutup',
+      'Do not contact':'Jangan hubungi',
+      'Assignment reason':'Sebab penugasan','Contact channel and timestamp':'Saluran hubungan dan masa',
+      'Outcome or next step':'Hasil atau langkah seterusnya','Interest notes':'Nota minat','Next follow-up':'Susulan seterusnya',
+      'Appointment date and owner':'Tarikh janji temu dan pemilik','Channel, location or meeting URL':'Saluran, lokasi atau URL mesyuarat',
+      'Reason or context':'Sebab atau konteks','Contacted at':'Dihubungi pada','Outcome / next step':'Hasil / langkah seterusnya',
       'Loading complete prospect detail…':'Memuatkan butiran prospek lengkap…','Prospect detail':'Butiran prospek',
       'Loading contacts, activities, tasks and commercial context…':'Memuatkan kenalan, aktiviti, tugas dan konteks komersial…',
       'Prospect unavailable':'Prospek tidak tersedia','Try again.':'Cuba lagi.',
@@ -2963,7 +2981,7 @@
       'Loading the prospect map…':'正在加载潜在商户地图…',
       'Search businesses':'搜索商户',
       'Name, street or postal code':'名称、街道或邮区编号',
-      'Minimum rating':'最低评分','Minimum reviews':'最少评价数','Minimum lead score':'最低线索评分',
+      'Minimum rating':'最低评分','Minimum reviews':'最少评价数',
       'Saved filters':'已保存的筛选','No saved filter':'未选择已保存的筛选',
       'Save current':'保存当前筛选','Rename':'重命名','Delete filter':'删除筛选',
       'Filter name':'筛选名称','Save filter':'保存筛选',
@@ -2977,7 +2995,7 @@
       'Showing {shown} of {count} mapped.':'已显示地图上 {count} 家中的 {shown} 家。',
       'Reset view':'重置视图',
       'Only the strongest leads are drawn':'仅绘制最优质的线索',
-      'Too many businesses match to plot them all, so only the top {count} by lead score appear. Narrow the filters to see the rest.':'符合条件的商户过多，无法全部绘制，因此仅显示线索评分最高的 {count} 家。请缩小筛选范围以查看其余商户。',
+      'Too many businesses match to plot them all, so only the first {count} appear. Narrow the filters to see the rest.':'符合条件的商户过多，无法全部绘制，因此仅显示前 {count} 家。请缩小筛选范围以查看其余商户。',
       'Singapore prospect map':'新加坡潜在商户地图',
       'Prospect map':'潜在商户地图',
       'Prospect list':'潜在商户列表',
@@ -3001,9 +3019,7 @@
       'The address Peekaa holds, and the point plotted on the map.':'Peekaa 记录的地址，以及在地图上标注的位置。',
       'The people who answer for this business.':'代表该商户接洽的人员。',
       'Who owns this lead, how strong it is, and what happens next.':'该线索由谁负责、质量如何，以及下一步安排。',
-      'How this score was reached':'该评分的计算依据',
       'Open the source listing':'打开来源页面',
-      'No scoring signals were recorded for this business.':'该商户没有记录任何评分信号。',
       'Nobody has contacted this business yet.':'尚无人联系过该商户。',
       'No named contact has been recorded for this business.':'该商户尚未记录具名联系人。',
       'Text message':'短信','Site visit':'实地拜访','Other channel':'其他渠道',
@@ -3022,7 +3038,7 @@
       'Peekaa status':'Peekaa 状态','Any Peekaa status':'所有 Peekaa 状态',
       'Trading status':'营业状态','Any trading status':'所有营业状态',
       'Has a phone number':'有电话号码','Has a website':'有网站','Has an email address':'有电邮地址',
-      'Area':'区域','Rating':'评分','Lead score':'线索评分','Outreach':'联系','Distance':'距离','When':'时间',
+      'Area':'区域','Rating':'评分','Outreach':'联系','Distance':'距离','When':'时间',
       'Business name':'商户名称','Categories':'类别','Address':'地址','Website':'网站',
       'Listing source':'资料来源','Source record':'来源记录','District':'邮区','Coordinates':'坐标',
       'Neighbourhood':'周边情况','Last outcome':'最近结果',
@@ -3061,7 +3077,7 @@
       'Loading the prospect map…':'Memuatkan peta prospek…',
       'Search businesses':'Cari perniagaan',
       'Name, street or postal code':'Nama, jalan atau poskod',
-      'Minimum rating':'Penilaian minimum','Minimum reviews':'Bilangan ulasan minimum','Minimum lead score':'Skor petunjuk minimum',
+      'Minimum rating':'Penilaian minimum','Minimum reviews':'Bilangan ulasan minimum',
       'Saved filters':'Penapis disimpan','No saved filter':'Tiada penapis disimpan dipilih',
       'Save current':'Simpan penapis semasa','Rename':'Namakan semula','Delete filter':'Padam penapis',
       'Filter name':'Nama penapis','Save filter':'Simpan penapis',
@@ -3075,7 +3091,7 @@
       'Showing {shown} of {count} mapped.':'Memaparkan {shown} daripada {count} yang dipetakan.',
       'Reset view':'Set semula paparan',
       'Only the strongest leads are drawn':'Hanya petunjuk terkuat dilukis',
-      'Too many businesses match to plot them all, so only the top {count} by lead score appear. Narrow the filters to see the rest.':'Terlalu banyak perniagaan sepadan untuk dipetakan semuanya, jadi hanya {count} teratas mengikut skor petunjuk dipaparkan. Persempitkan penapis untuk melihat selebihnya.',
+      'Too many businesses match to plot them all, so only the first {count} appear. Narrow the filters to see the rest.':'Terlalu banyak perniagaan sepadan untuk dipetakan semuanya, jadi hanya {count} pertama dipaparkan. Persempitkan penapis untuk melihat selebihnya.',
       'Singapore prospect map':'Peta prospek Singapura',
       'Prospect map':'Peta prospek',
       'Prospect list':'Senarai prospek',
@@ -3099,9 +3115,7 @@
       'The address Peekaa holds, and the point plotted on the map.':'Alamat yang disimpan Peekaa, dan titik yang dipetakan.',
       'The people who answer for this business.':'Orang yang mewakili perniagaan ini.',
       'Who owns this lead, how strong it is, and what happens next.':'Siapa memegang petunjuk ini, sekuat mana ia, dan apa yang berlaku seterusnya.',
-      'How this score was reached':'Bagaimana skor ini diperoleh',
       'Open the source listing':'Buka penyenaraian sumber',
-      'No scoring signals were recorded for this business.':'Tiada isyarat pemarkahan direkodkan untuk perniagaan ini.',
       'Nobody has contacted this business yet.':'Belum ada sesiapa menghubungi perniagaan ini.',
       'No named contact has been recorded for this business.':'Tiada kenalan bernama direkodkan untuk perniagaan ini.',
       'Text message':'Mesej teks','Site visit':'Lawatan tapak','Other channel':'Saluran lain',
@@ -3120,7 +3134,7 @@
       'Peekaa status':'Status Peekaa','Any Peekaa status':'Sebarang status Peekaa',
       'Trading status':'Status operasi','Any trading status':'Sebarang status operasi',
       'Has a phone number':'Ada nombor telefon','Has a website':'Ada laman web','Has an email address':'Ada alamat e-mel',
-      'Area':'Kawasan','Rating':'Penilaian','Lead score':'Skor petunjuk','Outreach':'Hubungan','Distance':'Jarak','When':'Bila',
+      'Area':'Kawasan','Rating':'Penilaian','Outreach':'Hubungan','Distance':'Jarak','When':'Bila',
       'Business name':'Nama perniagaan','Categories':'Kategori','Address':'Alamat','Website':'Laman web',
       'Listing source':'Sumber penyenaraian','Source record':'Rekod sumber','District':'Daerah','Coordinates':'Koordinat',
       'Neighbourhood':'Persekitaran','Last outcome':'Hasil terkini',
@@ -3129,6 +3143,68 @@
       'Choose a saved filter first.':'Pilih penapis disimpan terlebih dahulu.',
       'Saved filter deleted.':'Penapis disimpan telah dipadam.',
       'Saved filter updated.':'Penapis disimpan telah dikemas kini.'
+    })
+  });
+  /* V312: Business Explorer upgrade — the v312 search/bulk-assign/funnel/merchant-match RPCs
+     wired onto the Prospecting route. */
+  const PLATFORM_COPY_V312=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Select {name}':'选择 {name}','Sort by':'排序方式',
+      'Select all on this page':'全选本页','Select all {count} matching':'全选符合条件的 {count} 家',
+      'Conversion analytics':'转化分析','Run':'运行',
+      'Postal':'邮区','Candidate match':'候选匹配',
+      'Same business':'同一商户','Not the same':'并非同一商户',
+      'Merchant match review':'商户匹配复核',
+      'Industry':'行业','Subcategory':'子类别','Reviews':'评价数',
+      'Choose a consultant first.':'请先选择顾问。',
+      'Assigned {assigned}. Skipped {skipped} (already Peekaa merchants).':'已分配 {assigned} 家。已跳过 {skipped} 家（已是 Peekaa 商户）。',
+      'Marked as the same business.':'已标记为同一商户。',
+      'Marked as not the same business.':'已标记为并非同一商户。',
+      'Export':'导出','Preparing export…':'正在准备导出…',
+      'No rows for this period':'该时间段没有数据',
+      'By consultant':'按顾问','By location':'按地区','By industry':'按行业','By category':'按类别',
+      'No matches waiting':'没有待处理的匹配',
+      'Every candidate merchant match has been decided.':'所有候选商户匹配均已处理完毕。',
+      'Loading the funnel…':'正在加载转化漏斗…',
+      'Conversion analytics unavailable':'转化分析不可用',
+      'Loading candidate matches…':'正在加载候选匹配…',
+      'Merchant match review unavailable':'商户匹配复核不可用',
+      'Recently added':'最近添加','Oldest added first':'最早添加优先',
+      'Name A-Z':'名称 A-Z','Name Z-A':'名称 Z-A',
+      'Area A-Z':'区域 A-Z','Category A-Z':'类别 A-Z',
+      'Rating high to low':'评分从高到低','Most reviews first':'评价最多优先',
+      'Recently contacted':'最近联系','Follow-up due first':'跟进最紧急优先',
+      'Follow-up scheduled':'已安排跟进','No follow-up set':'未设置跟进',
+      'Assigned prospect':'已分配的潜在商户','Unassigned prospect':'未分配的潜在商户'
+    }),
+    ms:Object.freeze({
+      'Select {name}':'Pilih {name}','Sort by':'Susun mengikut',
+      'Select all on this page':'Pilih semua pada halaman ini','Select all {count} matching':'Pilih semua {count} yang sepadan',
+      'Conversion analytics':'Analitik penukaran','Run':'Jalankan',
+      'Postal':'Poskod','Candidate match':'Calon padanan',
+      'Same business':'Perniagaan yang sama','Not the same':'Bukan yang sama',
+      'Merchant match review':'Semakan padanan peniaga',
+      'Industry':'Industri','Subcategory':'Subkategori','Reviews':'Ulasan',
+      'Choose a consultant first.':'Pilih perunding dahulu.',
+      'Assigned {assigned}. Skipped {skipped} (already Peekaa merchants).':'{assigned} ditugaskan. {skipped} dilangkau (sudah menjadi peniaga Peekaa).',
+      'Marked as the same business.':'Ditanda sebagai perniagaan yang sama.',
+      'Marked as not the same business.':'Ditanda sebagai bukan perniagaan yang sama.',
+      'Export':'Eksport','Preparing export…':'Menyediakan eksport…',
+      'No rows for this period':'Tiada baris untuk tempoh ini',
+      'By consultant':'Mengikut perunding','By location':'Mengikut lokasi','By industry':'Mengikut industri','By category':'Mengikut kategori',
+      'No matches waiting':'Tiada padanan menunggu',
+      'Every candidate merchant match has been decided.':'Setiap calon padanan peniaga telah diputuskan.',
+      'Loading the funnel…':'Memuatkan corong…',
+      'Conversion analytics unavailable':'Analitik penukaran tidak tersedia',
+      'Loading candidate matches…':'Memuatkan calon padanan…',
+      'Merchant match review unavailable':'Semakan padanan peniaga tidak tersedia',
+      'Recently added':'Baharu ditambah','Oldest added first':'Paling lama ditambah dahulu',
+      'Name A-Z':'Nama A-Z','Name Z-A':'Nama Z-A',
+      'Area A-Z':'Kawasan A-Z','Category A-Z':'Kategori A-Z',
+      'Rating high to low':'Penilaian tinggi ke rendah','Most reviews first':'Paling banyak ulasan dahulu',
+      'Recently contacted':'Baru dihubungi','Follow-up due first':'Susulan tertunggak dahulu',
+      'Follow-up scheduled':'Susulan dijadualkan','No follow-up set':'Tiada susulan ditetapkan',
+      'Assigned prospect':'Prospek ditugaskan','Unassigned prospect':'Prospek belum ditugaskan'
     })
   });
   let platformLocale='en';
@@ -3148,6 +3224,7 @@
       ??PLATFORM_COPY_V282[platformLocale]?.[key]
       ??PLATFORM_COPY_V292[platformLocale]?.[key]
       ??PLATFORM_COPY_V297[platformLocale]?.[key]
+      ??PLATFORM_COPY_V312[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -3269,24 +3346,25 @@
     automation:'System health'
   });
   const prospectStages = Object.freeze([
-    ['new_lead','New Lead'],['appt_set','Appointment Set'],
-    ['npu_1','NPU 1'],['npu_2','NPU 2'],['npu_3','NPU 3'],['npu_4','NPU 4'],['npu_5','NPU 5'],['npu_6','NPU 6'],
-    ['call_back','Call Back'],['reschedule','Reschedule'],['meeting_sent','Meeting Link Sent / Calendar Set'],
-    ['site_visit','Site Visit'],['quotation_sent','Quotation Sent'],
-    ['pending_decision','Pending Decision'],['client','Client / Deal Won'],['account_created','Account Created'],
-    ['onboarding','Onboarding in Progress'],['activated','Activated'],['lost','Lost']
+    ['new_lead','Prospect'],['assigned','Assigned'],['contacted','Contacted'],
+    ['interested','Interested'],['appointment','Appointment'],
+    ['client','Deal agreed'],['account_created','Workspace created'],
+    ['onboarding','Onboarding'],['activated','Peekaa merchant'],
+    ['not_interested','Not interested'],['no_response','No response'],
+    ['invalid_contact','Invalid contact'],['closed_business','Closed business'],
+    ['do_not_contact','Do not contact'],['lost','Lost']
   ].map(([key,label])=>Object.freeze({key,label})));
   const operationalLanes = Object.freeze([
     Object.freeze({key:'inbox',label:'New & unassigned',description:'New leads and records that need triage',
       stages:Object.freeze(['unmapped','new_lead'])}),
     Object.freeze({key:'contacting',label:'Contact & meeting',description:'Outreach, callbacks and scheduled conversations',
-      stages:Object.freeze(['appt_set','npu_1','npu_2','npu_3','npu_4','npu_5','npu_6','call_back','reschedule','meeting_sent','site_visit'])}),
+      stages:Object.freeze(['assigned','contacted','interested'])}),
     Object.freeze({key:'decision',label:'Decision',description:'Qualified firms considering the proposal',
-      stages:Object.freeze(['quotation_sent','pending_decision'])}),
+      stages:Object.freeze(['appointment'])}),
     Object.freeze({key:'case_won',label:'Case won',description:'Signed, website-signup and onboarded firms',
       stages:Object.freeze(['client','account_created','onboarding','activated'])}),
     Object.freeze({key:'closed',label:'Closed',description:'Opportunities closed without activation',
-      stages:Object.freeze(['lost'])})
+      stages:Object.freeze(['lost','not_interested','no_response','invalid_contact','closed_business','do_not_contact'])})
   ]);
   const sectorModuleCatalog = Object.freeze([
     ['dashboard','Dashboard','Essentials','Daily business overview and priorities.'],
@@ -3334,23 +3412,19 @@
   const priorityRank=Object.freeze({urgent:4,high:3,normal:2,low:1});
   const stageGateDefinitions=Object.freeze({
     new_lead:['Company name or registration number','Lead source'],
-    appt_set:['Primary contact','Valid email or phone','Appointment date and owner','Next action'],
-    npu_1:['Attempt channel and timestamp','Next attempt or terminal disposition'],
-    npu_2:['Attempt channel and timestamp','Next attempt or terminal disposition'],
-    npu_3:['Attempt channel and timestamp','Next attempt or terminal disposition'],
-    npu_4:['Attempt channel and timestamp','Next attempt or terminal disposition'],
-    npu_5:['Attempt channel and timestamp','Next attempt or terminal disposition'],
-    npu_6:['Attempt channel and timestamp','Next attempt or terminal disposition'],
-    call_back:['Callback date and assigned person','Reason or context'],
-    reschedule:['Previous meeting reference','New time and reschedule reason'],
-    meeting_sent:['Confirmed meeting time','Channel, location or meeting URL','Attendees'],
-    site_visit:['Visit date and responsible owner','Outcome notes'],
-    quotation_sent:['Quotation amount','Sent date','Next follow-up'],
-    pending_decision:['Qualification summary','Decision maker','Decision date or follow-up','Objection, proposed value and next action'],
+    assigned:['Assigned consultant','Assignment reason'],
+    contacted:['Contact channel and timestamp','Outcome or next step'],
+    interested:['Interest notes','Next follow-up'],
+    appointment:['Appointment date and owner','Channel, location or meeting URL'],
     client:['Accepted product, seats, billing cycle, value and currency','Owner email','Onboarding owner and target go-live'],
     account_created:['Successful server-side conversion','Linked workspace and owner invitation'],
     onboarding:['Evidence checklist and responsible owner','Target go-live and incomplete mandatory work'],
     activated:['Accepted owner access','Valid subscription','Required configuration and first-value evidence','Go-live approval'],
+    not_interested:['Reason or context'],
+    no_response:['Reason or context'],
+    invalid_contact:['Reason or context'],
+    closed_business:['Reason or context'],
+    do_not_contact:['Reason or context'],
     lost:['Structured loss reason','Recontact decision']
   });
   let renderGeneration = 0;
@@ -6645,7 +6719,7 @@
       ${CUI.field({id:'newConsultant',label:'Sales consultant',control:'select',options:[
         {value:'',label:'Unassigned'},...consultants
       ],attributes:'name="consultant"'})}
-      ${CUI.field({id:'newStage',label:'Starting stage',control:'select',options:prospectStages.filter(stage=>!['account_created','onboarding','activated'].includes(stage.key)).map(stage=>({value:stage.key,label:stage.label,selected:stage.key==='new_lead'})),attributes:'name="stage"'})}
+      ${CUI.field({id:'newStage',label:'Starting stage',control:'select',options:prospectStages.filter(stage=>!['client','account_created','onboarding','activated'].includes(stage.key)).map(stage=>({value:stage.key,label:stage.label,selected:stage.key==='new_lead'})),attributes:'name="stage"'})}
       ${CUI.field({id:'newTags',label:'Tags',placeholder:'Comma separated',attributes:'name="tags"'})}
     </div>`,onSubmit:async(form,controls)=>{
       if(!form.get('contact_email')&&!form.get('contact_phone'))throw new Error(pt('Add a contact email or phone number.'));
@@ -8105,57 +8179,33 @@
     return wide?`<div class="wide">${field}</div>`:field;
   }
   function stageEvidenceFieldSpecs(stage) {
-    const now=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
     const channel={id:'channel',label:'Channel',control:'select',options:['phone','sms','whatsapp','email','video','in_person'].map(value=>({value,label:platformStatus(value)}))};
     const specs={
       new_lead:[{id:'source',label:'Lead source'}],
-      appt_set:[
+      assigned:[
+        {id:'assigned_consultant',label:'Assigned consultant'},
+        {id:'context',label:'Assignment reason',control:'textarea',wide:true}
+      ],
+      contacted:[
+        {id:'contacted_at',label:'Contacted at',type:'datetime-local'},channel,
+        {id:'context',label:'Outcome / next step',control:'textarea',wide:true}
+      ],
+      interested:[
+        {id:'context',label:'Interest notes',control:'textarea',wide:true},
+        {id:'next_follow_up_at',label:'Next follow-up at',type:'datetime-local'}
+      ],
+      appointment:[
         {id:'appointment_at',label:'Appointment at',type:'datetime-local'},
-        {id:'appointment_owner',label:'Appointment owner'},
-        {id:'next_action_at',label:'Next action at',type:'datetime-local'}
-      ],
-      call_back:[
-        {id:'callback_at',label:'Callback at',type:'datetime-local'},
-        {id:'assigned_person',label:'Assigned person'},
-        {id:'context',label:'Reason / context',control:'textarea',wide:true}
-      ],
-      reschedule:[
-        {id:'previous_meeting_reference',label:'Previous meeting reference'},
-        {id:'new_meeting_at',label:'New meeting at',type:'datetime-local'},
-        {id:'reschedule_reason',label:'Reschedule reason',control:'textarea',wide:true}
-      ],
-      meeting_sent:[
-        {id:'meeting_at',label:'Confirmed meeting at',type:'datetime-local'},channel,
-        {id:'attendees',label:'Attendees',hint:'Names or emails, comma separated.',wide:true},
+        {id:'appointment_owner',label:'Appointment owner'},channel,
         {id:'meeting_url',label:'Meeting URL',type:'url',required:false},
         {id:'physical_location',label:'Physical location',required:false}
       ],
-      site_visit:[
-        {id:'visit_at',label:'Visit at',type:'datetime-local'},
-        {id:'visit_owner',label:'Visit owner'},
-        {id:'outcome_notes',label:'Outcome notes',control:'textarea',wide:true}
-      ],
-      quotation_sent:[
-        {id:'quotation_amount_cents',label:'Quotation amount (SGD)',type:'number',money:true},
-        {id:'sent_at',label:'Sent at',type:'datetime-local'},
-        {id:'next_follow_up_at',label:'Next follow-up at',type:'datetime-local'}
-      ],
-      pending_decision:[
-        {id:'qualification_summary',label:'Qualification summary',control:'textarea',wide:true},
-        {id:'decision_maker',label:'Decision maker'},
-        {id:'key_objection',label:'Key objection'},
-        {id:'proposed_plan',label:'Proposed plan'},
-        {id:'proposed_value_cents',label:'Proposed value (SGD)',type:'number',money:true},
-        {id:'next_action_at',label:'Next action at',type:'datetime-local'},
-        {id:'decision_at',label:'Decision date',type:'date',required:false},
-        {id:'next_follow_up_at',label:'Next follow-up at',type:'datetime-local',required:false}
-      ]
+      not_interested:[{id:'context',label:'Reason / context',control:'textarea',wide:true}],
+      no_response:[{id:'context',label:'Reason / context',control:'textarea',wide:true}],
+      invalid_contact:[{id:'context',label:'Reason / context',control:'textarea',wide:true}],
+      closed_business:[{id:'context',label:'Reason / context',control:'textarea',wide:true}],
+      do_not_contact:[{id:'context',label:'Reason / context',control:'textarea',wide:true}]
     };
-    if(/^npu_[1-6]$/.test(stage))return[
-      {id:'attempt_at',label:'Attempt at',type:'datetime-local',value:now},channel,
-      {id:'next_attempt_at',label:'Next attempt at',type:'datetime-local',required:false},
-      {id:'terminal_disposition',label:'Terminal disposition',required:false,hint:'Required only when no next attempt is scheduled.'}
-    ];
     return specs[stage]||[];
   }
   function stageEvidenceModal(prospect,toStage,context) {
@@ -8175,12 +8225,8 @@
           if(spec.id==='attendees')value=value.split(',').map(item=>item.trim()).filter(Boolean).join(', ');
           evidence[spec.id]=value;
         });
-        if(/^npu_[1-6]$/.test(toStage)&&!evidence.next_attempt_at&&!evidence.terminal_disposition)
-          throw new Error(pt('Schedule the next attempt or enter a terminal disposition.'));
-        if(toStage==='meeting_sent'&&!evidence.meeting_url&&!evidence.physical_location)
+        if(toStage==='appointment'&&!evidence.meeting_url&&!evidence.physical_location)
           throw new Error(pt('Add a meeting URL or physical location.'));
-        if(toStage==='pending_decision'&&!evidence.decision_at&&!evidence.next_follow_up_at)
-          throw new Error(pt('Add a decision date or next follow-up.'));
         controls.close();
         previewThenConfirm({
           title:pt('Confirm {stage}',{stage:stageLabel}),
@@ -8914,6 +8960,46 @@
     ['OPERATIONAL','Open for business'],['CLOSED_TEMPORARILY','Temporarily closed'],
     ['CLOSED_PERMANENTLY','Permanently closed']
   ]);
+  /* V312 Business Explorer. platform_explorer_search_v312 replaces the v297 search RPC as the
+     list/map/ids/count data source; the v297 taxonomy, detail, outreach-log and saved-filter
+     RPCs are untouched and keep working exactly as before. */
+  const PROSPECTING_DEFAULT_SORT='added_desc';
+  const PROSPECTING_SORTS=Object.freeze([
+    ['added_desc','Recently added'],['added_asc','Oldest added first'],
+    ['name_asc','Name A-Z'],['name_desc','Name Z-A'],
+    ['area_asc','Area A-Z'],['category_asc','Category A-Z'],
+    ['rating_desc','Rating high to low'],['reviews_desc','Most reviews first'],
+    ['contacted_desc','Recently contacted'],['follow_up_asc','Follow-up due first']
+  ]);
+  const prospectingContactStates=Object.freeze([
+    ['not_contacted','Not contacted'],['contacted','Contacted']
+  ]);
+  const prospectingFollowUpFilterStates=Object.freeze([
+    ['overdue','Follow-up overdue'],['due_today','Follow-up due today'],
+    ['scheduled','Follow-up scheduled'],['none','No follow-up set']
+  ]);
+  const prospectingAssignmentStates=Object.freeze([
+    ['unassigned','Unassigned'],['assigned','Assigned']
+  ]);
+  const prospectingPeekaaFilterOptions=Object.freeze([
+    ['merchant','Peekaa merchant'],['all','Any Peekaa status']
+  ]);
+  function prospectingStageTone(kind) {
+    const value=String(kind||'').toLowerCase();
+    if(['won','merchant','active','converted'].includes(value))return 'on';
+    if(['lost','rejected','not_interested','do_not_contact'].includes(value))return 'off';
+    if(['follow_up','pending','scheduled','in_progress'].includes(value))return 'warn';
+    return 'neutral';
+  }
+  function prospectingConsultantName(id,taxonomy) {
+    const key=String(id||'');
+    if(!key)return pt('Unassigned');
+    const match=asArray(taxonomy.consultants).find(entry=>String(entry.id||'')===key);
+    return match?String(match.name||''):pt('Unassigned');
+  }
+  function prospectingSelectionCoversRows(rows,selection) {
+    return rows.length>0&&rows.every(row=>selection.has(String(row.prospect_id||'')));
+  }
   const prospectingCopy=(pairs,value)=>{
     const found=pairs.find(pair=>pair[0]===String(value||''));
     return found?found[1]:'';
@@ -8924,10 +9010,11 @@
   };
   function prospectingDefaultFilters() {
     return {
-      q:'',planning_area:'',sector:'',category:'',outreach:'',follow_up:'',
-      assigned_to:'',merchant_status:'',business_status:'',
-      rating_min:'',review_min:'',score_min:'',
-      has_phone:false,has_website:false,has_email:false
+      q:'',planning_area:'',industry:'',category:'',subcategory:'',
+      contact:'',follow_up:'',assignment:'',assigned_to:'',peekaa_status:'',
+      business_status:'',
+      rating_min:'',review_min:'',
+      has_phone:false,has_website:false
     };
   }
   function prospectingBoundsAreFull(bounds) {
@@ -8946,16 +9033,17 @@
     };
     if(filters.q)payload.q=String(filters.q);
     if(filters.planning_area)payload.planning_areas=[String(filters.planning_area)];
-    if(filters.sector)payload.sectors=[String(filters.sector)];
+    if(filters.industry)payload.industries=[String(filters.industry)];
     if(filters.category)payload.categories=[String(filters.category)];
-    if(filters.outreach)payload.outreach=String(filters.outreach);
+    if(filters.subcategory)payload.subcategories=[String(filters.subcategory)];
+    if(filters.contact)payload.contact=String(filters.contact);
     if(filters.follow_up)payload.follow_up=String(filters.follow_up);
+    if(filters.assignment)payload.assignment=String(filters.assignment);
     if(filters.assigned_to)payload.assigned_to=String(filters.assigned_to);
-    if(filters.merchant_status)payload.merchant_status=String(filters.merchant_status);
+    if(filters.peekaa_status)payload.peekaa_status=String(filters.peekaa_status);
     if(filters.business_status)payload.business_status=String(filters.business_status);
     if(number(filters.rating_min)!==null)payload.rating_min=number(filters.rating_min);
     if(number(filters.review_min)!==null)payload.review_min=number(filters.review_min);
-    if(number(filters.score_min)!==null)payload.score_min=number(filters.score_min);
     if(filters.has_phone)payload.has_phone=true;
     if(filters.has_website)payload.has_website=true;
     if(filters.has_email)payload.has_email=true;
@@ -9046,35 +9134,9 @@
     const parsed=Number(value);
     return Number.isFinite(parsed)?parsed:null;
   }
-  function prospectingScoreBand(score) {
-    const value=Number(score);
-    if(!Number.isFinite(value))return 'low';
-    if(value>=70)return 'high';
-    return value>=40?'medium':'low';
-  }
-  function prospectingScoreBadge(score) {
-    const band=prospectingScoreBand(score);
-    const label=band==='high'?pt('High'):band==='medium'?pt('Medium'):pt('Low');
-    const value=Number.isFinite(Number(score))?String(Math.round(Number(score))):'—';
-    return `<span class="platform-score-badge is-${escapeHtml(band)}"><b>${escapeHtml(value)}</b><span>${escapeHtml(label)}</span></span>`;
-  }
   function prospectingMarkerState(marker) {
-    if(marker.converted)return 'converted';
-    return marker.contacted?'contacted':'uncontacted';
-  }
-  function prospectingRowState(row) {
-    if(row.converted_business_id)return 'converted';
-    const outcome=String(row.last_outcome||'');
-    if(outcome==='do_not_contact')return 'do_not_contact';
-    if(outcome==='interested')return 'interested';
-    if(outcome==='not_interested')return 'not_interested';
-    if(row.next_follow_up_at)return 'follow_up';
-    return row.last_contacted_at||outcome?'contacted':'not_contacted';
-  }
-  function prospectingRowStateTone(state) {
-    if(state==='converted'||state==='interested')return 'on';
-    if(state==='not_interested'||state==='do_not_contact')return 'off';
-    return state==='follow_up'?'warn':'neutral';
+    if(marker.is_peekaa_merchant)return 'converted';
+    return marker.assigned?'contacted':'uncontacted';
   }
   function prospectingSummaryHtml(summary,CUI) {
     const source=asObject(summary);
@@ -9095,36 +9157,42 @@
         options.map(([value,text])=>`<option value="${escapeHtml(String(value))}"${String(current||'')===String(value)?' selected':''}>${escapeHtml(String(text))}</option>`).join('')
       }</select></label>`;
   }
+  /* V312: three dependent selects walk one flat taxonomy.categories list. A top-level entry's
+     .parent is an industry key; a subcategory's .parent is a category's own key. Picking an
+     industry narrows categories to that parent; picking a category narrows subcategories the
+     same way, one level down. */
   function prospectingFiltersHtml(taxonomy,filters,savedFilters,savedFilterId) {
     const areas=asArray(taxonomy.planning_areas).map(area=>[String(area.name||''),String(area.name||'')]);
-    const sectors=asArray(taxonomy.sectors).map(sector=>[String(sector.key||''),String(sector.label||sector.key||'')]);
-    const categories=asArray(taxonomy.categories)
-      .filter(category=>!filters.sector||String(category.sector||'')===String(filters.sector))
+    const allCategories=asArray(taxonomy.categories);
+    const industries=asArray(taxonomy.sectors).map(sector=>[String(sector.key||''),String(sector.label||sector.key||'')]);
+    const categories=allCategories
+      .filter(category=>!filters.industry||String(category.parent||'')===String(filters.industry))
       .map(category=>[String(category.key||''),String(category.label||category.key||'')]);
-    const consultants=[['unassigned',pt('Unassigned')]]
-      .concat(asArray(taxonomy.consultants).map(consultant=>[String(consultant.id||''),String(consultant.name||'')]));
+    const subcategories=allCategories
+      .filter(entry=>filters.category&&String(entry.parent||'')===String(filters.category))
+      .map(entry=>[String(entry.key||''),String(entry.label||entry.key||'')]);
+    const consultants=asArray(taxonomy.consultants).map(consultant=>[String(consultant.id||''),String(consultant.name||'')]);
     const checkbox=(name,label)=>`<label class="platform-prospecting-check"><input type="checkbox" name="${escapeHtml(name)}"${filters[name]?' checked':''}><span>${escapeHtml(pt(label))}</span></label>`;
     return `<form id="prospectingFilters" class="platform-prospecting-filter-form">
       <label class="cui-field"><span class="field-label">${escapeHtml(pt('Search businesses'))}</span>
         <input type="search" name="q" value="${escapeHtml(String(filters.q||''))}" autocomplete="off" placeholder="${escapeHtml(pt('Name, street or postal code'))}"></label>
       ${prospectingSelectHtml('planning_area','Planning area',areas,filters.planning_area,'Every area')}
-      ${prospectingSelectHtml('sector','Sector',sectors,filters.sector,'Every sector')}
+      ${prospectingSelectHtml('industry','Industry',industries,filters.industry,'Every industry')}
       ${prospectingSelectHtml('category','Category',categories,filters.category,'Every category')}
-      ${prospectingSelectHtml('outreach','Outreach state',prospectingOutreachStates.map(pair=>[pair[0],pt(pair[1])]),filters.outreach,'Any outreach state')}
-      ${prospectingSelectHtml('follow_up','Follow-up',prospectingFollowUpStates.map(pair=>[pair[0],pt(pair[1])]),filters.follow_up,'Any follow-up')}
+      ${prospectingSelectHtml('subcategory','Subcategory',subcategories,filters.subcategory,'Every subcategory')}
+      ${prospectingSelectHtml('contact','Contact state',prospectingContactStates.map(pair=>[pair[0],pt(pair[1])]),filters.contact,'Any contact state')}
+      ${prospectingSelectHtml('follow_up','Follow-up',prospectingFollowUpFilterStates.map(pair=>[pair[0],pt(pair[1])]),filters.follow_up,'Any follow-up')}
+      ${prospectingSelectHtml('assignment','Assignment',prospectingAssignmentStates.map(pair=>[pair[0],pt(pair[1])]),filters.assignment,'Any assignment')}
       ${prospectingSelectHtml('assigned_to','Assigned consultant',consultants,filters.assigned_to,'Anyone')}
-      ${prospectingSelectHtml('merchant_status','Peekaa status',prospectingMerchantStates.map(pair=>[pair[0],pt(pair[1])]),filters.merchant_status,'Any Peekaa status')}
+      ${prospectingSelectHtml('peekaa_status','Peekaa status',prospectingPeekaaFilterOptions.map(pair=>[pair[0],pt(pair[1])]),filters.peekaa_status,'Not yet on Peekaa')}
       ${prospectingSelectHtml('business_status','Trading status',prospectingBusinessStates.map(pair=>[pair[0],pt(pair[1])]),filters.business_status,'Any trading status')}
       <label class="cui-field"><span class="field-label">${escapeHtml(pt('Minimum rating'))}</span>
         <input type="number" name="rating_min" min="0" max="5" step="0.1" value="${escapeHtml(String(filters.rating_min||''))}"></label>
       <label class="cui-field"><span class="field-label">${escapeHtml(pt('Minimum reviews'))}</span>
         <input type="number" name="review_min" min="0" step="1" value="${escapeHtml(String(filters.review_min||''))}"></label>
-      <label class="cui-field"><span class="field-label">${escapeHtml(pt('Minimum lead score'))}</span>
-        <input type="number" name="score_min" min="0" max="100" step="1" value="${escapeHtml(String(filters.score_min||''))}"></label>
       <div class="platform-prospecting-checks">
         ${checkbox('has_phone','Has a phone number')}
         ${checkbox('has_website','Has a website')}
-        ${checkbox('has_email','Has an email address')}
       </div>
       <div class="platform-actions">
         <button type="submit" class="btn">${escapeHtml(pt('Apply filters'))}</button>
@@ -9143,38 +9211,48 @@
       </div>
     </form>`;
   }
-  function prospectingRowCells(row,CUI,showDistance) {
-    const state=prospectingRowState(row);
+  function prospectingRowCells(row,CUI,taxonomy,{showDistance,canAssign}={}) {
     const rating=prospectingNumber(row.rating);
     const distance=prospectingNumber(row.distance_km);
-    const cells=[
+    const stageLabel=row.stage_label?String(row.stage_label):(row.current_stage_key?platformStatus(row.current_stage_key):pt('Not contacted'));
+    const cells=[];
+    if(canAssign)cells.push(`<input type="checkbox" class="platform-prospecting-row-check" data-prospecting-check="${escapeHtml(String(row.prospect_id||''))}" aria-label="${escapeHtml(pt('Select {name}',{name:String(row.name||'')}))}">`);
+    cells.push(
       `<button type="button" class="platform-linklike" data-prospecting-row="${escapeHtml(String(row.prospect_id||''))}"><b>${escapeHtml(String(row.name||'—'))}</b></button>`,
+      `<span>${escapeHtml(String(row.industry||'—'))}</span><br><span class="muted small">${escapeHtml(String(row.category||row.subcategory||'—'))}</span>`,
       `<span>${escapeHtml(String(row.planning_area||row.district||'—'))}</span>`,
       `<span style="font-variant-numeric:tabular-nums">${escapeHtml(rating===null?'—':rating.toFixed(1))}</span><br><span class="muted small">${escapeHtml(pt('{count} reviews',{count:Number(row.review_count||0)}))}</span>`,
-      prospectingScoreBadge(row.score),
-      CUI.status(prospectingCopy(prospectingOutreachStates,state)||'Not contacted',prospectingRowStateTone(state)),
-      `<span>${escapeHtml(String(row.assigned_name||pt('Unassigned')))}</span>`
-    ];
+      CUI.status(stageLabel,prospectingStageTone(row.stage_kind)),
+      CUI.status(row.is_peekaa_merchant?pt('Peekaa merchant'):pt('Prospect'),row.is_peekaa_merchant?'on':'neutral'),
+      `<span>${escapeHtml(prospectingConsultantName(row.assigned_consultant_id,taxonomy))}</span>`
+    );
     if(showDistance)cells.push(`<span style="font-variant-numeric:tabular-nums">${escapeHtml(distance===null?'—':pt('{count} kilometres away',{count:distance.toFixed(1)}))}</span>`);
     return cells;
   }
-  function prospectingListHtml(state,CUI) {
+  function prospectingListHtml(state,taxonomy,CUI) {
     if(state.listError)return CUI.errorState({
       title:'Prospect list unavailable',
       message:platformErrorMessage(state.listError,'Please try again.'),
       retryId:'prospectingListRetry'
     });
     const rows=asArray(state.rows);
-    if(!rows.length)return CUI.emptyState({
+    const canAssign=taxonomy.can_assign===true;
+    const sortControl=`<label class="cui-field" style="max-width:260px;margin:0"><span class="field-label">${escapeHtml(pt('Sort by'))}</span>
+      <select id="prospectingSort">${PROSPECTING_SORTS.map(([value,label])=>`<option value="${escapeHtml(value)}"${state.sort===value?' selected':''}>${escapeHtml(pt(label))}</option>`).join('')}</select></label>`;
+    const pageCheck=canAssign&&rows.length?`<label class="platform-prospecting-check"><input type="checkbox" id="prospectingSelectPage"${prospectingSelectionCoversRows(rows,state.bulkSelection)?' checked':''}><span>${escapeHtml(pt('Select all on this page'))}</span></label>`:'';
+    const toolbar=`<div class="row" style="gap:16px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">${sortControl}${pageCheck}</div>`;
+    if(!rows.length)return toolbar+CUI.emptyState({
       iconName:'branch',title:'No businesses match',
       body:'Widen the filters, or clear them to see every prospect on the island.'
     });
     const showDistance=rows.some(row=>prospectingNumber(row.distance_km)!==null);
-    const headers=['Business','Area','Rating','Lead score','Outreach','Consultant'];
+    const headers=[];
+    if(canAssign)headers.push('Select');
+    headers.push('Business','Industry','Area','Rating','Stage','Peekaa','Consultant');
     if(showDistance)headers.push('Distance');
-    return `${CUI.table({
+    return `${toolbar}${CUI.table({
       caption:'Prospect list',headers,
-      rows:rows.map(row=>prospectingRowCells(row,CUI,showDistance))
+      rows:rows.map(row=>prospectingRowCells(row,CUI,taxonomy,{showDistance,canAssign}))
     })}
     <div class="platform-load-more">
       <p class="muted small">${escapeHtml(pt('Showing {shown} of {count}.',{shown:rows.length,count:state.total}))} · ${escapeHtml(pt('Business data: Google Maps'))}</p>
@@ -9204,13 +9282,13 @@
         </g>`;
       }
       const marker=cluster.items[0];
-      const radius=5+(Math.max(0,Math.min(100,Number(marker.score)||0))/100)*4;
+      const radius=7;
       const selected=String(state.selected||'')===String(marker.prospect_id||'');
       return `<g class="platform-map-pin is-${escapeHtml(prospectingMarkerState(marker))}${selected?' is-selected':''}" role="button" tabindex="0" data-prospecting-marker="${escapeHtml(String(marker.prospect_id||''))}" aria-label="${escapeHtml(String(marker.name||''))}">
         <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${radius.toFixed(1)}"></circle>
       </g>`;
     }).join('');
-    const legend=[['converted','Converted'],['contacted','Contacted'],['uncontacted','Not contacted']]
+    const legend=[['converted','Peekaa merchant'],['contacted','Assigned prospect'],['uncontacted','Unassigned prospect']]
       .map(pair=>`<span class="platform-map-legend-item"><i class="platform-map-key is-${escapeHtml(pair[0])}" aria-hidden="true"></i>${escapeHtml(pt(pair[1]))}</span>`).join('');
     const drawn=clusters.reduce((total,cluster)=>total+cluster.count,0);
     return `<div class="platform-map-head">
@@ -9220,7 +9298,7 @@
           <button type="button" class="btn ghost sm" id="prospectingMapReset"${prospectingBoundsAreFull(bounds)?' disabled':''}>${escapeHtml(pt('Reset view'))}</button>
         </div>
       </div>
-      ${state.capped?`<div class="platform-route-note"><b>${escapeHtml(pt('Only the strongest leads are drawn'))}</b><p class="small">${escapeHtml(pt('Too many businesses match to plot them all, so only the top {count} by lead score appear. Narrow the filters to see the rest.',{count:state.markerCap}))}</p></div>`:''}
+      ${state.capped?`<div class="platform-route-note"><b>${escapeHtml(pt('Only the strongest leads are drawn'))}</b><p class="small">${escapeHtml(pt('Too many businesses match to plot them all, so only the first {count} appear. Narrow the filters to see the rest.',{count:state.markerCap}))}</p></div>`:''}
       <div class="platform-map-frame">
         <svg viewBox="0 0 ${PROSPECTING_MAP_WIDTH} ${PROSPECTING_MAP_HEIGHT}" class="platform-map-svg" role="group" aria-label="${escapeHtml(pt('Singapore prospect map'))}">
           <rect x="0" y="0" width="${PROSPECTING_MAP_WIDTH}" height="${PROSPECTING_MAP_HEIGHT}" class="platform-map-bg"></rect>
@@ -9228,12 +9306,6 @@
           <g class="platform-map-pins">${pins}</g>
         </svg>
       </div>`;
-  }
-  function prospectingBreakdownHtml(leadScore) {
-    const entries=asArray(asObject(leadScore).breakdown);
-    if(!entries.length)return localizedEmptyHtml('No scoring signals were recorded for this business.');
-    return `<ul class="platform-score-breakdown">${entries.map(entry=>
-      `<li><span>${escapeHtml(String(entry.label||entry.key||''))}</span><b>${escapeHtml(String(entry.points??0))}</b></li>`).join('')}</ul>`;
   }
   function prospectingOutreachHistoryHtml(outreach,CUI) {
     const rows=asArray(outreach);
@@ -9272,7 +9344,6 @@
     const market=asObject(detail.market);
     const sources=asArray(detail.sources);
     const categories=asArray(detail.categories);
-    const leadScore=asObject(detail.lead_score);
     const phone=normalizePlatformPhone(business.phone||prospect.phone||'');
     const website=String(business.website||prospect.website||'');
     const safeWebsite=/^https?:\/\//i.test(website)?website:'';
@@ -9312,14 +9383,18 @@
       ${CUI.card({title:'Pipeline',description:'Who owns this lead, how strong it is, and what happens next.',body:`<dl class="platform-form-grid">${companyDetailFactRows([
         ['Assigned consultant',escapeHtml(String(prospect.assigned_name||pt('Unassigned')))],
         ['Stage',prospect.stage_key?escapeHtml(platformStatus(prospect.stage_key)):null],
-        ['Lead score',escapeHtml(String(leadScore.score??prospect.score??'—'))],
         ['Last contacted',prospect.last_contacted_at?escapeHtml(dateTime(prospect.last_contacted_at)):null],
         ['Last outcome',prospect.last_outcome?escapeHtml(prospectingLabel(prospectingOutcomes,prospect.last_outcome)||platformStatus(prospect.last_outcome)):null],
         ['Next follow-up',prospect.next_follow_up_at?escapeHtml(dateTime(prospect.next_follow_up_at)):null],
         ['Peekaa status',escapeHtml(prospectingLabel(prospectingMerchantStates,merchantState)||platformStatus(merchantState))]
       ])}</dl>
-      <h3 class="platform-subheading">${escapeHtml(pt('How this score was reached'))}</h3>
-      ${prospectingBreakdownHtml(leadScore)}`})}
+      ${detail.can_assign===true?`<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1 1 200px">${CUI.field({id:'prospectingAssignSelect',label:pt('Assign to'),control:'select',
+          options:[{value:'',label:pt('Choose a consultant')}].concat(consultants.map(entry=>({
+            value:String(entry.id||''),label:String(entry.name||''),
+            selected:String(entry.id||'')===String(prospect.assigned_consultant_id||'')})))})}</div>
+        <button type="button" class="btn sm" data-prospecting-assign>${escapeHtml(pt('Assign'))}</button>
+      </div>`:''}`})}
       ${CUI.card({title:'Outreach history',description:'Every call, message and visit already made.',body:prospectingOutreachHistoryHtml(detail.outreach,CUI)})}`;
   }
   function prospectingIdempotencyKey() {
@@ -9437,6 +9512,144 @@
     await load();
     return overlay;
   }
+  /* V312 sticky bulk-assign bar. Reuses .platform-module-selection, the same sticky
+     "N selected" bar the module-permission editor already uses, so this introduces no new
+     visual language. Rendered only for a super admin (taxonomy.can_assign===true); the RPC
+     re-checks the same rule server-side. */
+  function prospectingBulkBarHtml(state,taxonomy,CUI) {
+    const consultants=asArray(taxonomy.consultants);
+    return `<div class="platform-module-selection" aria-live="polite">
+      <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <b data-prospecting-bulk-count>${escapeHtml(pt('{count} selected',{count:state.bulkSelection.size}))}</b>
+        <div class="platform-actions" style="flex-wrap:wrap">
+          <button type="button" class="btn ghost sm" id="prospectingSelectAllMatching">${escapeHtml(pt('Select all {count} matching',{count:state.total}))}</button>
+          <button type="button" class="btn ghost sm" id="prospectingBulkClear">${escapeHtml(pt('Clear'))}</button>
+          <label class="cui-field" style="min-width:200px;margin:0"><span class="field-label sr-only">${escapeHtml(pt('Assign to'))}</span>
+            <select id="prospectingBulkConsultant"><option value="">${escapeHtml(pt('Choose a consultant'))}</option>${
+              consultants.map(consultant=>`<option value="${escapeHtml(String(consultant.id||''))}">${escapeHtml(String(consultant.name||''))}</option>`).join('')
+            }</select></label>
+          <button type="button" class="btn sm" id="prospectingBulkAssign">${escapeHtml(pt('Assign'))}</button>
+        </div>
+      </div>
+      <div id="prospectingBulkResult" role="status" aria-live="polite" class="muted small" style="margin-top:6px"></div>
+    </div>`;
+  }
+  function prospectingPercent(value) {
+    return value===null||value===undefined||value===''?'—':`${(Number(value)*100).toFixed(1)}%`;
+  }
+  function prospectingFunnelStageRows(funnel) {
+    const dash=value=>value===null||value===undefined?'—':String(value);
+    return [
+      ['Businesses',dash(funnel.businesses)],['Non-Peekaa',dash(funnel.non_peekaa)],
+      ['Assigned',dash(funnel.assigned)],['Contacted',dash(funnel.contacted)],
+      ['Interested',dash(funnel.interested)],['Appointments',dash(funnel.appointments)],
+      ['Onboarding',dash(funnel.onboarding)],['Merchants',dash(funnel.merchants)]
+    ];
+  }
+  function prospectingFunnelDetailRows(rates,effort) {
+    const dashNumber=value=>value===null||value===undefined||value===''?'—':Number(value).toFixed(1);
+    return [
+      ['Contact to appointment',prospectingPercent(rates.contact_to_appointment)],
+      ['Appointment to onboarding',prospectingPercent(rates.appointment_to_onboarding)],
+      ['Overall conversion',prospectingPercent(rates.overall)],
+      ['Touches per conversion',dashNumber(effort.touches_per_conversion)],
+      ['Average days to conversion',dashNumber(effort.avg_days_to_conversion)]
+    ];
+  }
+  /* Sub-tables (by consultant / location / industry / category) are aggregate rows whose exact
+     columns are decided server-side. Rendering them from their own keys means a new column the
+     backend adds shows up without another console release, and an absent value is always an
+     em dash, never a misleading zero. */
+  function prospectingGenericTableHtml(rows,CUI,caption) {
+    const list=asArray(rows);
+    if(!list.length)return CUI.emptyState({iconName:'reports',title:'No rows for this period'});
+    const keys=Object.keys(list[0]);
+    const headers=keys.map(key=>plainLabel(key));
+    return CUI.table({caption,headers,rows:list.map(row=>keys.map(key=>{
+      const value=row[key];
+      return escapeHtml(value===null||value===undefined||value===''?'—':String(value));
+    }))});
+  }
+  function prospectingFunnelHtml(payload,CUI) {
+    const funnel=asObject(payload?.funnel);
+    const rates=asObject(payload?.rates);
+    const effort=asObject(payload?.effort);
+    return `<dl class="platform-form-grid">${companyDetailFactRows(prospectingFunnelStageRows(funnel))}</dl>
+      <dl class="platform-form-grid" style="margin-top:10px">${companyDetailFactRows(prospectingFunnelDetailRows(rates,effort))}</dl>
+      ${CUI.card({title:'By consultant',body:prospectingGenericTableHtml(payload?.by_consultant,CUI,'Conversion by consultant')})}
+      ${CUI.card({title:'By location',body:prospectingGenericTableHtml(payload?.by_location,CUI,'Conversion by location')})}
+      ${CUI.card({title:'By industry',body:prospectingGenericTableHtml(payload?.by_industry,CUI,'Conversion by industry')})}
+      ${CUI.card({title:'By category',body:prospectingGenericTableHtml(payload?.by_category,CUI,'Conversion by category')})}`;
+  }
+  function prospectingFunnelSectionHtml(state,CUI) {
+    return `<details class="card platform-prospecting-funnel" id="prospectingFunnel">
+      <summary>${escapeHtml(pt('Conversion analytics'))}</summary>
+      <div class="platform-form-grid" style="margin-top:12px">
+        <label class="cui-field"><span class="field-label">${escapeHtml(pt('From'))}</span><input type="date" id="prospectingFunnelFrom" value="${escapeHtml(state.funnelFrom||'')}"></label>
+        <label class="cui-field"><span class="field-label">${escapeHtml(pt('To'))}</span><input type="date" id="prospectingFunnelTo" value="${escapeHtml(state.funnelTo||'')}"></label>
+        <div class="platform-actions" style="align-self:flex-end"><button type="button" class="btn sm" id="prospectingFunnelRun">${escapeHtml(pt('Run'))}</button></div>
+      </div>
+      <div id="prospectingFunnelBody" style="margin-top:12px"></div>
+    </details>`;
+  }
+  function prospectingMatchRowHtml(match) {
+    return `<div class="platform-action-item">
+      <div>
+        <b>${escapeHtml(String(match.company_name||''))}</b>
+        <span class="muted small"> ${escapeHtml(pt('Postal'))} ${escapeHtml(String(match.company_postal||'—'))}</span>
+        <p class="muted small">${escapeHtml(pt('Candidate match'))}: <b>${escapeHtml(String(match.merchant_name||''))}</b> · ${escapeHtml(pt('Postal'))} ${escapeHtml(String(match.merchant_postal||'—'))}</p>
+        <p class="muted small">${escapeHtml(platformStatus(match.match_basis))}</p>
+      </div>
+      <div class="platform-actions">
+        <button type="button" class="btn sm" data-prospecting-match-confirm="${escapeHtml(String(match.id||''))}">${escapeHtml(pt('Same business'))}</button>
+        <button type="button" class="btn ghost sm" data-prospecting-match-reject="${escapeHtml(String(match.id||''))}">${escapeHtml(pt('Not the same'))}</button>
+      </div>
+    </div>`;
+  }
+  function prospectingMatchesHtml(matches,CUI) {
+    const list=asArray(matches);
+    if(!list.length)return CUI.emptyState({iconName:'check',title:'No matches waiting',body:'Every candidate merchant match has been decided.'});
+    return list.map(prospectingMatchRowHtml).join('');
+  }
+  function prospectingMatchesSectionHtml() {
+    return `<details class="card platform-prospecting-matches" id="prospectingMatches">
+      <summary>${escapeHtml(pt('Merchant match review'))}</summary>
+      <div id="prospectingMatchesBody" style="margin-top:12px"></div>
+    </details>`;
+  }
+  function prospectingCsvHeader() {
+    return [pt('Business name'),pt('Industry'),pt('Category'),pt('Subcategory'),pt('Planning area'),pt('Postal code'),
+      pt('Phone'),pt('Website'),pt('Rating'),pt('Reviews'),pt('Trading status'),pt('Peekaa status'),pt('Stage'),
+      pt('Assigned consultant'),pt('Last contacted'),pt('Next follow-up')];
+  }
+  function prospectingCsvRow(row,taxonomy) {
+    return [
+      row.name||'',row.industry||'',row.category||'',row.subcategory||'',row.planning_area||row.district||'',
+      row.postal_code||'',row.phone||'',row.website||'',row.rating??'',row.review_count??'',
+      row.business_status?(prospectingLabel(prospectingBusinessStates,row.business_status)||platformStatus(row.business_status)):'',
+      row.is_peekaa_merchant?pt('Peekaa merchant'):pt('Prospect'),
+      row.stage_label||(row.current_stage_key?platformStatus(row.current_stage_key):''),
+      prospectingConsultantName(row.assigned_consultant_id,taxonomy),
+      row.last_contacted_at?dateTime(row.last_contacted_at):'',
+      row.next_follow_up_at?dateTime(row.next_follow_up_at):''
+    ];
+  }
+  /* Export walks the SAME search RPC used by the list, in server-sorted pages, so the file
+     matches exactly what the operator is looking at. Capped at 2,000 rows: a bulk CSV beyond
+     that is better served by narrowing the filters, and an unbounded walk could hang the tab. */
+  async function prospectingFetchAllForExport(sb,filterPayload,sort,cap=2000,pageSize=200) {
+    const rows=[];
+    let offset=0;
+    for(;;){
+      const payload=asObject(await rpc(sb,'platform_explorer_search_v312',{
+        p_filters:filterPayload,p_mode:'list',p_sort:sort,p_limit:pageSize,p_offset:offset}));
+      const page=asArray(payload.rows);
+      rows.push(...page);
+      offset+=pageSize;
+      if(!page.length||page.length<pageSize||rows.length>=cap||offset>=Number(payload.total||0))break;
+    }
+    return rows.slice(0,cap);
+  }
   async function renderProspecting(context) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Prospecting','Loading the prospect map…','branch');
@@ -9444,15 +9657,17 @@
       const [taxonomyPayload,summaryPayload,firstPage]=await Promise.all([
         rpc(sb,'platform_crm_prospecting_taxonomy_v297'),
         rpc(sb,'platform_crm_prospecting_summary_v297'),
-        rpc(sb,'platform_crm_prospecting_search_v297',{
-          p_filters:{},p_mode:'list',p_limit:PROSPECTING_PAGE,p_offset:0})
+        rpc(sb,'platform_explorer_search_v312',{
+          p_filters:{},p_mode:'list',p_sort:PROSPECTING_DEFAULT_SORT,p_limit:PROSPECTING_PAGE,p_offset:0})
       ]);
       const taxonomy=asObject(taxonomyPayload);
       const summary=asObject(summaryPayload);
       const page=asObject(firstPage);
       const areas=asArray(taxonomy.planning_areas);
+      const today=new Date();
       const state={
         filters:prospectingDefaultFilters(),
+        sort:PROSPECTING_DEFAULT_SORT,
         bounds:{...PROSPECTING_FULL_BOUNDS},
         view:'list',
         rows:asArray(page.rows),
@@ -9461,6 +9676,10 @@
         hasMore:page.has_more===true,
         markers:[],clusters:[],mapped:0,capped:false,markerCap:0,
         selected:'',savedFilters:[],savedFilterId:'',
+        bulkSelection:new Set(),
+        funnelFrom:new Date(today.getTime()-29*86400000).toISOString().slice(0,10),
+        funnelTo:today.toISOString().slice(0,10),
+        funnelLoaded:false,
         listError:null,mapError:null
       };
       try{state.savedFilters=asArray(await rpc(sb,'platform_crm_saved_filters_v297'),['items','filters'])}
@@ -9469,6 +9688,8 @@
       const listHost=()=>main.querySelector('[data-prospecting-list]');
       const mapHost=()=>main.querySelector('[data-prospecting-map]');
       const filterHost=()=>main.querySelector('[data-prospecting-filters]');
+      const summaryHost=()=>main.querySelector('[data-prospecting-summary]');
+      const bulkBarHost=()=>main.querySelector('[data-prospecting-bulkbar]');
       let searchTimer=null;
 
       function openRow(prospectId,name) {
@@ -9476,14 +9697,89 @@
         paintMap();
         openProspectingDetail(state.selected,context,{name:String(name||''),consultants:asArray(taxonomy.consultants),onChanged:refreshAll});
       }
+      function paintBulkBar() {
+        const host=bulkBarHost();
+        if(!host)return;
+        if(!(taxonomy.can_assign===true)||state.bulkSelection.size===0){host.innerHTML='';return}
+        host.innerHTML=prospectingBulkBarHtml(state,taxonomy,CUI);
+        wireBulkBar(host);
+      }
+      function wireBulkBar(host) {
+        const selectAll=host.querySelector('#prospectingSelectAllMatching');
+        if(selectAll)selectAll.onclick=async()=>{
+          selectAll.disabled=true;
+          try{
+            const ids=asArray(await rpc(sb,'platform_explorer_search_v312',{
+              p_filters:prospectingFilterPayload(state.filters),p_mode:'ids',p_sort:state.sort,
+              p_limit:5000,p_offset:0}));
+            state.bulkSelection=new Set(ids.map(String));
+            paintList();paintBulkBar();
+            CUI.announce(pt('{count} selected',{count:state.bulkSelection.size}));
+          }catch(error){
+            selectAll.disabled=false;
+            CUI.announce(platformErrorMessage(error,'That selection could not be loaded.'),{assertive:true});
+          }
+        };
+        const clear=host.querySelector('#prospectingBulkClear');
+        if(clear)clear.onclick=()=>{state.bulkSelection.clear();paintList();paintBulkBar()};
+        const assign=host.querySelector('#prospectingBulkAssign');
+        if(assign)assign.onclick=async()=>{
+          const consultant=String(host.querySelector('#prospectingBulkConsultant')?.value||'');
+          const result=host.querySelector('#prospectingBulkResult');
+          if(!consultant){if(result)result.textContent=pt('Choose a consultant first.');return}
+          assign.disabled=true;
+          try{
+            const outcome=asObject(await rpc(sb,'platform_explorer_bulk_assign_v312',{
+              p_prospects:[...state.bulkSelection],p_consultant:consultant,
+              p_reason:'Bulk assigned from Business Explorer'
+            }));
+            state.bulkSelection.clear();
+            await Promise.all([loadPage(0,false),refreshMap(),refreshSummary()]);
+            paintBulkBar();
+            CUI.announce(pt('Assigned {assigned}. Skipped {skipped} (already Peekaa merchants).',{
+              assigned:Number(outcome.assigned||0),skipped:Number(outcome.skipped||0)}));
+          }catch(error){
+            assign.disabled=false;
+            if(result)result.textContent=platformErrorMessage(error,'That assignment could not be saved.');
+          }
+        };
+      }
+      async function refreshSummary() {
+        const host=summaryHost();
+        if(!host)return;
+        try{
+          const payload=asObject(await rpc(sb,'platform_crm_prospecting_summary_v297'));
+          host.innerHTML=prospectingSummaryHtml(payload,CUI);
+        }catch(_e){/* keep the previous summary tiles if the refresh fails */}
+      }
       function paintList() {
         const host=listHost();
         if(!host)return;
-        host.innerHTML=prospectingListHtml(state,CUI);
+        host.innerHTML=prospectingListHtml(state,taxonomy,CUI);
         host.querySelectorAll('[data-prospecting-row]').forEach(button=>button.onclick=()=>{
           const row=state.rows.find(entry=>String(entry.prospect_id||'')===button.dataset.prospectingRow);
           openRow(button.dataset.prospectingRow,row?row.name:'');
         });
+        host.querySelectorAll('[data-prospecting-check]').forEach(checkbox=>{
+          checkbox.checked=state.bulkSelection.has(checkbox.dataset.prospectingCheck);
+          checkbox.onchange=()=>{
+            const id=checkbox.dataset.prospectingCheck;
+            if(checkbox.checked)state.bulkSelection.add(id);else state.bulkSelection.delete(id);
+            const pageCheck=host.querySelector('#prospectingSelectPage');
+            if(pageCheck)pageCheck.checked=prospectingSelectionCoversRows(state.rows,state.bulkSelection);
+            paintBulkBar();
+          };
+        });
+        const pageCheck=host.querySelector('#prospectingSelectPage');
+        if(pageCheck)pageCheck.onchange=()=>{
+          state.rows.forEach(row=>{
+            const id=String(row.prospect_id||'');
+            if(pageCheck.checked)state.bulkSelection.add(id);else state.bulkSelection.delete(id);
+          });
+          paintList();paintBulkBar();
+        };
+        const sortSelect=host.querySelector('#prospectingSort');
+        if(sortSelect)sortSelect.onchange=()=>{state.sort=sortSelect.value;loadPage(0,false)};
         const more=host.querySelector('#prospectingLoadMore');
         if(more)more.onclick=()=>{more.disabled=true;loadPage(state.offset+PROSPECTING_PAGE,true)};
         const retry=host.querySelector('#prospectingListRetry');
@@ -9523,8 +9819,8 @@
       }
       async function loadPage(offset,append) {
         try{
-          const payload=asObject(await rpc(sb,'platform_crm_prospecting_search_v297',{
-            p_filters:prospectingFilterPayload(state.filters),p_mode:'list',
+          const payload=asObject(await rpc(sb,'platform_explorer_search_v312',{
+            p_filters:prospectingFilterPayload(state.filters),p_mode:'list',p_sort:state.sort,
             p_limit:PROSPECTING_PAGE,p_offset:offset}));
           const rows=asArray(payload.rows);
           state.rows=append?state.rows.concat(rows):rows;
@@ -9544,8 +9840,8 @@
           title:'Prospect map',body:'Plotting the businesses that match…',
           iconName:'branch',variant:'compact'});
         try{
-          const payload=asObject(await rpc(sb,'platform_crm_prospecting_search_v297',{
-            p_filters:prospectingFilterPayload(state.filters,state.bounds),p_mode:'markers',
+          const payload=asObject(await rpc(sb,'platform_explorer_search_v312',{
+            p_filters:prospectingFilterPayload(state.filters,state.bounds),p_mode:'markers',p_sort:state.sort,
             p_limit:PROSPECTING_PAGE,p_offset:0}));
           state.markers=asArray(payload.markers);
           state.mapped=Number(payload.mapped??payload.total??state.markers.length);
@@ -9676,9 +9972,11 @@
           if(control.id==='prospectingSavedFilter')return;
           control.onchange=()=>{
             adopt();
-            /* A category only means something inside its sector, so changing the
-               sector clears the stale category and redraws the choices. */
-            if(control.name==='sector'){state.filters.category='';paintFilters()}
+            /* A category only means something inside its industry, and a subcategory only
+               means something inside its category, so changing either parent clears the
+               stale child and redraws the choices. */
+            if(control.name==='industry'){state.filters.category='';state.filters.subcategory='';paintFilters()}
+            else if(control.name==='category'){state.filters.subcategory='';paintFilters()}
             applyState();
           };
         });
@@ -9761,12 +10059,74 @@
         });
       }
 
+      function wireFunnel() {
+        const details=main.querySelector('#prospectingFunnel');
+        if(!details)return;
+        const body=()=>main.querySelector('#prospectingFunnelBody');
+        const loadFunnel=async()=>{
+          const host=body();
+          if(!host)return;
+          host.innerHTML=CUI.loadingState({title:'Conversion analytics',body:'Loading the funnel…',iconName:'reports',variant:'compact'});
+          const from=String(main.querySelector('#prospectingFunnelFrom')?.value||state.funnelFrom||'');
+          const to=String(main.querySelector('#prospectingFunnelTo')?.value||state.funnelTo||'');
+          state.funnelFrom=from;state.funnelTo=to;
+          try{
+            const payload=asObject(await rpc(sb,'platform_conversion_funnel_v312',{p_from:from,p_to:to}));
+            state.funnelLoaded=true;
+            host.innerHTML=prospectingFunnelHtml(payload,CUI);
+          }catch(error){
+            host.innerHTML=CUI.errorState({title:'Conversion analytics unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'prospectingFunnelRetry'});
+            const retry=host.querySelector('#prospectingFunnelRetry');
+            if(retry)retry.onclick=loadFunnel;
+          }
+        };
+        details.addEventListener('toggle',()=>{if(details.open&&!state.funnelLoaded)loadFunnel()});
+        const run=main.querySelector('#prospectingFunnelRun');
+        if(run)run.onclick=loadFunnel;
+      }
+      /* Merchant match review is admin/super-admin only, the same gate the discovery
+         panel already uses; the RPCs re-check it server-side either way. */
+      function wireMatches() {
+        const details=main.querySelector('#prospectingMatches');
+        if(!details)return;
+        const body=()=>main.querySelector('#prospectingMatchesBody');
+        const load=async()=>{
+          const host=body();
+          if(!host)return;
+          host.innerHTML=CUI.loadingState({title:'Merchant match review',body:'Loading candidate matches…',iconName:'check',variant:'compact'});
+          try{
+            const matches=asArray(await rpc(sb,'platform_merchant_matches_v312',{p_limit:50}));
+            host.innerHTML=prospectingMatchesHtml(matches,CUI);
+            host.querySelectorAll('[data-prospecting-match-confirm]').forEach(button=>button.onclick=()=>decide(button.dataset.prospectingMatchConfirm,true));
+            host.querySelectorAll('[data-prospecting-match-reject]').forEach(button=>button.onclick=()=>decide(button.dataset.prospectingMatchReject,false));
+          }catch(error){
+            host.innerHTML=CUI.errorState({title:'Merchant match review unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'prospectingMatchesRetry'});
+            const retry=host.querySelector('#prospectingMatchesRetry');
+            if(retry)retry.onclick=load;
+          }
+        };
+        const decide=async(matchId,confirm)=>{
+          try{
+            await rpc(sb,'platform_decide_merchant_match_v312',{p_match:matchId,p_confirm:confirm});
+            CUI.announce(confirm?pt('Marked as the same business.'):pt('Marked as not the same business.'));
+            await load();
+            if(confirm)await refreshAll();
+          }catch(error){
+            CUI.announce(platformErrorMessage(error,'That decision could not be saved.'),{assertive:true});
+          }
+        };
+        details.addEventListener('toggle',()=>{if(details.open)load()});
+      }
+      const canManageMatches=taxonomy.can_write===true&&(taxonomy.role==='admin'||taxonomy.role==='super_admin');
       main.innerHTML=`${CUI.pageHeader({
         title:'Prospecting',
         subtitle:'Every business Peekaa could sell to, on the map and in one worked list.',
-        iconName:'branch'})}
-        ${prospectingSummaryHtml(summary,CUI)}
+        iconName:'branch',
+        actions:`<button type="button" class="btn ghost" id="prospectingExport">${escapeHtml(pt('Export'))}</button>`})}
+        <div data-prospecting-summary>${prospectingSummaryHtml(summary,CUI)}</div>
         ${prospectingDiscoveryHtml(taxonomy,CUI)}
+        ${prospectingFunnelSectionHtml(state,CUI)}
+        ${canManageMatches?prospectingMatchesSectionHtml():''}
         <div class="platform-prospecting-layout" data-prospecting-view="list">
           <details class="card platform-prospecting-filter-sheet" id="prospectingFilterSheet" open>
             <summary>${escapeHtml(pt('Filters'))}</summary>
@@ -9786,7 +10146,8 @@
               <div data-prospecting-map></div>
             </section>
           </div>
-        </div>`;
+        </div>
+        <div data-prospecting-bulkbar></div>`;
       const layout=main.querySelector('.platform-prospecting-layout');
       main.querySelectorAll('[data-prospecting-toggle]').forEach(button=>button.onclick=()=>{
         state.view=button.dataset.prospectingToggle;
@@ -9799,9 +10160,28 @@
       });
       const sheet=main.querySelector('#prospectingFilterSheet');
       if(sheet&&globalObject.matchMedia&&globalObject.matchMedia('(max-width:760px)').matches)sheet.open=false;
+      const exportButton=main.querySelector('#prospectingExport');
+      if(exportButton)exportButton.onclick=async()=>{
+        exportButton.disabled=true;
+        const originalLabel=exportButton.textContent;
+        exportButton.textContent=pt('Preparing export…');
+        try{
+          const rows=await prospectingFetchAllForExport(sb,prospectingFilterPayload(state.filters),state.sort);
+          downloadCsv(`${context.brand?.downloadPrefix||'peekaa'}-business-explorer-${Date.now()}.csv`,
+            [prospectingCsvHeader(),...rows.map(row=>prospectingCsvRow(row,taxonomy))]);
+        }catch(error){
+          CUI.announce(platformErrorMessage(error,'That export could not be prepared.'),{assertive:true});
+        }finally{
+          exportButton.disabled=false;
+          exportButton.textContent=originalLabel;
+        }
+      };
       wireFilters();
       wireDiscovery();
+      wireFunnel();
+      wireMatches();
       paintList();
+      paintBulkBar();
       CUI.focusRoute(main);
       await refreshMap();
     }catch(error){showError(main,error,CUI,'Prospecting')}
@@ -9884,13 +10264,7 @@
               ['Consultant',consultant.display_name?escapeHtml(consultant.display_name):null]
             ])
           : `<div class="wide">${localizedEmptyHtml('This firm has no subscription yet.')}</div>`
-      }</dl>${detail.can_assign===true?`<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap;align-items:flex-end">
-        <div style="flex:1 1 200px">${CUI.field({id:'prospectingAssignSelect',label:pt('Assign to'),control:'select',
-          options:[{value:'',label:pt('Choose a consultant')}].concat(consultants.map(entry=>({
-            value:String(entry.id||''),label:String(entry.name||''),
-            selected:String(entry.id||'')===String(prospect.assigned_consultant_id||'')})))})}</div>
-        <button type="button" class="btn sm" data-prospecting-assign>${escapeHtml(pt('Assign'))}</button>
-      </div>`:''}`})}
+      }</dl>`})}
       ${CUI.card({title:'Contacts',description:'Call or message the people who answer for this firm.',
         body:contacts.length
           ? CUI.table({caption:'Contacts',headers:['Name','Role','Email','Contact'],rows:companyDetailContactRows(contacts,CUI)})
@@ -12459,7 +12833,7 @@
     renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
     renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
     renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
-    prospectingProject,prospectingClusters,prospectingScoreBand,prospectingFilterPayload,
+    prospectingProject,prospectingClusters,prospectingFilterPayload,
     prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
     receiptRows,receiptUnreadableReason
   });
@@ -12486,7 +12860,7 @@
       renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
       renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
       renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
-      prospectingProject,prospectingClusters,prospectingScoreBand,prospectingFilterPayload,
+      prospectingProject,prospectingClusters,prospectingFilterPayload,
     prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
     receiptRows,receiptUnreadableReason
     };

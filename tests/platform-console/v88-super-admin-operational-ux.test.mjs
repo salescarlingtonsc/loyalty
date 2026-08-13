@@ -23,7 +23,13 @@ test('operational board stays within five lanes and keeps Case won distinct from
   assert.deepEqual(lanes.find(lane=>lane.key==='case_won'),{
     key:'case_won',label:'Case won',stages:['client','account_created','onboarding','activated']
   });
-  assert.deepEqual(lanes.find(lane=>lane.key==='closed')?.stages,['lost']);
+  // The closed lane now legitimately holds all six closed-without-activation
+  // states, not just 'lost'. What must stay true is that it remains a
+  // distinct lane from case_won (won stays separate from closed).
+  assert.deepEqual(lanes.find(lane=>lane.key==='closed')?.stages,[
+    'lost','not_interested','no_response','invalid_contact','closed_business','do_not_contact'
+  ]);
+  assert.notEqual(lanes.find(lane=>lane.key==='closed'),lanes.find(lane=>lane.key==='case_won'));
   assert.equal(Console.operationalLaneFor({lane_key:'case_won',business_id:'firm-1'}),'case_won');
   assert.equal(Console.operationalLaneFor({source_stage_key:'lost'}),'closed');
 });

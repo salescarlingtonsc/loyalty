@@ -170,7 +170,9 @@ const sqlTestBySemanticVersion = new Map([
   ['v307', 'db/tests/v307_programme_read_model.sql'],
   ['v308', 'db/tests/v308_programme_spine.sql'],
   ['v309', 'db/tests/v309_ledger_programme_tag.sql'],
-  ['v310', 'db/tests/v310_google_content_retention.sql']
+  ['v310', 'db/tests/v310_google_content_retention.sql'],
+  ['v311', 'db/tests/v311_conversion_first_prospecting.sql'],
+  ['v312', 'db/tests/v311_conversion_first_prospecting.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
@@ -296,6 +298,15 @@ const appliedPreflightExceptions = new Map([
   }],
   ['20260804170000_nestly_v162_stripe_launch_price_148', {
     sha256: '9d140deebd7d7ed6303fffb47928caa1548c3123aff9267d86d97294120f4efd',
+    rollbackSuite: true,
+    outerTransaction: false
+  }],
+  // Not a migration in the applied-history sense: a manual recovery reference
+  // for v311's data drop, deliberately never executed automatically (no
+  // begin/commit envelope). Registered in the plan only so every file under
+  // db/migrations/ is accounted for.
+  ['20260814001050_nestly_v311_rollback_data_snapshot', {
+    sha256: '8cdeeb5ca4ceed9ebda6f2c7d7818c6e7f71b2fc3250957119536d39c7aef786',
     rollbackSuite: true,
     outerTransaction: false
   }]
@@ -776,7 +787,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 257); // + v310 google content retention
+  assert.equal(pending.length, 260); // + v311 conversion-first prospecting + v311 rollback snapshot + v312 business explorer/funnel
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 301,
-  "executableCount": 287,
+  "itemCount": 304,
+  "executableCount": 290,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -449,6 +449,15 @@
         "db/migrations/20260813_nestly_v309_ledger_programme_tag.sql",
         "db/migrations/20260813_nestly_v310_google_content_retention.sql",
         "db/migrations/20260813_nestly_v310_programme_read_path.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260814",
+      "count": 3,
+      "paths": [
+        "db/migrations/20260814_nestly_v311_conversion_first_prospecting.sql",
+        "db/migrations/20260814_nestly_v311_rollback_data_snapshot.sql",
+        "db/migrations/20260814_nestly_v312_business_explorer_and_funnel.sql"
       ]
     }
   ],
@@ -2860,6 +2869,30 @@
       "semanticVersion": "v310",
       "proposedDeployVersion": "20260813001300",
       "sha256": "c3617c903e581eae9803a0e2978990e91a58c3af0492a8cc6851a0c1b2adb794"
+    },
+    {
+      "order": 302,
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v311_conversion_first_prospecting.sql",
+      "semanticVersion": "v311",
+      "proposedDeployVersion": "20260814001000",
+      "sha256": "09d2ed0d483cfd4712672bbdced34cc079c6c74d1098f1921ea3ae9b8df224cd"
+    },
+    {
+      "order": 303,
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v311_rollback_data_snapshot.sql",
+      "semanticVersion": "v311",
+      "proposedDeployVersion": "20260814001050",
+      "sha256": "8cdeeb5ca4ceed9ebda6f2c7d7818c6e7f71b2fc3250957119536d39c7aef786"
+    },
+    {
+      "order": 304,
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v312_business_explorer_and_funnel.sql",
+      "semanticVersion": "v312",
+      "proposedDeployVersion": "20260814001100",
+      "sha256": "69f2e62620dd590fc82e2fca22ea3b755fb173565cdcdef1c65e3c29c23cdf54"
     }
   ]
 }

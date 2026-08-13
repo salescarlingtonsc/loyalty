@@ -1816,6 +1816,24 @@
       "version": "20260813001300",
       "name": "nestly_v310_google_content_retention",
       "sourcePath": "db/migrations/20260813_nestly_v310_google_content_retention.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814001000",
+      "name": "nestly_v311_conversion_first_prospecting",
+      "sourcePath": "db/migrations/20260814_nestly_v311_conversion_first_prospecting.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814001050",
+      "name": "nestly_v311_rollback_data_snapshot",
+      "sourcePath": "db/migrations/20260814_nestly_v311_rollback_data_snapshot.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814001100",
+      "name": "nestly_v312_business_explorer_and_funnel",
+      "sourcePath": "db/migrations/20260814_nestly_v312_business_explorer_and_funnel.sql"
     }
   ]
 }

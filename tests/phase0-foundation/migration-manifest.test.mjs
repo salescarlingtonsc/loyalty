@@ -73,10 +73,10 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'planning_only_not_deployable');
   assert.equal(manifest.hashAlgorithm, 'sha256-raw-bytes');
-  assert.equal(manifest.itemCount, 301); // + v310 google content retention
-  assert.equal(manifest.executableCount, 287); // + v310 google content retention
+  assert.equal(manifest.itemCount, 304); // + v311 conversion-first prospecting + v311 rollback snapshot + v312 business explorer/funnel
+  assert.equal(manifest.executableCount, 290); // + v311 conversion-first prospecting + v311 rollback snapshot + v312 business explorer/funnel
   assert.equal(manifest.reservationCount, 14);
-  assert.equal(sqlItems.length, 287); // + v310 google content retention
+  assert.equal(sqlItems.length, 290); // + v311 conversion-first prospecting + v311 rollback snapshot + v312 business explorer/funnel
   assert.equal(reservations.length, 14);
   assert.equal(manifest.sourceCollisionsResolved, false);
 
@@ -107,7 +107,8 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
     ['20260810', 6], // V273 + both v267s + V268
     ['20260811', 6], // V279
     ['20260812', 15], // +v293 grants +v297-v299 prospecting CRM
-    ['20260813', 7] // V300 readbacks + V306 both-mode tiers + V307 read model + V308 spine + V309 ledger tag + V310 google retention
+    ['20260813', 7], // V300 readbacks + V306 both-mode tiers + V307 read model + V308 spine + V309 ledger tag + V310 google retention
+    ['20260814', 3] // V311 conversion-first prospecting + V311 rollback snapshot + V312 business explorer/funnel
   ]);
   assert.deepEqual(
     manifest.sourceDeployVersionCollisions.map(({ sourceDeployVersion, count }) => [sourceDeployVersion, count]),

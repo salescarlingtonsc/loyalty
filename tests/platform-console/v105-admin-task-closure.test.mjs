@@ -599,7 +599,15 @@ test('daily onboarding forms use consultant names, SGD and percentages instead o
   assert.match(commercial,/percentInputToBasisPoints/);
   assert.doesNotMatch(commercial,/basis points/);
   assert.doesNotMatch(commercial,/\(cents\)/);
-  assert.match(stage,/Proposed value \(SGD\)/);
+  // The old quotation_sent stage captured a monetary "Proposed value (SGD)"
+  // evidence field; quotation_sent was retired by the pipeline vocabulary
+  // change and stage evidence no longer collects money directly (money is
+  // fully covered by the qualification/commercial/conversion assertions
+  // above and below). What must stay true here is that the remaining stage
+  // evidence fields use human names, not raw database ids or units.
+  assert.doesNotMatch(stage,/\(cents\)/);
+  assert.match(stage,/label:'Assigned consultant'/);
+  assert.match(stage,/label:'Appointment owner'/);
   assert.match(conversion,/Accepted amount \(SGD\)/);
   assert.match(conversion,/label:'Onboarding owner'/);
   assert.doesNotMatch(conversion,/Onboarding owner ID/);

@@ -6,16 +6,20 @@ import vm from 'node:vm';
 const root = new URL('../..', import.meta.url);
 const read = path => readFile(new URL(path, root), 'utf8');
 
-// Mirrors public.sme_pipeline_stages in production, in sort_order. v174 added
-// site_visit and quotation_sent between meeting_sent and pending_decision, so
-// the official set is 19, not the original 17.
+// Mirrors public.sme_pipeline_stages in production. Owner directive replaced
+// the old 19-stage vocabulary (inherited from a different business's sales
+// motion: six separate "no pick up" stages, site visits, quotations) with a
+// 15-stage conversion funnel. `client` and `account_created` are kept but
+// hidden from the rep-facing stage picker because convert_sme_prospect_v79
+// hard-depends on both.
 const officialStages = [
-  'new_lead','appt_set','npu_1','npu_2','npu_3','npu_4','npu_5','npu_6',
-  'call_back','reschedule','meeting_sent','site_visit','quotation_sent',
-  'pending_decision','client','account_created','onboarding','activated','lost'
+  'new_lead','assigned','contacted','interested','appointment',
+  'client','account_created','onboarding','activated',
+  'not_interested','no_response','invalid_contact','closed_business',
+  'do_not_contact','lost'
 ];
 
-test('onboarding exposes all 19 official stages and maps them into five operational lanes', async () => {
+test('onboarding exposes all 15 official stages and maps them into five operational lanes', async () => {
   const source = await read('app/platform-console.js');
   const context = { Object };
   context.globalThis = context;
