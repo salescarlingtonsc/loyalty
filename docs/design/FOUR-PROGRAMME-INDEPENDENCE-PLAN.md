@@ -269,6 +269,21 @@ makes "more than one live" true.
 > onboarding analysis applies: **preview-before-payment** — a new business
 > builds and previews its programme first and pays to go live. Recorded in
 > `docs/product/PRODUCT-TRUTH.md`; the build begins at W0.
+>
+> **OWNER AMENDMENT 2026-08-14 (binds W5/W6; amends D1's scope):** the existing
+> tiered-membership feature set is NOT retired and CO-EXISTS with the other
+> programmes: (a) the tier BASIS CHOICE survives as a first-class owner setting —
+> a firm may climb its ladder by VISITS or by POINTS EARNED (points-earned stays
+> the default the wizard suggests; the W6 contract's "retire the climbing
+> question" item is OVERRIDDEN — the wizard keeps the choice); (b) every expiry
+> knob survives per-programme — points expiry in all its modes (e.g. yearly via
+> expiry_days=365, inactivity windows) plus rung-level effective_from/expires_at;
+> nothing in W5's sweep scoping or W6's rails may drop one. Unchanged by this
+> amendment: stamps never feed tiers; the points-earned basis counts
+> points-programme earns only (the shipped v310 rule); spend-basis remains a
+> deep-editor option exactly as today. Verified at amendment time: nothing
+> shipped in W0–W4 discarded any of the above — v310 touched only the
+> points_earned branch of the tier metric.
 
 - **D1 Tier fuel**: confirm tiers = lifetime points EARNED via the points engine
   (silent accrual for tiers-only firms; stamps never feed tiers; refunds never

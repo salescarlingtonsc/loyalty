@@ -54,9 +54,14 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   switch any subset live simultaneously. This SUPERSEDES the v229/v230 "one use
   for points" exclusivity, the single-valued loyalty_model choice, and the
   wizard's mutually-exclusive model pick (superseded rulings remain recorded in
-  their migration headers). Approved resolutions: tiers are measured by
-  lifetime points EARNED via the points engine (a tiers-only firm accrues
-  silently; stamps never feed tiers; spending and refunds never demote);
+  their migration headers). Approved resolutions (as amended 2026-08-14): tiers are measured by
+  lifetime points EARNED via the points engine BY DEFAULT, and the owner-chosen
+  visits basis remains a first-class alternative — the existing tiered-membership
+  feature set (visits-or-points basis, points-expiry modes including yearly,
+  rung effective/expiry windows) co-exists with the other programmes and is
+  never retired (a tiers-only firm accrues points silently under the
+  points-earned basis; stamps never feed tiers; spending and refunds never
+  demote);
   mid-card stamp milestones unlock without consuming stamps and the card resets
   only when full; raising a tier threshold re-evaluates members immediately but
   the publish preview must state how many members move down; gifts may carry an
