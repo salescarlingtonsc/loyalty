@@ -76,8 +76,20 @@ begin
   --    billing-critical stages stay hidden rather than deleted.
   if (select string_agg(stage_key,'>' order by sort_order) from public.sme_pipeline_stages
        where is_system=false and kind in ('active','won'))
-     <> 'new_lead>assigned>contacted>interested>appointment>onboarding>activated' then
+     <> 'new_lead>assigned>contacted>interested>appointment>onboarding' then
     raise exception 'E: rep-facing pipeline is wrong'; end if;
+  -- 'activated' (Peekaa merchant) is deliberately NOT hand-settable: you become
+  -- a merchant by converting, not by a rep changing a dropdown. Letting it be
+  -- picked would forge the one number this system exists to measure.
+  if not exists (select 1 from public.sme_pipeline_stages
+                  where stage_key='activated' and kind='won' and is_system) then
+    raise exception 'E: the won stage must be system-managed'; end if;
+  -- The two tables that describe "machine-driven" must never disagree; when they
+  -- did, a rep could not advance a deal to Onboarding at all.
+  if exists (select 1 from public.sme_pipeline_stages s
+               join public.sme_stage_entry_requirements r on r.stage_key=s.stage_key
+              where r.system_managed is distinct from s.is_system) then
+    raise exception 'E: system-managed flags disagree between the stage tables'; end if;
   if (select count(*) from public.sme_pipeline_stages where kind='closed') <> 6 then
     raise exception 'E: expected six closed states'; end if;
   if not exists (select 1 from public.sme_pipeline_stages where stage_key='client' and is_system) then

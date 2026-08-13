@@ -1858,6 +1858,18 @@
       "version": "20260814001300",
       "name": "nestly_v316_repair_taxonomy_and_match_queue",
       "sourcePath": "db/migrations/20260814_nestly_v316_repair_taxonomy_and_match_queue.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814001400",
+      "name": "nestly_v317_restore_wrongly_dropped_dependencies",
+      "sourcePath": "db/migrations/20260814_nestly_v317_restore_wrongly_dropped_dependencies.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814001500",
+      "name": "nestly_v318_align_system_managed_stage_flags",
+      "sourcePath": "db/migrations/20260814_nestly_v318_align_system_managed_stage_flags.sql"
     }
   ]
 }

@@ -1863,6 +1863,18 @@
       "path": "db/migrations/20260814_nestly_v316_repair_taxonomy_and_match_queue.sql",
       "semanticVersion": "v316",
       "proposedDeployVersion": "20260814001300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v317_restore_wrongly_dropped_dependencies.sql",
+      "semanticVersion": "v317",
+      "proposedDeployVersion": "20260814001400"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v318_align_system_managed_stage_flags.sql",
+      "semanticVersion": "v318",
+      "proposedDeployVersion": "20260814001500"
     }
   ]
 }

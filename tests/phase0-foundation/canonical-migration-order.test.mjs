@@ -109,14 +109,14 @@ test('materializer creates one byte-preserving 308-file chain and deterministic 
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 264); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair
-  assert.equal(manifest.itemCount, 309); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 309); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair
+  assert.equal(manifest.pendingCount, 266); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment
+  assert.equal(manifest.itemCount, 311); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 311); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v316_repair_taxonomy_and_match_queue' // tail
+    'nestly_v318_align_system_managed_stage_flags' // tail
   );
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);
