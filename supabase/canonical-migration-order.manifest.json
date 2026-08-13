@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 253,
-  "itemCount": 298,
+  "pendingCount": 255,
+  "itemCount": 300,
   "items": [
     {
       "order": 1,
@@ -2962,6 +2962,26 @@
     {
       "order": 296,
       "kind": "pending",
+      "version": "20260813000400",
+      "name": "nestly_v308_programme_spine",
+      "path": "supabase/migrations/20260813000400_nestly_v308_programme_spine.sql",
+      "octetLength": 30121,
+      "sha256": "7c3426e85190cc7784521c141d84874dd118e6dea1fd09ea4ba096ab3d946958",
+      "provenance": "local-source"
+    },
+    {
+      "order": 297,
+      "kind": "pending",
+      "version": "20260813000500",
+      "name": "nestly_v309_ledger_programme_tag",
+      "path": "supabase/migrations/20260813000500_nestly_v309_ledger_programme_tag.sql",
+      "octetLength": 36475,
+      "sha256": "4189c59b7d4d06bdb5974a2e18f662f41634d8c65d86a6f7ba47fac602b34972",
+      "provenance": "local-source"
+    },
+    {
+      "order": 298,
+      "kind": "pending",
       "version": "20260813001000",
       "name": "nestly_v297_merchant_prospecting_map",
       "path": "supabase/migrations/20260813001000_nestly_v297_merchant_prospecting_map.sql",
@@ -2970,7 +2990,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 297,
+      "order": 299,
       "kind": "pending",
       "version": "20260813001100",
       "name": "nestly_v298_prospecting_seed_and_reference",
@@ -2980,7 +3000,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 298,
+      "order": 300,
       "kind": "pending",
       "version": "20260813001200",
       "name": "nestly_v299_prospecting_rpcs",
