@@ -290,7 +290,9 @@ test('all static platform interface metadata has real locale copy and no code-li
   // been correct since it was written. It only became visible now because v282
   // is the first code to use 'Status' as a field LABEL rather than a table
   // header, which is what pulls it into this inventory.
-  const invariants=new Set(['WhatsApp','Platform','UEN','CRM','Status']);
+  /* 'Import' joins these: it is the standard Malay word for import, exactly as 'CRM' is
+     the standard term — an identity mapping is the CORRECT copy, not a missing one. */
+  const invariants=new Set(['WhatsApp','Platform','UEN','CRM','Status','Import']);
   for(const locale of ['zh-CN','ms']){
     api.setPlatformLocaleForTest(locale);
     for(const key of keys){
@@ -306,7 +308,7 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   const explicit=[...new Set([...source.matchAll(/\bpt\((['"])(.*?)\1/g)].map(match=>match[2]))];
   const metadata=[...new Set([...source.matchAll(/\b(?:title|subtitle|description|caption|label|hint|placeholder|body|message|actionLabel|submitLabel)\s*:\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
   const announcements=[...new Set([...source.matchAll(/\.announce\(\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
-  assert.equal(explicit.length,952,'update the audited explicit-copy inventory when adding runtime UI'); // V292
+  assert.equal(explicit.length,963,'update the audited explicit-copy inventory when adding runtime UI'); // V292
   assert.equal(metadata.length,786,'update the audited CUI metadata inventory when adding UI metadata'); // V292
   assert.equal(announcements.length,49,'update the audited static announcement inventory when adding announcements'); // V292
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');

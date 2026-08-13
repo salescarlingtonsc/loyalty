@@ -2935,6 +2935,17 @@
   });
   const PLATFORM_COPY_V297=Object.freeze({
     'zh-CN':Object.freeze({
+      /* v297: provider discovery / import panel (zh-CN). */
+      'Find businesses':'查找商家',
+      'Search a provider for businesses in one area and category, preview what is new, then import. Preview never writes and never spends a details lookup.':'按区域和类别向数据源搜索商家，先预览新增结果，再导入。预览不会写入数据，也不会消耗详情查询。',
+      'Preview':'预览',
+      'Import':'导入',
+      'Import complete':'导入完成',
+      'Importing…':'正在导入…',
+      'Searching…':'正在搜索…',
+      'Choose an area and a category first.':'请先选择区域和类别。',
+      'Found {found} · New {new} · Already known {existing}':'找到 {found} · 新增 {new} · 已存在 {existing}',
+      'No business data provider is configured yet. Add the provider API key in Supabase before searching.':'尚未配置商家数据源。请先在 Supabase 中添加数据源 API 密钥，然后再搜索。',
       'Prospecting':'开发客户','Prospect':'潜在商户',
       'Prospecting summary':'开发客户概览',
       'Every business Peekaa could sell to, on the map and in one worked list.':'Peekaa 可以拓展的所有商户，既在地图上，也在同一份工作清单中。',
@@ -3011,6 +3022,17 @@
       'Saved filter updated.':'已保存的筛选已更新。'
     }),
     ms:Object.freeze({
+      /* v297: provider discovery / import panel (ms). */
+      'Find businesses':'Cari perniagaan',
+      'Search a provider for businesses in one area and category, preview what is new, then import. Preview never writes and never spends a details lookup.':'Cari perniagaan daripada penyedia mengikut satu kawasan dan kategori, pratonton apa yang baharu, kemudian import. Pratonton tidak pernah menulis dan tidak membelanjakan carian butiran.',
+      'Preview':'Pratonton',
+      'Import':'Import',
+      'Import complete':'Import selesai',
+      'Importing…':'Mengimport…',
+      'Searching…':'Mencari…',
+      'Choose an area and a category first.':'Pilih kawasan dan kategori dahulu.',
+      'Found {found} · New {new} · Already known {existing}':'Dijumpai {found} · Baharu {new} · Sedia diketahui {existing}',
+      'No business data provider is configured yet. Add the provider API key in Supabase before searching.':'Tiada penyedia data perniagaan dikonfigurasikan lagi. Tambah kunci API penyedia dalam Supabase sebelum mencari.',
       'Prospecting':'Mencari prospek','Prospect':'Prospek',
       'Prospecting summary':'Ringkasan pencarian prospek',
       'Every business Peekaa could sell to, on the map and in one worked list.':'Setiap perniagaan yang boleh didekati Peekaa, di atas peta dan dalam satu senarai kerja.',
@@ -8966,6 +8988,31 @@
   }
   /* Number(null) is 0 and Number('') is 0, so a missing rating or distance would
      print a confident "0.0" that the record never claimed. Absent stays absent. */
+  /* Brief §15: the admin-only sync surface. Deliberately two-step — Preview costs one
+     cheap search call and writes NOTHING, so nobody discovers a 1,200-row import by
+     accident. Import is a separate, explicit press. Sales staff never see this card:
+     importing mutates the shared prospect pool, so it is admin/super-admin only, which
+     is the same rule the ingest RPC enforces server-side. */
+  function prospectingDiscoveryHtml(taxonomy,CUI) {
+    if(!(taxonomy.can_write===true&&(taxonomy.role==='admin'||taxonomy.role==='super_admin')))return '';
+    const areas=asArray(taxonomy.planning_areas);
+    const categories=asArray(taxonomy.categories).filter(entry=>entry&&entry.parent);
+    return `<details class="card platform-prospecting-discovery" id="prospectingDiscovery">
+      <summary>${escapeHtml(pt('Find businesses'))}</summary>
+      <p class="muted small" style="margin-top:8px">${escapeHtml(pt('Search a provider for businesses in one area and category, preview what is new, then import. Preview never writes and never spends a details lookup.'))}</p>
+      <div class="platform-form-grid" style="margin-top:12px">
+        ${CUI.field({id:'prospectingDiscoveryArea',label:pt('Area'),control:'select',
+          options:areas.map(entry=>({value:String(entry.name||''),label:String(entry.name||'')}))})}
+        ${CUI.field({id:'prospectingDiscoveryCategory',label:pt('Category'),control:'select',
+          options:categories.map(entry=>({value:String(entry.key||''),label:String(entry.label||'')}))})}
+      </div>
+      <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button type="button" class="btn ghost sm" id="prospectingDiscoveryPreview">${escapeHtml(pt('Preview'))}</button>
+        <button type="button" class="btn sm" id="prospectingDiscoveryImport" disabled>${escapeHtml(pt('Import'))}</button>
+      </div>
+      <div id="prospectingDiscoveryResult" role="status" aria-live="polite" style="margin-top:12px"></div>
+    </details>`;
+  }
   function prospectingNumber(value) {
     if(value===null||value===undefined||value==='')return null;
     const parsed=Number(value);
@@ -9469,6 +9516,58 @@
       async function refreshAll() {
         await Promise.all([loadPage(0,false),refreshMap()]);
       }
+      function wireDiscovery() {
+        const preview=main.querySelector('#prospectingDiscoveryPreview');
+        const importButton=main.querySelector('#prospectingDiscoveryImport');
+        const result=main.querySelector('#prospectingDiscoveryResult');
+        if(!preview||!importButton||!result)return;
+        const area=()=>String(main.querySelector('#prospectingDiscoveryArea')?.value||'');
+        const category=()=>String(main.querySelector('#prospectingDiscoveryCategory')?.value||'');
+        const categoryLabel=()=>{
+          const match=asArray(taxonomy.categories).find(entry=>entry&&entry.key===category());
+          return match?String(match.label||''):'';
+        };
+        const run=async commit=>{
+          if(!area()||!category()){
+            result.innerHTML=`<div class="err">${escapeHtml(pt('Choose an area and a category first.'))}</div>`;
+            return;
+          }
+          preview.disabled=true;importButton.disabled=true;
+          result.innerHTML=`<p class="muted small">${escapeHtml(commit?pt('Importing…'):pt('Searching…'))}</p>`;
+          try{
+            const {data,error}=await sb.functions.invoke('business-discovery',{body:{
+              query:{query:categoryLabel()+' in '+area()+' Singapore',
+                     planningArea:area(),categoryKey:category()},
+              commit
+            }});
+            if(error)throw error;
+            const payload=asObject(data);
+            /* The function reports provider_not_configured when no API key is set. Say
+               exactly that rather than a generic failure, because the fix is an
+               operator action, not a retry. */
+            if(payload.error==='provider_not_configured'){
+              result.innerHTML=`<div class="err">${escapeHtml(pt('No business data provider is configured yet. Add the provider API key in Supabase before searching.'))}</div>`;
+              preview.disabled=false;return;
+            }
+            if(payload.error){
+              result.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage({message:payload.error},'That search could not be completed.'))}</div>`;
+              preview.disabled=false;return;
+            }
+            const found=Number(payload.found||0),fresh=Number(payload.new||0),existing=Number(payload.existing||0);
+            result.innerHTML=`<div class="platform-route-note"><b>${escapeHtml(pt(commit?'Import complete':'Preview'))}</b>
+              <p class="small" style="margin-top:6px">${escapeHtml(pt('Found {found} · New {new} · Already known {existing}')
+                .replace('{found}',String(found)).replace('{new}',String(fresh)).replace('{existing}',String(existing)))}</p></div>`;
+            preview.disabled=false;
+            importButton.disabled=commit||fresh===0;
+            if(commit){await refreshAll();CUI.announce(pt('Import complete'))}
+          }catch(error){
+            result.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'That search could not be completed.'))}</div>`;
+            preview.disabled=false;
+          }
+        };
+        preview.onclick=()=>run(false);
+        importButton.onclick=()=>run(true);
+      }
       function readFilters(form) {
         const data=new FormData(form);
         const next=prospectingDefaultFilters();
@@ -9581,6 +9680,7 @@
         subtitle:'Every business Peekaa could sell to, on the map and in one worked list.',
         iconName:'branch'})}
         ${prospectingSummaryHtml(summary,CUI)}
+        ${prospectingDiscoveryHtml(taxonomy,CUI)}
         <div class="platform-prospecting-layout" data-prospecting-view="list">
           <details class="card platform-prospecting-filter-sheet" id="prospectingFilterSheet" open>
             <summary>${escapeHtml(pt('Filters'))}</summary>
@@ -9614,6 +9714,7 @@
       const sheet=main.querySelector('#prospectingFilterSheet');
       if(sheet&&globalObject.matchMedia&&globalObject.matchMedia('(max-width:760px)').matches)sheet.open=false;
       wireFilters();
+      wireDiscovery();
       paintList();
       CUI.focusRoute(main);
       await refreshMap();
