@@ -92,6 +92,7 @@ test('platform console exposes the required namespaced routes', async () => {
      because nobody added them to the second list. The guarantee below - an unknown segment is
      still refused - is unchanged and asserted immediately after. */
   assert.equal(consoleApi.isRoute('#/platform/crm'),true);
+  assert.equal(consoleApi.isRoute('#/platform/prospecting'),true);
   assert.equal(consoleApi.isRoute('#/platform/companies'),true);
   assert.equal(consoleApi.isRoute('#/platform/marketing'),true);
   assert.equal(consoleApi.isRoute('#/platform/partners'),true);
@@ -100,7 +101,7 @@ test('platform console exposes the required namespaced routes', async () => {
   assert.equal(consoleApi.routeKey('#/platform/commissions'),'commissions');
   assert.deepEqual(
     Array.from(consoleApi.routes,route=>route.label),
-    ['Today','Onboarding','CRM','Demo requests','Customer lifecycle','Firms','Companies','Reports','Marketing usage','Billing','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Partner obligations','Platform access'] // V282
+    ['Today','Onboarding','CRM','Prospecting','Demo requests','Customer lifecycle','Firms','Companies','Reports','Marketing usage','Billing','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Partner obligations','Platform access'] // V282
   );
 });
 

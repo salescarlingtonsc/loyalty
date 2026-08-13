@@ -2933,6 +2933,160 @@
       'New':'Baharu','Contacted':'Dihubungi','Archived':'Diarkibkan'
     })
   });
+  const PLATFORM_COPY_V297=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Prospecting':'开发客户','Prospect':'潜在商户',
+      'Prospecting summary':'开发客户概览',
+      'Every business Peekaa could sell to, on the map and in one worked list.':'Peekaa 可以拓展的所有商户，既在地图上，也在同一份工作清单中。',
+      'Loading the prospect map…':'正在加载潜在商户地图…',
+      'Search businesses':'搜索商户',
+      'Name, street or postal code':'名称、街道或邮区编号',
+      'Minimum rating':'最低评分','Minimum reviews':'最少评价数','Minimum lead score':'最低线索评分',
+      'Saved filters':'已保存的筛选','No saved filter':'未选择已保存的筛选',
+      'Save current':'保存当前筛选','Rename':'重命名','Delete filter':'删除筛选',
+      'Filter name':'筛选名称','Save filter':'保存筛选',
+      'Rename saved filter':'重命名已保存的筛选','Save current filters':'保存当前筛选条件',
+      'Give this filter a name so you can find it again.':'请为此筛选命名，方便日后再次找到。',
+      '{count} reviews':'{count} 条评价',
+      '{count} kilometres away':'相距 {count} 公里',
+      '{rating} from {count} reviews':'{rating} 分，来自 {count} 条评价',
+      'Load more prospects':'加载更多潜在商户',
+      '{count} prospects here. Open to zoom in.':'此处有 {count} 家潜在商户。打开可放大查看。',
+      'Showing {shown} of {count} mapped.':'已显示地图上 {count} 家中的 {shown} 家。',
+      'Reset view':'重置视图',
+      'Only the strongest leads are drawn':'仅绘制最优质的线索',
+      'Too many businesses match to plot them all, so only the top {count} by lead score appear. Narrow the filters to see the rest.':'符合条件的商户过多，无法全部绘制，因此仅显示线索评分最高的 {count} 家。请缩小筛选范围以查看其余商户。',
+      'Singapore prospect map':'新加坡潜在商户地图',
+      'Prospect map':'潜在商户地图',
+      'Prospect list':'潜在商户列表',
+      'List or map':'列表或地图','Map':'地图','Filters':'筛选条件',
+      'Open a business to see its detail and record what happened.':'打开某家商户可查看详情并记录联系结果。',
+      'Singapore, drawn from the coordinates Peekaa already holds. No external map service is loaded.':'根据 Peekaa 已有的坐标绘制的新加坡地图，未加载任何外部地图服务。',
+      'Plotting the businesses that match…':'正在绘制符合条件的商户…',
+      'Prospect list unavailable':'潜在商户列表不可用',
+      'Prospect map unavailable':'潜在商户地图不可用',
+      'No businesses match':'没有符合条件的商户',
+      'Widen the filters, or clear them to see every prospect on the island.':'请放宽或清除筛选条件，以查看全岛所有潜在商户。',
+      'Log outreach':'记录联系','Schedule follow-up':'安排跟进','Save outreach':'保存联系记录',
+      'What happened':'联系结果','Next follow-up':'下次跟进时间',
+      'A follow-up outcome needs a date and time, so the next person knows when to call back.':'选择“稍后跟进”时必须填写日期和时间，下一位同事才知道何时回电。',
+      'Outreach history':'联系记录',
+      'Every call, message and visit already made.':'已进行的每一次致电、留言与拜访。',
+      'Everything known about this business, and what to do next.':'关于该商户的全部已知信息，以及下一步该做什么。',
+      'Loading business, contacts and outreach history…':'正在加载商户资料、联系人与联系记录…',
+      'The business':'商户资料','Who they are and how to reach them.':'他们是谁，以及如何联系他们。',
+      'Where it is':'所在位置',
+      'The address Peekaa holds, and the point plotted on the map.':'Peekaa 记录的地址，以及在地图上标注的位置。',
+      'The people who answer for this business.':'代表该商户接洽的人员。',
+      'Who owns this lead, how strong it is, and what happens next.':'该线索由谁负责、质量如何，以及下一步安排。',
+      'How this score was reached':'该评分的计算依据',
+      'Open the source listing':'打开来源页面',
+      'No scoring signals were recorded for this business.':'该商户没有记录任何评分信号。',
+      'Nobody has contacted this business yet.':'尚无人联系过该商户。',
+      'No named contact has been recorded for this business.':'该商户尚未记录具名联系人。',
+      'Text message':'短信','Site visit':'实地拜访','Other channel':'其他渠道',
+      'No answer':'无人接听','Spoke to the owner':'已与老板通话','Interested':'有意向',
+      'Follow up later':'稍后跟进','Not interested':'无意向','Wrong number':'号码有误',
+      'Already with a competitor':'已使用竞品','Signed up':'已签约','Do not contact again':'请勿再联系',
+      'Not contacted':'未联系','Follow-up booked':'已安排跟进','Do not contact':'请勿联系','Converted':'已转化',
+      'Follow-up due today':'今日应跟进','Follow-up overdue':'跟进已逾期','Follow-up due':'待跟进',
+      'Not on Peekaa':'尚未加入 Peekaa','In the pipeline':'洽谈中','Live merchant':'已上线商户',
+      'Open for business':'正常营业','Temporarily closed':'暂停营业','Permanently closed':'已结业',
+      'Prospects':'潜在商户',
+      'Planning area':'规划区','Every area':'所有区域','Every sector':'所有行业','Every category':'所有类别',
+      'Outreach state':'联系状态','Any outreach state':'所有联系状态',
+      'Follow-up':'跟进','Any follow-up':'所有跟进状态',
+      'Assigned consultant':'负责顾问','Anyone':'所有人',
+      'Peekaa status':'Peekaa 状态','Any Peekaa status':'所有 Peekaa 状态',
+      'Trading status':'营业状态','Any trading status':'所有营业状态',
+      'Has a phone number':'有电话号码','Has a website':'有网站','Has an email address':'有电邮地址',
+      'Area':'区域','Rating':'评分','Lead score':'线索评分','Outreach':'联系','Distance':'距离','When':'时间',
+      'Business name':'商户名称','Categories':'类别','Address':'地址','Website':'网站',
+      'Listing source':'资料来源','Source record':'来源记录','District':'邮区','Coordinates':'坐标',
+      'Neighbourhood':'周边情况','Last outcome':'最近结果',
+      'Outreach saved.':'联系记录已保存。',
+      'Saved filter applied.':'已应用保存的筛选。',
+      'Choose a saved filter first.':'请先选择一个已保存的筛选。',
+      'Saved filter deleted.':'已删除保存的筛选。',
+      'Saved filter updated.':'已保存的筛选已更新。'
+    }),
+    ms:Object.freeze({
+      'Prospecting':'Mencari prospek','Prospect':'Prospek',
+      'Prospecting summary':'Ringkasan pencarian prospek',
+      'Every business Peekaa could sell to, on the map and in one worked list.':'Setiap perniagaan yang boleh didekati Peekaa, di atas peta dan dalam satu senarai kerja.',
+      'Loading the prospect map…':'Memuatkan peta prospek…',
+      'Search businesses':'Cari perniagaan',
+      'Name, street or postal code':'Nama, jalan atau poskod',
+      'Minimum rating':'Penilaian minimum','Minimum reviews':'Bilangan ulasan minimum','Minimum lead score':'Skor petunjuk minimum',
+      'Saved filters':'Penapis disimpan','No saved filter':'Tiada penapis disimpan dipilih',
+      'Save current':'Simpan penapis semasa','Rename':'Namakan semula','Delete filter':'Padam penapis',
+      'Filter name':'Nama penapis','Save filter':'Simpan penapis',
+      'Rename saved filter':'Namakan semula penapis disimpan','Save current filters':'Simpan penapis semasa',
+      'Give this filter a name so you can find it again.':'Beri nama kepada penapis ini supaya anda boleh mencarinya semula.',
+      '{count} reviews':'{count} ulasan',
+      '{count} kilometres away':'Sejauh {count} kilometer',
+      '{rating} from {count} reviews':'{rating} daripada {count} ulasan',
+      'Load more prospects':'Muatkan lagi prospek',
+      '{count} prospects here. Open to zoom in.':'{count} prospek di sini. Buka untuk zum masuk.',
+      'Showing {shown} of {count} mapped.':'Memaparkan {shown} daripada {count} yang dipetakan.',
+      'Reset view':'Set semula paparan',
+      'Only the strongest leads are drawn':'Hanya petunjuk terkuat dilukis',
+      'Too many businesses match to plot them all, so only the top {count} by lead score appear. Narrow the filters to see the rest.':'Terlalu banyak perniagaan sepadan untuk dipetakan semuanya, jadi hanya {count} teratas mengikut skor petunjuk dipaparkan. Persempitkan penapis untuk melihat selebihnya.',
+      'Singapore prospect map':'Peta prospek Singapura',
+      'Prospect map':'Peta prospek',
+      'Prospect list':'Senarai prospek',
+      'List or map':'Senarai atau peta','Map':'Peta','Filters':'Penapis',
+      'Open a business to see its detail and record what happened.':'Buka sesebuah perniagaan untuk melihat butirannya dan merekod apa yang berlaku.',
+      'Singapore, drawn from the coordinates Peekaa already holds. No external map service is loaded.':'Singapura, dilukis daripada koordinat yang sedia ada pada Peekaa. Tiada perkhidmatan peta luar dimuatkan.',
+      'Plotting the businesses that match…':'Memetakan perniagaan yang sepadan…',
+      'Prospect list unavailable':'Senarai prospek tidak tersedia',
+      'Prospect map unavailable':'Peta prospek tidak tersedia',
+      'No businesses match':'Tiada perniagaan sepadan',
+      'Widen the filters, or clear them to see every prospect on the island.':'Luaskan penapis, atau kosongkannya untuk melihat setiap prospek di pulau ini.',
+      'Log outreach':'Rekod hubungan','Schedule follow-up':'Jadualkan susulan','Save outreach':'Simpan rekod hubungan',
+      'What happened':'Apa yang berlaku','Next follow-up':'Susulan seterusnya',
+      'A follow-up outcome needs a date and time, so the next person knows when to call back.':'Hasil susulan memerlukan tarikh dan masa, supaya orang seterusnya tahu bila hendak menghubungi semula.',
+      'Outreach history':'Sejarah hubungan',
+      'Every call, message and visit already made.':'Setiap panggilan, mesej dan lawatan yang telah dibuat.',
+      'Everything known about this business, and what to do next.':'Segala yang diketahui tentang perniagaan ini, dan apa yang perlu dilakukan seterusnya.',
+      'Loading business, contacts and outreach history…':'Memuatkan perniagaan, kenalan dan sejarah hubungan…',
+      'The business':'Perniagaan itu','Who they are and how to reach them.':'Siapa mereka dan bagaimana menghubungi mereka.',
+      'Where it is':'Lokasinya',
+      'The address Peekaa holds, and the point plotted on the map.':'Alamat yang disimpan Peekaa, dan titik yang dipetakan.',
+      'The people who answer for this business.':'Orang yang mewakili perniagaan ini.',
+      'Who owns this lead, how strong it is, and what happens next.':'Siapa memegang petunjuk ini, sekuat mana ia, dan apa yang berlaku seterusnya.',
+      'How this score was reached':'Bagaimana skor ini diperoleh',
+      'Open the source listing':'Buka penyenaraian sumber',
+      'No scoring signals were recorded for this business.':'Tiada isyarat pemarkahan direkodkan untuk perniagaan ini.',
+      'Nobody has contacted this business yet.':'Belum ada sesiapa menghubungi perniagaan ini.',
+      'No named contact has been recorded for this business.':'Tiada kenalan bernama direkodkan untuk perniagaan ini.',
+      'Text message':'Mesej teks','Site visit':'Lawatan tapak','Other channel':'Saluran lain',
+      'No answer':'Tiada jawapan','Spoke to the owner':'Bercakap dengan pemilik','Interested':'Berminat',
+      'Follow up later':'Susul kemudian','Not interested':'Tidak berminat','Wrong number':'Nombor salah',
+      'Already with a competitor':'Sudah menggunakan pesaing','Signed up':'Telah mendaftar','Do not contact again':'Jangan hubungi lagi',
+      'Not contacted':'Belum dihubungi','Follow-up booked':'Susulan ditempah','Do not contact':'Jangan hubungi','Converted':'Telah bertukar',
+      'Follow-up due today':'Susulan perlu hari ini','Follow-up overdue':'Susulan telah lewat','Follow-up due':'Susulan perlu dibuat',
+      'Not on Peekaa':'Belum di Peekaa','In the pipeline':'Dalam perbincangan','Live merchant':'Peniaga aktif',
+      'Open for business':'Beroperasi','Temporarily closed':'Tutup sementara','Permanently closed':'Tutup kekal',
+      'Prospects':'Prospek',
+      'Planning area':'Kawasan perancangan','Every area':'Semua kawasan','Every sector':'Semua sektor','Every category':'Semua kategori',
+      'Outreach state':'Keadaan hubungan','Any outreach state':'Sebarang keadaan hubungan',
+      'Follow-up':'Susulan','Any follow-up':'Sebarang susulan',
+      'Assigned consultant':'Perunding ditugaskan','Anyone':'Sesiapa sahaja',
+      'Peekaa status':'Status Peekaa','Any Peekaa status':'Sebarang status Peekaa',
+      'Trading status':'Status operasi','Any trading status':'Sebarang status operasi',
+      'Has a phone number':'Ada nombor telefon','Has a website':'Ada laman web','Has an email address':'Ada alamat e-mel',
+      'Area':'Kawasan','Rating':'Penilaian','Lead score':'Skor petunjuk','Outreach':'Hubungan','Distance':'Jarak','When':'Bila',
+      'Business name':'Nama perniagaan','Categories':'Kategori','Address':'Alamat','Website':'Laman web',
+      'Listing source':'Sumber penyenaraian','Source record':'Rekod sumber','District':'Daerah','Coordinates':'Koordinat',
+      'Neighbourhood':'Persekitaran','Last outcome':'Hasil terkini',
+      'Outreach saved.':'Rekod hubungan disimpan.',
+      'Saved filter applied.':'Penapis disimpan telah digunakan.',
+      'Choose a saved filter first.':'Pilih penapis disimpan terlebih dahulu.',
+      'Saved filter deleted.':'Penapis disimpan telah dipadam.',
+      'Saved filter updated.':'Penapis disimpan telah dikemas kini.'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -2949,6 +3103,7 @@
       ??PLATFORM_COPY_V255[platformLocale]?.[key]
       ??PLATFORM_COPY_V282[platformLocale]?.[key]
       ??PLATFORM_COPY_V292[platformLocale]?.[key]
+      ??PLATFORM_COPY_V297[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -3037,6 +3192,10 @@
        the DB gate (app.v89_platform_can('onboarding','r')) is the same one, so
        a new key here would let the two drift apart. */
     {key:'crm',moduleKey:'onboarding',label:'CRM',shortLabel:'CRM',hash:'#/platform/crm',icon:'customers'},
+    /* V297: Prospecting is the top of the same funnel CRM works, so it shares the
+       'onboarding' module gate for exactly the reason CRM does — one grant, one
+       decision. The reader itself decides what a consultant may write or assign. */
+    {key:'prospecting',moduleKey:'onboarding',label:'Prospecting',shortLabel:'Prospect',hash:'#/platform/prospecting',icon:'branch'},
     /* V292: super-admin only and deliberately without a moduleKey, like the partner
        register. A demo request is an unqualified prospect who has no tenant, so no
        tenant-scoped grant can be the thing that opens it. */
@@ -3257,7 +3416,7 @@
        rail. Putting CRM first made the Sales header point at CRM while the word
        "CRM" appeared nowhere. Onboarding stays the home it has always been, and
        CRM appears as a named child. */
-    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm','demo-requests'])}),
+    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm','prospecting','demo-requests'])}),
     Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms','companies'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports','marketing'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
@@ -8669,6 +8828,797 @@
       CUI.focusRoute(main);
     }
   }
+  /* V297 Prospecting.
+     A map of every business Peekaa could sell to, sitting on top of the same CRM
+     the consultants already work. The map is inline SVG on purpose: the
+     application's CSP allows images only from itself and Supabase, so an external
+     tile server would render a blank rectangle in production. A fixed Singapore
+     bounding box with a linear projection is enough to read the island once the
+     planning areas are drawn as reference points, and it costs no third-party
+     request, no API key and no CSP exception.
+     Every pin is a real activation target: a <g role="button"> with tabindex and
+     an explicit Enter/Space handler, because an SVG shape never synthesises a
+     click from the keyboard — the same defect already fixed once on the CRM
+     board. */
+  const PROSPECTING_PAGE=25;
+  const PROSPECTING_FULL_BOUNDS=Object.freeze({north:1.48,south:1.20,east:104.10,west:103.60});
+  const PROSPECTING_MAP_WIDTH=720;
+  const PROSPECTING_MAP_HEIGHT=520;
+  const PROSPECTING_CELLS=24;
+  const prospectingChannels=Object.freeze([
+    ['call','Call'],['whatsapp','WhatsApp'],['sms','Text message'],
+    ['email','Email'],['visit','Site visit'],['other','Other channel']
+  ]);
+  const prospectingOutcomes=Object.freeze([
+    ['no_answer','No answer'],['spoke_to_owner','Spoke to the owner'],['interested','Interested'],
+    ['follow_up','Follow up later'],['not_interested','Not interested'],['wrong_number','Wrong number'],
+    ['competitor','Already with a competitor'],['converted','Signed up'],['do_not_contact','Do not contact again']
+  ]);
+  const prospectingOutreachStates=Object.freeze([
+    ['not_contacted','Not contacted'],['contacted','Contacted'],['follow_up','Follow-up booked'],
+    ['interested','Interested'],['not_interested','Not interested'],
+    ['do_not_contact','Do not contact'],['converted','Converted']
+  ]);
+  const prospectingFollowUpStates=Object.freeze([
+    ['due_today','Follow-up due today'],['overdue','Follow-up overdue']
+  ]);
+  const prospectingMerchantStates=Object.freeze([
+    ['not_merchant','Not on Peekaa'],['prospect','In the pipeline'],
+    ['onboarding','Onboarding'],['active','Live merchant']
+  ]);
+  const prospectingBusinessStates=Object.freeze([
+    ['OPERATIONAL','Open for business'],['CLOSED_TEMPORARILY','Temporarily closed'],
+    ['CLOSED_PERMANENTLY','Permanently closed']
+  ]);
+  const prospectingCopy=(pairs,value)=>{
+    const found=pairs.find(pair=>pair[0]===String(value||''));
+    return found?found[1]:'';
+  };
+  const prospectingLabel=(pairs,value)=>{
+    const raw=prospectingCopy(pairs,value);
+    return raw?pt(raw):'';
+  };
+  function prospectingDefaultFilters() {
+    return {
+      q:'',planning_area:'',sector:'',category:'',outreach:'',follow_up:'',
+      assigned_to:'',merchant_status:'',business_status:'',
+      rating_min:'',review_min:'',score_min:'',
+      has_phone:false,has_website:false,has_email:false
+    };
+  }
+  function prospectingBoundsAreFull(bounds) {
+    if(!bounds)return true;
+    return Number(bounds.north)===PROSPECTING_FULL_BOUNDS.north
+      &&Number(bounds.south)===PROSPECTING_FULL_BOUNDS.south
+      &&Number(bounds.east)===PROSPECTING_FULL_BOUNDS.east
+      &&Number(bounds.west)===PROSPECTING_FULL_BOUNDS.west;
+  }
+  function prospectingFilterPayload(filters={},bounds=null) {
+    const payload={};
+    const number=value=>{
+      if(value===''||value===null||value===undefined)return null;
+      const parsed=Number(value);
+      return Number.isFinite(parsed)?parsed:null;
+    };
+    if(filters.q)payload.q=String(filters.q);
+    if(filters.planning_area)payload.planning_areas=[String(filters.planning_area)];
+    if(filters.sector)payload.sectors=[String(filters.sector)];
+    if(filters.category)payload.categories=[String(filters.category)];
+    if(filters.outreach)payload.outreach=String(filters.outreach);
+    if(filters.follow_up)payload.follow_up=String(filters.follow_up);
+    if(filters.assigned_to)payload.assigned_to=String(filters.assigned_to);
+    if(filters.merchant_status)payload.merchant_status=String(filters.merchant_status);
+    if(filters.business_status)payload.business_status=String(filters.business_status);
+    if(number(filters.rating_min)!==null)payload.rating_min=number(filters.rating_min);
+    if(number(filters.review_min)!==null)payload.review_min=number(filters.review_min);
+    if(number(filters.score_min)!==null)payload.score_min=number(filters.score_min);
+    if(filters.has_phone)payload.has_phone=true;
+    if(filters.has_website)payload.has_website=true;
+    if(filters.has_email)payload.has_email=true;
+    if(bounds&&!prospectingBoundsAreFull(bounds))payload.bbox={
+      north:Number(bounds.north),south:Number(bounds.south),
+      east:Number(bounds.east),west:Number(bounds.west)
+    };
+    return payload;
+  }
+  function prospectingProject(lat,lng,bounds) {
+    const north=Number(bounds.north),south=Number(bounds.south);
+    const east=Number(bounds.east),west=Number(bounds.west);
+    const latSpan=(north-south)||1,lngSpan=(east-west)||1;
+    return {
+      x:((Number(lng)-west)/lngSpan)*PROSPECTING_MAP_WIDTH,
+      y:((north-Number(lat))/latSpan)*PROSPECTING_MAP_HEIGHT
+    };
+  }
+  function prospectingWithinBounds(lat,lng,bounds) {
+    return Number.isFinite(Number(lat))&&Number.isFinite(Number(lng))
+      &&Number(lat)>=Number(bounds.south)&&Number(lat)<=Number(bounds.north)
+      &&Number(lng)>=Number(bounds.west)&&Number(lng)<=Number(bounds.east);
+  }
+  /* Overlapping pins hide their own count, so a cell holding more than one record
+     is drawn once with the number inside it. The cell keeps its own bounds, so
+     activating it can become the next viewport without guessing. */
+  function prospectingClusters(markers,bounds,cells=PROSPECTING_CELLS) {
+    const latSpan=(Number(bounds.north)-Number(bounds.south))||1;
+    const lngSpan=(Number(bounds.east)-Number(bounds.west))||1;
+    const buckets=new Map();
+    for(const marker of asArray(markers)){
+      const lat=Number(marker.lat),lng=Number(marker.lng);
+      if(!prospectingWithinBounds(lat,lng,bounds))continue;
+      const column=Math.min(cells-1,Math.max(0,Math.floor(((lng-Number(bounds.west))/lngSpan)*cells)));
+      const row=Math.min(cells-1,Math.max(0,Math.floor(((Number(bounds.north)-lat)/latSpan)*cells)));
+      const key=String(row)+':'+String(column);
+      const bucket=buckets.get(key)||{key,row,column,items:[]};
+      bucket.items.push(marker);
+      buckets.set(key,bucket);
+    }
+    return Array.from(buckets.values(),bucket=>({
+      key:bucket.key,count:bucket.items.length,items:bucket.items,
+      lat:bucket.items.reduce((total,item)=>total+Number(item.lat),0)/bucket.items.length,
+      lng:bucket.items.reduce((total,item)=>total+Number(item.lng),0)/bucket.items.length,
+      bounds:{
+        north:Number(bounds.north)-(bucket.row/cells)*latSpan,
+        south:Number(bounds.north)-((bucket.row+1)/cells)*latSpan,
+        west:Number(bounds.west)+(bucket.column/cells)*lngSpan,
+        east:Number(bounds.west)+((bucket.column+1)/cells)*lngSpan
+      }
+    }));
+  }
+  /* Number(null) is 0 and Number('') is 0, so a missing rating or distance would
+     print a confident "0.0" that the record never claimed. Absent stays absent. */
+  function prospectingNumber(value) {
+    if(value===null||value===undefined||value==='')return null;
+    const parsed=Number(value);
+    return Number.isFinite(parsed)?parsed:null;
+  }
+  function prospectingScoreBand(score) {
+    const value=Number(score);
+    if(!Number.isFinite(value))return 'low';
+    if(value>=70)return 'high';
+    return value>=40?'medium':'low';
+  }
+  function prospectingScoreBadge(score) {
+    const band=prospectingScoreBand(score);
+    const label=band==='high'?pt('High'):band==='medium'?pt('Medium'):pt('Low');
+    const value=Number.isFinite(Number(score))?String(Math.round(Number(score))):'—';
+    return `<span class="platform-score-badge is-${escapeHtml(band)}"><b>${escapeHtml(value)}</b><span>${escapeHtml(label)}</span></span>`;
+  }
+  function prospectingMarkerState(marker) {
+    if(marker.converted)return 'converted';
+    return marker.contacted?'contacted':'uncontacted';
+  }
+  function prospectingRowState(row) {
+    if(row.converted_business_id)return 'converted';
+    const outcome=String(row.last_outcome||'');
+    if(outcome==='do_not_contact')return 'do_not_contact';
+    if(outcome==='interested')return 'interested';
+    if(outcome==='not_interested')return 'not_interested';
+    if(row.next_follow_up_at)return 'follow_up';
+    return row.last_contacted_at||outcome?'contacted':'not_contacted';
+  }
+  function prospectingRowStateTone(state) {
+    if(state==='converted'||state==='interested')return 'on';
+    if(state==='not_interested'||state==='do_not_contact')return 'off';
+    return state==='follow_up'?'warn':'neutral';
+  }
+  function prospectingSummaryHtml(summary,CUI) {
+    const source=asObject(summary);
+    const figure=key=>String(Number(source[key]||0));
+    const tiles=[
+      ['Prospects',figure('total'),'branch'],
+      ['Not contacted',figure('uncontacted'),'customers'],
+      ['Follow-up due',String(Number(source.follow_up_due||0)+Number(source.follow_up_overdue||0)),'retention'],
+      ['Interested',figure('interested'),'reports'],
+      ['Converted',figure('converted'),'check']
+    ];
+    return `<section class="platform-kpis platform-prospecting-kpis" aria-label="${escapeHtml(pt('Prospecting summary'))}">${tiles.map(([label,value,icon])=>
+      `<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>`;
+  }
+  function prospectingSelectHtml(name,label,options,current,emptyLabel) {
+    return `<label class="cui-field"><span class="field-label">${escapeHtml(pt(label))}</span>
+      <select name="${escapeHtml(name)}"><option value="">${escapeHtml(pt(emptyLabel))}</option>${
+        options.map(([value,text])=>`<option value="${escapeHtml(String(value))}"${String(current||'')===String(value)?' selected':''}>${escapeHtml(String(text))}</option>`).join('')
+      }</select></label>`;
+  }
+  function prospectingFiltersHtml(taxonomy,filters,savedFilters,savedFilterId) {
+    const areas=asArray(taxonomy.planning_areas).map(area=>[String(area.name||''),String(area.name||'')]);
+    const sectors=asArray(taxonomy.sectors).map(sector=>[String(sector.key||''),String(sector.label||sector.key||'')]);
+    const categories=asArray(taxonomy.categories)
+      .filter(category=>!filters.sector||String(category.sector||'')===String(filters.sector))
+      .map(category=>[String(category.key||''),String(category.label||category.key||'')]);
+    const consultants=[['unassigned',pt('Unassigned')]]
+      .concat(asArray(taxonomy.consultants).map(consultant=>[String(consultant.id||''),String(consultant.name||'')]));
+    const checkbox=(name,label)=>`<label class="platform-prospecting-check"><input type="checkbox" name="${escapeHtml(name)}"${filters[name]?' checked':''}><span>${escapeHtml(pt(label))}</span></label>`;
+    return `<form id="prospectingFilters" class="platform-prospecting-filter-form">
+      <label class="cui-field"><span class="field-label">${escapeHtml(pt('Search businesses'))}</span>
+        <input type="search" name="q" value="${escapeHtml(String(filters.q||''))}" autocomplete="off" placeholder="${escapeHtml(pt('Name, street or postal code'))}"></label>
+      ${prospectingSelectHtml('planning_area','Planning area',areas,filters.planning_area,'Every area')}
+      ${prospectingSelectHtml('sector','Sector',sectors,filters.sector,'Every sector')}
+      ${prospectingSelectHtml('category','Category',categories,filters.category,'Every category')}
+      ${prospectingSelectHtml('outreach','Outreach state',prospectingOutreachStates.map(pair=>[pair[0],pt(pair[1])]),filters.outreach,'Any outreach state')}
+      ${prospectingSelectHtml('follow_up','Follow-up',prospectingFollowUpStates.map(pair=>[pair[0],pt(pair[1])]),filters.follow_up,'Any follow-up')}
+      ${prospectingSelectHtml('assigned_to','Assigned consultant',consultants,filters.assigned_to,'Anyone')}
+      ${prospectingSelectHtml('merchant_status','Peekaa status',prospectingMerchantStates.map(pair=>[pair[0],pt(pair[1])]),filters.merchant_status,'Any Peekaa status')}
+      ${prospectingSelectHtml('business_status','Trading status',prospectingBusinessStates.map(pair=>[pair[0],pt(pair[1])]),filters.business_status,'Any trading status')}
+      <label class="cui-field"><span class="field-label">${escapeHtml(pt('Minimum rating'))}</span>
+        <input type="number" name="rating_min" min="0" max="5" step="0.1" value="${escapeHtml(String(filters.rating_min||''))}"></label>
+      <label class="cui-field"><span class="field-label">${escapeHtml(pt('Minimum reviews'))}</span>
+        <input type="number" name="review_min" min="0" step="1" value="${escapeHtml(String(filters.review_min||''))}"></label>
+      <label class="cui-field"><span class="field-label">${escapeHtml(pt('Minimum lead score'))}</span>
+        <input type="number" name="score_min" min="0" max="100" step="1" value="${escapeHtml(String(filters.score_min||''))}"></label>
+      <div class="platform-prospecting-checks">
+        ${checkbox('has_phone','Has a phone number')}
+        ${checkbox('has_website','Has a website')}
+        ${checkbox('has_email','Has an email address')}
+      </div>
+      <div class="platform-actions">
+        <button type="submit" class="btn">${escapeHtml(pt('Apply filters'))}</button>
+        <button type="button" class="btn ghost" id="prospectingClear">${escapeHtml(pt('Clear filters'))}</button>
+      </div>
+      <div class="platform-prospecting-saved">
+        <label class="cui-field"><span class="field-label">${escapeHtml(pt('Saved filters'))}</span>
+          <select id="prospectingSavedFilter"><option value="">${escapeHtml(pt('No saved filter'))}</option>${
+            asArray(savedFilters).map(entry=>`<option value="${escapeHtml(String(entry.id||''))}"${String(savedFilterId||'')===String(entry.id||'')?' selected':''}>${escapeHtml(String(entry.name||''))}</option>`).join('')
+          }</select></label>
+        <div class="platform-actions">
+          <button type="button" class="btn ghost sm" id="prospectingSaveFilter">${escapeHtml(pt('Save current'))}</button>
+          <button type="button" class="btn ghost sm" id="prospectingRenameFilter">${escapeHtml(pt('Rename'))}</button>
+          <button type="button" class="btn ghost sm" id="prospectingDeleteFilter">${escapeHtml(pt('Delete filter'))}</button>
+        </div>
+      </div>
+    </form>`;
+  }
+  function prospectingRowCells(row,CUI,showDistance) {
+    const state=prospectingRowState(row);
+    const rating=prospectingNumber(row.rating);
+    const distance=prospectingNumber(row.distance_km);
+    const cells=[
+      `<button type="button" class="platform-linklike" data-prospecting-row="${escapeHtml(String(row.prospect_id||''))}"><b>${escapeHtml(String(row.name||'—'))}</b></button>`,
+      `<span>${escapeHtml(String(row.planning_area||row.district||'—'))}</span>`,
+      `<span style="font-variant-numeric:tabular-nums">${escapeHtml(rating===null?'—':rating.toFixed(1))}</span><br><span class="muted small">${escapeHtml(pt('{count} reviews',{count:Number(row.review_count||0)}))}</span>`,
+      prospectingScoreBadge(row.score),
+      CUI.status(prospectingCopy(prospectingOutreachStates,state)||'Not contacted',prospectingRowStateTone(state)),
+      `<span>${escapeHtml(String(row.assigned_name||pt('Unassigned')))}</span>`
+    ];
+    if(showDistance)cells.push(`<span style="font-variant-numeric:tabular-nums">${escapeHtml(distance===null?'—':pt('{count} kilometres away',{count:distance.toFixed(1)}))}</span>`);
+    return cells;
+  }
+  function prospectingListHtml(state,CUI) {
+    if(state.listError)return CUI.errorState({
+      title:'Prospect list unavailable',
+      message:platformErrorMessage(state.listError,'Please try again.'),
+      retryId:'prospectingListRetry'
+    });
+    const rows=asArray(state.rows);
+    if(!rows.length)return CUI.emptyState({
+      iconName:'branch',title:'No businesses match',
+      body:'Widen the filters, or clear them to see every prospect on the island.'
+    });
+    const showDistance=rows.some(row=>prospectingNumber(row.distance_km)!==null);
+    const headers=['Business','Area','Rating','Lead score','Outreach','Consultant'];
+    if(showDistance)headers.push('Distance');
+    return `${CUI.table({
+      caption:'Prospect list',headers,
+      rows:rows.map(row=>prospectingRowCells(row,CUI,showDistance))
+    })}
+    <div class="platform-load-more">
+      <p class="muted small">${escapeHtml(pt('Showing {shown} of {count}.',{shown:rows.length,count:state.total}))}</p>
+      ${state.hasMore?`<button type="button" class="btn ghost" id="prospectingLoadMore">${escapeHtml(pt('Load more prospects'))}</button>`:''}
+    </div>`;
+  }
+  function prospectingMapHtml(state,areas,CUI) {
+    if(state.mapError)return CUI.errorState({
+      title:'Prospect map unavailable',
+      message:platformErrorMessage(state.mapError,'Please try again.'),
+      retryId:'prospectingMapRetry'
+    });
+    const bounds=state.bounds;
+    const clusters=asArray(state.clusters);
+    const areaDots=asArray(areas).map(area=>{
+      if(!prospectingWithinBounds(area.lat,area.lng,bounds))return '';
+      const point=prospectingProject(area.lat,area.lng,bounds);
+      return `<g class="platform-map-area"><circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2.5"></circle><text x="${(point.x+5).toFixed(1)}" y="${(point.y+3).toFixed(1)}">${escapeHtml(String(area.name||''))}</text></g>`;
+    }).join('');
+    const pins=clusters.map(cluster=>{
+      const point=prospectingProject(cluster.lat,cluster.lng,bounds);
+      if(cluster.count>1){
+        const radius=Math.min(26,12+Math.log2(cluster.count)*3);
+        return `<g class="platform-map-cluster" role="button" tabindex="0" data-prospecting-cluster="${escapeHtml(cluster.key)}" aria-label="${escapeHtml(pt('{count} prospects here. Open to zoom in.',{count:cluster.count}))}">
+          <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${radius.toFixed(1)}"></circle>
+          <text x="${point.x.toFixed(1)}" y="${(point.y+4).toFixed(1)}" text-anchor="middle">${escapeHtml(String(cluster.count))}</text>
+        </g>`;
+      }
+      const marker=cluster.items[0];
+      const radius=5+(Math.max(0,Math.min(100,Number(marker.score)||0))/100)*4;
+      const selected=String(state.selected||'')===String(marker.prospect_id||'');
+      return `<g class="platform-map-pin is-${escapeHtml(prospectingMarkerState(marker))}${selected?' is-selected':''}" role="button" tabindex="0" data-prospecting-marker="${escapeHtml(String(marker.prospect_id||''))}" aria-label="${escapeHtml(String(marker.name||''))}">
+        <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${radius.toFixed(1)}"></circle>
+      </g>`;
+    }).join('');
+    const legend=[['converted','Converted'],['contacted','Contacted'],['uncontacted','Not contacted']]
+      .map(pair=>`<span class="platform-map-legend-item"><i class="platform-map-key is-${escapeHtml(pair[0])}" aria-hidden="true"></i>${escapeHtml(pt(pair[1]))}</span>`).join('');
+    const drawn=clusters.reduce((total,cluster)=>total+cluster.count,0);
+    return `<div class="platform-map-head">
+        <p class="muted small">${escapeHtml(pt('Showing {shown} of {count} mapped.',{shown:drawn,count:state.mapped}))}</p>
+        <div class="platform-actions">
+          <div class="platform-map-legend">${legend}</div>
+          <button type="button" class="btn ghost sm" id="prospectingMapReset"${prospectingBoundsAreFull(bounds)?' disabled':''}>${escapeHtml(pt('Reset view'))}</button>
+        </div>
+      </div>
+      ${state.capped?`<div class="platform-route-note"><b>${escapeHtml(pt('Only the strongest leads are drawn'))}</b><p class="small">${escapeHtml(pt('Too many businesses match to plot them all, so only the top {count} by lead score appear. Narrow the filters to see the rest.',{count:state.markerCap}))}</p></div>`:''}
+      <div class="platform-map-frame">
+        <svg viewBox="0 0 ${PROSPECTING_MAP_WIDTH} ${PROSPECTING_MAP_HEIGHT}" class="platform-map-svg" role="group" aria-label="${escapeHtml(pt('Singapore prospect map'))}">
+          <rect x="0" y="0" width="${PROSPECTING_MAP_WIDTH}" height="${PROSPECTING_MAP_HEIGHT}" class="platform-map-bg"></rect>
+          <g class="platform-map-areas">${areaDots}</g>
+          <g class="platform-map-pins">${pins}</g>
+        </svg>
+      </div>`;
+  }
+  function prospectingBreakdownHtml(leadScore) {
+    const entries=asArray(asObject(leadScore).breakdown);
+    if(!entries.length)return localizedEmptyHtml('No scoring signals were recorded for this business.');
+    return `<ul class="platform-score-breakdown">${entries.map(entry=>
+      `<li><span>${escapeHtml(String(entry.label||entry.key||''))}</span><b>${escapeHtml(String(entry.points??0))}</b></li>`).join('')}</ul>`;
+  }
+  function prospectingOutreachHistoryHtml(outreach,CUI) {
+    const rows=asArray(outreach);
+    if(!rows.length)return localizedEmptyHtml('Nobody has contacted this business yet.');
+    return CUI.table({
+      caption:'Outreach history',headers:['When','Channel','Outcome','Notes'],
+      rows:rows.map(entry=>[
+        escapeHtml(dateTime(entry.occurred_at||entry.created_at)),
+        escapeHtml(prospectingLabel(prospectingChannels,entry.channel)||'—'),
+        escapeHtml(prospectingLabel(prospectingOutcomes,entry.outcome)||'—'),
+        escapeHtml(String(entry.notes||'—'))
+      ])
+    });
+  }
+  function prospectingContactsHtml(contacts,CUI) {
+    const rows=asArray(contacts);
+    if(!rows.length)return localizedEmptyHtml('No named contact has been recorded for this business.');
+    return CUI.table({
+      caption:'Contacts',headers:['Name','Role','Email','Contact'],
+      rows:rows.map(contact=>[
+        `<b>${escapeHtml(String(contact.full_name||contact.name||'—'))}</b>`,
+        escapeHtml(String(contact.title||contact.role||'—')),
+        escapeHtml(String(contact.email||'—')),
+        platformContactActions(contact.phone||'',CUI)||`<span class="muted small">${escapeHtml(pt('No contact number'))}</span>`
+      ])
+    });
+  }
+  function prospectingSourceUrl(sources) {
+    const found=asArray(sources).find(source=>/^https?:\/\//i.test(String(source.url||'')));
+    return found?String(found.url):'';
+  }
+  function prospectingDetailHtml(detail,CUI) {
+    const prospect=asObject(detail.prospect);
+    const business=asObject(detail.business);
+    const location=asObject(detail.location);
+    const market=asObject(detail.market);
+    const sources=asArray(detail.sources);
+    const categories=asArray(detail.categories);
+    const leadScore=asObject(detail.lead_score);
+    const phone=normalizePlatformPhone(business.phone||prospect.phone||'');
+    const website=String(business.website||prospect.website||'');
+    const safeWebsite=/^https?:\/\//i.test(website)?website:'';
+    const sourceUrl=prospectingSourceUrl(sources);
+    const merchantState=String(prospect.merchant_status||(prospect.converted_business_id?'active':'not_merchant'));
+    const categoryText=categories.map(category=>String(category.label||category.key||'')).filter(Boolean).join(', ');
+    const sourceText=sources.map(source=>String(source.label||source.name||source.source||'')).filter(Boolean).join(', ');
+    const rating=prospectingNumber(business.rating??prospect.rating);
+    const latitude=prospectingNumber(location.latitude??prospect.latitude);
+    const longitude=prospectingNumber(location.longitude??prospect.longitude);
+    return `<div class="platform-actions platform-prospecting-drawer-actions">
+        ${phone?`<a class="btn ghost sm" href="tel:${escapeHtml(phone.tel)}">${CUI.icon('till',{size:16})}<span>${escapeHtml(pt('Call'))}</span></a>`:''}
+        ${phone?`<a class="btn ghost sm" href="https://wa.me/${escapeHtml(phone.wa)}" target="_blank" rel="noopener">${CUI.icon('customers',{size:16})}<span>${escapeHtml(pt('WhatsApp'))}</span></a>`:''}
+        ${detail.can_write===true?`<button type="button" class="btn sm" data-prospecting-log>${escapeHtml(pt('Log outreach'))}</button>`:''}
+        ${detail.can_write===true?`<button type="button" class="btn ghost sm" data-prospecting-follow-up>${escapeHtml(pt('Schedule follow-up'))}</button>`:''}
+      </div>
+      ${CUI.card({title:'The business',description:'Who they are and how to reach them.',body:`<dl class="platform-form-grid">${companyDetailFactRows([
+        ['Business name',escapeHtml(String(business.name||prospect.name||'—'))],
+        ['Categories',categoryText?escapeHtml(categoryText):null],
+        ['Rating',rating!==null?escapeHtml(pt('{rating} from {count} reviews',{rating:rating.toFixed(1),count:Number(business.review_count??prospect.review_count??0)})):null],
+        ['Address',escapeHtml(String(business.address||location.address||prospect.address||'—'))],
+        ['Phone',phone?escapeHtml(phone.display):null],
+        ['Website',safeWebsite?`<a href="${escapeHtml(safeWebsite)}" target="_blank" rel="noopener">${escapeHtml(safeWebsite)}</a>`:null],
+        ['Trading status',business.business_status?escapeHtml(prospectingLabel(prospectingBusinessStates,business.business_status)||platformStatus(business.business_status)):null],
+        ['Listing source',sourceText?escapeHtml(sourceText):null],
+        ['Source record',sourceUrl?`<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener">${escapeHtml(pt('Open the source listing'))}</a>`:null]
+      ])}</dl>`})}
+      ${CUI.card({title:'Where it is',description:'The address Peekaa holds, and the point plotted on the map.',body:`<dl class="platform-form-grid">${companyDetailFactRows([
+        ['Planning area',escapeHtml(String(location.planning_area||prospect.planning_area||'—'))],
+        ['District',location.district?escapeHtml(String(location.district)):null],
+        ['Postal code',location.postal_code?escapeHtml(String(location.postal_code)):null],
+        ['Coordinates',latitude!==null&&longitude!==null
+          ?escapeHtml(latitude.toFixed(5)+', '+longitude.toFixed(5)):null],
+        ['Neighbourhood',market.summary?escapeHtml(String(market.summary)):null]
+      ])}</dl>`})}
+      ${CUI.card({title:'Contacts',description:'The people who answer for this business.',body:prospectingContactsHtml(detail.contacts,CUI)})}
+      ${CUI.card({title:'Pipeline',description:'Who owns this lead, how strong it is, and what happens next.',body:`<dl class="platform-form-grid">${companyDetailFactRows([
+        ['Assigned consultant',escapeHtml(String(prospect.assigned_name||pt('Unassigned')))],
+        ['Stage',prospect.stage_key?escapeHtml(platformStatus(prospect.stage_key)):null],
+        ['Lead score',escapeHtml(String(leadScore.score??prospect.score??'—'))],
+        ['Last contacted',prospect.last_contacted_at?escapeHtml(dateTime(prospect.last_contacted_at)):null],
+        ['Last outcome',prospect.last_outcome?escapeHtml(prospectingLabel(prospectingOutcomes,prospect.last_outcome)||platformStatus(prospect.last_outcome)):null],
+        ['Next follow-up',prospect.next_follow_up_at?escapeHtml(dateTime(prospect.next_follow_up_at)):null],
+        ['Peekaa status',escapeHtml(prospectingLabel(prospectingMerchantStates,merchantState)||platformStatus(merchantState))]
+      ])}</dl>
+      <h3 class="platform-subheading">${escapeHtml(pt('How this score was reached'))}</h3>
+      ${prospectingBreakdownHtml(leadScore)}`})}
+      ${CUI.card({title:'Outreach history',description:'Every call, message and visit already made.',body:prospectingOutreachHistoryHtml(detail.outreach,CUI)})}`;
+  }
+  function prospectingIdempotencyKey() {
+    const random=globalObject.crypto&&typeof globalObject.crypto.randomUUID==='function'
+      ?globalObject.crypto.randomUUID():Math.random().toString(36).slice(2,12);
+    return 'prospecting-outreach-'+String(Date.now())+'-'+String(random);
+  }
+  /* The reader refuses a 'follow_up' outcome with no date (22023). Surfacing that
+     as a provider error would be the console blaming the operator for a rule it
+     never showed them, so the requirement is stated inline the moment the outcome
+     is chosen, and enforced again before the call is made. */
+  function prospectingOutreachModal(context,prospectId,options={}) {
+    const {CUI,sb}=context;
+    const overlay=modal({
+      title:options.followUpOnly?'Schedule follow-up':'Log outreach',
+      submitLabel:'Save outreach',CUI,
+      body:`<div class="platform-form-grid">
+        <label class="cui-field"><span class="field-label">${escapeHtml(pt('Channel'))}</span>
+          <select name="channel" required>${prospectingChannels.map(pair=>`<option value="${escapeHtml(pair[0])}">${escapeHtml(pt(pair[1]))}</option>`).join('')}</select></label>
+        <label class="cui-field"><span class="field-label">${escapeHtml(pt('What happened'))}</span>
+          <select name="outcome" required>${prospectingOutcomes.map(pair=>`<option value="${escapeHtml(pair[0])}"${options.followUpOnly&&pair[0]==='follow_up'?' selected':''}>${escapeHtml(pt(pair[1]))}</option>`).join('')}</select></label>
+        <label class="cui-field wide"><span class="field-label">${escapeHtml(pt('Next follow-up'))}</span>
+          <input type="datetime-local" name="next_follow_up_at" value=""></label>
+        <label class="cui-field wide"><span class="field-label">${escapeHtml(pt('Notes'))}</span>
+          <textarea name="notes" rows="4"></textarea></label>
+      </div>
+      <p class="muted small" data-prospecting-followup-hint hidden>${escapeHtml(pt('A follow-up outcome needs a date and time, so the next person knows when to call back.'))}</p>`,
+      onSubmit:async(form,controls)=>{
+        const outcome=String(form.get('outcome')||'');
+        const followUp=String(form.get('next_follow_up_at')||'').trim();
+        if(outcome==='follow_up'&&!followUp){
+          throw new Error(pt('A follow-up outcome needs a date and time, so the next person knows when to call back.'));
+        }
+        await rpc(sb,'platform_crm_log_outreach_v297',{
+          p_prospect:prospectId,
+          p_channel:String(form.get('channel')||'call'),
+          p_outcome:outcome,
+          p_notes:String(form.get('notes')||'').trim()||null,
+          p_contact:null,
+          p_next_follow_up_at:followUp?new Date(followUp).toISOString():null,
+          p_idempotency_key:prospectingIdempotencyKey()
+        });
+        controls.close();
+        CUI.announce('Outreach saved.');
+        if(typeof options.onSaved==='function')await options.onSaved();
+      }
+    });
+    const outcomeSelect=overlay.querySelector('[name="outcome"]');
+    const followUpInput=overlay.querySelector('[name="next_follow_up_at"]');
+    const hint=overlay.querySelector('[data-prospecting-followup-hint]');
+    const syncFollowUp=()=>{
+      const required=String(outcomeSelect.value||'')==='follow_up';
+      followUpInput.required=required;
+      if(hint)hint.hidden=!required;
+    };
+    outcomeSelect.onchange=syncFollowUp;
+    syncFollowUp();
+    return overlay;
+  }
+  async function openProspectingDetail(prospectId,context,options={}) {
+    const {CUI,sb}=context;
+    const overlay=document.createElement('div');
+    overlay.className='platform-drawer';overlay.tabIndex=-1;
+    overlay.innerHTML=`<section class="platform-drawer-panel" aria-labelledby="prospectingDetailTitle">
+      <div class="platform-drawer-head">
+        <div><h1 id="prospectingDetailTitle" style="font-size:1.45rem">${escapeHtml(String(options.name||pt('Prospect detail')))}</h1>
+          <p class="muted small">${escapeHtml(pt('Everything known about this business, and what to do next.'))}</p></div>
+        <button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button>
+      </div>
+      <div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading business, contacts and outreach history…',iconName:'branch'})}</div></section>`;
+    document.body.appendChild(overlay);
+    let deactivate,closed=false;
+    const close=()=>{if(closed)return;closed=true;closeOverlay(overlay,deactivate)};
+    overlay.querySelector('.platform-drawer-close').onclick=close;
+    deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
+    const load=async()=>{
+      try{
+        const detail=asObject(await rpc(sb,'platform_crm_prospecting_detail_v297',{p_prospect:prospectId}));
+        if(!overlay.isConnected)return;
+        const title=overlay.querySelector('#prospectingDetailTitle');
+        const name=String(asObject(detail.business).name||asObject(detail.prospect).name||'');
+        if(title&&name)title.textContent=name;
+        overlay.querySelector('[data-detail]').innerHTML=prospectingDetailHtml(detail,CUI);
+        const afterSave=async()=>{
+          await load();
+          if(typeof options.onChanged==='function')await options.onChanged();
+        };
+        const log=overlay.querySelector('[data-prospecting-log]');
+        if(log)log.onclick=()=>prospectingOutreachModal(context,prospectId,{onSaved:afterSave});
+        const followUp=overlay.querySelector('[data-prospecting-follow-up]');
+        if(followUp)followUp.onclick=()=>prospectingOutreachModal(context,prospectId,{followUpOnly:true,onSaved:afterSave});
+      }catch(error){
+        if(!overlay.isConnected)return;
+        overlay.querySelector('[data-detail]').innerHTML=error?.platformUpdateRequired
+          ?systemUpdateRequired(CUI,'Prospect detail')
+          :CUI.errorState({title:'Prospect detail unavailable',message:platformErrorMessage(error,'Please try again.')});
+      }
+    };
+    await load();
+    return overlay;
+  }
+  async function renderProspecting(context) {
+    const {main,CUI,sb}=context;
+    main.innerHTML=loading(CUI,'Prospecting','Loading the prospect map…','branch');
+    try{
+      const [taxonomyPayload,summaryPayload,firstPage]=await Promise.all([
+        rpc(sb,'platform_crm_prospecting_taxonomy_v297'),
+        rpc(sb,'platform_crm_prospecting_summary_v297'),
+        rpc(sb,'platform_crm_prospecting_search_v297',{
+          p_filters:{},p_mode:'list',p_limit:PROSPECTING_PAGE,p_offset:0})
+      ]);
+      const taxonomy=asObject(taxonomyPayload);
+      const summary=asObject(summaryPayload);
+      const page=asObject(firstPage);
+      const areas=asArray(taxonomy.planning_areas);
+      const state={
+        filters:prospectingDefaultFilters(),
+        bounds:{...PROSPECTING_FULL_BOUNDS},
+        view:'list',
+        rows:asArray(page.rows),
+        offset:0,
+        total:Number(page.total??asArray(page.rows).length),
+        hasMore:page.has_more===true,
+        markers:[],clusters:[],mapped:0,capped:false,markerCap:0,
+        selected:'',savedFilters:[],savedFilterId:'',
+        listError:null,mapError:null
+      };
+      try{state.savedFilters=asArray(await rpc(sb,'platform_crm_saved_filters_v297'),['items','filters'])}
+      catch(error){state.savedFilters=[]}
+
+      const listHost=()=>main.querySelector('[data-prospecting-list]');
+      const mapHost=()=>main.querySelector('[data-prospecting-map]');
+      const filterHost=()=>main.querySelector('[data-prospecting-filters]');
+      let searchTimer=null;
+
+      function openRow(prospectId,name) {
+        state.selected=String(prospectId||'');
+        paintMap();
+        openProspectingDetail(state.selected,context,{name:String(name||''),onChanged:refreshAll});
+      }
+      function paintList() {
+        const host=listHost();
+        if(!host)return;
+        host.innerHTML=prospectingListHtml(state,CUI);
+        host.querySelectorAll('[data-prospecting-row]').forEach(button=>button.onclick=()=>{
+          const row=state.rows.find(entry=>String(entry.prospect_id||'')===button.dataset.prospectingRow);
+          openRow(button.dataset.prospectingRow,row?row.name:'');
+        });
+        const more=host.querySelector('#prospectingLoadMore');
+        if(more)more.onclick=()=>{more.disabled=true;loadPage(state.offset+PROSPECTING_PAGE,true)};
+        const retry=host.querySelector('#prospectingListRetry');
+        if(retry)retry.onclick=()=>loadPage(0,false);
+      }
+      function paintMap() {
+        const host=mapHost();
+        if(!host)return;
+        state.clusters=prospectingClusters(state.markers,state.bounds);
+        host.innerHTML=prospectingMapHtml(state,areas,CUI);
+        const activate=(node,handler)=>{
+          node.onclick=handler;
+          node.onkeydown=event=>{
+            if(event.key==='Enter'||event.key===' '){event.preventDefault();handler()}
+          };
+        };
+        host.querySelectorAll('[data-prospecting-cluster]').forEach(node=>activate(node,()=>{
+          const cluster=state.clusters.find(entry=>entry.key===node.dataset.prospectingCluster);
+          if(!cluster)return;
+          state.bounds=cluster.bounds;
+          refreshMap();
+        }));
+        host.querySelectorAll('[data-prospecting-marker]').forEach(node=>activate(node,()=>{
+          const marker=state.markers.find(entry=>String(entry.prospect_id||'')===node.dataset.prospectingMarker);
+          openRow(node.dataset.prospectingMarker,marker?marker.name:'');
+        }));
+        const reset=host.querySelector('#prospectingMapReset');
+        if(reset)reset.onclick=()=>{state.bounds={...PROSPECTING_FULL_BOUNDS};refreshMap()};
+        const retry=host.querySelector('#prospectingMapRetry');
+        if(retry)retry.onclick=()=>refreshMap();
+      }
+      function paintFilters() {
+        const host=filterHost();
+        if(!host)return;
+        host.innerHTML=prospectingFiltersHtml(taxonomy,state.filters,state.savedFilters,state.savedFilterId);
+        wireFilters();
+      }
+      async function loadPage(offset,append) {
+        try{
+          const payload=asObject(await rpc(sb,'platform_crm_prospecting_search_v297',{
+            p_filters:prospectingFilterPayload(state.filters),p_mode:'list',
+            p_limit:PROSPECTING_PAGE,p_offset:offset}));
+          const rows=asArray(payload.rows);
+          state.rows=append?state.rows.concat(rows):rows;
+          state.offset=offset;
+          state.total=Number(payload.total??state.rows.length);
+          state.hasMore=payload.has_more===true;
+          state.listError=null;
+        }catch(error){
+          state.listError=error;
+          if(!append)state.rows=[];
+        }
+        paintList();
+      }
+      async function refreshMap() {
+        const host=mapHost();
+        if(host)host.innerHTML=CUI.loadingState({
+          title:'Prospect map',body:'Plotting the businesses that match…',
+          iconName:'branch',variant:'compact'});
+        try{
+          const payload=asObject(await rpc(sb,'platform_crm_prospecting_search_v297',{
+            p_filters:prospectingFilterPayload(state.filters,state.bounds),p_mode:'markers',
+            p_limit:PROSPECTING_PAGE,p_offset:0}));
+          state.markers=asArray(payload.markers);
+          state.mapped=Number(payload.mapped??payload.total??state.markers.length);
+          state.capped=payload.capped===true;
+          state.markerCap=Number(payload.marker_cap||state.markers.length);
+          state.mapError=null;
+        }catch(error){
+          state.mapError=error;state.markers=[];
+        }
+        paintMap();
+      }
+      async function refreshAll() {
+        await Promise.all([loadPage(0,false),refreshMap()]);
+      }
+      function readFilters(form) {
+        const data=new FormData(form);
+        const next=prospectingDefaultFilters();
+        for(const key of Object.keys(next)){
+          next[key]=typeof next[key]==='boolean'?data.get(key)!==null:String(data.get(key)||'');
+        }
+        return next;
+      }
+      function applyState() {
+        state.bounds={...PROSPECTING_FULL_BOUNDS};
+        state.selected='';
+        refreshAll();
+      }
+      function wireFilters() {
+        const form=main.querySelector('#prospectingFilters');
+        if(!form)return;
+        const adopt=()=>{state.filters=readFilters(form);state.savedFilterId=''};
+        form.onsubmit=event=>{event.preventDefault();adopt();applyState()};
+        form.querySelectorAll('select,input[type="checkbox"],input[type="number"]').forEach(control=>{
+          if(control.id==='prospectingSavedFilter')return;
+          control.onchange=()=>{
+            adopt();
+            /* A category only means something inside its sector, so changing the
+               sector clears the stale category and redraws the choices. */
+            if(control.name==='sector'){state.filters.category='';paintFilters()}
+            applyState();
+          };
+        });
+        const search=form.querySelector('[name="q"]');
+        if(search)search.oninput=()=>{
+          if(searchTimer)globalObject.clearTimeout(searchTimer);
+          searchTimer=globalObject.setTimeout(()=>{
+            searchTimer=null;
+            const live=main.querySelector('#prospectingFilters');
+            if(!live)return;
+            state.filters=readFilters(live);
+            state.savedFilterId='';
+            applyState();
+          },300);
+        };
+        const clear=form.querySelector('#prospectingClear');
+        if(clear)clear.onclick=()=>{
+          state.filters=prospectingDefaultFilters();
+          state.savedFilterId='';
+          paintFilters();
+          applyState();
+        };
+        const saved=form.querySelector('#prospectingSavedFilter');
+        if(saved)saved.onchange=()=>{
+          state.savedFilterId=String(saved.value||'');
+          const entry=state.savedFilters.find(item=>String(item.id||'')===state.savedFilterId);
+          state.filters={...prospectingDefaultFilters(),...asObject(entry&&entry.config)};
+          paintFilters();
+          applyState();
+          CUI.announce('Saved filter applied.');
+        };
+        const save=form.querySelector('#prospectingSaveFilter');
+        if(save)save.onclick=()=>savedFilterModal(null);
+        const rename=form.querySelector('#prospectingRenameFilter');
+        if(rename)rename.onclick=()=>{
+          const entry=state.savedFilters.find(item=>String(item.id||'')===state.savedFilterId);
+          if(!entry){CUI.announce('Choose a saved filter first.',{assertive:true});return}
+          savedFilterModal(entry);
+        };
+        const remove=form.querySelector('#prospectingDeleteFilter');
+        if(remove)remove.onclick=()=>{
+          const entry=state.savedFilters.find(item=>String(item.id||'')===state.savedFilterId);
+          if(!entry){CUI.announce('Choose a saved filter first.',{assertive:true});return}
+          previewThenConfirm({
+            title:'Delete filter',CUI,
+            preview:{name:entry.name,config:asObject(entry.config)},
+            onConfirm:async controls=>{
+              await rpc(sb,'platform_crm_delete_filter_v297',{p_id:entry.id});
+              controls.close();
+              await reloadSavedFilters('');
+              CUI.announce('Saved filter deleted.');
+            }
+          });
+        };
+      }
+      async function reloadSavedFilters(selectedId) {
+        try{state.savedFilters=asArray(await rpc(sb,'platform_crm_saved_filters_v297'),['items','filters'])}
+        catch(error){state.savedFilters=[]}
+        state.savedFilterId=String(selectedId||'');
+        paintFilters();
+      }
+      function savedFilterModal(entry) {
+        modal({
+          title:entry?'Rename saved filter':'Save current filters',
+          submitLabel:'Save filter',CUI,
+          body:`<label class="cui-field"><span class="field-label">${escapeHtml(pt('Filter name'))}</span>
+            <input name="name" value="${escapeHtml(String((entry&&entry.name)||''))}" maxlength="80" required></label>`,
+          onSubmit:async(form,controls)=>{
+            const name=String(form.get('name')||'').trim();
+            if(!name)throw new Error(pt('Give this filter a name so you can find it again.'));
+            const saved=asObject(await rpc(sb,'platform_crm_save_filter_v297',{
+              p_name:name,
+              p_config:entry?asObject(entry.config):prospectingFilterPayload(state.filters),
+              p_id:entry?entry.id:null
+            }));
+            controls.close();
+            await reloadSavedFilters(saved.id||(entry&&entry.id)||'');
+            CUI.announce('Saved filter updated.');
+          }
+        });
+      }
+
+      main.innerHTML=`${CUI.pageHeader({
+        title:'Prospecting',
+        subtitle:'Every business Peekaa could sell to, on the map and in one worked list.',
+        iconName:'branch'})}
+        ${prospectingSummaryHtml(summary,CUI)}
+        <div class="platform-prospecting-layout" data-prospecting-view="list">
+          <details class="card platform-prospecting-filter-sheet" id="prospectingFilterSheet" open>
+            <summary>${escapeHtml(pt('Filters'))}</summary>
+            <div data-prospecting-filters>${prospectingFiltersHtml(taxonomy,state.filters,state.savedFilters,state.savedFilterId)}</div>
+          </details>
+          <div class="platform-prospecting-panels">
+            <div class="platform-prospecting-toggle" role="group" aria-label="${escapeHtml(pt('List or map'))}">
+              <button type="button" class="btn sm" data-prospecting-toggle="list" aria-pressed="true">${escapeHtml(pt('List'))}</button>
+              <button type="button" class="btn ghost sm" data-prospecting-toggle="map" aria-pressed="false">${escapeHtml(pt('Map'))}</button>
+            </div>
+            <section class="card platform-prospecting-panel" data-prospecting-panel="list">
+              <div class="cui-card-head"><h2>${escapeHtml(pt('Prospect list'))}</h2><p>${escapeHtml(pt('Open a business to see its detail and record what happened.'))}</p></div>
+              <div data-prospecting-list></div>
+            </section>
+            <section class="card platform-prospecting-panel" data-prospecting-panel="map">
+              <div class="cui-card-head"><h2>${escapeHtml(pt('Prospect map'))}</h2><p>${escapeHtml(pt('Singapore, drawn from the coordinates Peekaa already holds. No external map service is loaded.'))}</p></div>
+              <div data-prospecting-map></div>
+            </section>
+          </div>
+        </div>`;
+      const layout=main.querySelector('.platform-prospecting-layout');
+      main.querySelectorAll('[data-prospecting-toggle]').forEach(button=>button.onclick=()=>{
+        state.view=button.dataset.prospectingToggle;
+        if(layout)layout.dataset.prospectingView=state.view;
+        main.querySelectorAll('[data-prospecting-toggle]').forEach(other=>{
+          const active=other.dataset.prospectingToggle===state.view;
+          other.setAttribute('aria-pressed',String(active));
+          other.classList.toggle('ghost',!active);
+        });
+      });
+      const sheet=main.querySelector('#prospectingFilterSheet');
+      if(sheet&&globalObject.matchMedia&&globalObject.matchMedia('(max-width:760px)').matches)sheet.open=false;
+      wireFilters();
+      paintList();
+      CUI.focusRoute(main);
+      await refreshMap();
+    }catch(error){showError(main,error,CUI,'Prospecting')}
+  }
   // Company detail drawer. Everything the operator needs before picking up the
   // phone, on one surface: who they are, what they are on, what they owe, how
   // they have paid before, and who to call.
@@ -11280,6 +12230,7 @@
     if(!task&&activeKey==='companies')task=renderCompanies(context);
     if(!task&&activeKey==='marketing')task=renderMarketingUsage(context);
     if(!task&&activeKey==='crm')task=renderCrm(context);
+    if(!task&&activeKey==='prospecting')task=renderProspecting(context);
     if(!task&&activeKey==='pnl')task=renderPlatformFinance(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);
@@ -11315,6 +12266,8 @@
     renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
     renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
     renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
+    prospectingProject,prospectingClusters,prospectingScoreBand,prospectingFilterPayload,
+    prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
     receiptRows,receiptUnreadableReason
   });
   if (typeof module !== 'undefined' && module.exports) {
@@ -11340,7 +12293,9 @@
       renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
       renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
       renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
-      receiptRows,receiptUnreadableReason
+      prospectingProject,prospectingClusters,prospectingScoreBand,prospectingFilterPayload,
+    prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
+    receiptRows,receiptUnreadableReason
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

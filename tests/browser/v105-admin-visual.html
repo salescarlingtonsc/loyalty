@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="ea17160a76387d1e9398e0e6e05f1e1511b9c1f6201bc1a74b9aff90ad349151">
+<meta name="v105-production-component-sha256" content="4b38bba6e27f8c45d2ec2ffbb3c9c22a0fa9af4ea498004c86331470d6cec9f1">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -2667,6 +2667,101 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   .platform-main{padding-inline:max(12px,env(safe-area-inset-left))}
 }
 
+/* V297 Prospecting. The map is inline SVG rather than raster tiles: the app's
+   CSP allows images only from itself and Supabase, so a tile host would draw a
+   blank rectangle in production. The frame scrolls horizontally on its own so a
+   narrow phone never scrolls the whole page sideways. */
+.platform-prospecting-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+.platform-prospecting-layout{
+  display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start
+}
+.platform-prospecting-filter-sheet{position:sticky;top:16px;padding:16px}
+.platform-prospecting-filter-sheet>summary{
+  display:flex;align-items:center;min-height:44px;font-weight:750;cursor:pointer;list-style:none
+}
+.platform-prospecting-filter-sheet>summary::-webkit-details-marker{display:none}
+.platform-prospecting-filter-form{display:grid;gap:10px;margin-top:8px}
+.platform-prospecting-filter-form .field-label{
+  display:block;margin-bottom:4px;color:var(--muted);font-size:12px;font-weight:700
+}
+.platform-prospecting-filter-form input,.platform-prospecting-filter-form select{width:100%;min-height:44px}
+.platform-prospecting-checks{display:grid}
+.platform-prospecting-check{display:flex;align-items:center;gap:9px;min-height:44px}
+.platform-prospecting-check input{width:20px;min-width:20px;min-height:20px}
+.platform-prospecting-saved{
+  display:grid;gap:8px;margin-top:6px;padding-top:12px;border-top:1px solid var(--hair)
+}
+.platform-prospecting-panels{display:grid;gap:16px;min-width:0}
+.platform-prospecting-panel{min-width:0}
+.platform-prospecting-toggle{display:none;gap:8px;margin-bottom:2px}
+.platform-prospecting-drawer-actions{margin-bottom:14px}
+.platform-linklike{
+  display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:none;
+  color:var(--coral);font:inherit;text-align:left;cursor:pointer
+}
+.platform-linklike:hover{text-decoration:underline}
+.platform-linklike:focus-visible{outline:3px solid rgba(194,65,53,.25);outline-offset:2px}
+.platform-score-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;
+  background:rgba(120,120,120,.12);color:var(--ink2);font-size:12px;font-weight:700
+}
+.platform-score-badge.is-high{background:rgba(31,138,76,.14);color:#166B3B}
+.platform-score-badge.is-medium{background:rgba(208,135,0,.16);color:#8A6100}
+.platform-score-breakdown{display:grid;margin-top:8px}
+.platform-score-breakdown li{
+  display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--hair)
+}
+.platform-score-breakdown li:last-child{border-bottom:0}
+.platform-subheading{margin-top:18px;color:var(--muted);font-size:12.5px;font-weight:750}
+.platform-map-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px
+}
+.platform-map-legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+.platform-map-legend-item{display:inline-flex;align-items:center;gap:6px}
+.platform-map-key{display:inline-block;width:10px;height:10px;border-radius:50%}
+.platform-map-key.is-converted{background:#1F8A4C}
+.platform-map-key.is-contacted{background:#D08700}
+.platform-map-key.is-uncontacted{background:#C24135}
+.platform-map-frame{
+  margin-top:10px;border:1px solid var(--hair);border-radius:var(--r-sm);background:#F3F1EC;
+  overflow-x:auto;overscroll-behavior-inline:contain
+}
+.platform-map-svg{display:block;width:100%;min-width:560px;height:auto}
+.platform-map-bg{fill:#EAE7DF}
+.platform-map-area circle{fill:rgba(90,90,90,.32)}
+.platform-map-area text{fill:rgba(60,60,60,.62);font-size:9px}
+.platform-map-pin,.platform-map-cluster{cursor:pointer}
+.platform-map-pin:focus-visible,.platform-map-cluster:focus-visible{
+  outline:3px solid rgba(194,65,53,.45);outline-offset:2px
+}
+.platform-map-pin circle{stroke:#fff;stroke-width:1.5}
+.platform-map-pin.is-converted circle{fill:#1F8A4C}
+.platform-map-pin.is-contacted circle{fill:#D08700}
+.platform-map-pin.is-uncontacted circle{fill:#C24135}
+.platform-map-pin.is-selected circle{stroke:#1A1A1A;stroke-width:2.5}
+.platform-map-cluster circle{fill:rgba(194,65,53,.88);stroke:#fff;stroke-width:2}
+.platform-map-cluster text{fill:#fff;font-size:12px;font-weight:750}
+.platform-load-more{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px
+}
+@media(max-width:1100px){
+  .platform-prospecting-layout{grid-template-columns:240px minmax(0,1fr)}
+  .platform-prospecting-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .platform-prospecting-layout{grid-template-columns:1fr}
+  .platform-prospecting-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .platform-prospecting-filter-sheet{position:static}
+  .platform-prospecting-toggle{display:flex}
+  .platform-prospecting-toggle .btn{flex:1 1 auto;min-height:44px;justify-content:center}
+  .platform-prospecting-layout[data-prospecting-view="list"] [data-prospecting-panel="map"]{display:none}
+  .platform-prospecting-layout[data-prospecting-view="map"] [data-prospecting-panel="list"]{display:none}
+  .platform-map-svg{min-width:440px}
+  .platform-map-head{align-items:flex-start;flex-direction:column}
+  .platform-load-more .btn{width:100%;justify-content:center}
+  .platform-prospecting-saved .btn{flex:1 1 auto;justify-content:center}
+}
+
 .v105-provenance{position:fixed;right:8px;bottom:8px;z-index:99;padding:4px 8px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#67616d;font:11px/1.2 system-ui}
 </style>
 </head>
@@ -2674,7 +2769,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · ea17160a7638</span>
+<span class="v105-provenance">v105 production-component harness · 4b38bba6e27f</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2799,7 +2894,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'ea17160a76387d1e9398e0e6e05f1e1511b9c1f6201bc1a74b9aff90ad349151',
+  sourceHash:'4b38bba6e27f8c45d2ec2ffbb3c9c22a0fa9af4ea498004c86331470d6cec9f1',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
