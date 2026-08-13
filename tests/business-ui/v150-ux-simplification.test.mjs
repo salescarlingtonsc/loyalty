@@ -29,7 +29,9 @@ test('V150 sidebar keeps operational actions separate from money history', () =>
      exclusive to industry='bar' and is stripped from the resolved module list for every other
      sector before the rail is built). The doing-vs-reviewing separation this test guards is
      unchanged: Bottles is something staff DO during service, not money history. */
-  assert.match(navBlock, /items:\['till','appointments',(?:'bottles',)?'bookings','waitlist','giftcards'\]/);
+  /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"): the Gift cards
+     row left this group. The separation this test guards is unchanged. */
+  assert.match(navBlock, /items:\['till','appointments',(?:'bottles',)?'bookings','waitlist'\]/);
   /* V180 owner instruction: Business Insights and Expenses swapped so the money group reads
      as money in -> money out -> result -> why. The separation this test guards is unchanged. */
   /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left

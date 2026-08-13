@@ -116,11 +116,15 @@ test('V271 (a) removing the chooser button leaves no empty row behind', () => {
 /* ---------------- B. three views ---------------- */
 
 test('V271 (b) all three views exist, resolve from the hash, and keep the old ones working', () => {
+  /* V301 ADDITION, not a weakening (owner 2026-08-13: "ONE page with step subtabs… publish at
+     completion, no popups"). The setup wizard is a fourth VIEW of this same page, so 'setup'
+     joins the list; V271's own three views and the two legacy hashes still resolve exactly as
+     they did, which is what the assertions below check. */
   assert.match(app,
-    /const programmeView=\['overview','history','ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
+    /const programmeView=\['overview','history','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
   // A view hash must never be mistaken for an engine deep link (that crashed on the surface map).
   assert.match(app,
-    /const hashParamIsProgrammeView=\['overview','history','ongoing','available','settings'\]\.includes/);
+    /const hashParamIsProgrammeView=\['overview','history','ongoing','available','settings','setup'\]\.includes/);
   // Each view names itself in the heading.
   assert.match(app, /programmeView==='overview'\?'Overview':programmeView==='history'\?'History'/);
 });
@@ -141,7 +145,9 @@ test('V271 (b) the three views are reachable, each with its own linkable hash', 
 });
 
 test('V271 (b) Overview and History replace the category list rather than stacking on it', () => {
-  assert.match(app, /const growCategoryViewV271=!\['overview','history'\]\.includes\(programmeView\);/);
+  /* V301: the setup wizard replaces the category list for the same reason Overview and History
+     do — showing both would put the same programme on the page twice, under two shapes. */
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup'\]\.includes\(programmeView\);/);
   assert.match(app, /const topicOnV229=key=>!growCategoryViewV271\?false:\(growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229\);/);
   assert.match(grow, /\$\{programmeView==='overview'\?growOverviewTableV271:''\}/);
   assert.match(grow, /\$\{programmeView==='history'\?growHistoryTableV271:''\}/);
@@ -166,10 +172,15 @@ test('V271 (b) an unsourceable cell says so — it is never a zero', () => {
     /const growCountCellV271=value=>value==null\s*\r?\n?\s*\?`<span class="muted">\$\{growUsageV271\?'Not tracked':'Not available'\}<\/span>`\s*\r?\n?\s*:esc\(String\(Number\(value\)\)\);/);
   assert.match(app,
     /const growDateCellV271=value=>Number\.isFinite\(Date\.parse\(value\|\|''\)\)\s*\r?\n?\s*\?esc\(promotionDateTextV104\(value\)\):'<span class="muted">Not tracked<\/span>';/);
-  // Promotions and gift cards are the two programmes with no usage record at all.
+  // Promotions are a programme with no usage record at all.
   const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
   assert.match(entries, /type:'Promotion',[\s\S]{0,220}?customers:null/);
-  assert.match(entries, /name:'Gift cards',type:'Gift cards',[\s\S]{0,120}?customers:null/);
+  /* V301 (owner: "i already removed gift card - but it keeps appearing"): gift cards used to be
+     the other such row. V294 moved gift-card management to Serve & sell and V296 moved its
+     switch to Customer Interface, but neither touched businesses.gift_card_sales_enabled — the
+     flag this row's gate read — so the row kept reappearing after the owner "removed" it. It
+     must not come back. */
+  assert.doesNotMatch(entries, /name:'Gift cards',type:'Gift cards'/);
   // A failed usage read must not be laundered into zeros anywhere.
   assert.doesNotMatch(app, /growUsageV271\?\.[a-z_]+\?\.customers\|\|0/);
   assert.doesNotMatch(app, /customers:Number\([^)]*\)\|\|0/);

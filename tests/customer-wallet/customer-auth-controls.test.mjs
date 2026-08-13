@@ -70,9 +70,12 @@ test('auth-control cache identity changes with the versioned customer UI asset',
      carries a hand-written ?v= token — so a returning visitor would have kept the cached copy
      and rendered the fallback glyph on every tier rung. Both cache identities move together:
      the asset token and the service worker's CACHE_VERSION, which also caches this file. */
-  assert.match(app,/<script src="\/customer-ui\.js\?v=20260808-v195-tier-icons"><\/script>/);
+  /* V298 retargets the token: customer-ui.js changed (the synthesised table <caption> is now
+     sr-only, so a card title is printed once), and a visitor holding the v195 copy would keep
+     seeing the doubled title. Same invariant, newer strings. */
+  assert.match(app,/<script src="\/customer-ui\.js\?v=20260813-v298-caption-once"><\/script>/);
   /* V289: CACHE_VERSION moved again (guarded updates + a precached app shell). The invariant this
      test protects is the direction, not the string: the shell cache identity must never be older
      than the customer-ui.js token it caches, so bumping the asset always requires bumping this. */
-  assert.match(sw,/CACHE_VERSION='v10-20260812-v289-guarded-updates'/);
+  assert.match(sw,/CACHE_VERSION='v11-20260813-v298-caption-once'/);
 });

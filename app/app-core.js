@@ -421,6 +421,7 @@ let pendingOpenApptFormV217=false;
 let growTopicV229='';
 let settingsActiveTab='modules';
 let profileOpen=false;
+let customerUiObserver=null;
 let routeDispose=()=>{};
 let activeCustomerRedemptionCleanup=()=>{};
 let activeCustomerWalletLiveCleanupV295=()=>{};
@@ -1197,12 +1198,21 @@ async function route(){
       const workspaceHash=S.biz?.slug
         ?`#/workspace/${encodeURIComponent(S.biz.slug)}/dashboard`
         :'#/';
-      return await platformConsole.render({
+      const platformRenderedV298=await platformConsole.render({
         root,sb,CUI,brand:BRAND,hash:h,isCurrent:isRouteCurrent,workspaceHash,
         onSignOut:async()=>{
           killChannels();await sb.auth.signOut();resetClientSessionState();nav('#/');
         }
       });
+      /* V298 (owner report 2026-08-13 — a card title printed twice, once as the heading and again
+         as the table's caption). The console never calls CUI.mountMain, so the workspace fix in
+         enhanceTables cannot reach it; this attaches the caption rule on its own, which is the
+         only part of the enhancer that is safe to run over console markup. It reuses
+         customerUiObserver so leaving for a workspace route disconnects it at shell render, and
+         the disconnect above covers console route to console route. */
+      if(customerUiObserver)customerUiObserver.disconnect();
+      customerUiObserver=CUI.observeTableCaptionsV298(root);
+      return platformRenderedV298;
     }
     /* V286: the Stripe self-serve return route, resolved before any persona lookup.
        start_self_serve_business_v130 has already created an active owner staff row by the time
@@ -1421,6 +1431,16 @@ async function route(){
       toast('Stored value is not available for launch.');
       return nav('#/loyalty');
     }
+    /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"). Hiding the nav
+       row is not the boundary — a bookmark or a typed hash still resolves — so the route is
+       refused here, in the same place and the same shape as the storedvalue refusal above, and it
+       says so rather than silently rendering the dashboard. The page function and every gift-card
+       RPC are left in place: this is a surface decision, and nothing about existing cards, their
+       balances or their ledger rows changes. */
+    if(pageKey==='giftcards'){
+      toast('Gift cards are no longer part of this workspace.');
+      return nav('#/dashboard');
+    }
     /* Promotions are customer-facing publishing authority, not an ordinary staff module.
        Keep the authoring surface owner-only in the client and enforce the same boundary in
        v104 RPCs. Managers/front desk can continue operating the published programme without
@@ -1571,6 +1591,14 @@ const CUSTOMER_COPY=Object.freeze({
     chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
     programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
     addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
+    referralHeading:'Give a friend {business}',
+    referralTermsWithFloor:'They quote your code when they join. Once they spend {floor}, you get {reward} in credit.',
+    referralTerms:'They quote your code when they join. After their first spend, you get {reward} in credit.',
+    yourReferralCode:'Your referral code',copyCode:'Copy',shareCode:'Share',codeCopied:'Code copied.',
+    referralCodePending:'Your code is being prepared — ask the team at the counter.',
+    referredCount:'Friends who joined and spent through you: {count}',
+    shareYourCode:'Share your code',
+    referralShareMessage:'Come join me at {business} — quote my code {code} when you sign up at the counter.',
     rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
     firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
     firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
@@ -1589,6 +1617,12 @@ const CUSTOMER_COPY=Object.freeze({
     noFeatured:'This business has not published featured items yet.',
     /* v295: wallet detail sections + claim flow. */
     'Transactions & points':'Transactions & points',
+    'Recent activity':'Recent activity',
+    'Full history':'Full history',
+    'Rate your visit':'Rate your visit',
+    'Your latest events with this business.':'Your latest events with this business.',
+    'Your review helps other people find this business.':'Your review helps other people find this business.',
+    'No purchases or points activity has been recorded for this programme yet.':'No purchases or points activity has been recorded for this programme yet.',
     'Every purchase, reversal, correction, and points event kept in time order.':'Every purchase, reversal, correction, and points event kept in time order.',
     'Loyalty activity':'Loyalty activity',
     'Your loyalty history with this business.':'Your loyalty history with this business.',
@@ -1690,6 +1724,14 @@ const CUSTOMER_COPY=Object.freeze({
     chooseProgramme:'选择一家奖励商家',yourProgrammes:'我的奖励',
     programmesIntro:'选择一家商家，查看它的奖励、权益、预约和活动记录。',
     addProgramme:'扫码加入',openProgramme:'打开{business}的奖励',localBusiness:'本地商家',
+    referralHeading:'介绍朋友到{business}',
+    referralTermsWithFloor:'朋友加入时报上您的代码。他们消费满{floor}后，您可获得{reward}余额。',
+    referralTerms:'朋友加入时报上您的代码。他们首次消费后，您可获得{reward}余额。',
+    yourReferralCode:'您的推荐码',copyCode:'复制',shareCode:'分享',codeCopied:'已复制代码。',
+    referralCodePending:'您的推荐码正在准备中——请到柜台咨询。',
+    referredCount:'通过您加入并消费的朋友：{count}',
+    shareYourCode:'分享您的推荐码',
+    referralShareMessage:'来{business}和我一起吧——在柜台注册时报上我的代码{code}。',
     rewardReady:'奖励已就绪 — 打开即可兑换。',continueProgramme:'打开奖励主页，看看接下来能做什么。',
     firstQuest:'你的第一份奖励',scanLoyaltyQr:'扫描会员二维码',
     firstQuestBody:'在参与商家出示的 Peekaa 二维码处扫码。该认证商家会成为你的第一个奖励账户。',
@@ -1749,6 +1791,12 @@ const CUSTOMER_COPY=Object.freeze({
     'That image could not be read. Try a clearer QR image.':'无法读取该图片。请尝试更清晰的二维码图片。',
     /* v295: wallet detail sections + claim flow. */
     'Transactions & points':'交易与积分',
+    'Recent activity':'最近动态',
+    'Full history':'完整记录',
+    'Rate your visit':'评价这次光临',
+    'Your latest events with this business.':'您在本店的最新记录。',
+    'Your review helps other people find this business.':'您的评价能帮助更多人找到这家店。',
+    'No purchases or points activity has been recorded for this programme yet.':'此计划还没有任何消费或积分记录。',
     'Every purchase, reversal, correction, and points event kept in time order.':'每一笔购买、冲正、更正和积分事件均按时间顺序保存。',
     'Loyalty activity':'积分活动',
     'Your loyalty history with this business.':'你在该商家的积分历史。',
@@ -1847,6 +1895,14 @@ const CUSTOMER_COPY=Object.freeze({
     chooseProgramme:'Pilih perniagaan ganjaran',yourProgrammes:'Ganjaran Saya',
     programmesIntro:'Pilih perniagaan untuk membuka ganjaran, manfaat, tempahan dan aktivitinya.',
     addProgramme:'Imbas untuk sertai',openProgramme:'Buka ganjaran {business}',localBusiness:'Perniagaan tempatan',
+    referralHeading:'Perkenalkan rakan kepada {business}',
+    referralTermsWithFloor:'Rakan anda sebut kod anda semasa mendaftar. Selepas mereka berbelanja {floor}, anda dapat kredit {reward}.',
+    referralTerms:'Rakan anda sebut kod anda semasa mendaftar. Selepas belanja pertama mereka, anda dapat kredit {reward}.',
+    yourReferralCode:'Kod rujukan anda',copyCode:'Salin',shareCode:'Kongsi',codeCopied:'Kod disalin.',
+    referralCodePending:'Kod anda sedang disediakan — tanya kaunter.',
+    referredCount:'Rakan yang sertai dan berbelanja melalui anda: {count}',
+    shareYourCode:'Kongsi kod anda',
+    referralShareMessage:'Jom sertai saya di {business} — sebut kod saya {code} semasa mendaftar di kaunter.',
     rewardReady:'Ganjaran sedia — buka untuk menebus.',continueProgramme:'Buka laman ganjaran anda untuk melihat langkah seterusnya.',
     firstQuest:'Ganjaran pertama anda',scanLoyaltyQr:'Imbas QR kesetiaan',
     firstQuestBody:'Di perniagaan yang menyertai, imbas QR Peekaa yang dipaparkan di kaunter. Perniagaan yang disahkan itu menjadi akaun ganjaran pertama anda.',
@@ -1906,6 +1962,12 @@ const CUSTOMER_COPY=Object.freeze({
     'That image could not be read. Try a clearer QR image.':'Imej itu tidak dapat dibaca. Cuba imej QR yang lebih jelas.',
     /* v295: wallet detail sections + claim flow. */
     'Transactions & points':'Transaksi & mata',
+    'Recent activity':'Aktiviti terkini',
+    'Full history':'Sejarah penuh',
+    'Rate your visit':'Nilai lawatan anda',
+    'Your latest events with this business.':'Rekod terkini anda dengan perniagaan ini.',
+    'Your review helps other people find this business.':'Ulasan anda membantu orang lain menemui perniagaan ini.',
+    'No purchases or points activity has been recorded for this programme yet.':'Belum ada pembelian atau aktiviti mata direkodkan untuk program ini.',
     'Every purchase, reversal, correction, and points event kept in time order.':'Setiap pembelian, pembalikan, pembetulan dan peristiwa mata disimpan mengikut susunan masa.',
     'Loyalty activity':'Aktiviti kesetiaan',
     'Your loyalty history with this business.':'Sejarah kesetiaan anda dengan perniagaan ini.',
@@ -2004,6 +2066,14 @@ const CUSTOMER_COPY=Object.freeze({
     chooseProgramme:'வெகுமதி வணிகத்தைத் தேர்ந்தெடுக்கவும்',yourProgrammes:'என் வெகுமதிகள்',
     programmesIntro:'வெகுமதிகள், சலுகைகள், முன்பதிவுகள் மற்றும் செயல்பாடுகளைத் திறக்க ஒரு வணிகத்தைத் தேர்ந்தெடுக்கவும்.',
     addProgramme:'சேர QR ஸ்கேன் செய்யவும்',openProgramme:'{business} வெகுமதிகளைத் திற',localBusiness:'உள்ளூர் வணிகம்',
+    referralHeading:'{business}-க்கு நண்பரை அறிமுகப்படுத்துங்கள்',
+    referralTermsWithFloor:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்கள் {floor} செலவழித்ததும், உங்களுக்கு {reward} கிரெடிட் கிடைக்கும்.',
+    referralTerms:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்களின் முதல் செலவுக்குப் பிறகு, உங்களுக்கு {reward} கிரெடிட் கிடைக்கும்.',
+    yourReferralCode:'உங்கள் பரிந்துரை குறியீடு',copyCode:'நகலெடு',shareCode:'பகிர்',codeCopied:'குறியீடு நகலெடுக்கப்பட்டது.',
+    referralCodePending:'உங்கள் குறியீடு தயாராகிறது — கவுண்டரில் கேளுங்கள்.',
+    referredCount:'உங்கள் மூலம் சேர்ந்து செலவழித்த நண்பர்கள்: {count}',
+    shareYourCode:'உங்கள் குறியீட்டைப் பகிருங்கள்',
+    referralShareMessage:'{business}-இல் என்னுடன் இணையுங்கள் — கவுண்டரில் பதிவு செய்யும்போது என் குறியீடு {code} சொல்லுங்கள்.',
     rewardReady:'வெகுமதி தயார் — மீட்டெடுக்கத் திறக்கவும்.',continueProgramme:'அடுத்து என்ன என்பதைப் பார்க்க உங்கள் வெகுமதி முகப்பைத் திறக்கவும்.',
     firstQuest:'உங்கள் முதல் வெகுமதிகள்',scanLoyaltyQr:'லாயல்டி QR-ஐ ஸ்கேன் செய்யவும்',
     firstQuestBody:'பங்கேற்கும் வணிகத்தில், கவுண்டரில் காட்டப்படும் Peekaa QR-ஐ ஸ்கேன் செய்யவும். அந்தச் சரிபார்க்கப்பட்ட வணிகமே உங்கள் முதல் வெகுமதிக் கணக்காகும்.',
@@ -2063,6 +2133,12 @@ const CUSTOMER_COPY=Object.freeze({
     'That image could not be read. Try a clearer QR image.':'அந்தப் படத்தைப் படிக்க முடியவில்லை. தெளிவான QR படத்தை முயற்சிக்கவும்.',
     /* v295: wallet detail sections + claim flow. */
     'Transactions & points':'பரிவர்த்தனைகள் & புள்ளிகள்',
+    'Recent activity':'சமீபத்திய செயல்பாடு',
+    'Full history':'முழு வரலாறு',
+    'Rate your visit':'உங்கள் வருகையை மதிப்பிடுங்கள்',
+    'Your latest events with this business.':'இந்த வணிகத்துடனான உங்கள் சமீபத்திய பதிவுகள்.',
+    'Your review helps other people find this business.':'உங்கள் மதிப்புரை மற்றவர்கள் இந்த வணிகத்தைக் கண்டறிய உதவுகிறது.',
+    'No purchases or points activity has been recorded for this programme yet.':'இந்தத் திட்டத்தில் இதுவரை கொள்முதல் அல்லது புள்ளிகள் செயல்பாடு பதிவாகவில்லை.',
     'Every purchase, reversal, correction, and points event kept in time order.':'ஒவ்வொரு வாங்குதல், மாற்றியமைப்பு, திருத்தம் மற்றும் புள்ளி நிகழ்வும் கால வரிசையில் வைக்கப்படுகிறது.',
     'Loyalty activity':'லாயல்டி செயல்பாடு',
     'Your loyalty history with this business.':'இந்த வணிகத்துடனான உங்கள் லாயல்டி வரலாறு.',
@@ -2375,7 +2451,7 @@ function renderNoCustomerDestination(staffWorkspaces=[]){
     ${relationshipRetry?`<div class="row" style="margin-top:16px">${customerRelationshipCheckActionHtml()}</div>`:''}
     ${workspaces.length?`<div style="margin-top:16px"><b>Open a staff workspace</b><div class="row" style="margin-top:10px">${workspaces.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div>`:''}
     <a class="btn" href="#/customer" style="margin-top:18px">Set up ${esc(BRAND.customerLabel)}</a>
-    ${legalLinks()}</section></main>`;
+    ${legalLinks(customerLocale)}</section></main>`;
   if(relationshipRetry)wireCustomerRelationshipCheck(()=>route());
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
@@ -2404,7 +2480,7 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
          actions behind a tap is exactly the pattern this navigation was rebuilt to remove. -->
     </header>${customerPrimaryNavigation(active,navCounts||customerNavCountsV194)}
     <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
-    ${legalLinks()}</div></div>`;
+    ${legalLinks(customerLocale)}</div></div>`;
   if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
   if($('walletBack'))$('walletBack').onclick=()=>nav(backHref);
 }
@@ -2719,7 +2795,7 @@ function renderCustomerWalletUnavailable(message='Customer wallet access is not 
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
-    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+    </div>${accountDeletionCardHtml()}${legalLinks(customerLocale)}</div></div>`;
   wireAccountDeletionButton();
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
@@ -2731,7 +2807,7 @@ function renderCustomerCapabilityRetry(message){
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
       <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
-    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+    </div>${accountDeletionCardHtml()}${legalLinks(customerLocale)}</div></div>`;
   wireAccountDeletionButton();
   $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -2815,7 +2891,8 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
     facts=customerOfferTaglineV194(item?.name,String(item?.metadata?.offer_facts||'')),
     description=customerOfferDescriptionV195(item?.description),
     terms=String(item?.terms||'').trim();
-  const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
+  /* V299: business monogram coin, not the offer name's first letter (see home shelf). */
+  const initial=(String(business?.name||item?.name||'P').trim()[0]||'P').toUpperCase();
   return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
     ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:`<div class="customer-promotion-card-media customer-promotion-card-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <div class="customer-promotion-card-copy">

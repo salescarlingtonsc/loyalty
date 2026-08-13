@@ -31,7 +31,13 @@ export function buildRewardOverviewVisualFixture(app){
   const status=sourceBetween(app,'function growStatus','/* v104 starts');
   const retention=sourceBetween(app,'async function retentionPage(','/* ---------- Grow: one customer journey');
   const grow=sourceBetween(app,'async function growPage(','/* ---------- Bring-back playbooks');
-  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}`).digest('hex');
+  /* V299: growPage now normalizes each promotion row through promotionEditorItemV104 (the V295
+     "can straightaway go inside see which promotions available" drilling). The fixture ran the
+     real growPage without that helper, so it threw before #rewardJourneyTitle ever rendered. */
+  const promotionItem=sourceBetween(app,'function promotionEditorItemV104(','function promotionScopeMediaV104(');
+  /* V299: growPage also reads the V291 pending-changes helpers when it summarizes a draft. */
+  const pendingChanges=sourceBetween(app,'function growRewardDiffFieldsV291(','function growPublishFieldRowsV170(');
+  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}\n${promotionItem}\n${pendingChanges}`).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
     <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa rewards overview browser acceptance</title><style>${style}
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -168,6 +174,8 @@ export function buildRewardOverviewVisualFixture(app){
     ${snapshotAdapter}
     ${journey}
     ${status}
+    ${promotionItem}
+    ${pendingChanges}
     ${grow}
     window.rewardOverviewMetrics=()=>({sourceHash:'${sourceHash}',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},

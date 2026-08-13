@@ -249,15 +249,24 @@ try{
   assertTrue(programmesText.includes('Referral programme'),'the referral row is untouched');
 
   /* --------------------------- 2. gift cards page --------------------------- */
-  say('2. gift cards page drops the "Offer gift cards" block and the back button');
+  /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"). V296 removed the
+     "Offer gift cards" block FROM this page and moved it to Customer Interface, on the reading
+     that the capability had to survive the block. The owner has now removed the surface itself,
+     so the page this step was about no longer answers: #/giftcards is refused with a plain toast
+     and corrected to the dashboard, exactly like the storedvalue refusal. Nothing customer-side
+     changes — the wallet still shows a customer their outstanding gift-card balance — and no DB
+     object, businesses.gift_card_sales_enabled included, is touched. */
+  say('2. #/giftcards is refused and says so, and no gift-card control is left in the workspace');
   await go('#/giftcards');
-  await page.waitForFunction(()=>document.body.innerText.includes('Issue a gift card'),null,{timeout:20000});
+  await page.waitForFunction(()=>location.hash==='#/dashboard',null,{timeout:20000});
+  assertTrue(true,'a typed #/giftcards is corrected to #/dashboard rather than rendering');
+  assertTrue((await page.locator('#toast').innerText())
+    .includes('Gift cards are no longer part of this workspace.'),
+    'and the refusal SAYS so, rather than bouncing silently');
   const giftText=await bodyText();
-  assertTrue(!giftText.includes('Offer gift cards'),'the "Offer gift cards" block is gone (owner: "remove this")');
-  assertTrue(await page.locator('#giftCardEnabled').count()===0,'its checkbox is not on this page at all');
-  assertTrue(!giftText.includes('Back to Grow overview'),'no "← Back to Grow overview" in the header');
-  assertTrue(giftText.includes('Issue a gift card')&&giftText.includes('Redeem an existing card'),
-    'issuing and redeeming still work from this page');
+  assertTrue(!giftText.includes('Issue a gift card'),'the issuing workspace is not rendered anywhere');
+  assertTrue(await page.locator('#giftCardEnabled').count()===0,'and no issuance checkbox exists in the shell');
+  assertTrue(await page.locator('a[href="#/giftcards"]').count()===0,'no nav row still points at it');
 
   /* --------------------------- 3. Customer Interface sub-tabs --------------------------- */
   say('3. Customer Interface is a nav group whose children land on their sections');
@@ -272,8 +281,10 @@ try{
     ['Preview','#/customer-interface','preview'],
     ['Workspace & brand','#/customer-interface/brand','brand'],
     ['Customer programme','#/customer-interface/programme','programme'],
-    ['Sign-up & fields','#/customer-interface/interface','interface'],
-    ['Gift cards','#/customer-interface/giftcards','giftcards']
+    /* V303: the Gift cards child went with the surface (owner: "remove gift cards from the
+       business UI entirely"). The four children below are unchanged and still prove the V296
+       requirement this step is about — each rail child lands on, and shows only, its section. */
+    ['Sign-up & fields','#/customer-interface/interface','interface']
   ];
   for(const [label,href,key] of children){
     const link=page.locator(`.side .navbody[data-body="customerui"] a[href="${href}"]`).first();
@@ -290,15 +301,19 @@ try{
     assertTrue((await activeChild.evaluate(node=>node.textContent)).includes(label),
       `child "${label}" is marked active in the rail`);
   }
-  await page.waitForSelector('#giftCardEnabled',{timeout:20000});
-  assertTrue((await page.locator('[data-ci-view-v296="giftcards"]').innerText()).includes('Offer gift cards'),
-    'the moved "Offer gift cards" control lives on the Gift cards child, with its own copy');
-  await page.uncheck('#giftCardEnabled');
-  await page.waitForFunction(()=>window.__V296.rpc.some(call=>call.name==='set_gift_card_sales_enabled_v102'
-    &&call.args&&call.args.p_enabled===false),null,{timeout:20000});
-  assertTrue(true,'the moved switch still writes through set_gift_card_sales_enabled_v102');
-  await page.check('#giftCardEnabled');
-  await page.waitForFunction(()=>window.__V296.giftCardSalesEnabled===true,null,{timeout:20000});
+  /* V303: the moved switch and its section are gone, so what is asserted is their ABSENCE — and
+     that no set_gift_card_sales_enabled_v102 write can be reached from this page any more. */
+  assertTrue(await page.locator('[data-ci-view-v296="giftcards"]').count()===0,
+    'Customer Interface has no Gift cards section left');
+  assertTrue(await page.locator('#giftCardEnabled').count()===0,'and no "Offer gift cards" switch');
+  assertTrue(await page.locator('a[href="#/customer-interface/giftcards"]').count()===0,
+    'and no rail child pointing at one');
+  assertTrue(await page.evaluate(()=>!window.__V296.rpc.some(call=>call.name==='set_gift_card_sales_enabled_v102')),
+    'no gift-card issuance write is reachable from this page');
+  /* The customer side is deliberately untouched: gift-card BALANCE visibility in the wallet is a
+     separate reader (customer_get_gift_cards) on a separate surface, and V303 changed neither. */
+  assertTrue(await page.evaluate(()=>!window.__V296.rpc.some(call=>call.name==='customer_get_gift_cards'&&call.failed)),
+    'the customer wallet gift-card reader is untouched by this removal');
 
   /* --------------------------- 4. no in-page programme view pills --------------------------- */
   say('4. the in-page Overview / List / History pill strip is gone, the rail children are not');

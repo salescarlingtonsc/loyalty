@@ -314,16 +314,35 @@ try{
   for(const blurb of ['Let customers come back with points!','Do tier membership for your customers!',
     'Customers earn stamps and redeem!','Let customers subscribe and save'])
     assertTrue(growText.includes(blurb),`owner blurb present: "${blurb}"`);
-  assertTrue(await page.locator('.side .navbody[data-body="serve"] a[href="#/giftcards"]').count()===1,
-    'Gift cards is reachable from the Serve & sell nav group');
+  /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"). V294 had moved
+     gift-card management INTO Serve & sell when the combined programme card was struck out; the
+     owner has now removed the surface itself, so the same line asserts its absence. Everything
+     else this step checks — the V294 card copy and the struck combined card — is unchanged. */
+  assertTrue(await page.locator('.side .navbody[data-body="serve"] a[href="#/giftcards"]').count()===0,
+    'Gift cards is NOT reachable from the Serve & sell nav group');
+  assertTrue(!growText.includes('Gift cards'),'and no Programmes card mentions gift cards');
 
   /* ---------------- 5. reward history on the grid and in the editor ---------------- */
   say('5a. grow catalogue grid: retired reward lives in history');
-  await page.click('[data-grow-topic-v229="points"]');
+  /* V302: the reward-card grid is the surface a RUNNING programme's owner reaches, and this
+     fixture's programme is paused — a state that now opens the setup wizard instead, because the
+     owner reported that paused is exactly where a failed setup attempt lands. The programme is
+     switched on for this step and switched back after step 6, leaving every later step's paused
+     expectations intact.
+     V303 (owner: "tiered membership / stamps - still not able to build like points"): ALL THREE
+     point-engine cards open the wizard now, live or not, so the tile no longer drills. The grid
+     itself is byte-unchanged and still renders on the two Programmes views that show the category
+     list, where the V244 filter splits it by status: the offerable reward is on "Ongoing
+     programmes" and the retired one is on "Pending setup". Both halves are asserted, on the view
+     each is actually visible in. */
+  await page.evaluate(()=>{window.__V294.state.program.active=true});
+  await go('#/dashboard');await page.waitForTimeout(300);await go('#/grow/ongoing');
   await page.waitForSelector('[data-reward-card-grid-v250]',{timeout:20000});
   const gridText=await page.locator('[data-reward-card-grid-v250]').first().innerText();
   assertTrue(gridText.includes('Free Coffee'),'offerable reward stays on the grid');
   assertTrue(!gridText.includes('Free Lolipop'),'retired reward is absent from the offer grid');
+  await go('#/dashboard');await page.waitForTimeout(300);await go('#/grow/available');
+  await page.waitForSelector('[data-reward-history-v294]',{timeout:20000});
   assertTrue(await page.locator('[data-reward-history-v294]').count()===1,'grid has a Reward history disclosure');
   assertTrue(!await page.locator('[data-reward-history-v294][open]').count(),'grid history starts collapsed');
   assertTrue((await page.locator('[data-reward-history-v294] summary').innerText()).includes('Reward history · 1'),
@@ -352,29 +371,36 @@ try{
 
   /* ---------------- 6. loyalty editor entry contexts + no back button ---------------- */
   say('6. entry context: points card hides tiers, tiers card shows them');
+  /* V294's requirement is unchanged and is what this step still proves: the card the owner came
+     from decides whether the editor shows the tiers block ("this in tier programme, not here!").
+     V303 changes only the DOOR. All three point-engine cards now open the setup wizard, so the
+     context can no longer come from a drilled tile — it comes from the model chosen on the
+     wizard's step 1, and the wizard's permanent "More reward settings" link carries it on the
+     hash exactly as growFocusPath did. Both halves are re-asserted through that link. */
   await go('#/grow');
   await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
   await page.click('[data-grow-topic-v229="points"]');
-  await page.waitForSelector('[data-reward-card-grid-v250]',{timeout:20000});
-  await page.click('[data-rewards-overview-edit="catalogue"][data-reward-id="lr-live"]');
-  await page.waitForSelector('#rewardDialogV238 #rwCustomerName',{timeout:20000});
+  await page.waitForSelector('#growSetupFullEditorV302',{timeout:20000});
+  assertTrue(await page.locator('.modal').count()===0,'the points card opened the wizard, not a dialog');
+  await page.click('#growSetupFullEditorV302');
+  await page.waitForFunction(()=>document.getElementById('rwList')||document.getElementById('lm'),null,{timeout:20000});
   assertTrue((await page.evaluate(()=>location.hash)).includes('ctx-points'),'points-card entry carries ctx-points on the hash');
   const pointsEntryText=await bodyText();
   assertTrue(!pointsEntryText.includes('Your tiers'),'points-card entry renders NO "Your tiers" block');
   assertTrue(!pointsEntryText.includes('Customers cannot see these tiers'),'and no paused-tiers banner');
   assertTrue(!pointsEntryText.includes('Back to Grow overview'),'no "Back to Grow overview" button in the editor');
-  await page.click('#rewardDialogV238 #rwClose');
-  await page.waitForFunction(()=>!document.getElementById('rewardDialogV238'));
 
   await go('#/grow');
   await page.waitForSelector('[data-grow-topic-v229="tiers"]',{timeout:20000});
   await page.click('[data-grow-topic-v229="tiers"]');
-  await page.waitForSelector('[data-grow-open="rewards"][data-grow-focus="ltb"]',{timeout:20000});
-  await page.click('[data-grow-open="rewards"][data-grow-focus="ltb"]');
+  await page.waitForSelector('#growSetupFullEditorV302',{timeout:20000});
+  assertTrue(await page.locator('.modal').count()===0,'the tiers card opened the wizard, not the old drill');
+  await page.click('#growSetupFullEditorV302');
   await page.waitForFunction(()=>document.body.innerText.includes('Your tiers'),{timeout:20000});
   assertTrue((await page.evaluate(()=>location.hash)).includes('ctx-tiers'),'tiers-card entry carries ctx-tiers on the hash');
   assertTrue((await bodyText()).includes('Your tiers'),'tiers-card entry renders the tiers block');
   assertTrue(!(await bodyText()).includes('Back to Grow overview'),'still no back button on the tiers entry');
+  await page.evaluate(()=>{window.__V294.state.program.active=false}); // V302: back to the fixture's own paused state
 
   /* ---------------- 8. Business Insights tabs ---------------- */
   say('8. insights cards became tabs');

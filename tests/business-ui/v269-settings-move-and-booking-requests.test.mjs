@@ -114,7 +114,9 @@ test('V269 Customer Interface presents the three sections the owner named, in or
   /* V296 retarget: the same three sections, in the same order, are now the rail's sub-tabs.
      'Interface' was renamed 'Sign-up & fields' (its own hint's words) so the child row says what
      it holds, and the moved gift-card switch adds a fourth section after them. */
-  assert.deepEqual(headings, ['Workspace & brand', 'Customer programme', 'Sign-up & fields', 'Gift cards']);
+  /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"): the fourth
+     section V296 added is gone again, leaving exactly the three sections this test is named for. */
+  assert.deepEqual(headings, ['Workspace & brand', 'Customer programme', 'Sign-up & fields']);
   // each heading immediately precedes the panel it names
   const order = [
     "customerInterfaceSectionHeadingV269('ciSectionBrandV269'",
@@ -123,8 +125,8 @@ test('V269 Customer Interface presents the three sections the owner named, in or
     'id="customerProgrammeEditorV95"',
     "customerInterfaceSectionHeadingV269('ciSectionInterfaceV269'",
     'customerInterfaceSectionsHtmlV243(',
-    "customerInterfaceSectionHeadingV269('ciSectionGiftCardsV296'",
-    'id="giftCardEnabled"',
+    /* V303: the V296 Gift cards section and its switch left this page with the rest of the
+       gift-card surface (owner: "remove gift cards from the business UI entirely"). */
   ];
   let cursor = -1;
   for (const marker of order) {

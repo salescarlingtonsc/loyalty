@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="949a8f42a90e200b4eb41dbe5b08e45153dc98b6c2858612125185d6fe374988"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="b1cb15242c48be02e71e2dfe9502ef9e30141aa44e6ead96597c4eae12cfda6e"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -14,6 +14,8 @@
   --line:#EAE6DF; --control-border:#817B88; --hair:rgba(23,22,26,.06);
   --coral:#C24135; --coral-hover:#9D352C; --amber:#A75514; --green:#1F6B48; --red:#9D352C;
   --grad:linear-gradient(135deg,#C24135,#9D352C);
+  /* V299: the one categorical palette for DOM proportion bars (reports, playbooks). */
+  --chart-1:#C24135; --chart-2:#1F6B48; --chart-3:#1F5199; --chart-4:#8A5A12; --chart-5:#7A2E9D; --chart-6:#6B6673;
   --tint:#FFF0EC;            /* coral wash for selected/active surfaces */
   /* iOS uses generous, continuous corner radii */
   --r:18px; --r-sm:12px; --r-lg:24px;
@@ -158,7 +160,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .reporting-scope-branches label{display:inline-flex;align-items:center;gap:5px;min-height:36px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;font-size:12px;font-weight:700}
 .reporting-scope-branches input{width:auto;min-height:auto}
 .scope-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#F7F1EA;border:1px solid var(--line);padding:5px 9px;font-size:11px;font-weight:750;color:var(--muted)}
-.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(4,minmax(150px,1fr))}
+.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
 .dashboard-chart-head>svg{margin-top:2px}.dashboard-chart-head b{display:block;line-height:1.25;overflow-wrap:anywhere}.dashboard-chart-head p{line-height:1.35}
@@ -1023,6 +1025,81 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 /* The trail above a drilled-in category: where you are, and one tap back to the level above. */
 .grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
 .grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
+/* V301 (owner 2026-08-13: "ONE page with step subtabs… no popups"). The setup wizard lives
+   inside the Programmes card, so it borrows the page's own tokens and adds no new colours. The
+   step strip scrolls horizontally rather than wrapping into a second line at 390px, and every
+   control keeps a 44px tap target — the staff filling this in may be reading a second language. */
+.grow-setup-v301{padding:4px 14px 16px}
+.grow-setup-head-v301{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.grow-setup-head-links-v301{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.grow-setup-title-v301{margin:2px 0 0;font-size:1.02rem;letter-spacing:-.01em}
+.grow-setup-leave-v301{color:var(--muted);font-size:.82rem;text-decoration:underline;padding:10px 2px;min-height:44px;display:inline-flex;align-items:center}
+.grow-setup-steps-v301{display:flex;gap:8px;list-style:none;margin:12px 0 0;padding:0 0 4px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.grow-setup-steps-v301::-webkit-scrollbar{display:none}
+.grow-setup-steps-v301>li{flex:0 0 auto}
+.grow-setup-step-v301{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font:inherit;font-size:.84rem;font-weight:650;cursor:pointer;white-space:nowrap}
+.grow-setup-step-v301:disabled{opacity:.55;cursor:default}
+.grow-setup-step-v301.is-current{border-color:var(--coral);background:var(--tint);color:var(--ink)}
+.grow-setup-step-v301.is-done{color:var(--ink)}
+.grow-setup-step-num-v301{display:grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--tint);color:var(--coral);font-size:.78rem;font-weight:800}
+.grow-setup-step-v301.is-current .grow-setup-step-num-v301{background:var(--coral);color:#fff}
+.grow-setup-body-v301{margin-top:16px}
+.grow-setup-lead-v301{margin:0 0 12px;font-size:1.02rem;font-weight:750;letter-spacing:-.01em}
+.grow-setup-options-v301{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.grow-setup-option-v301{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;min-height:150px;padding:16px;border:1.5px solid var(--line);border-radius:16px;background:#fff;color:inherit;font:inherit;cursor:pointer}
+.grow-setup-option-v301:hover{border-color:var(--coral);background:var(--tint)}
+.grow-setup-option-v301.is-picked{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3px rgba(201,67,51,.14)}
+.grow-setup-option-icon-v301{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--tint);color:var(--coral)}
+.grow-setup-option-v301>b{font-size:1.02rem}
+/* V305 (owner: "when i press 'tiered membership' - it shows both tier & points? can you explain
+   the logic?" and "you need to ensure programs integrity"). Two new controls on this surface:
+   the integrity line under step 1's cards, which states what a model switch PRESERVES, and the
+   climbing-basis picker — full width as the tiers-only Climbing step, compact at the top of the
+   Points + tiers ladder step. Both keep the 44px tap target the rest of the wizard holds to. */
+.grow-setup-integrity-v305{margin:14px 0 0;padding:11px 13px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.9rem;line-height:1.5}
+.grow-setup-basis-v305{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.grow-setup-basisopt-v305{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-height:44px;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:inherit;font:inherit;cursor:pointer}
+.grow-setup-basisopt-v305:hover{border-color:var(--coral);background:var(--tint)}
+.grow-setup-basisopt-v305.is-picked{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3px rgba(201,67,51,.14)}
+.grow-setup-basisopt-v305>b{font-size:.98rem}
+.grow-setup-basisrow-v305{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+.grow-setup-basislabel-v305{display:block;margin-bottom:9px;font-size:.88rem}
+.grow-setup-basis-v305.is-compact-v305{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.grow-setup-basis-v305.is-compact-v305 .grow-setup-basisopt-v305{padding:10px 12px;border-radius:12px}
+.grow-setup-sentence-v301{margin:0 0 10px;font-size:1rem;line-height:2;overflow-wrap:anywhere}
+.grow-setup-input-v301{display:inline-block;width:6.5em;min-height:44px;margin:0 4px;padding:6px 10px;text-align:center;font-weight:700}
+.grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
+.grow-setup-rewardlist-v301{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px}
+.grow-setup-rewardlist-v301>li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:.84rem;cursor:pointer}
+.grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
+.grow-setup-rewardform-v301{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
+.grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
+/* V304 (owner: "i need to be able to add or delete", "not auto saved… it needs to reflect as i
+   change it"). Every reward and tier row now carries Edit + Remove and a transient saved marker,
+   and the inline form carries its own primary action so the list changes without pressing Next.
+   A removed row keeps its place, muted and dashed, until the visit ends — the Undo beside it is
+   the safety, in place of the confirm dialog this surface is not allowed to open. */
+.grow-setup-rowactions-v304{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grow-setup-rowactions-v304 .btn{min-height:44px}
+.grow-setup-rewardlist-v301>li.is-removed-v304{opacity:.62;border-style:dashed}
+.grow-setup-rewardlist-v301>li.is-removed-v304 .btn{min-height:44px}
+.grow-setup-formfoot-v304{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.grow-setup-formfoot-v304 .btn{min-height:44px;padding:11px 20px}
+.grow-setup-changes-v301{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+/* V303: the points_mode switch a tier choice implies, stated on the Go-live step. It leads the
+   change list because it is the biggest thing publishing that choice does to a customer. */
+.grow-setup-modechange-v303{margin:0 0 10px;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.9rem;line-height:1.5}
+.grow-setup-foot-v301{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.grow-setup-next-v301{min-height:48px;padding:12px 22px;font-size:1rem}
+.grow-setup-done-v301{text-align:center;padding:12px 0}
+.grow-setup-done-icon-v301{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 12px;border-radius:999px;background:var(--tint);color:var(--coral)}
+@media (max-width:520px){
+  .grow-setup-v301{padding:4px 10px 16px}
+  .grow-setup-foot-v301 .btn{flex:1 1 auto}
+}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1248,6 +1325,15 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .report-share-v297{margin-top:12px}
 .report-share-bar-v297{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--line)}
 .report-share-bar-v297>span{display:block;height:100%}
+/* V299: Business Insights depended on two classes that had no rules at all — every tab's
+   headline number rendered at body size one card under the 1.85rem verdict value. */
+.metric{font-size:1.6rem;font-weight:750;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+@media(max-width:720px){.metric{font-size:1.4rem}}
+.report-scope-card{padding:16px 18px}
+.report-scope-card .range{align-items:center;row-gap:10px}
+.report-scope-card .range label{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:12.5px;font-weight:650;color:var(--muted)}
+.report-scope-card .range input[type=date]{width:auto;min-width:150px}
+.report-scope-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .report-share-legend-v297{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
 .report-share-legend-v297 li{display:flex;align-items:center;gap:6px}
 .report-share-dot-v297{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
@@ -1615,6 +1701,18 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-book{flex:0 0 auto}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
+/* V300: how many times a reward has actually been redeemed, on its card. */
+.reward-card-redeemed-v300{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+/* V300: the customer's own referral code — dashed coupon treatment so it reads as a thing
+   you hand to a friend, not as data. */
+.customer-referral-code-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.customer-referral-code{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1.5px dashed var(--coral);border-radius:12px;background:var(--tint);color:var(--coral);font-size:1.3rem;font-weight:750;letter-spacing:.14em;font-variant-numeric:tabular-nums}
+.customer-referral-count{margin-top:10px}
+/* V299: when a firm runs tiers AND spendable points, the balance is visible on the tab bar
+   itself — the customer's number one fact must not hide behind the unselected tab. */
+.customer-programme-tablist--with-balance{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.customer-programme-tab-balance{display:inline-flex;align-items:baseline;gap:4px;align-self:center;padding:0 10px 0 6px;font-weight:750;font-size:14.5px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.customer-programme-tab-balance small{font-weight:600;font-size:11px;color:var(--muted);letter-spacing:0}
 .customer-programme-single{padding:16px}
 .customer-programme-single-head{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:1.05rem}
 .customer-programme-single .customer-tier-now{margin-top:14px}
@@ -1665,7 +1763,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-expiring-list .muted{min-width:0;overflow-wrap:anywhere}
 .customer-expiring-when{margin-left:auto;font-size:.82rem;color:var(--muted);white-space:nowrap}
 .customer-expiring-when.is-urgent{color:var(--red);font-weight:600}
-.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
+.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}.customer-home-offer-media--fallback span{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);font-size:17px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
 /* V243 customer-app preview — restored after a rebase conflict resolution dropped it */
 .customer-preview-phone-v243{width:390px;max-width:100%;margin:14px auto 0;border:10px solid var(--ink);border-radius:34px;background:var(--ink);box-shadow:0 12px 30px rgba(23,22,26,.18)}
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
@@ -1721,7 +1819,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    contain at natural ratio (height-capped) with the card's copy strictly below.
    Only the no-photo fallback keeps a fixed ratio and decorative gradient. */
 .customer-promotion-card-media{position:relative;width:100%;flex:0 0 auto;overflow:hidden;background:linear-gradient(135deg,#3b2a45,#17161a)}.customer-promotion-card-media img{display:block;width:100%;height:auto;max-height:clamp(140px,34vw,220px);object-fit:contain;margin:0 auto}
-.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9}.customer-promotion-card-media--fallback span{position:relative;z-index:1;font-size:clamp(1.7rem,6vw,2.4rem);font-weight:750;letter-spacing:-.04em;color:rgba(255,255,255,.92)}
+.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:21/9;background:radial-gradient(circle at 80% 14%,rgba(255,255,255,.14),transparent 55%),radial-gradient(circle at 14% 86%,rgba(255,255,255,.08),transparent 45%)}.customer-promotion-card-media--fallback span{position:relative;z-index:1;display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);font-size:19px;font-weight:750;letter-spacing:-.03em;color:rgba(255,255,255,.95)}
 .customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;padding:15px 16px 16px}
 .customer-promotion-card-copy .customer-promotion-card-facts{margin-top:5px;font-size:clamp(.98rem,2.9vw,1.12rem);font-weight:750;line-height:1.25;letter-spacing:-.015em;color:#fff}.customer-promotion-card-copy h3{font-size:clamp(1.15rem,3.2vw,1.4rem);line-height:1.15;letter-spacing:-.02em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
 .customer-promotion-validity{font-weight:750}.customer-promotion-detail-list{display:grid;gap:10px;margin:16px 0}.customer-promotion-detail-list>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px}.customer-promotion-detail-list dt{color:var(--muted);font-size:.78rem;font-weight:750}.customer-promotion-detail-list dd{margin:0;overflow-wrap:anywhere}
@@ -1777,7 +1875,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-section h2{font-size:18px;margin-bottom:4px}
 .wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
-.wallet-reward{border:1px solid var(--hair);border-radius:7px;padding:14px;background:#fff;min-width:0}
+.wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:#fff;min-width:0}
 .wallet-reward-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}
@@ -1786,8 +1884,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 .customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
 .customer-offer-detail-media img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;margin:0 auto}
-.customer-offer-detail-media--fallback{display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
-.customer-offer-detail-media--fallback span{font-size:2.6rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
+.customer-offer-detail-media--fallback{position:relative;display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
+.customer-offer-detail-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}
+.customer-offer-detail-media--fallback span{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
 .customer-offer-detail h2{margin-top:2px;font-size:clamp(1.35rem,4vw,1.7rem);letter-spacing:-.02em}
 .customer-offer-detail-facts{margin-top:6px;font-size:clamp(1.05rem,3.2vw,1.25rem);font-weight:760;letter-spacing:-.015em;color:var(--ink)}
 .customer-offer-detail-meta{display:grid;gap:5px;margin-top:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--bg)}
@@ -1955,7 +2054,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 949a8f42a90e200b4eb41dbe5b08e45153dc98b6c2858612125185d6fe374988</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · b1cb15242c48be02e71e2dfe9502ef9e30141aa44e6ead96597c4eae12cfda6e</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2100,7 +2199,14 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   }
 
   function table({caption,headers,rows,className=''}={}){
-    return `<div class="cui-table-wrap" role="region" aria-label="${escapeHtml(caption)}" tabindex="0"><table class="cui-table ${className}" data-responsive="true"><caption>${escapeHtml(caption)}</caption><thead><tr>${headers.map(header=>`<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((cell,index)=>`<td data-label="${escapeHtml(headers[index]||'')}">${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    /* V298: a caller that passes no caption used to get `<caption></caption>` and
+       `aria-label=""` — an empty element AND a table with no accessible name, the worst of both.
+       Emit no caption at all in that case and let enhanceTables derive one from the surrounding
+       card heading (it always leaves a non-empty name behind), and never let the scroll region's
+       label collapse to nothing. */
+    const captionTextV298=String(caption??'').trim();
+    const regionLabelV298=captionTextV298||'Data table';
+    return `<div class="cui-table-wrap" role="region" aria-label="${escapeHtml(regionLabelV298)}" tabindex="0"><table class="cui-table ${className}" data-responsive="true">${captionTextV298?`<caption>${escapeHtml(captionTextV298)}</caption>`:''}<thead><tr>${headers.map(header=>`<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((cell,index)=>`<td data-label="${escapeHtml(headers[index]||'')}">${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
 
   let generatedFieldId=0;
@@ -2119,9 +2225,72 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   function tableCaption(table){
     const card=table.closest('.card');
-    const heading=card?.querySelector('h2,h3,.cui-card-head,b');
+    /* V298: `b` is in this list because that is how a workspace card writes its title — but a
+       `b` INSIDE a table is a cell, not a title. Staff performance was naming its table after the
+       first staff member in it ("Owner Person"), which is both a useless accessible name and a
+       repeat of text already in the grid. Skip anything that lives in a table and fall through to
+       the page heading, which is what the caller meant all along. */
+    const heading=[...(card?.querySelectorAll('h2,h3,.cui-card-head,b')||[])]
+      .find(node=>!node.closest('table')&&node.textContent.trim());
     const page=table.closest('main')?.querySelector('h1');
     return (heading?.textContent||page?.textContent||'Data table').trim();
+  }
+
+  /* V298 (owner report 2026-08-13, from a live Business Insights screenshot: "Revenue by type"
+     printed as the card heading and AGAIN as a smaller grey line right beneath it — same for
+     "Reversal reconciliation", "Loyalty flow…" and "Liabilities…", and the same across the rest
+     of the workspace). Mechanism: a workspace card is written as
+     `<div class="card"><b>Revenue by type</b><table>…`, and enhanceTables below then synthesised
+     a <caption> whose text tableCaption() had just COPIED off that very <b>. The duplicate was
+     structural, not a typo at any one call site.
+
+     A <caption> is the native accessible name of a table, so deleting it would trade a cosmetic
+     bug for a real accessibility regression (screen-reader users would meet an unnamed grid).
+     The name is therefore kept and hidden with the document's existing .sr-only utility: the
+     title is visible exactly once (the heading) and announced exactly once (the caption).
+
+     Hand-written captions are left visible unless they repeat a heading verbatim, because those
+     carry information the heading does not — platform console prints "{count} archived" and
+     "First five source rows" in a caption, and hiding those would delete facts from the page. */
+  function captionRepeatsHeadingV298(table,text){
+    const name=text.trim().toLowerCase();
+    if(!name)return false;
+    const scope=table.closest('.card,.platform-detail-section,section');
+    if(!scope)return false;
+    /* `b`/`strong` are in the list because that is how the workspace cards write their titles;
+       anything inside a table is a cell, not a heading, so it can never be the visible title. */
+    return [...scope.querySelectorAll('h1,h2,h3,h4,.cui-card-head,b,strong')]
+      .some(node=>!node.closest('table')&&node.textContent.trim().toLowerCase()===name);
+  }
+
+  /* V298: the one place that decides whether a table's name is also shown. A caption we
+     synthesised is a copy of an already-visible heading by construction, so it is always hidden;
+     an authored one is hidden only when it repeats that heading word for word. Either way the
+     table is left with a non-empty accessible name. .sr-only is only ever added, never removed,
+     so this is idempotent under the MutationObservers that drive both callers. */
+  function nameTableOnceV298(table,caption,derived){
+    if(derived||!caption.textContent.trim())caption.textContent=tableCaption(table);
+    if(derived||captionRepeatsHeadingV298(table,caption.textContent))caption.classList.add('sr-only');
+  }
+
+  /* The workspace runs the full enhancer (mountMain); the platform console does not — it writes
+     its own finished markup and would otherwise keep the doubled titles the owner reported, on
+     "Loss reasons", "Contacts", "Payment history", "Campaign history", "Explore demand",
+     "Partner register", "Suppression instructions" and "Stripe price catalogue". This observer is
+     the caption rule ALONE: it never touches classes, data-label, thead or the wrapper, so it
+     cannot restyle a console table that was never built for the responsive card layout. */
+  function dedupeTableCaptionsV298(root){
+    root.querySelectorAll('caption').forEach(caption=>{
+      const table=caption.parentElement;
+      if(table?.tagName==='TABLE')nameTableOnceV298(table,caption,false);
+    });
+  }
+
+  function observeTableCaptionsV298(root){
+    dedupeTableCaptionsV298(root);
+    const observer=new MutationObserver(()=>dedupeTableCaptionsV298(root));
+    observer.observe(root,{childList:true,subtree:true});
+    return observer;
   }
 
   function enhanceTables(root){
@@ -2130,7 +2299,9 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
       const isComplex=!!table.querySelector('[colspan],[rowspan]');
       table.dataset.responsive=isComplex?'false':'true';
       let caption=table.querySelector(':scope > caption');
-      if(!caption){caption=document.createElement('caption');caption.textContent=tableCaption(table);table.prepend(caption)}
+      const derivedCaptionV298=!caption;
+      if(!caption){caption=document.createElement('caption');table.prepend(caption)}
+      nameTableOnceV298(table,caption,derivedCaptionV298);
       let head=table.querySelector(':scope > thead');
       const firstRow=table.querySelector('tr');
       if(!head&&firstRow?.querySelector('th')){
@@ -2266,6 +2437,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
     associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog,
+    dedupeTableCaptionsV298,observeTableCaptionsV298,
     currentDialogHistoryId
   });
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -3981,7 +4153,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'949a8f42a90e200b4eb41dbe5b08e45153dc98b6c2858612125185d6fe374988',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'b1cb15242c48be02e71e2dfe9502ef9e30141aa44e6ead96597c4eae12cfda6e',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

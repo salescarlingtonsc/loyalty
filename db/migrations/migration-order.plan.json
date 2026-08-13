@@ -1764,21 +1764,33 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v300_growth_readbacks.sql",
+      "semanticVersion": "v300",
+      "proposedDeployVersion": "20260813000100"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v306_both_mode_shows_tiers.sql",
+      "semanticVersion": "v306",
+      "proposedDeployVersion": "20260813000200"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql",
       "semanticVersion": "v297",
-      "proposedDeployVersion": "20260812001300"
+      "proposedDeployVersion": "20260813001000"
     },
     {
       "kind": "executable",
       "path": "db/migrations/20260812_nestly_v298_prospecting_seed_and_reference.sql",
       "semanticVersion": "v298",
-      "proposedDeployVersion": "20260812001400"
+      "proposedDeployVersion": "20260813001100"
     },
     {
       "kind": "executable",
       "path": "db/migrations/20260812_nestly_v299_prospecting_rpcs.sql",
       "semanticVersion": "v299",
-      "proposedDeployVersion": "20260812001500"
+      "proposedDeployVersion": "20260813001200"
     }
   ]
 }

@@ -136,7 +136,12 @@ test('C: an existing programme opens the editor without the create-draft dialog'
   assert.match(grow,
     /sb\.rpc\('create_loyalty_config_draft',\{\s*\n\s*p_business:S\.biz\.id,p_based_on:snapshot\.currentVersion,p_source:'owner_editor'\}\);/);
   // Every entry point uses the one gate; none of them still hand-rolls the old guard.
-  assert.equal((grow.match(/openGrowEditorV258\(action\)\.catch\(fail\)/g) || []).length, 3);
+  /* V303 (owner 2026-08-13: "pressing add rewards - still brings me to this page"): the reward
+     template picker was the third caller and now hands its chosen template to the setup wizard's
+     inline form instead of to the deep editor's New-reward dialog. The rule this line guards —
+     every entry point uses the ONE gate, none hand-rolls the old guard — is unchanged for the
+     callers that still open the editor. */
+  assert.equal((grow.match(/openGrowEditorV258\(action\)\.catch\(fail\)/g) || []).length, 2);
   assert.doesNotMatch(grow, /if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/);
 });
 

@@ -123,7 +123,10 @@ test('platform console is routed before workspace onboarding and uses versioned 
   assert.ok(platformRoute > 0);
   assert.ok(onboardingFallback > platformRoute);
   assert.match(index,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
-  assert.match(index,/if\(requestedPlatformRoute\)\{[\s\S]*return await platformConsole\.render\(/);
+  /* V298: still inside the requestedPlatformRoute branch and still awaited — the route now binds
+     the result so it can attach the caption observer to the console's markup before returning. */
+  assert.match(index,/if\(requestedPlatformRoute\)\{[\s\S]*const platformRenderedV298=await platformConsole\.render\(/);
+  assert.match(index,/if\(requestedPlatformRoute\)\{[\s\S]*CUI\.observeTableCaptionsV298\(root\)[\s\S]*return platformRenderedV298;/);
   /* v184: the console is no longer an eager <script>/<link> in index.html — a customer opening a
      booking page was downloading ~210KB of admin code. The urls live in a JSON manifest that
      app.js fetches on demand for a #/platform route. Both facts are asserted: the manifest is

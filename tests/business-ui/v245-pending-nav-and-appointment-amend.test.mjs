@@ -30,7 +30,10 @@ test('V250 the Programmes nav is one flat link, with no sub-rows left', () => {
 
 test('V245 nav row, page heading and tile group all say the same words', () => {
   // The heading for the filtered views no longer invents its own vocabulary.
-  assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes':programmeView==='available'\?'Pending setup':'List'/);
+  /* V301 ADDITION (owner 2026-08-13, the one-page setup wizard): the fourth view names itself in
+     the same ternary. The V245 vocabulary — Ongoing programmes / Pending setup / List — is
+     unchanged, which is what this assertion exists to protect. */
+  assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes':programmeView==='available'\?'Pending setup':programmeView==='setup'\?'Set up rewards':'List'/);
   // ...and they are the exact strings the V244 groups use inside the list.
   assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
   assert.match(app, /growTileSectionV244\('Pending setup'/);

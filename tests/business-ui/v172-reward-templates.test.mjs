@@ -31,23 +31,39 @@ test('every sector resolves a template set with own-price suggestions and fallba
   assert.match(fn, /return sets\[industry\]\|\|sets\.other;/, 'unknown sector must fall back, never throw');
 });
 
-test('choosing a template reuses the existing add-reward path, no new writers', () => {
+/* V303 (owner 2026-08-13: "pressing add rewards - still brings me to this page", screenshotting
+   the deep editor's New-reward dialog). A template is an add-reward path, and on a live programme
+   it ended in exactly that dialog. The templates themselves are a capability, so they survive
+   unchanged — every assertion above still holds — but the chosen one is now handed to the setup
+   wizard's INLINE reward form, which is the same three fields and the same writer. */
+test('choosing a template reuses the same one add-reward path, no new writers', () => {
   const start = app.indexOf('const templatesOpen=$(');
   assert.ok(start > 0);
   const wiring = app.slice(start, app.indexOf('const growRewardsRetry', start));
-  assert.match(wiring, /focusTarget:'rwAdd',activateTarget:true/, 'must open the existing reward editor');
-  // V258: the template picker delegates to the same shared gate as "+ Add reward"; the cold
-  // start still reaches openRewardsAutoSetup inside it, and the draft path still mounts.
-  assert.match(wiring, /openGrowEditorV258\(action\)\.catch\(fail\)/, 'must use the one shared editor gate');
+  assert.match(wiring, /pendingGrowSetupRewardV303=\{mode:'add',name:template\.name,budgetCents:template\.budget\}/,
+    'the template must arm the wizard reward form');
+  assert.match(wiring, /nav\('#\/grow\/setup'\)/, 'and land on the wizard, never a dialog');
+  assert.doesNotMatch(wiring, /openGrowEditorV258/, 'no template may reach the deep editor dialog');
   assert.doesNotMatch(wiring, /\.insert\(|\.update\(|\.upsert\(/, 'templates must not write server state');
   assert.doesNotMatch(wiring.replace(/from\('services'\)\.select\('price_cents'\)/, ''), /sb\.rpc\(/, 'only the read-only price query is allowed');
 });
 
-test('template prefill fills the editor fields and lets the editor derive points', () => {
-  const start = app.indexOf('const applyPendingRewardTemplateV172');
-  assert.ok(start > 0);
-  const fn = app.slice(start, start + 1200);
-  assert.match(fn, /nameField\.value=template\.name/);
-  assert.match(fn, /estimate\.dispatchEvent\(new Event\('input',\{bubbles:true\}\)\)/, 'budget must trigger the existing budget->points maths');
-  assert.match(fn, /pendingRewardTemplateV172=null/, 'prefill must be consumed once');
+test('template prefill fills the wizard form and lets the wizard derive points', () => {
+  /* V305: the hand-off is now gated on the chosen model HAVING a Reward step — a tiers-only
+     programme has none, and the old "fall back to the last step" would have dropped the owner on
+     the publish gate with a reward form armed. The slice therefore anchors on the declaration name
+     rather than on its right-hand side. */
+  const start = app.indexOf('const rewardHandoffV303=');
+  assert.ok(start > 0, 'the wizard must consume the hand-off');
+  assert.match(app.slice(start, start + 200),
+    /const rewardHandoffV303=stepNumberOrNullV305\('reward'\)===null\?null:pendingGrowSetupRewardV303;/,
+    'and only where there is a Reward step to consume it on');
+  const fn = app.slice(start, start + 1600);
+  assert.match(fn, /pendingGrowSetupRewardV303=null/, 'prefill must be consumed once');
+  assert.match(fn, /name:String\(rewardHandoffV303\.name\|\|''\)/);
+  assert.match(fn, /Math\.ceil\(budgetCents\/Math\.max\(1,costPerPointCents\(\)\)\)/,
+    'the company cost must drive the points price through the one programme-wide rate');
+  // The editor-side one-shot is gone with the route it served — an applier with no writer is a
+  // silent no-op, and V303 removed both rather than leave one behind.
+  assert.doesNotMatch(app, /const applyPendingRewardTemplateV172=/);
 });

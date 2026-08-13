@@ -162,7 +162,11 @@ test('programme editors expose explicit visibility controls and customer rewards
   assert.match(app,/id="birthdayActive" type="checkbox"/);
   assert.match(app,/id="fe"><option value="true"[\s\S]{0,100}?<option value="false"/);
   assert.match(app,/onclick="togglePlan\('[^']+',\$\{!p\.active\}\)"/);
-  assert.match(app,/id="giftCardEnabled" type="checkbox"/);
+  /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"): the gift-card
+     issuance switch left the business UI with the rest of the surface, so there is no visibility
+     control left to pin. Every other programme editor's visibility control is asserted above and
+     below, unchanged — that is what this test is for. */
+  assert.doesNotMatch(app,/id="giftCardEnabled" type="checkbox"/);
   assert.match(app,/staff_get_customer_actionable_loyalty_v145/);
   assert.match(launchFreezeMigration,/reward_version\.active[\s\S]*join public\.loyalty_rewards reward[\s\S]*reward\.active/);
 });

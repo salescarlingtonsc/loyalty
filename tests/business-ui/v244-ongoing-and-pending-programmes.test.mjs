@@ -19,9 +19,19 @@ function loadHelpersV244() {
   const start = app.indexOf('const growTopicActionV244=topic=>{');
   assert.notEqual(start, -1, 'growTopicActionV244 must exist');
   const body = app.slice(start, app.indexOf('\n  };', start) + 4);
+  /* V301 (owner 2026-08-13: "Business owners cannot set up rewards"). The two point-engine cards
+     open the setup wizard while nothing is live, so the helper asks growSetupEntryV301 first. It
+     is stubbed FALSE here — that is the "programme is already live" branch, which is exactly the
+     world the six assertions below describe, so every V244 expectation is preserved rather than
+     weakened. The wizard branch has its own coverage in v301-programmes-setup-wizard.test.mjs. */
+  /* V303 (owner 2026-08-13, third round): the wizard branch now also consults
+     growTopicOngoingV244 (it says "Edit →" for a live card and "Set up →" otherwise), so the
+     substitution has to replace EVERY occurrence, not the first. growSetupEntryV301 stays stubbed
+     false for the same reason as V301 — these six assertions describe the non-wizard cards. */
   // eslint-disable-next-line no-eval
   const action = eval(`(${body.replace('const growTopicActionV244=', '').replace(/;$/, '')})`
-    .replace('growTopicOngoingV244(topic)', 'topic.status[1]===\'on\''));
+    .replaceAll('growTopicOngoingV244(topic)', 'topic.status[1]===\'on\'')
+    .replaceAll('growSetupEntryV301(topic.key)', 'false'));
   return { ongoing, action };
 }
 

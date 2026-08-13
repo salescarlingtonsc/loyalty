@@ -32,13 +32,23 @@ test('the marker names what the rows are showing, so the old name is not read as
 });
 
 test('no draft means no marker — an owner with nothing pending is not nagged', () => {
-  assert.match(app, /growDraftPendingId&&canRewards\s*\r?\n?\s*\?`<div class="imp-note" id="growOverviewDraftBarV198"/);
+  /* V301 ADDITION (owner 2026-08-13, the one-page setup wizard): the banner is also suppressed
+     on the wizard's own view, whose last step IS the review — two doors to the same publish on
+     one screen would be the contradiction the owner reported everywhere else. The V198 property
+     is untouched: no draft still means no marker. */
+  assert.match(app, /growDraftPendingId&&canRewards&&programmeView!=='setup'\s*\r?\n?\s*\?`<div class="imp-note" id="growOverviewDraftBarV198"/);
   assert.match(app, /:'';/);
 });
 
 test('publish is one tap away, and only for someone allowed to publish', () => {
   assert.match(app, /\$\{canSetupGrow\?'<button class="btn sm" id="growOverviewDraftPublishV198"/);
-  assert.match(app, /if\(growOverviewDraftPublish\)growOverviewDraftPublish\.onclick=\(\)=>openProtectedGrowPublishReview\(growDraftPendingId\);/);
+  /* V301 RETARGET, not a weakening. "One tap away" is the property; the destination changed
+     from the studio review page — which auto-opened a modal over itself and could open it twice
+     — to the wizard's own final step, which shows the same change list and calls the same
+     publish RPC inline. openProtectedGrowPublishReview and #/studio/<draft> still exist and are
+     still reached from the Studio rule builder. */
+  assert.match(app, /if\(growOverviewDraftPublish\)growOverviewDraftPublish\.onclick=\(\)=>nav\('#\/grow\/setup\/review'\);/);
+  assert.match(app, /function openProtectedGrowPublishReview\(draftVersionId\)\{/);
 });
 
 test('the published catalogue still drives the row names', () => {

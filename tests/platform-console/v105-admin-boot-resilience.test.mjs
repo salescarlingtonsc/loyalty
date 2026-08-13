@@ -47,7 +47,13 @@ test('admin route exposes a loading state and awaits the async platform renderer
   assert.match(route,/role="status"/);
   assert.match(route,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
   assert.match(route,/const requestedPlatformRoute=platformRoutePath==='#\/platform'\|\|platformRoutePath\.startsWith\('#\/platform\/'\)/);
-  assert.match(route,/return await platformConsole\.render\(/);
+  /* V298: the renderer is still awaited inside the route (so a failure lands in this route's own
+     catch and replaces the loading card) — it is now awaited into a binding first, because the
+     route attaches the caption observer to the console's finished markup before returning. Both
+     halves are asserted so the awaiting-not-fire-and-forget contract is strengthened, not weakened. */
+  assert.match(route,/await platformConsole\.render\(/);
+  assert.match(route,/const platformRenderedV298=await platformConsole\.render\(/);
+  assert.match(route,/return platformRenderedV298;/);
 });
 
 test('a missing platform module renders a recoverable error instead of falling through',async()=>{

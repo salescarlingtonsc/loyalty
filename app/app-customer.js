@@ -419,7 +419,7 @@ function customerRegistrationShell(body){
   setCustomerSurfaceDocumentV167();
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks()}</footer></div></main>`;
+    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
@@ -2345,10 +2345,11 @@ function customerHomeOfferMarkupV167(item,seen){
     /* v194 (owner: "put company category"): a customer with several businesses needs to know what
        KIND of business an offer is from, not only its name. */
     category=String(business.industry||'').trim();
-  const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
+  /* V299: the artwork fallback shows the BUSINESS monogram as a small coin, never a giant
+     first letter of the offer name — "2-for-1 lattes" was rendering a huge lone "2". */
   const businessInitial=(String(business.name||'B').trim()[0]||'B').toUpperCase();
   return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
-    ${image?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`:`<div class="customer-home-offer-media customer-home-offer-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
+    ${image?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`:`<div class="customer-home-offer-media customer-home-offer-media--fallback" aria-hidden="true"><span>${esc(businessInitial)}</span></div>`}
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
     <p class="customer-home-offer-business">${logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
@@ -2541,7 +2542,7 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
     taglineV194=customerOfferTaglineV194(item?.name,item?.tagline),
     factsV195=customerOfferTaglineV194(item?.name,String(item?.metadata?.offer_facts||'')),
     descriptionV195=customerOfferDescriptionV195(item?.description),
-    initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase(),
+    initial=(String(business.name||item?.name||'P').trim()[0]||'P').toUpperCase(),
     ctaLabel=String(cta.label||'').trim();
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-offer-detail-modal';overlay.setAttribute('role','dialog');
@@ -2751,13 +2752,13 @@ function customerShareLockupV267(business={}){
     <p class="customer-share-cobrand">${esc(customerShareCoBrandV267(business))}</p>
   </div>`;
 }
-function customerShareSheetMarkupV264({text,url,business={}}){
+function customerShareSheetMarkupV264({text,url,business={},title='Share this offer'}){
   const message=customerShareMessageV267(text,business);
   const channels=CUSTOMER_SHARE_CHANNELS_V264
     .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text:message,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
     .join('');
   return `<section class="modal-card customer-share-sheet">
-    <div class="row"><h2 id="customerShareTitle">Share this offer</h2><span class="spacer"></span>
+    <div class="row"><h2 id="customerShareTitle">${esc(title)}</h2><span class="spacer"></span>
       <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
     ${customerShareLockupV267(business)}
     <p class="muted small">${esc(text)}</p>
@@ -2766,12 +2767,12 @@ function customerShareSheetMarkupV264({text,url,business={}}){
     <p class="muted small customer-share-note">Instagram, TikTok and WeChat can be reached from your phone's own share button.</p>
   </section>`;
 }
-function showCustomerShareSheetV264({text,url,business={},onChannel=()=>{}}){
+function showCustomerShareSheetV264({text,url,business={},onChannel=()=>{},title='Share this offer'}){
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-share-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerShareTitle');
-  overlay.innerHTML=customerShareSheetMarkupV264({text,url,business});
+  overlay.innerHTML=customerShareSheetMarkupV264({text,url,business,title});
   document.body.appendChild(overlay);
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerShareClose'});
   overlay.querySelector('#customerShareClose').onclick=()=>deactivate({restoreFocus:true});
@@ -2815,6 +2816,51 @@ async function shareCustomerOfferV264(item,business){
     if(error?.name==='AbortError')return;
   }
   showCustomerShareSheetV264({text,url,business:shop,onChannel:record});
+}
+/* V300 (owner approval 2026-08-13): customers see and share their OWN referral code, synced to
+   the firm's live programme. The card renders only when the server says the programme AND the
+   referrals module are both on — the same {enabled:false} that hides the card also withholds the
+   terms and the code, so a switched-off programme can never be advertised. The share path is the
+   V264/V267 machinery: device sheet first (Instagram/TikTok/WeChat live there), co-branded
+   fallback sheet with the three real web endpoints otherwise. */
+function customerReferralMoneyV300(cents,currency){
+  return `${currency} ${(Number(cents||0)/100).toFixed(2)}`;
+}
+function customerReferralCardMarkupV300(card,business){
+  const currency=String(card?.currency||business?.currency||'SGD');
+  const code=String(card?.code||'').trim();
+  const referred=Math.max(0,Number(card?.referred_count)||0);
+  const reward=customerReferralMoneyV300(card?.reward_cents,currency);
+  const floor=Number(card?.min_spend_cents||0)>0?customerReferralMoneyV300(card?.min_spend_cents,currency):'';
+  return `<section class="card wallet-section customer-referral-card-v300" id="walletReferral" aria-labelledby="customerReferralTitle">
+    <div class="wallet-section-head"><div>
+      <h2 id="customerReferralTitle">${esc(ct('referralHeading',{business:business?.name||ct('localBusiness')}))}</h2>
+      <p class="muted small">${esc(floor?ct('referralTermsWithFloor',{reward,floor}):ct('referralTerms',{reward}))}</p>
+    </div></div>
+    ${code?`<div class="customer-referral-code-row">
+      <span class="customer-referral-code" aria-label="${esc(ct('yourReferralCode'))}">${esc(code)}</span>
+      <button class="btn ghost sm" id="customerReferralCopy" type="button">${CUI.icon('copy',{size:16})}<span>${esc(ct('copyCode'))}</span></button>
+      <button class="btn sm" id="customerReferralShare" type="button">${CUI.icon('share',{size:16})}<span>${esc(ct('shareCode'))}</span></button>
+    </div>`:`<p class="muted small" style="margin-top:10px">${esc(ct('referralCodePending'))}</p>`}
+    ${referred>0?`<p class="muted small customer-referral-count">${esc(ct('referredCount',{count:referred}))}</p>`:''}
+  </section>`;
+}
+async function shareCustomerReferralV300(card,business){
+  const slug=String(business?.slug||'').trim();
+  let url='';
+  try{url=slug?NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`):''}catch{}
+  if(!url)return toast('This business has no public page to share yet.');
+  const text=ct('referralShareMessage',{business:business?.name||ct('localBusiness'),code:String(card?.code||'').trim()});
+  const businessId=String(business?.id||'');
+  const record=channel=>typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.referral_shared',businessId,
+    {context:{channel,surface_version:'v300'}});
+  try{
+    const shared=await NestlyNativeBridge.share({title:customerShareCoBrandV267(business),text:customerShareMessageV267(text,business),url});
+    if(shared){record('device');return}
+  }catch(error){
+    if(error?.name==='AbortError')return;
+  }
+  showCustomerShareSheetV264({text,url,business,onChannel:record,title:ct('shareYourCode')});
 }
 function openCustomerPromotionDetailsV104(card){
   const template=card?.querySelector('template[data-promotion-details-template]');
@@ -3099,10 +3145,17 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
       ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
     </section>`;
   }
+  /* V299: with tiers AND spendable points, the balance sat entirely behind the unselected
+     "Reward points" tab — the customer's number one fact was invisible on first paint. It now
+     reads on the tab bar itself. Hidden while the programme is paused: the points panel says
+     "Programme paused" there, and a bare 0 beside it would contradict that sentence. */
+  const tabBalanceV299=loyalty.enabled===false?''
+    :`<span class="customer-programme-tab-balance" aria-label="${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))} ${esc(ct(presentation.unit))} to spend">${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}<small>${esc(ct(presentation.unit))}</small></span>`;
   return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
-    <div class="customer-programme-tablist" role="tablist" aria-label="Tier and reward points">
+    <div class="customer-programme-tablist${tabBalanceV299?' customer-programme-tablist--with-balance':''}" role="tablist" aria-label="Tier and reward points">
       <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('star',{size:17})}<span>Tier</span></button>
       <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">${CUI.icon('redeem',{size:17})}<span>Reward points</span></button>
+      ${tabBalanceV299}
     </div>
     <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
       <div data-programme-panel="tier">${customerTierPanelMarkupV194(tier)}</div>
@@ -3163,6 +3216,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerPointsExplainerMarkupV167(business)}
     ${customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
+    <div id="walletReferralSlot" hidden></div>
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
@@ -3220,7 +3274,7 @@ function renderCustomerFirstProgrammeQuest(){
       owner asked to remove. "Profile & passkeys" is dropped: a customer who has not joined a
       business yet has nothing to open there. -->
       <button class="btn ghost sm" id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button></header>
-    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks()}</div></div>`;
+    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks(customerLocale)}</div></div>`;
   $('customerFirstScan').onclick=openCustomerJoinScanner;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   focusCustomerRoute();
@@ -3736,6 +3790,23 @@ async function renderCustomerWallet(businessSlug=null){
   };
   ensureWalletEmptyState(businessSlug);
   const isWalletSectionCurrent=(host)=>walletSectionStillCurrent(host,isWalletCurrent);
+  /* V300: the referral card renders only from a server yes. Any other answer — programme off,
+     module off, backend not yet applied, denial, transport failure — removes the slot: this is
+     a growth invitation, not the customer's money, so a retry card here would be noise about a
+     feature the customer does not know exists. */
+  const loadReferralCardV300=async()=>{
+    const slot=$('walletReferralSlot');
+    if(!slot)return;
+    const {data,error}=await customerRpc('customer_get_referral_card_v300',{p_business_slug:businessSlug});
+    if(!isWalletCurrent()||!slot.isConnected)return;
+    if(error||data?.enabled!==true){slot.remove();return}
+    slot.outerHTML=customerReferralCardMarkupV300(data,{...b,id:businessId||b.id,slug:businessSlug});
+    const copyButton=$('customerReferralCopy');
+    if(copyButton)copyButton.onclick=()=>copyTextToClipboard(String(data.code||''),{button:copyButton,
+      success:ct('codeCopied'),failure:'Copying is blocked in this browser. Long-press the code to copy it.'});
+    const shareButton=$('customerReferralShare');
+    if(shareButton)shareButton.onclick=()=>shareCustomerReferralV300(data,{...b,id:businessId||b.id,slug:businessSlug});
+  };
   const loadGrowthOffers=async()=>{
     const host=$('walletGrowthOffers');
     if(!host||!window.NestlyGrowthOffers)return;
@@ -3960,7 +4031,7 @@ async function renderCustomerWallet(businessSlug=null){
     transactionState.nextCursor=data?.next_cursor||null;
     host.setAttribute('aria-busy','false');
     if(!transactionState.items.length){
-      host.innerHTML='<div class="wallet-section-head"><div><h2>Transactions &amp; points</h2><p class="muted small">No purchases or points activity has been recorded for this programme yet.</p></div></div>';
+      host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Transactions & points'))}</h2><p class="muted small">${esc(ct('No purchases or points activity has been recorded for this programme yet.'))}</p></div></div>`;
       return;
     }
     const historyCurrency=String(data?.business?.currency||currency);
@@ -3978,9 +4049,9 @@ async function renderCustomerWallet(businessSlug=null){
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
         </div></article>`;
       };
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Recent activity</h2><p class="muted small">Your latest ${Math.min(3,transactionState.items.length)} useful event${Math.min(3,transactionState.items.length)===1?'':'s'}.</p></div></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Recent activity'))}</h2><p class="muted small">${esc(ct('Your latest events with this business.'))}</p></div></div>
       <div class="wallet-history">${transactionState.items.slice(0,3).map(historyItemMarkup).join('')}</div>
-      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>Full history</span><span class="muted small">${transactionState.items.length} event${transactionState.items.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${transactionState.items.map(historyItemMarkup).join('')}</div></div></details>
+      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>${esc(ct('Full history'))}</span><span class="muted small">${transactionState.items.length} event${transactionState.items.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${transactionState.items.map(historyItemMarkup).join('')}</div></div></details>
       ${transactionState.nextCursor?'<button class="btn ghost sm" id="walletTransactionsMore" style="margin-top:12px">Load more history</button>':''}`;
     const more=$('walletTransactionsMore');
     if(more)more.onclick=()=>{more.disabled=true;more.textContent='Loading…';loadTransactions(transactionState.nextCursor)};
@@ -4029,7 +4100,7 @@ async function renderCustomerWallet(businessSlug=null){
     packageState.items=cursor?[...packageState.items,...next]:next;packageState.nextCursor=data?.next_cursor||null;
     if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages',ct('No packages are available for this account.'),businessSlug,'packages',()=>loadPackages(null),isWalletCurrent);
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Packages</h2><p class="muted small">Session balances and recent usage.</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Packages'))}</h2><p class="muted small">${esc(ct('Session balances and recent usage.'))}</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
       ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
       ${packageState.nextCursor?`<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
@@ -4043,7 +4114,7 @@ async function renderCustomerWallet(businessSlug=null){
     const memberships=Array.isArray(data)?data:[];
     if(!memberships.length)return walletSectionEmpty('walletMemberships','Membership',ct('No membership is available for this account.'),businessSlug,'membership',loadMemberships,isWalletCurrent);
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Membership</h2><p class="muted small">Current plan and period status.</p></div></div>${memberships.map(item=>`<div class="wallet-line"><div><b>${esc(item.plan_name||'Membership')}</b><p class="muted small" style="margin-top:3px">${esc(String(item.cadence||'').replaceAll('_',' '))}${item.current_period_start?' · '+esc(walletDate(item.current_period_start))+' to '+esc(walletDate(item.current_period_end)):''}</p></div><span class="spacer"></span><span class="pill">${esc(String(item.status||'').replaceAll('_',' '))}</span></div>`).join('')}`;
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Membership'))}</h2><p class="muted small">${esc(ct('Current plan and period status.'))}</p></div></div>${memberships.map(item=>`<div class="wallet-line"><div><b>${esc(item.plan_name||'Membership')}</b><p class="muted small" style="margin-top:3px">${esc(String(item.cadence||'').replaceAll('_',' '))}${item.current_period_start?' · '+esc(walletDate(item.current_period_start))+' to '+esc(walletDate(item.current_period_end)):''}</p></div><span class="spacer"></span><span class="pill">${esc(String(item.status||'').replaceAll('_',' '))}</span></div>`).join('')}`;
   };
   const appointmentState={items:[],nextCursor:null};
   const loadAppointments=async(cursor=null)=>{
@@ -4122,10 +4193,10 @@ async function renderCustomerWallet(businessSlug=null){
   const loadFeedback=async()=>{
     const host=$('walletFeedback');if(!host||!walletReviewUrl)return;
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Rate your visit</h2><p class="muted small">Your review helps other people find ${esc(b.name||'this business')}.</p></div></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Rate your visit'))}</h2><p class="muted small">${esc(ct('Your review helps other people find this business.'))}</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
   };
-  await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
+  await Promise.all([loadReferralCardV300(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
   if(!isWalletCurrent())return;
 }
 
@@ -4727,7 +4798,7 @@ async function renderPortal(slug){
           <div id="merr"></div>
           <div id="mlist" style="margin-top:12px"></div>
         </details>
-      </div>${legalLinks()}</div>`;
+      </div>${legalLinks(customerLocale)}</div>`;
     const buildSummary=()=>{
       const el=$('pfSummary');if(!el)return;
       const s=svcObj();
