@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="001174c47f2bee29d534b17129925281648d2505eabfdc121ba0c39f0cd8acf5"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="d52a5aa0fc4f43e650dcd7969a32f089e0887b9c5743d55f5d83d7f1554769d5"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1063,6 +1063,9 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
 .grow-setup-changes-v301{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+/* V303: the points_mode switch a tier choice implies, stated on the Go-live step. It leads the
+   change list because it is the biggest thing publishing that choice does to a customer. */
+.grow-setup-modechange-v303{margin:0 0 10px;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.9rem;line-height:1.5}
 .grow-setup-foot-v301{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
 .grow-setup-next-v301{min-height:48px;padding:12px 22px;font-size:1rem}
 .grow-setup-done-v301{text-align:center;padding:12px 0}
@@ -2024,7 +2027,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 001174c47f2bee29d534b17129925281648d2505eabfdc121ba0c39f0cd8acf5</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · d52a5aa0fc4f43e650dcd7969a32f089e0887b9c5743d55f5d83d7f1554769d5</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2936,6 +2939,28 @@ function growBirthdayPendingChangesV291(live,draft){
    review page runs. Nothing here touches loyalty_programs, businesses.points_mode or a ledger
    directly — points_mode stays an advanced-editor concern, exactly as V229 left it. */
 const GROW_SETUP_STEPS_V301=[[1,'Choose'],[2,'Earning'],[3,'Reward'],[4,'Go live']];
+/* V303 (owner 2026-08-13: "tiered membership / stamps - still not able to build like points").
+   A model that includes tiers gets one extra step, in the place the ladder belongs — after the
+   earning rule that feeds it and before the rewards it gates. The step LIST is what the stepper,
+   the "Step n of m" heading and every advance branch read, so adding a step is one edit and the
+   numbering follows; the ids and the data-grow-setup-step-v301 contract are unchanged, they just
+   count against whichever list is active. */
+const GROW_SETUP_STEPS_TIERS_V303=[[1,'Choose'],[2,'Earning'],[3,'Tiers'],[4,'Reward'],[5,'Go live']];
+/* The four models the deep editor offers, as the owner's own screenshot lists them. Three of them
+   are the SAME points engine under businesses.points_mode; the fourth is the stamp engine, which
+   is loyalty_programs.loyalty_model. Keeping both facts in one table is what stops step 1 from
+   having to explain the difference to a layman — they pick a name, the wizard writes the right
+   store. */
+const GROW_SETUP_MODELS_V303=[
+  ['redeem','points','till','Points System',
+    'Customers collect points when they spend, then swap them for rewards you choose.'],
+  ['tiers','points','star','Tiered membership',
+    'Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits.'],
+  ['both','points','loyalty','Points + tiers',
+    'Points buy rewards while visits build the tier — the two never affect each other.'],
+  ['stamps','stamps','check','Stamp card',
+    'Customers collect a stamp when they spend. A full card wins a reward.']
+];
 /* V302: the setup wizard's picture of a catalogue is PUBLISHED rewards overlaid with the draft's
    own versions, because a draft only carries the rewards it has been made to carry (see
    refreshRewards). Draft wins on id — it is the newer truth for that reward — and a published
@@ -3036,7 +3061,7 @@ async function growSetupComparisonV301(draftVersionId){
    `.modal` inside it, because "no popups" is the whole point of this surface. State lives in
    this closure so a step change never loses a typed value, and only the wizard's own node is
    re-rendered, so the Programmes page around it (and the rail) is untouched between steps. */
-async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
+async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTiers=null}){
   if(!host)return;
   const currency=S.biz?.currency||'SGD';
   const live=snapshot?.loyalty||null;
@@ -3061,10 +3086,45 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       name:String(reward.customer_name||reward.name||'Reward').trim(),
       points:Math.max(0,Number(reward.cost_points)||0),
       budgetCents:Math.max(0,Number(reward.estimated_cost_cents)||0)}));
+  /* V303: the tier ladder, the same shape as the reward list above — LIVE tiers overlaid with the
+     draft's own versions, draft winning on id. create_loyalty_config_draft does copy tiers into a
+     new draft, so this merge is usually a no-op; it is written anyway because the alternative is a
+     step that quietly disagrees with the Tiered membership card next to it if that ever changes.
+     Every column is carried through, not just the two this step edits — see the widened
+     loyalty_tiers read in growPage for why. */
+  const tierListFrom=rows=>(Array.isArray(rows)?rows:[])
+    .filter(tier=>tier?.active!==false)
+    .map(tier=>({id:String(tier.tier_id||tier.id||''),
+      name:String(tier.name||'Tier').trim(),
+      threshold:Math.max(0,Number(tier.threshold)||0),
+      multiplier:Number(tier.points_multiplier)>0?Number(tier.points_multiplier):1,
+      perkNote:tier.perk_note??null,
+      sort:Number.isFinite(Number(tier.sort))?Number(tier.sort):0,
+      effectiveFrom:tier.effective_from??null,
+      expiresAt:tier.expires_at??null}));
+  const mergeTiersV303=(existing,incoming)=>{
+    const byId=new Map();
+    existing.forEach(tier=>{if(tier.id)byId.set(tier.id,tier)});
+    incoming.forEach(tier=>{if(tier.id)byId.set(tier.id,tier)});
+    return [...byId.values()].sort((a,b)=>a.threshold-b.threshold);
+  };
+  /* V303: which of the four models step 1 opens on. The card the owner pressed wins — they have
+     already made the choice once and being asked again is the complaint this wizard exists to
+     answer — and with no hand-off the state is derived from what is actually live, exactly the way
+     liveLoyaltyModelV235 derives the Programmes tiles' Live marker: the stamp engine is
+     loyalty_model, the three points models are businesses.points_mode. */
+  const handoffV303=pendingGrowSetupModelV303;pendingGrowSetupModelV303=null;
+  const handoffModelV303=handoffV303?.model||null;
+  const livePointsModeV303=String(S.biz?.points_mode||'redeem');
+  const derivedModelV303=baseModel==='stamps'?'stamps'
+    :(livePointsModeV303==='tiers'?'tiers':livePointsModeV303==='both'?'both':'redeem');
+  const pickV303=GROW_SETUP_MODELS_V303.some(model=>model[0]===handoffModelV303)
+    ?handoffModelV303:derivedModelV303;
   const state={
-    step:Math.min(4,Math.max(1,Number(startStep)||1)),
+    step:1,
     visited:new Set([1]),
-    family:baseModel==='stamps'?'stamps':'points',
+    pick:pickV303,
+    family:pickV303==='stamps'?'stamps':'points',
     model:baseModel||'points_tiers',
     versionId:snapshot?.draft?.id||null,
     snapshotHash:snapshot?.draft?.snapshot_hash||null,
@@ -3080,16 +3140,75 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
        already have. */
     rewards:mergeRewardsV302(rewardListFrom(snapshot?.rewards),
       rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:[])),
+    tiers:mergeTiersV303(tierListFrom(liveTiers),
+      tierListFrom(Array.isArray(snapshot?.draftDetail?.tiers)?snapshot.draftDetail.tiers:[])),
+    /* Which tier ids this session has actually touched. Only those are written on Next: a step
+       that re-saved every listed tier would bump the snapshot hash of rows nobody edited and put
+       a wizard-shaped write on the audit trail for each of them. */
+    tiersDirty:new Set(),tierForm:null,
     form:null,comparison:null,
     keepPaused:false,ack:false,needAck:false,impactRules:[],
-    busy:false,error:'',published:false,publishedSummary:null
+    busy:false,error:'',published:false,publishedSummary:null,
+    /* V303: publish succeeded but the points_mode switch that the chosen model implies did not.
+       It is its own state because the honest message is not "publishing failed" — publishing
+       happened — and the retry must repeat only the part that did not. */
+    modeError:''
   };
-  for(let number=1;number<=state.step;number++)state.visited.add(number);
+  /* V303: the step LIST depends on the chosen model, so every step number in this closure is read
+     from it rather than written down. `startStep:'review'` means "the last step", whichever that
+     is — a five-step tier wizard would otherwise open its Reward step and call it the publish
+     gate. Ids are unchanged; they simply count against the active list. */
+  const stepListV303=()=>state.pick==='tiers'||state.pick==='both'
+    ?GROW_SETUP_STEPS_TIERS_V303:GROW_SETUP_STEPS_V301;
+  const stepCountV303=()=>stepListV303().length;
+  const stepKindV303=()=>{
+    const label=(stepListV303()[state.step-1]||[])[1]||'Go live';
+    return label==='Choose'?'choose':label==='Earning'?'earn':label==='Tiers'?'tiers'
+      :label==='Reward'?'reward':'live';
+  };
+  const stepNumberForV303=kind=>{
+    const label=kind==='choose'?'Choose':kind==='earn'?'Earning':kind==='tiers'?'Tiers'
+      :kind==='reward'?'Reward':'Go live';
+    const index=stepListV303().findIndex(step=>step[1]===label);
+    return index<0?stepCountV303():index+1;
+  };
+  const tierModelV303=()=>state.pick==='tiers'||state.pick==='both';
+  /* V294's editor entry context, decided by the CARD the owner pressed where there was one, and
+     by the chosen model otherwise. Which programme they came about is the question that block
+     answers, and it is not the same question as which engine they are configuring. */
+  const editorContextV303=()=>handoffV303?.from
+    ?(handoffV303.from==='tiers'?'ctx-tiers':'ctx-points')
+    :(tierModelV303()?'ctx-tiers':'ctx-points');
+  state.step=String(startStep)==='review'?stepCountV303()
+    :Math.min(stepCountV303(),Math.max(1,Number(startStep)||1));
   const writesCostDefault=()=>state.family==='points'&&state.model!=='classic'&&(fresh||!pairSet);
   const costPerPointCents=()=>writesCostDefault()?1
     :(pairSet?Number(base.reward_credit_cents)/Number(base.redeem_points):1);
   const unitWord=(value,plural)=>`${value} ${Number(value)===1?(plural==='stamps'?'stamp':'point'):(plural==='stamps'?'stamps':'points')}`;
   const rewardUnit=()=>state.family==='stamps'?'stamps':'points';
+  /* V303: an Add reward / Edit reward control on the Programmes drill hands over "open on the
+     Reward step with this form armed" (owner: "pressing add rewards - still brings me to this
+     page"). Consumed once, here, so a later plain visit to #/grow/setup opens on step 1. It sits
+     below costPerPointCents deliberately: a template hand-off carries a company cost, and the
+     points price is derived from it by the SAME one programme-wide rate the form's own maths uses,
+     rather than being left blank for the owner to work out. */
+  const rewardHandoffV303=pendingGrowSetupRewardV303;pendingGrowSetupRewardV303=null;
+  if(rewardHandoffV303){
+    state.step=stepNumberForV303('reward');
+    const wanted=rewardHandoffV303.mode==='edit'
+      ?state.rewards.find(reward=>reward.id===String(rewardHandoffV303.id||''))
+      :null;
+    if(wanted)state.form={id:wanted.id,name:wanted.name,
+      budget:(wanted.budgetCents/100).toFixed(2),points:String(wanted.points)};
+    else if(rewardHandoffV303.mode!=='edit'){
+      const budgetCents=Math.max(0,Number(rewardHandoffV303.budgetCents)||0);
+      state.form={id:null,name:String(rewardHandoffV303.name||''),
+        budget:budgetCents>0?(budgetCents/100).toFixed(2):'',
+        points:budgetCents>0&&state.family!=='stamps'
+          ?String(Math.max(1,Math.ceil(budgetCents/Math.max(1,costPerPointCents())))):''};
+    }
+  }
+  for(let number=1;number<=state.step;number++)state.visited.add(number);
   /* Points keeps the points-family model the firm already runs (classic stays classic, so its
      fixed pair is never orphaned); a firm with no model at all gets points_tiers, because that
      is the catalogue engine every named reward on this page is claimed through. */
@@ -3169,19 +3288,25 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
   const errBlock=()=>state.error
     ?`<div class="err" role="alert">${esc(state.error)}<div class="row" style="margin-top:10px"><button type="button" class="btn ghost sm" id="growSetupRetryV301">Retry</button></div></div>`
     :'';
-  const stepperHtml=()=>`<ol class="grow-setup-steps-v301" aria-label="Setup steps">${GROW_SETUP_STEPS_V301.map(([number,label])=>{
+  const stepperHtml=()=>`<ol class="grow-setup-steps-v301" aria-label="Setup steps">${stepListV303().map(([number,label])=>{
     const done=number<state.step,current=number===state.step;
     const reachable=state.visited.has(number)||number<state.step;
     return `<li><button type="button" class="grow-setup-step-v301${current?' is-current':''}${done?' is-done':''}" data-grow-setup-goto-v301="${number}"${current?' aria-current="step"':''}${reachable?'':' disabled'}><span class="grow-setup-step-num-v301" aria-hidden="true">${done?'✓':number}</span><span class="grow-setup-step-label-v301">${esc(label)}</span></button></li>`;
   }).join('')}</ol>`;
-  const stepOneHtml=()=>`<p class="grow-setup-lead-v301">What do customers collect?</p>
-    <div class="grow-setup-options-v301" role="radiogroup" aria-label="What customers collect">
-      <button type="button" class="grow-setup-option-v301${state.family==='points'?' is-picked':''}" role="radio" aria-checked="${state.family==='points'}" data-grow-setup-family-v301="points">
-        <span class="grow-setup-option-icon-v301">${CUI.icon('till',{size:26})}</span><b>Points</b>
-        <span class="muted small">Customers collect points when they spend. They swap points for a reward.</span></button>
-      <button type="button" class="grow-setup-option-v301${state.family==='stamps'?' is-picked':''}" role="radio" aria-checked="${state.family==='stamps'}" data-grow-setup-family-v301="stamps">
-        <span class="grow-setup-option-icon-v301">${CUI.icon('check',{size:26})}</span><b>Stamp card</b>
-        <span class="muted small">Customers collect a stamp when they spend. A full card wins a reward.</span></button>
+  /* V303 (owner 2026-08-13: "tiered membership / stamps - still not able to build like points",
+     with the deep editor's own four-way model list in the screenshot). Step 1 offers those four
+     models, not two families — a firm that wants tiers must be able to say so HERE, or the wizard
+     is a points-only door and the Tiered membership card leads nowhere new.
+     data-grow-setup-family-v301 stays on every card and still names the ENGINE the model runs on,
+     because that is what steps 2 and 3 branch on; data-grow-setup-model-v303 is the choice itself.
+     Selecting only highlights. Next writes loyalty_model, and only when the engine family changed;
+     points_mode is an instant live switch (see the V230 comments on #lsave) so it is deliberately
+     NOT written here — it is applied at publish, once, with the rest of the change. */
+  const stepOneHtml=()=>`<p class="grow-setup-lead-v301">What kind of programme do you want?</p>
+    <div class="grow-setup-options-v301" role="radiogroup" aria-label="Programme model">
+      ${GROW_SETUP_MODELS_V303.map(([key,family,icon,title,blurb])=>`<button type="button" class="grow-setup-option-v301${state.pick===key?' is-picked':''}" role="radio" aria-checked="${state.pick===key}" data-grow-setup-model-v303="${key}" data-grow-setup-family-v301="${family}">
+        <span class="grow-setup-option-icon-v301">${CUI.icon(icon,{size:26})}</span><b>${esc(title)}</b>
+        <span class="muted small">${esc(blurb)}</span></button>`).join('')}
     </div>
     <p class="muted small" style="margin-top:12px">You can change this later.</p>`;
   const stepTwoHtml=()=>state.family==='stamps'
@@ -3194,6 +3319,32 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
            never be translated, and neither must the number the owner types into this field. -->
       <p class="grow-setup-sentence-v301">Customer spends ${esc(currency)} <b>1</b> → earns <input id="growSetupEarnV301" class="grow-setup-input-v301" inputmode="decimal" data-merchant-content value="${esc(String(state.earn))}" aria-label="Points earned per ${esc(currency)} 1"> point(s)</p>
       <p class="grow-setup-example-v301" id="growSetupExampleV301" role="status">${esc(exampleText())}</p>`;
+  /* V303 Tiers step. Only reachable on a model that includes tiers, and it holds exactly two
+     things per tier — the name a customer sees and the threshold they reach it at. Multipliers,
+     benefit lines and schedules stay in the advanced editor, one click away under "More reward
+     settings": a layman setting up a ladder needs the ladder, and a step that asked for six
+     numbers per rung is the surface this wizard replaced.
+     The threshold's unit is tier_basis, so it is LABELLED with that unit rather than left as a
+     bare number the owner has to guess the meaning of. */
+  const tierBasisV303=()=>String(base?.tier_basis||'visits');
+  const tierUnitLabelV303=()=>tierBasisV303()==='visits'?'Visits to reach it':'Points to reach it';
+  const TIER_DEFAULTS_V303=[['Bronze',0],['Silver',10],['Gold',25]];
+  const tiersStepHtml=()=>{
+    const form=state.tierForm||{name:'',threshold:''};
+    const rows=state.tiers.length
+      ?`<ul class="grow-setup-rewardlist-v301">${state.tiers.map(tier=>`<li><span><b data-merchant-content>${esc(tier.name)}</b><span class="muted small"> · ${esc(`${tier.threshold} ${tierBasisV303()==='visits'?'visits':'points'}`)}</span></span><button type="button" class="btn ghost sm" data-grow-setup-tier-edit-v303="${esc(tier.id)}">Edit</button></li>`).join('')}</ul>`
+      :`<p class="muted small">No tier yet. Add the first one below${TIER_DEFAULTS_V303.length?', or start from a ready-made ladder':''}.</p>
+        <div class="grow-setup-chips-v301" aria-label="Suggested tier ladder"><button type="button" class="grow-setup-chip-v301" data-grow-setup-tier-default-v303="1">${esc(TIER_DEFAULTS_V303.map(([name,threshold])=>`${name} ${threshold}`).join(' · '))}</button></div>`;
+    return `<p class="grow-setup-lead-v301">What tiers do customers climb?</p>${rows}
+      <div class="grow-setup-rewardform-v301" data-grow-setup-tierform-v303>
+        <div class="field-grid">
+          <div class="full"><label for="growSetupTierNameV303">Tier name customers see</label>
+            <input id="growSetupTierNameV303" value="${esc(form.name)}" placeholder="e.g. Gold"></div>
+          <div><label for="growSetupTierThresholdV303">${esc(tierUnitLabelV303())}</label>
+            <input id="growSetupTierThresholdV303" inputmode="numeric" value="${esc(String(form.threshold))}" placeholder="e.g. 10"></div>
+        </div>
+        <p class="muted small" style="margin-top:8px">Fill this in and press Next to add or save a tier. Benefits and point multipliers live under More reward settings.</p></div>`;
+  };
   const rewardFormHtml=()=>{
     const form=state.form||{id:null,name:'',budget:'',points:''};
     return `<div class="grow-setup-rewardform-v301" data-grow-setup-rewardform-v301>
@@ -3223,12 +3374,22 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     const chips=`<div class="grow-setup-chips-v301" aria-label="Suggested rewards">${suggestionsV301().map((item,index)=>`<button type="button" class="grow-setup-chip-v301" data-grow-setup-suggest-v301="${index}">${esc(item.name)} — ${esc(unitWord(item.points,rewardUnit()))}</button>`).join('')}</div>`;
     return `<p class="grow-setup-lead-v301">What do customers get?</p>${stampsHead}${rows}${chips}${rewardFormHtml()}`;
   };
+  /* V303: what the chosen model does to points_mode, in the owner's words, so the Go-live step
+     lists it with the rest of "what changes for customers" rather than springing it. */
+  const modeChangeLineV303=()=>!pointsModeChangesV303()?''
+    :state.pick==='tiers'?'Points will now build tier membership — customers stop claiming point rewards.'
+    :state.pick==='both'?'Points will buy rewards AND build tier membership, side by side.'
+    :'Points will be spent on rewards again — tiers stay saved, and stop being what customers see.';
+  const modeErrorBlockV303=()=>state.modeError
+    ?`<div class="err" role="alert" style="margin-top:14px">${esc(state.modeError)}<div class="row" style="margin-top:10px"><button type="button" class="btn ghost sm" id="growSetupModeRetryV303">Retry</button></div></div>`
+    :'';
   const stepFourHtml=()=>{
     if(state.published)return `<div class="grow-setup-done-v301" role="status">
       <span class="grow-setup-done-icon-v301">${CUI.icon('check',{size:34})}</span>
       <h3>Published — customers can use this now</h3>
       <p class="grow-setup-sentence-v301">${esc(state.publishedSummary?.earn||'')}</p>
       <p class="grow-setup-sentence-v301" data-merchant-content>${esc(state.publishedSummary?.reward||'')}</p>
+      ${modeErrorBlockV303()}
       <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap"><a class="btn" href="#/grow/overview" id="growSetupDoneV301">Back to Programmes</a>
       <button type="button" class="btn ghost sm" id="growSetupAddAnotherV301">Add another reward</button></div></div>`;
     const changes=state.comparison;
@@ -3237,6 +3398,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       :changes.error
         ?'<p class="muted small">The change list could not be read, so it is not shown. Nothing has been published yet.</p>'
         :`${changes.lines.length?`<ul class="studio-change-list-v295">${changes.lines.join('')}</ul>`:'<p class="muted small">Nothing changes for customers in this draft.</p>'}${changes.unreadable.length?`<p class="muted small" style="margin-top:10px">Changes to ${esc(changes.unreadable.join(' and '))} could not be read, so they are not listed here.</p>`:''}`;
+    /* V303: the mode switch is not part of the draft, so growSetupComparisonV301 — which compares
+       draft against live — cannot see it. It is stated here, beside the changes it belongs with,
+       because it is the biggest thing publishing this choice does to a customer. */
+    const modeLine=modeChangeLineV303();
     const ackBlock=state.needAck
       ?`<div class="imp-note" style="margin-top:12px">${state.impactRules.length?`<b>Advanced rules this draft turns on</b><div style="margin-top:6px">${state.impactRules.map(rule=>`<div class="studio-impact-rule"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b></div>`).join('')}</div>`:'<b>This draft turns on a rule that moves money or reaches customers.</b>'}
         <label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupAckV301" style="width:auto;margin-top:3px"${state.ack?' checked':''}> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label></div>`
@@ -3245,51 +3410,71 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       <p class="grow-setup-sentence-v301">${esc(earnLine())}</p>
       <p class="grow-setup-sentence-v301" data-merchant-content>${esc(rewardLine())}</p>
       <section class="grow-setup-changes-v301" aria-label="What changes for customers"><b>What changes for customers</b>
-      <div style="margin-top:8px" id="growSetupChangesV301">${changeBlock}</div></section>
+      <div style="margin-top:8px" id="growSetupChangesV301">${modeLine?`<p class="grow-setup-modechange-v303" data-grow-setup-modechange-v303><b>${esc(modeLine)}</b></p>`:''}${changeBlock}</div></section>
       <div class="imp-note" style="margin-top:12px"><b>${state.keepPaused?'Programme will stay PAUSED — customers earn nothing.':'Programme will be ON — customers start earning when you publish.'}</b>
       <label style="display:flex;align-items:center;gap:9px;margin-top:10px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupPauseV301" style="width:auto"${state.keepPaused?' checked':''}> <span>Keep it paused for now</span></label></div>${ackBlock}`;
   };
-  const bodyHtml=()=>state.step===1?stepOneHtml():state.step===2?stepTwoHtml():state.step===3?stepThreeHtml():stepFourHtml();
+  /* V303: the body follows the step's KIND, not its number — on a tier model step 3 is the ladder
+     and step 4 is the reward list, and a number-indexed dispatch would have shown the wrong one. */
+  const bodyHtml=()=>{
+    const kind=stepKindV303();
+    return kind==='choose'?stepOneHtml():kind==='earn'?stepTwoHtml()
+      :kind==='tiers'?tiersStepHtml():kind==='reward'?stepThreeHtml():stepFourHtml();
+  };
   function render(){
     host.innerHTML=`<section class="grow-setup-v301" id="growSetupWizardPanelV301" aria-label="Set up rewards" data-grow-setup-step-v301="${state.step}">
       <div class="grow-setup-head-v301"><div><p class="customer-quest-kicker">Set up rewards</p>
-      <h3 class="grow-setup-title-v301">Step ${state.step} of 4 · ${esc(GROW_SETUP_STEPS_V301[state.step-1][1])}</h3></div>
+      <h3 class="grow-setup-title-v301">Step ${state.step} of ${stepCountV303()} · ${esc((stepListV303()[state.step-1]||[])[1]||'Go live')}</h3></div>
       <!-- V302: the wizard is now the door for every unfinished programme, including a PAUSED one
            that already carries a catalogue, tiers and reward history. That owner must never lose
            the surface that holds them, so the full editor keeps a permanent link here — the same
            words the Programmes page uses for the same destination — and it carries the draft the
            wizard is editing, so opening it lands on this work rather than on a second draft. -->
-      <span class="grow-setup-head-links-v301"><a class="grow-setup-leave-v301" href="#/loyalty${state.versionId?`/${encodeURIComponent(state.versionId)}`:''}" id="growSetupFullEditorV302">More reward settings</a>
+      <!-- V303: the link now CARRIES the entry context (V294: "why after i edited my system point
+           programme, come to this 'tier' page… this in tier programme, not here!"). That context
+           used to come from which card the owner had drilled into, and all three point-engine
+           cards now open this wizard instead of a drill — so the model chosen on step 1 is what
+           tells the editor which engine the owner is here for, and a points choice still lands in
+           an editor with no tiers block. -->
+      <span class="grow-setup-head-links-v301"><a class="grow-setup-leave-v301" href="#/loyalty${state.versionId?`/${encodeURIComponent(state.versionId)}`:''}/${editorContextV303()}" id="growSetupFullEditorV302">More reward settings</a>
       <a class="grow-setup-leave-v301" href="#/grow">Leave set up</a></span></div>
       ${stepperHtml()}
       <div class="grow-setup-body-v301" id="growSetupBodyV301">${bodyHtml()}</div>
       ${errBlock()}
-      ${state.published?'':`<div class="grow-setup-foot-v301">${state.step>1?'<button type="button" class="btn ghost" id="growSetupBackV301">Back</button>':''}<span class="spacer"></span><button type="button" class="btn grow-setup-next-v301" id="growSetupNextV301"${state.step===4&&state.needAck&&!state.ack?' disabled':''}>${state.step===4?'Publish now':'Next →'}</button></div>`}
+      ${state.published?'':`<div class="grow-setup-foot-v301">${state.step>1?'<button type="button" class="btn ghost" id="growSetupBackV301">Back</button>':''}<span class="spacer"></span><button type="button" class="btn grow-setup-next-v301" id="growSetupNextV301"${stepKindV303()==='live'&&state.needAck&&!state.ack?' disabled':''}>${stepKindV303()==='live'?'Publish now':'Next →'}</button></div>`}
     </section>`;
     localizeWorkspaceSubtreeV97(host);
     bind();
   }
   const goto=step=>{
-    state.step=Math.min(4,Math.max(1,step));
+    state.step=Math.min(stepCountV303(),Math.max(1,step));
     state.visited.add(state.step);
     state.error='';
     render();
-    if(state.step===4)loadComparison();
+    if(stepKindV303()==='live')loadComparison();
   };
   async function loadComparison(){
     state.comparison=null;
     if(!state.versionId){state.comparison={error:null,lines:[],unreadable:[],draftActive:null};return render()}
     const result=await growSetupComparisonV301(state.versionId);
-    if(!isCurrent()||state.step!==4)return;
+    if(!isCurrent()||stepKindV303()!=='live')return;
     state.comparison=result;
     render();
   }
   const readStepFields=()=>{
-    if(state.step===2){
+    const kind=stepKindV303();
+    if(kind==='earn'){
       if(state.family==='stamps')state.stampSpend=parseFloat($('growSetupStampV301')?.value||'')||state.stampSpend;
       else state.earn=parseFloat($('growSetupEarnV301')?.value||'')||state.earn;
     }
-    if(state.step!==3)return;
+    if(kind==='tiers'){
+      const tierName=String($('growSetupTierNameV303')?.value||'').trim();
+      const tierThreshold=String($('growSetupTierThresholdV303')?.value||'').trim();
+      state.tierForm=(tierName||tierThreshold)
+        ?{id:state.tierForm?.id||null,name:tierName,threshold:tierThreshold}:null;
+      return;
+    }
+    if(kind!=='reward')return;
     if(state.model==='classic'){
       state.classicRedeem=parseInt($('growSetupClassicPointsV301')?.value||'',10)||state.classicRedeem;
       state.classicCredit=parseFloat($('growSetupClassicCreditV301')?.value||'')||state.classicCredit;
@@ -3305,8 +3490,12 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     host.querySelectorAll('[data-grow-setup-goto-v301]').forEach(button=>button.onclick=()=>{
       readStepFields();goto(Number(button.dataset.growSetupGotoV301));
     });
-    host.querySelectorAll('[data-grow-setup-family-v301]').forEach(button=>button.onclick=()=>{
-      state.family=button.dataset.growSetupFamilyV301==='stamps'?'stamps':'points';
+    /* V303: picking a card only highlights it. It also re-derives the family, because that is what
+       the later steps branch on, and re-renders — which can change the number of steps, since a
+       tier model runs five. Nothing is written until Next. */
+    host.querySelectorAll('[data-grow-setup-model-v303]').forEach(button=>button.onclick=()=>{
+      state.pick=button.dataset.growSetupModelV303;
+      state.family=state.pick==='stamps'?'stamps':'points';
       render();
     });
     const rateInput=$('growSetupEarnV301')||$('growSetupStampV301');
@@ -3327,6 +3516,25 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       if(!reward)return;
       state.form={id:reward.id,name:reward.name,budget:(reward.budgetCents/100).toFixed(2),points:String(reward.points)};
       render();$('growSetupRewardNameV301')?.focus({preventScroll:true});
+    });
+    /* V303 tiers step. Editing a listed tier loads it into the same inline form the add uses —
+       one form, so there is never a second place a tier can be typed into. */
+    host.querySelectorAll('[data-grow-setup-tier-edit-v303]').forEach(button=>button.onclick=()=>{
+      const tier=state.tiers.find(item=>item.id===button.dataset.growSetupTierEditV303);
+      if(!tier)return;
+      state.tierForm={id:tier.id,name:tier.name,threshold:String(tier.threshold)};
+      render();$('growSetupTierNameV303')?.focus({preventScroll:true});
+    });
+    /* The one-tap ladder. It only PREFILLS the list — nothing is written until Next — so an owner
+       who presses it and then changes their mind has created nothing. */
+    host.querySelectorAll('[data-grow-setup-tier-default-v303]').forEach(button=>button.onclick=()=>{
+      TIER_DEFAULTS_V303.forEach(([name,threshold],index)=>{
+        const id=crypto.randomUUID();
+        state.tiers.push({id,name,threshold,multiplier:1,perkNote:null,sort:index,
+          effectiveFrom:null,expiresAt:null});
+        state.tiersDirty.add(id);
+      });
+      state.tierForm=null;render();
     });
     /* V293's two-decision maths, unchanged: the company-cost budget derives the points price
        from the one programme-wide cost per point, and typing a points price pauses that
@@ -3359,8 +3567,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     const addAnother=$('growSetupAddAnotherV301');
     if(addAnother)addAnother.onclick=()=>{
       state.published=false;state.form=null;state.ack=false;state.needAck=false;state.impactRules=[];
-      goto(3);
+      state.modeError='';
+      goto(stepNumberForV303('reward'));
     };
+    /* V303: the publish landed, the points_mode switch behind it did not. Retrying only re-tries
+       that write — re-publishing would be a second publish of a version that is already live. */
+    const modeRetry=$('growSetupModeRetryV303');
+    if(modeRetry)modeRetry.onclick=()=>{applyPointsModeV303(true)};
   }
   /* The Next button is disabled for the duration of its own save. This is the same defect class
      as the double publish modal: an enabled button over an in-flight write is how one intent
@@ -3378,20 +3591,53 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     }
   };
   const failStep=(error,tail)=>{state.error=`${ownerErrorText(error)} ${tail}`;render()};
+  /* V303: the points_mode the chosen model implies, or null for the stamp engine, which is not a
+     points mode at all. This is the ONE place the mapping is written down. */
+  const targetPointsModeV303=()=>state.pick==='stamps'?null:state.pick;
+  const pointsModeChangesV303=()=>{
+    const target=targetPointsModeV303();
+    return Boolean(target&&target!==S.biz?.points_mode);
+  };
+  /* V230 recorded why this is not a draft field: points_mode is an INSTANT live switch on
+     businesses, enforced server-side, so writing it at step 1 would change what customers can do
+     the moment the owner picked a card — before they had reviewed anything, and even if they then
+     walked away. It is therefore applied once, AFTER publish_loyalty_config has succeeded, so the
+     mode and the configuration that assumes it go live together.
+     No confirm(): step 1 WAS the deliberate act, and the Go-live step states the change in words
+     before the owner presses Publish. */
+  async function applyPointsModeV303(fromRetry){
+    const target=targetPointsModeV303();
+    if(!target||target===S.biz?.points_mode){state.modeError='';if(fromRetry)render();return true}
+    if(fromRetry){state.modeError='';render()}
+    const {error}=await sb.from('businesses').update({points_mode:target}).eq('id',S.biz.id);
+    if(!isCurrent())return false;
+    if(error){
+      /* Honest: publishing HAPPENED. Saying "publish failed" would send the owner to re-publish a
+         version that is already live. */
+      state.modeError=`Published. The tier switch could not be applied — ${ownerErrorText(error)} Press retry.`;
+      render();return false;
+    }
+    S.biz.points_mode=target;
+    state.modeError='';
+    if(fromRetry)render();
+    return true;
+  }
   async function advance(){
     readStepFields();
-    if(state.step===1)return withBusy(async()=>{
+    const kind=stepKindV303();
+    if(kind==='choose')return withBusy(async()=>{
       const model=modelForFamily();
       state.model=model;
       /* Nothing is written when the family did not change: an owner who opens the wizard to fix
-         a reward must not create a draft, and a no-op save is still a draft. */
-      if(model===baseModel)return goto(2);
+         a reward must not create a draft, and a no-op save is still a draft. points_mode is NOT
+         written here — see applyPointsModeV303. */
+      if(model===baseModel)return goto(state.step+1);
       const result=await saveDraft({loyalty_model:model});
       if(!isCurrent())return;
       if(!result.ok)return failStep(result.error,'Nothing was saved.');
-      goto(2);
+      goto(state.step+1);
     });
-    if(state.step===2)return withBusy(async()=>{
+    if(kind==='earn')return withBusy(async()=>{
       const model=state.model||modelForFamily();
       if(state.family==='stamps'?!(state.stampSpend>0):!(state.earn>0)){
         state.error=state.family==='stamps'?'Enter the spend needed for one stamp.':'Enter how many points a customer earns.';
@@ -3410,9 +3656,56 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       const result=await saveDraft(row);
       if(!isCurrent())return;
       if(!result.ok)return failStep(result.error,'Nothing was saved.');
-      goto(3);
+      goto(state.step+1);
     });
-    if(state.step===3)return withBusy(async()=>{
+    /* V303: the tier ladder, written through the SAME save_loyalty_tier_draft_v143 the deep
+       editor's Add tier / Save tier button writes through, one call per touched tier, with the
+       snapshot hash refreshed from each response so consecutive writes are never stale. Only the
+       tiers this session actually touched are sent. Every column the form does not show is handed
+       straight back from the merged row — a two-field edit must not blank a multiplier or a
+       benefit list set in the advanced editor. */
+    if(kind==='tiers')return withBusy(async()=>{
+      const form=state.tierForm;
+      const hasForm=Boolean(form&&form.name.trim().length>=1);
+      if(hasForm){
+        const threshold=parseInt(form.threshold||'',10);
+        if(!Number.isFinite(threshold)||threshold<0){
+          state.error=`Enter how many ${tierBasisV303()==='visits'?'visits':'points'} a customer needs for this tier.`;
+          return render();
+        }
+        const id=form.id||crypto.randomUUID();
+        const existing=state.tiers.find(tier=>tier.id===id);
+        if(existing){existing.name=form.name.trim();existing.threshold=threshold}
+        else state.tiers.push({id,name:form.name.trim(),threshold,multiplier:1,perkNote:null,
+          sort:state.tiers.length,effectiveFrom:null,expiresAt:null});
+        state.tiersDirty.add(id);
+        state.tiers.sort((a,b)=>a.threshold-b.threshold);
+        state.tierForm=null;
+      }
+      if(!state.tiers.length){
+        state.error='Add at least one tier customers can reach.';return render();
+      }
+      const pending=state.tiers.filter(tier=>state.tiersDirty.has(tier.id));
+      if(pending.length){
+        const created=await ensureDraftV302();
+        if(!isCurrent())return;
+        if(!created.ok)return failStep(created.error,'Nothing was saved.');
+        for(const tier of pending){
+          const {data,error}=await sb.rpc('save_loyalty_tier_draft_v143',{
+            p_version:state.versionId,
+            p_tier:{id:tier.id,name:tier.name,threshold:tier.threshold,
+              points_multiplier:tier.multiplier,perk_note:tier.perkNote,sort:tier.sort,active:true,
+              effective_from:tier.effectiveFrom,expires_at:tier.expiresAt},
+            p_expected_snapshot_hash:state.snapshotHash||null});
+          if(!isCurrent())return;
+          if(error)return failStep(error,'Not every tier was saved.');
+          if(data?.snapshot_hash)state.snapshotHash=data.snapshot_hash;
+          state.tiersDirty.delete(tier.id);
+        }
+      }
+      goto(state.step+1);
+    });
+    if(kind==='reward')return withBusy(async()=>{
       if(state.model==='classic'){
         if(!(state.classicRedeem>0)||!(state.classicCredit>0)){
           state.error='Enter how many points a customer spends, and what credit they get.';return render();
@@ -3420,7 +3713,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
         const result=await saveDraft({redeem_points:state.classicRedeem,reward_credit_cents:Math.round(state.classicCredit*100)});
         if(!isCurrent())return;
         if(!result.ok)return failStep(result.error,'Nothing was saved.');
-        return goto(4);
+        return goto(state.step+1);
       }
       if(state.family==='stamps'&&!(state.stampTarget>0)){state.error='Enter how many stamps a customer needs.';return render()}
       const form=state.form;
@@ -3474,7 +3767,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
         await refreshRewards();
         if(!isCurrent())return;
       }
-      goto(4);
+      goto(state.step+1);
     });
     return withBusy(async()=>{
       const activeResult=await saveDraft({active:!state.keepPaused});
@@ -3505,10 +3798,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       state.publishedSummary={earn:earnLine(),reward:rewardLine()};
       toast('Grow changes published');
       render();
+      /* V303: and only now the mode. AFTER publish, never before — see applyPointsModeV303. It
+         renders its own inline failure, so publishing is never reported as failed because of it. */
+      await applyPointsModeV303(false);
     });
   }
   render();
-  if(state.step===4)loadComparison();
+  if(stepKindV303()==='live')loadComparison();
 }
     async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false}={}){
   /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
@@ -3549,8 +3845,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
      one choice for what points are FOR. tier_basis measures LIFETIME earn, so redemption never
      mechanically drops a tier — the choice exists because telling customers "spend your points"
      and "your points make you Gold" at the same time is two stories, and the owner wants one. */
+  /* V303: the same read, widened. The setup wizard's Tiers step edits a tier's name and threshold
+     and nothing else, but save_loyalty_tier_draft_v143 takes the WHOLE tier — the deep editor
+     passes every column on both its save and its pause paths — so a two-field edit that did not
+     carry the rest would blank a multiplier or a benefit list the owner set in the advanced
+     editor. Reading them here is what lets the wizard hand them straight back untouched. */
   const loyaltyTiersV229=canRewards
-    ?await sb.from('loyalty_tiers').select('id,name,threshold').eq('business_id',S.biz.id).order('threshold')
+    ?await sb.from('loyalty_tiers')
+      .select('id,name,threshold,points_multiplier,perk_note,sort,active,effective_from,expires_at')
+      .eq('business_id',S.biz.id).order('threshold')
       .then(r=>r.error?null:(r.data||[])).catch(()=>null)
     :[];
   if(!isGrowCurrent())return;
@@ -3728,7 +4031,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
      snapshot growPage has already read rather than loading the programme a second time.
      #/grow/setup/review carries 'review' in the focus slot and opens it on the final step. */
   const programmeView=['overview','history','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
-  const growSetupStepV301=programmeView==='setup'&&String(routedFocus||'')==='review'?4:1;
+  /* V303: 'review' is now a NAME, not the number 4. A tier model runs a five-step wizard, so a
+     hardcoded 4 would have opened the Reward step and called it the publish gate. The wizard
+     resolves the name against its own active step list. */
+  const growSetupStepV301=programmeView==='setup'&&String(routedFocus||'')==='review'?'review':1;
   /* V229: the Ongoing / To set up views are flat lists; a drilled topic only makes sense from
      the tile overview, so arriving via those views clears it. */
   if(programmeView!=='list')growTopicV229='';
@@ -3829,7 +4135,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     /* V294 (owner markup 2026-08-12, combined "Memberships & gift cards" card crossed out:
        "remove this programme"). Memberships stands alone as its own card ("Do membership for
        customers"); gift cards are not a programme to set up, so their management moved to the
-       Serve & sell nav group (#/giftcards) instead of sharing a card here. The status stays
+       Serve & sell nav group instead of sharing a card here (V303 has since removed that row too,
+       with the rest of the gift-card surface — owner: "remove gift cards from the business UI
+       entirely"). The status stays
        honest: a tenant with live plans still reads Live, not "pending". */
     {key:'recurring',icon:'memberships',title:'Memberships',blurb:'Let customers subscribe and save',
       status:activeMembershipCount?['Live','on']:membershipConfigured?['Paused','off']:['Not set up','off'],
@@ -3868,9 +4176,29 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
      click away instead of being the only door. Once a programme IS live, every existing drill
      and inline editor is reached exactly as before — editing a running programme is not the
      wizard's job. */
-  const growSetupEntryV301=key=>canSetupGrow&&['points','stamps'].includes(String(key||''))&&!loyaltyLive;
+  /* V303 (owner 2026-08-13, third round, re-testing from a workspace whose programme is now LIVE:
+     "tiered membership / stamps - still not able to build like points"). The V302 line still ended
+     in "&&!loyaltyLive", so the moment a programme went live all three cards fell back to the old
+     drill — and the Tiered membership card fell back to a drill whose first row says "Tier
+     membership is off". Two scope narrowings have now been reverted by the owner in two rounds,
+     so this one goes too: the wizard IS this module's UX, for the first set-up and for editing,
+     live or not. It opens PREFILLED from whatever is live, and every advanced surface the drill
+     and deep editor hold stays one click away behind "More reward settings". 'tiers' joins the
+     list because a tier ladder must be buildable the same way points are. */
+  const growSetupEntryV301=key=>canSetupGrow&&['points','stamps','tiers'].includes(String(key||''));
+  /* Which of the four models the pressed card stands for. The Points System card carries the
+     firm's CURRENT points mode rather than a hardcoded 'redeem', so opening it on a workspace
+     running points+tiers does not silently propose turning tiers off. */
+  const growSetupModelForTileV303=key=>key==='stamps'?'stamps'
+    :key==='tiers'?'tiers'
+    :(pointsModeV229==='tiers'?'tiers':pointsModeV229==='both'?'both':'redeem');
   const growTopicActionV244=topic=>{
-    if(growSetupEntryV301(topic.key))return growDraftPendingId?'Continue set up →':'Set up →';
+    /* V303: "Set up →" while this model is not reaching customers, "Edit →" once it is — the
+       wizard is the same door either way, and the word has to match what pressing it does. The
+       card's OWN status decides, not the programme's, so on a firm running points the Tiered
+       membership card still says "Set up →" rather than offering to edit something that is off. */
+    if(growSetupEntryV301(topic.key))return growTopicOngoingV244(topic)?'Edit →'
+      :(growDraftPendingId?'Continue set up →':'Set up →');
     if(growTopicOngoingV244(topic))return 'View →';
     const label=String(topic.status[0]||'');
     if(label==='Draft')return 'Finish setup →';
@@ -4192,8 +4520,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       </div></div>
       `:''}
       ${topicOnV229('recurring')?`
-      <!-- V294: the category follows the card — Memberships only. Gift cards management lives
-           at #/giftcards, now reachable from the Serve & sell nav group. -->
+      <!-- V294: the category follows the card — Memberships only. V303 removed gift-card
+           management from the business workspace altogether (owner: "remove gift cards from the
+           business UI entirely"), so there is no destination left to point at here either. -->
       <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
       </div></div>      `:''}
@@ -4249,7 +4578,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
   /* V301: the wizard mounts into the page card it belongs to and owns only its own node, so the
      rail, the header and the Programmes shell around it never re-render between steps. */
   if(programmeView==='setup'&&canSetupGrow){
-    growSetupWizardV301({host:$('growSetupHostV301'),snapshot,isCurrent:isGrowCurrent,startStep:growSetupStepV301}).catch(fail);
+    /* V303: the live tier ladder is handed in rather than re-read — growPage has already loaded it
+       for the Tiered membership card, and a second read would be a second answer. */
+    growSetupWizardV301({host:$('growSetupHostV301'),snapshot,isCurrent:isGrowCurrent,startStep:growSetupStepV301,
+      liveTiers:loyaltyTiersV229}).catch(fail);
   }
   if(['ongoing','available'].includes(programmeView)){
     let visibleCategories=0;
@@ -4343,7 +4675,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
      the company's fulfilment cost in cents, suggested from the business's own active service
      prices where available (cheapest/average), with sector fallbacks when the catalogue is
      empty. The editor's own budget->points maths turns the budget into a points cost. */
-  let pendingRewardTemplateV172=null;
+  /* V303: the chosen template is now handed to the setup wizard's inline reward form through
+     pendingGrowSetupRewardV303 instead of to the deep editor's dialog, so the editor-side
+     one-shot (pendingRewardTemplateV172) and the applier that consumed it have no writer left and
+     are gone with the route. The template SETS below are untouched — they are the capability. */
   const rewardTemplatesForSectorV172=(industry,prices)=>{
     const sorted=[...(prices||[])].filter(v=>Number.isFinite(v)&&v>0).sort((a,b)=>a-b);
     const cheapest=sorted[0]||null;
@@ -4476,23 +4811,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       toast('Proposed fulfilment cost added to the editable reward');
       return true;
     };
-    /* V172: consume a chosen template once the reward editor is on screen — name, customer
-       description and suggested company cost; the editor's own maths derives the points. */
-    const applyPendingRewardTemplateV172=()=>{
-      if(surface!=='rewards'||!pendingRewardTemplateV172)return false;
-      const nameField=$('rwCustomerName'),estimate=$('rwEstimate');
-      if(!nameField||!estimate)return false;
-      const template=pendingRewardTemplateV172;pendingRewardTemplateV172=null;
-      nameField.value=template.name;
-      const description=$('rwDescription');if(description)description.value=template.desc;
-      const internal=$('rwInternalName');if(internal)internal.value=template.name;
-      if(Number.isFinite(template.estimateCents)&&template.estimateCents>0){
-        estimate.value=(template.estimateCents/100).toFixed(2);
-        estimate.dispatchEvent(new Event('input',{bubbles:true}));
-      }
-      toast(`Template loaded — review the numbers, then publish`);
-      return true;
-    };
+    /* V172's applyPendingRewardTemplateV172 lived here: it consumed a chosen sector template into
+       the deep editor's New-reward dialog. V303 sends templates to the wizard's inline form
+       instead (owner: "pressing add rewards - still brings me to this page"), so nothing sets that
+       one-shot any more and an applier with no writer would be a silent no-op sitting on a hot
+       path. The template sets, the panel and the picker are all unchanged. */
     /* V173: birthday branch of the overview "Use suggestion" strip. */
     const applyPendingBirthdaySuggestV173=()=>{
       if(surface!=='rewards'||pendingProgrammeSuggestV172?.kind!=='birthday')return false;
@@ -4521,7 +4844,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
         await loyaltyPage(undefined,draft,null,false,editorIntent);
       }
       if(!await openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
-      applyPendingRewardEstimate();applyPendingRewardTemplateV172();applyPendingBirthdaySuggestV173();
+      applyPendingRewardEstimate();applyPendingBirthdaySuggestV173();
       return;
     }
     if((surface==='rewards'&&!canRewards)||(surface==='winback'&&!canWinback))return;
@@ -4549,7 +4872,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
-    applyPendingRewardEstimate();applyPendingRewardTemplateV172();applyPendingBirthdaySuggestV173();
+    applyPendingRewardEstimate();applyPendingBirthdaySuggestV173();
   }
   function openRewardsAutoSetup(action={surface:'rewards',focusTarget:'lm',activateTarget:false}){
     if(!canSetupGrow)return;
@@ -4655,7 +4978,19 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     /* V301: a point-engine card that is not live yet opens the one-page wizard rather than the
        drill — the drill is where an owner MANAGES a running programme, and the owner's report is
        that it is not where anyone can START one. */
-    if(growSetupEntryV301(tile.dataset.growTopicV229))return nav('#/grow/setup');
+    /* V303: all three point-engine cards, live or not. The card that was pressed decides which
+       model the wizard opens on, handed over as a one-shot so a later plain visit to #/grow/setup
+       still derives the choice from what is actually live. */
+    if(growSetupEntryV301(tile.dataset.growTopicV229)){
+      /* The card key rides along with the model because the two answer different questions: the
+         model is what the wizard edits, the card is which programme the owner came here ABOUT —
+         and that is what V294's editor entry context means ("this in tier programme, not here!").
+         A firm running points+tiers opens the Points System card on the 'both' model, and its
+         full editor must still be the points one. */
+      pendingGrowSetupModelV303={model:growSetupModelForTileV303(tile.dataset.growTopicV229),
+        from:String(tile.dataset.growTopicV229||'')};
+      return nav('#/grow/setup');
+    }
     growTopicV229=tile.dataset.growTopicV229;
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
@@ -4746,6 +5081,24 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
        — is a cold start, so it lands in the wizard. Its "Edit →" (a rule already exists) still
        opens the editor exactly as before. */
     if(kind==='earning'&&!rewardJourney.earning&&canSetupGrow)return nav('#/grow/setup');
+    /* V303 (owner 2026-08-13: "pressing add rewards - still brings me to this page", with a
+       screenshot of the old New-reward dialog opened from a LIVE programme's drill). No primary
+       path may open a dialog. Both reward controls on this grid — the dashed "+ Add reward" card
+       and each card's own "Edit →" — now go to the wizard's Reward step with the inline form
+       armed, which is the same form, the same three fields and the same writer the wizard has
+       always used; the deep editor keeps its dialogs and stays one click away behind "More reward
+       settings". The reward id rides on the one-shot rather than the hash so the wizard opens on
+       exactly the card that was pressed. */
+    /* The Reward-history cards carry the SAME data-rewards-overview-edit="catalogue" contract, but
+       what an owner does there is un-archive a retired reward — a job the wizard's three-field form
+       cannot do and does not show, because its list is deliberately the rewards that can still be
+       offered. Those cards therefore keep the full editor, which is where un-archiving lives. */
+    if(canSetupGrow&&(kind==='add'||kind==='catalogue')&&!button.closest('[data-reward-history-v294]')){
+      pendingGrowSetupRewardV303=kind==='add'
+        ?{mode:'add'}
+        :{mode:'edit',id:button.dataset.rewardId||null};
+      return nav('#/grow/setup');
+    }
     if(!growDraftVersionId){
       if(action.surface==='winback'&&canSetupWinback){
         (async()=>{
@@ -4791,9 +5144,16 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
       templatesPanel.querySelectorAll('[data-reward-template]').forEach(button=>button.onclick=()=>{
         const template=templates[Number(button.dataset.rewardTemplate)];
         if(!template)return;
-        pendingRewardTemplateV172={name:template.name,desc:template.desc,estimateCents:template.budget};
-        const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
-        openGrowEditorV258(action).catch(fail);
+        /* V303 (owner 2026-08-13: "pressing add rewards - still brings me to this page"). This is
+           an add-reward path like any other, and on a live programme it ended in the deep editor's
+           New-reward dialog — the exact screen the owner rejected. The sector templates themselves
+           are a capability, not ceremony, so they survive: the chosen template now arms the
+           wizard's own inline reward form with the same name and suggested company cost, and the
+           wizard's budget→points maths derives the price exactly as the editor's did. This panel
+           only renders for canSetupGrow, which is also the wizard's own gate, so there is no
+           second audience left needing the old route. */
+        pendingGrowSetupRewardV303={mode:'add',name:template.name,budgetCents:template.budget};
+        nav('#/grow/setup');
       });
     };
   }
@@ -4845,7 +5205,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'001174c47f2bee29d534b17129925281648d2505eabfdc121ba0c39f0cd8acf5',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'d52a5aa0fc4f43e650dcd7969a32f089e0887b9c5743d55f5d83d7f1554769d5',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

@@ -27,6 +27,20 @@
  *   f. "Back to Programmes" lands on the Overview; the draft banner is gone.
  *   g. Mobile 390x844: steps 1→4 with no horizontal overflow and the stepper visible.
  *   h. The draft banner's "Review & publish" opens the wizard directly on step 4.
+ *   i. V302: a PAUSED programme WITH a published catalogue still opens the wizard.
+ *   j. V303: a LIVE programme — all THREE point-engine cards (Points System / Tiered membership /
+ *      Stamp card) open the wizard, prefilled, with zero .modal. This is the third round of the
+ *      same owner report: V302 widened the gate to "not live", and the owner then re-tested from
+ *      a workspace whose programme IS live and found the old drill again.
+ *   k. V303: the tiers ladder is BUILDABLE here — the Tiers step lists the live tiers, the inline
+ *      form adds one, Next fires save_loyalty_tier_draft_v143, and publishing writes
+ *      publish_loyalty_config THEN the businesses.points_mode switch, in that order.
+ *   l. V303: Add reward and per-reward Edit on the live reward grid land on the wizard's Reward
+ *      step with the form armed — never the old New-reward dialog.
+ *      (l runs before k: publishing a tier programme switches the workspace to points_mode
+ *      'tiers', where the Programmes page shows the tier note in place of the reward grid.)
+ *   m. V303: gift cards are gone from the business UI — no nav row, no Customer Interface
+ *      sub-tab, and #/giftcards is refused with a plain toast instead of rendering.
  *
  * Serves on 4303 deliberately: sibling worktrees use 4173/4196 and a parallel session was found
  * squatting 4203, and evidence has been captured from the wrong tree that way before. The probe
@@ -107,12 +121,18 @@ const stubSource=`(()=>{
     firm_config_versions:[]
   };
   /* The in-memory draft the wizard writes into, so a re-render reads back what it saved. */
+  /* V303: the draft carries TIERS as well as rewards, because the wizard's Tiers step writes them
+     through save_loyalty_tier_draft_v143 and re-reads them from get_loyalty_reward_draft. */
   const draft={id:null,version_no:2,snapshotHash:'hash-1',hashSeq:1,
-    program:{...program},rewards:[]};
+    program:{...program},rewards:[],tiers:[]};
   /* V302: the table set and the business id are exposed so a step can put this business into a
      DIFFERENT starting state in the same browser — specifically the owner's own reported one, a
      paused programme with a published configuration and a reward catalogue. */
-  window.__V301={rpc:[],writes:[],draft,published:[],tables:TABLES,biz:BIZ};
+  /* V303: one monotonic sequence across BOTH recorders, so a step can assert that the
+     businesses.points_mode write happened AFTER publish_loyalty_config and not merely that both
+     happened. Ordering is the whole point of that rule. */
+  let seqV303=0;
+  window.__V301={rpc:[],writes:[],draft,published:[],tables:TABLES,biz:BIZ,seq:()=>++seqV303};
   const chainable=resolveOut=>{
     const q={single:false,head:false,countMode:null,op:'select'};
     const chain={};
@@ -130,7 +150,13 @@ const stubSource=`(()=>{
   };
   const query=table=>chainable(q=>{
     if(q.op!=='select'){
-      window.__V301.writes.push({table,op:q.op,payload:q.payload??null});
+      window.__V301.writes.push({table,op:q.op,payload:q.payload??null,seq:window.__V301.seq()});
+      /* V303: the points_mode switch is a real live write, so the fixture APPLIES it — recording
+         it only would let a re-render disagree with what the wizard just did. */
+      if(table==='businesses'&&q.op==='update'&&q.payload&&q.payload.points_mode!==undefined){
+        bizRow.points_mode=q.payload.points_mode;
+        TABLES.businesses=TABLES.businesses.map(row=>({...row,points_mode:q.payload.points_mode}));
+      }
       return {data:null,error:null};
     }
     const rows=TABLES[table]||[];
@@ -165,6 +191,9 @@ const stubSource=`(()=>{
       case 'get_program_rules_draft':return {version_no:draft.version_no,rules:[]};
       case 'create_loyalty_config_draft':
         draft.id=draft.id||'draft-v301';
+        /* Mirrors the real function: a new draft COPIES the programme row and the tiers, but not
+           the reward versions (that is what ensure_published_reward_in_draft_v138 is for). */
+        if(!draft.tiers.length)draft.tiers=(TABLES.loyalty_tiers||[]).map(t=>({...t,tier_id:t.id}));
         TABLES.firm_config_versions=[{id:draft.id,business_id:BIZ,version_no:draft.version_no,
           based_on_version_id:args&&args.p_based_on||null,status:'draft',snapshot_hash:draft.snapshotHash}];
         return {version_id:draft.id,version_no:draft.version_no,status:'draft',snapshot_hash:draft.snapshotHash};
@@ -209,8 +238,23 @@ const stubSource=`(()=>{
         if(TABLES.firm_config_versions[0])TABLES.firm_config_versions[0].snapshot_hash=draft.snapshotHash;
         return {version_id:draft.id,status:'draft',snapshot_hash:draft.snapshotHash};
       }
+      /* V303: the SAME writer the deep editor's Add tier / Save tier button uses. Upsert on id,
+         bump the hash, and hand the new hash back so consecutive tier writes are never stale. */
+      case 'save_loyalty_tier_draft_v143':{
+        const payload=(args&&args.p_tier)||{};
+        const id=payload.id||payload.tier_id;
+        const existing=draft.tiers.find(t=>(t.tier_id||t.id)===id);
+        const next={tier_id:id,id,business_id:BIZ,name:payload.name,threshold:payload.threshold,
+          points_multiplier:payload.points_multiplier??1,perk_note:payload.perk_note??null,
+          sort:payload.sort??draft.tiers.length,active:payload.active!==false,
+          effective_from:payload.effective_from??null,expires_at:payload.expires_at??null};
+        if(existing)Object.assign(existing,next);else draft.tiers.push(next);
+        draft.snapshotHash='hash-'+(++draft.hashSeq);
+        return {tier_id:id,snapshot_hash:draft.snapshotHash};
+      }
       case 'get_loyalty_reward_draft':
-        return {program:{...draft.program},rewards:draftRows(),tiers:[],snapshot_hash:draft.snapshotHash};
+        return {program:{...draft.program},rewards:draftRows(),
+          tiers:draft.tiers.map(t=>({...t})),snapshot_hash:draft.snapshotHash};
       case 'preview_publish_impact':return {rules:[],requires_confirmation:false,
         will_activate_live_financial:false,will_activate_customer_facing:false};
       case 'publish_loyalty_config':
@@ -218,14 +262,15 @@ const stubSource=`(()=>{
         TABLES.loyalty_programs=[{...draft.program,id:'prog-1',business_id:BIZ,current_config_version_id:draft.id,configuration_status:'published'}];
         TABLES.businesses=[{...bizRow,active_config_version_id:draft.id}];
         TABLES.loyalty_rewards=draft.rewards.map(r=>({...r,id:r.reward_id}));
+        TABLES.loyalty_tiers=draft.tiers.map(t=>({...t,id:t.tier_id||t.id}));
         TABLES.firm_config_versions=[];
-        draft.id=null;draft.rewards=draft.rewards.slice();
+        draft.id=null;draft.rewards=draft.rewards.slice();draft.tiers=draft.tiers.slice();
         return {status:'ok'};
       default:return null;
     }
   };
   const rpc=(name,args)=>{
-    window.__V301.rpc.push({name,args:args??null});
+    window.__V301.rpc.push({name,args:args??null,seq:window.__V301.seq()});
     return chainable(()=>({data:rpcData(name,args),error:null}));
   };
   const channel=()=>{const c={on:()=>c,subscribe:()=>c,unsubscribe:()=>{}};return c};
@@ -511,8 +556,200 @@ try{
   const rewardWrite=ensureCall.find(call=>call.index>(firstEnsure?.index??Infinity));
   assertTrue(Boolean(rewardWrite),`the reward write follows the materialisation (${rewardWrite?.name})`);
 
+  /* ---- j. V303: the owner's CURRENT state — the programme is LIVE ---- */
+  /* Third round of the same report. V301 excluded a configured programme; V302 excluded a LIVE
+     one; the owner re-tested from a workspace whose programme is now live and found the old drill
+     again, and the Tiered membership card led to a drill whose first row reads "Tier membership is
+     off". The standing rule is that the wizard IS this module's UX, for first set-up and for
+     editing, live or not — so all THREE point-engine cards are exercised against a live fixture. */
+  say('j. a LIVE programme: all three point-engine cards open the wizard, prefilled, no dialog');
+  await page.evaluate(()=>{
+    const T=window.__V301.tables,biz=window.__V301.biz,D=window.__V301.draft;
+    /* Back to a clean slate, then into the owner's reported shape: live, published, four rewards
+       and three tiers. Reaching in is legitimate HERE — this is the starting state, not an
+       outcome the app is supposed to have produced. */
+    D.id=null;D.rewards.length=0;D.tiers.length=0;
+    T.firm_config_versions.length=0;
+    T.businesses[0].active_config_version_id='pub-1';
+    T.businesses[0].points_mode='redeem';
+    T.loyalty_programs[0]={...T.loyalty_programs[0],active:true,current_config_version_id:'pub-1',
+      configuration_status:'published',loyalty_model:'points_tiers',tier_basis:'visits'};
+    T.loyalty_rewards.length=0;
+    ['Free flat white','Free pastry','5 off','Free tote'].forEach((name,index)=>{
+      T.loyalty_rewards.push({id:`lr-${index+1}`,business_id:biz,active:true,customer_name:name,
+        name,cost_points:200*(index+1),credit_cents:0,entitlement_expiry_days:null,usage_limit:null,
+        min_tier_id:null,min_tier_threshold:null,estimated_cost_cents:300*(index+1),sort:index,
+        claim_available_from:null,claim_available_until:null,created_at:'2026-06-01T00:00:00Z'});
+    });
+    T.loyalty_tiers.length=0;
+    [['Bronze',0],['Silver',10],['Gold',25]].forEach(([name,threshold],index)=>{
+      T.loyalty_tiers.push({id:`tier-${index+1}`,business_id:biz,name,threshold,
+        points_multiplier:1,perk_note:null,sort:index,active:true,
+        effective_from:null,expires_at:null});
+    });
+  });
+  const reloadGrowV303=async()=>{
+    await go('#/dashboard');
+    await page.waitForTimeout(400);
+    await go('#/grow');
+    await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
+  };
+  const cardsV303=[['points','redeem','Points System',4],['tiers','tiers','Tiered membership',5],
+    ['stamps','stamps','Stamp card',4]];
+  for(const [topic,model,label,stepCount] of cardsV303){
+    await reloadGrowV303();
+    const tile=page.locator(`[data-grow-topic-v229="${topic}"]`);
+    assertTrue(await tile.count()===1,`the ${label} card is on the Programmes list`);
+    await tile.click();
+    await page.waitForFunction(()=>location.hash.startsWith('#/grow/setup'),null,{timeout:20000});
+    await waitStep(1);
+    assertTrue(await page.locator(`[data-grow-setup-model-v303="${model}"][aria-checked="true"]`).count()===1,
+      `pressing ${label} opens the wizard PRESELECTED on ${model} — the choice is not asked twice`);
+    assertTrue(await page.locator('[data-grow-setup-model-v303]').count()===4,
+      'step 1 offers the same four models the deep editor offers');
+    const labels=await page.locator('.grow-setup-step-v301').allInnerTexts();
+    assertTrue(labels.length===stepCount,
+      `${label} runs ${stepCount} steps (found ${labels.length}: ${JSON.stringify(labels)})`);
+    await noModal(`after the LIVE ${label} card`);
+    assertTrue(await page.locator('#rewardDialogV238').count()===0,
+      `the old New-reward dialog is not opened by ${label}`);
+  }
+  await reloadGrowV303();
+  assertTrue((await page.locator('[data-grow-topic-v229="points"]').innerText()).includes('Edit →'),
+    'a LIVE card says "Edit →" — the word matches what pressing it does');
+  assertTrue((await page.locator('[data-grow-topic-v229="tiers"]').innerText()).includes('Set up →'),
+    'a card whose model is NOT reaching customers still says "Set up →"');
+
+  /* ---- l. V303: Add reward / Edit reward never reopen the dialog ---- */
+  /* Owner: "pressing add rewards - still brings me to this page", screenshotting the old
+     New-reward dialog. The reward grid is reached the way an owner reaches it — the Programmes
+     "Ongoing programmes" view, which renders the same cards the drill does. */
+  /* Ordered before step k on purpose: publishing a tier programme switches this workspace to
+     points_mode='tiers', where the Programmes page deliberately shows the tier note IN PLACE of
+     the reward grid. The owner's screenshot of the New-reward dialog was taken on a points
+     workspace with a live catalogue, which is the state the fixture is in right now. */
+  say('l. Add reward and per-reward Edit land on the wizard Reward step, with no dialog');
+  /* The reward grid renders on both Programmes views that show the category list. The dashed
+     "+ Add reward" card carries no status pill, so the "Ongoing programmes" filter hides it and
+     "Pending setup" is where an owner presses it; a LIVE reward card is the other way round.
+     Each control is therefore exercised on the view it is actually visible in. */
+  await go('#/dashboard');await page.waitForTimeout(400);
+  await go('#/grow/available');
+  await page.waitForSelector('[data-rewards-overview-edit="add"]',{timeout:20000});
+  await noModal('on the reward grid');
+  await page.click('[data-rewards-overview-edit="add"]');
+  await page.waitForFunction(()=>location.hash.startsWith('#/grow/setup'),null,{timeout:20000});
+  await page.waitForSelector('[data-grow-setup-rewardform-v301]',{timeout:20000});
+  assertTrue(await page.locator('#rewardDialogV238').count()===0,
+    'Add reward does NOT open the old New-reward dialog');
+  await noModal('after Add reward');
+  assertTrue((await page.locator('#growSetupRewardNameV301').inputValue())==='',
+    'it lands on an empty inline form, armed and ready');
+  const armedStep=await wizardStep();
+  const armedLabel=await page.locator('.grow-setup-step-v301.is-current').innerText();
+  assertTrue(/Reward/.test(armedLabel),`and on the Reward step (step ${armedStep}: ${armedLabel})`);
+  await go('#/dashboard');await page.waitForTimeout(400);
+  await go('#/grow/ongoing');
+  await page.waitForSelector('[data-rewards-overview-edit="catalogue"]',{timeout:20000});
+  await page.click('[data-rewards-overview-edit="catalogue"][data-reward-id="lr-2"]');
+  await page.waitForFunction(()=>location.hash.startsWith('#/grow/setup'),null,{timeout:20000});
+  await page.waitForSelector('#growSetupRewardNameV301',{timeout:20000});
+  assertTrue((await page.locator('#growSetupRewardNameV301').inputValue())==='Free pastry',
+    'per-reward Edit opens the wizard with THAT reward in the inline form');
+  await noModal('while editing a reward from the grid');
+  assertTrue(await page.locator('#rewardDialogV238').count()===0,
+    'and the old dialog is still not opened');
+
+  /* ---- k. V303: a tier ladder is buildable here, exactly the way points are ---- */
+  say('k. Tiered membership: the Tiers step lists, adds and saves a tier, then publishes the mode');
+  await reloadGrowV303();
+  await page.click('[data-grow-topic-v229="tiers"]');
+  await waitStep(1);
+  await page.click('#growSetupNextV301');await waitStep(2);
+  await page.click('#growSetupNextV301');await waitStep(3);
+  const tiersBody=await page.locator('#growSetupBodyV301').innerText();
+  for(const name of ['Bronze','Silver','Gold'])
+    assertTrue(tiersBody.includes(name),`the Tiers step lists the LIVE tier "${name}"`);
+  assertTrue(await page.locator('[data-grow-setup-tierform-v303]').count()===1,
+    'the tier form is INLINE in the step body');
+  await noModal('on the Tiers step');
+  assertTrue((await page.locator('label[for="growSetupTierThresholdV303"]').innerText()).includes('Visits'),
+    'the threshold is labelled in the unit tier_basis actually measures');
+  await page.fill('#growSetupTierNameV303','Platinum');
+  await page.fill('#growSetupTierThresholdV303','50');
+  await page.click('#growSetupNextV301');
+  await waitStep(4);
+  const tierSave=await page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_tier_draft_v143')
+    .map(call=>call.args));
+  assertTrue(tierSave.length===1,`exactly the ONE touched tier was written (${tierSave.length})`);
+  assertTrue(tierSave[0].p_tier.name==='Platinum'&&tierSave[0].p_tier.threshold===50,
+    'the p_tier envelope carries the typed name and threshold');
+  assertTrue(tierSave[0].p_tier.points_multiplier===1&&tierSave[0].p_tier.active===true
+    &&Object.prototype.hasOwnProperty.call(tierSave[0].p_tier,'perk_note'),
+    'and the whole tier row, so an advanced-editor field is never blanked by a two-field form');
+  assertTrue(typeof tierSave[0].p_expected_snapshot_hash==='string',
+    'the write carries the snapshot hash it read');
+  assertTrue(await page.locator('#growSetupBodyV301').innerText().then(t=>/Free flat white/.test(t)),
+    'step 4 is the Reward step, carrying the live catalogue');
+  await page.click('#growSetupNextV301');await waitStep(5);
+  await page.waitForFunction(()=>!/Checking what changes/.test(
+    document.getElementById('growSetupChangesV301')?.textContent||''),null,{timeout:20000});
+  const goLiveText=await page.locator('#growSetupBodyV301').innerText();
+  assertTrue(/Points will now build tier membership/.test(goLiveText),
+    'the Go-live step states the mode change in plain words BEFORE Publish is pressed');
+  const publishedBefore=await page.evaluate(()=>window.__V301.published.length);
+  await page.click('#growSetupNextV301');
+  await page.waitForSelector('.grow-setup-done-v301',{timeout:20000});
+  await noModal('after publishing a tier programme');
+  const modeOrder=await page.evaluate(before=>{
+    const names=window.__V301.rpc.map(call=>call.name);
+    return {published:window.__V301.published.length,before,
+      publishAt:names.lastIndexOf('publish_loyalty_config'),
+      modeWrites:window.__V301.writes.filter(w=>w.table==='businesses'&&w.payload&&w.payload.points_mode),
+      publishSeq:Math.max(...window.__V301.rpc.filter(c=>c.name==='publish_loyalty_config').map(c=>c.seq))};
+  },publishedBefore);
+  assertTrue(modeOrder.published===publishedBefore+1,'publish_loyalty_config ran exactly once');
+  assertTrue(modeOrder.modeWrites.length===1
+    &&modeOrder.modeWrites[0].payload.points_mode==='tiers',
+    `the points_mode switch was written once, to tiers (${JSON.stringify(modeOrder.modeWrites)})`);
+  /* AFTER the publish, never before: points_mode is an instant live switch, so writing it early
+     would change what customers can do before the configuration that assumes it went live. */
+  assertTrue(modeOrder.modeWrites[0].seq>modeOrder.publishSeq,
+    `the mode switch followed publish_loyalty_config (mode ${modeOrder.modeWrites[0].seq} vs publish ${modeOrder.publishSeq})`);
+  assertTrue((await page.locator('.grow-setup-done-v301').innerText())
+    .includes('Published — customers can use this now'),'the success panel replaces the wizard body');
+  assertTrue(await page.locator('#growSetupModeRetryV303').count()===0,
+    'and no mode-retry is shown, because the switch succeeded');
+
+  /* ---- m. V303: gift cards are gone from the business UI ---- */
+  say('m. gift cards have no nav row, no Customer Interface sub-tab, and #/giftcards is refused');
+  await go('#/dashboard');
+  await page.waitForTimeout(500);
+  assertTrue(await page.locator('a[href="#/giftcards"]').count()===0,
+    'no rail row, anywhere in the shell, leads to Gift cards');
+  const serveText=await page.evaluate(()=>{
+    const rows=[...document.querySelectorAll('.shell a,.shell button')];
+    return rows.map(node=>node.textContent||'').join(' | ');
+  });
+  assertTrue(!/Gift cards/.test(serveText),'and no nav control is labelled "Gift cards"');
+  await go('#/giftcards');
+  await page.waitForFunction(()=>location.hash==='#/dashboard',null,{timeout:20000});
+  assertTrue(true,'a typed #/giftcards is refused and corrected to #/dashboard');
+  const refusalToast=await page.locator('#toast').innerText();
+  assertTrue(refusalToast.includes('Gift cards are no longer part of this workspace.'),
+    `and it SAYS so rather than bouncing silently (${JSON.stringify(refusalToast)})`);
+  await go('#/customer-interface');
+  await page.waitForSelector('[data-ci-view-v296="preview"]',{timeout:20000});
+  assertTrue(await page.locator('[data-ci-view-v296="giftcards"]').count()===0,
+    'Customer Interface has no Gift cards section left');
+  assertTrue(await page.locator('#giftCardEnabled').count()===0,
+    'and no gift-card issuance switch');
+  assertTrue(await page.locator('a[href="#/customer-interface/giftcards"]').count()===0,
+    'and no rail sub-tab pointing at one');
+
   if(pageErrors.length)process.stdout.write(`note: page errors observed (non-fatal): ${JSON.stringify(pageErrors)}\n`);
-  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-i)\n');
+  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-m)\n');
 }catch(error){
   process.stdout.write(`V301 walkthrough FAIL at ${step}\n${error?.stack||error}\n`);
   if(pageErrors.length)process.stdout.write(`page errors: ${JSON.stringify(pageErrors)}\n`);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="1cb88e5576c417d374f96bc4476ec69d957575356f9915b1484a0e9efb348663">
+<meta name="v105-production-component-sha256" content="cb1e725442882294edcaa15985c996e011168ef1ea50bde0e9acf6e5f85c9ed7">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1069,6 +1069,9 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
 .grow-setup-changes-v301{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+/* V303: the points_mode switch a tier choice implies, stated on the Go-live step. It leads the
+   change list because it is the biggest thing publishing that choice does to a customer. */
+.grow-setup-modechange-v303{margin:0 0 10px;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.9rem;line-height:1.5}
 .grow-setup-foot-v301{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
 .grow-setup-next-v301{min-height:48px;padding:12px 22px;font-size:1rem}
 .grow-setup-done-v301{text-align:center;padding:12px 0}
@@ -2744,7 +2747,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 1cb88e5576c4</span>
+<span class="v105-provenance">v105 production-component harness · cb1e72544288</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2869,7 +2872,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'1cb88e5576c417d374f96bc4476ec69d957575356f9915b1484a0e9efb348663',
+  sourceHash:'cb1e725442882294edcaa15985c996e011168ef1ea50bde0e9acf6e5f85c9ed7',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

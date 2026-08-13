@@ -1094,6 +1094,9 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
 .grow-setup-changes-v301{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+/* V303: the points_mode switch a tier choice implies, stated on the Go-live step. It leads the
+   change list because it is the biggest thing publishing that choice does to a customer. */
+.grow-setup-modechange-v303{margin:0 0 10px;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.9rem;line-height:1.5}
 .grow-setup-foot-v301{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
 .grow-setup-next-v301{min-height:48px;padding:12px 22px;font-size:1rem}
 .grow-setup-done-v301{text-align:center;padding:12px 0}
@@ -2100,7 +2103,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=30f8b805b877","business":"/app-business.js?b=20f63717771d","i18n":"/app-i18n.js?b=c3dd5127e450"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=30f8b805b877","business":"/app-business.js?b=0b6c93073dc1","i18n":"/app-i18n.js?b=c3dd5127e450"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -2124,6 +2127,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=bf346f573657" defer></script>
+<script src="/app-core.js?b=9c116f4740ab" defer></script>
 </body>
 </html>

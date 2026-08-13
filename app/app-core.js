@@ -1431,6 +1431,16 @@ async function route(){
       toast('Stored value is not available for launch.');
       return nav('#/loyalty');
     }
+    /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"). Hiding the nav
+       row is not the boundary — a bookmark or a typed hash still resolves — so the route is
+       refused here, in the same place and the same shape as the storedvalue refusal above, and it
+       says so rather than silently rendering the dashboard. The page function and every gift-card
+       RPC are left in place: this is a surface decision, and nothing about existing cards, their
+       balances or their ledger rows changes. */
+    if(pageKey==='giftcards'){
+      toast('Gift cards are no longer part of this workspace.');
+      return nav('#/dashboard');
+    }
     /* Promotions are customer-facing publishing authority, not an ordinary staff module.
        Keep the authoring surface owner-only in the client and enforce the same boundary in
        v104 RPCs. Managers/front desk can continue operating the published programme without

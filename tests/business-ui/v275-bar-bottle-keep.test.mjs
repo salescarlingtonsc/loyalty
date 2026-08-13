@@ -159,7 +159,9 @@ test('V275 the nav advertises Bottles to bars only, and no other sector gained a
   assert.match(app, /\.filter\(module=>module!=='bottles'\|\|sectorShowsBottlesV275\)/);
   assert.match(app, /\|\|\(m==='bottlesetup'&&sectorShowsBottlesV275&&S\.myRole==='owner'\)/);
   // Bottles rides in Serve & sell; Bottle keep rides in Operations setup.
-  assert.match(app, /label:'Serve & sell',items:\['till','appointments','bottles','bookings','waitlist','giftcards'\]/); /* V294: gift cards joined Serve & sell */
+  /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"): the V294 Gift
+     cards row is gone; where Bottles rides is what this line is about and that is unchanged. */
+  assert.match(app, /label:'Serve & sell',items:\['till','appointments','bottles','bookings','waitlist'\]/);
   assert.match(app, /label:'Operations setup',items:\['staffmembers','branches','services','inventory','packages','bottlesetup'\]/);
   // Every other sector's module list is untouched: 'bottles' appears in exactly one INDUSTRIES
   // entry (bar) and never in ALLMODS, so it cannot arrive by default anywhere else.

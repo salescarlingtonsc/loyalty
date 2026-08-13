@@ -90,8 +90,12 @@ test('not-yet-configured standalone modules deep-link to the exact create contro
      control a person arriving at Gift cards needs is the amount field, and the moved switch has
      its own routable sub-tab. */
   assert.match(app,/focusRoutedWorkspaceControl\(routedFocus,'ga'\)/);
-  assert.match(app,/\['giftcards','Gift cards','#\/customer-interface\/giftcards','giftcard'\]/);
-  assert.match(app,/'bookings','waitlist','giftcards'\]\}/);
+  /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"): the Customer
+     Interface sub-tab and the Serve & sell row are both gone, so the two lines that pinned them
+     now pin their ABSENCE. The requirement this test is about — a deep link lands on the exact
+     create control — is unchanged for every module that still has a nav entry. */
+  assert.doesNotMatch(app,/\['giftcards','Gift cards','#\/customer-interface\/giftcards','giftcard'\]/);
+  assert.doesNotMatch(app,/'bookings','waitlist','giftcards'\]\}/);
   assert.match(app,/async function referralsPage\(\)[\s\S]{0,80}?routedFocus/);
   assert.match(app,/async function membershipsPage\(\)[\s\S]{0,80}?routedFocus/);
   assert.match(app,/async function giftcardsPage\(\)[\s\S]{0,80}?routedFocus/);

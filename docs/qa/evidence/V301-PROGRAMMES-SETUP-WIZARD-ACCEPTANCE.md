@@ -64,7 +64,7 @@ overview. Chrome captures were re-run for `v142-connect-paynow-pos/metrics.json`
 
 Regenerated `tests/browser/reward-overview-owner-visual.html` production-source-sha256:
 
-    001174c47f2bee29d534b17129925281648d2505eabfdc121ba0c39f0cd8acf5
+    d52a5aa0fc4f43e650dcd7969a32f089e0887b9c5743d55f5d83d7f1554769d5
 
 ## Same release: the phantom "Gift cards" Overview row
 
@@ -152,3 +152,39 @@ back. Every assertion in them is unchanged, which is the point: widening the wiz
 capability away.
 
 Suite 2838/2838; V301 (a–i), V293, V294, V296 walkthroughs pass on the V302 bundles.
+
+## V303 follow-up — the wizard becomes the loyalty module's only front door
+
+Owner re-test on the deployed V302 build, with screenshots: (1) "remove gift cards from the
+business UI entirely"; (2) "tiered membership / stamps - still not able to build like points" —
+the tiers card still landed on the old drill and model-picker editor; (3) "pressing add rewards -
+still brings me to this page" — the old New-reward dialog, from a LIVE programme's grid. The V302
+gate stopped at `!loyaltyLive`, so a live programme's owner still got every old surface.
+
+Shipped: the three point-engine cards (Points System / Tiered membership / Stamp card) open the
+wizard ALWAYS — live or not, prefilled, labelled "Edit →" when running. Step 1 offers the same
+four models as the editor (Points System · Tiered membership · Points + tiers · Stamp card). A
+model with tiers runs FIVE steps — Choose · Earning · Tiers · Reward · Go live — with an inline
+tier ladder (name + threshold, one-tap Bronze/Silver/Gold defaults) writing through
+`save_loyalty_tier_draft_v143`; the full tier row is read and carried so a wizard edit can never
+blank multipliers or benefits set in the advanced editor. `businesses.points_mode` (an instant
+live switch) is applied only AFTER `publish_loyalty_config` succeeds, stated in plain words on
+the Go-live step, with an honest inline retry that never claims the publish failed. Add reward
+and per-reward Edit on the live grid land on the wizard's Reward step with the form armed — the
+old dialog is no longer reachable from any primary path (reward-history un-archiving keeps the
+full editor, one click away behind "More reward settings"). "Start from a template" now arms the
+wizard's inline form instead of the dialog.
+
+Gift cards are out of the business UI: no Serve & sell nav row, no Customer Interface sub-tab or
+switch, and `#/giftcards` is refused with a plain toast. Kept deliberately: the module key in
+entitlement lists (server truth other tenants' scopes are written against), read-side reporting
+of historical gift-card sales, the customer wallet's gift credit, and all DB code.
+**Known consequence, flagged:** `redeem_gift_card_at_branch_v117`'s only call site was the
+removed page, so an outstanding card balance is no longer redeemable from the business UI — the
+one such card lives on the owner's demo tenant.
+
+Walkthrough steps j–m pin the report: a LIVE fixture (4 rewards, 3 tiers, published config) —
+all three cards open the wizard with zero `.modal`; the tiers build fires the tier RPC then
+publish THEN the mode write, in order; Add/Edit from the live grid reach the wizard, never the
+dialog; gift cards absent from nav and Customer Interface with the route refused. Suite
+2841/2841; V301 (a–m), V293, V294, V296 walkthroughs pass on the V303 bundles.
