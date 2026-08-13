@@ -225,6 +225,17 @@ Deno.serve(async (request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   if (!supabaseUrl) return json({ error: 'server_misconfigured' }, 500);
 
+  // GATE FIRST, SPEND SECOND. The first cut called Google and THEN asked the database
+  // whether the caller was allowed — so anyone holding the public anon key could burn
+  // real Places quota without being able to persist a single row. This read-only RPC
+  // raises unless the caller is a real platform user with prospecting access, so the
+  // billable call below is unreachable without authorization.
+  try {
+    await callRpc(supabaseUrl, authorization, 'platform_crm_prospecting_taxonomy_v297', {});
+  } catch {
+    return json({ error: 'prospecting_access_required' }, 403);
+  }
+
   try {
     // 1. DISCOVERY — cheap, always scoped, never unbounded.
     const search = await provider.searchBusinesses(body.query);
