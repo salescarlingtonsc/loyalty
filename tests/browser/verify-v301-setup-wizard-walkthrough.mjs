@@ -109,7 +109,10 @@ const stubSource=`(()=>{
   /* The in-memory draft the wizard writes into, so a re-render reads back what it saved. */
   const draft={id:null,version_no:2,snapshotHash:'hash-1',hashSeq:1,
     program:{...program},rewards:[]};
-  window.__V301={rpc:[],writes:[],draft,published:[]};
+  /* V302: the table set and the business id are exposed so a step can put this business into a
+     DIFFERENT starting state in the same browser — specifically the owner's own reported one, a
+     paused programme with a published configuration and a reward catalogue. */
+  window.__V301={rpc:[],writes:[],draft,published:[],tables:TABLES,biz:BIZ};
   const chainable=resolveOut=>{
     const q={single:false,head:false,countMode:null,op:'select'};
     const chain={};
@@ -165,6 +168,27 @@ const stubSource=`(()=>{
         TABLES.firm_config_versions=[{id:draft.id,business_id:BIZ,version_no:draft.version_no,
           based_on_version_id:args&&args.p_based_on||null,status:'draft',snapshot_hash:draft.snapshotHash}];
         return {version_id:draft.id,version_no:draft.version_no,status:'draft',snapshot_hash:draft.snapshotHash};
+      /* V302: mirrors the real function — it copies a PUBLISHED reward's full row into this
+         draft so a later partial edit has something to coalesce its untouched fields from.
+         Idempotent: a reward already in the draft is simply confirmed. */
+      case 'ensure_published_reward_in_draft_v138':{
+        const wanted=args&&args.p_reward;
+        if(!draft.rewards.find(r=>r.reward_id===wanted)){
+          const published=(TABLES.loyalty_rewards||[]).find(r=>r.id===wanted);
+          if(!published)return {reward_id:null,snapshot_hash:draft.snapshotHash};
+          draft.rewards.push({reward_id:published.id,business_id:BIZ,name:published.name,
+            customer_name:published.customer_name,description:published.description??null,
+            fulfillment_kind:published.fulfillment_kind||'manual_item',cost_points:published.cost_points,
+            credit_cents:published.credit_cents??0,estimated_cost_cents:published.estimated_cost_cents??0,
+            active:published.active!==false,sort:published.sort??draft.rewards.length,
+            entitlement_expiry_days:published.entitlement_expiry_days??null,usage_limit:published.usage_limit??null,
+            min_tier_id:published.min_tier_id??null,min_tier_threshold:published.min_tier_threshold??null,
+            claim_available_from:null,claim_available_until:null,image_ref:null,
+            created_at:published.created_at||'2026-08-13T00:00:00Z'});
+          draft.snapshotHash='hash-'+(++draft.hashSeq);
+        }
+        return {reward_id:wanted,snapshot_hash:draft.snapshotHash};
+      }
       case 'save_loyalty_config_draft':{
         const config=(args&&args.p_config)||{};
         if(config.reward){
@@ -415,8 +439,80 @@ try{
   await page.click('#growSetupNextV301');await waitStep(4);
   await overflow('step 4');await stepperVisible('step 4');await noModal('on mobile step 4');
 
+  /* ------- i. V302: the owner's OWN reported state — paused, WITH a catalogue ------- */
+  /* This is the regression that matters. Every step above ran against a brand-new business, and
+     that is exactly why V301 shipped looking fixed while the workspace that reported the bug was
+     untouched: its programme is PAUSED with a published configuration and four rewards, and the
+     V301 gate read that as "a configured programme its owner is managing" and sent the same click
+     back to the old drill and the old New-reward popup. Paused is the state a failed setup
+     ATTEMPT ends in. The fixture is mutated into that exact shape, in the same browser, and the
+     click the owner actually makes must reach the wizard. */
+  say("i. a PAUSED programme WITH a published catalogue still opens the wizard (owner's own state)");
+  await page.setViewportSize({width:1440,height:1000});
+  await page.evaluate(()=>{
+    const T=window.__V301.tables,biz=window.__V301.biz;
+    T.firm_config_versions.length=0;
+    T.firm_config_versions.push({id:'pub-1',business_id:biz,version_no:1,
+      based_on_version_id:null,status:'published',snapshot_hash:'hash-pub'});
+    T.businesses[0].active_config_version_id='pub-1';
+    T.loyalty_programs[0]={...T.loyalty_programs[0],active:false,current_config_version_id:'pub-1'};
+    T.loyalty_rewards.length=0;
+    T.loyalty_rewards.push({id:'lr-1',business_id:biz,active:true,customer_name:'Free flat white',
+      name:'Free flat white',cost_points:400,credit_cents:0,entitlement_expiry_days:null,
+      usage_limit:null,min_tier_id:null,min_tier_threshold:null,estimated_cost_cents:600,
+      sort:1,claim_available_from:null,claim_available_until:null,created_at:'2026-06-01T00:00:00Z'});
+  });
+  await go('#/dashboard');
+  await page.waitForTimeout(400);
+  await go('#/grow');
+  await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
+  await page.click('[data-grow-topic-v229="points"]');
+  await page.waitForFunction(()=>location.hash.startsWith('#/grow/setup'),null,{timeout:20000});
+  await waitStep(1);
+  assertTrue(true,'clicking Points System on a PAUSED programme WITH a catalogue opens the wizard');
+  await noModal('after the paused-with-catalogue entry');
+  /* Nothing is taken away: the full editor that holds tiers, archived rewards and reward history
+     is one click from every step of the wizard. */
+  assertTrue(await page.locator('#growSetupFullEditorV302').count()===1,
+    'the wizard links to the full editor, so a configured owner loses no capability');
+  const fullEditorHref=await page.locator('#growSetupFullEditorV302').getAttribute('href');
+  assertTrue(String(fullEditorHref||'').startsWith('#/loyalty'),
+    `the full-editor link points at the reward editor (${fullEditorHref})`);
+  /* And the catalogue this business already has is carried INTO the wizard, not hidden from it.
+     V302: the list is published rewards MERGED with the draft's own versions, because
+     create_loyalty_config_draft copies the programme row and the tiers into a new draft but not
+     the reward versions — so reading the draft alone would show an owner with four published
+     rewards an empty step 3 and invite them to re-create what they already have. */
+  await page.click('#growSetupNextV301');await waitStep(2);
+  await page.click('#growSetupNextV301');await waitStep(3);
+  const stepThreeCatalogue=await page.locator('#growSetupBodyV301').innerText();
+  assertTrue(stepThreeCatalogue.includes('Free flat white'),
+    'step 3 lists the PUBLISHED reward even though the fresh draft does not carry it yet');
+  await noModal('on step 3 with an existing catalogue');
+  /* Editing that published reward must MATERIALISE it into the draft first. Without it,
+     save_loyalty_reward_draft coalesces the fields this three-field form does not send from a
+     draft version that does not exist — writing NULL description / fulfilment kind beside the
+     edit, which publishing would then put onto a working reward. */
+  await page.click('[data-grow-setup-reward-edit-v301="lr-1"]');
+  await page.waitForTimeout(300);
+  assertTrue((await page.locator('#growSetupRewardNameV301').inputValue())==='Free flat white',
+    'Edit loads that exact reward into the inline form (still no dialog)');
+  await noModal('while editing an existing reward');
+  await page.fill('#growSetupRewardBudgetV301','7.50');
+  await page.waitForTimeout(250);
+  await page.click('#growSetupNextV301');await waitStep(4);
+  const ensureCall=await page.evaluate(()=>window.__V301.rpc
+    .map((call,index)=>({name:call.name,index}))
+    .filter(call=>call.name==='ensure_published_reward_in_draft_v138'||call.name==='save_loyalty_reward_draft'
+      ||call.name==='save_loyalty_config_draft'));
+  const firstEnsure=ensureCall.find(call=>call.name==='ensure_published_reward_in_draft_v138');
+  assertTrue(Boolean(firstEnsure),
+    'editing a published reward calls ensure_published_reward_in_draft_v138 before writing it');
+  const rewardWrite=ensureCall.find(call=>call.index>(firstEnsure?.index??Infinity));
+  assertTrue(Boolean(rewardWrite),`the reward write follows the materialisation (${rewardWrite?.name})`);
+
   if(pageErrors.length)process.stdout.write(`note: page errors observed (non-fatal): ${JSON.stringify(pageErrors)}\n`);
-  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-h)\n');
+  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-i)\n');
 }catch(error){
   process.stdout.write(`V301 walkthrough FAIL at ${step}\n${error?.stack||error}\n`);
   if(pageErrors.length)process.stdout.write(`page errors: ${JSON.stringify(pageErrors)}\n`);

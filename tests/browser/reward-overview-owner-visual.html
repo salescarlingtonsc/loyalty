@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="0f46f64abb16e1920d9d9f1597b1b0660e73c9e3d52ae91f0d607785ff962bd0"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="001174c47f2bee29d534b17129925281648d2505eabfdc121ba0c39f0cd8acf5"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1031,6 +1031,7 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
    control keeps a 44px tap target — the staff filling this in may be reading a second language. */
 .grow-setup-v301{padding:4px 14px 16px}
 .grow-setup-head-v301{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.grow-setup-head-links-v301{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .grow-setup-title-v301{margin:2px 0 0;font-size:1.02rem;letter-spacing:-.01em}
 .grow-setup-leave-v301{color:var(--muted);font-size:.82rem;text-decoration:underline;padding:10px 2px;min-height:44px;display:inline-flex;align-items:center}
 .grow-setup-steps-v301{display:flex;gap:8px;list-style:none;margin:12px 0 0;padding:0 0 4px;max-width:100%;overflow-x:auto;scrollbar-width:none}
@@ -2023,7 +2024,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0f46f64abb16e1920d9d9f1597b1b0660e73c9e3d52ae91f0d607785ff962bd0</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 001174c47f2bee29d534b17129925281648d2505eabfdc121ba0c39f0cd8acf5</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2935,6 +2936,18 @@ function growBirthdayPendingChangesV291(live,draft){
    review page runs. Nothing here touches loyalty_programs, businesses.points_mode or a ledger
    directly — points_mode stays an advanced-editor concern, exactly as V229 left it. */
 const GROW_SETUP_STEPS_V301=[[1,'Choose'],[2,'Earning'],[3,'Reward'],[4,'Go live']];
+/* V302: the setup wizard's picture of a catalogue is PUBLISHED rewards overlaid with the draft's
+   own versions, because a draft only carries the rewards it has been made to carry (see
+   refreshRewards). Draft wins on id — it is the newer truth for that reward — and a published
+   reward the draft has never touched stays on the list rather than vanishing from the owner's
+   view of their own programme. Order follows the incoming published list, with anything the
+   draft added appended, so a re-read never shuffles rows under the reader. */
+function mergeRewardsV302(existing,incoming){
+  const byId=new Map();
+  (Array.isArray(existing)?existing:[]).forEach(reward=>{if(reward?.id)byId.set(String(reward.id),reward)});
+  (Array.isArray(incoming)?incoming:[]).forEach(reward=>{if(reward?.id)byId.set(String(reward.id),reward)});
+  return [...byId.values()];
+}
 /* The publish gate's "What changes for customers" list, distilled for the wizard's last step.
    It reads the SAME module-scope comparisons studioPublishReviewPage reads —
    growPublishFieldRowsV170 plus the V291 reward / birthday / bring-back diffs — so the two
@@ -3061,7 +3074,12 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     stampTarget:Number(base?.stamp_target)>0?Math.round(Number(base.stamp_target)):8,
     classicRedeem:Number(base?.redeem_points)>0?Math.round(Number(base.redeem_points)):800,
     classicCredit:Number(base?.reward_credit_cents)>0?Number(base.reward_credit_cents)/100:20,
-    rewards:rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:snapshot?.rewards),
+    /* V302: published first, then the draft's own versions overlaid on top — see
+       mergeRewardsV302. Reading only the draft (as V301 did) showed an owner with a published
+       catalogue and a fresh draft an empty step 3, which invites them to re-create rewards they
+       already have. */
+    rewards:mergeRewardsV302(rewardListFrom(snapshot?.rewards),
+      rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:[])),
     form:null,comparison:null,
     keepPaused:false,ack:false,needAck:false,impactRules:[],
     busy:false,error:'',published:false,publishedSummary:null
@@ -3101,15 +3119,23 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
      so a wizard the owner browsed away from leaves no orphan draft behind; the snapshot hash is
      carried and refreshed from each response; and a failure comes back as a message the caller
      prints beside the step it belongs to, without touching a single typed value. */
+  /* V302: draft creation is its own step because the reward path needs the draft to EXIST before
+     it writes anything — ensure_published_reward_in_draft_v138 takes a config version. Still
+     created on the first write only, never on page load, so browsing the wizard and leaving
+     still deposits no orphan draft. */
+  const ensureDraftV302=async()=>{
+    if(state.versionId)return {ok:true};
+    const {data,error}=await sb.rpc('create_loyalty_config_draft',{
+      p_business:S.biz.id,p_based_on:state.basedOn,p_source:'owner_setup_wizard_v301'});
+    if(error)return {ok:false,error};
+    if(!data?.version_id)return {ok:false,error:new Error('The editable draft was not returned.')};
+    state.versionId=data.version_id;
+    state.snapshotHash=data.snapshot_hash||null;
+    return {ok:true};
+  };
   const saveDraft=async config=>{
-    if(!state.versionId){
-      const {data,error}=await sb.rpc('create_loyalty_config_draft',{
-        p_business:S.biz.id,p_based_on:state.basedOn,p_source:'owner_setup_wizard_v301'});
-      if(error)return {ok:false,error};
-      if(!data?.version_id)return {ok:false,error:new Error('The editable draft was not returned.')};
-      state.versionId=data.version_id;
-      state.snapshotHash=data.snapshot_hash||null;
-    }
+    const created=await ensureDraftV302();
+    if(!created.ok)return created;
     const {data,error}=await sb.rpc('save_loyalty_config_draft',{
       p_version:state.versionId,p_config:config,p_expected_snapshot_hash:state.snapshotHash||null});
     if(error)return {ok:false,error};
@@ -3124,7 +3150,16 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     const {data,error}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:state.versionId});
     if(error||!data)return;
     if(data.snapshot_hash)state.snapshotHash=data.snapshot_hash;
-    state.rewards=rewardListFrom(data.rewards);
+    /* V302: MERGE, never replace. create_loyalty_config_draft copies the programme row and the
+       tiers into a new draft but NOT the reward versions — that is what
+       ensure_published_reward_in_draft_v138 exists to do, on demand, one reward at a time. So a
+       firm with a published catalogue and a fresh draft has a draft that legitimately holds only
+       the rewards it has touched, and replacing the list with it would make four published
+       rewards disappear from this step the moment the owner saved their first one. Publishing
+       cannot lose them either way — publish_loyalty_config UPDATEs loyalty_rewards from the
+       draft's versions and leaves rows the draft does not carry untouched — so what is at stake
+       here is the owner's picture of their own catalogue, and it must stay complete. */
+    state.rewards=mergeRewardsV302(state.rewards,rewardListFrom(data.rewards));
   };
   const suggestionsV301=()=>{
     const cents=Math.max(1,costPerPointCents());
@@ -3219,7 +3254,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     host.innerHTML=`<section class="grow-setup-v301" id="growSetupWizardPanelV301" aria-label="Set up rewards" data-grow-setup-step-v301="${state.step}">
       <div class="grow-setup-head-v301"><div><p class="customer-quest-kicker">Set up rewards</p>
       <h3 class="grow-setup-title-v301">Step ${state.step} of 4 · ${esc(GROW_SETUP_STEPS_V301[state.step-1][1])}</h3></div>
-      <a class="grow-setup-leave-v301" href="#/grow">Leave set up</a></div>
+      <!-- V302: the wizard is now the door for every unfinished programme, including a PAUSED one
+           that already carries a catalogue, tiers and reward history. That owner must never lose
+           the surface that holds them, so the full editor keeps a permanent link here — the same
+           words the Programmes page uses for the same destination — and it carries the draft the
+           wizard is editing, so opening it lands on this work rather than on a second draft. -->
+      <span class="grow-setup-head-links-v301"><a class="grow-setup-leave-v301" href="#/loyalty${state.versionId?`/${encodeURIComponent(state.versionId)}`:''}" id="growSetupFullEditorV302">More reward settings</a>
+      <a class="grow-setup-leave-v301" href="#/grow">Leave set up</a></span></div>
       ${stepperHtml()}
       <div class="grow-setup-body-v301" id="growSetupBodyV301">${bodyHtml()}</div>
       ${errBlock()}
@@ -3400,6 +3441,25 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
            are sent: save_loyalty_reward_draft coalesces every absent key from the existing
            version, so a description, image or store-credit value set in the full editor is
            preserved rather than blanked by a wizard that never showed it. */
+        /* V302: a reward this draft has never carried must be MATERIALISED into it before the
+           partial edit below is written. save_loyalty_reward_draft coalesces every field it is
+           not given from the reward's version IN THIS DRAFT — and for a published reward the
+           draft has never touched there is no such version, so the three fields this form owns
+           would be saved beside a NULL description, NULL fulfilment kind and NULL terms, and
+           publishing would then write those NULLs onto a working reward. This is the same
+           ensure-then-edit the full editor performs for exactly the same reason; it is
+           idempotent, so a reward already in the draft simply confirms. */
+        if(form.id){
+          const created=await ensureDraftV302();
+          if(!isCurrent())return;
+          if(!created.ok)return failStep(created.error,'Nothing was saved.');
+          const {data:ensured,error:ensureError}=await sb.rpc('ensure_published_reward_in_draft_v138',{
+            p_config_version:state.versionId,p_reward:form.id,p_expected_snapshot_hash:state.snapshotHash||null});
+          if(!isCurrent())return;
+          if(ensureError||ensured?.reward_id!==form.id)
+            return failStep(ensureError||new Error('The editable copy of this reward could not be confirmed.'),'Nothing was saved.');
+          if(ensured?.snapshot_hash)state.snapshotHash=ensured.snapshot_hash;
+        }
         const payload=form.id
           ?{id:form.id,business_id:S.biz.id,name:form.name.trim(),customer_name:form.name.trim(),
             cost_points:cost,estimated_cost_cents:budgetCents}
@@ -3796,16 +3856,19 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
      means live; everything else is work outstanding, and its call to action says which kind of
      work — finishing a draft is not the same job as starting from nothing. */
   const growTopicOngoingV244=topic=>topic.status[1]==='on';
-  /* V301: the two point-engine cards are the cold-start doors the owner reported as unusable, so
-     an owner who has never finished setting a programme up gets the wizard instead of the tile
-     drill. "Never finished" is deliberately narrow — no published configuration at all, or a
-     published one that is neither running nor carrying a single reward. A PAUSED programme WITH
-     a catalogue is a configured programme its owner is managing, and sending them to a four-step
-     wizard would take away the reward history, the tiers and the archived rewards the drill
-     holds. Once anything is live, every existing drill and inline editor is reached exactly as
-     before — editing a running programme is not the wizard's job. */
-  const growSetupEntryV301=key=>canSetupGrow&&['points','stamps'].includes(String(key||''))
-    &&!(snapshot.currentVersion&&snapshot.loyalty&&(loyaltyLive||(snapshot.rewards||[]).length>0));
+  /* V302 (owner, on the shipped V301: "it still showing gift card and same UI UX", from a
+     workspace whose programme is PAUSED with four rewards). V301 excluded exactly that state on
+     the theory that a paused catalogue is a configured programme being managed — and it was
+     wrong about who that owner is. The programme this rule protected had never reached a
+     customer: paused is the state a setup ATTEMPT ends in, which is why the workspace that
+     reported "setting up rewards does not work" was the one state the fix could not reach.
+     The line is now the honest one — anything not LIVE is unfinished setup, and its owner gets
+     the wizard. Nothing is taken away: the wizard carries a permanent link into the full editor
+     for the tiers, archived rewards and history the drill holds, so the advanced surface is one
+     click away instead of being the only door. Once a programme IS live, every existing drill
+     and inline editor is reached exactly as before — editing a running programme is not the
+     wizard's job. */
+  const growSetupEntryV301=key=>canSetupGrow&&['points','stamps'].includes(String(key||''))&&!loyaltyLive;
   const growTopicActionV244=topic=>{
     if(growSetupEntryV301(topic.key))return growDraftPendingId?'Continue set up →':'Set up →';
     if(growTopicOngoingV244(topic))return 'View →';
@@ -4782,7 +4845,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1}){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'0f46f64abb16e1920d9d9f1597b1b0660e73c9e3d52ae91f0d607785ff962bd0',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'001174c47f2bee29d534b17129925281648d2505eabfdc121ba0c39f0cd8acf5',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

@@ -64,7 +64,7 @@ overview. Chrome captures were re-run for `v142-connect-paynow-pos/metrics.json`
 
 Regenerated `tests/browser/reward-overview-owner-visual.html` production-source-sha256:
 
-    0f46f64abb16e1920d9d9f1597b1b0660e73c9e3d52ae91f0d607785ff962bd0
+    001174c47f2bee29d534b17129925281648d2505eabfdc121ba0c39f0cd8acf5
 
 ## Same release: the phantom "Gift cards" Overview row
 
@@ -108,3 +108,47 @@ table without the Gift cards row; the published pair shows the inline success st
   (name, points cost, company cost). `save_loyalty_reward_draft` coalesces every absent key from
   the existing version, so a description, image or store-credit value set in the full editor is
   preserved rather than blanked by a form that never showed it.
+
+## V302 follow-up — the fix that did not reach the owner who reported it
+
+The owner re-tested the shipped V301 build and reported no change: **"it still showing gift card
+and same UI UX"**, from a workspace whose programme is PAUSED with four rewards and a published
+configuration. Three defects, all confirmed against production before changing anything:
+
+1. **The wizard never opened for them.** `growSetupEntryV301` excluded a paused programme that
+   already carried a catalogue, on the theory that such a programme is being *managed*. Paused is
+   the state a failed setup ATTEMPT ends in — so the one workspace that reported "setting up
+   rewards does not work" was the exact state the fix could not reach, and its "Set up →" still
+   fell through to the old drill and the old New-reward dialog. The gate is now `!loyaltyLive`:
+   anything not running is unfinished setup. Nothing is withheld — the wizard carries a permanent
+   **More reward settings** link (`#growSetupFullEditorV302`) into the full editor, which holds
+   the tiers, archived rewards and reward history the drill holds.
+2. **A published catalogue could vanish from step 3.** `create_loyalty_config_draft` copies the
+   programme row and the tiers into a new draft but NOT the reward versions (that is what
+   `ensure_published_reward_in_draft_v138` does, on demand, one reward at a time). Reading the
+   draft alone showed an owner with four published rewards an empty step 3, inviting duplicates.
+   The list is now published rewards MERGED with the draft's versions (`mergeRewardsV302`), draft
+   winning per id, in both the initial state and every re-read.
+3. **Editing a published reward could write NULLs onto it.** `save_loyalty_reward_draft` coalesces
+   the fields it is not given from that reward's version *in this draft*; for a reward the draft
+   had never carried there is none, so the wizard's three-field form would have stored a NULL
+   description and fulfilment kind beside the edit, and publishing writes the draft's values onto
+   `loyalty_rewards`. The wizard now performs the same ensure-then-edit the full editor does.
+
+Checked and found safe, so deliberately NOT changed: `publish_loyalty_config` UPDATEs
+`loyalty_rewards` from the draft's reward versions via a join and leaves rows the draft does not
+carry untouched — a partial draft can never delete a published reward. (Tiers are delete+insert;
+rewards are not.)
+
+Regression: walkthrough step **(i)** puts the fixture into the owner's own reported shape —
+published configuration, paused programme, existing reward — and proves the tile opens the wizard,
+that step 3 lists the published reward the fresh draft does not carry, that Edit loads it inline
+with no dialog, and that `ensure_published_reward_in_draft_v138` precedes the write. Verified
+red-first: with the V301 gate restored, step (i) fails at the tile click.
+
+`verify-v294-owner-batch-walkthrough` steps 5a/6 now switch their fixture's programme ON for the
+reward-card grid — the grid is the surface a RUNNING programme's owner drills into — and switch it
+back. Every assertion in them is unchanged, which is the point: widening the wizard's entry took no
+capability away.
+
+Suite 2838/2838; V301 (a–i), V293, V294, V296 walkthroughs pass on the V302 bundles.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="7a66fd52c1a7e34ed836111a3c5e3f60ac3cd362571b094e4e18b1139d2382c2">
+<meta name="v105-production-component-sha256" content="1cb88e5576c417d374f96bc4476ec69d957575356f9915b1484a0e9efb348663">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1037,6 +1037,7 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
    control keeps a 44px tap target — the staff filling this in may be reading a second language. */
 .grow-setup-v301{padding:4px 14px 16px}
 .grow-setup-head-v301{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.grow-setup-head-links-v301{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .grow-setup-title-v301{margin:2px 0 0;font-size:1.02rem;letter-spacing:-.01em}
 .grow-setup-leave-v301{color:var(--muted);font-size:.82rem;text-decoration:underline;padding:10px 2px;min-height:44px;display:inline-flex;align-items:center}
 .grow-setup-steps-v301{display:flex;gap:8px;list-style:none;margin:12px 0 0;padding:0 0 4px;max-width:100%;overflow-x:auto;scrollbar-width:none}
@@ -2743,7 +2744,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 7a66fd52c1a7</span>
+<span class="v105-provenance">v105 production-component harness · 1cb88e5576c4</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2868,7 +2869,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'7a66fd52c1a7e34ed836111a3c5e3f60ac3cd362571b094e4e18b1139d2382c2',
+  sourceHash:'1cb88e5576c417d374f96bc4476ec69d957575356f9915b1484a0e9efb348663',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

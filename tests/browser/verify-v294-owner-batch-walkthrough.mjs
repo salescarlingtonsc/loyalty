@@ -319,6 +319,14 @@ try{
 
   /* ---------------- 5. reward history on the grid and in the editor ---------------- */
   say('5a. grow catalogue grid: retired reward lives in history');
+  /* V302: the reward-card grid is the surface a RUNNING programme's owner drills into, and this
+     fixture's programme is paused — a state that now opens the setup wizard instead, because the
+     owner reported that paused is exactly where a failed setup attempt lands. The grid itself is
+     unchanged, so this step asserts it where it belongs: the programme is switched on for the
+     drill, then switched back, leaving every later step's paused expectations intact. */
+  await page.evaluate(()=>{window.__V294.state.program.active=true});
+  await go('#/dashboard');await page.waitForTimeout(300);await go('#/grow');
+  await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
   await page.click('[data-grow-topic-v229="points"]');
   await page.waitForSelector('[data-reward-card-grid-v250]',{timeout:20000});
   const gridText=await page.locator('[data-reward-card-grid-v250]').first().innerText();
@@ -375,6 +383,7 @@ try{
   assertTrue((await page.evaluate(()=>location.hash)).includes('ctx-tiers'),'tiers-card entry carries ctx-tiers on the hash');
   assertTrue((await bodyText()).includes('Your tiers'),'tiers-card entry renders the tiers block');
   assertTrue(!(await bodyText()).includes('Back to Grow overview'),'still no back button on the tiers entry');
+  await page.evaluate(()=>{window.__V294.state.program.active=false}); // V302: back to the fixture's own paused state
 
   /* ---------------- 8. Business Insights tabs ---------------- */
   say('8. insights cards became tabs');

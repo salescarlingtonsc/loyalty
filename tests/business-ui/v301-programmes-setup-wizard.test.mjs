@@ -223,10 +223,16 @@ test('V301 (e) the rewards cold start no longer opens the auto-setup modal', () 
 });
 
 test('V301 (e) the pending point-engine cards and the bare Point system row open the wizard', () => {
-  /* The gate is narrow on purpose: a PAUSED programme that already carries a reward catalogue is
-     a configured programme its owner is managing, and the drill holds things the wizard does not
-     (reward history, tiers, archived rewards). Sending them to a wizard would remove capability. */
-  assert.match(grow, /const growSetupEntryV301=key=>canSetupGrow&&\['points','stamps'\]\.includes\(String\(key\|\|''\)\)\s*\r?\n?\s*&&!\(snapshot\.currentVersion&&snapshot\.loyalty&&\(loyaltyLive\|\|\(snapshot\.rewards\|\|\[\]\)\.length>0\)\);/);
+  /* V302 (owner, on the shipped V301, from a workspace whose programme is PAUSED with four
+     rewards: "it still showing gift card and same UI UX"). The V301 gate excluded a paused
+     catalogue as "a configured programme its owner is managing" — but paused is the state a
+     failed setup ATTEMPT ends in, so the one workspace that reported the bug was the one state
+     the fix could not reach. Anything not LIVE is unfinished setup. Capability is preserved by
+     the wizard's permanent link into the full editor, asserted here, not by withholding the
+     wizard from the owner who needs it. */
+  assert.match(grow, /const growSetupEntryV301=key=>canSetupGrow&&\['points','stamps'\]\.includes\(String\(key\|\|''\)\)&&!loyaltyLive;/);
+  assert.match(app, /id="growSetupFullEditorV302"/);
+  assert.match(app, /More reward settings<\/a>/);
   assert.match(grow, /if\(growSetupEntryV301\(tile\.dataset\.growTopicV229\)\)return nav\('#\/grow\/setup'\);/);
   assert.match(grow, /if\(growSetupEntryV301\(topic\.key\)\)return growDraftPendingId\?'Continue set up →':'Set up →';/);
   assert.match(grow, /if\(kind==='earning'&&!rewardJourney\.earning&&canSetupGrow\)return nav\('#\/grow\/setup'\);/);
