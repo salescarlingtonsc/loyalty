@@ -594,7 +594,7 @@ confirm the seeder gives it four spine rows.
 | `app/app.js` | `7efdfeed4513d84acff990b65b0731a55f6236508774500e924a0783ffdb0151` | `b19f58d87a264170147f97075e76f0a7` |
 | `app/app-core.js` (generated) | `ce10195ecb7aa87fcf73c9839aa7060e472ed9c106531196d72d76bb41900a0a` | `ee1f8b0c5c164e46af431a8a56e35426` |
 | `app/app-business.js` (generated) | `6a680c272e95f32216bfc8f9d401905047320c6c8b4baddc5862ac99f8a0caf0` | `4d81f33543775c89632344c7784b461b` |
-| `app/index.html` (generated stamp) | `d2b9806b6e11039ccc6c98b0c44b39d1f5ded86b14373e3ab32c2c4796214e80` | `dc3f037fd8ee7b24f6820194a6c65533` |
+| `app/index.html` (generated stamp) | `d72618e626397f79` (prefix; as shipped — carries this increment's stamps MERGED with the parallel session's platform-console stamp after the rebase onto main `409c7db`) | — |
 | `tests/browser/v129-trial-test-visual.html` | `b7998dc7fdd15d2d900df60da9c446b6767a4a47eecb355eb59fdc895b740b4d` | `80117e1cee303ee53eab067ee49d77c5` |
 | `tests/browser/v145-launch-freeze-visual.html` | `027645ced2c1bdeb942c86a8b40d09f4f9d259928c37f2d6020b787518791f85` | `7be0c1f4a6986eb6fe685e63ee78641e` |
 
