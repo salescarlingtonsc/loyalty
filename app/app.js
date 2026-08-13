@@ -22288,8 +22288,10 @@ function growBirthdayPendingChangesV291(live,draft){
    This is a different DOOR onto the existing engine, never a second writer. Every Next saves
    through the SAME create_loyalty_config_draft / save_loyalty_config_draft the editor writes
    through, and Publish runs the SAME preview_publish_impact → publish_loyalty_config pair the
-   review page runs. Nothing here touches loyalty_programs, businesses.points_mode or a ledger
-   directly — points_mode stays an advanced-editor concern, exactly as V229 left it. */
+   review page runs. Nothing here touches loyalty_programs or a ledger directly. The ONE live
+   column it writes is businesses.points_mode, and only after publish has succeeded — the model the
+   owner picked on step 1 has to reach the engine that enforces it, or the choice is cosmetic. See
+   targetPointsModeV303 / applyPointsModeV303 for the mapping and for why it runs after publish. */
 const GROW_SETUP_STEPS_V301=[[1,'Choose'],[2,'Earning'],[3,'Reward'],[4,'Go live']];
 /* V303 (owner 2026-08-13: "tiered membership / stamps - still not able to build like points").
    A model that includes tiers gets one extra step, in the place the ladder belongs — after the
@@ -22546,10 +22548,21 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     :(livePointsModeV303==='tiers'?'tiers':livePointsModeV303==='both'?'both':'redeem');
   const pickV303=GROW_SETUP_MODELS_V303.some(model=>model[0]===handoffModelV303)
     ?handoffModelV303:derivedModelV303;
+  /* V306: tier_basis has two spellings, and this is the boundary between them. The DB CHECK — on
+     loyalty_programs, loyalty_program_versions and the draft alike — allows only
+     visits|spend|points_earned; the wizard radio (GROW_SETUP_CLIMB_V305) speaks visits|points.
+     V305 compared the STORED value against 'points', which the stored spelling 'points_earned'
+     never equals, so a points-earned ladder was read back as 'visits' and silently downgraded on
+     the next save; and the write side sent the UI key straight through, where 'points' violates the
+     CHECK and the save fails outright. Translate at the two reads and the two writes, nowhere else.
+     'spend' has no radio (no production firm is on it): it passes through both translators
+     untouched, so a spend firm round-trips unchanged and only an actual click moves it off. */
+  const tierBasisFromDbV306=db=>{const v=String(db||'visits');return v==='points_earned'?'points':v==='spend'?'spend':'visits'};
+  const tierBasisToDbV306=ui=>ui==='points'?'points_earned':ui;
   /* V305: what tier_basis was when this visit opened, kept so the Tiers step writes it only when
      the owner actually changed it — a no-op save is still a draft write, and V301's own rule is
      that nothing is written when nothing changed. */
-  const initialTierBasisV305=String(base?.tier_basis||'visits')==='points'?'points':'visits';
+  const initialTierBasisV305=tierBasisFromDbV306(base?.tier_basis);
   const state={
     step:1,
     visited:new Set([1]),
@@ -22584,8 +22597,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* V305: tier_basis is now a value the owner SETS here, not one the wizard only reads. It lives
        on state so the Climbing step (tiers-only) and the compact control on the Tiers step (points
        + tiers) are two views of one answer, and so the threshold labels re-read it the moment it
-       changes. The saved default is the live/draft one — the owner is never silently re-basised. */
-    tierBasis:String(base?.tier_basis||'visits')==='points'?'points':'visits',
+       changes. The saved default is the live/draft one — the owner is never silently re-basised.
+       V306: through tierBasisFromDbV306, so the stored 'points_earned' arrives as the radio's
+       'points' instead of collapsing to 'visits'. */
+    tierBasis:tierBasisFromDbV306(base?.tier_basis),
     /* V304: which listed row the open form is EDITING. It drives the "· editing" affix the owner
        asked for ("it needs to reflect as i change it, so will not have confusion") and nothing
        else — the row's own name and number are patched straight into the DOM as they are typed. */
@@ -23089,9 +23104,14 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      integrity"). The switch is a switch on `businesses`, not a delete, and the sentence that
      announces it has to say so — an owner reading "customers stop claiming point rewards" with no
      second clause reasonably concludes their catalogue is being thrown away. */
+  /* V306: the stamp card gets its own line, because it now MOVES points_mode too (it targets
+     'redeem' — see targetPointsModeV303). Falling through to the redeem sentence would have told a
+     stamp firm about tiers it is no longer running, and saying nothing at all would have been the
+     old, wrong claim that choosing stamps leaves points_mode untouched. */
   const modeChangeLineV303=()=>!pointsModeChangesV303()?''
     :state.pick==='tiers'?'Points will now build tier membership — customers stop claiming point rewards. Every reward you set up stays saved.'
     :state.pick==='both'?'Points will buy rewards AND build tier membership, side by side. Nothing you have already set up changes.'
+    :state.pick==='stamps'?'Customers switch to the stamp card. Your points set-up stays saved, and points go back to being spendable underneath — so no old tier ladder is left showing to customers.'
     :'Points will be spent on rewards again — tiers stay saved, and stop being what customers see.';
   /* V305: and on a tiers-ONLY programme the consequence is stated whether or not the mode is
      CHANGING, because it is true of the state the owner is publishing into either way. A firm
@@ -23494,9 +23514,19 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     }
   };
   const failStep=(error,tail)=>{state.error=`${ownerErrorText(error)} ${tail}`;render()};
-  /* V303: the points_mode the chosen model implies, or null for the stamp engine, which is not a
-     points mode at all. This is the ONE place the mapping is written down. */
-  const targetPointsModeV303=()=>state.pick==='stamps'?null:state.pick;
+  /* V303: the points_mode the chosen model implies. This is the ONE place the mapping is written
+     down.
+     V306: stamps target 'redeem', not null. V303 mapped the stamp card to null on the reasoning
+     that the stamp engine "is not a points mode at all", and applyPointsModeV303 reads a falsy
+     target as "leave it alone" — so a firm that had run Tiered membership kept points_mode='tiers'
+     after switching to a stamp card, and the V229 gate in customer_create_redemption_intent_v89
+     refuses ALL redemption under 'tiers' while the customer 'rewards' capability stays false. Every
+     stamp redemption was blocked. 'redeem' is what the V229 backfill gave every firm; on a stamp
+     firm it means "what you collect can be spent", it passes the server redemption gate, and it
+     keeps coalesce(points_mode,'tiers')='tiers' FALSE, so a tier ladder left over from a previous
+     model never resurfaces on the customer page. NULL does the opposite: the capabilities function
+     coalesces null to 'tiers', and an ex-tiers stamp firm would be shown the old ladder. */
+  const targetPointsModeV303=()=>state.pick==='stamps'?'redeem':state.pick;
   const pointsModeChangesV303=()=>{
     const target=targetPointsModeV303();
     return Boolean(target&&target!==S.biz?.points_mode);
@@ -23541,7 +23571,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     else row.earn_points_per_dollar=state.earn;
     if(model==='classic'){row.redeem_points=state.classicRedeem;row.reward_credit_cents=Math.round(state.classicCredit*100)}
     else if(writesCostDefault()){row.redeem_points=costBasis;row.reward_credit_cents=Math.round(0.01*100*costBasis)}
-    if(model==='points_tiers'&&state.tierBasis)row.tier_basis=state.tierBasis;
+    /* V306: through tierBasisToDbV306 — state.tierBasis is the radio's spelling, and the DB CHECK
+       accepts only visits|spend|points_earned, so the untranslated 'points' failed the save. */
+    if(model==='points_tiers'&&state.tierBasis)row.tier_basis=tierBasisToDbV306(state.tierBasis);
     return row;
   };
   async function advance(){
@@ -23618,7 +23650,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
          Tiers-only never reaches this line: its Climbing step already wrote the basis with the rest
          of the programme row. */
       if(state.tierBasis!==initialTierBasisV305){
-        const basisResult=await runSaveV304(()=>saveDraft({tier_basis:state.tierBasis}));
+        const basisResult=await runSaveV304(()=>saveDraft({tier_basis:tierBasisToDbV306(state.tierBasis)}));
         if(!isCurrent())return;
         if(!basisResult.ok)return reportSaveV304(basisResult,'The tier basis was not saved.');
       }

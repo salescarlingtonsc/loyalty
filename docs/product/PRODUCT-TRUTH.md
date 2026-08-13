@@ -44,6 +44,30 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   compare-with baseline, Customer 360 states Member since / Last visit /
   Rewards claimed from data consistent with its own figures, and reward cards
   state real redemption counts (never an invented zero).
+- Owner rulings 2026-08-13 (four independent programmes; plan approved same day
+  with all recommendations D1–D7 — ledger `PROGRAMME-INDEPENDENCE-001`, plan
+  `docs/design/FOUR-PROGRAMME-INDEPENDENCE-PLAN.md`): Peekaa runs FOUR loyalty
+  programmes — Points→gifts, Tier membership (3 tiers, default Silver/Gold/
+  Diamond, achieved by accumulated points, thresholds editable), Stamp card
+  (Stampede shape: min-spend per stamp, N stamps per gift), and Referral. Each
+  programme is INDIVIDUAL and not connected to the others; a business may
+  switch any subset live simultaneously. This SUPERSEDES the v229/v230 "one use
+  for points" exclusivity, the single-valued loyalty_model choice, and the
+  wizard's mutually-exclusive model pick (superseded rulings remain recorded in
+  their migration headers). Approved resolutions: tiers are measured by
+  lifetime points EARNED via the points engine (a tiers-only firm accrues
+  silently; stamps never feed tiers; spending and refunds never demote);
+  mid-card stamp milestones unlock without consuming stamps and the card resets
+  only when full; raising a tier threshold re-evaluates members immediately but
+  the publish preview must state how many members move down; gifts may carry an
+  optional total stock cap; referral pays BOTH sides and is captured on the
+  self-serve QR join with a no-double-dip rule against the welcome offer
+  (referral wins by default); new businesses may build and preview their
+  programme before paying; the wizard produces exactly 3 tiers while the deep
+  editor allows more, with no retroactive enforcement on existing tenants.
+  Delivery follows waves W0–W6 in the plan; independence becomes live behaviour
+  only at the final unlock wave, and until then existing single-programme
+  behaviour must not change.
 - Every visible dashboard value must come from an identified persistent source
   and use one documented formula, branch scope, time range, Singapore-calendar
   boundary, and inclusion/exclusion policy. A failed, partial, stale, capped, or

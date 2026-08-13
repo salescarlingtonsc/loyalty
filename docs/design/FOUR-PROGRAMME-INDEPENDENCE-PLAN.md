@@ -245,7 +245,13 @@ W6 is the big UX wave. The Stampede-parity FEEL (setup rail, customer stack,
 switchboard copy) arrives at W4/W6 without waiting on anything else; W5 is what
 makes "more than one live" true.
 
-## 7. Decisions needed from the owner
+## 7. Owner decisions — ALL APPROVED 2026-08-13
+
+> Owner reply: "proceed with all recommendations." Every decision below is
+> adopted as recommended. For D6 the standing recommendation from the Stampede
+> onboarding analysis applies: **preview-before-payment** — a new business
+> builds and previews its programme first and pays to go live. Recorded in
+> `docs/product/PRODUCT-TRUTH.md`; the build begins at W0.
 
 - **D1 Tier fuel**: confirm tiers = lifetime points EARNED via the points engine
   (silent accrual for tiers-only firms; stamps never feed tiers; refunds never

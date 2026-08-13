@@ -214,9 +214,11 @@ test('V301 (b) step 2 mirrors the #lsave field set, minus what belongs to publis
   assert.match(wizard, /const costBasis=Number\(base\?\.redeem_points\)>0\?Math\.round\(Number\(base\.redeem_points\)\):800;/);
   /* V305: tier_basis is read from STATE now, not straight off the stored row — the Climbing step
      and the Points + tiers basis control are how the owner sets it, and state carries the stored
-     value until they do. */
-  assert.match(wizard, /if\(model==='points_tiers'&&state\.tierBasis\)row\.tier_basis=state\.tierBasis;/);
-  assert.match(wizard, /tierBasis:String\(base\?\.tier_basis\|\|'visits'\)==='points'\?'points':'visits',/);
+     value until they do.
+     V306: and it crosses the DB boundary through tierBasisToDbV306, because state carries the
+     radio's spelling and the CHECK accepts only visits|spend|points_earned. */
+  assert.match(wizard, /if\(model==='points_tiers'&&state\.tierBasis\)row\.tier_basis=tierBasisToDbV306\(state\.tierBasis\);/);
+  assert.match(wizard, /tierBasis:tierBasisFromDbV306\(base\?\.tier_basis\),/);
   /* configuration_status and active are NOT written here — publishing owns them, and a wizard
      that set them would publish a paused programme by accident (the V258 defect). Comments are
      stripped before the check so the explanatory prose above does not satisfy it.
@@ -603,8 +605,9 @@ test('V305 (g) each of the owner’s four scenarios runs the steps its own seman
 test('V305 (g) the Climbing step asks the one question that decides the ladder', () => {
   assert.match(app, /const GROW_SETUP_CLIMB_V305=\[\s*\r?\n?\s*\['visits','Visits',/);
   assert.match(app, /\['points','Points earned',/);
-  // Visits is the default, exactly as tier_basis already defaults.
-  assert.match(wizard, /tierBasis:String\(base\?\.tier_basis\|\|'visits'\)==='points'\?'points':'visits',/);
+  // Visits is the default, exactly as tier_basis already defaults — V306 through the DB→UI
+  // translator, so a stored 'points_earned' opens on Points earned instead of collapsing to visits.
+  assert.match(wizard, /tierBasis:tierBasisFromDbV306\(base\?\.tier_basis\),/);
   assert.match(wizard, /const climbStepHtmlV305=\(\)=>`<p class="grow-setup-lead-v301">How do customers climb tiers\?<\/p>/);
   /* The earn rate is revealed INLINE on the same step, and only under a points basis — that is the
      only basis under which an earn rate means climbing speed. It reuses the Earning step's own id,
@@ -637,9 +640,11 @@ test('V305 (g) Points + tiers keeps five steps and gains the basis control on th
   // ONE control, two placements — the compact flag changes chrome only.
   assert.match(wizard, /const climbOptionsHtmlV305=compact=>/);
   assert.match(wizard, /data-grow-setup-basis-v305="\$\{key\}"/);
-  // Saved with the tiers step's own Next, and only when it changed.
-  assert.match(wizard, /if\(state\.tierBasis!==initialTierBasisV305\)\{\s*\r?\n?\s*const basisResult=await runSaveV304\(\(\)=>saveDraft\(\{tier_basis:state\.tierBasis\}\)\);/);
-  assert.match(wizard, /const initialTierBasisV305=String\(base\?\.tier_basis\|\|'visits'\)==='points'\?'points':'visits';/);
+  // Saved with the tiers step's own Next, and only when it changed — V306 in the DB's spelling.
+  assert.match(wizard, /if\(state\.tierBasis!==initialTierBasisV305\)\{\s*\r?\n?\s*const basisResult=await runSaveV304\(\(\)=>saveDraft\(\{tier_basis:tierBasisToDbV306\(state\.tierBasis\)\}\)\);/);
+  /* The baseline is translated too. Comparing a UI-spelled state against a DB-spelled baseline is
+     what would make a points_earned firm look "changed" the moment the wizard opened. */
+  assert.match(wizard, /const initialTierBasisV305=tierBasisFromDbV306\(base\?\.tier_basis\);/);
 });
 
 test('V305 (g) reward validation is scoped away from tiers-only, tier validation is not', () => {

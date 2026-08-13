@@ -1767,6 +1767,12 @@
       "path": "db/migrations/20260813_nestly_v300_growth_readbacks.sql",
       "semanticVersion": "v300",
       "proposedDeployVersion": "20260813000100"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v306_both_mode_shows_tiers.sql",
+      "semanticVersion": "v306",
+      "proposedDeployVersion": "20260813000200"
     }
   ]
 }

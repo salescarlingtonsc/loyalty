@@ -73,10 +73,10 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'planning_only_not_deployable');
   assert.equal(manifest.hashAlgorithm, 'sha256-raw-bytes');
-  assert.equal(manifest.itemCount, 292); // V300 growth readbacks
-  assert.equal(manifest.executableCount, 278); // V300 growth readbacks
+  assert.equal(manifest.itemCount, 293); // V306 both-mode tiers capability
+  assert.equal(manifest.executableCount, 279); // V306 both-mode tiers capability
   assert.equal(manifest.reservationCount, 14);
-  assert.equal(sqlItems.length, 278); // V300 growth readbacks
+  assert.equal(sqlItems.length, 279); // V306 both-mode tiers capability
   assert.equal(reservations.length, 14);
   assert.equal(manifest.sourceCollisionsResolved, false);
 
@@ -106,7 +106,8 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
     ['20260809', 9],
     ['20260810', 6], // V273 + both v267s + V268
     ['20260811', 6], // V279
-    ['20260812', 12] // +v293 customer-intelligence grants
+    ['20260812', 12], // +v293 customer-intelligence grants
+    ['20260813', 2] // V300 growth readbacks + V306 both-mode tiers capability
   ]);
   assert.deepEqual(
     manifest.sourceDeployVersionCollisions.map(({ sourceDeployVersion, count }) => [sourceDeployVersion, count]),

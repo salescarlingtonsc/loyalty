@@ -49,12 +49,24 @@
  *   o. V305: the four scenarios run the steps their own semantics allow. Tiered membership reads
  *      Choose · Climbing · Tiers · Go live with NO Reward chip (points_mode='tiers' refuses
  *      catalogue claims); Climbing defaults to Visits with no earn input, and choosing "Points
- *      earned" reveals it inline; Next records {tier_basis:'points', earn_points_per_dollar};
+ *      earned" reveals it inline; Next records {tier_basis:'points_earned', earn_points_per_dollar};
  *      step 1 carries the integrity line for the direction being taken; Go live carries the
  *      cannot-claim line beside a mode line that names what is preserved; publish records
  *      points_mode='tiers' AFTER publish_loyalty_config; and NOT ONE reward write is recorded
  *      across the whole switch, with all four rewards still in the table afterwards. Then
  *      Points + tiers: five steps, Earning untouched, and the basis control on the Tiers step.
+ *   p. V306: the two defects this wizard shipped with, driven live.
+ *      p1. A firm on points_mode='tiers' that switches to Stamp card ends with a businesses
+ *          UPDATE carrying points_mode='redeem' — V303 wrote null there, which
+ *          applyPointsModeV303 reads as "leave it alone", so the stale 'tiers' stayed and the
+ *          V229 server gate refused every stamp redemption.
+ *      p2. A stored tier_basis='points_earned' opens the Climbing step with "Points earned"
+ *          selected. V305 compared the stored value against 'points', which it never equals, so
+ *          a points-earned ladder was read back as Visits and downgraded on the next save.
+ *      p3. Changing the basis records tier_basis='points_earned' — the DB spelling. The UI key
+ *          'points' violates the CHECK on every table that holds the column, so the save failed
+ *          outright; no recorded draft write in the whole run may carry a value outside it.
+ *      p4. The other write site: the Points + tiers Tiers step's basis-only save, same spelling.
  *
  * Serves on 4303 deliberately: sibling worktrees use 4173/4196 and a parallel session was found
  * squatting 4203, and evidence has been captured from the wrong tree that way before. The probe
@@ -1080,7 +1092,9 @@ try{
   const climbWriteV305=await page.evaluate(before=>window.__V301.rpc
     .filter(call=>call.name==='save_loyalty_config_draft').slice(before)
     .map(call=>call.args.p_config).find(config=>config&&config.tier_basis),configWritesBeforeV305);
-  assertTrue(Boolean(climbWriteV305)&&climbWriteV305.tier_basis==='points',
+  /* V306: in the DB's spelling. The radio says 'points', the CHECK says points_earned, and the
+     untranslated key is what made this save fail outright in production. */
+  assertTrue(Boolean(climbWriteV305)&&climbWriteV305.tier_basis==='points_earned',
     `Next saved the basis through save_loyalty_config_draft (${JSON.stringify(climbWriteV305&&climbWriteV305.tier_basis)})`);
   assertTrue(Number(climbWriteV305.earn_points_per_dollar)===3,
     `and the earn rate with it (${JSON.stringify(climbWriteV305.earn_points_per_dollar)})`);
@@ -1167,8 +1181,148 @@ try{
     'and changing it re-labels the threshold immediately, before any number is typed');
   await noModal('on the Points + tiers ladder step');
 
+  /* ---- p. V306: the two defects the wizard shipped with, driven live ---- */
+  /* Both were invisible to the source pins that existed, because both are about what CROSSES a
+     boundary: one the mode column on `businesses`, the other the spelling of tier_basis. */
+  const reseedV306=async()=>{
+    /* A reload between scenarios, because a published fixture leaves the workspace on whatever
+       mode it just wrote — the same reason (o) reloads before it re-seeds. */
+    await page.evaluate(()=>{location.hash='#/grow'});
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
+    await seedLivePointsV305();
+  };
+
+  /* p1. The stale points_mode that blocked every stamp redemption. */
+  say('p1. V306: switching to Stamp card clears a stale points_mode instead of leaving it on tiers');
+  await reseedV306();
+  /* The firm the defect hits: it ran Tiered membership, so businesses.points_mode is 'tiers' —
+     the state in which the V229 gate inside customer_create_redemption_intent_v89 refuses ALL
+     redemption and the customer 'rewards' capability is false. V303 mapped the stamp card to a
+     null target and applyPointsModeV303 reads a falsy target as "leave it alone", so that firm
+     kept 'tiers' forever and no stamp could ever be redeemed. */
+  await page.evaluate(()=>{
+    window.__V301.tables.businesses[0].points_mode='tiers';
+    window.__V301.draft.program.tier_basis='visits';
+  });
+  await reloadGrowV303();
+  await page.click('[data-grow-topic-v229="stamps"]');
+  await page.waitForFunction(()=>location.hash.startsWith('#/grow/setup'),null,{timeout:20000});
+  await waitStep(1);
+  assertTrue(await page.locator('[data-grow-setup-model-v303="stamps"][aria-checked="true"]').count()===1,
+    'the Stamp card opens the wizard preselected on stamps');
+  await noModal('on step 1 of the stamp wizard');
+  const modeWritesBeforeV306=await page.evaluate(()=>window.__V301.writes
+    .filter(write=>write.table==='businesses'&&write.payload&&write.payload.points_mode!==undefined).length);
+  await page.click('#growSetupNextV301');await waitStep(2);
+  assertTrue(await page.locator('#growSetupStampV301').count()===1,'step 2 asks the spend that earns one stamp');
+  await page.click('#growSetupNextV301');await waitStep(3);
+  assertTrue(await page.locator('#growSetupStampTargetV301').count()===1,'step 3 asks how many stamps win a reward');
+  await page.click('#growSetupNextV301');await waitStep(4);
+  await page.waitForFunction(()=>!/Checking what changes/.test(
+    document.getElementById('growSetupChangesV301')?.textContent||''),null,{timeout:20000});
+  /* The Go-live step has to SAY it, or the wizard moves a live switch the owner never saw named. */
+  assertTrue(await page.locator('[data-grow-setup-modechange-v303]').count()===1,
+    'the Go-live step carries a mode line, because choosing stamps now moves points_mode too');
+  const stampModeLineV306=await page.locator('[data-grow-setup-modechange-v303]').innerText();
+  assertTrue(/stamp card/i.test(stampModeLineV306)&&/stays saved/.test(stampModeLineV306),
+    `and it is the STAMP sentence, naming what survives (${JSON.stringify(stampModeLineV306)})`);
+  const publishedBeforeV306=await page.evaluate(()=>window.__V301.published.length);
+  await page.click('#growSetupNextV301');
+  await page.waitForSelector('.grow-setup-done-v301',{timeout:20000});
+  await noModal('after publishing a stamp card');
+  const stampModeV306=await page.evaluate(before=>({
+    added:window.__V301.writes
+      .filter(write=>write.table==='businesses'&&write.payload&&write.payload.points_mode!==undefined)
+      .slice(before),
+    published:window.__V301.published.length,
+    publishSeq:Math.max(...window.__V301.rpc.filter(call=>call.name==='publish_loyalty_config').map(call=>call.seq)),
+    live:window.__V301.tables.businesses[0].points_mode}),modeWritesBeforeV306);
+  assertTrue(stampModeV306.published===publishedBeforeV306+1,'publish_loyalty_config ran exactly once');
+  assertTrue(stampModeV306.added.length===1&&stampModeV306.added[0].payload.points_mode==='redeem',
+    `publishing the stamp card wrote points_mode='redeem' (${JSON.stringify(stampModeV306.added.map(write=>write.payload))})`);
+  assertTrue(stampModeV306.added[0].seq>stampModeV306.publishSeq,
+    `and AFTER publish_loyalty_config (mode ${stampModeV306.added[0].seq} vs publish ${stampModeV306.publishSeq})`);
+  /* 'redeem' rather than NULL on purpose: coalesce(points_mode,'tiers') is how the capabilities
+     function reads the column, so a null would put an ex-tiers stamp firm's old ladder back on the
+     customer page — and would fail the same server redemption gate all over again. */
+  assertTrue(stampModeV306.live==='redeem',
+    `the business is left on redeem, so the server redemption gate passes (${stampModeV306.live})`);
+
+  /* p2. A stored points_earned ladder is READ back as Points earned, not downgraded to Visits. */
+  say('p2. V306: a stored tier_basis=points_earned opens the Climbing step on "Points earned"');
+  await reseedV306();
+  /* Production carries exactly this: an open ladder measured in lifetime points earned. The wizard
+     reads base=draft||live, so both copies are seeded and neither can be the one that passes. */
+  await page.evaluate(()=>{
+    window.__V301.tables.loyalty_programs[0].tier_basis='points_earned';
+    window.__V301.draft.program.tier_basis='points_earned';
+  });
+  await reloadGrowV303();
+  await page.click('[data-grow-topic-v229="tiers"]');
+  await waitStep(1);
+  await page.click('#growSetupNextV301');await waitStep(2);
+  assertTrue(await page.locator('[data-grow-setup-basis-v305="points"][aria-checked="true"]').count()===1,
+    'the Climbing step opens on "Points earned" — the stored basis, not a silent downgrade to Visits');
+  assertTrue(await page.locator('[data-grow-setup-basis-v305="visits"][aria-checked="true"]').count()===0,
+    'and Visits is NOT selected, which is what the owner would have published over their own ladder');
+  assertTrue(await page.locator('#growSetupEarnV301').count()===1,
+    'the earn rate is revealed with it, because under a points basis the rate IS the climbing speed');
+  await noModal('on the Climbing step of a points-earned ladder');
+
+  /* p3. And it is WRITTEN in the spelling the DB CHECK accepts. */
+  say('p3. V306: changing the basis writes points_earned, never the radio key the CHECK rejects');
+  const draftWritesBeforeV306=await page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft').length);
+  await page.click('[data-grow-setup-basis-v305="visits"]');
+  await page.waitForTimeout(150);
+  assertTrue(await page.locator('#growSetupEarnV301').count()===0,
+    'moving to Visits hides the earn rate again — the control follows the answer both ways');
+  await page.click('[data-grow-setup-basis-v305="points"]');
+  await page.waitForSelector('#growSetupEarnV301',{timeout:20000});
+  await page.click('#growSetupNextV301');await waitStep(3);
+  const basisWriteV306=await page.evaluate(before=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft').slice(before)
+    .map(call=>call.args&&call.args.p_config).filter(Boolean)
+    .find(config=>config.tier_basis!==undefined),draftWritesBeforeV306);
+  assertTrue(Boolean(basisWriteV306)&&basisWriteV306.tier_basis==='points_earned',
+    `the Climbing save carries the DB spelling (${JSON.stringify(basisWriteV306&&basisWriteV306.tier_basis)})`);
+  /* Every draft write of the whole run, not only this step's. tier_basis is CHECK-constrained to
+     visits|spend|points_earned on loyalty_programs, loyalty_program_versions and the draft alike,
+     so any other value is a save that fails in production rather than a cosmetic difference. */
+  const illegalBasisV306=await page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft')
+    .map(call=>call.args&&call.args.p_config&&call.args.p_config.tier_basis)
+    .filter(value=>value!==undefined&&value!==null&&!['visits','spend','points_earned'].includes(value)));
+  assertTrue(illegalBasisV306.length===0,
+    `no draft write in the entire run carried a tier_basis the CHECK would reject (${JSON.stringify(illegalBasisV306)})`);
+
+  /* p4. The OTHER write site — the Points + tiers basis-only save on the Tiers step. */
+  say('p4. V306: the Points + tiers basis control writes the DB spelling too');
+  await reseedV306();
+  await page.evaluate(()=>{window.__V301.draft.program.tier_basis='visits'});
+  await reloadGrowV303();
+  await page.click('[data-grow-topic-v229="points"]');
+  await waitStep(1);
+  await page.click('[data-grow-setup-model-v303="both"]');
+  await page.waitForTimeout(200);
+  await page.click('#growSetupNextV301');await waitStep(2);
+  await page.click('#growSetupNextV301');await waitStep(3);
+  const bothBasisBeforeV306=await page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft').length);
+  await page.click('[data-grow-setup-basis-v305="points"]');
+  await page.waitForTimeout(200);
+  await page.click('#growSetupNextV301');await waitStep(4);
+  const bothBasisWriteV306=await page.evaluate(before=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft').slice(before)
+    .map(call=>call.args&&call.args.p_config).filter(Boolean)
+    .find(config=>config.tier_basis!==undefined),bothBasisBeforeV306);
+  assertTrue(Boolean(bothBasisWriteV306)&&bothBasisWriteV306.tier_basis==='points_earned',
+    `the Tiers step's basis save carries points_earned (${JSON.stringify(bothBasisWriteV306&&bothBasisWriteV306.tier_basis)})`);
+  await noModal('after the Points + tiers basis save');
+
   if(pageErrors.length)process.stdout.write(`note: page errors observed (non-fatal): ${JSON.stringify(pageErrors)}\n`);
-  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-o)\n');
+  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-p)\n');
 }catch(error){
   process.stdout.write(`V301 walkthrough FAIL at ${step}\n${error?.stack||error}\n`);
   if(pageErrors.length)process.stdout.write(`page errors: ${JSON.stringify(pageErrors)}\n`);
