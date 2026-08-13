@@ -65,6 +65,14 @@ test('a paused programme explains the consequence and the fix, once', () => {
      the status pill rather than a paragraph, and the pill is what the Ongoing filter reads. */
   assert.doesNotMatch(app, /customers earn nothing and no reward below is claimable/);
   assert.match(app, /programmeStatus\(rewardJourney\.earning\.availableToCustomers\?'Live':'Paused',rewardJourney\.earning\.availableToCustomers\?'on':'off'\)/);
-  assert.match(app, /const programmeActive=loyalty\?\.active===true/,
+  /* V314 (W6i1, 2026-08-14): still ONE master switch driving every row — that is the fact this
+     assertion protects — but the switch moved. loyalty_programs.active became a published SETTING
+     when the switchboard inverted, and the engine reads public.business_programmes instead, so a
+     pill sourced from the old column disagreed with what customers experienced in BOTH
+     directions: a firm that published active=true with no switch thrown earned nothing under a
+     "Live" pill, and a firm switched on over a paused published version earned under a "Paused"
+     one. Same single source, read from the spine, legacy column kept only as the fallback for a
+     session that could not read it. */
+  assert.match(app, /const programmeActive=spineAccruingV314===null\?loyalty\?\.active===true:spineAccruingV314;/,
     'one master switch drives every row, which is why the message belongs on the earning row');
 });

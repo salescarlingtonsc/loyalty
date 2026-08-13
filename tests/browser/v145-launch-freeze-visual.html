@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ada18cc10056519961124fdfec5a95f6ddb5306e5a69729b938f91636b30d2e3"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="69ffdb2393214429ddbb47c82fa003ae4c5f7bc46f1df5fba2db0213052d8fc1"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2085,7 +2085,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · ada18cc10056519961124fdfec5a95f6ddb5306e5a69729b938f91636b30d2e3</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 69ffdb2393214429ddbb47c82fa003ae4c5f7bc46f1df5fba2db0213052d8fc1</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3579,8 +3579,12 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const programmeRowHtmlV294=(name,copy,live,label=null)=>`<div class="c360-programme-row-v294"><div><b data-merchant-content>${esc(name)}</b><p class="muted small" data-merchant-content>${esc(copy)}</p></div><span class="pill ${live?'on':'off'}">${esc(label||(live?'Live':'Paused'))}</span></div>`;
   const programmeRowsV294=[];
   if(loyaltyFactsAvailable&&prog){
-    const loyaltyLiveV294=prog.active===true;
-    const pointsModeV294=S.biz.points_mode||'redeem';
+    /* V314 (W6 increment 1): the same two frozen reads the Grow pill carried. This row's
+       Live/Paused pill is about whether THIS customer can earn and claim right now, which after
+       the inversion only the programme spine can answer; both fall back to the legacy columns
+       when the spine could not be read. */
+    const loyaltyLiveV294=programmeSpineRunningV314()??(prog.active===true);
+    const pointsModeV294=programmePointsModeV314()||S.biz.points_mode||'redeem';
     /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent, redeem on
        rewards" line struck through, "0 points" written beside the Paused pill). A row on a CUSTOMER
        profile answers "where does this person stand", not "how does the scheme work" — the scheme
@@ -5320,7 +5324,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'ada18cc10056519961124fdfec5a95f6ddb5306e5a69729b938f91636b30d2e3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'69ffdb2393214429ddbb47c82fa003ae4c5f7bc46f1df5fba2db0213052d8fc1',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

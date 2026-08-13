@@ -53,8 +53,10 @@ test('A: the save path writes the chosen basis unchanged, and the dead 23514 bra
   // The 23514 special case was only reachable while the v239 trigger existed.
   assert.doesNotMatch(save, /modeError\.code==='23514'/);
   assert.doesNotMatch(app, /measure its tiers in points\/i\.test/);
-  // The draft save still precedes the points_mode switch — one Save is still one decision.
-  assert.ok(save.indexOf('save_loyalty_config_draft') < save.indexOf('update({points_mode:targetModeV230})'));
+  /* The draft save still precedes the live switch — one Save is still one decision. V314 (W6i1,
+     2026-08-14): the switch became public.set_programmes_v314 on the programme spine, because
+     businesses.points_mode is frozen behind a tripwire that silently pins any write to it. */
+  assert.ok(save.indexOf('save_loyalty_config_draft') < save.indexOf('writeProgrammeSwitchesV314(S.biz.id,loyaltySelectionV230,'));
 });
 
 test('A: the helper line explains why the pairing is coherent', () => {
@@ -114,9 +116,12 @@ test('B: the confirmation cannot open before the paused state is known, and repe
 });
 
 test('B: the paused cascade stays honest — a paused programme really is unclaimable', () => {
-  // Rewards are marked unavailable from the SAME flag the server gates redemption on
-  // (customer_create_redemption_intent_v89 selects loyalty_programs ... and program.active).
-  assert.match(app, /const programmeActive=loyalty\?\.active===true;/);
+  /* Rewards are marked unavailable from the SAME flag the server gates redemption on. V314 (W6i1,
+     2026-08-14): that flag is the programme's spine row now, in both places — v314's consumers 4
+     and 5 moved customer_create_redemption_intent_v89 and app.redeem_reward_core off
+     loyalty_programs.active entirely (the row lookup no longer even carries `and active`), so
+     reading the old column here would re-open the gap this test exists to close. */
+  assert.match(app, /const programmeActive=spineAccruingV314===null\?loyalty\?\.active===true:spineAccruingV314;/);
   assert.match(app, /!loyalty\?'programme_unconfigured':!programmeActive\?'programme_paused'/);
   /* V271 removed the sentence the owner struck. The cascade is still visible, and now says WHICH
      kind of off each reward is: "Paused with programme" is the reward-level readout of this flag. */

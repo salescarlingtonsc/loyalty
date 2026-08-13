@@ -1836,6 +1836,18 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v313_reward_programme_identity.sql",
+      "semanticVersion": "v313",
+      "proposedDeployVersion": "20260814000100"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v314_programme_switchboard_inversion.sql",
+      "semanticVersion": "v314",
+      "proposedDeployVersion": "20260814000200"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260814_nestly_v313_conversion_first_prospecting.sql",
       "semanticVersion": "v313",
       "proposedDeployVersion": "20260814001000"

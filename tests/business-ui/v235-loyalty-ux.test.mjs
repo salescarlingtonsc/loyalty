@@ -43,7 +43,13 @@ test('(b) switching model cannot write a different Status than the owner is look
   // Status is module state that survives the preserveFields=false preview re-render...
   assert.match(app, /^let loyaltyStatusDraftV235=null;$/m);
   assert.match(loyalty, /if\(!stableRefresh\)loyaltyStatusDraftV235=null;/);
-  assert.match(loyalty, /const loyaltyActiveV235=loyaltyStatusDraftV235===null\?Boolean\(p\?\.active\):loyaltyStatusDraftV235;/);
+  /* V314 (W6i1, 2026-08-14): the fallback source changed, the rule did not. "The stored
+     programme" is the SPINE now — loyalty_programs.active became a published setting when the
+     switchboard inverted, and the two can legitimately disagree, so rendering the stale column
+     here would show "Paused" over an earning firm and, since Save now writes this very value back
+     to the spine, one Save would have silently paused it. The pending draft still wins, and the
+     legacy column is still the last resort when the spine could not be read. */
+  assert.match(loyalty, /const loyaltyActiveV235=loyaltyStatusDraftV235===null\s*\r?\n?\s*\?\(programmeSpineRunningV314\(\)\?\?Boolean\(p\?\.active\)\):loyaltyStatusDraftV235;/);
   // ...the Status control renders from it, so the select can never silently reset...
   assert.match(loyalty, /<option value="true" \$\{loyaltyActiveV235\?'selected':''\}>Active<\/option>/);
   assert.doesNotMatch(loyalty, /<option value="true" \$\{p\?\.active\?'selected':''\}>Active<\/option>/);

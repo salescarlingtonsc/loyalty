@@ -61,20 +61,30 @@ test('V229 reward milestones live inside Point system, never on the tile overvie
    tiers may run together; what the server still holds the door on is points being spendable
    AND the tier's yardstick at once. The chooser therefore offers three ways, not two. */
 test('V229/V240 a firm chooses how points are used, and the server holds the door', () => {
-  // Unchosen: two cards. Chosen: the pill plus a switch to the OTHER mode only.
-  assert.match(app, /Choose how customers use their points/);
-  assert.match(app, /You can change this later\./);
-  assert.match(app, /data-points-mode-v229="redeem"/);
-  assert.match(app, /data-points-mode-v229="tiers"/);
+  /* V314 (W6i1, 2026-08-14) — THE CHOOSER CARDS ARE DELETED, and this test is what would have
+     kept them. They wrote businesses.points_mode directly, and after the switchboard inversion
+     that column is frozen behind a tripwire that silently PINS the write: PostgREST answers 204,
+     the toast fires, the page re-renders, the engine never hears. Worse, they rendered ONLY when
+     points_mode was falsy — which every tenant created after v314 is, permanently — so the one
+     surface that looked like the place to choose a model was the one that could not.
+     The CAPABILITY is intact and is asserted here instead: the honest line that took the slot
+     points at the setup wizard, and the wizard and the Grow editor's four-way toggle both write
+     the choice through public.set_programmes_v314. The full pins live in
+     tests/business-ui/v314-programme-switchboard.test.mjs. */
+  assert.doesNotMatch(app, /Choose how customers use their points/);
+  assert.doesNotMatch(app, /data-points-mode-v229=/);
+  assert.match(app, /No points programme is set up yet/);
+  assert.match(app, /The setup guide asks what points are for/);
+  assert.match(app, /href="#\/grow\/setup"/);
   /* V235: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as two half
      truths. All three models are now named with exactly one Live mark, and the change itself
      happens in one place — the editor's segmented toggle. */
   assert.match(app, /const liveLoyaltyModelV235=snapshot\.loyalty\?\.loyalty_model==='stamps'\?'stamps'/);
   assert.match(app, /live\?'<span aria-hidden="true">●<\/span> Live: ':''/);
   assert.match(app, /const loyaltyModelTileStatusV235=key=>/);
-  // Switching states the concrete consequence and asks first.
+  // Switching states the concrete consequence and asks first — in the editor, the surviving door.
   assert.match(app, /Customers will not be able to claim point rewards until you switch back\./);
-  assert.match(app, /sb\.from\('businesses'\)\.update\(\{points_mode:next\}\)/);
+  assert.match(app, /writeProgrammeSwitchesV314\(S\.biz\.id,loyaltySelectionV230,/);
   // In tiers mode the redeemable rows are swapped for a truthful note.
   assert.match(app, /\$\{pointsModeV229==='tiers'\?growTiersModeNoteV229:`/);
   assert.match(app, /Rewards created earlier are kept, and customers cannot claim them while tiers run\./);

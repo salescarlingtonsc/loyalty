@@ -451,7 +451,27 @@ const beginRouteInvocation=()=>{
   return ()=>routeRenderEpoch===routeEpoch;
 };
 
-let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+/* V314 (W6 increment 1): `programmes` is this session's mirror of public.business_programmes —
+   the four-row programme spine that became the ONE authority on which programmes run when v314
+   dropped the v308 sync triggers. It is cached exactly like myModules (fetched once per business,
+   see route()), refreshed from the server after every public.set_programmes_v314 call, and NEVER
+   flipped optimistically: an optimistic flip is precisely how businesses.points_mode came to lie
+   after the tripwire started swallowing writes to it. null = not read yet or unreadable, in which
+   case every reader falls back to the frozen legacy columns rather than guessing. */
+let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null,programmes:null,programmesBusinessId:null};
+
+function programmeSpineRowsV314(){
+  return Array.isArray(S.programmes)&&S.programmesBusinessId&&S.biz&&S.programmesBusinessId===S.biz.id
+    ?S.programmes:null;
+}
+async function refreshProgrammeSpineV314(){
+  if(!S.biz?.id)return null;
+  const {data,error}=await sb.from('business_programmes').select('kind,active').eq('business_id',S.biz.id);
+  if(error)return null;
+  S.programmes=(data||[]).map(row=>({kind:row?.kind||null,active:row?.active===true}));
+  S.programmesBusinessId=S.biz.id;
+  return S.programmes;
+}
 const PRODUCT_INTERACTION_EVENTS_V100=new Set([
   'merchant.workspace_viewed','merchant.grow_opened','merchant.grow_draft_started',
   'merchant.counter_action_opened','merchant.counter_action_started',
@@ -725,7 +745,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   const destination=preserveInvitation?pendingCustomerDestination:'';
   if(!preserveInvitation)rememberPendingCustomerJoinToken('');
   rememberCustomerRecoveryVerified(false);
-  S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+  S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null,programmes:null,programmesBusinessId:null};
   /* V286: the nav badge cache is per-person. Left standing, customer B's Rewards/Bookings tabs
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
@@ -1366,6 +1386,16 @@ async function route(){
     if(!S.isSA&&!hasResolvedStaffRole&&!hasResolvedStaffModules){
       S.myModules=[];S.myModulePerms={};
       return renderWorkspaceAccessUnavailable();
+    }
+    /* V314 (W6 increment 1): the programme spine, cached once per business exactly like
+       S.myModules above. Every owner surface that used to ask businesses.points_mode or
+       loyalty_programs.active "is this programme running?" asks this instead — those two columns
+       became SETTINGS at v314 and can no longer answer it. Fail-soft and retried on the next
+       route: a failed read leaves S.programmes null and each reader falls back to the legacy
+       column rather than inventing a state. */
+    if(programmeSpineRowsV314()===null&&S.myModules&&S.myModules.includes('loyalty')){
+      await refreshProgrammeSpineV314();
+      if(!isRouteCurrent())return;
     }
     if(S.hasCustomerPersona===null){
       const {data:personas}=await sb.rpc('get_my_personas');

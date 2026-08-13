@@ -35,7 +35,13 @@ test('V230 one three-way model select, in the owner\'s words', () => {
   assert.match(app, /Loyalty model preview updated — Save to apply\./);
   /* V240: the target gains 'both' — points redemption and tiers may now run together. */
   assert.match(app, /targetModeV230=loyaltySelectionV230==='tiers'\?'tiers':loyaltySelectionV230==='both'\?'both':'redeem'/);
-  assert.match(app, /save_loyalty_config_draft[\s\S]{0,800}update\(\{points_mode:targetModeV230\}\)/);
+  /* V314 (W6i1, 2026-08-14): the second store is the four-row programme spine, not
+     businesses.points_mode — that column is frozen behind a tripwire that silently pins any write,
+     so the old UPDATE was a success-reporting no-op. The ORDER this assertion exists to protect is
+     unchanged: the draft save lands first, the live switch second, so one Save is one decision.
+     The value handed over is the FOUR-way selection: the spine has a stamps flag, so the stamp
+     card no longer has to be flattened into a points_mode value to be expressed. */
+  assert.match(app, /save_loyalty_config_draft[\s\S]{0,1800}writeProgrammeSwitchesV314\(S\.biz\.id,loyaltySelectionV230,/);
   // A stale preview cannot leak into the next visit.
   assert.match(app, /if\(!stableRefresh\)loyaltyModeDraftV230=null;/);
 });

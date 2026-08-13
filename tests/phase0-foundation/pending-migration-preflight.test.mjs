@@ -176,7 +176,13 @@ const sqlTestBySemanticVersion = new Map([
      v311's four tenant shapes, and the S4/S5 cells only mean anything with both
      applied. Both semantic versions are unique, so these bind by version, not by name. */
   ['v311', 'db/tests/v311_v312_programme_money_kernel.sql'],
-  ['v312', 'db/tests/v311_v312_programme_money_kernel.sql']
+  ['v312', 'db/tests/v311_v312_programme_money_kernel.sql'],
+  /* v313 (reward programme identity) and v314 (the switchboard inversion) are ONE increment
+     applied back-to-back and are exercised by the same rolled-back suite: v314's step 0 pins
+     v313's post-apply md5s, and the cross-programme redemption cells only mean anything with both
+     applied. Both semantic versions are unique, so these bind by version, not by name. */
+  ['v313', 'db/tests/v313_v314_programme_switchboard.sql'],
+  ['v314', 'db/tests/v313_v314_programme_switchboard.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
@@ -798,7 +804,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 266); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment
+  assert.equal(pending.length, 268); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion)
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

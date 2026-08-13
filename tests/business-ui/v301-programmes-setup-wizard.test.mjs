@@ -122,21 +122,33 @@ test('V301 (b) each step Next writes through the SAME draft RPCs the editor writ
   assert.match(wizard, /state\.snapshotHash=data\?\.snapshot_hash\|\|null;/);
   // No second writer for the CONFIGURATION: the wizard never touches loyalty_programs directly.
   assert.doesNotMatch(wizard, /from\('loyalty_programs'\)/);
-  /* V303: points_mode is the one exception, and it is deliberate. It is an INSTANT live switch on
-     businesses (see the V230 comments on #lsave), not a draft field, so writing it at step 1 would
-     change what customers can do the moment a card was pressed — before the owner reviewed
-     anything and even if they then walked away. It is applied ONCE, after publish_loyalty_config
-     has succeeded, through the same write the deep editor uses. */
-  assert.match(wizard, /sb\.from\('businesses'\)\.update\(\{points_mode:target\}\)\.eq\('id',S\.biz\.id\)/);
+  /* V303/V314: the programme switch is the one exception, and it is deliberate. It is an INSTANT
+     live change, enforced server-side, not a draft field, so throwing it at step 1 would change
+     what customers can do the moment a card was pressed — before the owner reviewed anything and
+     even if they then walked away. It is applied ONCE, after publish_loyalty_config has succeeded.
+     V314 (W6 increment 1) moved the STORAGE only: the businesses.points_mode write became a
+     public.set_programmes_v314 call, because after the switchboard inversion the spine is the
+     authority and points_mode is frozen behind a swallow+audit tripwire.
+     V314 REMEDIATION (2026-08-14): the call itself moved OUT of the wizard to module scope. An
+     adversarial review found the wizard was one of FOUR doors onto this decision and the only one
+     that reached the engine — the Grow editor's toggle still wrote the frozen column, and the two
+     publish routes wrote nothing. A per-door copy of the call is exactly what let that happen, so
+     there is now ONE writer and the wizard calls it. */
+  assert.match(app, /sb\.rpc\('set_programmes_v314',\{\s*\r?\n?\s*p_business:businessId,p_switches:switches,p_idempotency_key:key\|\|crypto\.randomUUID\(\)\}\)/);
+  assert.match(wizard, /await writeProgrammeSwitchesV314\(S\.biz\.id,state\.pick,\s*\r?\n?\s*\{paused:state\.keepPaused===true,key:state\.switchKeyV314\}\)/);
   const publishStep = wizard.slice(wizard.indexOf("const activeResult=await saveDraft({active:"));
-  assert.ok(publishStep.indexOf("publish_loyalty_config") < publishStep.indexOf('applyPointsModeV303(false)'),
-    'the mode may only be applied AFTER the publish it belongs with');
-  // Publishing happened, so a failed mode write must say so rather than report a failed publish.
-  assert.match(wizard, /Published\. The tier switch could not be applied/);
+  assert.ok(publishStep.indexOf("publish_loyalty_config") < publishStep.indexOf('applyProgrammeSwitchesV314(false)'),
+    'the switches may only be applied AFTER the publish they belong with');
+  // Publishing happened, so a failed switch write must say so rather than report a failed publish.
+  assert.match(wizard, /Published\. The programme switch could not be applied/);
   assert.match(wizard, /id="growSetupModeRetryV303"/);
+  /* The retry reuses ONE key, so a retry after a timeout that had actually succeeded replays the
+     server's receipt instead of flipping a second time — while a SECOND publish in the same wizard
+     run ("Add another reward", possibly with a different pause choice) mints a fresh key instead
+     of colliding with the first receipt's request hash or silently replaying it. */
+  assert.match(wizard, /if\(!fromRetry\|\|!state\.switchKeyV314\)state\.switchKeyV314=crypto\.randomUUID\(\);/);
   // And no confirm(): step 1 WAS the deliberate act, and the Go-live step states the change first.
-  assert.match(wizard, /const modeChangeLineV303=\(\)=>/);
-  assert.match(wizard, /Points will now build tier membership/);
+  assert.match(app, /const PROGRAMME_SWITCHES_V314=\{/);
 });
 
 test('V301 (b) step 1 persists only a CHANGED family, and never a partial fresh model', () => {
@@ -687,10 +699,14 @@ test('V305 (g) integrity is SAID: step 1 names what a model switch preserves', (
   assert.match(wizard, /const line=GROW_SETUP_INTEGRITY_V305\[`\$\{derivedModelV303\}>\$\{state\.pick\}`\];/);
   assert.match(wizard, /return line\?`<p class="grow-setup-integrity-v305" data-grow-setup-integrity-v305=/);
   assert.match(wizard, /\$\{integrityLineHtmlV305\(\)\}/);
-  // The Go-live mode lines name what is preserved too, and tiers-only carries the claim line
-  // whether or not the mode is CHANGING — it is true of the state being published either way.
-  assert.match(wizard, /Every reward you set up stays saved\./);
-  assert.match(wizard, /Nothing you have already set up changes\./);
+  /* V314 (W6 increment 1): the Go-live MODE lines are gone with modeChangeLineV303 — they
+     compared the pick against businesses.points_mode, which the switchboard inversion froze, so
+     they would have gone stale for exactly the owners who switch. The switchboard's own "what
+     changes" sentence is increment 2's deliverable. The integrity matrix above is untouched and is
+     now the only place a model transition is narrated. The tiers-only claim line survives: it is a
+     statement about the state being published, not about a transition, and it never read
+     points_mode. */
+  assert.doesNotMatch(wizard, /const modeChangeLineV303=/);
   assert.match(wizard, /const tiersOnlyClaimLineV305=\(\)=>state\.pick!=='tiers'\?''/);
   assert.match(wizard, /While Tiered membership runs on its own, customers cannot claim point rewards\./);
   assert.match(wizard, /data-grow-setup-claimline-v305/);
@@ -732,11 +748,18 @@ test('V305 (g) a model switch NEVER deletes: the wizard writes through an exact 
     'save_loyalty_config_draft',          // programme row / tier_basis / reward envelope
     'save_loyalty_tier_draft_v143'        // one tier row at a time
   ].sort(), `wizard RPC allowlist drifted: ${JSON.stringify(rpcNames)}`);
-  // The ONE table write, and it is the points_mode switch — a mode column, not a row deletion.
+  /* V314 REMEDIATION: set_programmes_v314 left this list because the wizard no longer calls it
+     directly — it goes through the one module-scope writer every door now shares. The switch is
+     still in the allowlist in spirit, and the assertion that it is the wizard's ONLY off-draft
+     write is the one below. */
+  assert.equal([...wizard.matchAll(/writeProgrammeSwitchesV314\(/g)].length, 1,
+    'the wizard reaches the spine through exactly one call to the shared writer');
+  /* V314 (W6 increment 1): ZERO direct table writes now. The businesses.points_mode update was
+     the last one, and it became an owner-gated RPC whose only effect is four boolean flags on
+     public.business_programmes — still a switch, still never a row deletion. */
   const tableWrites = [...new Set([...wizard.matchAll(/sb\.from\('([a-z_]+)'\)\.([a-z]+)\(/g)]
     .map(m => `${m[1]}.${m[2]}`))].sort();
-  assert.deepEqual(tableWrites, ['businesses.update'], `wizard table access drifted: ${JSON.stringify(tableWrites)}`);
-  assert.match(wizard, /sb\.from\('businesses'\)\.update\(\{points_mode:target\}\)\.eq\('id',S\.biz\.id\)/);
+  assert.deepEqual(tableWrites, [], `wizard table access drifted: ${JSON.stringify(tableWrites)}`);
   // No delete, in any spelling, anywhere in the wizard.
   assert.doesNotMatch(wizard, /\.delete\(\)/);
   assert.doesNotMatch(wizard, /sb\.rpc\('[a-z0-9_]*(delete|remove|archive|purge)[a-z0-9_]*'/);

@@ -1831,6 +1831,18 @@
     },
     {
       "kind": "pending",
+      "version": "20260814000100",
+      "name": "nestly_v313_reward_programme_identity",
+      "sourcePath": "db/migrations/20260814_nestly_v313_reward_programme_identity.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814000200",
+      "name": "nestly_v314_programme_switchboard_inversion",
+      "sourcePath": "db/migrations/20260814_nestly_v314_programme_switchboard_inversion.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260814001000",
       "name": "nestly_v313_conversion_first_prospecting",
       "sourcePath": "db/migrations/20260814_nestly_v313_conversion_first_prospecting.sql"

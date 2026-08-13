@@ -716,7 +716,125 @@ const beginRouteInvocation=()=>{
   return ()=>routeRenderEpoch===routeEpoch;
 };
 
-let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+/* V314 (W6 increment 1): `programmes` is this session's mirror of public.business_programmes —
+   the four-row programme spine that became the ONE authority on which programmes run when v314
+   dropped the v308 sync triggers. It is cached exactly like myModules (fetched once per business,
+   see route()), refreshed from the server after every public.set_programmes_v314 call, and NEVER
+   flipped optimistically: an optimistic flip is precisely how businesses.points_mode came to lie
+   after the tripwire started swallowing writes to it. null = not read yet or unreadable, in which
+   case every reader falls back to the frozen legacy columns rather than guessing. */
+let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null,programmes:null,programmesBusinessId:null};
+
+/* ==================== V314 (W6 increment 1) — the programme switchboard, client side ==========
+   ONE mapping, ONE writer, ONE truth. Before v314 an owner's model choice was written to
+   businesses.points_mode from THREE different places in this file and read from six more. After
+   the inversion that column is frozen behind a server tripwire that silently pins any write and
+   audits it (POINTS_MODE_WRITE_SUPPRESSED_V314), so every one of those writes would have been a
+   success-reporting no-op: green toast, local flip, nothing changed server-side. The switch now
+   lives in public.business_programmes and public.set_programmes_v314 is the only door.
+
+   Everything below is at module scope on purpose. The wizard, the loyalty editor, the Grow review
+   publish and the Studio publish are four different doors onto the same decision; when the mapping
+   lived inside the wizard only the wizard could be right. */
+const PROGRAMME_SWITCHES_V314={
+  redeem:{points:true,tiers:false},
+  tiers:{points:false,tiers:true},
+  both:{points:true,tiers:true},
+  stamps:{stamps:true,points:false,tiers:false}
+};
+/* PAUSED = THE PROGRAMME'S SPINE ROW IS OFF. That is the whole rule, and it is the rule because
+   the spine is now the ONLY gate the engine reads: app.on_sale_recorded loops over active
+   accruing spine rows, and app.redeem_reward_core refuses a reward whose programme row is off. A
+   paused firm therefore neither accrues nor redeems, and an unpaused one does both — which is
+   what "Keep it paused for now — customers earn nothing" and "This will publish PAUSED" have
+   always promised. Every switch the chosen model implies goes off, not just the accruing one: a
+   tier ladder still climbing under a paused programme would be the same broken promise wearing a
+   different hat, and turning the pause off restores the identical set. */
+function programmeSwitchSetV314(selection,{paused=false}={}){
+  const base=PROGRAMME_SWITCHES_V314[selection];
+  if(!base)return null;
+  const set={};
+  Object.keys(base).forEach(kind=>{set[kind]=paused?false:base[kind]===true});
+  return set;
+}
+function programmeSpineRowsV314(){
+  return Array.isArray(S.programmes)&&S.programmesBusinessId&&S.biz&&S.programmesBusinessId===S.biz.id
+    ?S.programmes:null;
+}
+function programmeSpineOnV314(kind){
+  const rows=programmeSpineRowsV314();
+  return rows?rows.some(row=>row&&row.kind===kind&&row.active===true):null;
+}
+/* "Is this firm's loyalty programme running at all?" — the question the owner's Live/Paused pill
+   is asking. Accruing AND tiers, because a tier ladder is a programme a customer can be inside. */
+function programmeSpineRunningV314(){
+  const rows=programmeSpineRowsV314();
+  return rows?rows.some(row=>row&&row.active===true&&['points','tiers','stamps'].includes(row.kind)):null;
+}
+/* The three-valued points model the pre-v314 UI called points_mode, derived from the spine
+   instead of read from the frozen column — the SAME derivation v314 installed inside
+   public.customer_portal_capabilities, so the owner's page and the customer's app cannot
+   disagree about which model is live. Null when the spine has not been read. */
+function programmePointsModeV314(){
+  const rows=programmeSpineRowsV314();
+  if(!rows||!rows.length)return null;
+  const points=programmeSpineOnV314('points'),tiers=programmeSpineOnV314('tiers');
+  return points&&tiers?'both':tiers?'tiers':'redeem';
+}
+/* Which switch set a PUBLISH should apply. The publish routes do not choose a model — they
+   publish numbers and an active flag — so the selection is the owner's current one, read from the
+   spine. A firm with nothing running yet has no spine answer, so the frozen legacy column is the
+   last record of the choice, and 'redeem' is the same default every pre-v314 reader used. */
+function programmeSelectionForPublishV314(loyaltyModel){
+  const rows=programmeSpineRowsV314();
+  if(rows&&rows.length){
+    if(programmeSpineOnV314('stamps'))return 'stamps';
+    const points=programmeSpineOnV314('points'),tiers=programmeSpineOnV314('tiers');
+    if(points&&tiers)return 'both';
+    if(tiers)return 'tiers';
+    if(points)return 'redeem';
+  }
+  if(String(loyaltyModel||'')==='stamps')return 'stamps';
+  const legacy=String(S.biz?.points_mode||'');
+  return legacy==='tiers'?'tiers':legacy==='both'?'both':'redeem';
+}
+/* Server truth in, cache out. set_programmes_v314 returns the spine it just wrote, so the reply
+   to the write IS the refresh — no second round trip and no window in which the page renders a
+   state the server never reached. */
+function rememberProgrammeSpineV314(programmes){
+  if(!Array.isArray(programmes))return false;
+  S.programmes=programmes.map(row=>({kind:row?.kind||null,active:row?.active===true}));
+  S.programmesBusinessId=S.biz?.id||null;
+  return true;
+}
+async function refreshProgrammeSpineV314(){
+  if(!S.biz?.id)return null;
+  const {data,error}=await sb.from('business_programmes').select('kind,active').eq('business_id',S.biz.id);
+  if(error)return null;
+  S.programmes=(data||[]).map(row=>({kind:row?.kind||null,active:row?.active===true}));
+  S.programmesBusinessId=S.biz.id;
+  return S.programmes;
+}
+/* The one client-side call site of public.set_programmes_v314. Returns {ok,error,skipped} and
+   never throws, because every caller has already done something the owner can see (a draft save,
+   a publish) and must report the switch separately from it. */
+async function writeProgrammeSwitchesV314(businessId,selection,{paused=false,key=null}={}){
+  const switches=programmeSwitchSetV314(selection,{paused});
+  if(!switches||!businessId)return {ok:true,skipped:true,error:null};
+  const {data,error}=await sb.rpc('set_programmes_v314',{
+    p_business:businessId,p_switches:switches,p_idempotency_key:key||crypto.randomUUID()});
+  if(error)return {ok:false,skipped:false,error};
+  rememberProgrammeSpineV314(data?.programmes);
+  return {ok:true,skipped:false,error:null};
+}
+/* The publish routes' shared rule: apply the switch set IFF the draft being published actually
+   carries a loyalty programme row. A rules-only Studio publish leaves loyalty_programs untouched,
+   so it must leave the spine untouched too. */
+async function applyPublishedProgrammeSwitchesV314({active=null,loyaltyModel=null}={}){
+  if(active===null||active===undefined)return {ok:true,skipped:true,error:null};
+  return writeProgrammeSwitchesV314(S.biz?.id,programmeSelectionForPublishV314(loyaltyModel),
+    {paused:active!==true});
+}
 const PRODUCT_INTERACTION_EVENTS_V100=new Set([
   'merchant.workspace_viewed','merchant.grow_opened','merchant.grow_draft_started',
   'merchant.counter_action_opened','merchant.counter_action_started',
@@ -1018,7 +1136,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   const destination=preserveInvitation?pendingCustomerDestination:'';
   if(!preserveInvitation)rememberPendingCustomerJoinToken('');
   rememberCustomerRecoveryVerified(false);
-  S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+  S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null,programmes:null,programmesBusinessId:null};
   /* V286: the nav badge cache is per-person. Left standing, customer B's Rewards/Bookings tabs
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
@@ -2499,6 +2617,16 @@ async function route(){
     if(!S.isSA&&!hasResolvedStaffRole&&!hasResolvedStaffModules){
       S.myModules=[];S.myModulePerms={};
       return renderWorkspaceAccessUnavailable();
+    }
+    /* V314 (W6 increment 1): the programme spine, cached once per business exactly like
+       S.myModules above. Every owner surface that used to ask businesses.points_mode or
+       loyalty_programs.active "is this programme running?" asks this instead — those two columns
+       became SETTINGS at v314 and can no longer answer it. Fail-soft and retried on the next
+       route: a failed read leaves S.programmes null and each reader falls back to the legacy
+       column rather than inventing a state. */
+    if(programmeSpineRowsV314()===null&&S.myModules&&S.myModules.includes('loyalty')){
+      await refreshProgrammeSpineV314();
+      if(!isRouteCurrent())return;
     }
     if(S.hasCustomerPersona===null){
       const {data:personas}=await sb.rpc('get_my_personas');
@@ -13508,8 +13636,12 @@ async function clientDetail(id){
   const programmeRowHtmlV294=(name,copy,live,label=null)=>`<div class="c360-programme-row-v294"><div><b data-merchant-content>${esc(name)}</b><p class="muted small" data-merchant-content>${esc(copy)}</p></div><span class="pill ${live?'on':'off'}">${esc(label||(live?'Live':'Paused'))}</span></div>`;
   const programmeRowsV294=[];
   if(loyaltyFactsAvailable&&prog){
-    const loyaltyLiveV294=prog.active===true;
-    const pointsModeV294=S.biz.points_mode||'redeem';
+    /* V314 (W6 increment 1): the same two frozen reads the Grow pill carried. This row's
+       Live/Paused pill is about whether THIS customer can earn and claim right now, which after
+       the inversion only the programme spine can answer; both fall back to the legacy columns
+       when the spine could not be read. */
+    const loyaltyLiveV294=programmeSpineRunningV314()??(prog.active===true);
+    const pointsModeV294=programmePointsModeV314()||S.biz.points_mode||'redeem';
     /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent, redeem on
        rewards" line struck through, "0 points" written beside the Paused pill). A row on a CUSTOMER
        profile answers "where does this person stand", not "how does the scheme work" — the scheme
@@ -17201,7 +17333,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      can be live at any go)"). One three-way choice. Underneath, 'redeem' and 'tiers' share the
      points engine (loyalty_model classic/points_tiers) and differ by businesses.points_mode —
      which the server already enforces — while 'stamps' is its own model. */
-  const loyaltyModeV230=loyaltyModeDraftV230||S.biz.points_mode||'redeem';
+  /* V314 (W6 increment 1): ...and points_mode stopped being that difference. It is frozen behind
+     a tripwire; the four-row spine is the switch. programmePointsModeV314() runs the identical
+     derivation v314 put inside customer_portal_capabilities, so the editor, the Programmes page
+     and the customer's app all answer "which model is live" from one place. The frozen column
+     survives only as the fallback for a session whose spine read failed. */
+  const loyaltyModeV230=loyaltyModeDraftV230||programmePointsModeV314()||S.biz.points_mode||'redeem';
   /* V240 (owner, the Chagee model): points redemption and a tier ladder may run TOGETHER, with
      the tier earned by VISITS and points a separate spendable currency. Exclusivity now means
      the stamp card versus the points engine — plus the one thing the server refuses outright,
@@ -17211,10 +17348,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   /* V235: Status is read from the pending draft first, the stored programme second. Every
      render of the Status control and everything that judges "is this running" goes through
      this one value, so a preview re-render can no longer change what Save will write. */
-  const loyaltyActiveV235=loyaltyStatusDraftV235===null?Boolean(p?.active):loyaltyStatusDraftV235;
+  /* V314: "the stored programme" is the SPINE now, not loyalty_programs.active — that column is a
+     published SETTING and after the inversion it can disagree with what the engine is doing (a
+     firm whose owner switched points on and then published a paused version earns, and this
+     control used to render it "Paused"). Saving writes this value straight back to the spine, so
+     showing the stale column here would have let one Save silently pause a running firm. */
+  const loyaltyActiveV235=loyaltyStatusDraftV235===null
+    ?(programmeSpineRunningV314()??Boolean(p?.active)):loyaltyStatusDraftV235;
   /* The saved model, ignoring any preview — this is what customers are on right now. */
   const liveLoyaltySelectionV235=(p?.loyalty_model||'classic')==='stamps'?'stamps'
-    :loyaltySelectionForModeV240(S.biz.points_mode||'redeem');
+    :loyaltySelectionForModeV240(programmePointsModeV314()||S.biz.points_mode||'redeem');
   /* V296 (owner markup 2026-08-12: "redemption" struck through, "System" written above it).
      Label only — the stored model keys ('redeem' here, 'classic' on loyalty_programs.loyalty_model)
      and every comparison against them are untouched, so no customer's programme changes shape. */
@@ -17980,12 +18123,18 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
        is written exactly as the owner chose it — including 'points_earned', which measures
        lifetime points earned and is therefore untouched by redemption. The draft save still
        lands before the mode switch so one Save remains one decision. */
+    /* V314 (W6 increment 1): the switch is the SPINE, so the four-way toggle carries straight
+       into PROGRAMME_SWITCHES_V314 — including 'stamps', which V230 had to flatten into 'redeem'
+       because points_mode had no value for a stamp card. The confirm still compares against what
+       is LIVE, read from the spine rather than from the frozen column. */
     const targetModeV230=loyaltySelectionV230==='tiers'?'tiers':loyaltySelectionV230==='both'?'both':'redeem';
+    const liveModeForAskV314=programmePointsModeV314()||S.biz.points_mode||null;
     const modeSwitchAskV240={
       tiers:'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.',
       redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
       both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis you chose above.'};
-    if(S.biz.points_mode&&targetModeV230!==S.biz.points_mode&&!confirm(modeSwitchAskV240[targetModeV230]))return;
+    if(loyaltySelectionV230!=='stamps'&&liveModeForAskV314&&targetModeV230!==liveModeForAskV314
+       &&!confirm(modeSwitchAskV240[targetModeV230]))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
       expiry_mode:expiryMode};
@@ -18023,19 +18172,33 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     loyaltyStatusDraftV235=null;
     /* V230: the mode is an instant business switch (the server gate reads it live), unlike the
        numbers, which wait for publish. Writing it here keeps one Save meaning one decision. */
-    if(targetModeV230!==(S.biz.points_mode||null)){
-      const {error:modeError}=await sb.from('businesses').update({points_mode:targetModeV230}).eq('id',S.biz.id);
-      if(!isLoyaltyCurrent())return;
-      if(modeError){
-        $('lsave').disabled=false;
-        /* V258: the 23514 "measure its tiers in points" branch is gone — V256 dropped the
-           trigger that raised it, so the branch was unreachable and could only mislead.
-           loyaltyModeDraftV230 still survives a genuine failure. */
-        return fail(modeError);
-      }
-      S.biz.points_mode=targetModeV230;
+    /* V314 (W6 increment 1) — THE WRITE THAT USED TO BE HERE IS GONE. It was a raw PostgREST
+       UPDATE of businesses.points_mode, and after the inversion the server
+       tripwire pins that column and audits the attempt: PostgREST would still answer 204, the
+       toast would still fire, and nothing would have changed. The identical decision now goes to
+       public.set_programmes_v314 through the SAME mapping the setup wizard uses.
+       The Status control comes with it. In the switchboard there is one flag per programme, so
+       "which model" and "is it running" are the same row; publishing a paused version can no
+       longer leave a firm earning, and pausing here stops accrual AND catalogue redemption at
+       once (v314 consumers 1 and 5), which is what the word has always promised.
+       No optimistic flip: the spine this session renders from is the one the server just
+       returned. A failed switch surfaces as a failure — the draft was saved, the switch was not,
+       and saying otherwise is how the old writer lied. */
+    const switchResultV314=await writeProgrammeSwitchesV314(S.biz.id,loyaltySelectionV230,
+      {paused:$('la').value!=='true'});
+    if(!isLoyaltyCurrent())return;
+    if(!switchResultV314.ok){
+      $('lsave').disabled=false;
+      /* V258: the 23514 "measure its tiers in points" branch is gone — V256 dropped the
+         trigger that raised it, so the branch was unreachable and could only mislead.
+         loyaltyModeDraftV230 still survives a genuine failure. */
+      return fail(switchResultV314.error);
+    }
+    if(!switchResultV314.skipped){
       loyaltyModeDraftV230=null;
-      toast(targetModeV230==='tiers'?'Points now build tier membership'
+      if($('la').value!=='true')toast('Programme paused — customers stop earning and cannot claim rewards');
+      else toast(loyaltySelectionV230==='stamps'?'Customers now collect stamps'
+        :targetModeV230==='tiers'?'Points now build tier membership'
         :targetModeV230==='both'?'Points buy rewards, and tiers run alongside them'
         :'Points are now redeemed for rewards');
     }
@@ -19119,10 +19282,21 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     if(onSaved)onSaved();
   };
 }
-function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null}={}){
+function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null,programmes=null}={}){
   const model=loyalty?.loyalty_model||loyaltyModel||'points';
   const unit=model==='stamps'?'stamps':'points';
-  const programmeActive=loyalty?.active===true;
+  /* V314 (W6 increment 1): the owner's Live/paused pill asks the SPINE. loyalty_programs.active
+     stopped being the switch at v314 — it is the published setting, and the engine reads
+     public.business_programmes instead. A firm that publishes an active programme without a
+     spine row earns nothing while this pill said "Live"; a firm whose owner switched points on
+     over a paused published version earns while it said "paused". Both are the same lie in
+     opposite directions, and both are answered by the accruing spine rows. `programmes` is
+     passed in rather than read from module state so this stays a pure function; a null array
+     (spine unreadable) falls back to the legacy column rather than inventing a state. */
+  const spineAccruingV314=Array.isArray(programmes)&&programmes.length
+    ?programmes.some(row=>row&&row.active===true&&(row.kind==='points'||row.kind==='stamps'))
+    :null;
+  const programmeActive=spineAccruingV314===null?loyalty?.active===true:spineAccruingV314;
   const asOfMs=Number.isFinite(Date.parse(asOf||''))?Date.parse(asOf):Date.now();
   const compactNumber=value=>Number.isInteger(Number(value))?String(Number(value)):String(Number(value)).replace(/\.0+$/,'');
   const pointsRate=Math.max(0,Number(loyalty?.earn_points_per_dollar||0));
@@ -20037,7 +20211,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(!snapshot||!isGrowCurrent())return;
   let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
   const rewardJourney=ownerRewardJourneyV122({
-    rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
+    rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf,
+    /* V314: the spine decides Live/paused — see ownerRewardJourneyV122. */
+    programmes:programmeSpineRowsV314()
   });
   /* v215: the welcome offer is a reward, so it belongs in this list rather than buried in
      Settings. Read separately: a failure here must not blank the whole programme overview. */
@@ -20079,7 +20255,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(!isGrowCurrent())return;
   const growUsageV271=growProgrammeReadsV271[0];
   const growFirstPublishedV271=growProgrammeReadsV271[1];
-  const pointsModeV229=S.biz.points_mode||null;
+  /* V314 (W6 increment 1): derived from the four-row spine, not from the frozen businesses
+     column. Nothing writes points_mode any more, so on every tenant created after the inversion
+     it is permanently NULL — reading it here would have made every one of them look like a
+     never-configured 'redeem' firm forever. The legacy column stays as the fallback for a
+     session whose spine read failed, where a stale answer still beats an invented one. */
+  const pointsModeV229=programmePointsModeV314()||S.biz.points_mode||null;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
@@ -20122,7 +20303,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const activeMembershipCount=(snapshot.memberships||[]).filter(x=>x.active!==false).length;
   const membershipConfigured=snapshot.memberships.length>0;
   const referralConfigured=Boolean(snapshot.referral);
-  const loyaltyLive=Boolean(snapshot.loyalty?.active&&snapshot.currentVersion);
+  /* V314 (W6 increment 1): "is the programme running" is a SPINE question. loyalty_programs.active
+     is a published setting after the inversion and the two can legitimately disagree — a firm
+     whose owner switched points on while the published version still says active=false is
+     earning, and this tile used to print "Active · paused" over it. */
+  const loyaltyLive=Boolean((programmeSpineRunningV314()??(snapshot.loyalty?.active===true))&&snapshot.currentVersion);
   /* V235 (owner: "which loyalty model is live right now?"). One derivation, three tiles, one
      Active marker. It reads the same two stores the editor writes — loyalty_model carries the
      stamp engine, points_mode splits the points engine into redemption vs tier membership —
@@ -20432,22 +20617,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      removing it would have removed the capability rather than the clutter. */
   const growPointsModeChooserV229=({showLiveModelsV250=true}={})=>{
     if(!canRewards)return '';
+    /* V314 (W6 increment 1) — THE THREE CHOOSER CARDS ARE DELETED. Each one wrote
+       `businesses.points_mode` directly, and after the switchboard inversion that column is
+       frozen behind a server tripwire: the write returns 204, the toast fires, the page
+       re-renders as if the model changed, and the engine never hears about it. The cards only
+       ever rendered for a firm whose points_mode was NULL, and every tenant created after v314 is
+       exactly that firm forever — so the one surface that looked like the place to choose a model
+       would have been the one surface that could not.
+       The capability is not lost: choosing a model is the setup wizard (#/grow/setup) and the
+       Grow editor's four-way toggle, both of which now route through public.set_programmes_v314.
+       This line is what stands in the slot so the row is not a blank region. */
     const locked=!canSetupGrow;
-    if(!pointsModeV229)return `<div class="points-mode-chooser-v229" role="group" aria-label="How customers use points">
-      <p class="points-mode-lead-v229"><b>Choose how customers use their points</b><br><span class="muted small">You can change this later.</span></p>
-      <div class="points-mode-cards-v229">
-        <button type="button" class="points-mode-card-v229" data-points-mode-v229="redeem" ${locked?'disabled':''}><b>Redeem rewards</b><span class="muted small">Points are spent on discounts, vouchers and free items.</span></button>
-        <button type="button" class="points-mode-card-v229" data-points-mode-v229="tiers" ${locked?'disabled':''}><b>Tier membership</b><span class="muted small">Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits.</span></button>
-        <button type="button" class="points-mode-card-v229" data-points-mode-v229="both" ${locked?'disabled':''}><b>Both</b><span class="muted small">Points buy rewards while visits build the tier — the two never affect each other.</span></button>
-      </div></div>`;
+    if(!pointsModeV229)return `<div class="points-mode-chooser-v229">
+      <p class="points-mode-lead-v229"><b>No points programme is set up yet</b><br><span class="muted small">The setup guide asks what points are for — rewards, tiers, or both — and turns it on at the end.</span></p>
+      ${locked?'':'<div class="row" style="margin-top:10px"><a class="btn sm" href="#/grow/setup">Open the setup guide</a></div>'}</div>`;
     /* V235 (owner: the "Points are used for: X" chip plus a one-way "Switch to…" pill read as
        two half-truths). All three models are named, exactly one carries the Live mark, and the
        change itself happens in one place — the editor's segmented toggle. */
     /* V271 (owner struck "Change model" and wrote "delete"). It opened the rewards editor focused
        on 'lm' — the identical destination the Point system row's own Edit already opens — and the
        four-way model toggle lives inside that editor (data-loyalty-model-v235). So the capability
-       keeps its entry point; this button was a second door onto the same one. A firm that has
-       never chosen a model still gets the cards above, which are that choice. */
+       keeps its entry point; this button was a second door onto the same one. */
     if(!showLiveModelsV250)return '';
     return `<div class="points-mode-chosen-v229"><span class="loyalty-live-models-v235">${['redeem','tiers','stamps'].map(key=>{const live=liveLoyaltyModelKeysV240.includes(key);return `<span class="pill ${live?'on':'off'}">${live?'<span aria-hidden="true">●</span> Live: ':''}${esc(loyaltyModelNamesV235[key])}</span>`}).join('')}</span></div>`;
   };
@@ -21200,29 +21390,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   const growTopicBack=$('growTopicBackV229');
   if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
-  outerMain.querySelectorAll('[data-points-mode-v229]').forEach(button=>button.onclick=async()=>{
-    const next=button.dataset.pointsModeV229;
-    /* Switching away from a chosen model changes what customers can do; first-time choice needs
-       no confirm. The tiers warning states the concrete consequence the server enforces. */
-    const askV240={
-      tiers:'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.',
-      redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
-      both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis set in the editor.'};
-    if(S.biz.points_mode&&!confirm(askV240[next]))return;
-    button.disabled=true;
-    const {error}=await sb.from('businesses').update({points_mode:next}).eq('id',S.biz.id);
-    if(error){
-      button.disabled=false;
-      /* V258: V256 dropped the trigger that raised 23514 here, so the special-case branch was
-         unreachable and was removed. */
-      return fail(error);
-    }
-    S.biz.points_mode=next;
-    toast(next==='tiers'?'Points now build tier membership'
-      :next==='both'?'Points buy rewards, and tiers run alongside them'
-      :'Points are now redeemed for rewards');
-    growPage(routedSurface,hashParam,routedFocus).catch(fail);
-  });
+  /* V314 (W6 increment 1) — the [data-points-mode-v229] wiring is DELETED with the cards it
+     drove. It was the second of the two surviving `businesses.points_mode` writers, and after the
+     inversion both were success-reporting no-ops: the tripwire pins the column, PostgREST returns
+     204 with no error, the toast fires and the engine never changes. Deleting the handler with
+     the markup keeps the file honest — a live listener for a selector nothing renders is how a
+     dead writer comes back. Choosing a model is the wizard (#/grow/setup) and the Grow editor's
+     four-way toggle; both call public.set_programmes_v314. */
   /* V258 (owner item 7: "why does edit require draft then edit? it causes additional steps and
      more bugs"). The versioning is kept — every edit still lands on a draft version and
      customers keep seeing the published programme until Review & publish. What is dropped is
@@ -22603,9 +22777,10 @@ function growBirthdayPendingChangesV291(live,draft){
    through the SAME create_loyalty_config_draft / save_loyalty_config_draft the editor writes
    through, and Publish runs the SAME preview_publish_impact → publish_loyalty_config pair the
    review page runs. Nothing here touches loyalty_programs or a ledger directly. The ONE live
-   column it writes is businesses.points_mode, and only after publish has succeeded — the model the
-   owner picked on step 1 has to reach the engine that enforces it, or the choice is cosmetic. See
-   targetPointsModeV303 / applyPointsModeV303 for the mapping and for why it runs after publish. */
+   column it writes is the four-row programme spine, through public.set_programmes_v314, and only
+   after publish has succeeded — the model the owner picked on step 1 has to reach the engine that
+   enforces it, or the choice is cosmetic. See PROGRAMME_SWITCHES_V314 /
+   applyProgrammeSwitchesV314 for the mapping and for why it runs after publish. */
 const GROW_SETUP_STEPS_V301=[[1,'Choose'],[2,'Earning'],[3,'Reward'],[4,'Go live']];
 /* V303 (owner 2026-08-13: "tiered membership / stamps - still not able to build like points").
    A model that includes tiers gets one extra step, in the place the ladder belongs — after the
@@ -22855,9 +23030,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      answer — and with no hand-off the state is derived from what is actually live, exactly the way
      liveLoyaltyModelV235 derives the Programmes tiles' Live marker: the stamp engine is
      loyalty_model, the three points models are businesses.points_mode. */
+  /* V314: ...and the three points models are the SPINE now. Reading the frozen column here would
+     have opened the wizard on 'redeem' for every post-v314 tenant regardless of what they run. */
   const handoffV303=pendingGrowSetupModelV303;pendingGrowSetupModelV303=null;
   const handoffModelV303=handoffV303?.model||null;
-  const livePointsModeV303=String(S.biz?.points_mode||'redeem');
+  const livePointsModeV303=String(programmePointsModeV314()||S.biz?.points_mode||'redeem');
   const derivedModelV303=baseModel==='stamps'?'stamps'
     :(livePointsModeV303==='tiers'?'tiers':livePointsModeV303==='both'?'both':'redeem');
   const pickV303=GROW_SETUP_MODELS_V303.some(model=>model[0]===handoffModelV303)
@@ -23412,22 +23589,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const chips=`<div class="grow-setup-chips-v301" aria-label="Suggested rewards">${suggestionsV301().map((item,index)=>`<button type="button" class="grow-setup-chip-v301" data-grow-setup-suggest-v301="${index}">${esc(item.name)} — ${esc(unitWord(item.points,rewardUnit()))}</button>`).join('')}</div>`;
     return `<p class="grow-setup-lead-v301">What do customers get?</p>${stampsHead}${rows}${chips}${rewardFormHtml()}`;
   };
-  /* V303: what the chosen model does to points_mode, in the owner's words, so the Go-live step
-     lists it with the rest of "what changes for customers" rather than springing it. */
-  /* V305: each mode line now NAMES what is preserved (owner: "you need to ensure programs
-     integrity"). The switch is a switch on `businesses`, not a delete, and the sentence that
-     announces it has to say so — an owner reading "customers stop claiming point rewards" with no
-     second clause reasonably concludes their catalogue is being thrown away. */
-  /* V306: the stamp card gets its own line, because it now MOVES points_mode too (it targets
-     'redeem' — see targetPointsModeV303). Falling through to the redeem sentence would have told a
-     stamp firm about tiers it is no longer running, and saying nothing at all would have been the
-     old, wrong claim that choosing stamps leaves points_mode untouched. */
-  const modeChangeLineV303=()=>!pointsModeChangesV303()?''
-    :state.pick==='tiers'?'Points will now build tier membership — customers stop claiming point rewards. Every reward you set up stays saved.'
-    :state.pick==='both'?'Points will buy rewards AND build tier membership, side by side. Nothing you have already set up changes.'
-    :state.pick==='stamps'?'Customers switch to the stamp card. Your points set-up stays saved, and points go back to being spendable underneath — so no old tier ladder is left showing to customers.'
-    :'Points will be spent on rewards again — tiers stay saved, and stop being what customers see.';
-  /* V305: and on a tiers-ONLY programme the consequence is stated whether or not the mode is
+  /* V303/V305/V306's modeChangeLineV303 is DELETED at V314 (W6 increment 1). It compared the
+     chosen model against businesses.points_mode to decide whether to announce a mode change — and
+     points_mode is frozen from v314 onward, so the comparison would answer from a column nothing
+     writes and the sentence would go stale for exactly the owners who switch. The switchboard's
+     own "what changes" sentence is increment 2's deliverable, written against the four spine
+     flags the owner will then be able to see and set directly. The tiers-only consequence line
+     below survives untouched: it is a statement about the state being published, not about a
+     transition, and it never read points_mode. */
+  /* V305: on a tiers-ONLY programme the consequence is stated whether or not the mode is
      CHANGING, because it is true of the state the owner is publishing into either way. A firm
      already running tiers gets no mode line at all — that is what the "not published yet" owner
      was missing when they asked why the wizard was showing them rewards. */
@@ -23464,10 +23634,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :changes.error
         ?'<p class="muted small">The change list could not be read, so it is not shown. Nothing has been published yet.</p>'
         :`${changes.lines.length?`<ul class="studio-change-list-v295">${changes.lines.join('')}</ul>`:'<p class="muted small">Nothing changes for customers in this draft.</p>'}${changes.unreadable.length?`<p class="muted small" style="margin-top:10px">Changes to ${esc(changes.unreadable.join(' and '))} could not be read, so they are not listed here.</p>`:''}`;
-    /* V303: the mode switch is not part of the draft, so growSetupComparisonV301 — which compares
-       draft against live — cannot see it. It is stated here, beside the changes it belongs with,
-       because it is the biggest thing publishing this choice does to a customer. */
-    const modeLine=modeChangeLineV303();
     const claimLine=tiersOnlyClaimLineV305();
     const ackBlock=state.needAck
       ?`<div class="imp-note" style="margin-top:12px">${state.impactRules.length?`<b>Advanced rules this draft turns on</b><div style="margin-top:6px">${state.impactRules.map(rule=>`<div class="studio-impact-rule"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b></div>`).join('')}</div>`:'<b>This draft turns on a rule that moves money or reaches customers.</b>'}
@@ -23477,7 +23643,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <p class="grow-setup-sentence-v301">${esc(earnOrClimbLineV305())}</p>
       <p class="grow-setup-sentence-v301" data-merchant-content>${esc(rewardOrLadderLineV305())}</p>
       <section class="grow-setup-changes-v301" aria-label="What changes for customers"><b>What changes for customers</b>
-      <div style="margin-top:8px" id="growSetupChangesV301">${modeLine?`<p class="grow-setup-modechange-v303" data-grow-setup-modechange-v303><b>${esc(modeLine)}</b></p>`:''}${claimLine?`<p class="grow-setup-modechange-v303" data-grow-setup-claimline-v305>${esc(claimLine)}</p>`:''}${changeBlock}</div></section>
+      <div style="margin-top:8px" id="growSetupChangesV301">${claimLine?`<p class="grow-setup-modechange-v303" data-grow-setup-claimline-v305>${esc(claimLine)}</p>`:''}${changeBlock}</div></section>
       <div class="imp-note" style="margin-top:12px"><b>${state.keepPaused?'Programme will stay PAUSED — customers earn nothing.':'Programme will be ON — customers start earning when you publish.'}</b>
       <label style="display:flex;align-items:center;gap:9px;margin-top:10px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupPauseV301" style="width:auto"${state.keepPaused?' checked':''}> <span>Keep it paused for now</span></label></div>${ackBlock}`;
   };
@@ -23807,7 +23973,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* V303: the publish landed, the points_mode switch behind it did not. Retrying only re-tries
        that write — re-publishing would be a second publish of a version that is already live. */
     const modeRetry=$('growSetupModeRetryV303');
-    if(modeRetry)modeRetry.onclick=()=>{applyPointsModeV303(true)};
+    if(modeRetry)modeRetry.onclick=()=>{applyProgrammeSwitchesV314(true)};
   }
   /* The Next button is disabled for the duration of its own save. This is the same defect class
      as the double publish modal: an enabled button over an in-flight write is how one intent
@@ -23828,43 +23994,52 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     }
   };
   const failStep=(error,tail)=>{state.error=`${ownerErrorText(error)} ${tail}`;render()};
-  /* V303: the points_mode the chosen model implies. This is the ONE place the mapping is written
-     down.
-     V306: stamps target 'redeem', not null. V303 mapped the stamp card to null on the reasoning
-     that the stamp engine "is not a points mode at all", and applyPointsModeV303 reads a falsy
-     target as "leave it alone" — so a firm that had run Tiered membership kept points_mode='tiers'
-     after switching to a stamp card, and the V229 gate in customer_create_redemption_intent_v89
-     refuses ALL redemption under 'tiers' while the customer 'rewards' capability stays false. Every
-     stamp redemption was blocked. 'redeem' is what the V229 backfill gave every firm; on a stamp
-     firm it means "what you collect can be spent", it passes the server redemption gate, and it
-     keeps coalesce(points_mode,'tiers')='tiers' FALSE, so a tier ladder left over from a previous
-     model never resurfaces on the customer page. NULL does the opposite: the capabilities function
-     coalesces null to 'tiers', and an ex-tiers stamp firm would be shown the old ladder. */
-  const targetPointsModeV303=()=>state.pick==='stamps'?'redeem':state.pick;
-  const pointsModeChangesV303=()=>{
-    const target=targetPointsModeV303();
-    return Boolean(target&&target!==S.biz?.points_mode);
-  };
-  /* V230 recorded why this is not a draft field: points_mode is an INSTANT live switch on
-     businesses, enforced server-side, so writing it at step 1 would change what customers can do
-     the moment the owner picked a card — before they had reviewed anything, and even if they then
-     walked away. It is therefore applied once, AFTER publish_loyalty_config has succeeded, so the
-     mode and the configuration that assumes it go live together.
+  /* V314 (W6 increment 1): the programme switches the chosen model implies. This is the ONE place
+     the mapping is written down, and it REPLACES V303/V306's businesses.points_mode write.
+     After the switchboard inversion the spine (public.business_programmes) is the authority and
+     points_mode is a frozen historical column: a v314 BEFORE UPDATE tripwire silently pins any
+     write to it and records POINTS_MODE_WRITE_SUPPRESSED_V314, so the old mapping would have been
+     a no-op that still looked like it worked.
+     The stamp card no longer has to be squeezed into a points_mode value — it turns the STAMPS
+     programme on and points/tiers off, which is what V306 was approximating when it made stamps
+     target 'redeem' to dodge the V229 tiers gate. Increment 2 replaces this implied set with four
+     independent owner-visible toggles; until then the wizard's one-of-four pick is expressed
+     faithfully as a switch set. */
+  /* The mapping itself is at module scope (PROGRAMME_SWITCHES_V314) because the wizard is one of
+     FOUR doors onto this decision — the Grow editor's toggle and the two publish routes are the
+     others, and when the mapping lived here only the wizard could be right. */
+  /* V230/V303 recorded why this is not a draft field, and the reason survives the inversion
+     verbatim — only the storage changed: it is an INSTANT live switch, enforced server-side, so
+     throwing it at step 1 would change what customers can do the moment the owner picked a card,
+     before they had reviewed anything and even if they then walked away. It is therefore applied
+     once, AFTER publish_loyalty_config has succeeded, so the switches and the configuration that
+     assumes them go live together.
      No confirm(): step 1 WAS the deliberate act, and the Go-live step states the change in words
-     before the owner presses Publish. */
-  async function applyPointsModeV303(fromRetry){
-    const target=targetPointsModeV303();
-    if(!target||target===S.biz?.points_mode){state.modeError='';if(fromRetry)render();return true}
+     before the owner presses Publish.
+     V314 (W6 increment 1 remediation): state.keepPaused RIDES ALONG. It used not to, and the
+     result was that "Keep it paused for now — customers earn nothing" published a firm that
+     earned: the wizard wrote active=false onto the draft, and v314 had just removed
+     loyalty_programs.active from the earn gate, so with the spine switched ON the sale earned
+     anyway. PAUSED = the spine row is OFF (programmeSwitchSetV314), which stops accrual and
+     catalogue redemption together.
+     The idempotency key is minted per PUBLISH and reused by the retry button, so a retry after a
+     timeout that had actually succeeded replays the server's stored receipt instead of flipping a
+     second time — while "Add another reward" followed by a second publish, possibly with a
+     different pause choice, mints a new key instead of colliding with the first receipt's hash
+     (23505) or silently replaying it. */
+  async function applyProgrammeSwitchesV314(fromRetry){
+    if(!PROGRAMME_SWITCHES_V314[state.pick]){state.modeError='';if(fromRetry)render();return true}
     if(fromRetry){state.modeError='';render()}
-    const {error}=await sb.from('businesses').update({points_mode:target}).eq('id',S.biz.id);
+    if(!fromRetry||!state.switchKeyV314)state.switchKeyV314=crypto.randomUUID();
+    const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,state.pick,
+      {paused:state.keepPaused===true,key:state.switchKeyV314});
     if(!isCurrent())return false;
-    if(error){
+    if(!ok){
       /* Honest: publishing HAPPENED. Saying "publish failed" would send the owner to re-publish a
          version that is already live. */
-      state.modeError=`Published. The tier switch could not be applied — ${ownerErrorText(error)} Press retry.`;
+      state.modeError=`Published. The programme switch could not be applied — ${ownerErrorText(error)} Press retry.`;
       render();return false;
     }
-    S.biz.points_mode=target;
     state.modeError='';
     if(fromRetry)render();
     return true;
@@ -23898,7 +24073,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       state.model=model;
       /* Nothing is written when the family did not change: an owner who opens the wizard to fix
          a reward must not create a draft, and a no-op save is still a draft. points_mode is NOT
-         written here — see applyPointsModeV303. */
+         written here — see applyProgrammeSwitchesV314. */
       if(model===baseModel)return goto(state.step+1);
       const result=await saveDraft({loyalty_model:model});
       if(!isCurrent())return;
@@ -24035,9 +24210,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       state.publishedSummary={earn:earnOrClimbLineV305(),reward:rewardOrLadderLineV305()};
       toast('Grow changes published');
       render();
-      /* V303: and only now the mode. AFTER publish, never before — see applyPointsModeV303. It
-         renders its own inline failure, so publishing is never reported as failed because of it. */
-      await applyPointsModeV303(false);
+      /* V303/V314: and only now the switches. AFTER publish, never before — see
+         applyProgrammeSwitchesV314. It renders its own inline failure, so publishing is never
+         reported as failed because of it. */
+      await applyProgrammeSwitchesV314(false);
     });
   }
   render();
@@ -24122,6 +24298,10 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
      review screen stops being silent — it says the programme will publish paused, before the
      confirmation, and offers the switch. */
   let draftProgrammeActiveV258=null;
+  /* V314 (W6 increment 1): the draft's own loyalty_model, captured beside its active flag,
+     because publishing has to apply the programme switches and the model decides which set.
+     Null when the draft carries no programme row at all — see the publish handler. */
+  let draftProgrammeModelV314=null;
   const renderPublishPauseWarningV258=()=>{
     const host=$('growPublishPauseV258');if(!host)return;
     if(draftProgrammeActiveV258!==false){host.innerHTML='';return}
@@ -24201,6 +24381,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
       return;
     }
     draftProgrammeActiveV258=draftResult.data?.program?.active??null;
+    draftProgrammeModelV314=draftResult.data?.program?.loyalty_model??null;
     renderPublishPauseWarningV258();
     const rows=growPublishFieldRowsV170((liveResult.data||[])[0]||null,draftResult.data?.program||null);
     /* V291: one renderer for every changed thing, in the order an owner reads them. A section is
@@ -24313,13 +24494,37 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
        even guess the word. A checkbox is exactly as deliberate — it cannot be pressed by
        accident, it is one extra intentional act — and it translates. */
     $('growPubType').onchange=event=>{$('growPubConfirm').disabled=event.target.checked!==true};
+    /* V314: a retry after a failed SWITCH must never re-run publish_loyalty_config — the version
+       is already live and republishing it is a second publish, not a retry. */
+    let growPublishedV314=false;
     $('growPubConfirm').onclick=async()=>{
       if($('growPubType').checked!==true)return;
       const confirmButton=$('growPubConfirm');confirmButton.disabled=true;confirmButton.setAttribute('aria-busy','true');
-      const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
+      const {error:publishError}=growPublishedV314
+        ?{error:null}
+        :await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
       if(!isCurrent())return;
       confirmButton.removeAttribute('aria-busy');
       if(publishError){confirmButton.disabled=false;$('growPubErr').innerHTML=`<div class="err">${esc(publishError.code==='42501'?'Only the owner can publish.':(publishError.message||'Could not publish.'))}</div>`;return}
+      growPublishedV314=true;
+      /* V314 (W6 increment 1): AND THE SWITCHES, exactly as the setup wizard applies them — same
+         helper, same mapping, same PAUSED-means-the-spine-row-is-off rule. Publishing used to be
+         the one route that reached the engine on its own, through the v308 sync trigger the
+         inversion drops. Without this call an owner who set the whole programme up in the Grow
+         editor and published it from this page went live with every spine row still false: the
+         page said Live and the next sale earned nothing. `active===null` means this draft has no
+         programme row, so publish_loyalty_config leaves loyalty_programs alone and the spine must
+         be left alone too.
+         Publishing HAPPENED — a failed switch is reported as a failed switch, never as a failed
+         publish, and the dialog stays open with its Publish button re-enabled as a retry. */
+      const switchV314=await applyPublishedProgrammeSwitchesV314(
+        {active:draftProgrammeActiveV258,loyaltyModel:draftProgrammeModelV314});
+      if(!isCurrent())return;
+      if(!switchV314.ok){
+        confirmButton.disabled=false;
+        $('growPubErr').innerHTML=`<div class="err">Published. The programme switch could not be applied — ${esc(switchV314.error?.message||'try again.')} Press Publish now to retry just the switch.</div>`;
+        return;
+      }
       sessionStorage.removeItem(reviewKey);close();toast('Grow changes published');nav('#/grow');
     };
   };
@@ -24965,17 +25170,46 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
     if($('studioPubType'))$('studioPubType').onchange=e=>{
       $('studioPubConfirm').disabled=e.target.checked!==true;
     };
+    /* V314: as in the Grow publish flow — a retry after a failed switch re-tries the switch, not
+       the publish. */
+    let studioPublishedV314=false;
     $('studioPubConfirm').onclick=async()=>{
       if($('studioPubType').checked!==true){
         $('studioPubErr').innerHTML='<div class="err">Tick the box to confirm.</div>';return;
       }
       const cbtn=$('studioPubConfirm');cbtn.disabled=true;cbtn.setAttribute('aria-busy','true');
-      const {error}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
+      const {error}=studioPublishedV314
+        ?{error:null}
+        :await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
       if(!isCurrent())return;
       cbtn.removeAttribute('aria-busy');
       if(error){cbtn.disabled=false;
         const msg=error.code==='23514'?(error.message||'One or more rules are not valid — fix them before publishing.'):error.code==='42501'?'Only the owner can publish.':(error.message||'Could not publish.');
         $('studioPubErr').innerHTML=`<div class="err">${esc(msg)}</div>`;CUI.announce(msg,{assertive:true});return;}
+      studioPublishedV314=true;
+      /* V314 (W6 increment 1): the THIRD publish route, and it publishes the same
+         firm_config_version the other two do — including that version's loyalty programme row, if
+         it has one. Studio is the rules surface, so most of its publishes carry no programme row
+         at all; get_loyalty_reward_draft answers which case this is, and a draft with no
+         `program` leaves the spine untouched, exactly as publish_loyalty_config leaves
+         loyalty_programs untouched. Fail CLOSED on a failed read: guessing an active flag here
+         would either strand a firm switched off or switch one on behind the owner's back. */
+      const draftForSwitchV314=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId});
+      if(!isCurrent())return;
+      if(draftForSwitchV314.error){
+        cbtn.disabled=false;
+        const readMsg=`Published. The programme switch could not be applied — ${draftForSwitchV314.error.message||'the draft could not be re-read.'} Press Publish now to retry just the switch.`;
+        $('studioPubErr').innerHTML=`<div class="err">${esc(readMsg)}</div>`;CUI.announce(readMsg,{assertive:true});return;
+      }
+      const switchV314=await applyPublishedProgrammeSwitchesV314({
+        active:draftForSwitchV314.data?.program?.active??null,
+        loyaltyModel:draftForSwitchV314.data?.program?.loyalty_model??null});
+      if(!isCurrent())return;
+      if(!switchV314.ok){
+        cbtn.disabled=false;
+        const switchMsg=`Published. The programme switch could not be applied — ${switchV314.error?.message||'try again.'} Press Publish now to retry just the switch.`;
+        $('studioPubErr').innerHTML=`<div class="err">${esc(switchMsg)}</div>`;CUI.announce(switchMsg,{assertive:true});return;
+      }
       close();
       toast('Published — each rule now shows its live state');
       nav('#/studio');

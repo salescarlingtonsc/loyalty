@@ -35,26 +35,44 @@ const section = (start, end) => {
 };
 const wizard = section('async function growSetupWizardV301(', 'function growPublishFieldRowsV170(');
 
-test('V306 the Stamp card targets a points_mode that lets a stamp be redeemed', () => {
-  assert.match(wizard, /const targetPointsModeV303=\(\)=>state\.pick==='stamps'\?'redeem':state\.pick;/);
-  /* The old form must be GONE from the whole file, not merely absent from the wizard: a second
-     copy of the mapping is how the fix would ship half-applied. */
+test('V306/V314 the Stamp card reaches an engine that lets a stamp be redeemed', () => {
+  /* V314 (W6 increment 1) SUPERSEDES V306's fix rather than reverting it. V306's defect was that
+     the stamp card left businesses.points_mode on a stale 'tiers', which the V229 gate read as
+     "points are for membership" and used to refuse every redemption. After the switchboard
+     inversion there is no points_mode to leave stale: the card turns the STAMPS programme on and
+     points/tiers off, and the redemption gate asks the spine. The V306 defect is closed by
+     construction, and this pin now guards the mapping that replaced it. */
+  /* V314 REMEDIATION (2026-08-14): the mapping is at MODULE scope now, not inside the wizard. The
+     Grow editor's four-way toggle and both publish routes read the SAME table, which is what
+     stopped them lying; pinning it against the wizard slice would re-authorise a per-door copy. */
+  assert.match(app, /const PROGRAMME_SWITCHES_V314=\{\s*\r?\n?\s*redeem:\{points:true,tiers:false\},\s*\r?\n?\s*tiers:\{points:false,tiers:true\},\s*\r?\n?\s*both:\{points:true,tiers:true\},\s*\r?\n?\s*stamps:\{stamps:true,points:false,tiers:false\}\s*\r?\n?\s*\};/);
+  /* Both older forms must be GONE from the WHOLE file, not merely absent from the wizard: a
+     surviving copy of either mapping is how a fix ships half-applied. */
   assert.doesNotMatch(app, /state\.pick==='stamps'\?null:state\.pick/);
-  /* And the reason the null was fatal, pinned so it cannot be re-introduced as "harmless": a falsy
-     target is still the early return that means "leave the live column alone". */
-  assert.match(wizard, /if\(!target\|\|target===S\.biz\?\.points_mode\)\{state\.modeError='';if\(fromRetry\)render\(\);return true\}/);
-  // The write itself is unchanged — one column on businesses, after publish.
-  assert.match(wizard, /sb\.from\('businesses'\)\.update\(\{points_mode:target\}\)\.eq\('id',S\.biz\.id\)/);
+  assert.doesNotMatch(app, /state\.pick==='stamps'\?'redeem':state\.pick/);
+  // No writer anywhere in the wizard may touch the frozen column again.
+  assert.doesNotMatch(wizard, /points_mode:/);
+  // The write is one owner-gated RPC, after publish, reached through the one shared writer.
+  assert.match(app, /sb\.rpc\('set_programmes_v314',\{/);
+  assert.match(wizard, /writeProgrammeSwitchesV314\(S\.biz\.id,state\.pick,/);
 });
 
-test('V306 the Go-live step names the mode change the stamp card now makes', () => {
-  /* pointsModeChangesV303() is TRUE for a stamp firm that was not already on 'redeem', so the
-     step must state it. Falling through to the redeem sentence would have told a stamp firm about
-     tiers it is no longer running; saying nothing would have been the old, wrong claim that
-     choosing stamps leaves points_mode untouched. */
-  assert.match(wizard, /:state\.pick==='stamps'\?'Customers switch to the stamp card\./);
-  assert.match(wizard, /Customers switch to the stamp card\.[^']*stays saved/);
-  assert.match(wizard, /const pointsModeChangesV303=\(\)=>\{\s*\r?\n?\s*const target=targetPointsModeV303\(\);\s*\r?\n?\s*return Boolean\(target&&target!==S\.biz\?\.points_mode\);/);
+test('V314 the Go-live step no longer narrates a frozen column', () => {
+  /* V306 made the stamp card state its own mode-change sentence, because it MOVED points_mode.
+     V314 froze that column, so a sentence conditioned on it would be narrating a value nothing
+     writes — stale for exactly the owners who switch. The whole modeChangeLineV303 family is
+     deleted here and rebuilt against the four spine flags in increment 2. The undeclared-identifier
+     hazard is what these three assertions actually guard: a deleted declaration with a surviving
+     reference passes `node --check` and the entire suite, then crashes in production. */
+  for (const gone of ['modeChangeLineV303', 'pointsModeChangesV303',
+                      'targetPointsModeV303', 'applyPointsModeV303']) {
+    // A declaration OR a call — prose in a comment is allowed to keep naming what was removed.
+    assert.doesNotMatch(app, new RegExp(`(const|function)\\s+${gone}\\b`), `${gone} is declared`);
+    assert.doesNotMatch(app, new RegExp(`${gone}\\s*\\(`), `${gone} is still called`);
+  }
+  // The retry control and its honest wording survive — the switch really can fail after publish.
+  assert.match(wizard, /id="growSetupModeRetryV303"/);
+  assert.match(wizard, /applyProgrammeSwitchesV314\(true\)/);
 });
 
 test('V306 tier_basis crosses the DB boundary through two translators', () => {

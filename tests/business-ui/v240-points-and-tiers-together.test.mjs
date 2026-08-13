@@ -75,9 +75,11 @@ test('V240/V258 the save path writes the chosen basis unchanged', () => {
   // V258: no coercion at all — 'points_earned' reaches the server exactly as chosen.
   assert.doesNotMatch(save, /basisV240/);
   assert.match(save, /row\.tier_basis=\$\('ltb'\)\.value;/);
-  // The draft save (carrying tier_basis) precedes the points_mode switch — the order the
-  // database trigger requires.
-  assert.ok(save.indexOf("save_loyalty_config_draft") < save.indexOf("update({points_mode:targetModeV230})"));
+  /* The draft save (carrying tier_basis) precedes the live switch — the order the database
+     requires. V314 (W6i1, 2026-08-14): the switch is public.set_programmes_v314 on the four-row
+     spine, not a businesses.points_mode UPDATE, because that column is frozen behind a tripwire
+     that silently pins any write. The ordering rule is untouched. */
+  assert.ok(save.indexOf("save_loyalty_config_draft") < save.indexOf("writeProgrammeSwitchesV314(S.biz.id,loyaltySelectionV230,"));
   // V258: the 23514 branch is unreachable since V256 dropped the trigger, so it is gone from
   // both write paths — a dead branch can only ever mislead.
   assert.doesNotMatch(save, /modeError\.code==='23514'/);
@@ -120,7 +122,13 @@ test('V240 the overview can show two live models at once', () => {
   assert.match(app, /summary:!liveLoyaltyModelKeysV240\.includes\('tiers'\)\?''/);
   // The stamp card is still exclusive with the points engine — 'both' never marks it live.
   assert.doesNotMatch(app, /liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'\?\[[^\]]*'stamps'/);
-  assert.match(app, /data-points-mode-v229="both"/, 'the first-run chooser offers it too');
+  /* V314 (W6i1, 2026-08-14): the first-run chooser is DELETED — its three cards wrote the frozen
+     businesses.points_mode column and could only ever look like they worked. 'both' is still one
+     of the four models a firm can pick; the surfaces that offer it are the setup wizard's step 1
+     and the Grow editor's four-way toggle, and both map it through the same switch set. */
+  assert.doesNotMatch(app, /data-points-mode-v229="both"/);
+  assert.match(app, /both:\{points:true,tiers:true\}/, 'the switch mapping still offers both');
+  assert.match(app, /\['redeem','tiers','both','stamps'\]\.map\(key=>/, 'and the editor toggle does too');
 });
 
 test('V241 the catalog payload is an object and the wallet tolerates both shapes', () => {
