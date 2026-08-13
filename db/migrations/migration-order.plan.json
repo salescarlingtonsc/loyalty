@@ -1794,6 +1794,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v310_programme_read_path.sql",
+      "semanticVersion": "v310",
+      "proposedDeployVersion": "20260813000600"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql",
       "semanticVersion": "v297",
       "proposedDeployVersion": "20260813001000"

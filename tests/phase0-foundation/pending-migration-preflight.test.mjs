@@ -174,6 +174,10 @@ const sqlTestBySemanticVersion = new Map([
 ]);
 
 const sqlTestByMigrationName = new Map([
+  // v310 semantic label is shared by two applied migrations (programme read path 20260813000600
+  // and google content retention 20260813001300); the read-path suite binds BY NAME so the
+  // semantic fallback keeps serving the retention entry.
+  ['nestly_v310_programme_read_path', 'db/tests/v310_programme_read_path.sql'],
   ['nestly_v292_demo_requests', 'db/tests/v292_demo_requests.sql'],
   ['nestly_v290_server_debt_closure', 'db/tests/v290_server_debt_closure.sql'],
   ['nestly_v285_a4_gap_closure', 'db/tests/v285_a4_gap_closure.sql'],
@@ -772,7 +776,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 256); // + v310 google content retention
+  assert.equal(pending.length, 257); // + v310 google content retention
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

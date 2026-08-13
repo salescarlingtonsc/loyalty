@@ -231,6 +231,18 @@ full rolled-back production rehearsal + full-tenant diffs.
   the new programme while old earns keep the old tag — the first per-programme
   balance reader must migrate the pot at switch time or read switched firms
   single-pot.
+  DESIGN LOCKED 2026-08-13 (W4 design contract, workflow wf_80e3e488-edd): W4 splits
+  into W4a (migration v310 — 9 readers gain additive per-programme payloads, the D1
+  tier-fuel filter with a fail-open guard is the wave's ONLY behaviour change, and a
+  pot-split detector ships fail-closed), W4b (the customer stack, gated on
+  programmes_contract='v310' so a pre-v310 server renders today's tabs byte-identically
+  through the CDN window), and W4c (the "Show my code" member QR — deferred because no
+  member identity exists that the counter scanner can parse; its two RPCs and the
+  nestly:member: scan branch are contract-pinned). Currentness policy (a) adopted:
+  every spendable balance stays single-pot in W4; per-programme objects carry
+  balance_scope='business_pot' which W5 flips by VALUE to 'programme_pot' after the
+  pot migration; retagging history was rejected out loud (append-only ledger).
+  Ship order: W4a alone and proven live, then W4b, then W4c.
 - **W5 — write path**: index swap in ONE transaction; programme_id NOT NULL; earn
   loop (retention-engine template); tier multiplier scoped to points; the
   `on conflict do nothing` earn insert made constraint-explicit (it currently
