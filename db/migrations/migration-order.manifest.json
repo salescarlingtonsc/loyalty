@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 297,
-  "executableCount": 283,
+  "itemCount": 298,
+  "executableCount": 284,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -440,11 +440,12 @@
     },
     {
       "sourceDeployVersion": "20260813",
-      "count": 3,
+      "count": 4,
       "paths": [
         "db/migrations/20260813_nestly_v300_growth_readbacks.sql",
         "db/migrations/20260813_nestly_v306_both_mode_shows_tiers.sql",
-        "db/migrations/20260813_nestly_v307_programme_read_model.sql"
+        "db/migrations/20260813_nestly_v307_programme_read_model.sql",
+        "db/migrations/20260813_nestly_v308_programme_spine.sql"
       ]
     }
   ],
@@ -2804,13 +2805,21 @@
     {
       "order": 295,
       "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v308_programme_spine.sql",
+      "semanticVersion": "v308",
+      "proposedDeployVersion": "20260813000400",
+      "sha256": "7c3426e85190cc7784521c141d84874dd118e6dea1fd09ea4ba096ab3d946958"
+    },
+    {
+      "order": 296,
+      "kind": "executable",
       "path": "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql",
       "semanticVersion": "v297",
       "proposedDeployVersion": "20260813001000",
       "sha256": "a3f0ed41d794a4e0a928d0428f1fce735e4cd2ee0f6c868dcbed3cf7ca5bfc8c"
     },
     {
-      "order": 296,
+      "order": 297,
       "kind": "executable",
       "path": "db/migrations/20260812_nestly_v298_prospecting_seed_and_reference.sql",
       "semanticVersion": "v298",
@@ -2818,7 +2827,7 @@
       "sha256": "1faff673db3f49babbfe5ba64a354448cb56d51dc94e90939a63cacef6d5e1d7"
     },
     {
-      "order": 297,
+      "order": 298,
       "kind": "executable",
       "path": "db/migrations/20260812_nestly_v299_prospecting_rpcs.sql",
       "semanticVersion": "v299",
