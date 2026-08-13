@@ -1788,6 +1788,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v309_ledger_programme_tag.sql",
+      "semanticVersion": "v309",
+      "proposedDeployVersion": "20260813000500"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql",
       "semanticVersion": "v297",
       "proposedDeployVersion": "20260813001000"

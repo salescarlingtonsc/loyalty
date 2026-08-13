@@ -225,7 +225,12 @@ full rolled-back production rehearsal + full-tenant diffs.
   readers, catalog grouped, tier metric filtered, liability + analytics scoped
   (`points_outstanding_total` and programme-overview counts break on the second
   programme row otherwise). Customer stack ships here — visual change only, tenants
-  still single-programme.
+  still single-programme. W4 also owns the CURRENTNESS GAP recorded in the V309
+  evidence doc: the ledger tag follows the business's model at write time, so a
+  switched firm's later offsetting rows (expiry/redeem/adjust, sale_id NULL) land on
+  the new programme while old earns keep the old tag — the first per-programme
+  balance reader must migrate the pot at switch time or read switched firms
+  single-pot.
 - **W5 — write path**: index swap in ONE transaction; programme_id NOT NULL; earn
   loop (retention-engine template); tier multiplier scoped to points; the
   `on conflict do nothing` earn insert made constraint-explicit (it currently
