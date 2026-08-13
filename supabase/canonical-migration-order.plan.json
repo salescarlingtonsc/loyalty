@@ -1771,6 +1771,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260813000300",
+      "name": "nestly_v307_programme_read_model",
+      "sourcePath": "db/migrations/20260813_nestly_v307_programme_read_model.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260813001000",
       "name": "nestly_v297_merchant_prospecting_map",
       "sourcePath": "db/migrations/20260812_nestly_v297_merchant_prospecting_map.sql"
