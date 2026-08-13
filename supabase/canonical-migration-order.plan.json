@@ -1816,6 +1816,18 @@
       "version": "20260813001300",
       "name": "nestly_v310_google_content_retention",
       "sourcePath": "db/migrations/20260813_nestly_v310_google_content_retention.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260813001400",
+      "name": "nestly_v311_programme_money_kernel",
+      "sourcePath": "db/migrations/20260813_nestly_v311_programme_money_kernel.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260813001500",
+      "name": "nestly_v312_programme_pot_migration",
+      "sourcePath": "db/migrations/20260813_nestly_v312_programme_pot_migration.sql"
     }
   ]
 }

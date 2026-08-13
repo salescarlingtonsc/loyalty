@@ -170,7 +170,13 @@ const sqlTestBySemanticVersion = new Map([
   ['v307', 'db/tests/v307_programme_read_model.sql'],
   ['v308', 'db/tests/v308_programme_spine.sql'],
   ['v309', 'db/tests/v309_ledger_programme_tag.sql'],
-  ['v310', 'db/tests/v310_google_content_retention.sql']
+  ['v310', 'db/tests/v310_google_content_retention.sql'],
+  /* v311 (the money kernel) and v312 (the pot machinery) are ONE wave applied
+     back-to-back and are exercised by the same rolled-back suite: v312's fixtures are
+     v311's four tenant shapes, and the S4/S5 cells only mean anything with both
+     applied. Both semantic versions are unique, so these bind by version, not by name. */
+  ['v311', 'db/tests/v311_v312_programme_money_kernel.sql'],
+  ['v312', 'db/tests/v311_v312_programme_money_kernel.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
@@ -776,7 +782,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 257); // + v310 google content retention
+  assert.equal(pending.length, 259); // + v311 money kernel + v312 pot migration
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

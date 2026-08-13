@@ -1821,6 +1821,18 @@
       "path": "db/migrations/20260813_nestly_v310_google_content_retention.sql",
       "semanticVersion": "v310",
       "proposedDeployVersion": "20260813001300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v311_programme_money_kernel.sql",
+      "semanticVersion": "v311",
+      "proposedDeployVersion": "20260813001400"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v312_programme_pot_migration.sql",
+      "semanticVersion": "v312",
+      "proposedDeployVersion": "20260813001500"
     }
   ]
 }
