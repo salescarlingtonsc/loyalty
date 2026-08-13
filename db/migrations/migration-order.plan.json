@@ -1851,6 +1851,12 @@
       "path": "db/migrations/20260814_nestly_v314_business_explorer_and_funnel.sql",
       "semanticVersion": "v314",
       "proposedDeployVersion": "20260814001100"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v315_repair_dropped_lead_score_references.sql",
+      "semanticVersion": "v315",
+      "proposedDeployVersion": "20260814001200"
     }
   ]
 }

@@ -109,14 +109,14 @@ test('materializer creates one byte-preserving 307-file chain and deterministic 
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 262); // + v311 money kernel + v312 pot migration
-  assert.equal(manifest.itemCount, 307); // + v311 money kernel + v312 pot migration
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 307); // + v311 money kernel + v312 pot migration
+  assert.equal(manifest.pendingCount, 263); // + v311 money kernel + v312 pot migration + v315 lead score repair
+  assert.equal(manifest.itemCount, 308); // + v311 money kernel + v312 pot migration + v315 lead score repair
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 308); // + v311 money kernel + v312 pot migration + v315 lead score repair
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v314_business_explorer_and_funnel' // tail
+    'nestly_v315_repair_dropped_lead_score_references' // tail
   );
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);
