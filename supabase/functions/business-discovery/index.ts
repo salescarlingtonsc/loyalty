@@ -20,6 +20,16 @@
  *   - It has no unrestricted "download all of Singapore" mode. Discovery is always
  *     scoped by area/category/radius, and `maxPages` is hard-capped.
  *
+ * GEO PROVENANCE (GMP Service Specific Terms, read 2026-08-13). §14.3 allows
+ * caching Places lat/lng for only 30 consecutive calendar days, and §14.2 bars
+ * Places content on a non-Google map — which Peekaa's self-contained SVG map is.
+ * So for every place with a postal code, this function re-geocodes it against
+ * ONEMAP (Singapore Land Authority open data): those coordinates are government
+ * open data, stored permanently as geo_source='onemap', and are what the map
+ * plots. Google lat/lng is only a fallback for postal-less places, flagged
+ * geo_source='google_places' and purged by the daily v308 retention job.
+ * Place IDs are kept forever (SST §3 exempts them).
+ *
  * COST CONTROL (brief §14):
  *   - Discovery (searchText) and enrichment (Details) are SEPARATE steps. A preview
  *     never spends a Details call.
@@ -66,6 +76,8 @@ interface BusinessDataProvider {
   readonly key: string;
   searchBusinesses(q: DiscoveryQuery): Promise<{ results: NormalizedBusiness[]; calls: number }>;
   getBusinessDetails(sourceIds: string[]): Promise<{ results: Map<string, Partial<NormalizedBusiness>>; calls: number }>;
+  /** Full re-read of already-known places, for the 30-day content refresh cycle. */
+  refreshBusinesses(sourceIds: string[]): Promise<{ results: NormalizedBusiness[]; calls: number }>;
 }
 
 const PRICE_LEVEL: Record<string, number> = {
@@ -178,6 +190,53 @@ const googlePlaces: BusinessDataProvider = {
     }
     return { results, calls };
   },
+
+  async refreshBusinesses(sourceIds) {
+    const apiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
+    if (!apiKey) throw new Error('provider_not_configured');
+    // Refresh mask = search fields + contact fields in one Details call per place.
+    // This is how stored Google content stays inside the 30-day cache window: the
+    // v308 stale-sources RPC nominates near-expiry places, this re-reads them, and
+    // the ingest RPC restarts their retention clock.
+    const mask = [
+      'id',
+      'displayName',
+      'formattedAddress',
+      'location',
+      'rating',
+      'userRatingCount',
+      'priceLevel',
+      'businessStatus',
+      'nationalPhoneNumber',
+      'internationalPhoneNumber',
+      'websiteUri',
+      'googleMapsUri',
+      'addressComponents',
+    ].join(',');
+
+    const results: NormalizedBusiness[] = [];
+    let calls = 0;
+    for (const id of sourceIds) {
+      const response = await fetch(
+        `https://places.googleapis.com/v1/places/${encodeURIComponent(id)}`,
+        { headers: { 'X-Goog-Api-Key': apiKey, 'X-Goog-FieldMask': mask } },
+      );
+      calls++;
+      if (!response.ok) continue;
+      const place = await response.json();
+      if (!place?.id) continue;
+      const postal = (place.addressComponents ?? []).find((c: { types?: string[] }) =>
+        (c.types ?? []).includes('postal_code'))?.longText;
+      results.push({
+        ...normalizeGooglePlace(place, { query: '' }),
+        phone: place.nationalPhoneNumber ?? place.internationalPhoneNumber ?? undefined,
+        website: place.websiteUri ?? undefined,
+        source_url: place.googleMapsUri ?? undefined,
+        postal_code: postal ?? undefined,
+      });
+    }
+    return { results, calls };
+  },
 };
 
 function normalizeGooglePlace(place: Record<string, any>, q: DiscoveryQuery): NormalizedBusiness {
@@ -201,6 +260,48 @@ const PROVIDERS: Record<string, BusinessDataProvider> = {
   google_places: googlePlaces,
 };
 
+/** OneMap (SLA, open government data). Free, no key for the search endpoint.
+ *  A hit replaces the Google geocode entirely, making the stored coordinates
+ *  first-party-permitted open data instead of 30-day Google content. */
+async function onemapGeocode(postal: string): Promise<{ latitude: number; longitude: number; address: string; postal_code: string } | null> {
+  try {
+    const response = await fetch(
+      `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${encodeURIComponent(postal)}&returnGeom=Y&getAddrDetails=Y&pageNum=1`,
+      { headers: { Accept: 'application/json' } },
+    );
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const hit = (payload.results ?? [])[0];
+    if (!hit?.LATITUDE || !hit?.LONGITUDE) return null;
+    return {
+      latitude: Number(hit.LATITUDE),
+      longitude: Number(hit.LONGITUDE),
+      address: String(hit.ADDRESS ?? ''),
+      postal_code: String(hit.POSTAL ?? postal),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function applyOnemapGeo(places: NormalizedBusiness[]): Promise<NormalizedBusiness[]> {
+  const out: NormalizedBusiness[] = [];
+  for (const place of places) {
+    if (place.postal_code) {
+      const geo = await onemapGeocode(place.postal_code);
+      if (geo) {
+        out.push({ ...place, latitude: geo.latitude, longitude: geo.longitude,
+          address: geo.address || place.address, postal_code: geo.postal_code,
+          // @ts-ignore carried through to the ingest RPC
+          geo_source: 'onemap' } as NormalizedBusiness);
+        continue;
+      }
+    }
+    out.push(place);
+  }
+  return out;
+}
+
 Deno.serve(async (request) => {
   if (request.method !== 'POST') {
     return json({ error: 'method_not_allowed' }, 405);
@@ -210,7 +311,15 @@ Deno.serve(async (request) => {
   const authorization = request.headers.get('Authorization');
   if (!authorization) return json({ error: 'authentication_required' }, 401);
 
-  let body: { query?: DiscoveryQuery; commit?: boolean; provider?: string };
+  let body: {
+    query?: DiscoveryQuery;
+    /** Blanket mode: every category of one sector across one planning area. */
+    sweep?: { planningArea: string; categories: { key: string; label: string }[]; maxPages?: number };
+    /** Compliance mode: re-read near-expiry Google content nominated by the DB. */
+    refresh?: { source_ids: string[] };
+    commit?: boolean;
+    provider?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -220,7 +329,14 @@ Deno.serve(async (request) => {
   const providerKey = body.provider ?? 'google_places';
   const provider = PROVIDERS[providerKey];
   if (!provider) return json({ error: 'unknown_provider' }, 400);
-  if (!body.query?.query) return json({ error: 'query_required' }, 400);
+  const mode = body.refresh ? 'refresh' : body.sweep ? 'sweep' : 'query';
+  if (mode === 'query' && !body.query?.query) return json({ error: 'query_required' }, 400);
+  if (mode === 'sweep' && (!body.sweep?.planningArea || !(body.sweep?.categories?.length))) {
+    return json({ error: 'sweep_scope_required' }, 400);
+  }
+  if (mode === 'refresh' && !(body.refresh?.source_ids?.length)) {
+    return json({ error: 'refresh_ids_required' }, 400);
+  }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   if (!supabaseUrl) return json({ error: 'server_misconfigured' }, 500);
@@ -237,13 +353,57 @@ Deno.serve(async (request) => {
   }
 
   try {
-    // 1. DISCOVERY — cheap, always scoped, never unbounded.
-    const search = await provider.searchBusinesses(body.query);
+    // ---- REFRESH: keep already-stored Google content inside its 30-day window.
+    if (mode === 'refresh') {
+      const ids = [...new Set(body.refresh!.source_ids)].slice(0, 50); // bounded spend
+      const refreshed = await provider.refreshBusinesses(ids);
+      const enriched = await applyOnemapGeo(refreshed.results);
+      const committed = await callRpc(supabaseUrl, authorization, 'platform_crm_ingest_discovered_v297', {
+        p_places: enriched,
+        p_request: { provider: providerKey, mode: 'refresh', requested: ids.length },
+        p_commit: true,
+        p_search_calls: 0,
+        p_detail_calls: refreshed.calls,
+      });
+      return json({ stage: 'refreshed', provider: providerKey, requested: ids.length,
+        ...committed, detail_calls: refreshed.calls });
+    }
+
+    // 1. DISCOVERY — cheap, always scoped, never unbounded. A sweep is just the
+    //    single-category search run once per category of the chosen sector, with
+    //    the category count capped so a sweep stays a bounded, auditable spend.
+    let search: { results: NormalizedBusiness[]; calls: number };
+    if (mode === 'sweep') {
+      const sweep = body.sweep!;
+      const categories = sweep.categories.slice(0, 12);
+      const seen = new Set<string>();
+      const merged: NormalizedBusiness[] = [];
+      let calls = 0;
+      for (const category of categories) {
+        const page = await provider.searchBusinesses({
+          query: `${category.label} in ${sweep.planningArea} Singapore`,
+          planningArea: sweep.planningArea,
+          categoryKey: category.key,
+          maxPages: Math.min(Math.max(sweep.maxPages ?? 3, 1), 3),
+        });
+        calls += page.calls;
+        for (const place of page.results) {
+          if (seen.has(place.source_id)) continue; // one shop, many categories
+          seen.add(place.source_id);
+          merged.push(place);
+        }
+      }
+      search = { results: merged, calls };
+    } else {
+      search = await provider.searchBusinesses(body.query!);
+    }
 
     // 2. PREVIEW — ask the database what is actually new. Costs no provider calls.
     const preview = await callRpc(supabaseUrl, authorization, 'platform_crm_ingest_discovered_v297', {
       p_places: search.results,
-      p_request: { provider: providerKey, ...body.query },
+      p_request: { provider: providerKey, mode, ...(body.query ?? {}),
+        ...(body.sweep ? { planningArea: body.sweep.planningArea,
+          categories: body.sweep.categories.map((c) => c.key) } : {}) },
       p_commit: false,
       p_search_calls: search.calls,
       p_detail_calls: 0,
@@ -263,11 +423,16 @@ Deno.serve(async (request) => {
       detailCalls = details.calls;
       enriched = search.results.map((r) => ({ ...r, ...(details.results.get(r.source_id) ?? {}) }));
     }
+    // Swap Google geocodes for OneMap open data wherever a postal code exists —
+    // those rows become permanent; the remainder stay on the 30-day Google clock.
+    enriched = await applyOnemapGeo(enriched);
 
     // 4. COMMIT — the database dedups and persists.
     const committed = await callRpc(supabaseUrl, authorization, 'platform_crm_ingest_discovered_v297', {
       p_places: enriched,
-      p_request: { provider: providerKey, ...body.query },
+      p_request: { provider: providerKey, mode, ...(body.query ?? {}),
+        ...(body.sweep ? { planningArea: body.sweep.planningArea,
+          categories: body.sweep.categories.map((c) => c.key) } : {}) },
       p_commit: true,
       p_search_calls: search.calls,
       p_detail_calls: detailCalls,

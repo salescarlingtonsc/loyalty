@@ -2948,6 +2948,12 @@
       'Import complete':'导入完成',
       'Importing…':'正在导入…',
       'Searching…':'正在搜索…',
+      /* v308: sector sweep + Google content retention (zh-CN). */
+      'Sweep every category in this sector':'扫描该行业的所有类别',
+      'Business data: Google Maps':'商家资料：Google Maps',
+      'Refresh stale Google data ({count})':'刷新过期的 Google 数据（{count}）',
+      'Refreshing…':'正在刷新…',
+      'Refreshed {count} places.':'已刷新 {count} 个地点。',
       'Choose an area and a category first.':'请先选择区域和类别。',
       'Found {found} · New {new} · Already known {existing}':'找到 {found} · 新增 {new} · 已存在 {existing}',
       'No business data provider is configured yet. Add the provider API key in Supabase before searching.':'尚未配置商家数据源。请先在 Supabase 中添加数据源 API 密钥，然后再搜索。',
@@ -3040,6 +3046,12 @@
       'Import complete':'Import selesai',
       'Importing…':'Mengimport…',
       'Searching…':'Mencari…',
+      /* v308: sector sweep + Google content retention (ms). */
+      'Sweep every category in this sector':'Imbas semua kategori dalam sektor ini',
+      'Business data: Google Maps':'Data perniagaan: Google Maps',
+      'Refresh stale Google data ({count})':'Segar semula data Google lapuk ({count})',
+      'Refreshing…':'Menyegar semula…',
+      'Refreshed {count} places.':'Sudah segar semula {count} tempat.',
       'Choose an area and a category first.':'Pilih kawasan dan kategori dahulu.',
       'Found {found} · New {new} · Already known {existing}':'Dijumpai {found} · Baharu {new} · Sedia diketahui {existing}',
       'No business data provider is configured yet. Add the provider API key in Supabase before searching.':'Tiada penyedia data perniagaan dikonfigurasikan lagi. Tambah kunci API penyedia dalam Supabase sebelum mencari.',
@@ -9016,11 +9028,17 @@
         ${CUI.field({id:'prospectingDiscoveryCategory',label:pt('Category'),control:'select',
           options:categories.map(entry=>({value:String(entry.key||''),label:String(entry.label||'')}))})}
       </div>
+      <label class="row" style="gap:8px;margin-top:10px;align-items:center">
+        <input type="checkbox" id="prospectingDiscoverySweep">
+        <span class="small">${escapeHtml(pt('Sweep every category in this sector'))}</span>
+      </label>
       <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
         <button type="button" class="btn ghost sm" id="prospectingDiscoveryPreview">${escapeHtml(pt('Preview'))}</button>
         <button type="button" class="btn sm" id="prospectingDiscoveryImport" disabled>${escapeHtml(pt('Import'))}</button>
+        <button type="button" class="btn ghost sm" id="prospectingDiscoveryRefresh" hidden></button>
       </div>
       <div id="prospectingDiscoveryResult" role="status" aria-live="polite" style="margin-top:12px"></div>
+      <p class="muted small" style="margin-top:10px">${escapeHtml(pt('Business data: Google Maps'))}</p>
     </details>`;
   }
   function prospectingNumber(value) {
@@ -9159,7 +9177,7 @@
       rows:rows.map(row=>prospectingRowCells(row,CUI,showDistance))
     })}
     <div class="platform-load-more">
-      <p class="muted small">${escapeHtml(pt('Showing {shown} of {count}.',{shown:rows.length,count:state.total}))}</p>
+      <p class="muted small">${escapeHtml(pt('Showing {shown} of {count}.',{shown:rows.length,count:state.total}))} · ${escapeHtml(pt('Business data: Google Maps'))}</p>
       ${state.hasMore?`<button type="button" class="btn ghost" id="prospectingLoadMore">${escapeHtml(pt('Load more prospects'))}</button>`:''}
     </div>`;
   }
@@ -9553,6 +9571,17 @@
           const match=asArray(taxonomy.categories).find(entry=>entry&&entry.key===category());
           return match?String(match.label||''):'';
         };
+        const sweepChecked=()=>main.querySelector('#prospectingDiscoverySweep')?.checked===true;
+        /* A sweep covers every leaf category sharing the selected category's sector.
+           The edge function runs one bounded search per category and dedups by
+           place ID, so "blanket the sector" stays a fixed, auditable spend. */
+        const sectorCategories=()=>{
+          const chosen=asArray(taxonomy.categories).find(entry=>entry&&entry.key===category());
+          if(!chosen||!chosen.parent)return [];
+          return asArray(taxonomy.categories)
+            .filter(entry=>entry&&entry.parent===chosen.parent&&entry.key&&entry.label)
+            .map(entry=>({key:String(entry.key),label:String(entry.label)}));
+        };
         const run=async commit=>{
           if(!area()||!category()){
             result.innerHTML=`<div class="err">${escapeHtml(pt('Choose an area and a category first.'))}</div>`;
@@ -9561,11 +9590,11 @@
           preview.disabled=true;importButton.disabled=true;
           result.innerHTML=`<p class="muted small">${escapeHtml(commit?pt('Importing…'):pt('Searching…'))}</p>`;
           try{
-            const {data,error}=await sb.functions.invoke('business-discovery',{body:{
-              query:{query:categoryLabel()+' in '+area()+' Singapore',
-                     planningArea:area(),categoryKey:category(),maxPages:3},
-              commit
-            }});
+            const body=sweepChecked()
+              ?{sweep:{planningArea:area(),categories:sectorCategories(),maxPages:3},commit}
+              :{query:{query:categoryLabel()+' in '+area()+' Singapore',
+                       planningArea:area(),categoryKey:category(),maxPages:3},commit};
+            const {data,error}=await sb.functions.invoke('business-discovery',{body});
             if(error)throw error;
             const payload=asObject(data);
             /* The function reports provider_not_configured when no API key is set. Say
@@ -9593,6 +9622,37 @@
         };
         preview.onclick=()=>run(false);
         importButton.onclick=()=>run(true);
+        /* 30-day compliance loop: the DB nominates near-expiry Google content, one
+           press re-reads it from the provider (which restarts each place's retention
+           clock) before the nightly purge would have to delete it. */
+        const refresh=main.querySelector('#prospectingDiscoveryRefresh');
+        if(refresh)(async()=>{
+          try{
+            const {data,error}=await sb.rpc('platform_crm_stale_google_sources_v297',{p_limit:50});
+            if(error)return;
+            const stale=asArray(data);
+            if(!stale.length)return;
+            refresh.hidden=false;
+            refresh.textContent=pt('Refresh stale Google data ({count})',{count:stale.length});
+            refresh.onclick=async()=>{
+              refresh.disabled=true;
+              result.innerHTML=`<p class="muted small">${escapeHtml(pt('Refreshing…'))}</p>`;
+              try{
+                const {data:out,error:invokeError}=await sb.functions.invoke('business-discovery',{
+                  body:{refresh:{source_ids:stale.map(entry=>String(entry.source_id||'')).filter(Boolean)}}});
+                if(invokeError)throw invokeError;
+                const payload=asObject(out);
+                if(payload.error)throw {message:payload.error};
+                result.innerHTML=`<div class="platform-route-note"><b>${escapeHtml(pt('Refreshed {count} places.',{count:Number(payload.existing||0)}))}</b></div>`;
+                refresh.hidden=true;
+                await refreshAll();
+              }catch(refreshError){
+                result.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(refreshError,'That search could not be completed.'))}</div>`;
+                refresh.disabled=false;
+              }
+            };
+          }catch(_e){/* non-admins and offline states simply keep the button hidden */}
+        })();
       }
       function readFilters(form) {
         const data=new FormData(form);
