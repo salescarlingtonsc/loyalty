@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F4F2EE">
+<meta name="application-name" content="Peekaa">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Peekaa">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://challenges.cloudflare.com; worker-src 'self'; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com; upgrade-insecure-requests">
+<title>Join — Peekaa</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pwa.css">
+<script src="/native-bridge.js"></script>
+<script src="/pwa.js" defer></script>
+<style>
+/* ==== copied from app/index.html (:root + base + .card/.btn/.muted/.small system) ==== */
+:root{
+  --bg:#F7F5F1; --card:#FFFFFF; --ink:#1C1A22; --muted:#75717E;
+  --line:#E8E4DD; --coral:#FF6B5E; --amber:#FFB86B; --green:#2FA36B;
+  --grad:linear-gradient(100deg,#FF6B5E,#FFB86B);
+  --r:14px; --shadow:0 1px 3px rgba(28,26,34,.06),0 8px 24px rgba(28,26,34,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;font-size:16px}
+input{font-family:inherit;font-size:16px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%;min-height:48px}
+input:focus{outline:2px solid rgba(255,107,94,.35);border-color:var(--coral)}
+label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 0 6px}
+.btn{background:var(--grad);color:#fff;font-weight:700;padding:14px 22px;border-radius:100px;transition:transform .15s, box-shadow .15s;font-size:16px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(255,107,94,.35)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.btn:focus-visible,.challenge-retry:focus-visible,.legal-links a:focus-visible{outline:3px solid rgba(255,107,94,.45);outline-offset:3px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:26px 22px}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+.err{background:#FBEAE7;color:#C0392B;padding:12px 14px;border-radius:10px;font-size:14px;margin-top:14px}
+.empty{text-align:center;padding:38px 10px;color:var(--muted)}
+.icon{display:block;flex:0 0 auto}
+.state-icon{width:48px;height:48px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#FFF1EF;color:var(--coral)}
+.state-icon.success{background:#EAF6F0;color:var(--green)}
+.state-icon.error{background:#FBEAE7;color:#C0392B}
+.field-label{display:flex;align-items:center;gap:8px}
+.success-actions{margin-top:22px}
+.success-actions .btn{width:100%}
+.success-actions .btn+.btn{margin-top:10px}
+.btn.secondary{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.secondary:hover{border-color:var(--coral);box-shadow:0 6px 16px rgba(28,26,34,.08)}
+.counter-fallback{font-size:13px;line-height:1.5;margin-top:14px}
+/* ==== page-specific: public join page, no login, mobile-first, capped ~440px on desktop ==== */
+.wrap{min-height:100dvh;display:flex;align-items:flex-start;justify-content:center;
+  padding:max(36px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right))
+    max(36px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.join{width:440px;max-width:100%}
+.jhead{text-align:center;margin-bottom:18px}
+.logo{display:inline-flex;align-items:center;min-height:44px;margin-bottom:16px}
+.brand-logo{display:block;width:auto;height:58px;max-width:145px;object-fit:contain}
+.jhead h1{font-size:1.6rem;color:var(--coral);margin-bottom:4px}
+.help{font-size:12.5px;color:var(--muted);margin-top:6px}
+.legal-links{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 14px;margin-top:18px;color:var(--muted);font-size:11.5px}
+.legal-links a{text-decoration:underline;text-underline-offset:2px}
+.challenge{margin-top:18px;min-height:82px}
+.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.challenge-retry{background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
+/* consent row: whole row is one big tap target (PDPA — checkbox starts unticked, never pre-checked) */
+.checkrow{display:flex;align-items:center;gap:12px;margin-top:20px;padding:13px 14px;background:#FBFAF7;border-radius:10px;border:1px solid var(--line);cursor:pointer;min-height:48px}
+.checkrow input[type=checkbox]{width:22px;height:22px;min-height:0;flex-shrink:0;accent-color:var(--coral)}
+.checkrow span{font-size:14px;font-weight:500;color:var(--ink)}
+@media(max-width:400px){.join{width:100%}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="/brand-config.js"></script>
+<script src="/runtime-config.js?v=2"></script>
+<script src="/runtime-config-loader.js?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
+<script>
+/* ============ Peekaa — public customer join page (legacy API identifiers remain compatible) ============ */
+const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)}catch{
+  window.FrenlyRuntimeConfig?.renderFailure(document.getElementById('root'));
+  throw new Error('Peekaa runtime configuration is unavailable.');
+}})();
+const BRAND=window.NestlyBrand;
+const SB_URL=RUNTIME_CONFIG.supabaseUrl;
+const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
+function warmRuntimeOrigin(origin){
+  const url=new URL(origin);
+  const preconnect=document.createElement('link');preconnect.rel='preconnect';preconnect.href=url.origin;preconnect.crossOrigin='anonymous';
+  const dns=document.createElement('link');dns.rel='dns-prefetch';dns.href=`//${url.host}`;
+  document.head.append(preconnect,dns);
+}
+warmRuntimeOrigin(SB_URL);
+/* This page is a public gateway. It must never refresh, replace or remove the
+   primary app session stored by the authenticated Peekaa client. */
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
+  storageKey:'peekaa-public-join-anon-v1',persistSession:false,
+  autoRefreshToken:false,detectSessionInUrl:false
+}});
+const brandWordmark=()=>{
+  const productName=String(BRAND?.productName||'Peekaa');
+  const logoPath=String(BRAND?.logoPath||'/brand/peekaa-logo.png');
+  return `<img class="brand-logo" src="${esc(logoPath)}" alt="${esc(productName)}">`;
+};
+const legalLinks=()=>`<div class="legal-links"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a></div>`;
+let turnstileLoader;
+const mountedTurnstileControls=new Set();
+function destroyMountedTurnstiles(){
+  [...mountedTurnstileControls].forEach(control=>control.destroy());
+}
+function loadTurnstile(){
+  if(window.turnstile) return Promise.resolve(window.turnstile);
+  if(turnstileLoader) return turnstileLoader;
+  turnstileLoader=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async=true;script.defer=true;
+    script.onload=()=>window.turnstile?resolve(window.turnstile):reject(new Error('Security check unavailable.'));
+    script.onerror=()=>{turnstileLoader=null;script.remove();reject(new Error('Security check unavailable.'))};
+    document.head.appendChild(script);
+  });
+  return turnstileLoader;
+}
+async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
+  const statusEl=$(status),retryEl=$(retry);
+  let api,widgetId,destroyed=false;
+  const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  const clear=(text,isError=false)=>{onToken('');message(text,isError)};
+  const logTurnstileError=(errorCode)=>{
+    const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
+    console.warn('Turnstile error code:',code);
+  };
+  const removeWidget=()=>{
+    const host=document.getElementById(container);
+    if(api&&widgetId!==undefined&&host){
+      try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    }
+    widgetId=undefined;
+    host?.replaceChildren();
+  };
+  const render=async()=>{
+    if(destroyed)return;
+    message('Loading security check…');retryEl.hidden=true;
+    try{
+      api=await loadTurnstile();
+      if(destroyed||!document.getElementById(container)) return;
+      removeWidget();
+      if(destroyed)return;
+      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,
+        callback:(token)=>{if(destroyed)return;onToken(token);message('Security check complete.');retryEl.hidden=true},
+        'expired-callback':()=>{if(destroyed)return;clear('Security check expired. Please try again.',true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(destroyed)return;clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear('Security check could not connect. Please retry, or check your browser and network settings.',true);retryEl.hidden=false;return true}});
+    }catch{if(!destroyed){clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}}
+  };
+  const retryRender=()=>{if(destroyed)return;clear('Complete the security check to continue.');retryEl.hidden=true;render()};
+  const reset=()=>{if(destroyed)return;clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  const destroy=()=>{
+    if(destroyed)return;
+    destroyed=true;retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
+  };
+  const control={reset,destroy};
+  mountedTurnstileControls.add(control);
+  retryEl.onclick=retryRender;
+  await render();
+  return control;
+}
+/* V292 (audit G9): the gateway's status code is the ONLY thing that distinguishes
+   "this QR is dead" from "your train went into a tunnel", and this function used
+   to throw it away. public-join answers:
+     404 - the join token failed TOKEN_PATTERN, or internal_public_join_page_v89
+           returned nothing: an expired, revoked, replaced or join-disabled QR.
+           Retrying cannot fix it, ever.
+     403 - the request origin is not on the gateway allow-list. Also terminal for
+           the person holding the phone; it is a configuration fault, not theirs.
+     429 - rate limited, with retry_after. Retrying is exactly right, later.
+     5xx / a rejected fetch - the gateway or the network. Retrying is right now.
+   The status now travels with the error so init() can tell the customer which of
+   those actually happened instead of blaming their connection for all four. */
+async function publicJoin({method='POST',body=null,joinToken=null}={}){
+  const query=joinToken?`?token=${encodeURIComponent(joinToken)}`:'';
+  const response=await fetch(`${SB_URL}/functions/v1/public-join${query}`,{
+    method,headers:body?{'content-type':'application/json'}:undefined,
+    body:body?JSON.stringify(body):undefined,credentials:'omit'});
+  let payload=null;
+  try{payload=await response.json()}catch{}
+  if(!response.ok){
+    const error=new Error(payload?.error||'We could not process that request.');
+    error.status=response.status;
+    error.retryAfter=Number(payload?.retry_after)||0;
+    throw error;
+  }
+  return payload;
+}
+
+const $=(id)=>document.getElementById(id);
+const root=$('root');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function getJoinToken(){
+  const qs=new URLSearchParams(location.search);
+  const fromQuery=(qs.get('token')||'').trim();
+  if(fromQuery) return fromQuery;
+  const hashParams=new URLSearchParams((location.hash.split('?')[1]||''));
+  const fromHash=(hashParams.get('token')||'').trim();
+  if(fromHash)return fromHash;
+  return null;
+}
+
+function customerHandoffUrl(joinToken,currentUrl=location.href){
+  const target=new URL('index.html',currentUrl);
+  target.search='';
+  target.hash=`#/join?token=${encodeURIComponent(String(joinToken??'').trim())}`;
+  return target.href;
+}
+
+function customerAppUrl(route='#/',currentUrl=location.href){
+  const target=new URL('index.html',currentUrl);
+  target.search='';
+  target.hash=route==='#/wallet'?'#/wallet':'#/';
+  return target.href;
+}
+
+function icon(name,size=20){
+  const paths={
+    link:'<path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15"/><path d="M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15"/>',
+    warning:'<path d="m21 16-8.5-14a2 2 0 0 0-3 0L1 16a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    checkCircle:'<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/>',
+    check:'<path d="m5 12 4 4L19 6"/>',
+    user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.33 1.85.56 2.81.69A2 2 0 0 1 22 16.92Z"/>',
+    mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 6L2 7"/>',
+    bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+    wallet:'<path d="M20 7V6a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h15v10H5a3 3 0 0 1-3-3V7"/><path d="M16 14h.01"/>'
+  };
+  return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[name]||''}</svg>`;
+}
+
+function shellOpen(inner){
+  destroyMountedTurnstiles();
+  root.innerHTML=`<div class="wrap"><div class="join">
+    <div class="jhead"><div class="logo">${brandWordmark()}</div></div>
+    ${inner}${legalLinks()}
+  </div></div>`;
+}
+
+/* ---- state: loading ---- */
+function renderLoading(){
+  shellOpen(`<div class="card"><div class="empty">Loading…</div></div>`);
+}
+
+/* ---- state: empty / invalid link (unknown or disabled slug) ---- */
+function renderInvalidLink(){
+  const legacySlug=(new URLSearchParams(location.search).get('s')||'').trim();
+  shellOpen(`<div class="card"><div class="empty">
+    <div class="state-icon" aria-hidden="true">${icon('link',26)}</div>
+    <h2 style="margin-bottom:8px">${legacySlug?'This QR was replaced':'This link isn’t active'}</h2>
+    <p class="muted">${legacySlug?'This is an older Peekaa QR. Please ask the business to display its current “Customer sign-up” QR.':'Please check with the business for its current Peekaa QR code.'}</p>
+    <div class="success-actions">
+      <a class="btn" href="${esc(customerAppUrl('#/'))}">${icon('wallet',20)}<span>Open ${esc(BRAND.customerLabel)}</span></a>
+      <a class="btn secondary" href="${esc(customerAppUrl('#/wallet'))}"><span>Already a member? Sign in</span></a>
+    </div>
+  </div></div>`);
+}
+
+/* ---- state: the gateway refused this QR (404/403) — terminal, no retry ---- */
+function renderExpiredLink(){
+  shellOpen(`<div class="card"><div class="empty">
+    <div class="state-icon" aria-hidden="true">${icon('link',26)}</div>
+    <h2 style="margin-bottom:8px">This QR code is no longer active</h2>
+    <p class="muted">Ask the counter for a new one. Nothing is wrong with your phone or your connection — this particular code has expired, been replaced, or been switched off by the business.</p>
+    <div class="success-actions">
+      <a class="btn" href="${esc(customerAppUrl('#/'))}">${icon('wallet',20)}<span>Open ${esc(BRAND.customerLabel)}</span></a>
+      <a class="btn secondary" href="${esc(customerAppUrl('#/wallet'))}"><span>Already a member? Sign in</span></a>
+    </div>
+  </div></div>`);
+}
+
+/* ---- state: too many requests from this network — retryable, but later ---- */
+function renderBusyGateway(retryAfterSeconds){
+  const wait=Number(retryAfterSeconds)>0
+    ?`Please wait about ${Math.ceil(Number(retryAfterSeconds)/60)} minute(s) and try again.`
+    :'Please wait a moment and try again.';
+  shellOpen(`<div class="card"><div class="empty">
+    <div class="state-icon error" aria-hidden="true">${icon('warning',26)}</div>
+    <h2 style="margin-bottom:8px">Too many sign-ups from this network</h2>
+    <p class="muted" style="margin-bottom:18px">${esc(wait)} Your details have not been sent.</p>
+    <button class="btn" id="retryBtn" style="width:auto;padding:12px 26px">Try again</button>
+  </div></div>`);
+  $('retryBtn').onclick=init;
+}
+
+/* ---- state: error (page failed to load — distinct from an invalid link) ---- */
+function renderLoadError(){
+  shellOpen(`<div class="card"><div class="empty">
+    <div class="state-icon error" aria-hidden="true">${icon('warning',26)}</div>
+    <h2 style="margin-bottom:8px">Something went wrong</h2>
+    <p class="muted" style="margin-bottom:18px">Please check your connection and try again.</p>
+    <button class="btn" id="retryBtn" style="width:auto;padding:12px 26px">Try again</button>
+  </div></div>`);
+  $('retryBtn').onclick=init;
+}
+
+/* ---- state: success ---- */
+function renderSuccess(bizName,joinToken){
+  const cardEl=document.querySelector('.join .card');
+  if(!cardEl) return;
+  destroyMountedTurnstiles();
+  cardEl.innerHTML=`<div class="empty" aria-labelledby="joinSuccessTitle">
+    <div class="state-icon success" aria-hidden="true">${icon('checkCircle',26)}</div>
+    <h2 id="joinSuccessTitle" tabindex="-1" style="margin-bottom:10px">You're in!</h2>
+    <p style="margin-bottom:6px;font-size:16px;color:var(--ink)"><b>${esc(bizName)}</b></p>
+    <p class="muted">Keep this programme with your other rewards in ${esc(BRAND.customerLabel)}.</p>
+    <div class="success-actions">
+      <a class="btn" id="openMyFrenly" href="${esc(customerHandoffUrl(joinToken))}">
+        ${icon('wallet',20)}<span>Create or open ${esc(BRAND.customerLabel)}</span>
+      </a>
+    </div>
+    <p class="muted counter-fallback">Prefer not to continue online? You can still show the mobile number you joined with at the counter to collect points.</p>
+  </div>`;
+  $('joinSuccessTitle')?.focus();
+}
+
+/* ---- state: form (page loaded, ready for input) ---- */
+function renderForm(page, joinToken){
+  destroyMountedTurnstiles();
+  const bc=/^#[0-9A-Fa-f]{6}$/.test(page.brand_color||'')?page.brand_color:'#FF6B5E';
+  document.title=(page.name||'Join')+` — ${BRAND.productName}`;
+  root.innerHTML=`<div class="wrap" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)"><div class="join">
+    <div class="jhead">
+      <div class="logo">${brandWordmark()}</div>
+      <h1>${esc(page.name)}</h1>
+      <p class="muted">Join free and start earning rewards.</p>
+    </div>
+    <div class="card">
+      <form id="joinForm" novalidate>
+        <label class="field-label" for="f_name">${icon('user',18)}<span>Name</span></label>
+        <input id="f_name" placeholder="Your name" autocomplete="name">
+
+        <label class="field-label" for="f_phone">${icon('phone',18)}<span>Mobile number</span></label>
+        <input id="f_phone" inputmode="numeric" maxlength="8" placeholder="8123 4567" autocomplete="tel" enterkeyhint="next">
+        <p class="help">Your 8-digit Singapore mobile number, starting with 8 or 9.</p>
+
+        <label class="field-label" for="f_email">${icon('mail',18)}<span>Email <span class="muted small">(optional)</span></span></label>
+        <input id="f_email" type="email" placeholder="you@example.com" autocomplete="email" enterkeyhint="done">
+
+        <!-- PDPA: consent checkbox must never be pre-ticked -->
+        <label class="checkrow">
+          <input type="checkbox" id="f_consent">
+          ${icon('bell',20)}<span>Send me offers and rewards</span>
+        </label>
+
+        <div class="challenge"><div id="turnstileWidget"></div>
+          <p class="challenge-status" id="turnstileStatus" role="status" aria-live="polite">Loading security check…</p>
+          <button class="challenge-retry" id="turnstileRetry" type="button" hidden>Retry security check</button>
+        </div>
+
+        <div id="formErr" role="alert" aria-live="assertive"></div>
+        <div style="margin-top:20px"><button class="btn" id="submitBtn" type="submit" disabled style="width:100%">${icon('check',18)}<span>Join now</span></button></div>
+      </form>
+    </div>${legalLinks()}
+  </div></div>`;
+
+  const nameEl=$('f_name'), phoneEl=$('f_phone'), emailEl=$('f_email'), consentEl=$('f_consent');
+  const btn=$('submitBtn'), errBox=$('formErr');
+  let turnstileToken='',turnstileControl=null;
+
+  /* V292: the field is labelled "Mobile number" and the wallet this join feeds
+     accepts only 8/9 numbers (the SPA's own /^[89]\d{7}$/ check), so accepting a
+     3xx/6xx landline here produced a member the customer app could never match.
+     The gateway stays deliberately more permissive; this is the tighter of the
+     two, which is the correct direction for a client-side guard.
+     Email is optional but was previously unchecked, so a typo was silently
+     accepted here and then rejected by the gateway as a generic failure. The
+     pattern is the gateway's own EMAIL_PATTERN. */
+  const JOIN_MOBILE_PATTERN=/^[89]\d{7}$/;
+  const JOIN_EMAIL_PATTERN=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  function cleanPhone(){ return phoneEl.value.replace(/\D/g,'').slice(0,8); }
+  function emailValid(){
+    const value=emailEl.value.trim();
+    return !value||(value.length<=254&&JOIN_EMAIL_PATTERN.test(value));
+  }
+  function formValid(){
+    return nameEl.value.trim().length>=2
+      && JOIN_MOBILE_PATTERN.test(cleanPhone())
+      && emailValid();
+  }
+  function refreshBtn(){ btn.disabled=!formValid()||!turnstileToken; }
+
+  nameEl.addEventListener('input', refreshBtn);
+  emailEl.addEventListener('input', ()=>{
+    errBox.innerHTML=emailEl.value.trim()&&!emailValid()
+      ?`<div class="err">Check the email address — it needs an @ and a domain, for example you@example.com.</div>`
+      :'';
+    refreshBtn();
+  });
+  phoneEl.addEventListener('input', ()=>{
+    const cleaned=cleanPhone();
+    if(phoneEl.value!==cleaned) phoneEl.value=cleaned;
+    refreshBtn();
+  });
+
+  function setBusy(busy){
+    nameEl.disabled=busy; phoneEl.disabled=busy; emailEl.disabled=busy; consentEl.disabled=busy;
+    btn.disabled=busy?true:!formValid()||!turnstileToken;
+    btn.innerHTML=busy?'Joining…':`${icon('check',18)}<span>Join now</span>`;
+  }
+
+  $('joinForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!formValid()) return;
+    errBox.innerHTML='';
+    setBusy(true);
+    try{
+      const data=await publicJoin({body:{join_token:joinToken,name:nameEl.value.trim(),phone:cleanPhone(),
+        email:emailEl.value.trim()||null,consent:consentEl.checked,
+        turnstile_token:turnstileToken}});
+      renderSuccess((data&&data.business_name)||page.name,joinToken);
+    }catch(err){
+      /* A 404 on submit means the QR died between loading this page and pressing
+         Join. Leaving the form on screen would invite the customer to retype
+         everything into a form that can never succeed. */
+      if(err?.status===404||err?.status===403){ renderExpiredLink(); return; }
+      errBox.innerHTML=`<div class="err">${esc(err.message||'Something went wrong. Please try again.')}</div>`;
+      turnstileControl?.reset();
+      setBusy(false);
+    }
+  });
+  mountTurnstile(page.turnstile_site_key,{container:'turnstileWidget',status:'turnstileStatus',retry:'turnstileRetry',action:'public_join',
+    onToken:(token)=>{turnstileToken=token;refreshBtn()}}).then(control=>{turnstileControl=control});
+}
+
+/* ---- boot ---- */
+async function init(){
+  renderLoading();
+  const joinToken=getJoinToken();
+  if(!joinToken){ renderInvalidLink(); return; }
+  let data;
+  try{
+    data=await publicJoin({method:'GET',joinToken});
+  }catch(err){
+    if(err?.status===404||err?.status===403){ renderExpiredLink(); return; }
+    if(err?.status===429){ renderBusyGateway(err.retryAfter); return; }
+    renderLoadError();
+    return;
+  }
+  if(!data){ renderInvalidLink(); return; }
+  renderForm(data, joinToken);
+}
+
+init();
+</script>
+</body>
+</html>

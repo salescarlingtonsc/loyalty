@@ -1,0 +1,71 @@
+:root{
+  --pwa-safe-top:env(safe-area-inset-top,0px);
+  --pwa-safe-right:env(safe-area-inset-right,0px);
+  --pwa-safe-bottom:env(safe-area-inset-bottom,0px);
+  --pwa-safe-left:env(safe-area-inset-left,0px);
+}
+html{min-height:100%;-webkit-text-size-adjust:100%}
+body{min-height:100dvh}
+:where(button,[role="button"],a.btn,input,select,textarea){touch-action:manipulation}
+.pwa-status{
+  position:fixed;z-index:190;top:calc(8px + var(--pwa-safe-top));
+  left:max(10px,var(--pwa-safe-left));right:max(10px,var(--pwa-safe-right));
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:fit-content;max-width:calc(100% - 20px);min-height:44px;margin:0 auto;
+  padding:9px 12px;border:1px solid rgba(23,22,26,.16);border-radius:999px;
+  background:rgba(23,22,26,.94);color:#fff;font:600 13px/1.35 -apple-system,
+    BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+  box-shadow:0 12px 34px rgba(23,22,26,.2);
+  -webkit-backdrop-filter:saturate(160%) blur(18px);
+  backdrop-filter:saturate(160%) blur(18px)
+}
+.pwa-status[hidden],.pwa-prompt[hidden]{display:none!important}
+.pwa-status button{
+  min-width:44px;min-height:44px;margin:-7px -8px -7px 0;padding:8px 11px;
+  border:0;border-radius:999px;background:#fff;color:#17161A;font:700 13px/1 inherit;
+  cursor:pointer
+}
+.pwa-prompt{
+  position:fixed;z-index:185;left:max(12px,var(--pwa-safe-left));
+  right:max(12px,var(--pwa-safe-right));
+  bottom:calc(12px + var(--pwa-safe-bottom));display:flex;align-items:center;
+  justify-content:space-between;gap:14px;width:min(560px,calc(100% - 24px));
+  margin:0 auto;padding:14px 14px 14px 16px;border:1px solid rgba(23,22,26,.1);
+  border-radius:18px;background:rgba(255,255,255,.96);color:#17161A;
+  box-shadow:0 18px 52px rgba(23,22,26,.18);
+  -webkit-backdrop-filter:saturate(160%) blur(20px);
+  backdrop-filter:saturate(160%) blur(20px);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif
+}
+.pwa-prompt-copy{min-width:0}
+.pwa-prompt-copy strong{display:block;font-size:14px;line-height:1.35}
+.pwa-prompt-copy span{display:block;margin-top:3px;color:#5D5964;font-size:12px;line-height:1.45}
+.pwa-prompt-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.pwa-action,.pwa-dismiss{
+  display:inline-flex;align-items:center;justify-content:center;min-width:44px;
+  min-height:44px;border-radius:999px;cursor:pointer;font:700 13px/1
+    -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif
+}
+.pwa-action{padding:10px 15px;border:0;background:#C24135;color:#fff}
+.pwa-dismiss{width:44px;padding:0;border:1px solid #D9D4CC;background:#fff;color:#3D3B44}
+.pwa-action:focus-visible,.pwa-dismiss:focus-visible,.pwa-status button:focus-visible{
+  outline:3px solid #C24135;outline-offset:3px
+}
+@media(max-width:760px){
+  input,select,textarea{font-size:16px!important}
+  .pwa-prompt{bottom:calc(88px + var(--pwa-safe-bottom));align-items:flex-start}
+  .pwa-prompt-actions{align-self:center}
+}
+@media(max-width:430px){
+  .pwa-prompt{display:grid;grid-template-columns:minmax(0,1fr) auto}
+  .pwa-prompt-actions{grid-column:1/-1;width:100%}
+  .pwa-action{flex:1 1 auto}
+}
+@media(display-mode:standalone){
+  body{min-height:100dvh}
+  .site-header{padding-top:var(--pwa-safe-top)}
+  .site-footer{padding-bottom:var(--pwa-safe-bottom)}
+}
+@media(prefers-reduced-motion:reduce){
+  .pwa-status,.pwa-prompt{scroll-behavior:auto}
+}

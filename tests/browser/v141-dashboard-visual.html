@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9bfb5fe90bb63647e007be6591988b6188a73ed96ee35fe9ff99f9c491889545"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="943e79fa82b7ccefe261d990a2f146e12d346372246750f30d6799835806d9b6"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1726,6 +1726,37 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-rewards-lede{margin-bottom:10px}
 .customer-programme-balance{font-size:clamp(1.6rem,6vw,2.1rem);line-height:1;letter-spacing:-.03em}
 .customer-programme-balance span{font-size:.85rem;font-weight:600;letter-spacing:0}
+/* V310 (W4b) — the programme stack. One card per programme the firm runs, fixed order, identical
+   three slots per card. The tab rules above are NOT retired: they are what the pre-v310 fallback
+   path renders for the whole Cloudflare window and on rollback. */
+.customer-programme-stack{display:grid;gap:12px;margin-bottom:14px}
+.customer-programme-card-v310{padding:16px 18px 18px;margin:0}
+.customer-programme-card-head-v310{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:1.05rem}
+.customer-programme-card-head-v310 svg{flex:none;color:var(--coral)}
+.customer-programme-card-line-v310{margin-top:8px}
+.customer-programme-paused-since{margin-top:4px;font-variant-numeric:tabular-nums}
+/* The stamp ring row. Filled = solid fill AND a tick glyph; empty = dashed outline. Both signals
+   are carried without colour, so the row reads in greyscale and to a colour-blind eye — the same
+   rule the v186 tier ladder already follows. Wraps rather than scrolls: a row the thumb has to
+   drag sideways hides the goal, which is the one thing this figure exists to show. */
+.customer-programme-stamp-rings{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 2px}
+.customer-programme-stamp-ring{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px dashed var(--line);color:transparent;background:transparent;transition:background-color .18s ease,border-color .18s ease}
+.customer-programme-stamp-ring.is-filled{border-style:solid;border-color:var(--coral);background:var(--coral);color:#fff}
+.customer-programme-stamp-ring.is-goal{border-width:2.5px;border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-programme-stamp-ring svg{display:block}
+.customer-programme-stamp-count{font-size:clamp(1.6rem,6vw,2.1rem);line-height:1;letter-spacing:-.03em}
+.customer-programme-stamp-count span{font-size:.85rem;font-weight:600;letter-spacing:0}
+@media (prefers-reduced-motion:reduce){.customer-programme-stamp-ring{transition:none}}
+/* The claimable-now strip: absent unless something really is claimable, so it never becomes
+   furniture the eye learns to skip. */
+.customer-claimable-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border:1.5px solid var(--coral);border-radius:14px;background:var(--tint)}
+.customer-claimable-strip-label{display:inline-flex;align-items:center;gap:6px;color:var(--coral)}
+.customer-claimable-strip-label svg{flex:none}
+.customer-claimable-strip-count{font-size:12.5px;font-weight:650;color:var(--ink2)}
+.customer-claimable-strip-items{display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+.customer-claimable-strip-items span:not(:last-child)::after{content:' ·'}
+/* W4c's member-code slot, shipped hidden and empty so W4c is markup and wiring only. */
+.customer-member-code-slot{margin:0 0 12px}
 .customer-tier-now{font-size:1.02rem}
 .customer-tier-bar{position:relative;margin:14px 0 40px}
 .customer-tier-bar-track{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
@@ -3103,6 +3134,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'9bfb5fe90bb63647e007be6591988b6188a73ed96ee35fe9ff99f9c491889545',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'943e79fa82b7ccefe261d990a2f146e12d346372246750f30d6799835806d9b6',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

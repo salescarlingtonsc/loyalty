@@ -53,6 +53,13 @@ test('tier labels and benefits are escaped', () => {
 
 test('the wallet uses the panel instead of the old benefits-only section', () => {
   assert.match(app, /\$\{customerTierPanelMarkupV194\(tier\)\}/);
-  assert.match(app, /\$\{customerProgrammeSummaryTabsV194\(\{tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities\}\)\}/);
+  /* V310 (W4b): the call site became the stack gate. The pinned expression is unchanged as a
+     SUB-EXPRESSION — it is the whole fallback arm, so a pre-v310 server (`programmes` absent,
+     which is also the rollback state) still renders the v194 tabs byte-identically. Only the
+     `${` … `}` around it moved out to the ternary; the string this suite has always guarded is
+     asserted verbatim, and the gate that chooses it is asserted beside it. */
+  assert.match(app, /customerProgrammeSummaryTabsV194\(\{tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities\}\)/);
+  assert.match(app, /\$\{programmeStackV310\(programmeCapabilities\)\n\s+\?customerProgrammeStackV310\(/);
+  assert.match(app, /:customerProgrammeSummaryTabsV194\(\{tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities\}\)\}/);
   assert.doesNotMatch(app, /} benefits<\/h2><ul class="rec-why"/);
 });

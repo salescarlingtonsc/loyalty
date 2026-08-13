@@ -9,6 +9,13 @@ const section=(start,end)=>{
   return app.slice(from,to);
 };
 const merchant=section('function customerPromotionCtaV104','function actionableWalletCardMarkup');
+/* V310: the blanket "no progressbar anywhere in this slice" below was written when this span was
+   the merchant markup and its immediate helpers. The v310 programme stack now lives in the same
+   span and carries the same V167 reward meter the v95 suite already stopped banning outright (see
+   its own note there). What this assertion actually protects is that the merchant EXPERIENCE
+   markup — the compact head and the sections it lays out — carries no balance meter of its own,
+   so it is asserted on exactly that function instead of on everything above it. */
+const merchantExperience=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
 const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
 
 test('customer programme makes up to six promotions primary and keeps identity/points compact',()=>{
@@ -22,7 +29,7 @@ test('customer programme makes up to six promotions primary and keeps identity/p
     'promotions must precede supporting products and services');
   assert.doesNotMatch(merchant,/customer-merchant-hero/);
   assert.doesNotMatch(merchant,/customer-balance-panel/);
-  assert.doesNotMatch(merchant,/role="progressbar"/);
+  assert.doesNotMatch(merchantExperience,/role="progressbar"/);
   assert.doesNotMatch(merchant,/customer-offers-grid/,
     'a current offer must not be repeated again below products and benefits');
 });

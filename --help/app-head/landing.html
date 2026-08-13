@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+/* V274 — MUST stay the first script on this page.
+   The app used to live at "/", so every historical deep link, every push-notification
+   click (app/sw.js customerPushRoute) and every bookmark points at peekaa.asia/#/…
+   Marketing now owns "/", so a hash route has to be handed straight back to the app
+   at its new canonical path before anything renders. */
+(function forwardLegacyAppEntriesV274(){
+  try{
+    var hash=String(window.location.hash||'');
+    if(hash.indexOf('#/')===0){window.location.replace('/app'+hash);return}
+    /* A returning signed-in user should not be shown the marketing page. The Supabase
+       session lives under a key prefixed with the project ref. localStorage throws in
+       some private-browsing modes, so any failure simply falls through to the landing. */
+    var store=window.localStorage,i,key;
+    for(i=0;i<store.length;i+=1){
+      key=store.key(i);
+      if(key&&key.indexOf('sb-gadpooereceldfpfxsod')===0){window.location.replace('/app');return}
+    }
+  }catch(error){/* no session signal available — show the landing page */}
+  document.documentElement.className+=' js';
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F4F2EE">
+<title>Peekaa — Customer loyalty and rewards platform for businesses in Singapore</title>
+<meta name="description" content="Peekaa is a customer loyalty and rewards platform for Singapore businesses. Run a digital loyalty programme with points, stamps and tiers, send promotions, and bring inactive customers back — from one place.">
+<link rel="canonical" href="https://www.peekaa.asia/">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Peekaa">
+<meta property="og:url" content="https://www.peekaa.asia/">
+<meta property="og:title" content="Peekaa — Customer loyalty and rewards platform for businesses">
+<meta property="og:description" content="Turn customers into regulars. Digital loyalty, customer rewards, promotions and retention for cafés, restaurants, salons, studios, shops and services.">
+<meta property="og:image" content="https://www.peekaa.asia/brand/peekaa-logo.png">
+<meta property="og:locale" content="en_SG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Peekaa — Customer loyalty and rewards platform for businesses">
+<meta name="twitter:description" content="Turn customers into regulars. Digital loyalty, customer rewards, promotions and retention, built for Singapore businesses.">
+<meta name="twitter:image" content="https://www.peekaa.asia/brand/peekaa-logo.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
+<style>
+/* ============================================================================
+   Peekaa marketing landing — V274
+   Palette, radii, shadows and type are lifted from the app's own design system
+   (app/index.html :root) so the site and the product read as one thing.
+   ============================================================================ */
+:root{
+  --bg:#F4F2EE; --card:#FFFFFF; --ink:#17161A; --ink2:#3D3B44; --muted:#6B6673;
+  --line:#EAE6DF; --hair:rgba(23,22,26,.06);
+  --coral:#C24135; --coral-deep:#9D352C; --green:#1F6B48; --amber:#A75514;
+  --grad:linear-gradient(135deg,#C24135,#9D352C);
+  --tint:#FFF0EC;
+  --r:18px; --r-sm:12px; --r-lg:24px; --r-xl:32px;
+  --shadow:0 1px 2px rgba(23,22,26,.04),0 4px 12px rgba(23,22,26,.045);
+  --shadow-lg:0 2px 6px rgba(23,22,26,.05),0 18px 44px rgba(23,22,26,.10);
+  --shadow-xl:0 4px 10px rgba(23,22,26,.05),0 34px 80px rgba(23,22,26,.14);
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --sf:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',system-ui,'Segoe UI',Roboto,sans-serif;
+  --gut:20px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+/* The header is sticky, so an anchor jump must stop short of it or the heading
+   it was aiming at ends up underneath the nav. */
+[id]{scroll-margin-top:86px}
+body{background:var(--bg);color:var(--ink);font-family:var(--sf);font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.005em;
+  overflow-x:hidden}
+h1,h2,h3,h4{font-family:var(--sf);font-weight:650;letter-spacing:-.028em;color:var(--ink);line-height:1.12}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+:where(a,button):focus-visible{outline:3px solid var(--coral);outline-offset:3px;border-radius:6px}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.skip-link{position:fixed;left:12px;top:10px;z-index:300;transform:translateY(-180%);display:inline-flex;align-items:center;min-height:44px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:700}
+.skip-link:focus{transform:translateY(0)}
+
+.wrap{width:min(1160px,100%);margin:0 auto;padding:0 var(--gut)}
+.narrow{width:min(760px,100%);margin:0 auto}
+.muted{color:var(--muted)}
+.small{font-size:13.5px;line-height:1.5}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 9px;border-radius:100px;
+  background:var(--tint);color:var(--coral-deep);font-size:12.5px;font-weight:700;letter-spacing:.005em;
+  border:1px solid rgba(194,65,53,.16)}
+.eyebrow .dot{width:7px;height:7px;border-radius:100px;background:var(--coral)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:50px;
+  background:var(--grad);color:#fff;font-weight:650;font-size:15.5px;padding:12px 26px;border-radius:100px;
+  box-shadow:0 1px 2px rgba(194,65,53,.2),0 8px 20px rgba(194,65,53,.24);
+  transition:transform .22s var(--ease),box-shadow .22s var(--ease);border:1px solid transparent}
+.btn:hover{transform:translateY(-2px);box-shadow:0 2px 5px rgba(194,65,53,.24),0 14px 32px rgba(194,65,53,.3)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid #C9C2B8;box-shadow:var(--shadow)}
+.btn.ghost:hover{border-color:var(--ink2);box-shadow:var(--shadow-lg)}
+.btn.sm{min-height:44px;padding:9px 18px;font-size:14.5px}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+/* ---------- header ---------- */
+.site-head{position:sticky;top:0;z-index:100;background:rgba(244,242,238,.82);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid transparent;transition:border-color .3s var(--ease),background .3s var(--ease)}
+.site-head[data-stuck="true"]{border-bottom-color:var(--line);background:rgba(244,242,238,.94)}
+.head-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:66px}
+.brand-logo{height:34px;width:auto;max-width:120px;object-fit:contain}
+.head-nav{display:none;gap:26px;align-items:center;font-size:14.5px;font-weight:550;color:var(--ink2)}
+.head-nav a{display:inline-flex;align-items:center;min-height:28px;padding:4px 0;
+  border-bottom:1.5px solid transparent;transition:color .18s,border-color .18s}
+.head-nav a:hover{color:var(--coral);border-bottom-color:var(--coral)}
+.head-actions{display:flex;align-items:center;gap:8px}
+/* "Log in" stays in the header at every width: a returning owner arriving on a phone
+   should not have to hunt the footer for the way back into their workspace. */
+.head-login{display:inline-flex;align-items:center;min-height:44px;font-size:14.5px;font-weight:600;
+  padding:10px 10px;border-radius:100px;color:var(--ink);white-space:nowrap}
+.head-login:hover{background:rgba(23,22,26,.05)}
+@media(min-width:900px){.head-nav{display:flex}.head-login{padding:10px 14px}}
+
+/* ---------- hero ---------- */
+/* V283: overflow is VISIBLE so the hero's own tokens keep travelling into the
+   sections below it — the composition does not stop at the hero's edge. The
+   horizontal overrun is still contained by body{overflow-x:hidden}. */
+.hero{position:relative;padding:56px 0 92px;overflow:visible}
+.hero .wrap{position:relative;z-index:1}
+.hero h1{font-size:clamp(2.6rem,8.4vw,4.55rem);letter-spacing:-.042em;margin:20px 0 0;max-width:16ch}
+.hero-lede{font-size:clamp(1.02rem,3.1vw,1.24rem);color:var(--ink2);max-width:46ch;margin-top:20px;line-height:1.55}
+.hero .cta-row{margin-top:30px}
+.hero-note{margin-top:18px;color:var(--muted);font-size:13.5px;max-width:44ch}
+.hero-stage{position:relative;margin-top:46px;padding-bottom:8px}
+
+/* ---------- category strip ---------- */
+.cats{padding:26px 0 6px}
+.cats-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);text-align:center}
+.cats-list{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:16px;list-style:none}
+.cats-list li{display:inline-flex;align-items:center;gap:8px;padding:9px 16px 9px 12px;background:#fff;
+  border:1px solid var(--hair);border-radius:100px;box-shadow:var(--shadow);font-size:14px;font-weight:600;color:var(--ink2)}
+.cats-list svg{flex:none;color:var(--coral)}
+
+/* ---------- generic section ---------- */
+.section{padding:78px 0}
+.section-head{max-width:34ch}
+.section-head h2{font-size:clamp(1.85rem,5.2vw,2.7rem);letter-spacing:-.034em}
+.section-head p{margin-top:14px;color:var(--ink2);font-size:clamp(1rem,2.6vw,1.1rem);max-width:52ch}
+.rule{height:1px;background:var(--line);border:0}
+
+/* ---------- story ---------- */
+.story{padding:20px 0 30px}
+.story-intro{padding:70px 0 10px}
+/* V283: a hard full-width rule between steps drew five separate slabs. The seam
+   is now a hairline that fades out at both ends, so one step flows into the next. */
+.step{padding:52px 0;position:relative}
+.step::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line) 18%,var(--line) 82%,transparent)}
+.step:first-of-type::before{display:none}
+.step-grid{display:grid;gap:54px;align-items:center}
+/* V283: the art carries an L3 layer and drifts; the copy must never be covered. */
+.step-copy{position:relative;z-index:2}
+.step-art{position:relative;z-index:1}
+.step-num{display:inline-flex;align-items:center;gap:11px;font-size:12.5px;font-weight:750;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--coral)}
+.step-num b{font-family:var(--sf);font-size:15px;letter-spacing:.02em;font-weight:800}
+.step-num .bar{display:block;width:32px;height:2px;background:var(--coral);border-radius:2px;opacity:.5}
+.step h3{font-size:clamp(1.6rem,4.6vw,2.25rem);margin-top:16px;letter-spacing:-.032em;max-width:18ch}
+.step p.lede{margin-top:14px;color:var(--ink2);font-size:clamp(1rem,2.5vw,1.08rem);max-width:50ch}
+.checks{list-style:none;margin-top:22px;display:grid;gap:11px;max-width:50ch}
+.checks li{display:flex;gap:11px;align-items:flex-start;font-size:15px;color:var(--ink2);line-height:1.5}
+.checks svg{flex:none;margin-top:3px;color:var(--green)}
+@media(min-width:940px){
+  .step-grid{grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:64px}
+  .step-grid.flip .step-copy{order:2}
+  .step-grid.flip .step-art{order:1}
+  .step{padding:76px 0}
+}
+
+/* ============================================================================
+   Product mocks — hand-built from the app's own component vocabulary.
+   ============================================================================ */
+.mock{font-size:13px;line-height:1.4;color:var(--ink);letter-spacing:-.008em}
+.frame{background:var(--card);border:1px solid var(--hair);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-xl);overflow:hidden}
+.frame-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--hair);background:#FCFBF9}
+.frame-dots{display:flex;gap:5px}
+.frame-dots i{width:9px;height:9px;border-radius:100px;background:#E3DED6;display:block}
+.frame-url{flex:1;text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frame-body{padding:16px}
+.mock-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mock-h{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.mock-sub{font-size:11.5px;color:var(--muted);font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:-.004em;white-space:nowrap}
+.pill.ok{background:#E7F6EE;color:var(--green)}
+.pill.new{background:var(--tint);color:var(--coral-deep)}
+.pill.off{background:#F1EEE9;color:var(--muted)}
+.pill.amber{background:#FBF0E4;color:var(--amber)}
+
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}
+.kpi{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:12px 12px 13px;min-width:0}
+.kpi .l{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .v{font-size:1.32rem;font-weight:700;letter-spacing:-.038em;font-variant-numeric:tabular-nums;margin-top:4px;line-height:1.1}
+.kpi .d{font-size:10.5px;font-weight:700;color:var(--green);margin-top:2px}
+
+.chart{display:flex;align-items:flex-end;gap:6px;height:76px;margin-top:14px;padding:0 2px}
+.chart span{flex:1;border-radius:5px 5px 3px 3px;background:linear-gradient(180deg,rgba(194,65,53,.9),rgba(194,65,53,.42));min-width:0}
+.chart span.q{background:linear-gradient(180deg,#E5DFD6,#EFEAE2)}
+.chart-x{display:flex;gap:6px;margin-top:7px}
+.chart-x i{flex:1;text-align:center;font-size:9.5px;font-style:normal;color:var(--muted);font-weight:700}
+
+.feed{list-style:none;margin-top:14px;display:grid;gap:8px}
+.feed li{display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid var(--hair);border-radius:13px;background:#fff}
+.avatar{flex:none;width:30px;height:30px;border-radius:100px;display:grid;place-items:center;font-size:11.5px;font-weight:800;
+  background:var(--tint);color:var(--coral-deep);letter-spacing:-.02em}
+.avatar.b{background:#E7F6EE;color:var(--green)}
+.avatar.c{background:#EDEBF6;color:#4A3F86}
+.feed .who{font-size:12.5px;font-weight:650;letter-spacing:-.015em}
+.feed .what{font-size:11px;color:var(--muted);font-weight:550}
+.feed .amt{margin-left:auto;font-size:12px;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* phone */
+.phone{width:100%;max-width:268px;border-radius:38px;padding:9px;background:linear-gradient(160deg,#26242B,#131217);
+  box-shadow:var(--shadow-xl);margin:0 auto}
+.phone-screen{background:var(--bg);border-radius:30px;overflow:hidden;position:relative}
+.phone-notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:74px;height:20px;border-radius:100px;background:#131217;z-index:2}
+.phone-inner{padding:34px 13px 16px}
+.wallet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.wallet-logo{height:20px;width:auto}
+.balance{background:var(--grad);color:#fff;border-radius:20px;padding:16px 16px 15px;
+  box-shadow:0 10px 26px rgba(157,53,44,.28)}
+.balance .l{font-size:10px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;opacity:.82}
+.balance .v{font-size:2.1rem;font-weight:750;letter-spacing:-.045em;line-height:1.05;margin-top:5px;font-variant-numeric:tabular-nums}
+.balance .v small{font-size:.92rem;font-weight:650;letter-spacing:-.01em;opacity:.85;margin-left:5px}
+.balance .m{font-size:11px;margin-top:7px;opacity:.9;font-weight:550}
+.tierbar{height:5px;border-radius:100px;background:rgba(255,255,255,.28);margin-top:11px;overflow:hidden}
+.tierbar i{display:block;height:100%;width:72%;border-radius:100px;background:#fff}
+.wallet-label{font-size:10.5px;font-weight:750;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:16px 0 8px}
+.rwd{display:grid;gap:8px}
+.rwd-card{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--hair);border-radius:14px;padding:10px 11px}
+.rwd-ic{flex:none;width:34px;height:34px;border-radius:11px;background:var(--tint);color:var(--coral);display:grid;place-items:center}
+.rwd-card>span:not([class]){min-width:0;flex:1}
+.rwd-n{display:block;font-size:12.5px;font-weight:650;letter-spacing:-.015em}
+.rwd-c{display:block;font-size:10.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.rwd-go{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--coral);white-space:nowrap;flex:none}
+.rwd-card.locked .rwd-ic{background:#F1EEE9;color:var(--muted)}
+.rwd-card.locked .rwd-go{color:var(--muted)}
+
+.msg{display:grid;gap:8px;margin-top:12px}
+.msg-card{border:1px solid var(--hair);border-radius:14px;background:#fff;padding:11px 12px}
+.msg-card.unread{border-color:rgba(194,65,53,.3);background:var(--tint)}
+.msg-t{font-size:12.5px;font-weight:700;letter-spacing:-.015em;display:flex;align-items:center;gap:7px}
+.msg-t .dot{width:6px;height:6px;border-radius:100px;background:var(--coral);flex:none}
+.msg-b{font-size:11px;color:var(--ink2);margin-top:3px;line-height:1.45}
+.msg-time{font-size:10px;color:var(--muted);font-weight:650;margin-top:6px}
+
+.offer-photo{height:64px;margin:-11px -12px 0;border-radius:13px 13px 0 0;
+  background:linear-gradient(135deg,#E8CFA8,#C98F63 46%,#8C5A3C);position:relative;overflow:hidden}
+.offer-photo::after{content:'';position:absolute;inset:auto -10% -40% -10%;height:70px;
+  background:radial-gradient(50% 70% at 50% 100%,rgba(255,255,255,.32),transparent 70%)}
+.share-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.share-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:100px;background:#fff;
+  border:1px solid var(--hair);font-size:10px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.share-chip svg{color:var(--green);flex:none}
+
+/* QR mock */
+.qr-card{display:grid;gap:14px;justify-items:center;text-align:center;padding:22px 18px}
+.qr{width:118px;height:118px;border-radius:14px;padding:9px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+.qr svg{width:100%;height:100%;display:block}
+
+/* customer 360 */
+.c360-head{display:flex;align-items:center;gap:12px}
+.c360-head .avatar{width:44px;height:44px;font-size:15px}
+.c360-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tl{list-style:none;margin-top:14px;display:grid;gap:0;position:relative;padding-left:18px}
+.tl::before{content:'';position:absolute;left:4px;top:8px;bottom:10px;width:1.5px;background:var(--line)}
+.tl li{position:relative;padding:8px 0}
+.tl li::before{content:'';position:absolute;left:-18px;top:14px;width:9px;height:9px;border-radius:100px;
+  background:#fff;border:2px solid var(--coral)}
+.tl li.pale::before{border-color:#D5CFC5}
+.tl .t{font-size:12.5px;font-weight:650;letter-spacing:-.015em}
+.tl .d{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:1px}
+
+/* insights */
+.ins-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+.ins{border:1px solid var(--hair);border-radius:14px;padding:11px 12px;background:#fff;min-width:0}
+.ins .l{font-size:9.5px;font-weight:750;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ins .v{font-size:1.05rem;font-weight:700;letter-spacing:-.03em;margin-top:3px;font-variant-numeric:tabular-nums}
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:9px}
+.heat i{display:block;aspect-ratio:1;border-radius:3px;background:#EFEAE2}
+.heat i.a{background:rgba(194,65,53,.22)}
+.heat i.b{background:rgba(194,65,53,.5)}
+.heat i.c{background:rgba(194,65,53,.85)}
+
+/* ---------- V283 · the sticky storytelling scene ----------
+   The track is taller than the viewport; the stage sticks inside it, so for the
+   length of the track scrolling stops advancing the PAGE and starts advancing
+   the STORY. The left column is pinned; the right composition morphs through
+   four steps and converges on the last one. Without JavaScript the track
+   collapses to its natural height and the stage is an ordinary diagram. */
+.scene{background:rgba(255,255,255,.6);padding-bottom:0}
+.scene-track{position:relative;height:auto}
+html.js .scene-track{height:340vh}
+.scene-sticky{position:relative;padding:26px 0 40px}
+html.js .scene-sticky{position:sticky;top:0;min-height:100vh;display:flex;align-items:center}
+.scene-grid{display:grid;gap:26px;width:100%;align-items:center}
+.scene-copy h2{font-size:clamp(1.8rem,5vw,2.7rem);letter-spacing:-.036em;max-width:14ch}
+.scene-lede{margin-top:14px;color:var(--ink2);font-size:clamp(1rem,2.5vw,1.08rem);max-width:44ch}
+.scene-steps{list-style:none;display:grid;gap:9px;margin-top:24px;counter-reset:sc}
+.scene-step{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid transparent;
+  border-radius:14px;background:transparent;
+  transition:opacity .45s var(--ease),transform .45s var(--ease),background .45s var(--ease),border-color .45s var(--ease)}
+html.js .scene-step{opacity:.42}
+html.js .scene-step.done{opacity:.7}
+html.js .scene-step.on{opacity:1;transform:translate3d(6px,0,0);background:var(--tint);border-color:rgba(194,65,53,.28)}
+.scene-step b{flex:none;width:24px;height:24px;border-radius:100px;background:var(--grad);color:#fff;
+  display:grid;place-items:center;font-size:11.5px;font-weight:800}
+.scene-step>span:not([class]){min-width:0}
+.scene-step .t{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.018em}
+.scene-step .d{display:block;font-size:13px;color:var(--muted);margin-top:3px;line-height:1.45}
+/* The stage. Each piece is absolutely centred and moved only by transform, so a
+   morph between steps is four compositor writes and no layout at all. */
+.scene-stage{position:relative;height:clamp(360px,54vh,470px);display:block;overflow:hidden}
+.scene-piece{position:absolute;left:50%;top:50%;width:min(100%,330px);margin-left:max(-50%,-165px);
+  will-change:transform,opacity}
+.scene-piece.p-a{z-index:1}
+.scene-piece.p-d{z-index:2}
+.scene-piece.p-b{z-index:3}
+.scene-piece.p-c{z-index:4}
+.scene-piece.p-b{width:min(56%,182px);margin-left:max(-28%,-91px)}
+.scene-piece.p-c{width:min(74%,242px);margin-left:max(-37%,-121px)}
+.scene-piece.p-d{width:min(70%,232px);margin-left:max(-35%,-116px)}
+.scene-piece{width:min(92%,306px);margin-left:max(-46%,-153px)}
+.scene-cap{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font-size:11px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+@media(min-width:1000px){
+  .scene-grid{grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:52px}
+  .scene-stage{height:clamp(430px,62vh,560px)}
+  .scene-piece{width:min(96%,360px);margin-left:max(-48%,-180px)}
+  .scene-piece.p-b{width:min(58%,222px);margin-left:max(-29%,-111px)}
+  .scene-piece.p-c{width:min(76%,300px);margin-left:max(-38%,-150px)}
+  .scene-piece.p-d{width:min(72%,286px);margin-left:max(-36%,-143px)}
+}
+@media(max-width:999px){
+  html.js .scene-track{height:300vh}
+  .scene-steps{margin-top:16px;gap:5px}
+  .scene-step .d{display:none}
+  .scene-step{padding:10px 12px}
+  .scene-lede{margin-top:11px;font-size:14.5px}
+  .scene-sticky{padding:10px 0 16px}
+  /* Pinned BELOW the sticky header, or the eyebrow is clipped by it. */
+  html.js .scene-sticky{top:62px;min-height:calc(100vh - 62px)}
+  .scene-stage{height:clamp(268px,34vh,340px)}
+}
+
+/* ---------- module grid ---------- */
+.mods{display:grid;gap:12px;margin-top:40px;grid-template-columns:repeat(auto-fit,minmax(min(100%,246px),1fr))}
+.mod{background:#fff;border:1px solid var(--hair);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);
+  transition:transform .24s var(--ease),box-shadow .24s var(--ease),border-color .24s var(--ease)}
+.mod:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--line)}
+.mod-ic{width:38px;height:38px;border-radius:12px;background:var(--tint);color:var(--coral);display:grid;place-items:center;margin-bottom:14px}
+.mod h3{font-size:16px;letter-spacing:-.022em}
+.mod p{font-size:14px;color:var(--muted);margin-top:7px;line-height:1.5}
+
+/* ---------- customer experience ---------- */
+/* Translucent, so the depth field drifts on through rather than being masked. */
+.cx{background:linear-gradient(180deg,rgba(255,247,244,.86),rgba(244,242,238,.35) 62%,rgba(244,242,238,0))}
+.cx-grid{display:grid;gap:54px;margin-top:40px;align-items:center}
+@media(min-width:940px){.cx-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:60px}}
+.cx-list{list-style:none;display:grid;gap:18px;margin-top:6px}
+.cx-list h3{font-size:16.5px;letter-spacing:-.022em}
+.cx-list p{font-size:14.5px;color:var(--ink2);margin-top:5px;line-height:1.5;max-width:46ch}
+.sw{flex:none;width:38px;height:22px;border-radius:100px;background:#E3DED6;position:relative;display:block}
+.sw i{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:100px;background:#fff;display:block}
+.sw.on{background:var(--coral)}
+.sw.on i{left:auto;right:2px}
+
+/* ---------- pricing ---------- */
+.price-grid{display:grid;gap:14px;margin-top:38px;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr))}
+.price{background:#fff;border:1px solid var(--hair);border-radius:var(--r-lg);padding:26px;box-shadow:var(--shadow)}
+.price.lead{border-color:rgba(194,65,53,.34);box-shadow:var(--shadow-lg)}
+.price .tag{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.price h3{font-size:15px;letter-spacing:-.018em}
+.price .amt{font-size:2.35rem;font-weight:720;letter-spacing:-.046em;margin-top:14px;line-height:1;font-variant-numeric:tabular-nums}
+.price .amt small{font-size:.94rem;font-weight:600;color:var(--muted);letter-spacing:-.01em;margin-left:6px}
+.price .eq{font-size:14px;color:var(--ink2);margin-top:9px}
+.price .btn{margin-top:20px;width:100%}
+.price-note{margin-top:20px;padding:18px 20px;border-radius:var(--r);background:#fff;border:1px solid var(--hair);
+  font-size:14px;color:var(--ink2);line-height:1.55;box-shadow:var(--shadow)}
+.price-note b{color:var(--ink)}
+
+/* ---------- final CTA ---------- */
+.final{padding:88px 0 96px;text-align:center}
+.final-card{position:relative;overflow:hidden;background:var(--grad);color:#fff;border-radius:var(--r-xl);
+  padding:clamp(38px,7vw,72px) clamp(22px,5vw,56px);box-shadow:0 30px 70px rgba(157,53,44,.28)}
+.final-card::after{content:'';position:absolute;inset:auto -12% -58% -12%;height:300px;pointer-events:none;
+  background:radial-gradient(50% 60% at 50% 100%,rgba(255,255,255,.22),transparent 70%)}
+.final-card h2{color:#fff;font-size:clamp(1.9rem,5.6vw,3rem);letter-spacing:-.038em;max-width:17ch;margin:0 auto;position:relative;z-index:1}
+.final-card p{margin:18px auto 0;max-width:46ch;font-size:clamp(1rem,2.6vw,1.1rem);color:rgba(255,255,255,.92);position:relative;z-index:1}
+.final-card .cta-row{justify-content:center;margin-top:30px;position:relative;z-index:1}
+.final-card .btn{background:#fff;color:var(--coral-deep);box-shadow:0 10px 26px rgba(23,22,26,.2)}
+.final-card .btn:hover{box-shadow:0 16px 36px rgba(23,22,26,.26)}
+.final-card .btn.line{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.6);box-shadow:none}
+.final-card .btn.line:hover{background:rgba(255,255,255,.12);border-color:#fff}
+
+/* ---------- footer ---------- */
+.site-foot{border-top:1px solid var(--line);padding:44px 0 56px;background:transparent}
+.foot-top{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:flex-start}
+.foot-nav{display:flex;flex-wrap:wrap;gap:4px 24px;font-size:14px;font-weight:600;color:var(--ink2)}
+/* WCAG 2.5.8 wants a 24px minimum target; a bare inline link is only ~22px tall. */
+.foot-nav a{display:inline-flex;align-items:center;min-height:30px}
+.foot-nav a:hover{color:var(--coral)}
+.foot-legal{margin-top:28px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;
+  display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
+
+/* ============================================================================
+   V283 — FIVE-LAYER SCROLL DEPTH
+   The page is ONE composition. Every layer's position is a pure function of
+   scrollY, expressed as an APPARENT SCROLL RATE relative to the page itself
+   (the page is 1.0x). One rAF loop writes translate3d and nothing else.
+
+     L1  0.15–0.25x  background glows and large soft shapes   [data-drift]
+     L2  0.35–0.50x  decorative fragments / reward symbols    [data-drift]
+     L3  0.70–0.80x  the product UI composition (main object) [data-rate]
+     L4  1.00–1.20x  floating product cards, nearer than L3   [data-rate]
+     L5  1.20–1.40x  small foreground elements                [data-rate]
+
+   [data-drift] = a FIXED layer. transform = -(scrollY * rate), recycled over
+   (viewport + own height) so it never restarts at a section boundary and never
+   runs off the document. Its wrap always happens off-screen.
+
+   [data-rate]  = an IN-FLOW layer. transform = (1 - rate) * (scrollY - y0),
+   where y0 is the scroll position at which the element sits where the designer
+   put it (0 for anything above the fold, so the page loads pixel-correct).
+   Capped by data-max so a layer can never collide with its neighbour.
+
+   data-min="<px>" drops a layer below that viewport width. The phone keeps all
+   five bands — fewer members and smaller amplitude, never a flat page.
+   ============================================================================ */
+.depth{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:layout paint}
+.depth span{position:absolute;display:block;top:0;left:0;will-change:transform}
+/* ---- L1 · 0.15–0.25x ---- */
+.d-orb{border-radius:50%}
+.d-orb.a{width:min(132vw,1220px);height:min(132vw,1220px);left:-34vw;
+  background:radial-gradient(circle at 44% 40%,rgba(194,65,53,.22),rgba(194,65,53,.055) 46%,transparent 70%)}
+.d-orb.b{width:min(118vw,980px);height:min(118vw,980px);left:auto;right:-32vw;
+  background:radial-gradient(circle at 54% 46%,rgba(167,85,20,.19),rgba(167,85,20,.045) 48%,transparent 72%)}
+.d-orb.c{width:min(106vw,860px);height:min(106vw,860px);left:2vw;
+  background:radial-gradient(circle at 50% 50%,rgba(31,107,72,.15),rgba(31,107,72,.03) 45%,transparent 70%)}
+.d-orb.d{width:min(92vw,740px);height:min(92vw,740px);left:auto;right:3vw;
+  background:radial-gradient(circle at 50% 50%,rgba(23,22,26,.055),transparent 66%)}
+/* ---- L2 · 0.35–0.50x ---- */
+.d-ring{border-radius:50%;border:1.5px solid rgba(194,65,53,.18)}
+.d-ring.r1{width:196px;height:196px;left:2%}
+.d-ring.r2{width:124px;height:124px;left:auto;right:8%;border-color:rgba(23,22,26,.1)}
+.d-ring.r3{width:264px;height:264px;left:auto;right:3%;border-color:rgba(167,85,20,.16)}
+.d-sq{border-radius:30%;background:rgba(23,22,26,.03);border:1px solid rgba(23,22,26,.055)}
+.d-sq.s1{width:138px;height:138px;left:auto;right:13%}
+.d-sq.s2{width:92px;height:92px;left:3%;background:rgba(194,65,53,.055);border-color:rgba(194,65,53,.11)}
+.d-mark{width:52px;height:52px;border-radius:16px;background:var(--tint);color:var(--coral);opacity:.62;
+  display:grid;place-items:center;border:1px solid rgba(194,65,53,.16)}
+.d-mark.m1{left:3%}
+.d-mark.m2{left:auto;right:4%;background:#E7F6EE;color:var(--green);border-color:rgba(31,107,72,.16)}
+.d-mark.m3{left:auto;right:12%;background:#FBF0E4;color:var(--amber);border-color:rgba(167,85,20,.18)}
+.d-dot{width:10px;height:10px;border-radius:100px;background:var(--coral);opacity:.32}
+.d-dot.p1{left:6%}
+.d-dot.p2{left:auto;right:7%;background:var(--green);opacity:.28}
+
+/* Scroll progress: one unbroken line for one unbroken page. */
+.scroll-progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;overflow:hidden;pointer-events:none}
+.scroll-progress i{display:block;height:100%;width:100%;background:var(--grad);border-radius:2px;
+  transform:scaleX(0);transform-origin:0 50%;will-change:transform}
+
+/* ---- L4 · floating product cards. Real product moments, drawn nearer than the
+   composition itself, so they visibly slide up past it as the page moves. ---- */
+.fcard{position:absolute;z-index:4;display:flex;align-items:center;gap:9px;padding:9px 14px 9px 10px;
+  border-radius:15px;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow-lg);
+  white-space:nowrap;letter-spacing:-.012em;will-change:transform}
+.fcard .fi{flex:none;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
+  background:var(--tint);color:var(--coral)}
+.fcard.ok .fi{background:#E7F6EE;color:var(--green)}
+.fcard.amber .fi{background:#FBF0E4;color:var(--amber)}
+.fcard.violet .fi{background:#EDEBF6;color:#4A3F86}
+.fcard b{display:block;font-size:12px;font-weight:750;color:var(--ink)}
+.fcard em{display:block;font-size:10.5px;font-style:normal;font-weight:600;color:var(--muted);margin-top:1px}
+/* ---- L5 · small foreground elements ---- */
+.fpill{position:absolute;z-index:5;display:inline-flex;align-items:center;gap:5px;padding:5px 11px;
+  border-radius:100px;background:var(--tint);border:1px solid rgba(194,65,53,.22);color:var(--coral-deep);
+  font-size:11px;font-weight:800;letter-spacing:-.008em;white-space:nowrap;
+  box-shadow:0 4px 12px rgba(157,53,44,.14);will-change:transform}
+.fpill.ok{background:#E7F6EE;border-color:rgba(31,107,72,.2);color:var(--green);box-shadow:0 4px 12px rgba(31,107,72,.12)}
+.fpill.plain{background:#fff;border-color:var(--hair);color:var(--ink2);box-shadow:var(--shadow)}
+
+/* Mid-page L4/L5. Every section, not just the hero, carries a card and a pill
+   drawn nearer than its product mock, so the depth never runs out. */
+.step-art,.cx-art{position:relative}
+.step-float{z-index:6}
+.step-float.a{left:1%;top:9%}
+.step-float.b{left:auto;right:2%;bottom:7%}
+.step-float.c{left:auto;right:1%;top:14%}
+@media(min-width:940px){
+  .step-float.a{left:-4%;top:11%}
+  .step-float.b{right:-3%;bottom:6%}
+  .step-float.c{right:-4%;top:12%}
+}
+@media(max-width:819px){
+  .step-float{display:none}
+  .fcard.step-float.keep{display:flex}
+  .fpill.step-float.keep{display:inline-flex}
+}
+
+/* Section floats sit beside the section head, in the empty half of the measure,
+   so the feature grids and price cards themselves never carry a transform. */
+.sec-float{display:none;z-index:6}
+@media(min-width:940px){
+  .sec-float{display:flex}
+  .fpill.sec-float{display:inline-flex}
+  .sec-float.a{left:auto;right:3%;top:92px}
+  .sec-float.b{left:auto;right:15%;top:196px}
+}
+
+/* Hero float placement. Below 1000px only two cards and two pills survive, at
+   safe insets — the phone keeps the depth without ever overflowing sideways. */
+.hero-float{display:none}
+.hero-float.keep{display:flex}
+.fpill.hero-float.keep{display:inline-flex}
+.hero-float.f1{left:1%;top:41%}
+.hero-float.f2{left:auto;right:1%;top:9%}
+.hero-float.f3{left:3%;top:95%}
+.hero-float.f4{left:auto;right:1%;top:88%}
+.hero-float.f5{left:auto;right:20%;top:100%}
+.hero-float.g1{left:2%;top:29%}
+.hero-float.g2{left:auto;right:3%;top:64%}
+.hero-float.g3{left:26%;top:104%}
+@media(min-width:1000px){
+  .hero-float{display:flex}
+  .fpill.hero-float{display:inline-flex}
+  .hero-float.f1{left:-2%;top:70%}
+  .hero-float.f2{right:-2%;top:98%}
+  .hero-float.f3{left:2%;top:107%}
+  .hero-float.f4{left:44%;right:auto;top:104%}
+  .hero-float.f5{right:26%;top:-5%}
+  .hero-float.g1{left:3%;top:32%}
+  .hero-float.g2{left:auto;right:33%;top:58%}
+  .hero-float.g3{left:22%;top:114%}
+}
+
+/* ---------- reveal ---------- */
+/* Deliberately small: the depth system, not a fade, is what carries the page.
+   A reveal never lands on an element that also carries a scroll layer. */
+html.js .reveal{opacity:0;transform:translate3d(0,12px,0);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+html.js .reveal.in{opacity:1;transform:translate3d(0,0,0)}
+html.js .reveal[data-delay="1"]{transition-delay:.06s}
+html.js .reveal[data-delay="2"]{transition-delay:.12s}
+html.js .reveal[data-delay="3"]{transition-delay:.18s}
+[data-rate],[data-drift]{will-change:transform}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  html.js .reveal,html.js .reveal.in{opacity:1!important;transform:none!important;transition:none!important}
+  [data-rate],[data-drift],.fcard,.fpill,.scene-piece{transform:none!important;will-change:auto}
+  .depth,.scroll-progress,.hero-float{display:none!important}
+  html.js .scene-track{height:auto!important}
+  html.js .scene-sticky{position:static!important;min-height:0!important}
+  html.js .scene-step{opacity:1!important}
+  html.js .scene-stage{position:static!important;height:auto!important}
+  html.js .scene-piece{position:static!important;opacity:1!important;margin:0 auto 16px}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+
+/* ---------- hero composition ---------- */
+/* V283 — the hero reads left to right: BUSINESS DASHBOARD → PEEKAA → CUSTOMER.
+   The hub in the middle is the product itself, and it is the only element that
+   sits on top of both sides, so the eye is told what joins them. */
+.stage{position:relative;display:grid;gap:18px;justify-items:center}
+.stage-dash{width:100%;max-width:560px;position:relative}
+.stage-phone{width:100%;max-width:250px;position:relative}
+.stage-hub{display:flex;align-items:center;justify-content:center;gap:7px;z-index:3;flex-direction:column}
+.hub-core{display:grid;justify-items:center;gap:6px}
+.hub-badge{width:60px;height:60px;border-radius:20px;background:#fff;border:1px solid rgba(194,65,53,.2);
+  box-shadow:0 6px 22px rgba(157,53,44,.16);display:grid;place-items:center;padding:10px}
+.hub-badge img{width:100%;height:auto}
+.hub-name{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--coral-deep)}
+.hub-arrows{display:flex;align-items:center;color:#C6BFB5}
+.hub-arrows svg{transform:rotate(90deg)}
+@media(min-width:900px){.stage-hub{flex-direction:row}.hub-arrows svg{transform:none}}
+.stage-cap{font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  text-align:center;margin-bottom:9px}
+@media(min-width:900px){
+  /* Room for the composition to lag into. At 0.74x it trails 150px behind
+     the page by the time it leaves — that space is its, not the strip's. */
+  .hero{padding:64px 0 168px}
+  .hero-stage{margin-top:56px}
+  /* Capped rather than fluid: stretched to 1100px the dashboard mock reads as an
+     empty page with three numbers in it, not as a working product screen. */
+  .stage{grid-template-columns:minmax(0,1fr) 106px minmax(0,268px);align-items:center;gap:0;
+    justify-content:center;justify-items:stretch}
+  .stage-dash{max-width:640px;justify-self:end;width:100%}
+  .stage-hub{justify-self:center}
+  .stage-phone{justify-self:center;margin-left:-16px;max-width:268px;z-index:2}
+  .stage-cap{position:absolute;top:-26px;left:0;right:0;margin:0}
+}
+/* The hero stays a single column at every width: the dashboard + phone composition
+   needs the full measure to sit side by side, and squeezing it into half the grid
+   pushed the phone outside the container. */
+@media(min-width:1060px){
+  .hero h1{font-size:clamp(3rem,4.6vw,4.4rem)}
+  .hero-lede{font-size:1.24rem;max-width:52ch}
+  .hero-stage{margin-top:46px}
+}
+.dash-flow{display:flex;align-items:center;gap:9px;margin-top:14px;flex-wrap:wrap}
+.flow-node{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:100px;background:var(--bg);
+  border:1px solid var(--line);font-size:11.5px;font-weight:700;color:var(--ink2);letter-spacing:-.01em}
+.flow-node.on{background:var(--tint);border-color:rgba(194,65,53,.3);color:var(--coral-deep)}
+.flow-arrow{color:#C6BFB5;flex:none}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ══════════════════ V283 DEPTH FIELD ══════════════════
+     One fixed field behind the whole document. Because it is fixed rather than
+     owned by any section, nothing in it restarts at a section boundary — this is
+     what makes the page read as a single composition instead of stacked pages.
+     Purely decorative; it carries no information and is hidden from assistive
+     technology, removed entirely under reduced motion. -->
+<div class="depth" id="depthField" aria-hidden="true">
+  <!-- L1 · 0.15–0.25x — background glows. At a fifth of the page's rate these
+       are what make the depth unmistakable the moment anyone scrolls. -->
+  <span class="d-orb a" data-drift="0.16" data-phase="0.04" data-x="34"></span>
+  <span class="d-orb b" data-drift="0.21" data-phase="0.46" data-x="-38"></span>
+  <span class="d-orb c" data-drift="0.19" data-phase="0.74" data-x="26" data-min="640"></span>
+  <span class="d-orb d" data-drift="0.24" data-phase="0.26" data-x="-30" data-min="900"></span>
+  <!-- L2 · 0.35–0.50x — fragments and reward symbols. -->
+  <span class="d-ring r1" data-drift="0.37" data-phase="0.08" data-x="24"></span>
+  <span class="d-ring r2" data-drift="0.46" data-phase="0.58" data-x="-26" data-min="640"></span>
+  <span class="d-ring r3" data-drift="0.4" data-phase="0.33" data-x="20" data-min="1100"></span>
+  <span class="d-sq s1" data-drift="0.43" data-phase="0.71" data-x="-22" data-min="760"></span>
+  <span class="d-sq s2" data-drift="0.36" data-phase="0.19" data-x="18"></span>
+  <span class="d-mark m1" data-drift="0.48" data-phase="0.87" data-x="-16" data-min="640"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/></svg></span>
+  <span class="d-mark m2" data-drift="0.42" data-phase="0.51" data-x="14" data-min="900"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+  <span class="d-mark m3" data-drift="0.5" data-phase="0.14" data-x="-12" data-min="1100"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-5M12.5 16V8M17 16v-3"/></svg></span>
+  <span class="d-dot p1" data-drift="0.45" data-phase="0.39" data-x="12"></span>
+  <span class="d-dot p2" data-drift="0.5" data-phase="0.83" data-x="-14" data-min="640"></span>
+</div>
+
+<header class="site-head" id="siteHead">
+  <div class="scroll-progress" aria-hidden="true"><i id="scrollFill"></i></div>
+  <div class="wrap head-inner">
+    <a href="#top" aria-label="Peekaa home"><img class="brand-logo" src="/brand/peekaa-logo.png" alt="Peekaa" width="240" height="68"></a>
+    <nav class="head-nav" aria-label="Page sections">
+      <a href="#story">How it works</a>
+      <a href="#inside">What's inside</a>
+      <a href="#customers">For your customers</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div class="head-actions">
+      <a class="head-login" href="/business">Log in</a>
+      <a class="btn sm" href="/business?signup=1">Get started</a>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+<span id="top"></span>
+
+<!-- ══════════════════════════ HERO ══════════════════════════ -->
+<section class="hero" aria-labelledby="heroTitle">
+  <div class="wrap">
+    <div class="hero-top">
+      <div class="hero-copy reveal">
+        <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Customer loyalty, built for Singapore businesses</span>
+        <h1 id="heroTitle">Turn customers into regulars.</h1>
+        <p class="hero-lede">Peekaa is a customer loyalty and rewards platform for businesses. Run a digital loyalty programme, give people a real reason to come back, and see exactly who is returning — and who has quietly stopped.</p>
+        <div class="cta-row">
+          <a class="btn" href="/business?signup=1">Get started with Peekaa</a>
+          <a class="btn ghost" href="#story">See how it works</a>
+        </div>
+        <p class="hero-note">Customers join by scanning a QR at your counter and open their rewards in any phone browser. No plastic cards to print.</p>
+      </div>
+
+      <div class="hero-stage reveal" data-delay="1">
+        <!-- L4 · 1.00–1.20x — floating product cards, nearer to the viewer than
+             the composition itself. Anchored to the hero, but because they move
+             FASTER than the page they are still climbing through the category
+             strip and the story intro long after the hero has scrolled away:
+             the hero does not stop at a section boundary. The two marked "keep"
+             survive on a phone; the rest are desktop-only, by layer count. -->
+        <span class="fcard hero-float ok f1 keep" aria-hidden="true" data-rate="1.16" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+          <span><b>Reward earned</b><em>Serene Lim · +82 pts</em></span>
+        </span>
+        <span class="fcard hero-float f2" aria-hidden="true" data-min="1000" data-rate="1.08" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M19 8v6M22 11h-6"/></svg></span>
+          <span><b>New customer</b><em>Joined at the counter</em></span>
+        </span>
+        <span class="fcard hero-float amber f3" aria-hidden="true" data-min="1000" data-rate="1.12" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M16.5 9.5a4 4 0 0 1 0 5"/></svg></span>
+          <span><b>Promotion</b><em>2-for-1 lattes · live</em></span>
+        </span>
+        <span class="fcard hero-float violet f4 keep" aria-hidden="true" data-rate="1.19" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-5M12.5 16V8M17 16v-3"/></svg></span>
+          <span><b>Loyalty progress</b><em>180 pts to Platinum</em></span>
+        </span>
+        <span class="fcard hero-float f5" aria-hidden="true" data-min="1000" data-rate="1.05" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <span><b>Customer activity</b><em>Visit 6 · Tanjong Pagar</em></span>
+        </span>
+        <!-- L5 · 1.20–1.40x — the small stuff, nearest of all. -->
+        <span class="fpill hero-float g1 keep" aria-hidden="true" data-rate="1.34" data-max="230">+18 pts</span>
+        <span class="fpill ok hero-float g2 keep" aria-hidden="true" data-rate="1.27" data-max="230">Came back</span>
+        <span class="fpill plain hero-float g3" aria-hidden="true" data-min="1000" data-rate="1.38" data-max="230">−150 pts</span>
+        <div class="stage">
+          <!-- L3 · 0.70–0.80x — the product composition, the main object. -->
+          <div class="mock stage-dash" data-rate-sm="0.76" data-max-sm="70" data-rate="0.74" data-max="150">
+            <div class="stage-cap">Business dashboard</div>
+            <div class="frame">
+              <div class="frame-bar">
+                <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="frame-url">peekaa.asia/business</span>
+              </div>
+              <div class="frame-body">
+                <div class="mock-row">
+                  <div>
+                    <div class="mock-h">This week</div>
+                    <div class="mock-sub">Kopi &amp; Co · Tanjong Pagar</div>
+                  </div>
+                  <span class="pill ok">Programme live</span>
+                </div>
+                <div class="kpis">
+                  <div class="kpi"><div class="l">Visits</div><div class="v">312</div><div class="d">+18%</div></div>
+                  <div class="kpi"><div class="l">Revenue</div><div class="v">4,980</div><div class="d">+11%</div></div>
+                  <div class="kpi"><div class="l">Members</div><div class="v">47</div><div class="d">+9</div></div>
+                </div>
+                <div class="chart" aria-hidden="true">
+                  <span style="height:42%"></span><span style="height:58%"></span><span style="height:49%"></span>
+                  <span style="height:71%"></span><span style="height:64%"></span><span style="height:92%"></span>
+                  <span class="q" style="height:36%"></span>
+                </div>
+                <div class="chart-x" aria-hidden="true"><i>M</i><i>T</i><i>W</i><i>T</i><i>F</i><i>S</i><i>S</i></div>
+                <ul class="feed">
+                  <li>
+                    <span class="avatar" aria-hidden="true">SL</span>
+                    <span><span class="who">Serene Lim</span><br><span class="what">Redeemed · Free kaya toast set</span></span>
+                    <span class="amt">−150 pts</span>
+                  </li>
+                  <li>
+                    <span class="avatar b" aria-hidden="true">HR</span>
+                    <span><span class="who">Hafiz Rahman</span><br><span class="what">Visit 6 · earned points</span></span>
+                    <span class="amt">+82 pts</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- The product that joins the two sides. -->
+          <div class="stage-hub" aria-hidden="true" data-rate-sm="0.76" data-max-sm="70" data-rate="0.8" data-max="150">
+            <span class="hub-arrows">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+            <span class="hub-core">
+              <span class="hub-badge"><img src="/brand/peekaa-mark.png" alt="" width="120" height="120"></span>
+              <span class="hub-name">Peekaa</span>
+            </span>
+            <span class="hub-arrows">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </div>
+
+          <!-- Customer wallet mock -->
+          <div class="mock stage-phone" data-rate-sm="0.76" data-max-sm="70" data-rate="0.78" data-max="150">
+            <div class="stage-cap">Customer experience</div>
+            <div class="phone">
+              <div class="phone-screen">
+                <span class="phone-notch" aria-hidden="true"></span>
+                <div class="phone-inner">
+                  <div class="wallet-head">
+                    <img class="wallet-logo" src="/brand/peekaa-mark.png" alt="" width="120" height="120" aria-hidden="true">
+                    <span class="pill new">Gold member</span>
+                  </div>
+                  <div class="balance">
+                    <div class="l">Your points</div>
+                    <div class="v">1,240<small>pts</small></div>
+                    <div class="m">180 more points to Platinum</div>
+                    <div class="tierbar" aria-hidden="true"><i></i></div>
+                  </div>
+                  <div class="wallet-label">Rewards you can claim</div>
+                  <div class="rwd">
+                    <div class="rwd-card">
+                      <span class="rwd-ic" aria-hidden="true">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/><path d="M12 7a3.5 3.5 0 1 1 3.5-3.5A3.5 3.5 0 0 1 12 7z"/><path d="M12 7A3.5 3.5 0 1 0 8.5 3.5 3.5 3.5 0 0 0 12 7z"/></svg>
+                      </span>
+                      <span><span class="rwd-n">Free kaya toast set</span><span class="rwd-c">150 points</span></span>
+                      <span class="rwd-go">Claim</span>
+                    </div>
+                    <div class="rwd-card locked">
+                      <span class="rwd-ic" aria-hidden="true">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                      </span>
+                      <span><span class="rwd-n">$10 off your bill</span><span class="rwd-c">1,500 points</span></span>
+                      <span class="rwd-go">260 to go</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="small muted" style="text-align:center;margin-top:22px" data-anchor data-rate-sm="0.76" data-max-sm="70" data-rate="0.74" data-max="150">Illustration of the Peekaa business dashboard and the customer's rewards wallet.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ CATEGORIES ══════════════════════════ -->
+<section class="cats reveal" aria-labelledby="catsTitle">
+  <div class="wrap">
+    <h2 class="cats-title" id="catsTitle">Wherever repeat customers matter</h2>
+    <ul class="cats-list">
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M6 3v2M10 2v3M14 3v2"/></svg>Cafés</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v8a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 3c-1.5 1.5-2 3.5-2 6s.7 3 2 3v9"/></svg>Restaurants</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16l-8 8z"/><path d="M12 12v7"/><path d="M8 21h8"/></svg>Bars &amp; pubs</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20"/></svg>Beauty &amp; salons</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg>Fitness studios</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-1.4 10a2 2 0 0 1-2 1.7H6.4a2 2 0 0 1-2-1.7z"/><path d="M8.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/></svg>Retail shops</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0 5 5l-8.4 8.4a2.8 2.8 0 0 1-4-4z"/><path d="m6 6 2 2"/></svg>Services</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════ STORY ══════════════════════════ -->
+<div id="story"></div>
+<section class="story-intro" aria-labelledby="storyTitle">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot" aria-hidden="true"></span>How Peekaa works</span>
+      <h2 id="storyTitle" style="margin-top:18px">Five things that turn a first visit into a habit.</h2>
+      <p>Getting someone through the door once is marketing. Getting them back is a system. Peekaa is that system — sign-up, reward, message, insight and win-back, joined up in one place.</p>
+    </div>
+  </div>
+</section>
+
+<div class="story">
+  <div class="wrap">
+
+    <!-- 01 -->
+    <section class="step" aria-labelledby="s1">
+      <div class="step-grid">
+        <div class="step-copy reveal">
+          <span class="step-num"><b>01</b><span class="bar" aria-hidden="true"></span>Bring customers in</span>
+          <h3 id="s1">Signing up takes one scan.</h3>
+          <p class="lede">Put your Peekaa QR code on the counter. A customer scans it, enters a name and a Singapore mobile number, and they are a member — before their coffee is ready.</p>
+          <ul class="checks">
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>No app download and no plastic card — it opens in their phone browser.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Marketing consent is asked for separately, never pre-ticked, and recorded against the customer.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Already have a customer list? Import it and carry on from there.</li>
+          </ul>
+        </div>
+        <div class="step-art mock reveal" data-delay="1">
+          <div class="frame" data-rate="0.72" data-max-sm="52" data-max="150">
+            <div class="frame-bar">
+              <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="frame-url">Join Kopi &amp; Co</span>
+            </div>
+            <div class="frame-body qr-card">
+              <div class="qr" aria-hidden="true">
+                <svg viewBox="0 0 29 29" role="presentation"><rect width="29" height="29" fill="#fff"/><g fill="#17161A"><path d="M0 0h7v7H0zM22 0h7v7h-7zM0 22h7v7H0z"/><path d="M2 2h3v3H2zM24 2h3v3h-3zM2 24h3v3H2z" fill="#fff"/><path d="M2 2h3v3H2zM24 2h3v3h-3zM2 24h3v3H2z" fill="#C24135"/><path d="M9 0h2v2H9zM13 0h2v3h-2zM17 1h2v2h-2zM9 4h4v2H9zM15 4h2v2h-2zM19 4h2v2h-2zM9 9h2v2H9zM12 9h3v2h-3zM17 9h2v2h-2zM20 9h2v2h-2zM24 9h3v2h-3zM0 9h2v2H0zM4 9h3v2H4zM0 13h3v2H0zM5 12h2v3H5zM9 12h2v3H9zM13 12h3v2h-3zM18 12h2v3h-2zM22 12h3v2h-3zM27 12h2v3h-2zM9 16h2v2H9zM12 17h3v2h-3zM16 16h3v2h-3zM20 17h2v2h-2zM24 16h3v2h-3zM0 17h3v2H0zM5 17h2v2H5zM9 20h3v2H9zM13 20h2v3h-2zM17 20h2v2h-2zM21 20h3v2h-3zM25 20h2v3h-2zM9 24h2v3H9zM12 24h3v2h-3zM16 25h3v2h-3zM20 24h2v3h-2zM23 24h2v2h-2zM26 25h3v2h-3zM13 6h2v2h-2z"/></g></svg>
+              </div>
+              <div>
+                <div class="mock-h">Join our rewards</div>
+                <div class="mock-sub" style="margin-top:4px">Scan · takes 20 seconds</div>
+              </div>
+              <div style="width:100%;display:grid;gap:8px;text-align:left">
+                <div style="border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:#fff">
+                  <div style="font-size:9.5px;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Name</div>
+                  <div style="font-size:12.5px;font-weight:600;margin-top:2px">Serene Lim</div>
+                </div>
+                <div style="border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:#fff">
+                  <div style="font-size:9.5px;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Mobile</div>
+                  <div style="font-size:12.5px;font-weight:600;margin-top:2px">+65 8••• ••33</div>
+                </div>
+                <div style="display:flex;gap:9px;align-items:flex-start;padding:2px 2px 0">
+                  <span style="flex:none;width:16px;height:16px;border-radius:5px;border:1.5px solid #C9C2B8;margin-top:2px" aria-hidden="true"></span>
+                  <span style="font-size:11px;color:var(--muted);line-height:1.4">Send me offers and rewards news. Optional — you can switch this off any time.</span>
+                </div>
+              </div>
+              <span class="btn sm" style="width:100%">Join</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section class="step" aria-labelledby="s2">
+      <div class="step-grid flip">
+        <div class="step-copy reveal">
+          <span class="step-num"><b>02</b><span class="bar" aria-hidden="true"></span>Give them a reason to return</span>
+          <h3 id="s2">Points, stamps and tiers — your rules.</h3>
+          <p class="lede">Choose how people earn: points on spend, a stamp card, or membership tiers that unlock better treatment as they keep coming back. Points and tiers can run side by side, so a regular is climbing towards status while still saving for the next reward.</p>
+          <ul class="checks">
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>You define the rewards and what they cost in points.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Redemption happens in front of you at the counter, not on trust.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Points and tiers stay independent — spending points never lowers a tier.</li>
+          </ul>
+        </div>
+        <div class="step-art mock reveal" data-delay="1">
+        <span class="fcard step-float violet a keep" aria-hidden="true" data-rate="1.14" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-5M12.5 16V8M17 16v-3"/></svg></span>
+          <span><b>Loyalty progress</b><em>Gold · 180 to Platinum</em></span>
+        </span>
+        <span class="fpill step-float b" data-min="820" aria-hidden="true" data-rate="1.3" data-max="230">+18 pts</span>
+          <div class="frame" data-rate="0.78" data-max-sm="52" data-max="150">
+            <div class="frame-bar">
+              <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="frame-url">Loyalty programme</span>
+            </div>
+            <div class="frame-body">
+              <div class="mock-row">
+                <div class="mock-h">Earning rules</div>
+                <span class="pill ok">Active</span>
+              </div>
+              <div style="display:grid;gap:8px;margin-top:13px">
+                <div style="border:1px solid rgba(194,65,53,.28);background:var(--tint);border-radius:14px;padding:12px 13px">
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+                    <span style="font-size:13px;font-weight:700">Points on spend</span><span class="pill new">On</span>
+                  </div>
+                  <div style="font-size:11.5px;color:var(--coral-deep);margin-top:4px;font-weight:600">1 point per SGD 1 spent</div>
+                </div>
+                <div style="border:1px solid rgba(194,65,53,.28);background:var(--tint);border-radius:14px;padding:12px 13px">
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+                    <span style="font-size:13px;font-weight:700">Membership tiers</span><span class="pill new">On</span>
+                  </div>
+                  <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap">
+                    <span class="pill off">Silver</span><span class="pill amber">Gold</span><span class="pill off">Platinum</span>
+                  </div>
+                </div>
+                <div style="border:1px solid var(--hair);border-radius:14px;padding:12px 13px;background:#fff">
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+                    <span style="font-size:13px;font-weight:700">Stamp card</span><span class="pill off">Off</span>
+                  </div>
+                  <div style="display:flex;gap:5px;margin-top:9px" aria-hidden="true">
+                    <i style="width:17px;height:17px;border-radius:100px;background:#EFEAE2;display:block"></i>
+                    <i style="width:17px;height:17px;border-radius:100px;background:#EFEAE2;display:block"></i>
+                    <i style="width:17px;height:17px;border-radius:100px;background:#EFEAE2;display:block"></i>
+                    <i style="width:17px;height:17px;border-radius:100px;background:#EFEAE2;display:block"></i>
+                    <i style="width:17px;height:17px;border-radius:100px;background:#EFEAE2;display:block"></i>
+                    <i style="width:17px;height:17px;border-radius:100px;background:#EFEAE2;display:block"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="mock-h" style="margin-top:18px">Rewards</div>
+              <ul class="feed" style="margin-top:10px">
+                <li><span class="avatar" aria-hidden="true">☕</span><span><span class="who">Free kaya toast set</span><br><span class="what">Redeemed 41 times</span></span><span class="amt">150 pts</span></li>
+                <li><span class="avatar c" aria-hidden="true">$</span><span><span class="who">$10 off your bill</span><br><span class="what">Redeemed 12 times</span></span><span class="amt">1,500 pts</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section class="step" aria-labelledby="s3">
+      <div class="step-grid">
+        <div class="step-copy reveal">
+          <span class="step-num"><b>03</b><span class="bar" aria-hidden="true"></span>Stay connected</span>
+          <h3 id="s3">Put your offer where your members already look.</h3>
+          <p class="lede">Write one factual offer, add a photo, publish it. It becomes a live promotion inside the programme your members already opened to check their points — and they can pass it on to a friend on WhatsApp in a tap.</p>
+          <ul class="checks">
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Publishing a promotion is a deliberate, permissioned act — not something any staff login can do.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Customers share to WhatsApp, Telegram or Facebook, or copy the link.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Each customer sets what they want to hear about, and can switch any of it off themselves.</li>
+          </ul>
+        </div>
+        <div class="step-art mock reveal" data-delay="1">
+        <span class="fcard step-float amber a" data-min="820" aria-hidden="true" data-rate="1.07" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M16.5 9.5a4 4 0 0 1 0 5"/></svg></span>
+          <span><b>Promotion</b><em>2-for-1 lattes · live</em></span>
+        </span>
+          <div class="phone" style="max-width:262px" data-rate="0.74" data-max-sm="52" data-max="150">
+            <div class="phone-screen">
+              <span class="phone-notch" aria-hidden="true"></span>
+              <div class="phone-inner">
+                <div class="wallet-head">
+                  <img class="wallet-logo" src="/brand/peekaa-mark.png" alt="" width="120" height="120" aria-hidden="true">
+                  <span class="pill new">Kopi &amp; Co</span>
+                </div>
+                <div class="wallet-label" style="margin-top:6px">Offers</div>
+                <div class="msg">
+                  <div class="msg-card unread">
+                    <div class="offer-photo" aria-hidden="true"></div>
+                    <div class="msg-t" style="margin-top:10px">2-for-1 on all lattes today</div>
+                    <div class="msg-b">Valid until 6pm at Tanjong Pagar. Show this screen at the counter.</div>
+                    <div class="share-row">
+                      <span class="share-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 2a8 8 0 1 1-4.1 14.9l-.4-.2-2.6.7.7-2.5-.2-.4A8 8 0 0 1 12 4m-3.3 4c-.2 0-.5.1-.7.4-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.9 2.7.7 3.2.7.5-.1 1.6-.7 1.9-1.3.2-.7.2-1.2.1-1.3l-.6-.3-1.5-.7c-.2-.1-.4-.1-.5.1l-.7 1c-.2.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.1-.3 0-.4.1-.5l.4-.5.3-.5v-.5l-.7-1.7c-.2-.4-.4-.4-.5-.4z"/></svg>WhatsApp</span>
+                      <span class="share-chip">Telegram</span>
+                      <span class="share-chip">Copy link</span>
+                    </div>
+                  </div>
+                  <div class="msg-card">
+                    <div class="msg-t">Weekday breakfast set · $6.80</div>
+                    <div class="msg-b">Before 11am, Monday to Friday.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section class="step" aria-labelledby="s4">
+      <div class="step-grid flip">
+        <div class="step-copy reveal">
+          <span class="step-num"><b>04</b><span class="bar" aria-hidden="true"></span>Know your customers</span>
+          <h3 id="s4">Every visit, in one profile.</h3>
+          <p class="lede">Open a customer and see the whole relationship: visits, spend, points, rewards claimed, packages, appointments. Zoom out and the same data answers the questions owners actually ask — which days are busy, who is coming back, how the team is doing.</p>
+          <ul class="checks">
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Revenue and visits over time, and where new members came from.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Your busiest days, so you can staff and promote around them.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>New, returning and reactivated customers — and how the team is performing.</li>
+          </ul>
+        </div>
+        <div class="step-art mock reveal" data-delay="1">
+        <span class="fcard step-float c" data-min="820" aria-hidden="true" data-rate="1.11" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <span><b>Customer activity</b><em>Visit 24 · 4 days ago</em></span>
+        </span>
+        <span class="fpill step-float ok b keep" aria-hidden="true" data-rate="1.36" data-max="230">Came back</span>
+          <div class="frame" data-rate="0.79" data-max-sm="52" data-max="150">
+            <div class="frame-bar">
+              <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="frame-url">Customer · Serene Lim</span>
+            </div>
+            <div class="frame-body">
+              <div class="c360-head">
+                <span class="avatar" aria-hidden="true">SL</span>
+                <div>
+                  <div class="mock-h">Serene Lim</div>
+                  <div class="mock-sub">Member since Mar 2026 · 24 visits</div>
+                </div>
+                <span class="pill amber" style="margin-left:auto">Gold</span>
+              </div>
+              <div class="ins-grid">
+                <div class="ins"><div class="l">Points balance</div><div class="v">1,240</div></div>
+                <div class="ins"><div class="l">Total spend</div><div class="v">SGD 862</div></div>
+                <div class="ins"><div class="l">Last visit</div><div class="v">4 days ago</div></div>
+                <div class="ins"><div class="l">Rewards claimed</div><div class="v">7</div></div>
+              </div>
+              <div class="c360-tags">
+                <span class="pill ok">Marketing consent on</span>
+                <span class="pill off">Weekday mornings</span>
+              </div>
+              <ul class="tl">
+                <li><div class="t">Redeemed free kaya toast set</div><div class="d">Today · Tanjong Pagar · −150 pts</div></li>
+                <li><div class="t">Visit · SGD 18.40</div><div class="d">4 days ago · +18 pts</div></li>
+                <li class="pale"><div class="t">Opened “2-for-1 lattes”</div><div class="d">Last week</div></li>
+                <li class="pale"><div class="t">Reached Gold tier</div><div class="d">Last month</div></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section class="step" aria-labelledby="s5">
+      <div class="step-grid">
+        <div class="step-copy reveal">
+          <span class="step-num"><b>05</b><span class="bar" aria-hidden="true"></span>Bring inactive customers back</span>
+          <h3 id="s5">Win back the ones who stopped coming.</h3>
+          <p class="lede">Peekaa knows who has gone quiet, because it knows when everyone last visited. Set a bring-back rule, and the reward is sitting in their programme waiting the next time they open it.</p>
+          <ul class="checks">
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>You choose how long counts as “gone quiet” and what the reward is.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>See who has been away 30, 60 or 90+ days, as a list you can work through.</li>
+            <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>The rule measures return visits, so you see who actually came back.</li>
+          </ul>
+        </div>
+        <div class="step-art mock reveal" data-delay="1">
+          <div class="frame" data-rate="0.75" data-max-sm="52" data-max="150">
+            <div class="frame-bar">
+              <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="frame-url">Retention · Bring-back</span>
+            </div>
+            <div class="frame-body">
+              <div class="mock-row">
+                <div class="mock-h">Haven't visited in 60 days</div>
+                <span class="pill new">86 customers</span>
+              </div>
+              <div style="border:1px solid rgba(194,65,53,.28);background:var(--tint);border-radius:15px;padding:14px;margin-top:13px">
+                <div style="font-size:12.5px;font-weight:750;color:var(--coral-deep)">Bring-back reward</div>
+                <div style="font-size:14.5px;font-weight:700;margin-top:5px;letter-spacing:-.02em">Free drink on your next visit</div>
+                <div style="font-size:11.5px;color:var(--ink2);margin-top:5px">Applies to members who cross 60 days without a visit.</div>
+              </div>
+              <div class="ins-grid">
+                <div class="ins"><div class="l">In this group</div><div class="v">86</div></div>
+                <div class="ins"><div class="l">Came back</div><div class="v" style="color:var(--green)">23</div></div>
+              </div>
+              <div class="mock-h" style="margin-top:16px;font-size:13px">Returned this month</div>
+              <ul class="feed" style="margin-top:9px">
+                <li><span class="avatar b" aria-hidden="true">JT</span><span><span class="who">Jaya Thanabalan</span><br><span class="what">Away 74 days · back yesterday</span></span><span class="pill ok">Back</span></li>
+                <li><span class="avatar c" aria-hidden="true">WC</span><span><span class="who">Wei Chen</span><br><span class="what">Away 91 days · back Monday</span></span><span class="pill ok">Back</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════ THE LOOP ══════════════════════════ -->
+<section class="scene section" aria-labelledby="loopTitle">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Two sides, one programme</span>
+      <h2 id="loopTitle" style="margin-top:18px">What you set up is what they see.</h2>
+      <p>There is no second system to keep in sync. You create a reward in your dashboard; it appears in your customers' wallets. They visit and claim it; it appears back in your activity feed.</p>
+    </div>
+  </div>
+
+  <!-- V283 — the sticky storytelling scene. The track is 340vh, so for three
+       screens of scrolling the stage stays pinned and the SCROLL DRIVES THE
+       STORY instead of the page: the left column holds still while the right
+       composition morphs through four steps and converges on the last one.
+       Every piece is moved by transform and opacity only. -->
+  <div class="scene-track" id="sceneTrack">
+    <div class="scene-sticky" id="sceneSticky">
+      <div class="wrap">
+        <div class="scene-grid">
+          <div class="scene-copy">
+            <span class="eyebrow"><span class="dot" aria-hidden="true"></span>The whole loop</span>
+            <h2 style="margin-top:16px">Turn customers into regulars.</h2>
+            <p class="scene-lede">Four things happen, in this order, and every one of them is the same programme — not four tools you have to keep in step.</p>
+            <ol class="scene-steps" id="sceneSteps">
+              <li class="scene-step"><b>1</b><span><span class="t">Reward customers</span><span class="d">Points on spend, a stamp card or tiers. You set what a reward costs, and switch it live.</span></span></li>
+              <li class="scene-step"><b>2</b><span><span class="t">Keep them engaged</span><span class="d">Their balance and the next reward are the first thing they see when they open it.</span></span></li>
+              <li class="scene-step"><b>3</b><span><span class="t">Bring them back</span><span class="d">Peekaa knows who has gone quiet. Set a bring-back rule and the reward waits for them.</span></span></li>
+              <li class="scene-step"><b>4</b><span><span class="t">Build loyalty</span><span class="d">Every visit, reward and return lands in one profile — and in the numbers you run the shop on.</span></span></li>
+            </ol>
+          </div>
+
+          <div class="scene-stage" id="sceneStage" aria-hidden="true">
+            <!-- A · the reward you create -->
+            <div class="scene-piece mock p-a" id="scenePieceA">
+              <div class="frame">
+                <div class="frame-bar"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-url">New reward</span></div>
+                <div class="frame-body">
+                  <div class="mock-row">
+                    <div><div class="mock-h">Free kaya toast set</div><div class="mock-sub" style="margin-top:4px">Costs 150 points</div></div>
+                    <span class="pill ok">Live</span>
+                  </div>
+                  <div class="dash-flow">
+                    <span class="flow-node on">Draft</span>
+                    <svg class="flow-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    <span class="flow-node on">Live</span>
+                  </div>
+                  <ul class="feed" style="margin-top:14px">
+                    <li><span class="avatar">SL</span><span><span class="who">Serene Lim</span><br><span class="what">Claimed just now</span></span><span class="amt">−150</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- B · what the customer sees -->
+            <div class="scene-piece mock p-b" id="scenePieceB">
+              <div class="phone">
+                <div class="phone-screen">
+                  <span class="phone-notch"></span>
+                  <div class="phone-inner" style="padding-top:30px">
+                    <div class="wallet-label" style="margin-top:0">New reward</div>
+                    <div class="rwd">
+                      <div class="rwd-card" style="border-color:rgba(194,65,53,.32);background:var(--tint)">
+                        <span class="rwd-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/></svg></span>
+                        <span><span class="rwd-n">Free kaya toast set</span><span class="rwd-c">150 points</span></span>
+                      </div>
+                    </div>
+                    <div style="margin-top:11px;font-size:10.5px;color:var(--muted);font-weight:600">You have 1,240 points</div>
+                    <span class="btn sm" style="width:100%;margin-top:10px;font-size:12px;min-height:38px">Claim reward</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- C · the ones who stopped coming -->
+            <div class="scene-piece mock p-c" id="scenePieceC">
+              <div class="frame">
+                <div class="frame-bar"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-url">Bring-back</span></div>
+                <div class="frame-body">
+                  <div class="mock-row">
+                    <div class="mock-h" style="font-size:13.5px">Away 60 days</div>
+                    <span class="pill new">86 customers</span>
+                  </div>
+                  <div style="border:1px solid rgba(194,65,53,.28);background:var(--tint);border-radius:14px;padding:11px 12px;margin-top:11px">
+                    <div style="font-size:11px;font-weight:750;color:var(--coral-deep)">Bring-back reward</div>
+                    <div style="font-size:13px;font-weight:700;margin-top:4px;letter-spacing:-.02em">Free drink on your next visit</div>
+                  </div>
+                  <div class="ins-grid">
+                    <div class="ins"><div class="l">In this group</div><div class="v">86</div></div>
+                    <div class="ins"><div class="l">Came back</div><div class="v" style="color:var(--green)">23</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- D · what it all adds up to -->
+            <div class="scene-piece mock p-d" id="scenePieceD">
+              <div class="frame">
+                <div class="frame-bar"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-url">Serene Lim</span></div>
+                <div class="frame-body">
+                  <div class="c360-head">
+                    <span class="avatar">SL</span>
+                    <div><div class="mock-h" style="font-size:13.5px">Serene Lim</div><div class="mock-sub">24 visits</div></div>
+                    <span class="pill amber" style="margin-left:auto">Gold</span>
+                  </div>
+                  <div class="ins-grid">
+                    <div class="ins"><div class="l">Points</div><div class="v">1,240</div></div>
+                    <div class="ins"><div class="l">Total spend</div><div class="v">SGD 862</div></div>
+                  </div>
+                  <div class="heat" style="margin-top:11px"><i class="a"></i><i class="b"></i><i></i><i class="c"></i><i class="b"></i><i class="c"></i><i class="a"></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ CUSTOMER EXPERIENCE ══════════════════════════ -->
+<section class="cx section" id="customers" aria-labelledby="cxTitle">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot" aria-hidden="true"></span>The other side of the counter</span>
+      <h2 id="cxTitle" style="margin-top:18px">A better experience for your customers, too.</h2>
+      <p>A loyalty programme people quietly resent does not make regulars. Peekaa is built to be pleasant on the customer's side — which is exactly why it keeps working on yours.</p>
+    </div>
+
+    <div class="cx-grid">
+      <div class="reveal">
+        <ul class="cx-list">
+          <li>
+            <h3>Nothing to carry, nothing to lose</h3>
+            <p>Their points, tier and rewards live on their phone. No card to forget at home, no card to re-issue when it goes missing.</p>
+          </li>
+          <li>
+            <h3>They always know where they stand</h3>
+            <p>The balance, the next reward and how far away it is are the first things they see. Progress they can see is progress they come back for.</p>
+          </li>
+          <li>
+            <h3>They stay in control of the messages</h3>
+            <p>Consent is asked for once, plainly, and never pre-ticked. If they want fewer messages, they turn a category off themselves — they never have to ask you to do it. Receipts, booking confirmations and security messages are never affected.</p>
+          </li>
+          <li>
+            <h3>One place for every programme they've joined</h3>
+            <p>Your programme sits alongside the others they've joined, so checking their points with you is a habit they already have.</p>
+          </li>
+        </ul>
+      </div>
+      <div class="mock reveal cx-art" data-delay="1">
+        <span class="fcard step-float ok a keep" aria-hidden="true" data-rate="1.13" data-max="190">
+          <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+          <span><b>Reward earned</b><em>Claimed at the counter</em></span>
+        </span>
+        <span class="fpill step-float plain b" data-min="820" aria-hidden="true" data-rate="1.25" data-max="230">Gold tier</span>
+        <div class="phone" style="max-width:258px" data-rate="0.76" data-max-sm="52" data-max="150">
+          <div class="phone-screen">
+            <span class="phone-notch" aria-hidden="true"></span>
+            <div class="phone-inner">
+              <div class="wallet-head">
+                <img class="wallet-logo" src="/brand/peekaa-mark.png" alt="" width="120" height="120" aria-hidden="true">
+                <span class="pill off">Settings</span>
+              </div>
+              <div class="wallet-label" style="margin-top:8px">Communications</div>
+              <div style="display:grid;gap:8px">
+                <div class="rwd-card" style="justify-content:space-between">
+                  <span><span class="rwd-n">Offers from businesses you follow</span><span class="rwd-c">Promotions and deals</span></span>
+                  <span class="sw on" aria-hidden="true"><i></i></span>
+                </div>
+                <div class="rwd-card" style="justify-content:space-between">
+                  <span><span class="rwd-n">Your rewards and points</span><span class="rwd-c">Balances and milestones</span></span>
+                  <span class="sw on" aria-hidden="true"><i></i></span>
+                </div>
+                <div class="rwd-card locked" style="justify-content:space-between">
+                  <span><span class="rwd-n">Peekaa updates</span><span class="rwd-c">Switched off by you</span></span>
+                  <span class="sw" aria-hidden="true"><i></i></span>
+                </div>
+              </div>
+              <p style="font-size:10px;color:var(--muted);margin-top:11px;line-height:1.45">
+                Turning something off here never stops receipts, booking confirmations or security messages.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-row reveal" style="justify-content:center;margin-top:48px">
+      <a class="btn" href="/business?signup=1">Get started with Peekaa</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ WHAT'S INSIDE ══════════════════════════ -->
+<section class="section" id="inside" aria-labelledby="insideTitle" style="position:relative">
+  <span class="fcard sec-float a" data-min="940" aria-hidden="true" data-rate="1.09" data-max="190">
+    <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M19 8v6M22 11h-6"/></svg></span>
+    <span><b>New customer</b><em>Joined at the counter</em></span>
+  </span>
+  <span class="fpill sec-float b" data-min="940" aria-hidden="true" data-rate="1.31" data-max="230">+18 pts</span>
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot" aria-hidden="true"></span>What's inside</span>
+      <h2 id="insideTitle" style="margin-top:18px">The rest of the day-to-day, in the same place.</h2>
+      <p>Loyalty is the point of Peekaa, but a loyalty programme that does not know about your bookings and sales is guessing. So those live here too.</p>
+    </div>
+    <div class="mods">
+      <article class="mod reveal">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></div>
+        <h3>Bookings &amp; appointments</h3>
+        <p>Take bookings, manage a calendar per staff member, and let a completed appointment feed the loyalty programme by itself.</p>
+      </article>
+      <article class="mod reveal" data-delay="1">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7h8M8 11h3M14 11h2M8 15h3M14 15h2"/></svg></div>
+        <h3>Record a sale</h3>
+        <p>Ring up products or services from a tile catalogue, look the customer up by mobile number, and their points are earned on the spot.</p>
+      </article>
+      <article class="mod reveal" data-delay="2">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M17 4.2a3.5 3.5 0 0 1 0 6.6M19.5 14.4a4 4 0 0 1 2.5 3.7V20"/></svg></div>
+        <h3>Referrals</h3>
+        <p>Every customer gets a code. Enter it under “Referred by” when their friend joins, and the referrer is rewarded once that friend actually spends.</p>
+      </article>
+      <article class="mod reveal">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v12H4z"/><path d="M2 4h20v4H2zM12 20V4"/><path d="M12 4S10.5 1.5 8.5 2.4 8.8 6 12 4zM12 4s1.5-2.5 3.5-1.6S15.2 6 12 4z"/></svg></div>
+        <h3>Gift cards</h3>
+        <p>Sell and redeem gift cards, with the money treated as cash collected rather than counted twice as revenue.</p>
+      </article>
+      <article class="mod reveal" data-delay="1">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19"/><path d="M6.5 14.5h4"/></svg></div>
+        <h3>Memberships</h3>
+        <p>Recurring plans with daily renewals and automated credit drops. Billing is collect-in-person for now — a renewal books the charge as a sale.</p>
+      </article>
+      <article class="mod reveal" data-delay="2">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7.5v9L12 21l9-4.5v-9z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/></svg></div>
+        <h3>Prepaid packages</h3>
+        <p>Sell a block of sessions up front and count them down as the customer uses them.</p>
+      </article>
+      <article class="mod reveal">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l5-4 5 4v12"/><path d="M14 21V12h6v9M2 21h20M7.5 12h2M7.5 16h2M17 16h.01"/></svg></div>
+        <h3>More than one branch</h3>
+        <p>Run several outlets under one company. Your customers see one business; you see which branch the visit came from.</p>
+      </article>
+      <article class="mod reveal" data-delay="1">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 6v6c0 4.6 3.3 8.4 8 9.5 4.7-1.1 8-4.9 8-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <h3>Roles &amp; permissions</h3>
+        <p>Give the counter staff what they need for their shift, and keep the money screens for the people who own them.</p>
+      </article>
+      <article class="mod reveal" data-delay="2">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16V10M12.5 16V6.5M17 16v-4"/></svg></div>
+        <h3>Business insights</h3>
+        <p>Revenue, bookings, your busiest days, retention and team performance — read from what actually happened, not typed into a spreadsheet.</p>
+      </article>
+      <article class="mod reveal">
+        <div class="mod-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.2 9h17.6M3.2 15h17.6M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></div>
+        <h3>Your team's language</h3>
+        <p>The business workspace runs in English, 中文 or Bahasa Melayu, chosen per person — so the counter staff read it in theirs. The customer rewards app follows each member’s choice of English, 中文, Bahasa Melayu or தமிழ்.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ PRICING ══════════════════════════ -->
+<section class="section" id="pricing" aria-labelledby="priceTitle" style="position:relative">
+  <span class="fcard sec-float ok a" data-min="940" aria-hidden="true" data-rate="1.15" data-max="190">
+    <span class="fi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+    <span><b>Reward earned</b><em>Serene Lim · +82 pts</em></span>
+  </span>
+  <span class="fpill ok sec-float b" data-min="940" aria-hidden="true" data-rate="1.28" data-max="230">Came back</span>
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Pricing</span>
+      <h2 id="priceTitle" style="margin-top:18px">One price. The whole platform.</h2>
+      <p>No feature tiers to decode and no per-customer charge. Every business on Peekaa gets the same product.</p>
+    </div>
+    <div class="price-grid">
+      <div class="price lead reveal">
+        <div class="tag"><h3>Annual</h3><span class="pill new">Best value</span></div>
+        <div class="amt">SGD 1,188<small>/ year</small></div>
+        <p class="eq">SGD 99/month equivalent, billed once a year.</p>
+        <p class="eq">Subscription fees are non-refundable after payment, except where required by law.</p>
+        <a class="btn" href="/business?signup=1">Get started with Peekaa</a>
+      </div>
+      <div class="price reveal" data-delay="1">
+        <div class="tag"><h3>Monthly</h3></div>
+        <div class="amt">SGD 148<small>/ month</small></div>
+        <p class="eq">Cancel renewal before the next billing date.</p>
+        <a class="btn ghost" href="/business?signup=1">Start monthly</a>
+      </div>
+    </div>
+    <p class="price-note reveal">Prices in SGD. GST not charged.</p>
+    <p class="price-note reveal"><b>Running more than one outlet?</b> An extra branch is charged like another shop. The exact amount and billing date are shown on the secure payment page before anything is charged, and the branch stays switched off until that payment confirms.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════ FINAL CTA ══════════════════════════ -->
+<section class="final" aria-labelledby="finalTitle">
+  <div class="wrap">
+    <div class="final-card reveal">
+      <h2 id="finalTitle">Give your customers a reason to come back.</h2>
+      <p>Set up your loyalty programme, print the QR code, and start turning first visits into regulars.</p>
+      <div class="cta-row">
+        <a class="btn" href="/business?signup=1">Get Started with Peekaa</a>
+        <a class="btn line" href="#story">See how it works</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div>
+        <img class="brand-logo" src="/brand/peekaa-logo.png" alt="Peekaa" width="240" height="68">
+        <p class="small muted" style="margin-top:12px;max-width:34ch">Customer loyalty, rewards and retention for businesses in Singapore.</p>
+      </div>
+      <nav class="foot-nav" aria-label="Footer">
+        <a href="#story">How it works</a>
+        <a href="#inside">What's inside</a>
+        <a href="#pricing">Pricing</a>
+        <a href="/business">Business sign in</a>
+        <a href="/app">Customer sign in</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/data-request.html">Data requests</a>
+      </nav>
+    </div>
+    <div class="foot-legal">
+      <span>Peekaa is a product of Nestly Technologies Pte. Ltd.</span>
+      <span>&copy; 2026 Peekaa. All rights reserved.</span>
+      <span>Screens on this page are illustrations of the Peekaa interface.</span>
+    </div>
+  </div>
+</footer>
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"Organization",
+      "@id":"https://www.peekaa.asia/#organization",
+      "name":"Peekaa",
+      "url":"https://www.peekaa.asia/",
+      "logo":"https://www.peekaa.asia/brand/peekaa-logo.png",
+      "email":"admin.peekaa@gmail.com",
+      "areaServed":"SG",
+      "description":"Peekaa is a customer loyalty and rewards platform that helps businesses in Singapore turn customers into regulars."
+    },
+    {
+      "@type":"SoftwareApplication",
+      "@id":"https://www.peekaa.asia/#software",
+      "name":"Peekaa",
+      "url":"https://www.peekaa.asia/",
+      "applicationCategory":"BusinessApplication",
+      "applicationSubCategory":"Customer loyalty and rewards software",
+      "operatingSystem":"Web browser",
+      "publisher":{"@id":"https://www.peekaa.asia/#organization"},
+      "description":"Customer loyalty platform for businesses: digital loyalty programmes with points, stamp cards and tiers, customer rewards, promotions, bookings, customer insights and retention tools.",
+      "offers":[
+        {
+          "@type":"Offer",
+          "name":"Annual",
+          "price":"1188",
+          "priceCurrency":"SGD",
+          "url":"https://www.peekaa.asia/business",
+          "availability":"https://schema.org/InStock"
+        },
+        {
+          "@type":"Offer",
+          "name":"Monthly",
+          "price":"148",
+          "priceCurrency":"SGD",
+          "url":"https://www.peekaa.asia/business",
+          "availability":"https://schema.org/InStock"
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<script>
+/* ============================================================================
+   V283 — the scroll depth engine.
+
+   ONE rAF loop. ONE passive scroll listener. The write phase touches nothing but
+   `transform` and `opacity`, and reads no layout at all — every measurement is
+   taken in measure(), which runs on load, on resize and once after the reveals
+   have settled. Everything here is progressive enhancement: without JavaScript
+   the page is a plain stack of sections with nothing hidden, and with
+   `prefers-reduced-motion: reduce` nothing is ever transformed.
+
+   Layer bands (apparent scroll rate; the page itself is 1.0x):
+     L1 0.15–0.25x  background glows            [data-drift]
+     L2 0.35–0.50x  fragments / reward symbols  [data-drift]
+     L3 0.70–0.80x  product UI composition      [data-rate]
+     L4 1.00–1.20x  floating product cards      [data-rate]
+     L5 1.20–1.40x  small foreground elements   [data-rate]
+   ============================================================================ */
+(function landingDepthV283(){
+  'use strict';
+  var reduce=false;
+  try{reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(error){reduce=false}
+
+  /* --- reveal on scroll (deliberately small; the depth carries the page) --- */
+  var revealables=document.querySelectorAll('.reveal'),i;
+  if(reduce||typeof IntersectionObserver!=='function'){
+    for(i=0;i<revealables.length;i+=1)revealables[i].classList.add('in');
+  }else{
+    var observer=new IntersectionObserver(function(entries){
+      for(var j=0;j<entries.length;j+=1){
+        if(!entries[j].isIntersecting)continue;
+        entries[j].target.classList.add('in');
+        observer.unobserve(entries[j].target);
+      }
+    },{rootMargin:'0px 0px -4% 0px',threshold:0.04});
+    for(i=0;i<revealables.length;i+=1)observer.observe(revealables[i]);
+    /* Anything already on screen at load must not wait for a scroll event. */
+    window.setTimeout(function(){
+      for(var m=0;m<revealables.length;m+=1){
+        if(revealables[m].getBoundingClientRect().top<window.innerHeight)revealables[m].classList.add('in');
+      }
+    },60);
+  }
+
+  var head=document.getElementById('siteHead');
+  var fill=document.getElementById('scrollFill');
+  var stuck='';
+
+  if(reduce){
+    /* The hairline under the sticky header is not motion — it is a boundary cue,
+       so it survives. Nothing else in this file runs. */
+    if(head){
+      window.addEventListener('scroll',function(){
+        var next=window.pageYOffset>8?'true':'false';
+        if(next!==stuck){stuck=next;head.setAttribute('data-stuck',next)}
+      },{passive:true});
+    }
+    return;
+  }
+
+  /* ---------------- layer registry ---------------- */
+  var drifts=[],flows=[],nodes,el,k;
+  nodes=document.querySelectorAll('[data-drift]');
+  for(k=0;k<nodes.length;k+=1){
+    el=nodes[k];
+    drifts.push({el:el,
+      rate:parseFloat(el.getAttribute('data-drift'))||0.2,
+      phase:parseFloat(el.getAttribute('data-phase')||'0'),
+      xAmp:parseFloat(el.getAttribute('data-x')||'0'),
+      min:parseFloat(el.getAttribute('data-min')||'0'),
+      h:0,last:''});
+  }
+  nodes=document.querySelectorAll('[data-rate]');
+  for(k=0;k<nodes.length;k+=1){
+    el=nodes[k];
+    flows.push({el:el,
+      rate:parseFloat(el.getAttribute('data-rate'))||1,
+      /* Stacked on a narrow screen, two members of one composition at different
+         rates collide. data-rate-sm makes them travel as a single object. */
+      rateSm:parseFloat(el.getAttribute('data-rate-sm')||'0')||0,
+      maxSm:parseFloat(el.getAttribute('data-max-sm')||'0')||0,
+      max:parseFloat(el.getAttribute('data-max')||'120'),
+      min:parseFloat(el.getAttribute('data-min')||'0'),
+      /* data-anchor pins y0 to scroll 0 — used by hero layers that start just
+         below the fold but must still load exactly where they were designed. */
+      pin:el.hasAttribute('data-anchor'),
+      y0:0,last:''});
+  }
+
+  /* ---------------- the sticky scene ---------------- */
+  var track=document.getElementById('sceneTrack');
+  var stage=document.getElementById('sceneStage');
+  var steps=document.querySelectorAll('#sceneSteps .scene-step');
+  var pieces=[document.getElementById('scenePieceA'),document.getElementById('scenePieceB'),
+              document.getElementById('scenePieceC'),document.getElementById('scenePieceD')];
+  /* Four keyframes per piece — [x as a fraction of the stage width,
+     y as a fraction of its height, scale, opacity]. Step 4 pulls all four
+     together: the four things are one programme, so the composition converges. */
+  var KEYS=[
+    [[ 0.00,-0.03,1.00,1.00],[-0.31,-0.16,0.80,0.34],[-0.34,-0.22,0.72,0.22],[-0.22,-0.18,0.84,0.94]],
+    [[ 0.42, 0.18,0.76,0.18],[ 0.05, 0.02,1.00,1.00],[ 0.30, 0.14,0.80,0.34],[ 0.23, 0.12,0.90,1.00]],
+    [[-0.34, 0.32,0.68,0.00],[-0.32, 0.32,0.72,0.00],[-0.03, 0.05,1.00,1.00],[-0.14, 0.26,0.82,0.92]],
+    [[ 0.34,-0.32,0.70,0.00],[ 0.35,-0.30,0.74,0.18],[ 0.35,-0.32,0.78,0.26],[ 0.18,-0.28,0.86,0.96]]
+  ];
+  var sceneTop=0,sceneH=0,stageW=0,stageH=0,pieceH=[0,0,0,0],pieceLast=['','','',''],stepIdx=-1;
+
+  /* ---------------- measurement (the only place layout is read) ------------- */
+  var vh=0,vw=0,docMax=1,amp=1;
+  function measure(){
+    var y=window.pageYOffset,n,rect;
+    /* Clear every transform first, then read: one write pass, one read pass,
+       so the browser never thrashes layout element by element. */
+    for(n=0;n<drifts.length;n+=1){drifts[n].el.style.transform='';drifts[n].last=''}
+    for(n=0;n<flows.length;n+=1){flows[n].el.style.transform='';flows[n].last=''}
+    for(n=0;n<pieces.length;n+=1)if(pieces[n]){pieces[n].style.transform='';pieceLast[n]=''}
+
+    vh=window.innerHeight;vw=window.innerWidth;
+    docMax=Math.max(1,(document.documentElement.scrollHeight||vh)-vh);
+    /* Amplitude, not presence: the phone keeps all five bands at 60% throw. */
+    amp=vw<700?0.7:(vw<1000?0.85:1);
+
+    for(n=0;n<drifts.length;n+=1)drifts[n].h=drifts[n].el.offsetHeight||0;
+    for(n=0;n<flows.length;n+=1){
+      rect=flows[n].el.getBoundingClientRect();
+      var top=rect.top+y;
+      /* Anything above the fold is anchored at scroll 0, so the page loads
+         exactly as designed and only starts separating once you scroll. */
+      flows[n].y0=(flows[n].pin||top<vh)?0:(top+rect.height/2-vh/2);
+    }
+    if(track&&stage){
+      rect=track.getBoundingClientRect();
+      sceneTop=rect.top+y;sceneH=rect.height;
+      rect=stage.getBoundingClientRect();
+      stageW=rect.width;stageH=rect.height;
+      for(n=0;n<pieces.length;n+=1)pieceH[n]=pieces[n]?pieces[n].offsetHeight:0;
+    }
+  }
+
+  function smooth(t){return t*t*(3-2*t)}
+
+  /* ---------------- the write phase (transform + opacity only) ------------- */
+  function paint(){
+    ticking=false;
+    var y=window.pageYOffset,n,layer,value,narrow=vw<900;
+
+    var next=y>8?'true':'false';
+    if(head&&next!==stuck){stuck=next;head.setAttribute('data-stuck',next)}
+    if(fill)fill.style.transform='scaleX('+Math.min(1,Math.max(0,y/docMax)).toFixed(4)+')';
+
+    /* L1 + L2 — fixed layers. transform = -(y * rate), recycled over
+       (viewport + own height) so the wrap always happens off-screen and the
+       field never restarts at a section boundary. */
+    for(n=0;n<drifts.length;n+=1){
+      layer=drifts[n];
+      if(vw<layer.min){if(layer.last!==''){layer.last='';layer.el.style.transform=''}continue}
+      var span=vh+layer.h;
+      var u=(y*layer.rate+layer.phase*span)%span;
+      if(u<0)u+=span;
+      value='translate3d('+(layer.xAmp*(u/span-0.5)*2).toFixed(1)+'px,'+(vh-u).toFixed(1)+'px,0)';
+      if(value!==layer.last){layer.last=value;layer.el.style.transform=value}
+    }
+
+    /* L3 + L4 + L5 — in-flow layers. transform = (1 - rate) * (y - y0), so the
+       element travels at exactly `rate` times the page's own rate. */
+    for(n=0;n<flows.length;n+=1){
+      layer=flows[n];
+      if(vw<layer.min){if(layer.last!==''){layer.last='';layer.el.style.transform=''}continue}
+      var rate=(narrow&&layer.rateSm)?layer.rateSm:layer.rate;
+      var off=(1-rate)*(y-layer.y0)*amp;
+      var cap=((narrow&&layer.maxSm)?layer.maxSm:layer.max)*amp;
+      if(off>cap)off=cap;else if(off<-cap)off=-cap;
+      value='translate3d(0,'+off.toFixed(1)+'px,0)';
+      if(value!==layer.last){layer.last=value;layer.el.style.transform=value}
+    }
+
+    /* The sticky scene. Progress through the track is the story's clock. */
+    if(track&&stage&&stageH){
+      var p=(y-sceneTop)/Math.max(1,sceneH-vh);
+      if(p<0)p=0;else if(p>1)p=1;
+      var seg=(p-0.125)/0.25;
+      if(seg<0)seg=0;else if(seg>3)seg=3;
+      var a=Math.floor(seg),t=smooth(seg-a),b=a+1>3?3:a+1;
+      /* A narrow stage compresses the lateral throw rather than clipping it. */
+      var spread=stageW<420?0.78:1;
+      for(n=0;n<pieces.length;n+=1){
+        if(!pieces[n])continue;
+        var f=KEYS[n][a],g=KEYS[n][b];
+        var px=(f[0]+(g[0]-f[0])*t)*stageW*spread;
+        var py=(f[1]+(g[1]-f[1])*t)*stageH-pieceH[n]/2;
+        var ps=f[2]+(g[2]-f[2])*t;
+        /* Opacity arrives well before position does. Cross-fading at the same
+           speed as the move leaves two half-transparent product cards sitting
+           on top of each other, which reads as a mess rather than as depth. */
+        var to=(t-0.05)/0.45;
+        to=smooth(to<0?0:(to>1?1:to));
+        var po=f[3]+(g[3]-f[3])*to;
+        /* A phone stage is too narrow for four components to avoid overlapping,
+           so a parked one has to read as a ghost, not as a second subject. */
+        if(narrow&&po<0.999)po*=0.6;
+        value='translate3d('+px.toFixed(1)+'px,'+py.toFixed(1)+'px,0) scale('+ps.toFixed(3)+')';
+        if(value!==pieceLast[n]){pieceLast[n]=value;pieces[n].style.transform=value;pieces[n].style.opacity=po.toFixed(3)}
+      }
+      var idx=Math.min(steps.length-1,Math.floor(p*steps.length));
+      if(idx!==stepIdx){
+        stepIdx=idx;
+        for(n=0;n<steps.length;n+=1){
+          steps[n].classList.toggle('on',n===idx);
+          steps[n].classList.toggle('done',n<idx);
+        }
+      }
+    }
+  }
+
+  var ticking=false;
+  function onScroll(){
+    if(ticking)return;
+    ticking=true;
+    window.requestAnimationFrame(paint);
+  }
+
+  measure();paint();
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',function(){measure();onScroll()},{passive:true});
+  window.addEventListener('load',function(){measure();onScroll()});
+  /* The reveals settle ~0.7s in and move the page by a few pixels; re-measure
+     once so every y0 is taken against the final layout. */
+  window.setTimeout(function(){measure();onScroll()},900);
+})();
+</script>
+</body>
+</html>

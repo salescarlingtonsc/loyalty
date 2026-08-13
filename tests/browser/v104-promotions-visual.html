@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="0b9631b1171edb342c703d2c621704319965ae433059c756de5dc96caf8df0c3">
+<meta name="v104-production-source-sha256" content="7d5bcdb1c5db64ce84954f7d72bf892926021dcd195065be5669b32d3d2089eb">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1732,6 +1732,37 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-rewards-lede{margin-bottom:10px}
 .customer-programme-balance{font-size:clamp(1.6rem,6vw,2.1rem);line-height:1;letter-spacing:-.03em}
 .customer-programme-balance span{font-size:.85rem;font-weight:600;letter-spacing:0}
+/* V310 (W4b) — the programme stack. One card per programme the firm runs, fixed order, identical
+   three slots per card. The tab rules above are NOT retired: they are what the pre-v310 fallback
+   path renders for the whole Cloudflare window and on rollback. */
+.customer-programme-stack{display:grid;gap:12px;margin-bottom:14px}
+.customer-programme-card-v310{padding:16px 18px 18px;margin:0}
+.customer-programme-card-head-v310{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:1.05rem}
+.customer-programme-card-head-v310 svg{flex:none;color:var(--coral)}
+.customer-programme-card-line-v310{margin-top:8px}
+.customer-programme-paused-since{margin-top:4px;font-variant-numeric:tabular-nums}
+/* The stamp ring row. Filled = solid fill AND a tick glyph; empty = dashed outline. Both signals
+   are carried without colour, so the row reads in greyscale and to a colour-blind eye — the same
+   rule the v186 tier ladder already follows. Wraps rather than scrolls: a row the thumb has to
+   drag sideways hides the goal, which is the one thing this figure exists to show. */
+.customer-programme-stamp-rings{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 2px}
+.customer-programme-stamp-ring{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px dashed var(--line);color:transparent;background:transparent;transition:background-color .18s ease,border-color .18s ease}
+.customer-programme-stamp-ring.is-filled{border-style:solid;border-color:var(--coral);background:var(--coral);color:#fff}
+.customer-programme-stamp-ring.is-goal{border-width:2.5px;border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-programme-stamp-ring svg{display:block}
+.customer-programme-stamp-count{font-size:clamp(1.6rem,6vw,2.1rem);line-height:1;letter-spacing:-.03em}
+.customer-programme-stamp-count span{font-size:.85rem;font-weight:600;letter-spacing:0}
+@media (prefers-reduced-motion:reduce){.customer-programme-stamp-ring{transition:none}}
+/* The claimable-now strip: absent unless something really is claimable, so it never becomes
+   furniture the eye learns to skip. */
+.customer-claimable-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border:1.5px solid var(--coral);border-radius:14px;background:var(--tint)}
+.customer-claimable-strip-label{display:inline-flex;align-items:center;gap:6px;color:var(--coral)}
+.customer-claimable-strip-label svg{flex:none}
+.customer-claimable-strip-count{font-size:12.5px;font-weight:650;color:var(--ink2)}
+.customer-claimable-strip-items{display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+.customer-claimable-strip-items span:not(:last-child)::after{content:' ·'}
+/* W4c's member-code slot, shipped hidden and empty so W4c is markup and wiring only. */
+.customer-member-code-slot{margin:0 0 12px}
 .customer-tier-now{font-size:1.02rem}
 .customer-tier-bar{position:relative;margin:14px 0 40px}
 .customer-tier-bar-track{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
@@ -2065,7 +2096,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 0b9631b1171edb342c703d2c621704319965ae433059c756de5dc96caf8df0c3</p>
+  <p class="v104-provenance">Local production-render harness · source 7d5bcdb1c5db64ce84954f7d72bf892926021dcd195065be5669b32d3d2089eb</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2077,7 +2108,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="0b9631b1171edb342c703d2c621704319965ae433059c756de5dc96caf8df0c3";
+const PRODUCTION_SOURCE_SHA256="7d5bcdb1c5db64ce84954f7d72bf892926021dcd195065be5669b32d3d2089eb";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -2513,7 +2544,22 @@ function customerTierMilestonesMarkupV194(tier={}){
     return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i><b>${esc(rung.label)}</b></span>`;
   }).join('')}</div>`;
 }
-function customerTierPanelMarkupV194(tier={}){
+/* v310 (W4b): the two sentences this panel writes in English — the distance to the next rung and
+   the top-rung line — are the Tier CARD's one sentence in the stack, and the stack ships in all
+   four mandate languages. `localizeV310` swaps exactly those two for their ct() keys and changes
+   nothing else; every caller on the v194 fallback path omits it and keeps the English five suites
+   pin. The ladder internals below stay English this wave, by the W4 contract's own scope note. */
+function customerTierUnitWordV310(basis){
+  /* ct()-routed: an interpolated English unit inside a Chinese/Malay/Tamil sentence reads as
+     code-switching, not localisation. The three words ship in all four locale blocks. */
+  if(basis==='spend')return ct('tierUnitSpent');
+  return basis==='points_earned'?ct('tierUnitPoints'):ct('tierUnitVisits');
+}
+function customerTierDistanceCountV310(remaining,basis){
+  if(basis==='spend')return `SGD ${Number(remaining).toLocaleString('en-SG',{maximumFractionDigits:0})}`;
+  return Math.ceil(remaining).toLocaleString('en-SG');
+}
+function customerTierPanelMarkupV194(tier={},{localizeV310=false}={}){
   const current=tier.current,next=tier.next;
   /* V230 (owner: "only 1 can be live at any go ... reflected in the customer portal"). When the
      firm redeems points for rewards, the tier ladder is not the story — showing it alongside
@@ -2535,6 +2581,8 @@ function customerTierPanelMarkupV194(tier={}){
   const remainingText=(()=>{
     if(!next)return '';
     const remaining=Math.max(0,Number(next.threshold||0)-metric);
+    if(localizeV310)return ct('tierDistance',{count:customerTierDistanceCountV310(remaining,basis),
+      unit:customerTierUnitWordV310(basis),tier:next.label});
     if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${next.label}`;
     if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${next.label}`;
     const visits=Math.ceil(remaining);
@@ -2550,7 +2598,8 @@ function customerTierPanelMarkupV194(tier={}){
   return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV258}
     ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
     <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
-      :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
+      :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · ${esc(localizeV310?ct('tierTop'):'you are at the highest tier.')}</p>`
+        :localizeV310?`<p class="muted small customer-tier-remaining">${esc(ct('tierTop'))}</p>`:''}
     ${customerTierLadderMarkupV186(tier)}`;
 }
 /* v186 (owner: "i want to see different tiers and its benefits… mask other tiers, still can see
@@ -2620,7 +2669,10 @@ function customerProgrammeModeV230({points_mode=null,tiers=false,rewards=false}=
   if(points_mode==='redeem')return 'redeem';
   return tiers&&rewards?'both':tiers?'tiers':'redeem';
 }
-function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false}){
+/* v310 (W4b): `progressMarkupV310` lets the stack supply the same meter with its sentence routed
+   through ct(). Omitted — which is every v194 fallback caller — the panel builds the V167 English
+   line exactly as it has since v167. Nothing else about this panel changes. */
+function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null}){
   const unitLabel=ct(presentation.unit);
   /* V289 (audit A3, G4). Both wallet readers return loyalty.enabled=false with EVERY number
      zeroed when the firm has the module off or its programme inactive — the server cannot
@@ -2634,7 +2686,7 @@ function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=nul
       <p class="muted small" style="margin-top:6px">This business isn’t running its rewards programme at the moment, so nothing is being counted. Anything you already earned is kept — it reappears here when the programme restarts.</p>`;
   }
   const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
-  const progress=customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward});
+  const progress=progressMarkupV310??customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward});
   return `<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
     ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}`;
@@ -2710,6 +2762,208 @@ function wireCustomerProgrammeTabsV194(host=document){
       select(tabs[(index+step+tabs.length)%tabs.length].dataset.programmeTab,true);
     };
   });
+}
+
+/* ===================================================================== v310 · the programme stack
+   W4b. Until now a customer's programmes were TABS: one card, at most two tabs, and which tab
+   existed was decided by customerProgrammeModeV230 — a mode, not the firm's actual programmes. A
+   stamps firm carries points_mode='redeem' after the v306 hotfix, so it fell through to the redeem
+   branch and was rendered as a card headed, hard-coded, "Reward points", printing "8 stamps"
+   underneath. There were no rings anywhere in this file, and no place at all for a third or fourth
+   programme.
+
+   The stack replaces that with one card per programme the firm actually runs, in a FIXED order —
+   stamps, points & gifts, tier, referral — each card carrying one figure, one sentence and one
+   action or disclosure. A card renders iff the server's spine says that programme exists for this
+   firm: active, or paused (which keeps its card, its retained figure and its own paused sentence —
+   a programme that pauses never silently disappears). A kind the firm never ran renders nothing;
+   there are no filler cards.
+
+   THE GATE is the four-hour CDN-window contract. /app-*.js is Cloudflare-pinned for about four
+   hours and chunk eviction order is not guaranteed, so for that whole window an old bundle must be
+   correct against the new server AND a new bundle against the old one. `programmes` and
+   `programmes_contract` arrive only from v310's customer_portal_capabilities; against anything
+   older they are absent, the gate returns null, and customerProgrammeSummaryTabsV194 runs
+   byte-identically to today. That same expression is the rollback path: revert the migration and
+   the client falls back on its own, with no deploy. Presence alone is never treated as truth —
+   both the array shape and the contract version are checked. */
+const programmeStackV310=caps=>
+  Array.isArray(caps?.programmes)&&caps.programmes.length>0&&caps?.programmes_contract==='v310'
+    ?caps.programmes:null;
+/* Fixed, regardless of which are on. Stamps and points are the figure the customer came for, tier
+   is where they are going, referral is what they can give away. */
+const PROGRAMME_STACK_ORDER_V310=Object.freeze(['stamps','points','tiers','referral']);
+const programmeStackEntryV310=(programmes,kind)=>
+  (Array.isArray(programmes)?programmes:[]).find(entry=>entry&&entry.kind===kind)||null;
+/* The server answers presentation with customer_visible, and the client OBEYS it rather than
+   re-deriving visibility from active alone: customer_visible is bound server-side to the SAME
+   legacy capabilities the v194 tab renderer reads, so the old bundle and the new bundle cannot
+   disagree about what this customer sees during the 4-hour CDN window. active without
+   customer_visible is a real state (a points programme with no reward configured yet) and must
+   not grow a card the tabs never showed. A paused programme keeps its card either way —
+   paused_since is a never-cleared breadcrumb and the paused sentence is the honest state. */
+function programmeStackCardVisibleV310(entry){
+  if(!entry)return false;
+  return entry.customer_visible===true||Boolean(entry.paused_since);
+}
+/* One paused block, used by whichever card is paused. Each card reads its OWN programmes[kind]:
+   one programme pausing never blanks another card. V289 wrote this sentence for points in English;
+   the stack says the same thing in all four languages, and V289's own wording stays exactly where
+   it is for the fallback path. */
+function customerProgrammePausedMarkupV310(entry){
+  const since=String(entry?.paused_since||'').trim();
+  return `<p class="customer-programme-paused" style="font-size:clamp(1.3rem,5vw,1.7rem);line-height:1.15;letter-spacing:-.02em"><b>${esc(ct('programmePaused'))}</b></p>
+    <p class="muted small" style="margin-top:6px">${esc(ct('programmePausedBody'))}</p>
+    ${since?`<p class="muted small customer-programme-paused-since"><time datetime="${esc(since)}">${esc(walletDate(since))}</time></p>`:''}`;
+}
+/* The V167 meter, with its sentence routed through ct(). V167's own English is untouched: it is
+   what the fallback path renders and five suites pin it. */
+function customerRewardProgressMarkupV310({loyalty={},reward=null}={}){
+  if(!reward)return '';
+  const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
+    available=reward.available_now===true||cost===0,
+    progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100,
+    gift=String(reward.name||'').trim()||ct('rewardsTab');
+  const sentence=available?ct('pointsReady',{gift})
+    :ct('pointsRemaining',{count:customerPointTotalV103(reward.remaining_units||0),gift});
+  return `<div class="customer-reward-progress-copy"><p class="muted small">${esc(sentence)}</p><div class="customer-reward-progress" role="progressbar" aria-label="${esc(gift)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
+}
+/* How many rings the card draws. N is the cost of the cheapest stamp reward we already know about
+   — the server's own next_eligible_reward, which is that reward by construction. If no reward is
+   known, N is UNKNOWN and the card says the plain number instead: a default of 10 would be a
+   number the business never chose, printed with the authority of a picture. The card/cycle entity
+   that would make N a stored fact is W6. The upper bound is a legibility limit, not a guess — past
+   it the row stops being readable at 390px and the plain number is the honest figure. */
+const PROGRAMME_STACK_RING_LIMIT_V310=24;
+function customerStampTargetV310(reward){
+  const cost=Math.floor(Number(reward?.cost_units)||0);
+  return cost>0&&cost<=PROGRAMME_STACK_RING_LIMIT_V310?cost:0;
+}
+/* Pure CSS/SVG, no image. Filled rings are a solid fill AND a tick; empty ones a dashed outline —
+   so the row survives greyscale and colour blindness exactly as the v186 ladder does. The single
+   aria-label carries the whole fact; the rings themselves are decorative to a screen reader.
+   prefers-reduced-motion is honoured in the stylesheet. */
+function customerProgrammeStampRingsV310(collected,target){
+  const total=Math.max(0,Math.floor(Number(target)||0));
+  if(!total)return '';
+  const filled=Math.max(0,Math.min(total,Math.floor(Number(collected)||0)));
+  return `<div class="customer-programme-stamp-rings" role="img" aria-label="${esc(`${filled} of ${total} stamps collected`)}">${
+    Array.from({length:total},(unused,index)=>`<span class="customer-programme-stamp-ring${index<filled?' is-filled':''}${index===total-1?' is-goal':''}" aria-hidden="true">${
+      index<filled?'<svg viewBox="0 0 16 16" width="12" height="12" focusable="false"><path d="M3.2 8.6l3.1 3.1L12.8 5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</span>`).join('')
+  }</div>`;
+}
+/* 1 · STAMPS. Never the words "Reward points", never a raw point figure — the rings ARE the
+   figure, and when N is unknown the plain count stands in. It deliberately does not use
+   .customer-programme-balance: that class is the stack's single hero and belongs to the Points
+   card (see the one-hero rule below). */
+function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false}){
+  const paused=entry?.active===false;
+  const collected=Number(loyalty.balance??presentation.balance??0);
+  const target=paused?0:customerStampTargetV310(reward);
+  const rings=customerProgrammeStampRingsV310(collected,target);
+  const gift=String(reward?.name||'').trim();
+  const remaining=Math.max(0,Number(reward?.remaining_units??0));
+  const sentence=paused?''
+    :!reward?ct('stampsNoGift',{count:customerPointTotalV103(collected)})
+    :(reward.available_now===true||remaining===0)?ct('stampsReady',{gift:gift||ct('rewardsTab')})
+    :ct('stampsRemaining',{count:customerPointTotalV103(remaining),gift:gift||ct('rewardsTab')});
+  const figure=paused?''
+    :rings||`<p class="customer-programme-stamp-count"><b>${esc(customerPointTotalV103(collected))}</b> <span class="muted">${esc(ct(presentation.unit))}</span></p>`;
+  return `<section class="card customer-programme-card-v310" data-programme-card="stamps" aria-label="${esc(ct('stampsCardTitle'))}">
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:17})}<span>${esc(ct('stampsCardTitle'))}</span></h2>
+    ${paused?customerProgrammePausedMarkupV310(entry):`${figure}
+    <p class="muted small customer-programme-card-line-v310">${esc(sentence)}</p>`}
+    ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}
+  </section>`;
+}
+/* 2 · POINTS & GIFTS. The one card that prints a raw point number — the stack's single hero. The
+   body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
+function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false}){
+  const paused=entry?.active===false||loyalty.enabled===false;
+  return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
+    ${paused?customerProgrammePausedMarkupV310(entry)
+      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,
+        progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
+  </section>`;
+}
+/* 3 · TIER — the no-duplicate-balance rule. customerProgrammeTierPanelV230 prints
+   `<p class="customer-programme-balance">{balance}</p>` labelled "{unit} earned" whenever the
+   basis is points_earned. That line is NOT in the stack, and the refutation is the money
+   verifier's own: 20260809_nestly_v256_tier_may_measure_lifetime_points_while_points_are_spendable
+   .sql:18-26 — the tier metric is sum(points) where entry_type='earn', redemptions are a separate
+   entry type and are never subtracted, so a customer who earns 5,000 and spends 4,900 keeps the
+   tier the 5,000 bought and has 100 left to spend. The old panel would print 100 beside the words
+   "points earned". The Tier card therefore speaks only in DISTANCE, and where a magnitude is
+   unavoidable it is the server's tier.metric — never loyalty.balance, which this function is not
+   even given.
+   Two deliberate differences from the fallback path, both inside the stack only:
+     · the points_mode==='redeem' early return is dropped — presence is decided by
+       programmes['tiers'], not by a mode; the fallback path keeps it.
+     · the V258 "both" reassurance is shown whenever the Points card is also present, which is
+       exactly when "will redeeming cost me my tier?" is a question the customer can have. */
+function customerProgrammeTierCardV310({tier={},entry=null,pointsCardPresent=false}){
+  const paused=entry?.active===false;
+  const tierForStack={...tier,points_mode:pointsCardPresent?'both':''};
+  return `<section class="card customer-programme-card-v310" data-programme-card="tiers" aria-label="${esc(ct('tierCardTitle'))}">
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:17})}<span>${esc(ct('tierCardTitle'))}</span></h2>
+    ${paused?customerProgrammePausedMarkupV310(entry):customerTierPanelMarkupV194(tierForStack,{localizeV310:true})}
+  </section>`;
+}
+/* The claimable-now strip. It fires NO new read: it is built only from facts the page already
+   holds when it paints — the server's own next_eligible_reward.available_now, and a birthday
+   benefit already in an actionable state. Nothing actionable renders nothing at all: an empty
+   "Ready now" strip would be a promise the surface cannot keep. */
+function customerClaimableFactsV310({reward=null,birthday=null}={}){
+  const facts=[];
+  if(reward&&reward.available_now===true)facts.push(String(reward.name||'').trim()||ct('rewardsTab'));
+  /* The birthday surface's real vocabulary is ready_to_activate / available / unavailable
+     (birthdayBenefitMarkup) — 'ready' is not a status this codebase emits. */
+  const birthdayStatus=String(birthday?.status||'').trim();
+  if(birthdayStatus==='ready_to_activate'||birthdayStatus==='available')
+    facts.push(String(birthday?.label||birthday?.display||'').trim()||ct('claimableNow'));
+  return facts;
+}
+function customerClaimableStripMarkupV310(facts){
+  if(!facts.length)return '';
+  return `<div class="customer-claimable-strip" id="customerClaimableStripV310" role="status">
+    <span class="customer-claimable-strip-label">${CUI.icon('redeem',{size:16})}<b>${esc(ct('claimableNow'))}</b></span>
+    <span class="customer-claimable-strip-count">${esc(ct('claimableCount',{count:facts.length}))}</span>
+    <span class="customer-claimable-strip-items">${facts.map(fact=>`<span>${esc(fact)}</span>`).join('')}</span>
+  </div>`;
+}
+/* W4c's landing site, shipped empty so W4c is markup and wiring only. It stays hidden and carries
+   nothing: there is no member identifier on this surface yet (customer_get_profile returns
+   full_name, birth_date, gender, preferred_language and nothing else) and the counter scanner
+   parses exactly nestly:redemption: / nestly:growth: / nestly:promotion:, none of which is an
+   identity. A QR the counter cannot scan is worse than no QR. */
+function customerMemberCodeSlotMarkupV310(){
+  return '<div id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden></div>';
+}
+function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null}={}){
+  const entries=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
+    .map(kind=>[kind,programmeStackEntryV310(programmes,kind)]));
+  const show=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
+    .map(kind=>[kind,programmeStackCardVisibleV310(entries[kind])]));
+  /* The gifts host lives on whichever of the two accruing cards is present — stamps first, because
+     the v308 tripwire refuses points.active AND stamps.active on one business, so at a stamps firm
+     any points card in the stack is a paused one with nothing to spend. */
+  const stampsHost=rewardsHost&&show.stamps&&entries.stamps?.active===true;
+  const cards=[
+    show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
+    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost}):'',
+    show.tiers?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
+    /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
+       customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
+       answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
+       gating the slot on programmes['referral'] too would give referral presentation two truths
+       that can disagree, and the one that would lose is the card. The spine's referral row exists
+       for the read path, not for this decision. */
+    '<div id="walletReferralSlot" hidden></div>'
+  ].filter(Boolean).join('');
+  return `${customerClaimableStripMarkupV310(customerClaimableFactsV310({reward,birthday}))}
+    ${customerMemberCodeSlotMarkupV310()}
+    <div class="customer-programme-stack" data-programme-stack="v310">${cards}</div>`;
 }
 const business={name:'Glow Atelier',slug:'glow-atelier'};
 $('promotionCards').innerHTML=FIXTURE_OFFERS.map(offer=>customerPromotionCardV104(offer,business,true)).join('');
