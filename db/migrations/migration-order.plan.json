@@ -1809,6 +1809,12 @@
       "path": "db/migrations/20260812_nestly_v299_prospecting_rpcs.sql",
       "semanticVersion": "v299",
       "proposedDeployVersion": "20260813001200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260813_nestly_v310_google_content_retention.sql",
+      "semanticVersion": "v310",
+      "proposedDeployVersion": "20260813001300"
     }
   ]
 }

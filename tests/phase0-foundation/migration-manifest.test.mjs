@@ -73,10 +73,10 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'planning_only_not_deployable');
   assert.equal(manifest.hashAlgorithm, 'sha256-raw-bytes');
-  assert.equal(manifest.itemCount, 299); // + v309 ledger programme tag
-  assert.equal(manifest.executableCount, 285); // + v309 ledger programme tag
+  assert.equal(manifest.itemCount, 300); // + v310 google content retention
+  assert.equal(manifest.executableCount, 286); // + v310 google content retention
   assert.equal(manifest.reservationCount, 14);
-  assert.equal(sqlItems.length, 285); // + v309 ledger programme tag
+  assert.equal(sqlItems.length, 286); // + v310 google content retention
   assert.equal(reservations.length, 14);
   assert.equal(manifest.sourceCollisionsResolved, false);
 
@@ -107,7 +107,7 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
     ['20260810', 6], // V273 + both v267s + V268
     ['20260811', 6], // V279
     ['20260812', 15], // +v293 grants +v297-v299 prospecting CRM
-    ['20260813', 5] // V300 readbacks + V306 both-mode tiers + V307 read model + V308 spine + V309 ledger tag
+    ['20260813', 6] // V300 readbacks + V306 both-mode tiers + V307 read model + V308 spine + V309 ledger tag + V310 google retention
   ]);
   assert.deepEqual(
     manifest.sourceDeployVersionCollisions.map(({ sourceDeployVersion, count }) => [sourceDeployVersion, count]),

@@ -1804,6 +1804,12 @@
       "version": "20260813001200",
       "name": "nestly_v299_prospecting_rpcs",
       "sourcePath": "db/migrations/20260812_nestly_v299_prospecting_rpcs.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260813001300",
+      "name": "nestly_v310_google_content_retention",
+      "sourcePath": "db/migrations/20260813_nestly_v310_google_content_retention.sql"
     }
   ]
 }

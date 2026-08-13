@@ -9035,7 +9035,7 @@
       <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
         <button type="button" class="btn ghost sm" id="prospectingDiscoveryPreview">${escapeHtml(pt('Preview'))}</button>
         <button type="button" class="btn sm" id="prospectingDiscoveryImport" disabled>${escapeHtml(pt('Import'))}</button>
-        <button type="button" class="btn ghost sm" id="prospectingDiscoveryRefresh" hidden></button>
+        <button type="button" class="btn ghost sm" id="prospectingDiscoveryRefresh" hidden>${escapeHtml(pt('Refresh stale Google data ({count})',{count:0}))}</button>
       </div>
       <div id="prospectingDiscoveryResult" role="status" aria-live="polite" style="margin-top:12px"></div>
       <p class="muted small" style="margin-top:10px">${escapeHtml(pt('Business data: Google Maps'))}</p>

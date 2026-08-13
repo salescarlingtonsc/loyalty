@@ -134,7 +134,7 @@ async function loadPlan() {
   assert.equal(plan.requireCatalogEvidenceForAllApplied, true,
     'every applied migration must retain catalog byte/hash evidence');
   assert.ok(Array.isArray(plan.items));
-assert.equal(plan.items.length, 300, 'canonical plan must contain 45 catalog and 255 pending migrations'); // + v309 ledger programme tag
+assert.equal(plan.items.length, 301, 'canonical plan must contain 45 catalog and 256 pending migrations'); // + v310 google content retention
 
   const seenVersions = new Set();
   const seenNames = new Set();
@@ -176,7 +176,7 @@ assert.equal(plan.items.length, 300, 'canonical plan must contain 45 catalog and
   const applied = plan.items.filter(({ kind }) => kind === 'catalog-applied');
   const pending = plan.items.filter(({ kind }) => kind === 'pending');
   assert.equal(applied.length, 45);
-assert.equal(pending.length, 255); // + v309 ledger programme tag
+assert.equal(pending.length, 256); // + v310 google content retention
   assert.deepEqual(applied.map(({ version, name }) => `${version}_${name}`), expectedCatalogIdentities,
     'catalog versions and names must match the trusted remote inventory exactly');
   assert.equal(applied.at(-1).version, plan.catalogCutoffVersion);
