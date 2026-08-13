@@ -98,6 +98,15 @@ exist (capabilities + the v229 gate) — the other four (`customer_explore_busin
   mention of `customer_portal_capabilities` is the pre-existing standard
   authenticated-SECURITY-DEFINER WARN, unchanged.
 
+## Production deploy verification (2026-08-13, post-push)
+
+`https://www.peekaa.asia/api/build` reports `commitSha
+3c7d548d120d5e57f50c776c7d439d9fe9888b44` (this change); the live shell at `/app`
+references `app-business.js?b=6a4ee6a9f7c9` and the served chunk's sha256 equals the
+local stamped file byte-for-byte (`6a4ee6a9f7c9e26f…`), carrying the stamps→'redeem'
+mapping. Anon REST probe on `customer_portal_capabilities` returns the identical
+anon-blind profile (401) as the known-good baseline `customer_get_business_summary`.
+
 ## Regenerated fixture identity
 
 reward-overview-owner-visual.html production-source-sha256 (regenerated for the V306
