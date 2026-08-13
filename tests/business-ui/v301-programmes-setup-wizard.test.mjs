@@ -170,8 +170,10 @@ test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier
   assert.match(wizard, /p_version:state\.versionId,/);
   assert.match(wizard, /p_tier:\{id:tier\.id,name:tier\.name,threshold:tier\.threshold,/);
   assert.match(wizard, /p_expected_snapshot_hash:state\.snapshotHash\|\|null\}\);/);
-  // The draft must exist first, and the hash is refreshed from every response.
-  assert.match(wizard, /const created=await ensureDraftV302\(\);\s*\r?\n?\s*if\(!isCurrent\(\)\)return;\s*\r?\n?\s*if\(!created\.ok\)return failStep\(created\.error,'Nothing was saved\.'\);\s*\r?\n?\s*for\(const tier of pending\)/);
+  /* V304: the draft must still exist before a tier is written, but the ensure now lives INSIDE
+     writeTierRowV304 — the one writer the in-form button, the auto-save, Remove/Undo and Next all
+     call. The assertion follows it there rather than pinning the shape of a loop that moved. */
+  assert.match(wizard, /const writeTierRowV304=async tier=>\{[\s\S]{0,200}?const created=await ensureDraftV302\(\);\s*\r?\n?\s*if\(!created\.ok\)return created;/);
   assert.match(wizard, /if\(data\?\.snapshot_hash\)state\.snapshotHash=data\.snapshot_hash;/);
   // Only the tiers this session touched are written — a step that re-saved every listed tier
   // would bump the hash of rows nobody edited and audit a wizard write for each of them.
@@ -180,8 +182,10 @@ test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier
   assert.match(wizard, /state\.error='Add at least one tier customers can reach\.';/);
   // The list is LIVE tiers merged with the draft's own versions, draft winning on id.
   assert.match(wizard, /const mergeTiersV303=\(existing,incoming\)=>\{/);
-  // Every column the two-field form does not show is handed straight back, never blanked.
-  assert.match(wizard, /points_multiplier:tier\.multiplier,perk_note:tier\.perkNote,sort:tier\.sort,active:true,/);
+  /* Every column the two-field form does not show is handed straight back, never blanked. V304:
+     `active` is now the row's own, because the SAME writer performs Remove (active:false) and Undo
+     (active:true) — hardcoding true would have made removal unwritable through it. */
+  assert.match(wizard, /points_multiplier:tier\.multiplier,perk_note:tier\.perkNote,sort:tier\.sort,\s*\r?\n?\s*active:tier\.active!==false,/);
   assert.match(app, /\.select\('id,name,threshold,points_multiplier,perk_note,sort,active,effective_from,expires_at'\)/);
   // The threshold is labelled in its own unit rather than left as a bare number.
   assert.match(wizard, /const tierUnitLabelV303=\(\)=>tierBasisV303\(\)==='visits'\?'Visits to reach it':'Points to reach it';/);
@@ -210,9 +214,11 @@ test('V301 (b) step 2 mirrors the #lsave field set, minus what belongs to publis
 
 test('V301 (b) step 3 writes the reward through the saveReward envelope', () => {
   assert.match(wizard, /fulfillment_kind:'manual_item',active:true\}/);
-  assert.match(wizard, /await saveDraft\(\{reward:payload,reward_branch_ids:\[\],reward_service_ids:\[\],reward_product_ids:\[\]\}\)/);
-  // A fresh setup cannot leave step 3 with nothing customers can claim.
-  assert.match(wizard, /if\(!hasForm&&!state\.rewards\.length\)\{/);
+  assert.match(wizard, /saveDraft\(\{reward:payload,reward_branch_ids:\[\],reward_service_ids:\[\],reward_product_ids:\[\]\}\)/);
+  /* A fresh setup cannot leave step 3 with nothing customers can claim. V304: "nothing" now means
+     nothing ACTIVE — removing every reward and pressing Next must not walk past an empty
+     catalogue just because the removed rows are still on screen with Undo beside them. */
+  assert.match(wizard, /if\(!hasForm&&!activeRewardsV304\(\)\.length\)\{/);
   // V293's budget → points derivation, with the same manual-override rule.
   assert.match(wizard, /pointsInput\.value=String\(Math\.max\(1,Math\.ceil\(\(budget\*100\)\/Math\.max\(1,costPerPointCents\(\)\)\)\)\)/);
   assert.match(wizard, /pointsInput\.addEventListener\('input',\(\)=>\{manualV301=true\}\);/);
@@ -228,6 +234,145 @@ test('V301 (b) a failed save keeps the owner on the step, with a retry and their
   assert.match(wizard, /\?`<div class="err" role="alert">\$\{esc\(state\.error\)\}[\s\S]{0,180}?id="growSetupRetryV301">Retry<\/button>/);
   // State lives in the closure, so a re-render cannot lose a typed value.
   assert.match(wizard, /const readStepFields=\(\)=>\{/);
+});
+
+/* ---------------- V304. the two list steps save themselves ----------------
+   Owner, re-testing the shipped V303 build:
+     "i typed the points or cost needed for points redemption - but not reflected in the system and
+      not auto saved (it needs to reflect as i change it, so will not have confusion)"
+     "i need to be able to add extra tier / delete tier"
+     "for rewards subtab - i need to be able to add or delete. because now i need to press 'next'
+      then press 'back' to view changes"
+   The write was only ever performed inside advance(), so the list above the form could not change
+   until the owner left the step and came back, a second row could not be added without advancing,
+   and nothing could be removed at all. */
+
+test('V304 one save helper per step, called by BOTH the in-form button and Next', () => {
+  assert.match(wizard, /const saveRewardFormV304=async\(form,\{active=null\}=\{\}\)=>\{/);
+  assert.match(wizard, /const saveTierFormV304=async\(form,\{active=null\}=\{\}\)=>\{/);
+  assert.match(wizard, /const writeTierRowV304=async tier=>\{/);
+  // The in-form primary action, inside the form card, on both steps.
+  assert.match(wizard, /id="growSetupRewardSaveV304">\$\{form\.id\?'Save':'Add reward'\}/);
+  assert.match(wizard, /id="growSetupTierSaveV304">\$\{editing\?'Save':'Add tier'\}/);
+  const rewardButton = wizard.slice(wizard.indexOf("const rewardSaveButton=$('growSetupRewardSaveV304');"),
+    wizard.indexOf("host.querySelectorAll('[data-grow-setup-reward-remove-v304]')"));
+  assert.match(rewardButton, /runSaveV304\(\(\)=>saveRewardFormV304\(form\)\)/);
+  const tierButton = wizard.slice(wizard.indexOf("const tierSaveButton=$('growSetupTierSaveV304');"),
+    wizard.indexOf("host.querySelectorAll('[data-grow-setup-tier-remove-v304]')"));
+  assert.match(tierButton, /runSaveV304\(\(\)=>saveTierFormV304\(form\)\)/);
+  // ...and Next calls the SAME helpers rather than keeping a second copy of the write.
+  const advanceSlice = wizard.slice(wizard.indexOf('async function advance('));
+  assert.match(advanceSlice, /runSaveV304\(\(\)=>saveTierFormV304\(\{\.\.\.form\}\)\)/);
+  assert.match(advanceSlice, /runSaveV304\(\(\)=>saveRewardFormV304\(\{\.\.\.form\}\)\)/);
+  assert.match(advanceSlice, /runSaveV304\(\(\)=>writeTierRowV304\(tier\)\)/);
+  // The reward helper still performs V302's ensure-then-edit before a partial edit is written.
+  const rewardHelper = wizard.slice(wizard.indexOf('const saveRewardFormV304='),
+    wizard.indexOf('const writeTierRowV304='));
+  assert.match(rewardHelper, /sb\.rpc\('ensure_published_reward_in_draft_v138',\{/);
+  assert.ok(rewardHelper.indexOf('ensure_published_reward_in_draft_v138') < rewardHelper.indexOf('const payload=form.id'),
+    'the materialisation must precede the edit envelope');
+  // The in-form button is disabled for the duration of its own write, like Next.
+  assert.match(wizard, /const withBusy=async\(work,buttonId='growSetupNextV301'\)=>\{/);
+  assert.match(wizard, /\},'growSetupRewardSaveV304'\);/);
+  assert.match(wizard, /\},'growSetupTierSaveV304'\);/);
+});
+
+test('V304 the row reflects what is being typed, before any save', () => {
+  /* "it needs to reflect as i change it, so will not have confusion" — DOM-only, on input, for a
+     form that is editing a LISTED row. A per-keystroke re-render would take the caret with it. */
+  assert.match(wizard, /const onRewardInput=\(\)=>\{/);
+  assert.match(wizard, /const onTierInput=\(\)=>\{/);
+  assert.match(wizard, /const row=host\.querySelector\(`\[data-grow-setup-rewardrow-v304="\$\{id\}"\]`\);/);
+  assert.match(wizard, /nameNode\.textContent=state\.form\.name\|\|'Reward';/);
+  assert.match(wizard, /pointsNode\.textContent=rewardRowPointsTextV304\(parseInt\(state\.form\.points\|\|'0',10\)\|\|0\);/);
+  assert.match(wizard, /const row=host\.querySelector\(`\[data-grow-setup-tierrow-v304="\$\{id\}"\]`\);/);
+  assert.match(wizard, /thresholdNode\.textContent=tierRowThresholdTextV304\(parseInt\(state\.tierForm\.threshold\|\|'0',10\)\|\|0\);/);
+  /* One composer per line, used by BOTH the render and the patch — two spellings of the same
+     sentence is how an optimistic update starts disagreeing with the next render. It is also
+     where the v97 rule wants interpolated runtime copy: in a named function, not at a
+     textContent assignment. */
+  assert.match(wizard, /const rewardRowPointsTextV304=points=>/);
+  assert.match(wizard, /const tierRowThresholdTextV304=threshold=>/);
+  assert.match(wizard, /data-grow-setup-rewardpoints-v304>\$\{esc\(rewardRowPointsTextV304\(reward\.points\)\)\}/);
+  assert.match(wizard, /data-grow-setup-tierthreshold-v304>\$\{esc\(tierRowThresholdTextV304\(tier\.threshold\)\)\}/);
+  // The affix, and the transient marker the save replaces it with.
+  assert.match(wizard, /rowMarkV304\('reward',id,' · editing'\);/);
+  assert.match(wizard, /rowMarkV304\('tier',id,' · editing'\);/);
+  assert.match(wizard, /const rowMarkTextV304=id=>state\.editingV304===id\?' · editing':'';/);
+  assert.match(wizard, /const flashSavedV304=\(kind,id\)=>\{/);
+  assert.match(wizard, /rowMarkV304\(kind,id,' · Saved ✓'\);/);
+  // The reward listener is registered AFTER the budget→points derivation, or it would read the
+  // points field one keystroke behind — that derivation writes the value without an input event.
+  assert.ok(wizard.indexOf('pointsInput.value=String(Math.max(1,Math.ceil(') < wizard.indexOf('const onRewardInput=()=>{'),
+    'the V304 reward input listener must be registered after the V293 derivation');
+});
+
+test('V304 an existing row auto-saves, and every save is serialised', () => {
+  // Debounced, 900ms after the last keystroke, and ONLY for a row that already exists.
+  assert.match(wizard, /const autoSaveRewardV304=\(\)=>\{/);
+  assert.match(wizard, /const autoSaveTierV304=\(\)=>\{/);
+  assert.match(wizard, /const form=state\.form\?\.id\?\{\.\.\.state\.form\}:null;\s*\r?\n?\s*if\(!form\)return;/);
+  assert.match(wizard, /const form=state\.tierForm\?\.id\?\{\.\.\.state\.tierForm\}:null;\s*\r?\n?\s*if\(!form\)return;/);
+  assert.match(wizard, /rewardTimerV304=setTimeout\(\(\)=>\{/);
+  assert.match(wizard, /\},900\);/);
+  /* One promise chain for every save. Both writers carry the snapshot hash they last read and the
+     server bumps it on each write, so two in flight together means the second is stale — 40001. */
+  assert.match(wizard, /let saveChainV304=Promise\.resolve\(\);/);
+  assert.match(wizard, /const runSaveV304=work=>\{\s*\r?\n?\s*const next=saveChainV304\.then\(work,work\);\s*\r?\n?\s*saveChainV304=next\.then\(\(\)=>\{\},\(\)=>\{\}\);/);
+  // A hash conflict is re-read and retried ONCE, silently, before the owner is told.
+  assert.match(wizard, /const hashConflictV304=error=>\/40001\|snapshot\|stale\|conflict\|serial\//);
+  assert.match(wizard, /const retryOnConflictV304=async write=>\{/);
+  assert.match(wizard, /await refreshRewards\(\);\s*\r?\n?\s*return write\(\);/);
+  // The explicit button and Next flush the pending debounce first, so one intent is one write.
+  assert.match(wizard, /const flushRewardSaveV304=\(\)=>\{if\(rewardTimerV304\)\{clearTimeout\(rewardTimerV304\);rewardTimerV304=null\}\};/);
+  assert.match(wizard, /const flushTierSaveV304=\(\)=>\{if\(tierTimerV304\)\{clearTimeout\(tierTimerV304\);tierTimerV304=null\}\};/);
+  const advanceSlice = wizard.slice(wizard.indexOf('async function advance('));
+  assert.ok(advanceSlice.indexOf('flushTierSaveV304();') < advanceSlice.indexOf('saveTierFormV304({...form})'),
+    'Next must flush the tier debounce before performing the same write');
+  assert.ok(advanceSlice.indexOf('flushRewardSaveV304();') < advanceSlice.indexOf('saveRewardFormV304({...form})'),
+    'Next must flush the reward debounce before performing the same write');
+});
+
+test('V304 Remove writes active:false through the same writers, with Undo and no dialog', () => {
+  // Every row carries Remove beside Edit, on both steps.
+  assert.match(wizard, /data-grow-setup-reward-remove-v304="\$\{esc\(reward\.id\)\}">Remove<\/button>/);
+  assert.match(wizard, /data-grow-setup-tier-remove-v304="\$\{esc\(tier\.id\)\}">Remove<\/button>/);
+  // Removal is the archive write, through the SAME helper an ordinary save goes through.
+  assert.match(wizard, /saveRewardFormV304\(\{id:reward\.id,name:reward\.name,\s*\r?\n?\s*budget:\(reward\.budgetCents\/100\)\.toFixed\(2\),points:String\(reward\.points\)\},\{active:false\}\)/);
+  assert.match(wizard, /saveTierFormV304\(\{id:tier\.id,name:tier\.name,\s*\r?\n?\s*threshold:String\(tier\.threshold\)\},\{active:false\}\)/);
+  // The removed row STAYS, muted, with an id-carrying Undo that re-saves active:true.
+  assert.match(wizard, /class="is-removed-v304" data-grow-setup-rewardrow-v304=/);
+  assert.match(wizard, /data-grow-setup-reward-undo-v304="\$\{esc\(reward\.id\)\}">Undo<\/button>/);
+  assert.match(wizard, /data-grow-setup-tier-undo-v304="\$\{esc\(tier\.id\)\}">Undo<\/button>/);
+  assert.match(wizard, /\{active:true\}\)\);/);
+  assert.match(html, /\.grow-setup-rewardlist-v301>li\.is-removed-v304\{opacity:\.62;border-style:dashed\}/);
+  // The last one cannot go: the step's own validation would strand the owner on an error.
+  assert.match(wizard, /state\.error='Keep at least one tier, or switch model in Choose\.';/);
+  assert.match(wizard, /state\.error='Keep at least one reward customers can get — add its replacement first\.';/);
+  assert.match(wizard, /if\(tierModelV303\(\)&&activeTiersV304\(\)\.length<=1\)\{/);
+  /* The list must be able to CARRY an archived row, or a removed reward vanishes before its Undo
+     can be pressed — and the draft's active:false has to beat the published row that still says
+     active, which the old pre-merge filter made impossible. */
+  assert.doesNotMatch(wizard, /\.filter\(reward=>reward\?\.active!==false\)/);
+  assert.match(wizard, /active:reward\?\.active!==false,/);
+  assert.match(wizard, /active:tier\?\.active!==false,/);
+  assert.match(wizard, /\.filter\(reward=>reward\.active!==false\),/);
+  assert.match(wizard, /const activeRewardsV304=\(\)=>state\.rewards\.filter\(reward=>reward\.active!==false\);/);
+  assert.match(wizard, /const activeTiersV304=\(\)=>state\.tiers\.filter\(tier=>tier\.active!==false\);/);
+  // The Go-live summary names only what a customer can still claim.
+  assert.match(wizard, /:activeRewardsV304\(\)\.length/);
+});
+
+test('V304 the copy matches the button, and no step still says "press Next to add"', () => {
+  assert.doesNotMatch(wizard, /press Next to add/);
+  assert.match(wizard, /Add tier saves it to the list right away\./);
+  assert.match(wizard, /Add reward saves it to the list right away\./);
+  assert.match(wizard, /Your changes save on their own\./);
+  // Still no dialog anywhere in the wizard, which is what Undo replaces.
+  const code = wizard.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(code, /confirm\(/);
+  assert.doesNotMatch(code, /class="modal/);
+  assert.doesNotMatch(code, /CUI\.activateDialog/);
 });
 
 /* ---------------- C. publish at completion, inline ---------------- */

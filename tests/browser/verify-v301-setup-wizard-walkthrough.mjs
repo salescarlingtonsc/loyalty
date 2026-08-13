@@ -41,6 +41,11 @@
  *      'tiers', where the Programmes page shows the tier note in place of the reward grid.)
  *   m. V303: gift cards are gone from the business UI — no nav row, no Customer Interface
  *      sub-tab, and #/giftcards is refused with a plain toast instead of rendering.
+ *   n. V304: the Reward and Tiers steps save themselves. "Add reward" / "Add tier" grow the list
+ *      WITHOUT the step changing; editing a listed row updates that row as it is typed and
+ *      auto-saves ~900ms later with no button pressed; Remove writes active:false and leaves the
+ *      row in place with Undo (which writes active:true back); and removing the last tier of a
+ *      tier model is refused inline. Zero dialogs throughout — the undo is the safety.
  *
  * Serves on 4303 deliberately: sibling worktrees use 4173/4196 and a parallel session was found
  * squatting 4203, and evidence has been captured from the wrong tree that way before. The probe
@@ -224,10 +229,16 @@ const stubSource=`(()=>{
           const payload=config.reward;
           const id=payload.id||('rw-'+(draft.rewards.length+1));
           const existing=draft.rewards.find(r=>r.reward_id===id);
+          /* V304: active is COALESCED, the way save_loyalty_reward_draft coalesces every key it is
+             not given. The wizard's three-field edit omits it, and a stub that read the absent key
+             as true would have silently un-archived a reward the owner had just removed — hiding
+             exactly the defect step (n) exists to prove. */
+          const nextActive=payload.active===undefined
+            ?(existing?existing.active!==false:true):payload.active!==false;
           const next={reward_id:id,business_id:BIZ,name:payload.name,customer_name:payload.customer_name,
             description:payload.description??null,fulfillment_kind:payload.fulfillment_kind||'manual_item',
             cost_points:payload.cost_points,credit_cents:payload.credit_cents??0,
-            estimated_cost_cents:payload.estimated_cost_cents??0,active:payload.active!==false,sort:draft.rewards.length,
+            estimated_cost_cents:payload.estimated_cost_cents??0,active:nextActive,sort:draft.rewards.length,
             entitlement_expiry_days:null,usage_limit:null,min_tier_id:null,min_tier_threshold:null,
             claim_available_from:null,claim_available_until:null,image_ref:null,created_at:'2026-08-13T00:00:00Z'};
           if(existing)Object.assign(existing,next);else draft.rewards.push(next);
@@ -748,8 +759,179 @@ try{
   assertTrue(await page.locator('a[href="#/customer-interface/giftcards"]').count()===0,
     'and no rail sub-tab pointing at one');
 
+  /* ---- n. V304: the two list steps save themselves, in place ---- */
+  /* Owner, on the shipped V303 build: "i typed the points or cost needed for points redemption -
+     but not reflected in the system and not auto saved (it needs to reflect as i change it, so
+     will not have confusion)", "i need to be able to add extra tier / delete tier", and "for
+     rewards subtab - i need to be able to add or delete. because now i need to press 'next' then
+     press 'back' to view changes". Everything below happens WITHOUT the step number changing —
+     that is the whole report. */
+  say('n. Reward and Tiers steps add, reflect, auto-save, remove and undo without leaving the step');
+  await page.setViewportSize({width:1440,height:1000});
+  /* A real RELOAD first. Step k's publish switched businesses.points_mode to 'tiers' and the app
+     cached that on S.biz, so the Points System card would hand over the 'tiers' model and open the
+     ladder where this step needs the reward catalogue. A hash bounce cannot clear a cached S.biz;
+     reloading re-runs the init script, which rebuilds the fixture at its cold start — so the live
+     POINTS shape is re-applied AFTER the reload, not before it. */
+  await page.evaluate(()=>{location.hash='#/grow'});
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForSelector('[data-grow-topic-v229="points"]',{timeout:20000});
+  await page.evaluate(()=>{
+    const T=window.__V301.tables,biz=window.__V301.biz,D=window.__V301.draft;
+    D.id=null;D.rewards.length=0;D.tiers.length=0;
+    T.firm_config_versions.length=0;
+    T.businesses[0].active_config_version_id='pub-1';
+    T.businesses[0].points_mode='redeem';
+    T.loyalty_programs[0]={...T.loyalty_programs[0],active:true,current_config_version_id:'pub-1',
+      configuration_status:'published',loyalty_model:'points_tiers',tier_basis:'visits'};
+    T.loyalty_rewards.length=0;
+    ['Free flat white','Free pastry','5 off','Free tote'].forEach((name,index)=>{
+      T.loyalty_rewards.push({id:`lr-${index+1}`,business_id:biz,active:true,customer_name:name,
+        name,cost_points:200*(index+1),credit_cents:0,entitlement_expiry_days:null,usage_limit:null,
+        min_tier_id:null,min_tier_threshold:null,estimated_cost_cents:300*(index+1),sort:index,
+        claim_available_from:null,claim_available_until:null,created_at:'2026-06-01T00:00:00Z'});
+    });
+    T.loyalty_tiers.length=0;
+    [['Bronze',0],['Silver',10],['Gold',25]].forEach(([name,threshold],index)=>{
+      T.loyalty_tiers.push({id:`tier-${index+1}`,business_id:biz,name,threshold,
+        points_multiplier:1,perk_note:null,sort:index,active:true,
+        effective_from:null,expires_at:null});
+    });
+  });
+  const rewardWritesV304=()=>page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_config_draft'
+      &&call.args&&call.args.p_config&&call.args.p_config.reward)
+    .map(call=>call.args.p_config.reward));
+  const tierWritesV304=()=>page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='save_loyalty_tier_draft_v143').map(call=>call.args.p_tier));
+  const rowTextV304=async(kind,id)=>page.locator(`[data-grow-setup-${kind}row-v304="${id}"]`).innerText();
+  await reloadGrowV303();
+  await page.click('[data-grow-topic-v229="points"]');
+  await waitStep(1);
+  await page.click('#growSetupNextV301');await waitStep(2);
+  await page.click('#growSetupNextV301');await waitStep(3);
+  const rewardStepV304=await wizardStep();
+  assertTrue(await page.locator('#growSetupRewardSaveV304').count()===1,
+    'the Reward form carries its own primary action, inside the form card');
+  assertTrue((await page.locator('#growSetupRewardSaveV304').innerText()).includes('Add reward'),
+    'an empty form offers "Add reward"');
+  const formCopyV304=await page.locator('[data-grow-setup-rewardform-v301]').innerText();
+  assertTrue(!/press Next to add/.test(formCopyV304)&&/saves it to the list right away/.test(formCopyV304),
+    `the copy matches the button rather than telling the owner to press Next (${JSON.stringify(formCopyV304.slice(-90))})`);
+
+  /* n1. Add, in place. */
+  const rewardsBeforeAdd=await page.locator('[data-grow-setup-rewardrow-v304]').count();
+  await page.fill('#growSetupRewardNameV301','Free muffin');
+  await page.fill('#growSetupRewardPointsV301','450');
+  await page.click('#growSetupRewardSaveV304');
+  await page.waitForFunction(before=>document.querySelectorAll('[data-grow-setup-rewardrow-v304]').length===before+1,
+    rewardsBeforeAdd,{timeout:20000});
+  assertTrue(await wizardStep()===rewardStepV304,
+    'pressing "Add reward" did NOT change the step — the list grew where the owner was standing');
+  assertTrue((await page.locator('#growSetupBodyV301').innerText()).includes('Free muffin'),
+    'the new reward is listed immediately, with no Next-then-Back round trip');
+  const addWrite=(await rewardWritesV304()).find(reward=>reward.customer_name==='Free muffin');
+  assertTrue(Boolean(addWrite)&&addWrite.cost_points===450,
+    `the button wrote the reward through save_loyalty_config_draft (${JSON.stringify(addWrite&&addWrite.cost_points)})`);
+  assertTrue((await page.locator('#growSetupRewardNameV301').inputValue())==='',
+    'and the form cleared, ready for the next one');
+  await noModal('after adding a reward in place');
+
+  /* n2. Live reflection, then auto-save. */
+  await page.click('[data-grow-setup-reward-edit-v301="lr-2"]');
+  await page.waitForFunction(()=>document.getElementById('growSetupRewardNameV301')?.value==='Free pastry',
+    null,{timeout:20000});
+  assertTrue(/editing/.test(await rowTextV304('reward','lr-2')),
+    'the row being edited says so, so the owner knows which one the fields belong to');
+  const writesBeforeType=(await rewardWritesV304()).length;
+  await page.fill('#growSetupRewardPointsV301','777');
+  assertTrue(/777/.test(await rowTextV304('reward','lr-2')),
+    'the row shows the new cost AS IT IS TYPED, before anything is saved');
+  assertTrue((await rewardWritesV304()).length===writesBeforeType,
+    'and nothing has been written yet — the save is debounced, not per keystroke');
+  await page.waitForFunction(()=>window.__V301.rpc.some(call=>call.name==='save_loyalty_config_draft'
+    &&call.args&&call.args.p_config&&call.args.p_config.reward
+    &&call.args.p_config.reward.id==='lr-2'&&call.args.p_config.reward.cost_points===777),
+    null,{timeout:20000});
+  assertTrue(true,'~900ms after the last keystroke the change auto-saved, with no button pressed');
+  assertTrue(!/editing/.test(await rowTextV304('reward','lr-2')),
+    'and the "· editing" affix cleared once it was stored');
+  const ensuredV304=await page.evaluate(()=>window.__V301.rpc
+    .filter(call=>call.name==='ensure_published_reward_in_draft_v138'
+      &&call.args&&call.args.p_reward==='lr-2').length);
+  assertTrue(ensuredV304>0,
+    'the auto-save materialised the published reward into the draft first, exactly as Next did');
+
+  /* n3. Remove, with undo, and no dialog. */
+  await page.click('[data-grow-setup-reward-remove-v304="lr-1"]');
+  await page.waitForFunction(()=>window.__V301.rpc.some(call=>call.name==='save_loyalty_config_draft'
+    &&call.args&&call.args.p_config&&call.args.p_config.reward
+    &&call.args.p_config.reward.id==='lr-1'&&call.args.p_config.reward.active===false),
+    null,{timeout:20000});
+  assertTrue(true,'Remove wrote active:false through the same reward writer');
+  await noModal('after removing a reward');
+  assertTrue(await page.locator('[data-grow-setup-reward-remove-v304="lr-1"]').count()===0
+    &&await page.locator('[data-grow-setup-reward-undo-v304="lr-1"]').count()===1,
+    'the row stays in place and offers Undo — the undo is the safety, not a confirm dialog');
+  assertTrue(/Removed/.test(await rowTextV304('reward','lr-1')),
+    'and it reads "Removed"');
+  await page.click('[data-grow-setup-reward-undo-v304="lr-1"]');
+  await page.waitForFunction(()=>window.__V301.rpc.some(call=>call.name==='save_loyalty_config_draft'
+    &&call.args&&call.args.p_config&&call.args.p_config.reward
+    &&call.args.p_config.reward.id==='lr-1'&&call.args.p_config.reward.active===true),
+    null,{timeout:20000});
+  assertTrue(true,'Undo wrote active:true back through the same writer');
+  assertTrue(await page.locator('[data-grow-setup-reward-remove-v304="lr-1"]').count()===1,
+    'and the row is claimable again');
+  assertTrue(await wizardStep()===rewardStepV304,
+    'none of add / edit / auto-save / remove / undo moved the owner off the Reward step');
+
+  /* n4. The Tiers step, same three abilities. */
+  await reloadGrowV303();
+  await page.click('[data-grow-topic-v229="tiers"]');
+  await waitStep(1);
+  await page.click('#growSetupNextV301');await waitStep(2);
+  await page.click('#growSetupNextV301');await waitStep(3);
+  const tierStepV304=await wizardStep();
+  const tiersBeforeAdd=await page.locator('[data-grow-setup-tierrow-v304]').count();
+  assertTrue(tiersBeforeAdd===3,`the Tiers step lists the three live tiers (${tiersBeforeAdd})`);
+  const tierFormCopyV304=await page.locator('[data-grow-setup-tierform-v303]').innerText();
+  assertTrue(!/press Next to add/.test(tierFormCopyV304)&&/Add tier saves it to the list right away/.test(tierFormCopyV304),
+    'the tier form copy matches its button too');
+  await page.fill('#growSetupTierNameV303','Diamond');
+  await page.fill('#growSetupTierThresholdV303','50');
+  await page.click('#growSetupTierSaveV304');
+  await page.waitForFunction(before=>document.querySelectorAll('[data-grow-setup-tierrow-v304]').length===before+1,
+    tiersBeforeAdd,{timeout:20000});
+  assertTrue(await wizardStep()===tierStepV304,
+    'pressing "Add tier" added the fourth tier without changing the step (owner: "add extra tier")');
+  const diamond=(await tierWritesV304()).find(tier=>tier.name==='Diamond');
+  assertTrue(Boolean(diamond)&&diamond.threshold===50,
+    'the tier went through save_loyalty_tier_draft_v143 with the typed threshold');
+  await noModal('after adding a tier in place');
+  /* Remove down to the last one; the last one is refused, inline, in words that name the way out. */
+  for(const id of ['tier-1','tier-2','tier-3']){
+    await page.click(`[data-grow-setup-tier-remove-v304="${id}"]`);
+    await page.waitForFunction(wanted=>window.__V301.rpc.some(call=>call.name==='save_loyalty_tier_draft_v143'
+      &&call.args&&call.args.p_tier&&call.args.p_tier.id===wanted&&call.args.p_tier.active===false),
+      id,{timeout:20000});
+    assertTrue(await page.locator(`[data-grow-setup-tier-undo-v304="${id}"]`).count()===1,
+      `removing ${id} wrote active:false and left an Undo on the row`);
+  }
+  await noModal('after removing tiers');
+  const lastTier=await page.locator('[data-grow-setup-tier-remove-v304]').first().getAttribute('data-grow-setup-tier-remove-v304');
+  const tierWritesBeforeLast=(await tierWritesV304()).length;
+  await page.click(`[data-grow-setup-tier-remove-v304="${lastTier}"]`);
+  await page.waitForFunction(()=>/Keep at least one tier/.test(
+    document.getElementById('growSetupWizardPanelV301')?.innerText||''),null,{timeout:20000});
+  assertTrue((await tierWritesV304()).length===tierWritesBeforeLast,
+    'removing the LAST tier of a tier model is refused inline, and writes nothing');
+  assertTrue((await page.locator('#growSetupWizardPanelV301').innerText()).includes('Keep at least one tier, or switch model in Choose.'),
+    'and the refusal names the way out rather than being a dead end');
+  await noModal('after the refused last-tier removal');
+
   if(pageErrors.length)process.stdout.write(`note: page errors observed (non-fatal): ${JSON.stringify(pageErrors)}\n`);
-  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-m)\n');
+  process.stdout.write('V301 setup wizard walkthrough PASS (steps a-n)\n');
 }catch(error){
   process.stdout.write(`V301 walkthrough FAIL at ${step}\n${error?.stack||error}\n`);
   if(pageErrors.length)process.stdout.write(`page errors: ${JSON.stringify(pageErrors)}\n`);

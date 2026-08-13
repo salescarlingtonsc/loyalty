@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="cb1e725442882294edcaa15985c996e011168ef1ea50bde0e9acf6e5f85c9ed7">
+<meta name="v105-production-component-sha256" content="3957cf3f2f426e6c1b8b3d54eb498ae6f7d9949568a2ad6958084649755451e4">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1068,6 +1068,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-rewardform-v301{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
+/* V304 (owner: "i need to be able to add or delete", "not auto saved… it needs to reflect as i
+   change it"). Every reward and tier row now carries Edit + Remove and a transient saved marker,
+   and the inline form carries its own primary action so the list changes without pressing Next.
+   A removed row keeps its place, muted and dashed, until the visit ends — the Undo beside it is
+   the safety, in place of the confirm dialog this surface is not allowed to open. */
+.grow-setup-rowactions-v304{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grow-setup-rowactions-v304 .btn{min-height:44px}
+.grow-setup-rewardlist-v301>li.is-removed-v304{opacity:.62;border-style:dashed}
+.grow-setup-rewardlist-v301>li.is-removed-v304 .btn{min-height:44px}
+.grow-setup-formfoot-v304{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.grow-setup-formfoot-v304 .btn{min-height:44px;padding:11px 20px}
 .grow-setup-changes-v301{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
 /* V303: the points_mode switch a tier choice implies, stated on the Go-live step. It leads the
    change list because it is the biggest thing publishing that choice does to a customer. */
@@ -2747,7 +2758,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · cb1e72544288</span>
+<span class="v105-provenance">v105 production-component harness · 3957cf3f2f42</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2872,7 +2883,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'cb1e725442882294edcaa15985c996e011168ef1ea50bde0e9acf6e5f85c9ed7',
+  sourceHash:'3957cf3f2f426e6c1b8b3d54eb498ae6f7d9949568a2ad6958084649755451e4',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

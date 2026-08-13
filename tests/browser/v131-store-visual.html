@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="4ab26e96ce0d45f44b8842a6203793092d8855d14007e5cbcfd203eb3de87de6"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="c46db7756f473b5105e622062f78857885b55712bb5c110e243268c2877a8311"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1061,6 +1061,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-rewardform-v301{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
+/* V304 (owner: "i need to be able to add or delete", "not auto saved… it needs to reflect as i
+   change it"). Every reward and tier row now carries Edit + Remove and a transient saved marker,
+   and the inline form carries its own primary action so the list changes without pressing Next.
+   A removed row keeps its place, muted and dashed, until the visit ends — the Undo beside it is
+   the safety, in place of the confirm dialog this surface is not allowed to open. */
+.grow-setup-rowactions-v304{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grow-setup-rowactions-v304 .btn{min-height:44px}
+.grow-setup-rewardlist-v301>li.is-removed-v304{opacity:.62;border-style:dashed}
+.grow-setup-rewardlist-v301>li.is-removed-v304 .btn{min-height:44px}
+.grow-setup-formfoot-v304{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.grow-setup-formfoot-v304 .btn{min-height:44px;padding:11px 20px}
 .grow-setup-changes-v301{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
 /* V303: the points_mode switch a tier choice implies, stated on the Go-live step. It leads the
    change list because it is the biggest thing publishing that choice does to a customer. */

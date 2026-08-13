@@ -64,7 +64,7 @@ overview. Chrome captures were re-run for `v142-connect-paynow-pos/metrics.json`
 
 Regenerated `tests/browser/reward-overview-owner-visual.html` production-source-sha256:
 
-    d52a5aa0fc4f43e650dcd7969a32f089e0887b9c5743d55f5d83d7f1554769d5
+    01e8b7236962731446eeb27ddc63d568f527577b4c949ea76317236633980d10
 
 ## Same release: the phantom "Gift cards" Overview row
 
@@ -188,3 +188,109 @@ all three cards open the wizard with zero `.modal`; the tiers build fires the ti
 publish THEN the mode write, in order; Add/Edit from the live grid reach the wizard, never the
 dialog; gift cards absent from nav and Customer Interface with the route refused. Suite
 2841/2841; V301 (a–m), V293, V294, V296 walkthroughs pass on the V303 bundles.
+
+## V304 follow-up — the two list steps save themselves
+
+Owner re-test of the deployed V303 build. First line: **"the UI UX is working now"** — the shape is
+right, so nothing was restructured. Three defects inside it:
+
+1. **"i typed the points or cost needed for points redemption - but not reflected in the system and
+   not auto saved (it needs to reflect as i change it, so will not have confusion)"**
+2. **"i need to be able to add extra tier / delete tier"**
+3. **"for rewards subtab - i need to be able to add or delete. because now i need to press 'next'
+   then press 'back' to view changes"**
+
+One root cause behind all three: the Reward and Tiers steps wrote **only** inside `advance()`. The
+list above the form therefore could not change until the owner left the step and came back, a
+second reward or tier could not be added without advancing, and nothing could be removed at all.
+The write itself was never wrong, so it was lifted out rather than rewritten.
+
+**Shared writers.** `saveRewardFormV304` (V302's ensure-then-edit materialisation + the V293
+three-field edit envelope) and `saveTierFormV304` / `writeTierRowV304`
+(`save_loyalty_tier_draft_v143`, full row carried) are now the single writer for each step, called
+by **all four** intents: the new in-form button, the debounced auto-save, Remove/Undo, and Next.
+`advance()` keeps no second copy of either write.
+
+**In-form action.** `#growSetupRewardSaveV304` ("Add reward" / "Save") and
+`#growSetupTierSaveV304` ("Add tier" / "Save") sit inside the form card. Pressing one performs the
+write and re-renders the step **in place** — the list gains the row, the form clears, focus returns
+to the name field, and the affected row flashes "· Saved ✓". The step number never changes.
+
+**Live reflection.** While the form is editing a listed row, typing patches that row's name and
+number straight into the DOM (never a per-keystroke re-render, so the caret is never moved) and
+marks it "· editing". Both the render and the patch compose their text through the same
+`rewardRowPointsTextV304` / `tierRowThresholdTextV304` helper, so the optimistic line cannot drift
+from the rendered one — and interpolated runtime copy stays in a named function, which is what the
+v97 pin requires.
+
+**Auto-save.** 900ms after the last keystroke, for an **existing** row only — a half-typed new
+reward is never written, which would spawn junk rows. The button and Next flush the pending timer
+before performing the identical write, so one intent is never two.
+
+**Save serialisation.** Every save runs through one promise chain (`runSaveV304`). Both writers
+carry the snapshot hash they last read and the server bumps it on each write, so two in flight
+together means the second is stale (40001). `retryOnConflictV304` re-reads the draft and retries
+**once**, silently, for the case the chain cannot see — another tab, or the deep editor.
+
+**Remove, with undo, no dialogs.** Every row carries Remove beside Edit. Remove is the archive
+write through the same writer (`active:false`); the row keeps its place for the rest of the visit,
+muted and dashed, with an Undo that writes `active:true` back. No `confirm()` and no modal — the
+undo **is** the safety, and the wizard's "never inserts a dialog" pin still holds. Removing the
+last active tier of a tier model is refused inline ("Keep at least one tier, or switch model in
+Choose."); the last active reward likewise, because the step's own validation already requires one.
+
+**The list now carries `active`.** `rewardListFrom`/`tierListFrom` no longer filter on it; the
+archived rows are dropped **once**, after the merge, at state init. This fixed a real latent bug as
+well as enabling Undo: filtering before `mergeRewardsV302` dropped the draft's `active:false`
+version, so the published row that still said active won the merge and a removed reward reappeared
+on the step. Step counts and the "at least one reward/tier" validation count only active rows, and
+the Go-live summary lists only what a customer can still claim. The publish change list already
+prints an archived reward as "no longer offered" (`growSetupComparisonV301`), verified unchanged.
+
+**Known limitation, unchanged by this release:** tier changes are not in the Go-live change list at
+all — `growSetupComparisonV301` compares the programme row, rewards, birthday and bring-back, and
+never carried tiers. A removed tier therefore publishes correctly (tiers are delete+insert) but is
+not itemised on the Go-live step. Out of scope here; flagged rather than fixed.
+
+### Verification (this tree)
+
+- `node --check app/app.js` OK; `npm run bundle-stamp:check` current
+  (core 332KB · auth 23KB · customer 380KB · business 1712KB · i18n 208KB).
+- `npm test`: **2846 pass / 0 fail** (2841 at the V303 baseline; the five new V304 tests are the delta).
+- `tests/business-ui/v301-programmes-setup-wizard.test.mjs`: 30 tests (5 new V304 tests).
+- Browser walkthroughs (real bundles, stubbed client): **v301 a–n PASS**, v296 1–7 PASS,
+  v294 1–9 PASS, v293 a–g PASS.
+- Nine fixtures regenerated from source; Chrome captures re-run for
+  `v104-promotions-production-render-metrics.json` (PASS) and `v142-connect-paynow-pos/metrics.json`
+  (PASS).
+
+Walkthrough step **(n)** pins the report end to end against the LIVE fixture: "Add reward" grows
+the list with `data-grow-setup-step-v301` unchanged; editing a listed reward shows the new cost in
+the row **before** any write and with no RPC yet recorded, then auto-saves ~900ms later
+(`ensure_published_reward_in_draft_v138` first, exactly as Next did) and clears "· editing";
+Remove records `active:false` and leaves "Removed · Undo"; Undo records `active:true`; "Add tier"
+grows the ladder in place; three tier removals record `active:false` each; and the fourth is
+refused inline with zero writes. Zero `.modal` at every point.
+
+## V304 follow-up — the list tells the truth while you type
+
+Owner, on the live V303 build: the UX works, but a typed points cost was "not reflected in the
+system and not auto saved", tiers need add/delete, and rewards need add/delete "because now i
+need to press next then press back to view changes". Root cause: both steps persisted only on
+Next, so the rows above the form lagged one navigation behind the owner's own edits.
+
+Shipped, same pattern on the Reward and Tiers steps: an in-form **Add / Save** button that writes
+immediately through the same draft writers and refreshes the list in place; live row reflection
+while editing (the row's own text updates as the owner types, "· editing" until saved); a 900ms
+debounced auto-save for edits to existing rows (never for half-typed new ones), serialized
+through one promise chain with a single silent re-read-and-retry on a snapshot-hash conflict;
+and per-row **Remove · Undo** (the archive write, `active:false`, with undo re-activating — no
+dialogs). Removing the last active tier of a tier model, or the last reward, is refused inline.
+Fixed en route: `rewardListFrom` filtered archived rows BEFORE the published/draft merge, so a
+draft's `active:false` could be resurrected by the published row — the filter now runs after.
+Known gap (pre-existing, flagged): the Go-live change list does not itemise tier changes.
+
+Walkthrough step (n) pins it on the LIVE fixture: add-in-place without leaving the step, row text
+updating before any save, the auto-save firing with the typed cost, Remove/Undo writing
+`active:false`/`true`, and the last-tier guard. Suite 2846/2846; V301 (a–n), V293, V294, V296
+walkthroughs pass on the V304 bundles.

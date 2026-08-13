@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b0232c8553c79a9b8f72d3b2bb0a5fe392bd53c82052a46e928676167d087b58"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="9dfad6ceffc79c3225211d81ded031cd110c670a78b6fe044036b68da0722dad"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1062,6 +1062,17 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-rewardform-v301{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
+/* V304 (owner: "i need to be able to add or delete", "not auto saved… it needs to reflect as i
+   change it"). Every reward and tier row now carries Edit + Remove and a transient saved marker,
+   and the inline form carries its own primary action so the list changes without pressing Next.
+   A removed row keeps its place, muted and dashed, until the visit ends — the Undo beside it is
+   the safety, in place of the confirm dialog this surface is not allowed to open. */
+.grow-setup-rowactions-v304{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grow-setup-rowactions-v304 .btn{min-height:44px}
+.grow-setup-rewardlist-v301>li.is-removed-v304{opacity:.62;border-style:dashed}
+.grow-setup-rewardlist-v301>li.is-removed-v304 .btn{min-height:44px}
+.grow-setup-formfoot-v304{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.grow-setup-formfoot-v304 .btn{min-height:44px;padding:11px 20px}
 .grow-setup-changes-v301{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
 /* V303: the points_mode switch a tier choice implies, stated on the Go-live step. It leads the
    change list because it is the biggest thing publishing that choice does to a customer. */
@@ -2028,7 +2039,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · b0232c8553c79a9b8f72d3b2bb0a5fe392bd53c82052a46e928676167d087b58</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 9dfad6ceffc79c3225211d81ded031cd110c670a78b6fe044036b68da0722dad</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -12723,11 +12734,19 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      ratio, so the wizard writes that same pair rather than inventing a second number that could
      disagree with the Point system editor. */
   const costBasis=Number(base?.redeem_points)>0?Math.round(Number(base.redeem_points)):800;
+  /* V304 (owner: "for rewards subtab - i need to be able to add or delete"). The list now CARRIES
+     `active` instead of filtering on it. Two reasons, both of them defects the filter caused: a
+     reward this session removed has to keep its place in the list — muted, with Undo — and a DRAFT
+     that archived a reward has to beat the published row that still says active, which the filter
+     made impossible, because it dropped the archived draft version before mergeRewardsV302 could
+     see it and the published row was resurrected. Rows that arrive ALREADY archived are dropped
+     once, at the initial merge below, so reward history stays in the full editor where it belongs
+     rather than filling this step with rows nobody can claim. */
   const rewardListFrom=rows=>(Array.isArray(rows)?rows:[])
-    .filter(reward=>reward?.active!==false)
     .map(reward=>({id:String(reward.reward_id||reward.id||''),
       name:String(reward.customer_name||reward.name||'Reward').trim(),
       points:Math.max(0,Number(reward.cost_points)||0),
+      active:reward?.active!==false,
       budgetCents:Math.max(0,Number(reward.estimated_cost_cents)||0)}));
   /* V303: the tier ladder, the same shape as the reward list above — LIVE tiers overlaid with the
      draft's own versions, draft winning on id. create_loyalty_config_draft does copy tiers into a
@@ -12735,11 +12754,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      step that quietly disagrees with the Tiered membership card next to it if that ever changes.
      Every column is carried through, not just the two this step edits — see the widened
      loyalty_tiers read in growPage for why. */
+  /* V304: `active` is carried here for the same reason it is carried on rewards — a tier removed
+     this session keeps its row, muted, with Undo. */
   const tierListFrom=rows=>(Array.isArray(rows)?rows:[])
-    .filter(tier=>tier?.active!==false)
     .map(tier=>({id:String(tier.tier_id||tier.id||''),
       name:String(tier.name||'Tier').trim(),
       threshold:Math.max(0,Number(tier.threshold)||0),
+      active:tier?.active!==false,
       multiplier:Number(tier.points_multiplier)>0?Number(tier.points_multiplier):1,
       perkNote:tier.perk_note??null,
       sort:Number.isFinite(Number(tier.sort))?Number(tier.sort):0,
@@ -12781,14 +12802,23 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        mergeRewardsV302. Reading only the draft (as V301 did) showed an owner with a published
        catalogue and a fresh draft an empty step 3, which invites them to re-create rewards they
        already have. */
+    /* V304: the archived rows are dropped HERE, after the merge, so a draft's active:false wins
+       over a published row that still says active. Filtering before the merge (V302/V303) simply
+       hid the draft's decision and put the removed reward back on the step. */
     rewards:mergeRewardsV302(rewardListFrom(snapshot?.rewards),
-      rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:[])),
+      rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:[]))
+      .filter(reward=>reward.active!==false),
     tiers:mergeTiersV303(tierListFrom(liveTiers),
-      tierListFrom(Array.isArray(snapshot?.draftDetail?.tiers)?snapshot.draftDetail.tiers:[])),
+      tierListFrom(Array.isArray(snapshot?.draftDetail?.tiers)?snapshot.draftDetail.tiers:[]))
+      .filter(tier=>tier.active!==false),
     /* Which tier ids this session has actually touched. Only those are written on Next: a step
        that re-saved every listed tier would bump the snapshot hash of rows nobody edited and put
        a wizard-shaped write on the audit trail for each of them. */
     tiersDirty:new Set(),tierForm:null,
+    /* V304: which listed row the open form is EDITING. It drives the "· editing" affix the owner
+       asked for ("it needs to reflect as i change it, so will not have confusion") and nothing
+       else — the row's own name and number are patched straight into the DOM as they are typed. */
+    editingV304:null,
     form:null,comparison:null,
     keepPaused:false,ack:false,needAck:false,impactRules:[],
     busy:false,error:'',published:false,publishedSummary:null,
@@ -12862,8 +12892,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     :`${currency} 1 spent → ${unitWord(state.earn,'points')}`;
   const rewardLine=()=>state.model==='classic'
     ?`${unitWord(state.classicRedeem,'points')} → ${currency} ${Number(state.classicCredit||0).toFixed(2)} credit`
-    :state.rewards.length
-      ?state.rewards.map(reward=>`${reward.name} — ${unitWord(reward.points,rewardUnit())}`).join(' · ')
+    /* V304: the summary names what customers can actually claim, so a reward removed on the step
+       above drops out of it here rather than being restated on the Go-live step. */
+    :activeRewardsV304().length
+      ?activeRewardsV304().map(reward=>`${reward.name} — ${unitWord(reward.points,rewardUnit())}`).join(' · ')
       :'No reward yet';
   function exampleText(){
     if(state.family==='stamps'){
@@ -12923,6 +12955,188 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        here is the owner's picture of their own catalogue, and it must stay complete. */
     state.rewards=mergeRewardsV302(state.rewards,rewardListFrom(data.rewards));
   };
+  /* ---------------- V304: the Reward and Tiers steps save themselves ----------------
+     Owner, re-testing the shipped V303 build:
+       "i typed the points or cost needed for points redemption - but not reflected in the system
+        and not auto saved (it needs to reflect as i change it, so will not have confusion)"
+       "i need to be able to add extra tier / delete tier"
+       "for rewards subtab - i need to be able to add or delete. because now i need to press
+        'next' then press 'back' to view changes"
+     Root cause: both steps wrote ONLY inside advance(). So the list above the form could not
+     change until the owner left the step and came back, a second reward or tier could not be added
+     without advancing, and nothing could be removed at all. The WRITE was never wrong — so it is
+     lifted out here, once, and the in-form button, the debounced auto-save, Remove/Undo and Next
+     all call the same helper. Four intents, one writer: they cannot drift apart. */
+  const activeRewardsV304=()=>state.rewards.filter(reward=>reward.active!==false);
+  const activeTiersV304=()=>state.tiers.filter(tier=>tier.active!==false);
+  /* Every save goes through ONE promise chain. save_loyalty_config_draft and
+     save_loyalty_tier_draft_v143 each carry the snapshot hash they last read and the server bumps
+     it on every write — so two saves in flight at once means the second carries a hash that is
+     already stale and comes back 40001. Serialising is the fix. The retry below is the belt for
+     the case this chain cannot see: another tab, or the deep editor, moving the draft under us. */
+  let saveChainV304=Promise.resolve();
+  const runSaveV304=work=>{
+    const next=saveChainV304.then(work,work);
+    saveChainV304=next.then(()=>{},()=>{});
+    return next;
+  };
+  const hashConflictV304=error=>/40001|snapshot|stale|conflict|serial/
+    .test(`${error?.code||''} ${error?.message||''} ${error?.details||''}`.toLowerCase());
+  const retryOnConflictV304=async write=>{
+    const first=await write();
+    if(first.ok||!hashConflictV304(first.error))return first;
+    /* Re-read the draft — which is what carries the current hash — and try exactly once more,
+       silently. A second failure is the owner's to see. */
+    await refreshRewards();
+    return write();
+  };
+  /* The row marker is patched into the DOM rather than re-rendered, because the owner is usually
+     still standing in the field when it appears and a re-render would take their caret with it. */
+  const rowMarkV304=(kind,id,text)=>{
+    const node=host.querySelector(`[data-grow-setup-rowmark-v304="${kind}:${id}"]`);
+    if(node)node.textContent=text;
+  };
+  const flashSavedV304=(kind,id)=>{
+    if(!id)return;
+    rowMarkV304(kind,id,' · Saved ✓');
+    setTimeout(()=>{if(isCurrent())rowMarkV304(kind,id,'')},2400);
+  };
+  const rewardFormProblemV304=form=>{
+    if(String(form?.name||'').trim().length<2)return 'Give this reward a name customers will recognise.';
+    if(!(parseInt(form?.points||'0',10)>0))return `Enter how many ${rewardUnit()} this reward costs.`;
+    return '';
+  };
+  /* The write advance() always performed, verbatim: materialise a published reward into this draft
+     first (V302's ensure-then-edit), then post the three-field edit envelope or the full new-reward
+     one. `active` is null for an ordinary save — save_loyalty_reward_draft coalesces the key it is
+     not given — false for Remove and true for Undo. */
+  const saveRewardFormV304=async(form,{active=null}={})=>{
+    const problem=rewardFormProblemV304(form);
+    if(problem)return {ok:false,soft:true,message:problem};
+    const name=String(form.name).trim();
+    const cost=parseInt(form.points||'0',10);
+    const budgetCents=Math.round((parseFloat(form.budget||'0')||0)*100);
+    const before=new Set(state.rewards.map(reward=>reward.id));
+    const result=await retryOnConflictV304(async()=>{
+      const created=await ensureDraftV302();
+      if(!created.ok)return created;
+      if(form.id){
+        const {data:ensured,error:ensureError}=await sb.rpc('ensure_published_reward_in_draft_v138',{
+          p_config_version:state.versionId,p_reward:form.id,p_expected_snapshot_hash:state.snapshotHash||null});
+        if(ensureError||ensured?.reward_id!==form.id)
+          return {ok:false,error:ensureError||new Error('The editable copy of this reward could not be confirmed.')};
+        if(ensured?.snapshot_hash)state.snapshotHash=ensured.snapshot_hash;
+      }
+      const payload=form.id
+        ?{id:form.id,business_id:S.biz.id,name,customer_name:name,
+          cost_points:cost,estimated_cost_cents:budgetCents}
+        :{id:null,business_id:S.biz.id,name,customer_name:name,
+          description:null,cost_points:cost,credit_cents:0,estimated_cost_cents:budgetCents,
+          entitlement_expiry_days:null,usage_limit:null,claim_available_from:null,
+          claim_available_until:null,image_ref:null,fulfillment_kind:'manual_item',active:true};
+      if(active!==null)payload.active=active;
+      return saveDraft({reward:payload,reward_branch_ids:[],reward_service_ids:[],reward_product_ids:[]});
+    });
+    if(!result.ok)return result;
+    await refreshRewards();
+    /* Reconcile the row with what the draft actually stored. A NEW reward's id was minted by the
+       server, so it is the one id the list did not carry before this write. */
+    const existing=state.rewards.find(reward=>reward.id===form.id);
+    if(existing){
+      existing.name=name;existing.points=cost;existing.budgetCents=budgetCents;
+      if(active!==null)existing.active=active;
+    }
+    return {ok:true,id:form.id||state.rewards.find(reward=>!before.has(reward.id))?.id||null};
+  };
+  /* The tier write, one row at a time, through the SAME save_loyalty_tier_draft_v143 the deep
+     editor's Add tier / Save tier button uses. Every column the two-field form does not show is
+     handed straight back from the merged row — a wizard edit must never blank a multiplier or a
+     benefit line set in the advanced editor. */
+  const writeTierRowV304=async tier=>{
+    const result=await retryOnConflictV304(async()=>{
+      const created=await ensureDraftV302();
+      if(!created.ok)return created;
+      const {data,error}=await sb.rpc('save_loyalty_tier_draft_v143',{
+        p_version:state.versionId,
+        p_tier:{id:tier.id,name:tier.name,threshold:tier.threshold,
+          points_multiplier:tier.multiplier,perk_note:tier.perkNote,sort:tier.sort,
+          active:tier.active!==false,
+          effective_from:tier.effectiveFrom,expires_at:tier.expiresAt},
+        p_expected_snapshot_hash:state.snapshotHash||null});
+      if(error)return {ok:false,error};
+      if(data?.snapshot_hash)state.snapshotHash=data.snapshot_hash;
+      return {ok:true};
+    });
+    if(result.ok)state.tiersDirty.delete(tier.id);
+    return result;
+  };
+  const saveTierFormV304=async(form,{active=null}={})=>{
+    const name=String(form?.name||'').trim();
+    if(!name)return {ok:false,soft:true,message:'Give this tier a name customers will see.'};
+    const threshold=parseInt(form?.threshold||'',10);
+    if(!Number.isFinite(threshold)||threshold<0)return {ok:false,soft:true,
+      message:`Enter how many ${tierBasisV303()==='visits'?'visits':'points'} a customer needs for this tier.`};
+    const id=form.id||crypto.randomUUID();
+    const existing=state.tiers.find(tier=>tier.id===id);
+    /* The candidate is written BEFORE it joins the list, so a failed add leaves no phantom row
+       behind and the owner's typed values stay exactly where they typed them. */
+    const candidate={...(existing||{id,multiplier:1,perkNote:null,sort:state.tiers.length,
+      effectiveFrom:null,expiresAt:null,active:true}),name,threshold};
+    if(active!==null)candidate.active=active;
+    const result=await writeTierRowV304(candidate);
+    if(!result.ok)return result;
+    if(existing)Object.assign(existing,candidate);else state.tiers.push(candidate);
+    state.tiers.sort((a,b)=>a.threshold-b.threshold);
+    return {ok:true,id};
+  };
+  /* Auto-save, for an EXISTING row's form only (owner: "not auto saved"). A half-typed NEW reward
+     or tier is never written — that would spawn a junk row from a name the owner is still
+     spelling. 900ms after the last keystroke; the explicit button and Next cancel the pending
+     timer and then perform the identical write, so one intent never becomes two. The form is
+     snapshotted at SCHEDULE time, so navigating away still persists what was typed. */
+  let rewardTimerV304=null,tierTimerV304=null;
+  const flushRewardSaveV304=()=>{if(rewardTimerV304){clearTimeout(rewardTimerV304);rewardTimerV304=null}};
+  const flushTierSaveV304=()=>{if(tierTimerV304){clearTimeout(tierTimerV304);tierTimerV304=null}};
+  const autoSaveRewardV304=()=>{
+    flushRewardSaveV304();
+    const form=state.form?.id?{...state.form}:null;
+    if(!form)return;
+    rewardTimerV304=setTimeout(()=>{
+      rewardTimerV304=null;
+      if(!isCurrent())return;
+      runSaveV304(async()=>{
+        const result=await saveRewardFormV304(form);
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was saved.');
+        /* No render: the owner is usually still in the field, and the row was already updated
+           optimistically as they typed. All that is left is to say it is stored. */
+        if(state.editingV304===form.id)state.editingV304=null;
+        flashSavedV304('reward',form.id);
+      });
+    },900);
+  };
+  const autoSaveTierV304=()=>{
+    flushTierSaveV304();
+    const form=state.tierForm?.id?{...state.tierForm}:null;
+    if(!form)return;
+    tierTimerV304=setTimeout(()=>{
+      tierTimerV304=null;
+      if(!isCurrent())return;
+      runSaveV304(async()=>{
+        const result=await saveTierFormV304(form);
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was saved.');
+        if(state.editingV304===form.id)state.editingV304=null;
+        flashSavedV304('tier',form.id);
+      });
+    },900);
+  };
+  /* A validation problem is the owner's own sentence and nothing else; a server failure keeps the
+     existing "<reason> Nothing was saved." shape, in the step's own error block. */
+  const reportSaveV304=(result,tail)=>{
+    if(result.soft){state.error=result.message;return render()}
+    return failStep(result.error,tail);
+  };
   const suggestionsV301=()=>{
     const cents=Math.max(1,costPerPointCents());
     const make=(name,budgetCents)=>({name,budgetCents,points:Math.max(1,Math.ceil(budgetCents/cents))});
@@ -12972,12 +13186,29 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const tierBasisV303=()=>String(base?.tier_basis||'visits');
   const tierUnitLabelV303=()=>tierBasisV303()==='visits'?'Visits to reach it':'Points to reach it';
   const TIER_DEFAULTS_V303=[['Bronze',0],['Silver',10],['Gold',25]];
+  /* V304: the affix a row carries while the form below is editing it. It says "· editing" until
+     the save lands, and the save replaces it with "· Saved ✓" — the owner asked to SEE that the
+     row now carries the number they typed. */
+  const rowMarkTextV304=id=>state.editingV304===id?' · editing':'';
+  /* V304: the row's own secondary line, composed ONCE and used by both the render and the
+     as-you-type DOM patch — two spellings of the same sentence is how an optimistic update starts
+     disagreeing with what the next render shows. Written as helpers rather than inline at the
+     textContent assignment for the v97 reason exampleText() is: interpolated runtime copy belongs
+     in a named function, so the localizer and this pin can both see it in one place. */
+  const rewardRowPointsTextV304=points=>` · ${unitWord(Math.max(0,Number(points)||0),rewardUnit())}`;
+  const tierRowThresholdTextV304=threshold=>` · ${Math.max(0,Number(threshold)||0)} ${tierBasisV303()==='visits'?'visits':'points'}`;
   const tiersStepHtml=()=>{
     const form=state.tierForm||{name:'',threshold:''};
+    /* V304: a removed row keeps its place for the rest of this visit, muted, with Undo beside it.
+       No confirm() and no modal — the undo IS the safety, and it is on the row itself. */
+    const tierRow=tier=>tier.active===false
+      ?`<li class="is-removed-v304" data-grow-setup-tierrow-v304="${esc(tier.id)}"><span><b data-merchant-content>${esc(tier.name)}</b><span class="muted small"> · Removed</span></span><button type="button" class="btn ghost sm" data-grow-setup-tier-undo-v304="${esc(tier.id)}">Undo</button></li>`
+      :`<li data-grow-setup-tierrow-v304="${esc(tier.id)}"><span><b data-merchant-content data-grow-setup-tiername-v304>${esc(tier.name)}</b><span class="muted small" data-grow-setup-tierthreshold-v304>${esc(tierRowThresholdTextV304(tier.threshold))}</span><span class="muted small" data-grow-setup-rowmark-v304="tier:${esc(tier.id)}">${esc(rowMarkTextV304(tier.id))}</span></span><span class="grow-setup-rowactions-v304"><button type="button" class="btn ghost sm" data-grow-setup-tier-edit-v303="${esc(tier.id)}">Edit</button><button type="button" class="btn ghost sm" data-grow-setup-tier-remove-v304="${esc(tier.id)}">Remove</button></span></li>`;
     const rows=state.tiers.length
-      ?`<ul class="grow-setup-rewardlist-v301">${state.tiers.map(tier=>`<li><span><b data-merchant-content>${esc(tier.name)}</b><span class="muted small"> · ${esc(`${tier.threshold} ${tierBasisV303()==='visits'?'visits':'points'}`)}</span></span><button type="button" class="btn ghost sm" data-grow-setup-tier-edit-v303="${esc(tier.id)}">Edit</button></li>`).join('')}</ul>`
+      ?`<ul class="grow-setup-rewardlist-v301">${state.tiers.map(tierRow).join('')}</ul>`
       :`<p class="muted small">No tier yet. Add the first one below${TIER_DEFAULTS_V303.length?', or start from a ready-made ladder':''}.</p>
         <div class="grow-setup-chips-v301" aria-label="Suggested tier ladder"><button type="button" class="grow-setup-chip-v301" data-grow-setup-tier-default-v303="1">${esc(TIER_DEFAULTS_V303.map(([name,threshold])=>`${name} ${threshold}`).join(' · '))}</button></div>`;
+    const editing=Boolean(state.tierForm?.id);
     return `<p class="grow-setup-lead-v301">What tiers do customers climb?</p>${rows}
       <div class="grow-setup-rewardform-v301" data-grow-setup-tierform-v303>
         <div class="field-grid">
@@ -12986,7 +13217,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
           <div><label for="growSetupTierThresholdV303">${esc(tierUnitLabelV303())}</label>
             <input id="growSetupTierThresholdV303" inputmode="numeric" value="${esc(String(form.threshold))}" placeholder="e.g. 10"></div>
         </div>
-        <p class="muted small" style="margin-top:8px">Fill this in and press Next to add or save a tier. Benefits and point multipliers live under More reward settings.</p></div>`;
+        <div class="grow-setup-formfoot-v304"><button type="button" class="btn" id="growSetupTierSaveV304">${editing?'Save':'Add tier'}</button>
+        <span class="muted small">${editing?'Your changes save on their own.':'Add tier saves it to the list right away.'}</span></div>
+        <p class="muted small" style="margin-top:8px">Benefits and point multipliers live under More reward settings.</p></div>`;
   };
   const rewardFormHtml=()=>{
     const form=state.form||{id:null,name:'',budget:'',points:''};
@@ -12999,7 +13232,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         <div><label for="growSetupRewardPointsV301">${state.family==='stamps'?'Stamps':'Points'} cost</label>
           <input id="growSetupRewardPointsV301" inputmode="numeric" value="${esc(form.points)}" placeholder="e.g. 300"></div>
       </div>
-      <p class="muted small" style="margin-top:8px">${esc(rewardHintText())}</p></div>`;
+      <p class="muted small" style="margin-top:8px">${esc(rewardHintText())}</p>
+      <div class="grow-setup-formfoot-v304"><button type="button" class="btn" id="growSetupRewardSaveV304">${form.id?'Save':'Add reward'}</button>
+      <span class="muted small">${form.id?'Your changes save on their own.':'Add reward saves it to the list right away.'}</span></div></div>`;
   };
   const stepThreeHtml=()=>{
     /* A firm already on fixed redemption has no reward catalogue to fill in — its one reward IS
@@ -13011,8 +13246,14 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const stampsHead=state.family==='stamps'
       ?`<p class="grow-setup-sentence-v301">Collect <input id="growSetupStampTargetV301" class="grow-setup-input-v301" inputmode="numeric" value="${esc(String(state.stampTarget))}" aria-label="Stamps needed for a reward"> stamps → reward</p>`
       :'';
+    /* V304: Remove sits beside Edit on every row, and a removed row stays muted with Undo for the
+       rest of this visit (owner: "i need to be able to add or delete"). Same shape as the tier
+       rows above, deliberately — one list pattern for both steps. */
+    const rewardRow=reward=>reward.active===false
+      ?`<li class="is-removed-v304" data-grow-setup-rewardrow-v304="${esc(reward.id)}"><span><b data-merchant-content>${esc(reward.name)}</b><span class="muted small"> · Removed</span></span><button type="button" class="btn ghost sm" data-grow-setup-reward-undo-v304="${esc(reward.id)}">Undo</button></li>`
+      :`<li data-grow-setup-rewardrow-v304="${esc(reward.id)}"><span><b data-merchant-content data-grow-setup-rewardname-v304>${esc(reward.name)}</b><span class="muted small" data-grow-setup-rewardpoints-v304>${esc(rewardRowPointsTextV304(reward.points))}</span><span class="muted small" data-grow-setup-rowmark-v304="reward:${esc(reward.id)}">${esc(rowMarkTextV304(reward.id))}</span></span><span class="grow-setup-rowactions-v304"><button type="button" class="btn ghost sm" data-grow-setup-reward-edit-v301="${esc(reward.id)}">Edit</button><button type="button" class="btn ghost sm" data-grow-setup-reward-remove-v304="${esc(reward.id)}">Remove</button></span></li>`;
     const rows=state.rewards.length
-      ?`<ul class="grow-setup-rewardlist-v301">${state.rewards.map(reward=>`<li><span><b data-merchant-content>${esc(reward.name)}</b><span class="muted small"> · ${esc(unitWord(reward.points,rewardUnit()))}</span></span><button type="button" class="btn ghost sm" data-grow-setup-reward-edit-v301="${esc(reward.id)}">Edit</button></li>`).join('')}</ul>`
+      ?`<ul class="grow-setup-rewardlist-v301">${state.rewards.map(rewardRow).join('')}</ul>`
       :'<p class="muted small">No reward yet. Add the first one below.</p>';
     const chips=`<div class="grow-setup-chips-v301" aria-label="Suggested rewards">${suggestionsV301().map((item,index)=>`<button type="button" class="grow-setup-chip-v301" data-grow-setup-suggest-v301="${index}">${esc(item.name)} — ${esc(unitWord(item.points,rewardUnit()))}</button>`).join('')}</div>`;
     return `<p class="grow-setup-lead-v301">What do customers get?</p>${stampsHead}${rows}${chips}${rewardFormHtml()}`;
@@ -13093,6 +13334,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     state.step=Math.min(stepCountV303(),Math.max(1,step));
     state.visited.add(state.step);
     state.error='';
+    /* V304: the "· editing" affix belongs to the form that was open on the step being left. Any
+       auto-save it armed still runs — the form was snapshotted when the timer was set. */
+    state.editingV304=null;
     render();
     if(stepKindV303()==='live')loadComparison();
   };
@@ -13152,12 +13396,16 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       const item=suggestionsV301()[Number(button.dataset.growSetupSuggestV301)];
       if(!item)return;
       state.form={id:null,name:item.name,budget:(item.budgetCents/100).toFixed(2),points:String(item.points)};
+      state.editingV304=null;
       render();$('growSetupRewardNameV301')?.focus({preventScroll:true});
     });
     host.querySelectorAll('[data-grow-setup-reward-edit-v301]').forEach(button=>button.onclick=()=>{
       const reward=state.rewards.find(item=>item.id===button.dataset.growSetupRewardEditV301);
       if(!reward)return;
       state.form={id:reward.id,name:reward.name,budget:(reward.budgetCents/100).toFixed(2),points:String(reward.points)};
+      /* V304: the row says "· editing" from the moment its form opens, so the owner can see which
+         of the listed rows the fields below belong to. */
+      state.editingV304=reward.id;
       render();$('growSetupRewardNameV301')?.focus({preventScroll:true});
     });
     /* V303 tiers step. Editing a listed tier loads it into the same inline form the add uses —
@@ -13166,6 +13414,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       const tier=state.tiers.find(item=>item.id===button.dataset.growSetupTierEditV303);
       if(!tier)return;
       state.tierForm={id:tier.id,name:tier.name,threshold:String(tier.threshold)};
+      state.editingV304=tier.id;
       render();$('growSetupTierNameV303')?.focus({preventScroll:true});
     });
     /* The one-tap ladder. It only PREFILLS the list — nothing is written until Next — so an owner
@@ -13174,11 +13423,135 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       TIER_DEFAULTS_V303.forEach(([name,threshold],index)=>{
         const id=crypto.randomUUID();
         state.tiers.push({id,name,threshold,multiplier:1,perkNote:null,sort:index,
-          effectiveFrom:null,expiresAt:null});
+          effectiveFrom:null,expiresAt:null,active:true});
         state.tiersDirty.add(id);
       });
       state.tierForm=null;render();
     });
+    /* ---------------- V304: add, save, remove and undo, all without leaving the step ----------
+       Owner: "for rewards subtab - i need to be able to add or delete. because now i need to press
+       'next' then press 'back' to view changes". Each control below performs the SAME write Next
+       performs, through the shared helper, and then re-renders this step in place. */
+    const rewardSaveButton=$('growSetupRewardSaveV304');
+    if(rewardSaveButton)rewardSaveButton.onclick=()=>{
+      readStepFields();
+      /* Flush first: the pending auto-save would otherwise repeat this exact write 900ms later. */
+      flushRewardSaveV304();
+      const form=state.form?{...state.form}:null;
+      if(!form)return;
+      withBusy(async()=>{
+        const result=await runSaveV304(()=>saveRewardFormV304(form));
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was saved.');
+        state.form=null;state.editingV304=null;state.error='';
+        render();
+        flashSavedV304('reward',result.id);
+        $('growSetupRewardNameV301')?.focus({preventScroll:true});
+      },'growSetupRewardSaveV304');
+    };
+    host.querySelectorAll('[data-grow-setup-reward-remove-v304]').forEach(button=>button.onclick=()=>{
+      const reward=state.rewards.find(item=>item.id===button.dataset.growSetupRewardRemoveV304);
+      if(!reward)return;
+      /* The step's own validation already refuses to move on with no reward, so removing the last
+         one would strand the owner on an error they cannot clear without retyping it. Refused
+         inline instead, in the words that say what to do. */
+      if(activeRewardsV304().length<=1){
+        state.error='Keep at least one reward customers can get — add its replacement first.';
+        return render();
+      }
+      flushRewardSaveV304();
+      withBusy(async()=>{
+        const result=await runSaveV304(()=>saveRewardFormV304({id:reward.id,name:reward.name,
+          budget:(reward.budgetCents/100).toFixed(2),points:String(reward.points)},{active:false}));
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was removed.');
+        reward.active=false;
+        if(state.form?.id===reward.id){state.form=null;state.editingV304=null}
+        state.error='';render();
+      });
+    });
+    host.querySelectorAll('[data-grow-setup-reward-undo-v304]').forEach(button=>button.onclick=()=>{
+      const reward=state.rewards.find(item=>item.id===button.dataset.growSetupRewardUndoV304);
+      if(!reward)return;
+      withBusy(async()=>{
+        const result=await runSaveV304(()=>saveRewardFormV304({id:reward.id,name:reward.name,
+          budget:(reward.budgetCents/100).toFixed(2),points:String(reward.points)},{active:true}));
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was restored.');
+        reward.active=true;state.error='';render();
+        flashSavedV304('reward',reward.id);
+      });
+    });
+    const tierSaveButton=$('growSetupTierSaveV304');
+    if(tierSaveButton)tierSaveButton.onclick=()=>{
+      readStepFields();
+      flushTierSaveV304();
+      const form=state.tierForm?{...state.tierForm}:null;
+      if(!form)return;
+      withBusy(async()=>{
+        const result=await runSaveV304(()=>saveTierFormV304(form));
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was saved.');
+        state.tierForm=null;state.editingV304=null;state.error='';
+        render();
+        flashSavedV304('tier',result.id);
+        $('growSetupTierNameV303')?.focus({preventScroll:true});
+      },'growSetupTierSaveV304');
+    };
+    host.querySelectorAll('[data-grow-setup-tier-remove-v304]').forEach(button=>button.onclick=()=>{
+      const tier=state.tiers.find(item=>item.id===button.dataset.growSetupTierRemoveV304);
+      if(!tier)return;
+      /* A model that RUNS on tiers cannot have none: customers would sit on a ladder with no
+         rungs. The way out is named, because "you cannot do that" without one is a dead end. */
+      if(tierModelV303()&&activeTiersV304().length<=1){
+        state.error='Keep at least one tier, or switch model in Choose.';
+        return render();
+      }
+      flushTierSaveV304();
+      withBusy(async()=>{
+        const result=await runSaveV304(()=>saveTierFormV304({id:tier.id,name:tier.name,
+          threshold:String(tier.threshold)},{active:false}));
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was removed.');
+        if(state.tierForm?.id===tier.id){state.tierForm=null;state.editingV304=null}
+        state.error='';render();
+      });
+    });
+    host.querySelectorAll('[data-grow-setup-tier-undo-v304]').forEach(button=>button.onclick=()=>{
+      const tier=state.tiers.find(item=>item.id===button.dataset.growSetupTierUndoV304);
+      if(!tier)return;
+      withBusy(async()=>{
+        const result=await runSaveV304(()=>saveTierFormV304({id:tier.id,name:tier.name,
+          threshold:String(tier.threshold)},{active:true}));
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was restored.');
+        state.error='';render();
+        flashSavedV304('tier',tier.id);
+      });
+    });
+    /* V304: while the form is editing a LISTED row, typing updates that row as it is typed (owner:
+       "it needs to reflect as i change it, so will not have confusion"). DOM-only — the step is not
+       re-rendered per keystroke, so the caret stays exactly where the owner put it — and the same
+       keystroke arms the 900ms auto-save. A NEW row is never written this way. */
+    const tierNameInput=$('growSetupTierNameV303'),tierThresholdInput=$('growSetupTierThresholdV303');
+    if(tierNameInput||tierThresholdInput){
+      const onTierInput=()=>{
+        readStepFields();
+        const id=state.tierForm?.id;
+        if(!id)return;
+        state.editingV304=id;
+        const row=host.querySelector(`[data-grow-setup-tierrow-v304="${id}"]`);
+        if(row){
+          const nameNode=row.querySelector('[data-grow-setup-tiername-v304]');
+          if(nameNode)nameNode.textContent=state.tierForm.name||'Tier';
+          const thresholdNode=row.querySelector('[data-grow-setup-tierthreshold-v304]');
+          if(thresholdNode)thresholdNode.textContent=tierRowThresholdTextV304(parseInt(state.tierForm.threshold||'0',10)||0);
+        }
+        rowMarkV304('tier',id,' · editing');
+        autoSaveTierV304();
+      };
+      [tierNameInput,tierThresholdInput].forEach(input=>input&&input.addEventListener('input',onTierInput));
+    }
     /* V293's two-decision maths, unchanged: the company-cost budget derives the points price
        from the one programme-wide cost per point, and typing a points price pauses that
        derivation so the field the owner just filled in is never overwritten under their hands.
@@ -13193,6 +13566,28 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         if(!(budget>0)||manualV301)return;
         pointsInput.value=String(Math.max(1,Math.ceil((budget*100)/Math.max(1,costPerPointCents()))));
       });
+    }
+    /* V304: the reward half of the live reflection, registered AFTER the derivation above on
+       purpose — the budget field derives the points price without firing an input event of its
+       own, so this listener has to run second to see the number it just wrote. */
+    const rewardNameInput=$('growSetupRewardNameV301');
+    if(rewardNameInput||budgetInput||pointsInput){
+      const onRewardInput=()=>{
+        readStepFields();
+        const id=state.form?.id;
+        if(!id)return;
+        state.editingV304=id;
+        const row=host.querySelector(`[data-grow-setup-rewardrow-v304="${id}"]`);
+        if(row){
+          const nameNode=row.querySelector('[data-grow-setup-rewardname-v304]');
+          if(nameNode)nameNode.textContent=state.form.name||'Reward';
+          const pointsNode=row.querySelector('[data-grow-setup-rewardpoints-v304]');
+          if(pointsNode)pointsNode.textContent=rewardRowPointsTextV304(parseInt(state.form.points||'0',10)||0);
+        }
+        rowMarkV304('reward',id,' · editing');
+        autoSaveRewardV304();
+      };
+      [rewardNameInput,budgetInput,pointsInput].forEach(input=>input&&input.addEventListener('input',onRewardInput));
     }
     const pause=$('growSetupPauseV301');
     if(pause)pause.onchange=()=>{state.keepPaused=pause.checked===true;render()};
@@ -13221,10 +13616,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   /* The Next button is disabled for the duration of its own save. This is the same defect class
      as the double publish modal: an enabled button over an in-flight write is how one intent
      becomes two writes. */
-  const withBusy=async work=>{
+  /* V304: the button id is a parameter now, because the Reward and Tiers steps grew their own
+     in-form primary action and the same rule applies to it — an enabled button over an in-flight
+     write is how one intent becomes two writes. The one busy flag still covers every caller. */
+  const withBusy=async(work,buttonId='growSetupNextV301')=>{
     if(state.busy)return;
     state.busy=true;state.error='';
-    const button=$('growSetupNextV301');
+    const button=$(buttonId);
     if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
     try{await work()}
     finally{
@@ -13307,44 +13705,27 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        tiers this session actually touched are sent. Every column the form does not show is handed
        straight back from the merged row — a two-field edit must not blank a multiplier or a
        benefit list set in the advanced editor. */
+    /* V304: Next no longer holds its own copy of this write. It flushes any pending auto-save,
+       puts the open form through the SAME saveTierFormV304 the in-form "Add tier" button uses,
+       and then writes whatever the one-tap ladder left dirty. */
     if(kind==='tiers')return withBusy(async()=>{
+      flushTierSaveV304();
       const form=state.tierForm;
       const hasForm=Boolean(form&&form.name.trim().length>=1);
       if(hasForm){
-        const threshold=parseInt(form.threshold||'',10);
-        if(!Number.isFinite(threshold)||threshold<0){
-          state.error=`Enter how many ${tierBasisV303()==='visits'?'visits':'points'} a customer needs for this tier.`;
-          return render();
-        }
-        const id=form.id||crypto.randomUUID();
-        const existing=state.tiers.find(tier=>tier.id===id);
-        if(existing){existing.name=form.name.trim();existing.threshold=threshold}
-        else state.tiers.push({id,name:form.name.trim(),threshold,multiplier:1,perkNote:null,
-          sort:state.tiers.length,effectiveFrom:null,expiresAt:null});
-        state.tiersDirty.add(id);
-        state.tiers.sort((a,b)=>a.threshold-b.threshold);
-        state.tierForm=null;
+        const result=await runSaveV304(()=>saveTierFormV304({...form}));
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was saved.');
+        state.tierForm=null;state.editingV304=null;
       }
-      if(!state.tiers.length){
+      if(!activeTiersV304().length){
         state.error='Add at least one tier customers can reach.';return render();
       }
       const pending=state.tiers.filter(tier=>state.tiersDirty.has(tier.id));
-      if(pending.length){
-        const created=await ensureDraftV302();
+      for(const tier of pending){
+        const result=await runSaveV304(()=>writeTierRowV304(tier));
         if(!isCurrent())return;
-        if(!created.ok)return failStep(created.error,'Nothing was saved.');
-        for(const tier of pending){
-          const {data,error}=await sb.rpc('save_loyalty_tier_draft_v143',{
-            p_version:state.versionId,
-            p_tier:{id:tier.id,name:tier.name,threshold:tier.threshold,
-              points_multiplier:tier.multiplier,perk_note:tier.perkNote,sort:tier.sort,active:true,
-              effective_from:tier.effectiveFrom,expires_at:tier.expiresAt},
-            p_expected_snapshot_hash:state.snapshotHash||null});
-          if(!isCurrent())return;
-          if(error)return failStep(error,'Not every tier was saved.');
-          if(data?.snapshot_hash)state.snapshotHash=data.snapshot_hash;
-          state.tiersDirty.delete(tier.id);
-        }
+        if(!result.ok)return reportSaveV304(result,'Not every tier was saved.');
       }
       goto(state.step+1);
     });
@@ -13361,7 +13742,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       if(state.family==='stamps'&&!(state.stampTarget>0)){state.error='Enter how many stamps a customer needs.';return render()}
       const form=state.form;
       const hasForm=Boolean(form&&form.name.trim().length>=2);
-      if(!hasForm&&!state.rewards.length){
+      /* V304: only rewards a customer can actually claim count. Removing them all and pressing
+         Next must not walk past a catalogue that is now empty. */
+      if(!hasForm&&!activeRewardsV304().length){
         state.error='Add one reward customers can get. Give it a name and a cost.';return render();
       }
       if(state.family==='stamps'){
@@ -13369,46 +13752,16 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         if(!isCurrent())return;
         if(!result.ok)return failStep(result.error,'Nothing was saved.');
       }
+      /* V304: the reward write that used to live here is saveRewardFormV304 — the same helper the
+         in-form "Add reward" / "Save" button and the debounced auto-save call, including V302's
+         ensure-then-edit materialisation and the V293 three-field edit envelope. Next flushes the
+         pending auto-save first, so pressing it during a debounce writes once, not twice. */
       if(hasForm){
-        const cost=parseInt(form.points||'0',10);
-        if(!(cost>0)){state.error=`Enter how many ${rewardUnit()} this reward costs.`;return render()}
-        const budgetCents=Math.round((parseFloat(form.budget||'0')||0)*100);
-        /* The same envelope saveReward posts. On an EDIT only the three fields this form owns
-           are sent: save_loyalty_reward_draft coalesces every absent key from the existing
-           version, so a description, image or store-credit value set in the full editor is
-           preserved rather than blanked by a wizard that never showed it. */
-        /* V302: a reward this draft has never carried must be MATERIALISED into it before the
-           partial edit below is written. save_loyalty_reward_draft coalesces every field it is
-           not given from the reward's version IN THIS DRAFT — and for a published reward the
-           draft has never touched there is no such version, so the three fields this form owns
-           would be saved beside a NULL description, NULL fulfilment kind and NULL terms, and
-           publishing would then write those NULLs onto a working reward. This is the same
-           ensure-then-edit the full editor performs for exactly the same reason; it is
-           idempotent, so a reward already in the draft simply confirms. */
-        if(form.id){
-          const created=await ensureDraftV302();
-          if(!isCurrent())return;
-          if(!created.ok)return failStep(created.error,'Nothing was saved.');
-          const {data:ensured,error:ensureError}=await sb.rpc('ensure_published_reward_in_draft_v138',{
-            p_config_version:state.versionId,p_reward:form.id,p_expected_snapshot_hash:state.snapshotHash||null});
-          if(!isCurrent())return;
-          if(ensureError||ensured?.reward_id!==form.id)
-            return failStep(ensureError||new Error('The editable copy of this reward could not be confirmed.'),'Nothing was saved.');
-          if(ensured?.snapshot_hash)state.snapshotHash=ensured.snapshot_hash;
-        }
-        const payload=form.id
-          ?{id:form.id,business_id:S.biz.id,name:form.name.trim(),customer_name:form.name.trim(),
-            cost_points:cost,estimated_cost_cents:budgetCents}
-          :{id:null,business_id:S.biz.id,name:form.name.trim(),customer_name:form.name.trim(),
-            description:null,cost_points:cost,credit_cents:0,estimated_cost_cents:budgetCents,
-            entitlement_expiry_days:null,usage_limit:null,claim_available_from:null,
-            claim_available_until:null,image_ref:null,fulfillment_kind:'manual_item',active:true};
-        const result=await saveDraft({reward:payload,reward_branch_ids:[],reward_service_ids:[],reward_product_ids:[]});
+        flushRewardSaveV304();
+        const result=await runSaveV304(()=>saveRewardFormV304({...form}));
         if(!isCurrent())return;
-        if(!result.ok)return failStep(result.error,'Nothing was saved.');
-        state.form=null;
-        await refreshRewards();
-        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Nothing was saved.');
+        state.form=null;state.editingV304=null;
       }
       goto(state.step+1);
     });
@@ -16692,6 +17045,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'b0232c8553c79a9b8f72d3b2bb0a5fe392bd53c82052a46e928676167d087b58',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'9dfad6ceffc79c3225211d81ded031cd110c670a78b6fe044036b68da0722dad',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
