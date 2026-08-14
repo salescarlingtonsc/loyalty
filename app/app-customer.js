@@ -2826,11 +2826,22 @@ async function shareCustomerOfferV264(item,business){
 function customerReferralMoneyV300(cents,currency){
   return `${currency} ${(Number(cents||0)/100).toFixed(2)}`;
 }
+/* V322 (OWNER RULING R1/R4): the reward is POINTS now, and the qualifying FLOOR is still money —
+   the friend still has to spend. Two units on one card, so each gets its own formatter and the
+   money one is left exactly as it is rather than being taught a second job. */
+function customerReferralPointsV322(points){
+  const value=Math.max(0,Math.round(Number(points)||0));
+  return ct(value===1?'referralOnePoint':'referralPoints',{count:value});
+}
 function customerReferralCardMarkupV300(card,business){
   const currency=String(card?.currency||business?.currency||'SGD');
   const code=String(card?.code||'').trim();
   const referred=Math.max(0,Number(card?.referred_count)||0);
-  const reward=customerReferralMoneyV300(card?.reward_cents,currency);
+  /* V322: reward_points is what the engine pays. reward_cents is still on the payload for the
+     four-hour CDN window in which the previous bundle is still being served, and this bundle
+     deliberately ignores it — a card that fell back to the money number would advertise a payout
+     that no longer exists. */
+  const reward=customerReferralPointsV322(card?.reward_points);
   const floor=Number(card?.min_spend_cents||0)>0?customerReferralMoneyV300(card?.min_spend_cents,currency):'';
   return `<section class="card wallet-section customer-referral-card-v300" id="walletReferral" aria-labelledby="customerReferralTitle">
     <div class="wallet-section-head"><div>

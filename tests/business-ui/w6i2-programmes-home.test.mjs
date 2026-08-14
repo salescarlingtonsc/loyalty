@@ -105,11 +105,39 @@ test('W6I2 A2 flipping one switch leaves the other three exactly as they were', 
 
 test('W6I2 A3 the switch SET reaches public.set_programmes_v314 whole, once, after publish', () => {
   /* v314's writer accepts either a legacy model key or an explicit set. The switchboard is the one
-     caller that produces a state no model key spells, and it must send all four kinds: an omitted
-     key leaves that spine row at whatever it was, so a switch the owner turned OFF would stay on. */
+     caller that produces a state no model key spells.
+     V322 (OWNER RULING R6 — "if i unselect the program does not mean i want to turn off (i need a
+     seperate button) — it just means i do not want to edit the rewards at this point in time").
+     "WHOLE" IS THE HALF THIS RULING RETIRED, and it retired it because it was a live defect. The
+     old reasoning above — "it must send all four kinds: an omitted key leaves that spine row at
+     whatever it was, so a switch the owner turned OFF would stay on" — assumed screen 0 was an
+     on/off control. It never was. An owner who opened the wizard to fix one gift and unticked Tier
+     because they did not want to walk two tier screens had their LIVE tier programme switched off
+     for every customer, with nothing on screen saying so.
+     So the "whole" claim is replaced by a STRONGER one: the call carries the scope the owner
+     selected and NOTHING ELSE. Absence is now the mechanism — set_programmes_v314 leaves an
+     unnamed kind exactly as it found it — which is precisely the property the old assertion was
+     written to defeat, now load-bearing. Everything else this test says is untouched: ONE call,
+     AFTER the publish it belongs with, through the one shared writer, and the frozen points_mode
+     column still written by nobody. */
   assert.match(code, /const base=typeof selection==='string'\s*\r?\n?\s*\?PROGRAMME_SWITCHES_V314\[selection\]/);
   assert.match(code, /\?Object\.fromEntries\(PROGRAMME_KINDS_W6I2\.filter\(kind=>kind in selection\)/);
-  assert.match(wizard, /await writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\},\s*\r?\n?\s*\{paused:state\.keepPaused===true,key:state\.switchKeyV314\}\)/);
+  assert.match(wizard, /await writeProgrammeSwitchesV314\(S\.biz\.id,\s*\r?\n?\s*programmeScopeSwitchesV322\(state\.switches,\{paused:state\.keepPaused===true\}\),\s*\r?\n?\s*\{paused:false,key:state\.switchKeyV314\}\)/);
+  /* The scope→payload translation, in full, because the ruling lives entirely inside it:
+       · a kind the owner did NOT tick contributes no key at all — never `false`;
+       · a kind the owner DID tick is sent `true`, or `false` under keep-it-paused, which is the
+         one case where a SELECTED programme legitimately goes off (PAUSED = spine row off);
+       · the ONLY `false` on an unticked kind is the R2/R3 stamps exclusivity, and the switchboard
+         takes an explicit confirmation before the scope reaches that state. */
+  assert.match(code, /function programmeScopeSwitchesV322\(scope,\{paused=false\}=\{\}\)\{\s*\r?\n?\s*const set=\{\};\s*\r?\n?\s*PROGRAMME_KINDS_W6I2\.forEach\(kind=>\{if\(scope&&scope\[kind\]===true\)set\[kind\]=paused!==true\}\);/);
+  assert.match(code, /if\(!Object\.keys\(set\)\.length\)return null;/);
+  assert.match(code, /if\(set\.stamps===true\)programmeExclusionsV322\('stamps'\)\.forEach\(kind=>\{set\[kind\]=false\}\);\s*\r?\n?\s*else if\(set\.points===true\|\|set\.tiers===true\)set\.stamps=false;/);
+  // A run with nothing in scope sends nothing at all, rather than four `false`s.
+  assert.match(code, /if\(!switches\|\|!businessId\)return \{ok:true,skipped:true,error:null\};/);
+  // The retired payload must not come back: it is the defect, not a style.
+  assert.doesNotMatch(wizardCode, /writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\}/);
+  // Still exactly ONE call to the shared writer from the whole wizard.
+  assert.equal([...wizard.matchAll(/writeProgrammeSwitchesV314\(/g)].length, 1);
   // AFTER publish, never before — the V230/V303 discipline v314 preserved verbatim.
   const publishStep = wizard.slice(wizard.indexOf('const activeResult=await saveDraft({active:'));
   assert.ok(publishStep.indexOf('publish_loyalty_config') < publishStep.indexOf('applyProgrammeSwitchesV314(false)'),
@@ -262,11 +290,24 @@ test('W6I2 B4 the referral rail writes referral_programs at Go-live, never on a 
   assert.doesNotMatch(referralBranch, /sb\.rpc|sb\.from/);
   const switchApply = wizard.slice(wizard.indexOf('async function applyProgrammeSwitchesV314(fromRetry){'),
     wizard.indexOf('const programRowV305=model=>{'));
-  assert.match(switchApply, /sb\.rpc\('save_referral_program',\{p_business:S\.biz\.id,/);
+  /* V322 (OWNER RULING R1/R4 — "why referral is a stored credits? please remove it as i already
+     said no more store credits"): the writer is save_referral_program_v322 and its amount argument
+     is p_reward_points, an integer count of POINTS with no ×100. The placement fact this test
+     exists for — a LIVE-table write that happens at Go-live and nowhere else — is untouched. */
+  assert.match(switchApply, /sb\.rpc\('save_referral_program_v322',\{p_business:S\.biz\.id,/);
+  assert.match(switchApply, /p_reward_points:Math\.max\(0,Math\.round\(Number\(state\.referralReward\)\|\|0\)\),/);
+  assert.doesNotMatch(switchApply, /p_reward_cents/);
+  /* V322 (OWNER RULING R6): and it happens only when referral is IN SCOPE. The spine payload no
+     longer names a programme the owner did not select, so its companion live-table write must not
+     either — a wizard run that never went near the referral screens leaves referral_programs
+     exactly as it found it, which is the same promise R6 makes about the spine row. */
+  assert.match(switchApply, /if\(state\.switches\.referral!==true\)\{state\.modeError='';if\(fromRetry\)render\(\);return true\}/);
   /* The spine row and referral_programs.enabled must agree: the spine gates presentation and the
      engine's referral block still reads `enabled`, so a switch-on that left `enabled` false would
-     be a programme that looks live and pays nothing. */
-  assert.match(switchApply, /const referralWanted=state\.switches\.referral===true&&state\.keepPaused!==true;/);
+     be a programme that looks live and pays nothing. Under R6 the `switches.referral===true` half
+     of that test is the scope guard above, so what remains here is the pause half — a selected
+     referral programme published paused still goes off. */
+  assert.match(switchApply, /const referralWanted=state\.keepPaused!==true;/);
   assert.match(switchApply, /p_enabled:referralWanted,/);
   // A no-op write is still a write, and this one lands on a live table.
   assert.match(switchApply, /if\(state\.referralDirty\|\|referralWanted!==referralWasOn\)\{/);
@@ -539,7 +580,9 @@ function mountWizard({ spine = null, industry = 'salon', snapshot = {}, liveTier
     save_loyalty_tier_draft_v143: async () => ({ data: { snapshot_hash: 'h3' }, error: null }),
     preview_publish_impact: async () => ({ data: { rules: [], requires_confirmation: false }, error: null }),
     publish_loyalty_config: async () => ({ data: {}, error: null }),
-    save_referral_program: async () => ({ data: {}, error: null }),
+    /* V322 (OWNER RULING R1/R4): the referral writer is save_referral_program_v322 and it takes
+       p_reward_points — an integer count of points — because the payout stopped being money. */
+    save_referral_program_v322: async () => ({ data: {}, error: null }),
     get_loyalty_reward_draft: async () => ({ data: { program: null, rewards: [], tiers: [] }, error: null }),
     set_programmes_v314: async args => ({ data: { programmes: Object.entries(args.p_switches)
       .map(([kind, active]) => ({ kind, active })) }, error: null })
@@ -669,10 +712,18 @@ test('W6I2 E3 turning Referral ON writes referral_programs, default accepted (de
   for (let guard = 0; guard < 8 && !/Go live/.test(w.title()); guard++) await w.press('growSetupNextV301');
   assert.match(w.title(), /Go live/);
   await w.press('growSetupNextV301');
-  const [referral] = w.called('save_referral_program');
+  /* V322 (OWNER RULING R1/R4 — "why referral is a stored credits? please remove it as i already
+     said no more store credits"): same write, same moment, same reason; the writer is
+     save_referral_program_v322 and the amount is p_reward_points, an integer count of POINTS.
+     The seeded default moved with the unit — 100 points, not $10.00 held as 1000 cents — because
+     a unit that changes on one side of a round trip is how a 10 becomes a 1000. */
+  const [referral] = w.called('save_referral_program_v322');
   assert.ok(referral, 'accepting the seeded default must still write the live referral row');
   assert.equal(referral.args.p_enabled, true);
-  assert.equal(referral.args.p_reward_cents, 1000);
+  assert.equal(referral.args.p_reward_points, 100);
+  assert.ok(!('p_reward_cents' in referral.args), 'no money argument survives on the referral write');
+  // And the retired money-signature RPC is never called.
+  assert.deepEqual(w.called('save_referral_program'), []);
 });
 
 test('W6I2 E3 turning Referral OFF disables referral_programs, untouched inputs (defect 3)', async () => {
@@ -681,14 +732,38 @@ test('W6I2 E3 turning Referral OFF disables referral_programs, untouched inputs 
   const w = mountWizard({ spine: spineRows(['points', 'referral']), industry: 'retail',
     snapshot: { loyalty: rowAsSelected(overviewColumns),
       referral: { id: 'ref-1', enabled: true, reward_cents: 1000, min_spend_cents: 0 } } });
+  /* V322 (OWNER RULING R6 — "if i unselect the program does not mean i want to turn off (i need a
+     seperate button) — it just means i do not want to edit the rewards at this point in time").
+     THE CONTROL THIS TEST PRESSED NO LONGER TURNS ANYTHING OFF. Unticking referral on screen 0 now
+     removes it from the run's SCOPE, and the ruling exists because doing otherwise was a live
+     defect: an owner unticking a programme merely to skip its screens had it switched off for
+     every customer. So the wizard half of this test is re-pointed to the ruling — unticking must
+     leave BOTH halves of referral exactly as it found them — and the money claim it was written to
+     protect (an "off" that reaches referral_programs and not merely the spine, because
+     app.on_sale_recorded reads that column) is pinned below at its new home, the ruling's own
+     "seperate button" on the Programmes page. */
   await w.open();
   await w.click('[data-grow-setup-switch-w6i2="referral"]');
-  assert.ok(!w.rail().includes('Referral'), 'the referral rail went with the switch');
+  assert.ok(!w.rail().includes('Referral'), 'the referral rail went with the scope');
   for (let guard = 0; guard < 8 && !/Go live/.test(w.title()); guard++) await w.press('growSetupNextV301');
   await w.press('growSetupNextV301');
-  const [referral] = w.called('save_referral_program');
-  assert.ok(referral, 'switching a live referral programme off must reach referral_programs');
-  assert.equal(referral.args.p_enabled, false);
+  assert.equal(w.called('publish_loyalty_config').length, 1, 'the publish itself still happened');
+  assert.deepEqual(w.called('save_referral_program_v322'), [],
+    'a programme merely dropped from scope must not have its live payout row rewritten');
+  const [switches] = w.called('set_programmes_v314');
+  assert.ok(!('referral' in switches.args.p_switches),
+    'and it must not be named in the spine payload either — absence is how "not off" is expressed');
+  assert.equal(switches.args.p_switches.points, true);
+  /* The OFF direction, at its new home. The separate on/off control writes BOTH halves in one
+     press for exactly the reason this test was written: SA-4 is still open, so a switch that moved
+     only the spine row would leave a programme that reads off on every surface while the engine
+     keeps paying referral rewards on qualifying first visits. */
+  assert.match(grow, /data-grow-switchtoggle-v322="\$\{esc\(kind\)\}"/);
+  assert.match(grow, /data-grow-switchconfirm-yes-v322="\$\{esc\(kind\)\}"/);
+  const confirmHandler = grow.slice(grow.indexOf("outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]')"));
+  assert.match(confirmHandler, /const want=programmeSpineOnV314\(kind\)!==true;/);
+  assert.match(confirmHandler, /const \{ok,error\}=await writeProgrammeSwitchesV314\(S\.biz\.id,set,\{paused:false,key:crypto\.randomUUID\(\)\}\);/);
+  assert.match(confirmHandler, /if\(kind==='referral'\)\{\s*\r?\n?\s*const \{error:referralError\}=await sb\.rpc\('save_referral_program_v322',\{p_business:S\.biz\.id,\s*\r?\n?\s*p_enabled:want,/);
 });
 
 test('W6I2 E3 a keep-it-paused publish disables referral too (defect 3)', async () => {
@@ -701,33 +776,69 @@ test('W6I2 E3 a keep-it-paused publish disables referral too (defect 3)', async 
   const pause = w.dom.$('growSetupPauseV301');
   pause.checked = true; pause.onchange();
   await w.press('growSetupNextV301');
-  const [referral] = w.called('save_referral_program');
+  const [referral] = w.called('save_referral_program_v322');
   assert.ok(referral, '"customers earn nothing" has to reach the table the engine reads');
   assert.equal(referral.args.p_enabled, false);
   const [switches] = w.called('set_programmes_v314');
-  assert.deepEqual(switches.args.p_switches, { points: false, tiers: false, stamps: false, referral: false });
+  /* V322 (OWNER RULING R6): keep-it-paused still turns the whole CHOSEN set off — that promise is
+     the point of this test and it is unchanged. What changed is what "the chosen set" means: the
+     payload is now SCOPE-shaped, so it carries the two programmes this firm actually has in scope
+     (the spine seeded points and referral) and does NOT carry tiers or stamps. Sending
+     `tiers:false, stamps:false` here would have been the wizard pausing two programmes the owner
+     never selected — the very thing "if i unselect the program does not mean i want to turn off"
+     forbids — and set_programmes_v314 leaves an unnamed kind exactly as it found it. */
+  assert.deepEqual(switches.args.p_switches, { points: false, referral: false });
 });
 
 test('W6I2 E3 the referral "before" is read from referral_programs, not from the spine (defect 3)', async () => {
   /* Re-verification proved the three pins above stay green if the captured "before" is taken from
      the SPINE again, because in every one of those fixtures the two agree. They can disagree — the
-     spine row is the display truth and referral_programs.enabled is the money truth, and nothing
-     but the wizard writes both — so the pin has to be a fixture where they differ.
-     Here the spine says referral is OFF (so the switchboard paints it off and the owner changes
-     nothing) while the live row still says enabled=true and the engine is still paying. Reading
-     the spine sees false === false and writes nothing, leaving the payout running under a firm
-     whose every surface says referral is off. Reading referral_programs sees true !== false and
-     heals it. */
-  const w = mountWizard({ spine: spineRows(['points']), industry: 'retail',
+     spine row is the display truth and referral_programs.enabled is the money truth — so the pin
+     has to be a fixture where they differ. That claim is defect 3 and it is untouched by V322.
+
+     V322 (OWNER RULING R6) moved WHICH disagreement the wizard is allowed to act on, so this test
+     now pins both sides of the discriminator.
+
+     (1) THE ORIGINAL FIXTURE, kept verbatim: spine says referral is OFF, the live row still says
+     enabled=true, and the owner touches nothing. This used to be healed at publish. Under the
+     ruling it must NOT be: referral is not in the run's scope, and a wizard that reached into a
+     programme the owner never selected is precisely what "if i unselect the program does not mean
+     i want to turn off" forbids. The drift is real and it is the separate on/off button's job.
+
+     (2) THE MIRROR FIXTURE, which is the disagreement the wizard IS responsible for and which
+     discriminates the two sources exactly as the original did, in the other direction: the spine
+     says referral is ON — so the switchboard paints it ticked and it IS in scope — while
+     referral_programs.enabled is false and the engine is paying nothing. Reading the "before" off
+     the spine sees true === true and writes nothing, leaving a programme every surface calls live
+     that never pays a referrer. Reading referral_programs sees false !== true and heals it. This
+     is the "looks live, pays nothing" failure the source comment names by hand. */
+  const untouched = mountWizard({ spine: spineRows(['points']), industry: 'retail',
     snapshot: { loyalty: rowAsSelected(overviewColumns),
-      referral: { id: 'ref-1', enabled: true, reward_cents: 1000, min_spend_cents: 0 } },
+      referral: { id: 'ref-1', enabled: true, reward_points: 100, min_spend_cents: 0 } },
+    startStep: 'review' });
+  await untouched.open();
+  await new Promise(resolve => setTimeout(resolve, 5));
+  await untouched.press('growSetupNextV301');
+  assert.equal(untouched.called('publish_loyalty_config').length, 1, 'the publish itself happened');
+  assert.deepEqual(untouched.called('save_referral_program_v322'), [],
+    'a programme the owner never put in scope must not be written by this run');
+  const [untouchedSwitches] = untouched.called('set_programmes_v314');
+  assert.ok(!('referral' in untouchedSwitches.args.p_switches),
+    'and it must be absent from the spine payload, not sent as false');
+
+  const w = mountWizard({ spine: spineRows(['points', 'referral']), industry: 'retail',
+    snapshot: { loyalty: rowAsSelected(overviewColumns),
+      referral: { id: 'ref-1', enabled: false, reward_points: 250, min_spend_cents: 0 } },
     startStep: 'review' });
   await w.open();
   await new Promise(resolve => setTimeout(resolve, 5));
   await w.press('growSetupNextV301');
-  const [referral] = w.called('save_referral_program');
-  assert.ok(referral, 'a live referral row under an off switch must be disabled at publish');
-  assert.equal(referral.args.p_enabled, false);
+  const [referral] = w.called('save_referral_program_v322');
+  assert.ok(referral,
+    'a spine row switched on with a dead referral_programs row behind it must be healed at publish');
+  assert.equal(referral.args.p_enabled, true);
+  // Read off the live row, not re-derived: the stored payout crosses untouched, in POINTS (R1/R4).
+  assert.equal(referral.args.p_reward_points, 250);
 });
 
 /* ---------------- defect 4: a legacy publish never destroys a multi-programme state -------- */
@@ -860,13 +971,33 @@ test('W6I2 E6 the four switches actually toggle, and only the one that was press
     snapshot: { loyalty: rowAsSelected(overviewColumns) } });
   await w.open();
   assert.deepEqual(w.rail(), ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Go live']);
-  await w.click('[data-grow-setup-switch-w6i2="stamps"]');
+  /* "Only the one that was pressed" is demonstrated on a NON-EXCLUDING toggle, because that is the
+     only kind for which it is unconditionally true. V322 (OWNER RULING R2/R3 — "stamps is not
+     supposed to be able to be live with points and tier - it is seperate rewards by itself") makes
+     the accrual kinds exclusive: points | tier | points+tier | stamps. Referral is deliberately
+     ORTHOGONAL to all of them (R4), so it is the switch that still moves alone, and it is the one
+     this half of the test presses. */
+  await w.click('[data-grow-setup-switch-w6i2="referral"]');
   assert.deepEqual(w.rail(),
-    ['Programmes', 'Stamps', 'Stamp gift', 'Earning', 'Gifts', 'Expiry', 'Go live'],
-    'stamps joined and points stayed exactly as it was');
-  await w.click('[data-grow-setup-switch-w6i2="points"]');
-  assert.deepEqual(w.rail(), ['Programmes', 'Stamps', 'Stamp gift', 'Go live'],
-    'and turning one off takes its screens with it, leaving the other alone');
+    ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Referral', 'Go live'],
+    'referral joined and points stayed exactly as it was');
+  await w.click('[data-grow-setup-switch-w6i2="referral"]');
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Go live'],
+    'and unticking one takes its screens with it, leaving the other alone');
+  /* The excluding toggle, which is the other half of the same wiring fact: a press whose kind
+     excludes something already ticked FLIPS NOTHING and renders a named confirmation — the ruling
+     is that the consequence is stated BEFORE it happens, not discovered afterwards. Pressing the
+     confirm is what performs the flip, and the clearing is then the owner's own act. */
+  await w.click('[data-grow-setup-switch-w6i2="stamps"]');
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Go live'],
+    'the first press on an excluding switch changes nothing at all');
+  assert.match(w.dom.markup, /data-grow-setup-exclusive-w6i2="stamps"/,
+    'it arms a confirmation instead');
+  assert.match(w.dom.markup, /Turning it on switches Points &amp; gifts off/,
+    'and the confirmation NAMES what goes, before it goes');
+  await w.click('[data-grow-setup-exclusive-confirm-w6i2="stamps"]');
+  assert.deepEqual(w.rail(), ['Programmes', 'Stamps', 'Milestones', 'Go live'],
+    'the confirm is what flips it, and stamps clears the points side per R2/R3');
 });
 
 test('W6I2 E6 the one-tap expiry chips actually set the mode', async () => {

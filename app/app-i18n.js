@@ -3,6 +3,29 @@
    Edit app/app.js and run: npm run bundle-stamp */
 const WORKSPACE_COPY_V97=Object.freeze({
   'zh-CN':Object.freeze({
+    /* v322 (OWNER RULINGS 2026-08-14). The English string IS the key here, so every sentence the
+       rulings rewrote orphaned its old translation and falls back to English until it is re-keyed.
+       These are the sentences the owner reads while making the decision, so they are re-keyed
+       here: the setup wizard's scope question and its footer (R6/R2), the two programme blurbs
+       (R1/R5), the Programmes page's live on/off panel (R6), and the referral fields (R1/R4). */
+    'Which programmes do you want to set up now?':'您现在想设置哪些计划？',
+    'Tick the ones you want to work on. Leaving one unticked does not switch it off — it just stays as it is. To turn a programme on or off for customers, use the switches on the Programmes page.':'勾选您想处理的计划。未勾选并不代表关闭 — 该计划维持原状。若要为顾客开启或关闭计划，请使用「计划」页面上的开关。',
+    'Points, tiers and referral run together. The stamp card runs on its own — picking it turns points and tiers off. Nothing you leave unticked here is switched off; it just stays as it is.':'积分、等级与推荐可同时运行。集章卡则单独运行 — 选择它会关闭积分与等级。此处未勾选的项目不会被关闭，维持原状。',
+    'Customers collect stamps. You set the milestones — 3 stamps, 5, 8, as many as you like.':'顾客集章。里程碑由您设定 — 3 个章、5 个、8 个，数量不限。',
+    'Customers bring a friend in, and you thank them with points.':'顾客带朋友前来，您以积分答谢。',
+    'Nothing is ticked. Tick at least one programme to set up.':'尚未勾选任何项目。请至少勾选一个要设置的计划。',
+    'Live for customers':'顾客可用',
+    'What customers can use right now':'顾客现在可以使用的计划',
+    'This is the on/off switch. Setting a programme up in the wizard does not turn anything on or off here.':'这里才是开关。在设置向导中设置计划并不会在此开启或关闭任何计划。',
+    'What does a referral pay?':'推荐奖励是什么？',
+    'Points for the customer who referred':'给推荐人的积分',
+    'Points to referrer':'给推荐人的积分',
+    'Referral works beside any programme, including the stamp card. The points land in whichever programme you are running.':'推荐可与任何计划并行，包括集章卡。积分会进入您正在运行的那个计划。',
+    'What do customers get, and at how many stamps?':'顾客可获得什么？需要几个章？',
+    'Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.':'您可以添加任意数量的里程碑 — 3 个章、5 个、8 个、12 个，没有上限。系统按所需章数排序。',
+    'Claiming a milestone spends those stamps, so the card starts filling again from what is left. A milestone that keeps the card filling is not built yet.':'兑换里程碑会消耗相应的章，卡片会从剩余章数继续累积。「兑换后不影响进度」的里程碑尚未开发。',
+    'Enter how many points the referring customer gets.':'请填写推荐人可获得的积分数。',
+    'What this publish changes for customers':'本次发布会为顾客改变什么',
     /* v295: humanErrorV295 fallbacks — every sentence the mapper can show instead of a raw
        provider string or a machine code. */
     'That did not go through. Please try again.':'操作未能完成。请重试。',
@@ -184,6 +207,26 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'I have checked the corrected amount.':'我已核对更正后的金额。','Replace the amount':'替换金额'
   }),
   ms:Object.freeze({
+    /* v322 (OWNER RULINGS 2026-08-14) — the Bahasa Melayu half of the same re-keying. See the
+       zh-CN block above for why each of these had to move. */
+    'Which programmes do you want to set up now?':'Program mana yang anda mahu sediakan sekarang?',
+    'Tick the ones you want to work on. Leaving one unticked does not switch it off — it just stays as it is. To turn a programme on or off for customers, use the switches on the Programmes page.':'Tandakan yang anda mahu kerjakan. Membiarkan satu tidak bertanda tidak mematikannya — ia kekal seperti sedia ada. Untuk menghidupkan atau mematikan program bagi pelanggan, gunakan suis di halaman Program.',
+    'Points, tiers and referral run together. The stamp card runs on its own — picking it turns points and tiers off. Nothing you leave unticked here is switched off; it just stays as it is.':'Mata, tahap dan rujukan berjalan bersama. Kad cop berjalan sendiri — memilihnya akan mematikan mata dan tahap. Apa yang anda biarkan tidak bertanda di sini tidak dimatikan; ia kekal seperti sedia ada.',
+    'Customers collect stamps. You set the milestones — 3 stamps, 5, 8, as many as you like.':'Pelanggan mengumpul cop. Anda menetapkan pencapaiannya — 3 cop, 5, 8, seberapa banyak yang anda mahu.',
+    'Customers bring a friend in, and you thank them with points.':'Pelanggan membawa rakan datang, dan anda berterima kasih dengan mata.',
+    'Nothing is ticked. Tick at least one programme to set up.':'Tiada yang ditandakan. Tandakan sekurang-kurangnya satu program untuk disediakan.',
+    'Live for customers':'Aktif untuk pelanggan',
+    'What customers can use right now':'Apa yang pelanggan boleh guna sekarang',
+    'This is the on/off switch. Setting a programme up in the wizard does not turn anything on or off here.':'Ini suis hidup/mati. Menyediakan program dalam pembantu persediaan tidak menghidupkan atau mematikan apa-apa di sini.',
+    'What does a referral pay?':'Apakah ganjaran rujukan?',
+    'Points for the customer who referred':'Mata untuk pelanggan yang merujuk',
+    'Points to referrer':'Mata kepada perujuk',
+    'Referral works beside any programme, including the stamp card. The points land in whichever programme you are running.':'Rujukan berfungsi bersama mana-mana program, termasuk kad cop. Mata itu masuk ke dalam program yang sedang anda jalankan.',
+    'What do customers get, and at how many stamps?':'Apa yang pelanggan dapat, dan pada berapa cop?',
+    'Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.':'Tambah seberapa banyak pencapaian yang anda mahu — 3 cop, 5, 8, 12, tiada had. Ia disusun mengikut bilangan cop yang diperlukan.',
+    'Claiming a milestone spends those stamps, so the card starts filling again from what is left. A milestone that keeps the card filling is not built yet.':'Menuntut satu pencapaian membelanjakan cop tersebut, jadi kad mula diisi semula daripada baki yang ada. Pencapaian yang mengekalkan pengisian kad belum dibina.',
+    'Enter how many points the referring customer gets.':'Masukkan berapa mata yang diterima pelanggan yang merujuk.',
+    'What this publish changes for customers':'Apa yang penerbitan ini ubah untuk pelanggan',
     /* v295: humanErrorV295 fallbacks — every sentence the mapper can show instead of a raw
        provider string or a machine code. */
     'That did not go through. Please try again.':'Tindakan itu tidak berjaya. Sila cuba lagi.',

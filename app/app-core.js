@@ -419,6 +419,12 @@ let pendingOpenApptFormV217=false;
 /* V229 (owner: "i need a clean overview before zooming in"). Which Programmes topic is drilled
    into, '' = the tile overview. In-session only, consumed by growPage. */
 let growTopicV229='';
+/* V322 (R6): the Rewards Programme page's live on/off switches. Module-level for the same reason
+   growTopicV229 is — growPage re-renders by re-calling itself, so anything held in its closure is
+   lost between the press and the confirmation the ruling requires. `pending` is the kind awaiting
+   that confirmation, `error` the last failed switch, both cleared by the router. */
+let growSwitchPendingV322='';
+let growSwitchErrorV322='';
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -750,7 +756,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -1622,8 +1628,13 @@ const CUSTOMER_COPY=Object.freeze({
     programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
     addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
     referralHeading:'Give a friend {business}',
-    referralTermsWithFloor:'They quote your code when they join. Once they spend {floor}, you get {reward} in credit.',
-    referralTerms:'They quote your code when they join. After their first spend, you get {reward} in credit.',
+    /* v322 (owner ruling R1/R4): "no more store credits" — a referral pays POINTS. {reward} is now
+       a points phrase from customerReferralPointsV322, not a money amount; {floor} is still money,
+       because the friend still has to spend. */
+    referralTermsWithFloor:'They quote your code when they join. Once they spend {floor}, you get {reward}.',
+    referralTerms:'They quote your code when they join. After their first spend, you get {reward}.',
+    referralPoints:'{count} points',
+    referralOnePoint:'1 point',
     yourReferralCode:'Your referral code',copyCode:'Copy',shareCode:'Share',codeCopied:'Code copied.',
     referralCodePending:'Your code is being prepared — ask the team at the counter.',
     referredCount:'Friends who joined and spent through you: {count}',
@@ -1784,8 +1795,10 @@ const CUSTOMER_COPY=Object.freeze({
     programmesIntro:'选择一家商家，查看它的奖励、权益、预约和活动记录。',
     addProgramme:'扫码加入',openProgramme:'打开{business}的奖励',localBusiness:'本地商家',
     referralHeading:'介绍朋友到{business}',
-    referralTermsWithFloor:'朋友加入时报上您的代码。他们消费满{floor}后，您可获得{reward}余额。',
-    referralTerms:'朋友加入时报上您的代码。他们首次消费后，您可获得{reward}余额。',
+    referralTermsWithFloor:'朋友加入时报上您的代码。他们消费满{floor}后，您可获得{reward}。',
+    referralTerms:'朋友加入时报上您的代码。他们首次消费后，您可获得{reward}。',
+    referralPoints:'{count}积分',
+    referralOnePoint:'1积分',
     yourReferralCode:'您的推荐码',copyCode:'复制',shareCode:'分享',codeCopied:'已复制代码。',
     referralCodePending:'您的推荐码正在准备中——请到柜台咨询。',
     referredCount:'通过您加入并消费的朋友：{count}',
@@ -1975,8 +1988,10 @@ const CUSTOMER_COPY=Object.freeze({
     programmesIntro:'Pilih perniagaan untuk membuka ganjaran, manfaat, tempahan dan aktivitinya.',
     addProgramme:'Imbas untuk sertai',openProgramme:'Buka ganjaran {business}',localBusiness:'Perniagaan tempatan',
     referralHeading:'Perkenalkan rakan kepada {business}',
-    referralTermsWithFloor:'Rakan anda sebut kod anda semasa mendaftar. Selepas mereka berbelanja {floor}, anda dapat kredit {reward}.',
-    referralTerms:'Rakan anda sebut kod anda semasa mendaftar. Selepas belanja pertama mereka, anda dapat kredit {reward}.',
+    referralTermsWithFloor:'Rakan anda sebut kod anda semasa mendaftar. Selepas mereka berbelanja {floor}, anda dapat {reward}.',
+    referralTerms:'Rakan anda sebut kod anda semasa mendaftar. Selepas belanja pertama mereka, anda dapat {reward}.',
+    referralPoints:'{count} mata',
+    referralOnePoint:'1 mata',
     yourReferralCode:'Kod rujukan anda',copyCode:'Salin',shareCode:'Kongsi',codeCopied:'Kod disalin.',
     referralCodePending:'Kod anda sedang disediakan — tanya kaunter.',
     referredCount:'Rakan yang sertai dan berbelanja melalui anda: {count}',
@@ -2166,8 +2181,10 @@ const CUSTOMER_COPY=Object.freeze({
     programmesIntro:'வெகுமதிகள், சலுகைகள், முன்பதிவுகள் மற்றும் செயல்பாடுகளைத் திறக்க ஒரு வணிகத்தைத் தேர்ந்தெடுக்கவும்.',
     addProgramme:'சேர QR ஸ்கேன் செய்யவும்',openProgramme:'{business} வெகுமதிகளைத் திற',localBusiness:'உள்ளூர் வணிகம்',
     referralHeading:'{business}-க்கு நண்பரை அறிமுகப்படுத்துங்கள்',
-    referralTermsWithFloor:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்கள் {floor} செலவழித்ததும், உங்களுக்கு {reward} கிரெடிட் கிடைக்கும்.',
-    referralTerms:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்களின் முதல் செலவுக்குப் பிறகு, உங்களுக்கு {reward} கிரெடிட் கிடைக்கும்.',
+    referralTermsWithFloor:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்கள் {floor} செலவழித்ததும், உங்களுக்கு {reward} கிடைக்கும்.',
+    referralTerms:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்களின் முதல் செலவுக்குப் பிறகு, உங்களுக்கு {reward} கிடைக்கும்.',
+    referralPoints:'{count} புள்ளிகள்',
+    referralOnePoint:'1 புள்ளி',
     yourReferralCode:'உங்கள் பரிந்துரை குறியீடு',copyCode:'நகலெடு',shareCode:'பகிர்',codeCopied:'குறியீடு நகலெடுக்கப்பட்டது.',
     referralCodePending:'உங்கள் குறியீடு தயாராகிறது — கவுண்டரில் கேளுங்கள்.',
     referredCount:'உங்கள் மூலம் சேர்ந்து செலவழித்த நண்பர்கள்: {count}',

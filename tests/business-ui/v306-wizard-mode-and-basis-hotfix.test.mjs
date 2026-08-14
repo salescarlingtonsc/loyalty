@@ -58,7 +58,21 @@ test('V306/V314 the Stamp card reaches an engine that lets a stamp be redeemed',
      with the exclusive pick it named — the switchboard can express points AND stamps, which no
      model key spells — and the mapping table above survives for the three surfaces that genuinely
      still offer one of four. */
-  assert.match(wizard, /writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\},/);
+  /* V322 (OWNER RULING R6 — "if i unselect the program does not mean i want to turn off"): the
+     switch set is now built from the SCOPE by programmeScopeSwitchesV322 rather than being the raw
+     `{...state.switches}` object. What this line claims for THIS test is untouched and is the whole
+     reason it exists — the wizard hands the shared writer a SWITCH SET, never a model key, so a
+     stamps firm reaches an engine that lets a stamp be redeemed without any surface keeping a
+     points_mode value in step. The translation adds only that a kind the owner never selected is
+     ABSENT from the set instead of being sent `false`. */
+  assert.match(wizard, /writeProgrammeSwitchesV314\(S\.biz\.id,\s*\r?\n?\s*programmeScopeSwitchesV322\(state\.switches,\{paused:state\.keepPaused===true\}\),/);
+  assert.doesNotMatch(wizard, /writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\},/);
+  /* V322 (OWNER RULING R2/R3 — "stamps is not supposed to be able to be live with points and
+     tier"): and the stamps side of that set is still decided by a TABLE, not by a screen. This is
+     the same fact PROGRAMME_SWITCHES_V314.stamps pins above — picking stamps forces points and
+     tiers off — restated for the switchboard's four independent scopes, which is the form the
+     wizard now speaks in. */
+  assert.match(app, /if\(set\.stamps===true\)programmeExclusionsV322\('stamps'\)\.forEach\(kind=>\{set\[kind\]=false\}\);/);
   assert.doesNotMatch(app, /state\.pick/);
 });
 

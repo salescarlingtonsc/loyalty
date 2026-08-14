@@ -206,7 +206,14 @@ test('V271 (b) every Overview number names its source', () => {
   assert.match(app, /claim_available_until,created_at'\)/);
   assert.match(app, /sb\.from\('retention_programs'\)\.select\('id,name,active,goal_visits,period_days,starts_on,created_at'\)/);
   assert.match(app, /sb\.from\('membership_plans'\)\.select\('id,name,active,created_at'\)/);
-  assert.match(app, /sb\.from\('referral_programs'\)\.select\('id,enabled,reward_cents,min_spend_cents,created_at'\)/);
+  /* V322 (OWNER RULING R1/R4 — "why referral is a stored credits? please remove it as i already
+     said no more store credits"): the referral payout is POINTS now, so the live column this
+     Overview row's number is READ FROM moved from reward_cents to reward_points. The fact this
+     line protects is untouched and is the whole point of the test — the Overview never invents a
+     referral number, it names the live column it came from — only the column's name moved.
+     reward_kind rides along on the same select so a later non-points payout has somewhere to be
+     read from rather than somewhere to be invented. */
+  assert.match(app, /sb\.from\('referral_programs'\)\.select\('id,enabled,reward_points,reward_kind,min_spend_cents,created_at'\)/);
   assert.match(app, /sb\.rpc\('business_programme_usage_v271',\{p_business:S\.biz\.id\}\)/);
   assert.match(app, /sb\.from\('firm_config_versions'\)\.select\('published_at'\)[\s\S]{0,180}?order\('published_at',\{ascending:true\}\)/);
 });

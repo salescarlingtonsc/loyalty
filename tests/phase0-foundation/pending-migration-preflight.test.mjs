@@ -182,7 +182,10 @@ const sqlTestBySemanticVersion = new Map([
      v313's post-apply md5s, and the cross-programme redemption cells only mean anything with both
      applied. Both semantic versions are unique, so these bind by version, not by name. */
   ['v313', 'db/tests/v313_v314_programme_switchboard.sql'],
-  ['v314', 'db/tests/v313_v314_programme_switchboard.sql']
+  ['v314', 'db/tests/v313_v314_programme_switchboard.sql'],
+  /* v322 (the owner rulings of 2026-08-14, server half: referral pays points, and the stamps
+     exclusivity guard returns to public.set_programmes_v314). */
+  ['v322', 'db/tests/v322_owner_programme_rulings.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
@@ -804,7 +807,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 268); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion)
+  assert.equal(pending.length, 269); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

@@ -364,7 +364,11 @@ test('customer routes paint loading, expose retryable failures, and ignore late 
   assert.ok((till.match(/if\(!isTillCurrent\(\)\)return/g)||[]).length>=5);
   assert.ok((loyalty.match(/if\(!isLoyaltyCurrent\(\)\)return/g)||[]).length>=10);
   assert.ok((retention.match(/if\(!isRetentionCurrent\(\)\)return/g)||[]).length>=10);
-  assert.match(referrals,/await sb\.rpc\('save_referral_program'[\s\S]{0,400}if\(!isReferralsCurrent\(\)\)return/);
+  /* V322 (OWNER RULING R1/R4): the referral payout became POINTS, so the writer moved from
+     save_referral_program (money) to save_referral_program_v322 (points). The claim this line
+     protects is unchanged and is about ORDERING, not about the amount: the page checks it is still
+     the current route before touching the DOM after the write. */
+  assert.match(referrals,/await sb\.rpc\('save_referral_program_v322'[\s\S]{0,400}if\(!isReferralsCurrent\(\)\)return/);
   assert.match(memberships,/await sb\.rpc\('enroll_membership_v41'[\s\S]{0,250}if\(!isMembershipsCurrent\(\)\)return/);
   assert.match(giftcards,/await sb\.rpc\('issue_gift_card_at_branch_v117'[\s\S]{0,450}if\(!isGiftCardsCurrent\(\)\)return/);
 });

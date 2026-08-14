@@ -45,6 +45,12 @@ const w6i2Evidence=readFileSync(new URL('../../docs/qa/evidence/W6I2-PROGRAMMES-
    extracted component, and with it this fixture's source hash, moved again. Same rule, new
    release's evidence. */
 const v319Evidence=readFileSync(new URL('../../docs/qa/evidence/V319-REWARDS-AND-OFFER-ACCEPTANCE.md',import.meta.url),'utf8');
+/* V322 (the six owner rulings of 2026-08-14): R6 rewrote the wizard's Programmes step into a scope
+   selector, R2/R3 added the exclusivity confirmation, R5 replaced the stamp-gift screen with the
+   milestone ladder and R1/R4 re-worded every referral line in points — all inside growPage and the
+   wizard the extracted component inlines, so this fixture's source hash moved again. Same rule,
+   new release's evidence. */
+const v322Evidence=readFileSync(new URL('../../docs/qa/evidence/V322-OWNER-PROGRAMME-RULINGS-ACCEPTANCE.md',import.meta.url),'utf8');
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -140,5 +146,5 @@ test('server recommendation uses governed sectors and serializes stale tabs onto
 test('checked-in browser evidence identifies the exact extracted production component',()=>{
   const sourceHash=browserFixture.match(/name="production-source-sha256" content="([a-f0-9]{64})"/)?.[1];
   assert.ok(sourceHash,'generated browser fixture must carry its production source hash');
-  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}\n${v295FixesEvidence}\n${v296Evidence}\n${v299Evidence}\n${v300Evidence}\n${v301Evidence}\n${v306Evidence}\n${v310bEvidence}\n${w6i2Evidence}\n${v319Evidence}`,new RegExp(sourceHash));
+  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}\n${v295FixesEvidence}\n${v296Evidence}\n${v299Evidence}\n${v300Evidence}\n${v301Evidence}\n${v306Evidence}\n${v310bEvidence}\n${w6i2Evidence}\n${v319Evidence}\n${v322Evidence}`,new RegExp(sourceHash));
 });

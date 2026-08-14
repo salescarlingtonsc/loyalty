@@ -353,6 +353,56 @@ function programmeSwitchesForPublishV314(loyaltyModel){
       .map(kind=>[kind,programmeSpineOnV314(kind)===true]));
   return programmeSelectionForPublishV314(loyaltyModel);
 }
+/* ============ V322 — OWNER RULINGS R2/R3/R6, THE THREE MODULE-SCOPE RULES =====================
+   R2/R3 (owner: "stamps is not supposed to be able to be live with points and tier. - it is
+   seperate rewards by itself." / "points / tier / points & tier"). The legal accrual shapes are
+   points | tier | points+tier | stamps. Referral is ORTHOGONAL and is never part of it — it runs
+   alongside any shape, including stamps (R4). public.set_programmes_v314 refuses a call whose
+   RESULT would break this, so the client's job is not to enforce it but to never send a payload
+   the owner has not been told about: the refusal is correct behaviour, and an owner meeting it
+   at Publish would have walked six screens to get there. */
+const PROGRAMME_ACCRUAL_EXCLUSIVE_V322=Object.freeze({stamps:['points','tiers'],points:['stamps'],tiers:['stamps']});
+/* Which kinds a pick of `kind` forces off. Empty for referral, which is why referral can never
+   turn anything off and nothing can turn it off. */
+function programmeExclusionsV322(kind){
+  return PROGRAMME_ACCRUAL_EXCLUSIVE_V322[kind]||[];
+}
+/* R6 (owner: "if i unselect the program does not mean i want to turn off (i need a seperate
+   button) — it just means i do not want to edit the rewards at this point in time").
+   THIS IS THE FIX FOR A LIVE DEFECT. The wizard used to send all four keys at Publish, so an
+   owner who unticked Tier because they did not want to walk the tier screens had their live tier
+   programme switched off for every customer, with nothing on screen saying so.
+   The wizard's Programmes step is a SCOPE selector now — "which programmes am I setting up right
+   now?" — and this is the only translation from that scope into a switch payload. Two rules, and
+   both of them are the ruling:
+     · A programme the owner did NOT select is ABSENT from the payload. public.set_programmes_v314
+       leaves an unnamed kind exactly as it found it, so absence is the mechanism by which
+       unselecting stops meaning "off". Never send `false` for a programme merely not in scope.
+     · A programme the owner DID select is sent `true` — turning something on IS what setting it
+       up means — or `false` when they chose to publish paused, which is the one case where a
+       selected programme legitimately goes off (PAUSED = the spine row is off, the rule v314
+       wrote down and this does not change).
+   The exclusivity clearing is the ONE place a `false` is sent for an unselected kind, and it is
+   not a side effect: the switchboard states the consequence and takes a confirmation BEFORE the
+   scope changes, so by the time this function runs the owner has already agreed to it. Stamps
+   wins a contradictory scope deterministically rather than picking arbitrarily; the switchboard
+   cannot produce one. */
+/* R1/R4: the business console's own points phrase. The customer app has ct('referralPoints'); this
+   is the workspace side of the same sentence, and it is a named function rather than an inline
+   template for the v97 reason exampleText() is one — interpolated runtime copy belongs somewhere
+   the localizer and a test can both see it in one place. */
+function growPointsWordV322(points){
+  const value=Math.max(0,Math.round(Number(points)||0));
+  return `${value} ${value===1?'point':'points'}`;
+}
+function programmeScopeSwitchesV322(scope,{paused=false}={}){
+  const set={};
+  PROGRAMME_KINDS_W6I2.forEach(kind=>{if(scope&&scope[kind]===true)set[kind]=paused!==true});
+  if(!Object.keys(set).length)return null;
+  if(set.stamps===true)programmeExclusionsV322('stamps').forEach(kind=>{set[kind]=false});
+  else if(set.points===true||set.tiers===true)set.stamps=false;
+  return set;
+}
 /* Server truth in, cache out. set_programmes_v314 returns the spine it just wrote, so the reply
    to the write IS the refresh — no second round trip and no window in which the page renders a
    state the server never reached. */
@@ -3767,7 +3817,9 @@ async function clientDetail(id){
       .then(r=>r.error?null:r.data).catch(()=>null):Promise.resolve(null),
     canReadProgrammeConfigV294?sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id})
       .then(r=>r.error?null:((r.data?.programs||[])[0]||null)).catch(()=>null):Promise.resolve(null),
-    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_cents,min_spend_cents')
+    /* V322: reward_points is the live amount; reward_cents is the frozen pre-v322 money column and
+       is no longer read by any surface. */
+    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,min_spend_cents')
       .eq('business_id',S.biz.id).limit(1).then(r=>r.error?null:((r.data||[])[0]||null)).catch(()=>null)
       :Promise.resolve(null),
     /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent" line struck
@@ -4126,7 +4178,7 @@ async function clientDetail(id){
   const limitedOfferRowsV319=(promotionsV294||[]).filter(item=>item?.active===true).slice(0,6)
     .map(item=>programmeRowHtmlV294(item.name||'Promotion',String(item.description||item.tagline||'A current offer customers can see.').slice(0,140),true));
   if(referralProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294('Referral programme',
-    Number(referralProgrammeV294.reward_cents)>0?`Refer a friend — ${money(referralProgrammeV294.reward_cents)} credit after their qualifying first visit.`:'Refer friends and get rewards.',
+    Number(referralProgrammeV294.reward_points)>0?`Refer a friend — ${growPointsWordV322(referralProgrammeV294.reward_points)} after their qualifying first visit.`:'Refer friends and get rewards.',
     referralProgrammeV294.enabled===true));
   if(welcomeOfferV294?.configured)programmeRowsV294.push(programmeRowHtmlV294('Welcome offer',
     welcomeOfferV294.reward_label?`New sign-ups get ${welcomeOfferV294.reward_label} free${Number(welcomeOfferV294.min_spend_cents)>0?` once they spend ${money(welcomeOfferV294.min_spend_cents)}`:''}.`:'A free item on the first visit.',
@@ -9533,7 +9585,10 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
     :Promise.resolve(none);
   const referralsRequest=modules.includes('referrals')
-    ?sb.from('referral_programs').select('id,enabled,reward_cents,min_spend_cents,created_at').eq('business_id',S.biz.id).limit(1)
+    /* V322: the wizard, the Programmes history row and the customer-360 card all read the referral
+       payout from this snapshot, and it is POINTS now. reward_kind rides along so a later voucher
+       payout has a place to be read from rather than a place to be invented. */
+    ?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,min_spend_cents,created_at').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const membershipsRequest=modules.includes('memberships')
     ?sb.from('membership_plans').select('id,name,active,created_at').eq('business_id',S.biz.id).order('created_at',{ascending:false})
@@ -11070,6 +11125,66 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      markup) and keeps its stateful summary underneath when that summary says something the
      benefit line does not — an error or the next action must never be hidden by marketing copy. */
   const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(growTopicOngoingV244(topic)?topic.summary:topic.blurb)}</span>${!growTopicOngoingV244(topic)&&topic.summary&&topic.summary!==topic.blurb?`<span class="muted small">${esc(topic.summary)}</span>`:''}<span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
+  /* ============ V322 — OWNER RULING R6: THE SEPARATE ON/OFF CONTROL ==========================
+     "if i unselect the program does not mean i want to turn off (i need a seperate button) — it
+     just means i do not want to edit the rewards at this point in time"
+     The setup wizard's Programmes step used to do two jobs with one control: pick what to edit AND
+     decide what runs. It is scope-only now (programmeScopeSwitchesV322), which leaves the second
+     job without a home. This is that home — the ruling's "seperate button", one per programme, on
+     the Rewards Programme page, where an owner looking at what customers can see already is.
+
+     Four decisions worth stating:
+     · IT READS THE SPINE, never the tile status. The tiles answer "is this set up?"; these answer
+       "is this running for my customers?", and those are different questions with different
+       answers (a firm can have a full tier ladder saved with the tier programme switched off).
+     · SWITCHING ONE OFF TAKES A CONFIRMATION, because it changes what customers see. Inline, on
+       the row, with the consequence in words — no modal, which is the standing rule for this
+       surface. Switching one ON does not, because turning a programme on is what this page is for
+       and nothing a customer already has is taken away by it.
+     · TURNING THE STAMP CARD ON STATES ITS EXCLUSIVITY FIRST (R2/R3) and then sends ONE call
+       carrying the whole set, so the firm is never briefly in a shape the server forbids and no
+       pot is stranded by a two-step switch (the residual V314 §7.1 named).
+     · REFERRAL WRITES BOTH HALVES. app.on_sale_recorded gates the payout on
+       referral_programs.enabled, not on the spine (SA-4 is still open), so a switch that moved
+       only the spine row would leave a programme that reads off and keeps paying — exactly the
+       split W6I2 defect 3 closed in the wizard, and this is the second door onto it. */
+  const growProgrammeSwitchKindsV322=[['points','Points & gifts'],['tiers','Tier membership'],
+    ['stamps','Stamp card'],['referral','Referral']];
+  const growProgrammeSwitchPanelV322=()=>{
+    if(!canRewards)return '';
+    const rows=programmeSpineRowsV314();
+    if(!rows)return `<div class="imp-note" data-grow-switchpanel-v322="unreadable" style="margin-top:14px" role="status">
+      <b>What customers can use right now</b>
+      <p class="muted small" style="margin-top:6px">This could not be read, so nothing is shown as on or off. Reload before changing anything.</p></div>`;
+    return `<section class="card" data-grow-switchpanel-v322="ready" style="margin-top:14px" aria-label="What customers can use right now">
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Live for customers</p>
+      <h3>What customers can use right now</h3>
+      <p class="muted small">This is the on/off switch. Setting a programme up in the wizard does not turn anything on or off here.</p></div></div>
+      <ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growProgrammeSwitchKindsV322.map(([kind,title])=>{
+        const on=programmeSpineOnV314(kind)===true;
+        const pending=growSwitchPendingV322===kind;
+        const losing=on?[]:programmeExclusionsV322(kind).filter(other=>programmeSpineOnV314(other)===true);
+        return `<li data-grow-switchrow-v322="${esc(kind)}"><span><b>${esc(title)}</b>
+          <span class="muted small" data-grow-switchstate-v322="${on?'on':'off'}"> · ${on?'ON for customers':'off'}</span></span>
+          ${canSetupGrow
+            ?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${on}" data-grow-switchtoggle-v322="${esc(kind)}">${on?'Turn off':'Turn on'}</button>`
+            :'<span class="muted small">Owner only</span>'}</li>
+        ${pending?`<li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px">
+          <b>${on?`Turn ${esc(title)} off for customers?`:`Turn ${esc(title)} on for customers?`}</b>
+          <p class="muted small" style="margin-top:6px">${on
+            ?`Customers stop earning and stop being able to claim from ${esc(title)} straight away. Everything you have set up stays saved and comes back when you turn it on again.`
+            :losing.length
+              ?`The stamp card runs on its own, so turning it on switches ${esc(losing.map(other=>(growProgrammeSwitchKindsV322.find(row=>row[0]===other)||[,other])[1]).join(' and '))} off. Their setup stays saved.`
+              :`Customers can start earning from ${esc(title)} straight away.`}</p>
+          ${!on&&kind==='referral'&&!(Number(snapshot.referral?.reward_points)>0)
+            /* A referral switched on with no points set is a programme that looks live and pays
+               nothing — the same split W6I2 defect 3 closed from the other direction. Say it here
+               rather than let the owner find out from a customer who never got their reward. */
+            ?'<p class="muted small" style="margin-top:6px" data-grow-switchreferralzero-v322>No referral reward is set yet, so nothing would be paid. Set the points on the Referrals page first.</p>':''}
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${esc(kind)}">${on?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div></li>`:''}`;
+      }).join('')}</ul>
+      ${growSwitchErrorV322?`<div class="err" role="alert" style="margin-top:12px">${esc(growSwitchErrorV322)}</div>`:''}</section>`;
+  };
   const growOngoingTopicsV244=growTopicDefsV229.filter(growTopicOngoingV244);
   const growPendingTopicsV244=growTopicDefsV229.filter(topic=>!growTopicOngoingV244(topic));
   const growTileSectionV244=(title,note,topics,empty)=>`<div class="grow-topic-group-v244">
@@ -11254,7 +11369,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       started:snapshot.referral.created_at||null,ended:null,
       state:snapshot.referral.enabled===true?'live':'paused',
       customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
-      detail:snapshot.referral.reward_cents?`${money(snapshot.referral.reward_cents)} to the referrer`:''});
+      detail:snapshot.referral.reward_points?`${growPointsWordV322(snapshot.referral.reward_points)} to the referrer`:''});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
       type:'Membership',started:plan?.created_at||null,ended:null,
       state:plan?.active===false?'retired':'live',
@@ -11376,6 +11491,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Rewards &amp; Offer</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
+      ${growTilesModeV229?growProgrammeSwitchPanelV322():''}
       ${growTilesModeV229?growTilesHtmlV229:''}
       ${growTilesModeV229&&canWinback?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
       ${programmeView==='setup'?(canSetupGrow
@@ -11543,8 +11659,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         prefill:{kind:'birthday',label:'Birthday treat',description:'10% off any visit during your birthday month.',discount:10}},
       bringback:{text:'<b>S$10 off</b> when they return within <b>30 days</b>',
         prefill:{kind:'bringback',name:'We miss you — S$10 off',goalVisits:1,withinDays:30,value:10}},
-      referrals:{text:'friend spends <b>S$30+</b>, referrer gets <b>S$10</b> credit',
-        prefill:{kind:'referral',minSpend:30,reward:10}}
+      /* V322 (R1/R4): the suggestion pays POINTS, not credit. */
+      referrals:{text:'friend spends <b>S$30+</b>, referrer gets <b>200 points</b>',
+        prefill:{kind:'referral',minSpend:30,reward:200}}
     };
     /* Scope to outerMain, exactly like the tab filter above: growPage renders into its own
        main node, and a document-wide query can run against the previous page's DOM (this is
@@ -11891,6 +12008,51 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      programme rows themselves, which call it as the draft-creation gate when no draft exists. */
   /* v215: re-render the Programmes list after a save so the row reflects the new state
      immediately — an owner who just switched the offer on must not still see "Not set up". */
+  /* V322 (R6): the live on/off switches. Press arms the confirmation and writes nothing; the
+     confirmation performs ONE set_programmes_v314 call carrying the whole set, including the R2
+     exclusions when the stamp card is going on. The page is re-rendered from the server's own
+     reply (writeProgrammeSwitchesV314 refreshes S.programmes from it), never optimistically. */
+  const growRerenderV322=()=>growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  outerMain.querySelectorAll('[data-grow-switchtoggle-v322]').forEach(button=>button.onclick=()=>{
+    const kind=button.dataset.growSwitchtoggleV322;
+    if(!PROGRAMME_KINDS_W6I2.includes(kind))return;
+    growSwitchPendingV322=kind;growSwitchErrorV322='';growRerenderV322();
+  });
+  outerMain.querySelectorAll('[data-grow-switchconfirm-no-v322]').forEach(button=>button.onclick=()=>{
+    growSwitchPendingV322='';growSwitchErrorV322='';growRerenderV322();
+  });
+  outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]').forEach(button=>button.onclick=async()=>{
+    const kind=button.dataset.growSwitchconfirmYesV322;
+    if(!PROGRAMME_KINDS_W6I2.includes(kind))return;
+    button.disabled=true;
+    const want=programmeSpineOnV314(kind)!==true;
+    const set={[kind]:want};
+    /* One call, not two. A two-step switch (stamps on, then points off) is the path that strands a
+       points pot — V314 residual §7.1 — and it also passes briefly through the shape the server
+       now refuses, so it would fail on the first half. */
+    if(want)programmeExclusionsV322(kind).forEach(other=>{set[other]=false});
+    const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
+    if(!isGrowCurrent())return;
+    if(!ok){
+      growSwitchErrorV322=`${ownerErrorText(error)} Nothing was changed.`;
+      growSwitchPendingV322='';return growRerenderV322();
+    }
+    /* SA-4 is still open: app.on_sale_recorded gates the referral payout on
+       referral_programs.enabled, not on the spine. A switch that moved only the spine row would
+       leave a programme that reads off on every surface while the engine keeps paying. The
+       amount and floor are handed straight back so this write changes nothing but the flag. */
+    if(kind==='referral'){
+      const {error:referralError}=await sb.rpc('save_referral_program_v322',{p_business:S.biz.id,
+        p_enabled:want,
+        p_reward_points:Math.max(0,Math.round(Number(snapshot.referral?.reward_points)||0)),
+        p_min_spend_cents:Math.max(0,Math.round(Number(snapshot.referral?.min_spend_cents)||0))});
+      if(!isGrowCurrent())return;
+      if(referralError)growSwitchErrorV322=`The switch was applied, but the referral payout setting could not be saved — ${ownerErrorText(referralError)}`;
+    }
+    growSwitchPendingV322='';
+    if(!growSwitchErrorV322)toast(want?'Turned on for customers':'Turned off for customers');
+    growRerenderV322();
+  });
   /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
   outerMain.querySelectorAll('[data-grow-topic-v229]').forEach(tile=>tile.onclick=()=>{
     /* V301: a point-engine card that is not live yet opens the one-page wizard rather than the
@@ -13298,15 +13460,26 @@ const GROW_SETUP_SWITCHES_W6I2=[
     'Customers collect points when they spend, then swap them for gifts you choose.'],
   ['tiers','star','Tier membership',
     'Customers climb Silver, Gold and Diamond. Each tier carries its own benefits.'],
+  /* V322 (OWNER RULING R5): a stamp card is a QUEST with an ORDERED LIST OF MILESTONES — "3 stamp
+     = xx rewards, 5 stamp = xx rewards, 8 stamp = xx rewards … but if bosses want to extend to 12
+     stamp = xx rewards and more = able to do it customisable". "A full card wins a gift" described
+     one prize at the end of a fixed card, which is not what this is. */
   ['stamps','check','Stamp card',
-    'Customers collect a stamp when they spend. A full card wins a gift.'],
+    'Customers collect stamps. You set the milestones — 3 stamps, 5, 8, as many as you like.'],
+  /* V322 (OWNER RULING R1/R4): "why referral is a stored credits? please remove it as i already
+     said no more store credits". Spendable credit left the product at v320 and the referral payout
+     followed at v322. It pays POINTS now. */
   ['referral','referrals','Referral',
-    'Customers bring a friend in, and you thank them with store credit.']
+    'Customers bring a friend in, and you thank them with points.']
 ];
-/* The one sentence that replaces the twelve-row integrity matrix. Unconditional — it is true of
-   every state now, which is the whole point of the wave. */
+/* V322 (OWNER RULINGS R2/R3/R6). The sentence this replaces said "You can turn any of these on or
+   off later, on their own. They do not affect each other." Both halves are now false: screen 0 is
+   not a turn-on control (R6 — it chooses which programmes this run walks you through), and the
+   stamp card is exclusive (R2 — it cannot run beside points or tiers). Saying either of those
+   things on the screen the owner makes the decision on is how the decision goes wrong. */
 const GROW_SETUP_SWITCH_FOOTER_W6I2=
-  'You can turn any of these on or off later, on their own. They do not affect each other.';
+  'Points, tiers and referral run together. The stamp card runs on its own — picking it turns '
+  +'points and tiers off. Nothing you leave unticked here is switched off; it just stays as it is.';
 /* The rail, in the CUSTOMER-FACING order the wallet stack paints: STAMPS → POINTS & GIFTS → TIER
    → REFERRAL (W4 design "Order and composition"). Predictability beats cleverness at a counter,
    and an owner who set the programmes up in the order their customer meets them has a much easier
@@ -13318,7 +13491,11 @@ const GROW_SETUP_SWITCH_FOOTER_W6I2=
    AMENDMENT requires every expiry knob to stay reachable, and expiry had no wizard screen at all
    before this wave: it rode along silently from whatever was already stored. */
 const GROW_SETUP_RAIL_W6I2=[
-  ['stamps',[['stampEarn','Stamps'],['stampGift','Stamp gift']]],
+  /* V322 (OWNER RULING R5): "Stamp gift" was one prize at the end of a fixed card. A stamp card is
+     a QUEST with an ordered list of milestones — "3 stamp = xx rewards, 5 stamp = xx rewards, 8
+     stamp = xx rewards … but if bosses want to extend to 12 stamp = xx rewards and more = able to
+     do it customisable" — so the screen is a repeatable list and its label says so. */
+  ['stamps',[['stampEarn','Stamps'],['stampGift','Milestones']]],
   ['points',[['earn','Earning'],['reward','Gifts'],['expiry','Expiry']]],
   ['tiers',[['climb','Climbing'],['tiers','Tiers']]],
   ['referral',[['referral','Referral']]]
@@ -13601,7 +13778,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* W6 increment 2: four independent booleans, not one of four exclusive keys. This object IS
        the switchboard, and it is also exactly what public.set_programmes_v314 is handed at
        Go-live — one shape, one mapping, no translation step that could disagree with itself. */
+    /* V322 (R6): this object is the SCOPE — which programmes this run sets up — not four live
+       on/off switches. programmeScopeSwitchesV322 is the only translation from it to a payload,
+       and it never sends `false` for a kind that is simply unticked. */
     switches:initialSwitchesW6I2,
+    /* V322 (R2/R3): the kind awaiting the owner's confirmation that turning it on switches the
+       other accrual side off. Null except between the press and the confirm. */
+    pendingExclusiveV322:null,
     model:baseModel||'points_tiers',
     versionId:snapshot?.draft?.id||null,
     snapshotHash:snapshot?.draft?.snapshot_hash||null,
@@ -13626,8 +13809,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        the write happens at Go-live beside the switches, under the same discipline the model
        switch has followed since V230: an instant live change is applied once, after the
        configuration that assumes it has been published. */
-    referralReward:Number(snapshot?.referral?.reward_cents)>=0
-      ?Number(snapshot.referral.reward_cents)/100:10,
+    /* V322 (R1/R4): POINTS, held as an integer. It used to be dollars, held as cents ÷ 100 and
+       written back × 100; both halves move together, because a unit that changes on one side of a
+       round trip is how a 10 becomes a 1000. */
+    referralReward:Number(snapshot?.referral?.reward_points)>0
+      ?Math.round(Number(snapshot.referral.reward_points)):100,
     referralMinSpend:Number(snapshot?.referral?.min_spend_cents)>=0
       ?Number(snapshot.referral.min_spend_cents)/100:0,
     referralDirty:false,
@@ -14074,10 +14260,44 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      on the spot. The switches reach the engine at Go-live, in ONE set_programmes_v314 call, which
      is the V303 discipline preserved verbatim: the switch and the configuration that assumes it go
      live together, or an owner who walks away mid-setup has changed what customers can do. */
+  /* V322 (OWNER RULING R2/R3) — THE EXCLUSIVITY, SAID BEFORE IT HAPPENS.
+     "picking Stamps clears points/tier and says so BEFORE it does, and vice versa." A toggle that
+     silently emptied the other side of the switchboard would be the same class of defect R6 is
+     fixing on the other axis: a control doing something the owner was not told about. So the first
+     press does not flip anything — it renders this block, naming exactly which programmes go, and
+     the flip happens on the confirm. Cancel puts the screen back untouched.
+     `pendingExclusiveV322` holds the kind awaiting confirmation, or null. */
+  const exclusiveConflictsV322=kind=>programmeExclusionsV322(kind)
+    .filter(other=>state.switches[other]===true);
+  const switchTitleV322=kind=>(GROW_SETUP_SWITCHES_W6I2.find(row=>row[0]===kind)||[,,kind])[2];
+  /* The scope flip itself. The step the owner is standing on is screen 0 either way, so the rail
+     can be rebuilt under them without moving them; state.visited is rebased because a step number
+     that meant "Gifts" a moment ago may now mean "Tiers", and carrying the old set forward would
+     unlock a screen the owner has never seen. */
+  const applyScopeToggleV322=kind=>{
+    state.switches={...state.switches,[kind]:state.switches[kind]!==true};
+    state.visited=new Set([1]);
+    state.step=1;
+    render();
+  };
+  const exclusiveNoticeHtmlV322=()=>{
+    const kind=state.pendingExclusiveV322;
+    if(!kind)return '';
+    const losing=exclusiveConflictsV322(kind).map(switchTitleV322);
+    if(!losing.length)return '';
+    return `<div class="imp-note" data-grow-setup-exclusive-w6i2="${esc(kind)}" style="margin-top:12px" role="status">
+      <b>${esc(switchTitleV322(kind))} runs on its own</b>
+      <p class="muted small" style="margin-top:6px">Turning it on switches ${esc(losing.join(' and '))} off, so customers stop earning there. Everything you have set up stays saved and comes back if you turn it on again.</p>
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on ${esc(switchTitleV322(kind))}</button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
+  };
   const stepOneHtml=()=>{
     const anyOn=anySwitchOnW6I2();
-    return `<p class="grow-setup-lead-v301">Which programmes do you want to run?</p>
-    <p class="muted small" style="margin-top:-4px">Turn on as many as you like. Each one works on its own.</p>
+    /* V322 (OWNER RULING R6). The question changed, because the control changed. It used to ask
+       "which programmes do you want to run?" under "Turn on as many as you like" — which is an
+       on/off control, and unticking one switched a live programme off for every customer. It asks
+       what it actually decides now: which programmes this run walks you through. */
+    return `<p class="grow-setup-lead-v301">Which programmes do you want to set up now?</p>
+    <p class="muted small" style="margin-top:-4px" data-grow-setup-scopenote-v322>Tick the ones you want to work on. Leaving one unticked does not switch it off — it just stays as it is. To turn a programme on or off for customers, use the switches on the Programmes page.</p>
     <div class="grow-setup-options-v301" role="group" aria-label="Programmes">
       ${GROW_SETUP_SWITCHES_W6I2.map(([kind,icon,title,blurb])=>{
         const on=state.switches[kind]===true;
@@ -14092,7 +14312,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         <span class="pill ${on?'on':'off'}" data-grow-setup-switch-state-w6i2="${on?'on':'off'}">${on?'ON':'OFF'}</span></button>`;
       }).join('')}
     </div>
-    ${anyOn?'':'<p class="grow-setup-integrity-v305" role="status">Nothing is turned on. Turn on at least one programme to publish.</p>'}
+    ${exclusiveNoticeHtmlV322()}
+    ${anyOn?'':'<p class="grow-setup-integrity-v305" role="status">Nothing is ticked. Tick at least one programme to set up.</p>'}
     <p class="muted small" style="margin-top:12px" data-grow-setup-switchfoot-w6i2>${esc(GROW_SETUP_SWITCH_FOOTER_W6I2)}</p>`;
   };
   /* THE TIER BASIS CHOICE — OWNER AMENDMENT 2026-08-14, first-class and visible.
@@ -14268,16 +14489,24 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      configuration that assumes it has been published.
      Two fields only. The friend-side reward the plan promises (D5) is increment 8's migration; a
      field with no column behind it would be a lie the owner cannot see through. */
+  /* V322 (OWNER RULING R1/R4): the reward is POINTS, so the field asks for points. The owner's
+     words were "why referral is a stored credits? please remove it as i already said no more store
+     credits". The FLOOR stays money — the friend still has to spend — so this screen carries two
+     units and says which is which on each label rather than leaving the owner to infer it.
+     The voucher payout the same ruling names ("customer receive voucher and come to store to claim
+     it") is DEFERRED: referral_programs.reward_kind carries the shape, nothing writes 'voucher',
+     and a field with no engine behind it would be a promise this screen cannot keep. */
   const referralStepHtmlW6I2=()=>`<p class="grow-setup-lead-v301">What does a referral pay?</p>
     <div class="field-grid">
-      <div class="full"><label for="growSetupReferralRewardW6I2">Store credit to the customer who referred (${esc(currency)})</label>
-        <input id="growSetupReferralRewardW6I2" inputmode="decimal" value="${esc(Number(state.referralReward||0).toFixed(2))}"></div>
+      <div class="full"><label for="growSetupReferralRewardW6I2">Points for the customer who referred</label>
+        <input id="growSetupReferralRewardW6I2" inputmode="numeric" value="${esc(String(Math.max(0,Math.round(Number(state.referralReward)||0))))}"></div>
       <div class="full"><label for="growSetupReferralMinW6I2">Friend must spend at least (${esc(currency)})</label>
         <input id="growSetupReferralMinW6I2" inputmode="decimal" value="${esc(Number(state.referralMinSpend||0).toFixed(2))}"></div>
     </div>
     <p class="grow-setup-example-v301" id="growSetupReferralExampleW6I2" role="status">${esc(referralExampleTextW6I2())}</p>
-    <p class="muted small" style="margin-top:10px">One reward per referred customer, ever. It is paid after the friend's first qualifying visit, not when they sign up.</p>`;
-  const referralExampleTextW6I2=()=>`Friend spends ${currency} ${Number(state.referralMinSpend||0).toFixed(2)} or more → ${currency} ${Number(state.referralReward||0).toFixed(2)} credit to the referrer`;
+    <p class="muted small" style="margin-top:10px">One reward per referred customer, ever. It is paid after the friend's first qualifying visit, not when they sign up.</p>
+    <p class="muted small" style="margin-top:8px" data-grow-setup-referraluniversal-v322>Referral works beside any programme, including the stamp card. The points land in whichever programme you are running.</p>`;
+  const referralExampleTextW6I2=()=>`Friend spends ${currency} ${Number(state.referralMinSpend||0).toFixed(2)} or more → ${growPointsWordV322(state.referralReward)} to the referrer`;
   /* V303 Tiers step. Only reachable on a model that includes tiers, and it holds exactly two
      things per tier — the name a customer sees and the threshold they reach it at. Multipliers,
      benefit lines and schedules stay in the advanced editor, one click away under "More reward
@@ -14366,12 +14595,65 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
           <input id="growSetupRewardNameV301" value="${esc(form.name)}" placeholder="e.g. Free drink"></div>
         <div><label for="growSetupRewardBudgetV301">Company cost (${esc(currency)})</label>
           <input id="growSetupRewardBudgetV301" inputmode="decimal" value="${esc(form.budget)}" placeholder="e.g. 3.00"></div>
-        <div><label for="growSetupRewardPointsV301">${familyW6I2()==='stamps'?'Stamps':'Points'} cost</label>
+        <div><label for="growSetupRewardPointsV301">${familyW6I2()==='stamps'?'Stamps needed for it':'Points cost'}</label>
           <input id="growSetupRewardPointsV301" inputmode="numeric" value="${esc(form.points)}" placeholder="e.g. 300"></div>
       </div>
       <p class="muted small" style="margin-top:8px">${esc(rewardHintText())}</p>
       <div class="grow-setup-formfoot-v304"><button type="button" class="btn" id="growSetupRewardSaveV304">${form.id?'Save':'Add reward'}</button>
       <span class="muted small">${form.id?'Your changes save on their own.':'Add reward saves it to the list right away.'}</span></div></div>`;
+  };
+  /* ============ V322 — OWNER RULING R5: THE STAMP CARD IS A QUEST ============================
+     "stamps is like a quest - complete one set of quest (3 stamp = xx rewards, 5 stamp = xx
+      rewards, 8 stamp = xx rewards) - customisable on how many stamps and what rewards … now is 3
+      sets in 1. but if bosses want to extend to 12 stamp = xx rewards and more = able to do it
+      customisable"
+
+     NO NEW ENTITY AND NO SCHEMA CHANGE, and that is not a shortcut — it is what v313 bought. A
+     milestone IS an ordinary catalogue reward whose COST is the stamp count, priced in the stamps
+     programme. v313 gave every reward a programme_id and v314 re-bodied
+     app.reward_default_programme_v313 to "the business's one active accruing programme when there
+     is exactly one", so at a stamps firm — which R2 now guarantees is the only kind of stamps firm
+     there is — a reward authored here lands on the stamps programme by itself. The list below is
+     therefore the same state.rewards every other screen edits, read as a ladder.
+
+     The count is UNBOUNDED. Three fixed slots was the shape the owner rejected; this is add and
+     remove, any number of rows. There is no separate reorder control because the order of a quest
+     is its stamp counts — the list sorts by them, so changing a number moves a rung, which is the
+     only reordering a ladder can have.
+
+     stamp_target is DERIVED from the last milestone rather than typed. It is what the customer's
+     card shows as its length, and a card whose length disagreed with its own last prize is the
+     kind of two-numbers-for-one-fact defect this file keeps having to fix.
+
+     WHAT THIS SCREEN CANNOT PROMISE, SAID ON THE SCREEN. The owner's ruling also says reaching one
+     milestone must not reset progress toward the next. It does today: app.redeem_reward_core
+     drains points_batches FEFO and writes a negative points_ledger row for the reward's cost, so
+     claiming the 3-stamp prize spends three stamps and the 5-stamp prize moves further away. Making
+     it non-consuming is a change to the money kernel — a claim that proves a balance without
+     draining it, and a per-client per-milestone claim ledger to stop it being claimed twice — which
+     this wave is explicitly not allowed to make. So the screen states what actually happens rather
+     than what the plan wanted, and the gap is reported to the owner. */
+  const stampMilestonesV322=()=>activeRewardsV304()
+    .slice().sort((a,b)=>(Number(a.points)||0)-(Number(b.points)||0));
+  const stampTargetFromMilestonesV322=()=>stampMilestonesV322()
+    .reduce((most,reward)=>Math.max(most,Math.max(0,Number(reward.points)||0)),0);
+  const stampMilestonesHtmlV322=()=>{
+    const ladder=stampMilestonesV322();
+    const milestoneRow=reward=>reward.active===false
+      ?`<li class="is-removed-v304" data-grow-setup-rewardrow-v304="${esc(reward.id)}"><span><b data-merchant-content>${esc(reward.name)}</b><span class="muted small"> · Removed</span></span><button type="button" class="btn ghost sm" data-grow-setup-reward-undo-v304="${esc(reward.id)}">Undo</button></li>`
+      :`<li data-grow-setup-rewardrow-v304="${esc(reward.id)}" data-grow-setup-milestone-v322="${esc(String(Math.max(0,Number(reward.points)||0)))}"><span><b data-merchant-content data-grow-setup-rewardname-v304>${esc(reward.name)}</b><span class="muted small" data-grow-setup-rewardpoints-v304>${esc(rewardRowPointsTextV304(reward.points))}</span><span class="muted small" data-grow-setup-rowmark-v304="reward:${esc(reward.id)}">${esc(rowMarkTextV304(reward.id))}</span></span><span class="grow-setup-rowactions-v304"><button type="button" class="btn ghost sm" data-grow-setup-reward-edit-v301="${esc(reward.id)}">Edit</button><button type="button" class="btn ghost sm" data-grow-setup-reward-remove-v304="${esc(reward.id)}">Remove</button></span></li>`;
+    /* Removed rows keep their place for the rest of the visit with Undo beside them (V304), so the
+       list rendered is the ladder plus anything taken off it this session. */
+    const rows=state.rewards.length
+      ?`<ul class="grow-setup-rewardlist-v301" data-grow-setup-milestones-v322="${ladder.length}">${stampMilestonesV322().concat(state.rewards.filter(reward=>reward.active===false)).map(milestoneRow).join('')}</ul>`
+      :'<p class="muted small">No milestone yet. Add the first one below — for example, a free drink at 3 stamps.</p>';
+    const chips=`<div class="grow-setup-chips-v301" aria-label="Common milestone ladders"><button type="button" class="grow-setup-chip-v301" data-grow-setup-stampladder-v322="1">Start from 3 · 5 · 8 stamps</button></div>`;
+    const length=stampTargetFromMilestonesV322();
+    return `<p class="grow-setup-lead-v301">What do customers get, and at how many stamps?</p>
+      <p class="muted small" style="margin-top:-4px">Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.</p>
+      ${rows}${chips}${rewardFormHtml()}
+      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?`The card customers see is ${esc(unitWord(length,'stamps'))} long — your last milestone.`:'The card gets its length from your last milestone.'}</p>
+      <p class="muted small" style="margin-top:8px" data-grow-setup-stampspend-v322>Claiming a milestone spends those stamps, so the card starts filling again from what is left. A milestone that keeps the card filling is not built yet.</p>`;
   };
   const stepThreeHtml=()=>{
     /* A firm already on fixed redemption has no reward catalogue to fill in — its one reward IS
@@ -14489,12 +14771,24 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      changes outside the versioned draft — public.set_programmes_v314 writes them live, immediately
      after publish — so they belong on the screen where the owner is asked to commit, spelled out
      rather than implied by which screens they happened to walk through. */
-  const switchSummaryBlockW6I2=()=>`<div class="imp-note" data-grow-setup-switchsummary-w6i2 style="margin-top:12px">
-    <b>Programmes this publishes</b>
+  /* V322 (R6): the summary reads from the PAYLOAD, not from the scope, because those are no longer
+     the same thing. A programme the owner did not tick is not published "off" — it is not sent at
+     all, and the spine leaves it exactly as it was. Printing "off" beside it was the screen telling
+     the owner the very thing the ruling says must not happen. Four honest states, and the one that
+     says "switching OFF" only ever appears for the exclusivity the owner already confirmed. */
+  const switchSummaryBlockW6I2=()=>{
+    const payload=programmeScopeSwitchesV322(state.switches,{paused:state.keepPaused===true})||{};
+    return `<div class="imp-note" data-grow-setup-switchsummary-w6i2 style="margin-top:12px">
+    <b>What this publish changes for customers</b>
     <ul class="studio-change-list-v295" style="margin-top:6px">${GROW_SETUP_SWITCHES_W6I2.map(([kind,,title])=>{
-      const on=state.switches[kind]===true&&!state.keepPaused;
-      return `<li data-grow-setup-switchsummary-kind-w6i2="${esc(kind)}"><b>${esc(title)}</b> — ${on?'ON':'off'}</li>`;
+      const sent=Object.prototype.hasOwnProperty.call(payload,kind);
+      const state322=!sent?'left as it is'
+        :payload[kind]===true?'turning ON'
+        :state.switches[kind]===true?'staying paused'
+        :'switching OFF';
+      return `<li data-grow-setup-switchsummary-kind-w6i2="${esc(kind)}" data-grow-setup-switchsummary-state-v322="${esc(state322)}"><b>${esc(title)}</b> — ${esc(state322)}</li>`;
     }).join('')}</ul></div>`;
+  };
   /* V303: the body follows the step's KIND, not its number — on a tier model step 3 is the ladder
      and step 4 is the reward list, and a number-indexed dispatch would have shown the wrong one. */
   const bodyHtml=()=>{
@@ -14506,7 +14800,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :kind==='earn'||kind==='stampEarn'?stepTwoHtml()
       :kind==='climb'?climbStepHtmlV305()
       :kind==='tiers'?tiersStepHtml()
-      :kind==='reward'||kind==='stampGift'?stepThreeHtml()
+      /* V322 (R5): the stamps rail's second screen is the milestone ladder now, not a single gift
+         with a fixed card length beside it. */
+      :kind==='stampGift'?stampMilestonesHtmlV322()
+      :kind==='reward'?stepThreeHtml()
       :kind==='expiry'?expiryStepHtmlW6I2()
       :kind==='referral'?referralStepHtmlW6I2()
       :stepFourHtml();
@@ -14603,9 +14900,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       return;
     }
     if(kind==='referral'){
-      const reward=parseFloat($('growSetupReferralRewardW6I2')?.value||'');
+      /* V322: parsed as an integer count of points, not a decimal amount of money. */
+      const reward=parseInt($('growSetupReferralRewardW6I2')?.value||'',10);
       const minSpend=parseFloat($('growSetupReferralMinW6I2')?.value||'');
-      if(Number.isFinite(reward)&&reward>=0&&reward!==state.referralReward){state.referralReward=reward;state.referralDirty=true}
+      if(Number.isInteger(reward)&&reward>=0&&reward!==state.referralReward){state.referralReward=reward;state.referralDirty=true}
       if(Number.isFinite(minSpend)&&minSpend>=0&&minSpend!==state.referralMinSpend){state.referralMinSpend=minSpend;state.referralDirty=true}
       return;
     }
@@ -14622,7 +14920,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       state.classicCredit=parseFloat($('growSetupClassicCreditV301')?.value||'')||state.classicCredit;
       return;
     }
-    if(kind==='stampGift')state.stampTarget=parseInt($('growSetupStampTargetV301')?.value||'',10)||state.stampTarget;
+    /* V322 (R5): stamp_target is no longer typed on this screen — it is DERIVED from the last
+       milestone, at save time, so the card's length can never disagree with its own last prize. */
     const name=String($('growSetupRewardNameV301')?.value||'').trim();
     const budget=String($('growSetupRewardBudgetV301')?.value||'').trim();
     const points=String($('growSetupRewardPointsV301')?.value||'').trim();
@@ -14649,10 +14948,29 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
          first cut of this wave and what no source-level assertion could see. */
       const kind=button.dataset.growSetupSwitchW6i2;
       if(!PROGRAMME_KINDS_W6I2.includes(kind))return;
-      state.switches={...state.switches,[kind]:state.switches[kind]!==true};
+      /* V322 (R2/R3): ticking a kind that excludes something already ticked ARMS the notice and
+         changes nothing. Unticking never excludes anything, so it is always immediate. */
+      if(state.switches[kind]!==true&&exclusiveConflictsV322(kind).length){
+        state.pendingExclusiveV322=kind;return render();
+      }
+      state.pendingExclusiveV322=null;
+      applyScopeToggleV322(kind);
+    });
+    host.querySelectorAll('[data-grow-setup-exclusive-confirm-w6i2]').forEach(button=>button.onclick=()=>{
+      const kind=button.dataset.growSetupExclusiveConfirmW6i2;
+      if(!PROGRAMME_KINDS_W6I2.includes(kind))return;
+      state.pendingExclusiveV322=null;
+      /* The confirm is what makes the clearing an owner's act rather than a side effect, so it is
+         where the other side is actually emptied out of the scope. */
+      const next={...state.switches,[kind]:true};
+      programmeExclusionsV322(kind).forEach(other=>{next[other]=false});
+      state.switches=next;
       state.visited=new Set([1]);
       state.step=1;
       render();
+    });
+    host.querySelectorAll('[data-grow-setup-exclusive-cancel-w6i2]').forEach(button=>button.onclick=()=>{
+      state.pendingExclusiveV322=null;render();
     });
     /* The climbing basis. Selecting only sets state and re-renders — like the toggles on screen 0,
        nothing is written until Next — and the re-render is what re-labels every threshold on the
@@ -14675,7 +14993,12 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const turnOnPoints=$('growSetupTurnOnPointsW6I2');
     if(turnOnPoints)turnOnPoints.onclick=()=>{
       readStepFields();
-      state.switches={...state.switches,points:true};
+      /* V322 (R2/R3): through the same exclusion rule the switchboard uses, so a one-tap fix can
+         never produce a scope the server would refuse at Publish. Unreachable in practice — this
+         button only renders on a tier rail, and tiers already excludes stamps — but a second
+         spelling of one rule is how the two spellings start to disagree. */
+      state.switches={...state.switches,points:true,
+        ...Object.fromEntries(programmeExclusionsV322('points').map(kind=>[kind,false]))};
       state.step=stepNumberForW6I2('climb');
       for(let number=1;number<=state.step;number++)state.visited.add(number);
       render();
@@ -14737,6 +15060,25 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       state.editingV304=tier.id;
       render();$('growSetupTierNameV303')?.focus({preventScroll:true});
     });
+    /* V322 (R5): the one-tap stamp ladder — the owner's own example, 3 · 5 · 8, as a starting
+       position they can then extend to 12 or 20 or delete outright. Unlike the tier chip this one
+       WRITES, because a reward's id is minted by the server (save_loyalty_reward_draft) and the
+       list is keyed on it; there is no local-only reward row the way there is a local-only tier.
+       That is the same contract the form's own "Add reward saves it to the list right away"
+       already states. Milestones the ladder would duplicate are skipped, so a second tap is a
+       no-op rather than a second set of three. */
+    const stampLadder=host.querySelector('[data-grow-setup-stampladder-v322]');
+    if(stampLadder)stampLadder.onclick=()=>withBusy(async()=>{
+      const taken=new Set(activeRewardsV304().map(reward=>Math.max(0,Number(reward.points)||0)));
+      for(const [name,stamps] of [['Free drink',3],['Free snack',5],['Free treat',8]]){
+        if(taken.has(stamps))continue;
+        const result=await runSaveV304(()=>saveRewardFormV304({id:null,name,budget:'',points:String(stamps)}));
+        if(!isCurrent())return;
+        if(!result.ok)return reportSaveV304(result,'Not every milestone was saved.');
+      }
+      if(!isCurrent())return;
+      render();
+    },'growSetupNextV301');
     /* The one-tap ladder. It only PREFILLS the list — nothing is written until Next — so an owner
        who presses it and then changes their mind has created nothing. */
     host.querySelectorAll('[data-grow-setup-tier-default-v303]').forEach(button=>button.onclick=()=>{
@@ -14992,16 +15334,27 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      second time — while "Add another reward" followed by a second publish, possibly with a
      different pause choice, mints a new key instead of colliding with the first receipt's hash
      (23505) or silently replaying it. */
-  /* W6 increment 2: the second argument is the SWITCH SET, not a model key. programmeSwitchSetV314
-     takes either; the switchboard is the one caller that can produce a state no model key spells,
-     and handing it the object is what makes points+stamps, or referral alone, reach the engine.
-     All four kinds are always sent — an omitted key leaves that spine row at whatever it was, and
-     a toggle the owner turned OFF must actually go off. */
+  /* V322 (OWNER RULING R6) — THE LIVE DEFECT THIS REPLACES, IN ONE PARAGRAPH.
+     Increment 2 sent `{...state.switches}` here: all four kinds, every time. The comment above it
+     said so proudly — "an omitted key leaves that spine row at whatever it was, and a toggle the
+     owner turned OFF must actually go off" — and it was wrong, because screen 0 was never an
+     on/off control. An owner opening the wizard to fix a gift, unticking Tier because they did not
+     want to walk two tier screens, and pressing through to Publish had their LIVE tier programme
+     switched off for every customer. Nothing warned them. The owner's words: "if i unselect the
+     program does not mean i want to turn off (i need a seperate button) — it just means i do not
+     want to edit the rewards at this point in time".
+     So screen 0 is SCOPE and this sends the scope: selected kinds only, through
+     programmeScopeSwitchesV322, which never puts a `false` on a kind the owner simply did not pick.
+     Nothing about PAUSED changes — a selected programme published paused still goes off, which is
+     what "Keep it paused for now — customers earn nothing" has always promised.
+     The separate, explicit on/off control the ruling asks for is on the Programmes page
+     (growProgrammeSwitchPanelV322), not here. */
   async function applyProgrammeSwitchesV314(fromRetry){
     if(fromRetry){state.modeError='';render()}
     if(!fromRetry||!state.switchKeyV314)state.switchKeyV314=crypto.randomUUID();
-    const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,{...state.switches},
-      {paused:state.keepPaused===true,key:state.switchKeyV314});
+    const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,
+      programmeScopeSwitchesV322(state.switches,{paused:state.keepPaused===true}),
+      {paused:false,key:state.switchKeyV314});
     if(!isCurrent())return false;
     if(!ok){
       /* Honest: publishing HAPPENED. Saying "publish failed" would send the owner to re-publish a
@@ -15021,12 +15374,20 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        just refreshed the spine cache from set_programmes_v314's own reply, so the "before" value
        would be the value that was just written and the comparison would be false whenever the
        switch actually moved. */
-    const referralWanted=state.switches.referral===true&&state.keepPaused!==true;
+    /* V322 (R6): and only when referral is IN SCOPE. The spine payload above no longer names a
+       programme the owner did not select, so its companion write must not either — a wizard run
+       that never went near the referral screens has to leave referral_programs exactly as it
+       found it, the same way it now leaves the referral spine row alone.
+       V322 (R1/R4): the amount is POINTS. save_referral_program_v322 is the writer that speaks
+       them; the pre-v322 four-argument money signature stays installed for the cached bundle's
+       window and is not called from here. */
+    if(state.switches.referral!==true){state.modeError='';if(fromRetry)render();return true}
+    const referralWanted=state.keepPaused!==true;
     const referralWasOn=state.referralEnabledW6I2===true;
     if(state.referralDirty||referralWanted!==referralWasOn){
-      const {error:referralError}=await sb.rpc('save_referral_program',{p_business:S.biz.id,
+      const {error:referralError}=await sb.rpc('save_referral_program_v322',{p_business:S.biz.id,
         p_enabled:referralWanted,
-        p_reward_cents:Math.round(Math.max(0,Number(state.referralReward)||0)*100),
+        p_reward_points:Math.max(0,Math.round(Number(state.referralReward)||0)),
         p_min_spend_cents:Math.round(Math.max(0,Number(state.referralMinSpend)||0)*100)});
       if(!isCurrent())return false;
       if(referralError){
@@ -15171,7 +15532,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        Go-live with the switches — see applyProgrammeSwitchesV314. */
     if(kind==='referral')return withBusy(async()=>{
       if(!(Number(state.referralReward)>0)){
-        state.error='Enter the credit the referring customer gets.';return render();
+        state.error='Enter how many points the referring customer gets.';return render();
       }
       goto(state.step+1);
     });
@@ -15185,18 +15546,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         if(!result.ok)return failStep(result.error,'Nothing was saved.');
         return goto(state.step+1);
       }
-      if(familyW6I2()==='stamps'&&!(state.stampTarget>0)){state.error='Enter how many stamps a customer needs.';return render()}
       const form=state.form;
       const hasForm=Boolean(form&&form.name.trim().length>=2);
       /* V304: only rewards a customer can actually claim count. Removing them all and pressing
          Next must not walk past a catalogue that is now empty. */
       if(!hasForm&&!activeRewardsV304().length){
-        state.error='Add one reward customers can get. Give it a name and a cost.';return render();
-      }
-      if(familyW6I2()==='stamps'){
-        const result=await saveDraft({stamp_target:state.stampTarget});
-        if(!isCurrent())return;
-        if(!result.ok)return failStep(result.error,'Nothing was saved.');
+        state.error=familyW6I2()==='stamps'
+          ?'Add one milestone. Give it a name and how many stamps it needs.'
+          :'Add one reward customers can get. Give it a name and a cost.';
+        return render();
       }
       /* V304: the reward write that used to live here is saveRewardFormV304 — the same helper the
          in-form "Add reward" / "Save" button and the debounced auto-save call, including V302's
@@ -15208,6 +15566,22 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         if(!isCurrent())return;
         if(!result.ok)return reportSaveV304(result,'Nothing was saved.');
         state.form=null;state.editingV304=null;
+      }
+      /* V322 (R5): the card length follows the ladder, and it is derived AFTER the form above has
+         been written — a milestone added on this press has to be able to be the last one. It was
+         written before, from a typed field, which is how a firm ended up with an 8-stamp card and
+         a 12-stamp prize nobody could reach. */
+      if(familyW6I2()==='stamps'){
+        const target=stampTargetFromMilestonesV322();
+        if(!(target>0)){
+          state.error='Give at least one milestone a stamp count above zero.';return render();
+        }
+        if(target!==state.stampTarget){
+          state.stampTarget=target;
+          const result=await saveDraft({stamp_target:target});
+          if(!isCurrent())return;
+          if(!result.ok)return failStep(result.error,'Nothing was saved.');
+        }
       }
       goto(state.step+1);
     });
@@ -16551,9 +16925,9 @@ async function referralsPage(){
     ?'Referral programme is Enabled. The first qualifying sale can reward the referrer once.'
     :'Referral programme is Off. Referral links are saved, but no reward is paid while it remains Off.';
   const referralSettings=canWrite?`<label for="fe">Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>Enabled</option><option value="false" ${!p||!p.enabled?'selected':''}>Off</option></select>
-      <label for="fr">Reward to referrer (${S.biz.currency||'SGD'} store credit)</label><input id="fr" type="number" min="0" step="0.01" value="${((p?.reward_cents??1000)/100).toFixed(2)}">
+      <label for="fr">Points to referrer</label><input id="fr" type="number" min="0" step="1" value="${Math.max(0,Math.round(Number(p?.reward_points)||0))}">
       <label for="fm">Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
-    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${p?.enabled?'Enabled':'Off'}</dd></div><div class="cui-readonly-row"><dt>Reward to referrer</dt><dd>${money(p?.reward_cents??1000)}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
+    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${p?.enabled?'Enabled':'Off'}</dd></div><div class="cui-readonly-row"><dt>Points to referrer</dt><dd>${esc(growPointsWordV322(p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
   routeMain.innerHTML=`${CUI.pageHeader({title:'Referrals',subtitle:referralStatusCopy,iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
     <div class="split"><div class="card"><div class="cui-card-head"><h2>Program settings</h2></div>
       ${referralSettings}
@@ -16563,21 +16937,25 @@ async function referralsPage(){
       <p class="muted" style="margin-top:8px;line-height:1.7">1. Each customer's code is on their profile (Customers → open → copy).<br>
       2. When a new customer joins, type the friend's code into <b>"Referred by"</b> on the add-customer form.<br>
       3. ${referralEnabled
-        ?workspaceTemplateHtmlV97('referralEnabledOutcome',{amount:money(p?.reward_cents??1000)})
+        ?workspaceTemplateHtmlV97('referralEnabledOutcome',{amount:growPointsWordV322(p?.reward_points)})
         :'The programme is Off. A linked referral stays pending; no reward is paid unless the programme is Enabled when a qualifying sale is recorded.'}</p></div></div>
     <div class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Referral activity</h2></div><div id="flist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>`;
   /* V173: one-shot prefill from the Programmes overview "Use suggestion" strip. */
   if(pendingProgrammeSuggestV172?.kind==='referral'&&$('fm')){
     const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;
     $('fm').value=suggest.minSpend.toFixed(2);
-    if($('fr'))$('fr').value=suggest.reward.toFixed(2);
+    /* V322: the reward slot is a whole number of points now, so it is written as one. */
+    if($('fr'))$('fr').value=String(Math.max(0,Math.round(Number(suggest.reward)||0)));
     if($('fe'))$('fe').value='true';
     toast('Suggestion loaded — review, then save');
   }
   if($('fsave'))$('fsave').onclick=async()=>{
     const saveButton=$('fsave');saveButton.disabled=true;
-    const {error}=await sb.rpc('save_referral_program',{p_business:S.biz.id,
-      p_enabled:$('fe').value==='true',p_reward_cents:Math.round(parseFloat($('fr').value||'10')*100),
+    /* V322 (R1/R4): the points writer. The pre-v322 money signature stays installed for the CDN
+       window but nothing in this bundle calls it. */
+    const {error}=await sb.rpc('save_referral_program_v322',{p_business:S.biz.id,
+      p_enabled:$('fe').value==='true',
+      p_reward_points:Math.max(0,parseInt($('fr').value||'0',10)||0),
       p_min_spend_cents:Math.round(parseFloat($('fm').value||'0')*100)});
     if(!isReferralsCurrent())return;
     if(error){saveButton.disabled=false;return fail(error)}toast('Referral program saved');referralsPage();
@@ -16594,7 +16972,7 @@ async function referralsPage(){
     $('flist').innerHTML=pageRows.length?`<table><tr><th>Referrer</th><th>Brought in</th><th>Status</th><th>Reward</th><th>Qualified</th></tr>
       ${pageRows.map(r=>`<tr><td><b>${esc(r.referrer?.full_name||'—')}</b></td><td>${esc(r.referred?.full_name||'—')}</td>
       <td><span class="pill ${r.status==='rewarded'?'ok':r.status==='pending'?'new':'off'}">${r.status}</span></td>
-      <td>${r.status==='rewarded'?money(r.reward_cents):'—'}</td>
+      <td>${r.status==='rewarded'?esc(growPointsWordV322(r.reward_points)):'—'}</td>
       <td>${r.qualified_at?r.qualified_at.slice(0,10):'—'}</td></tr>`).join('')}</table>
       <div class="row" style="margin-top:14px"><span class="muted small">${total} referral${total===1?'':'s'} · page ${referralPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="refPrev" ${referralPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="refNext" ${referralPage+1>=pages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'referrals',title:'No referrals yet',body:'Link a referral with the “Referred by” field when adding a customer.'});

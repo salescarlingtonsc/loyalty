@@ -35,11 +35,26 @@ test('referral card renders only from a server yes and shares co-branded',()=>{
 });
 
 test('referral copy exists in all four customer locales with the firm terms templated',()=>{
-  for(const key of ['referralHeading','referralTermsWithFloor','referralTerms','referralShareMessage','referredCount','shareYourCode']){
+  /* V322 (OWNER RULING R1/R4): "why referral is a stored credits? please remove it as i already
+     said no more store credits". The claim this test protects is unchanged — the card states the
+     firm's LIVE terms, templated, in all four customer locales — but the CURRENCY of the reward
+     moved from store credit to points, so the pinned sentence moved with it and two new keys
+     joined the four-locale sweep. The {floor} half is still money: the friend still has to spend. */
+  for(const key of ['referralHeading','referralTermsWithFloor','referralTerms','referralShareMessage',
+    'referredCount','shareYourCode','referralPoints','referralOnePoint']){
     const occurrences=(app.split(`${key}:`).length-1);
     assert.ok(occurrences>=4,`expected ${key} in all four locale blocks, saw ${occurrences}`);
   }
-  assert.match(app,/referralTermsWithFloor:'They quote your code when they join\. Once they spend \{floor\}, you get \{reward\} in credit\.'/);
+  assert.match(app,/referralTermsWithFloor:'They quote your code when they join\. Once they spend \{floor\}, you get \{reward\}\.'/);
+  /* The word the ruling removed must be gone from every locale's referral terms, not just English —
+     a zh-CN card still promising 余额 would be the same broken promise in another language. */
+  for(const line of app.split('\n').filter(text=>/^\s*referralTerms(WithFloor)?:/.test(text))){
+    assert.doesNotMatch(line,/credit|kredit|余额|கிரெடிட்/,
+      `referral terms still promise store credit: ${line.trim()}`);
+  }
+  /* And the reward the card renders is read from reward_points, never from the frozen money column
+     that public.customer_get_referral_card_v300 still carries for the CDN window. */
+  assert.match(app,/const reward=customerReferralPointsV322\(card\?\.reward_points\)/);
 });
 
 test('retention page carries the come-back card fed by v244 + v300 on the same visit predicate',()=>{

@@ -110,7 +110,17 @@ test('V314 (1) the Grow editor Save routes the four-way toggle through the spine
 test('V314 (2) keepPaused reaches the switch call, and turns the whole chosen set OFF', () => {
   assert.match(code, /function programmeSwitchSetV314\(selection,\{paused=false\}=\{\}\)\{/);
   assert.match(code, /set\[kind\]=paused\?false:base\[kind\]===true/);
-  assert.match(wizard, /\{paused:state\.keepPaused===true,key:state\.switchKeyV314\}/);
+  /* V322 (OWNER RULING R6 — "if i unselect the program does not mean i want to turn off"): the
+     wizard's keepPaused flag no longer rides on writeProgrammeSwitchesV314's own `paused` option;
+     it rides INTO the payload, through programmeScopeSwitchesV322, because after the ruling the
+     payload only names the kinds the owner actually SELECTED. The claim this test makes is
+     unchanged and still the whole point — keep-it-paused turns the whole CHOSEN set OFF — it is
+     just that "the chosen set" is now literally the set that is sent, rather than all four kinds
+     with the unchosen ones swept along. The writer's own paused flag is therefore false here:
+     applying the pause twice would pause kinds the payload had already decided. */
+  assert.match(code, /function programmeScopeSwitchesV322\(scope,\{paused=false\}=\{\}\)\{/);
+  assert.match(code, /PROGRAMME_KINDS_W6I2\.forEach\(kind=>\{if\(scope&&scope\[kind\]===true\)set\[kind\]=paused!==true\}\);/);
+  assert.match(wizard, /programmeScopeSwitchesV322\(state\.switches,\{paused:state\.keepPaused===true\}\),\s*\r?\n?\s*\{paused:false,key:state\.switchKeyV314\}/);
   /* The promise this restores, verbatim from the two surfaces that make it. */
   assert.match(wizard, /Keep it paused for now/);
   assert.match(wizard, /Programme will stay PAUSED — customers earn nothing\./);

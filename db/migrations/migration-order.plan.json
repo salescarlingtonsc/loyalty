@@ -1848,6 +1848,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v322_owner_programme_rulings.sql",
+      "semanticVersion": "v322",
+      "proposedDeployVersion": "20260814000300"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260814_nestly_v313_conversion_first_prospecting.sql",
       "semanticVersion": "v313",
       "proposedDeployVersion": "20260814001000"

@@ -92,7 +92,14 @@ test('W6I2 (b) the stepper renders one mini-rail per switched-on programme, in c
   /* W6 increment 2 replaces three fixed step lists with ONE composed rail. Sixteen subsets of four
      switches cannot be served by a list per model, and a firm running points AND stamps needs both
      rails on screen at once — which is the state the exclusive pick could not express at all. */
-  assert.match(app, /const GROW_SETUP_RAIL_W6I2=\[\s*\r?\n?\s*\['stamps',\[\['stampEarn','Stamps'\],\['stampGift','Stamp gift'\]\]\],\s*\r?\n?\s*\['points',\[\['earn','Earning'\],\['reward','Gifts'\],\['expiry','Expiry'\]\]\],\s*\r?\n?\s*\['tiers',\[\['climb','Climbing'\],\['tiers','Tiers'\]\]\],\s*\r?\n?\s*\['referral',\[\['referral','Referral'\]\]\]\s*\r?\n?\s*\];/);
+  /* V322 (OWNER RULING R5 — "stamps is like a quest … 3 stamp = xx rewards, 5 stamp = xx rewards,
+     8 stamp = xx rewards … able to do it customisable"): the stamps rail's second screen is no
+     longer one prize at the end of a fixed card, so its label moved from 'Stamp gift' to
+     'Milestones'. The claim this line makes — ONE composed rail, one entry per programme, in the
+     customer-facing order STAMPS → POINTS → TIER → REFERRAL, with honest per-programme screen
+     counts — is unchanged; only the second stamps screen's name moved. Matched against appCode
+     because the ruling put its rationale in a comment INSIDE the array literal. */
+  assert.match(appCode, /const GROW_SETUP_RAIL_W6I2=\[\s*\r?\n?\s*\['stamps',\[\['stampEarn','Stamps'\],\['stampGift','Milestones'\]\]\],\s*\r?\n?\s*\['points',\[\['earn','Earning'\],\['reward','Gifts'\],\['expiry','Expiry'\]\]\],\s*\r?\n?\s*\['tiers',\[\['climb','Climbing'\],\['tiers','Tiers'\]\]\],\s*\r?\n?\s*\['referral',\[\['referral','Referral'\]\]\]\s*\r?\n?\s*\];/);
   // Screen 0 first, Go-live last, and every switched-on programme's screens in between.
   assert.match(wizard, /const steps=\[\{kind:'choose',label:'Programmes',programme:null\}\];/);
   assert.match(wizard, /if\(state\.switches\[programme\]!==true\)return;/);
@@ -105,7 +112,13 @@ test('W6I2 (b) the stepper renders one mini-rail per switched-on programme, in c
   assert.match(wizard, /return kind==='choose'\?stepOneHtml\(\)/);
   assert.match(wizard, /:kind==='earn'\|\|kind==='stampEarn'\?stepTwoHtml\(\)/);
   assert.match(wizard, /:kind==='climb'\?climbStepHtmlV305\(\)/);
-  assert.match(wizard, /:kind==='reward'\|\|kind==='stampGift'\?stepThreeHtml\(\)/);
+  /* V322 (OWNER RULING R5): the two screens SPLIT. 'reward' still renders the points catalogue;
+     'stampGift' renders the milestone ladder (stampMilestonesHtmlV322), because a stamp card is a
+     quest with an ordered, unbounded list of milestones and not one prize at the end of a fixed
+     card. The fact this test protects — the body follows the step's KIND, never its number — is
+     untouched, and the split is a second kind honouring it rather than an exception to it. */
+  assert.match(wizard, /:kind==='stampGift'\?stampMilestonesHtmlV322\(\)/);
+  assert.match(wizard, /:kind==='reward'\?stepThreeHtml\(\)/);
   assert.match(wizard, /data-grow-setup-goto-v301="\$\{number\}"/);
   // Completed steps carry a tick and stay clickable; unvisited ones are not yet reachable.
   assert.match(wizard, /const number=index\+1,done=number<state\.step,current=number===state\.step;/);
@@ -138,7 +151,18 @@ test('V301 (b) each step Next writes through the SAME draft RPCs the editor writ
      publish routes wrote nothing. A per-door copy of the call is exactly what let that happen, so
      there is now ONE writer and the wizard calls it. */
   assert.match(app, /sb\.rpc\('set_programmes_v314',\{\s*\r?\n?\s*p_business:businessId,p_switches:switches,p_idempotency_key:key\|\|crypto\.randomUUID\(\)\}\)/);
-  assert.match(wizard, /await writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\},\s*\r?\n?\s*\{paused:state\.keepPaused===true,key:state\.switchKeyV314\}\)/);
+  /* V322 (OWNER RULING R6 — "if i unselect the program does not mean i want to turn off (i need a
+     seperate button) — it just means i do not want to edit the rewards at this point in time").
+     The wizard used to hand the writer `{...state.switches}`: all four kinds every time, so an
+     owner who unticked Tier merely to skip two screens had their LIVE tier programme switched off
+     for every customer. Screen 0 is SCOPE now, and the scope→payload translation
+     (programmeScopeSwitchesV322) is what goes to the writer. The keepPaused fact this line has
+     always carried survives verbatim, it just moved INTO the translation — a SELECTED kind under
+     "keep it paused" is still sent `false` — which is why the writer's own paused flag is now
+     false: applying it twice would pause kinds the payload had already decided. */
+  assert.match(wizard, /await writeProgrammeSwitchesV314\(S\.biz\.id,\s*\r?\n?\s*programmeScopeSwitchesV322\(state\.switches,\{paused:state\.keepPaused===true\}\),\s*\r?\n?\s*\{paused:false,key:state\.switchKeyV314\}\)/);
+  // And the wizard is not allowed to go back to sending the raw scope as if it were a switch set.
+  assert.doesNotMatch(wizard, /writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\}/);
   const publishStep = wizard.slice(wizard.indexOf("const activeResult=await saveDraft({active:"));
   assert.ok(publishStep.indexOf("publish_loyalty_config") < publishStep.indexOf('applyProgrammeSwitchesV314(false)'),
     'the switches may only be applied AFTER the publish they belong with');
@@ -182,12 +206,36 @@ test('W6I2 (b) screen 0 is a SWITCHBOARD: four independent toggles, any subset o
   // The twelve-row integrity matrix and the four-model table are gone from the whole file.
   for (const gone of ['GROW_SETUP_MODELS_V303', 'GROW_SETUP_INTEGRITY_V305', 'integrityLineHtmlV305'])
     assert.doesNotMatch(app, new RegExp(`(const|function)\\\\s+${gone}\\\\b`), `${gone} is declared`);
-  // One footer sentence replaces the matrix, unconditionally — it is true of every state now.
-  assert.match(app, /const GROW_SETUP_SWITCH_FOOTER_W6I2=\s*\r?\n?\s*'You can turn any of these on or off later, on their own\. They do not affect each other\.';/);
+  /* One footer sentence replaces the matrix, unconditionally — it is true of every state now.
+     V322 (OWNER RULINGS R2/R3/R6). The sentence it used to pin — "You can turn any of these on or
+     off later, on their own. They do not affect each other." — is now false in BOTH halves, and
+     saying either of them on the screen the owner decides on is how the decision goes wrong:
+       · R6: screen 0 is not a turn-on control at all, it is SCOPE. So the footer has to say that
+         leaving something unticked does NOT switch it off.
+       · R2/R3 ("stamps is not supposed to be able to be live with points and tier - it is
+         seperate rewards by itself"): the stamp card DOES affect the others. So the footer has to
+         say so before the owner picks it.
+     The fact this test protects — screen 0 states its own semantics in one unconditional sentence
+     rather than a twelve-row matrix — is unchanged; the sentence had to move because the
+     semantics did. */
+  assert.match(app, /const GROW_SETUP_SWITCH_FOOTER_W6I2=\s*\r?\n?\s*'Points, tiers and referral run together\. The stamp card runs on its own — picking it turns '\s*\r?\n?\s*\+'points and tiers off\. Nothing you leave unticked here is switched off; it just stays as it is\.';/);
   assert.match(wizard, /data-grow-setup-switchfoot-w6i2>\$\{esc\(GROW_SETUP_SWITCH_FOOTER_W6I2\)\}/);
+  // The retired sentence must not come back: both of its promises are now untrue.
+  assert.doesNotMatch(app, /You can turn any of these on or off later, on their own\./);
   /* A toggle flips ONE switch and leaves the other three alone. This is the single assertion that
-     would have caught an exclusive control wearing switch clothing. */
+     would have caught an exclusive control wearing switch clothing. "Any subset" now means any
+     subset the R2/R3 accrual exclusivity permits (points | tier | points+tier | stamps, referral
+     orthogonal to all four) — and the exclusion is never a silent side effect of a press. */
   assert.match(wizard, /state\.switches=\{\.\.\.state\.switches,\[kind\]:state\.switches\[kind\]!==true\};/);
+  /* V322 (R2/R3): a press whose kind excludes something already ticked ARMS a named confirmation
+     and flips NOTHING; the flip happens on the confirm, where the clearing becomes the owner's own
+     act. Unticking never excludes anything, so it stays immediate. */
+  assert.match(wizard, /if\(state\.switches\[kind\]!==true&&exclusiveConflictsV322\(kind\)\.length\)\{\s*\r?\n?\s*state\.pendingExclusiveV322=kind;return render\(\);/);
+  assert.match(wizard, /data-grow-setup-exclusive-w6i2="\$\{esc\(kind\)\}"/);
+  assert.match(wizard, /data-grow-setup-exclusive-confirm-w6i2="\$\{esc\(kind\)\}"/);
+  assert.match(wizard, /data-grow-setup-exclusive-cancel-w6i2="1"/);
+  // Referral is orthogonal: it excludes nothing and nothing excludes it.
+  assert.match(app, /const PROGRAMME_ACCRUAL_EXCLUSIVE_V322=Object\.freeze\(\{stamps:\['points','tiers'\],points:\['stamps'\],tiers:\['stamps'\]\}\);/);
   // Nothing is written on screen 0: the toggles only re-render, which rebuilds the rail.
   const toggleHandler = wizard.slice(wizard.indexOf("host.querySelectorAll('[data-grow-setup-switch-w6i2]')"),
     wizard.indexOf("host.querySelectorAll('[data-grow-setup-basis-v305]')"));
@@ -199,8 +247,14 @@ test('W6I2 (b) screen 0 is a SWITCHBOARD: four independent toggles, any subset o
   assert.match(wizard, /if\(handoffKindW6I2\)set\[handoffKindW6I2\]=true;/);
   assert.match(app, /const GROW_SETUP_SECTOR_DEFAULTS_W6I2=\{/);
   assert.match(wizard, /if\(PROGRAMME_KINDS_W6I2\.some\(kind=>set\[kind\]===true\)\)return set;/);
-  // Zero on: publish is refused, in words, rather than as a dead button.
-  assert.match(wizard, /Nothing is turned on\. Turn on at least one programme to publish\./);
+  /* Zero on: publish is refused, in words, rather than as a dead button.
+     V322 (OWNER RULING R6): the refusal is worded twice now, once per screen, because screen 0 and
+     the Go-live gate are asking different questions. Screen 0 is a SCOPE picker, so its empty
+     state says "Nothing is ticked. Tick at least one programme to set up." — telling an owner
+     there to "turn one on" would be the screen claiming a power the ruling took away from it. The
+     Go-live gate keeps the on/off wording, because publishing IS the moment something goes on. */
+  assert.match(wizard, /Nothing is ticked\. Tick at least one programme to set up\./);
+  assert.match(wizard, /Nothing is turned on, so there is nothing to publish\. Go back to Programmes and turn one on\./);
   assert.match(wizard, /\|\|!anySwitchOnW6I2\(\)/);
   /* The toggle reads the attribute under the name the DOM actually gives it. `data-…-w6i2`
      reaches the dataset as `…W6i2` — the HTML rule uppercases only a letter directly after a
@@ -304,8 +358,19 @@ test('V301 (b) step 3 writes the reward through the saveReward envelope', () => 
   assert.match(wizard, /pointsInput\.addEventListener\('input',\(\)=>\{manualV301=true\}\);/);
   // The classic pair keeps its own sentence rather than a catalogue its engine ignores.
   assert.match(wizard, /await saveDraft\(\{redeem_points:state\.classicRedeem,reward_credit_cents:Math\.round\(state\.classicCredit\*100\)\}\)/);
-  // Stamps save their target with the programme fields.
-  assert.match(wizard, /await saveDraft\(\{stamp_target:state\.stampTarget\}\)/);
+  /* Stamps save their target with the programme fields — through the same saveDraft envelope, on
+     the same Next, which is the fact this line has always protected.
+     V322 (OWNER RULING R5 — "stamps is like a quest … 3 stamp = xx rewards, 5 stamp = xx rewards,
+     8 stamp = xx rewards … able to do it customisable"): the number is no longer TYPED. The card's
+     length is the highest milestone on the ladder, derived after the milestone form on this press
+     has been written, and sent only when it actually moved — a card whose length disagreed with
+     its own last prize is the two-numbers-for-one-fact defect the ruling closes. */
+  assert.match(wizard, /const target=stampTargetFromMilestonesV322\(\);/);
+  assert.match(wizard, /if\(target!==state\.stampTarget\)\{\s*\r?\n?\s*state\.stampTarget=target;\s*\r?\n?\s*const result=await saveDraft\(\{stamp_target:target\}\);/);
+  // A ladder with no reachable milestone cannot leave the screen with a zero-length card.
+  assert.match(wizard, /Give at least one milestone a stamp count above zero\./);
+  // And the typed field it replaces is gone from the milestones screen.
+  assert.match(app, /const stampTargetFromMilestonesV322=\(\)=>stampMilestonesV322\(\)/);
 });
 
 test('V301 (b) a failed save keeps the owner on the step, with a retry and their values', () => {
@@ -769,9 +834,25 @@ test('W6I2 (g) the Go-live summary names every switched-on programme, and the sw
   assert.match(wizard, /if\(state\.switches\.points===true\)parts\.push\(/);
   assert.match(wizard, /if\(state\.switches\.referral===true\)parts\.push\(referralExampleTextW6I2\(\)\);/);
   assert.match(wizard, /return parts\.length\?parts\.join\(' · '\):'No programme is turned on\.';/);
-  // The four flags are restated on the gate — they are the one live thing publish changes.
-  assert.match(wizard, /const switchSummaryBlockW6I2=\(\)=>`<div class="imp-note" data-grow-setup-switchsummary-w6i2/);
-  assert.match(wizard, /const on=state\.switches\[kind\]===true&&!state\.keepPaused;/);
+  /* The four flags are restated on the gate — they are the one live thing publish changes.
+     V322 (OWNER RULING R6): the summary now reads the PAYLOAD, not the scope, because after the
+     ruling those are no longer the same thing. It used to print `const on=state.switches[kind]===
+     true&&!state.keepPaused;` and then "ON"/"off" per kind — which said "off" beside a programme
+     the publish does not touch at all, i.e. the screen asserting exactly the thing the ruling
+     forbids. Four honest states now, read off the payload: `turning ON` for a selected kind,
+     `staying paused` for a selected kind under keep-it-paused, `switching OFF` only for the
+     exclusivity the owner already confirmed, and `left as it is` for a kind that is not sent.
+     The claim survives and gets stronger: the gate states what THIS publish does to every one of
+     the four programmes, including "nothing". */
+  assert.match(wizard, /const switchSummaryBlockW6I2=\(\)=>\{/);
+  assert.match(wizard, /const payload=programmeScopeSwitchesV322\(state\.switches,\{paused:state\.keepPaused===true\}\)\|\|\{\};/);
+  assert.match(wizard, /<div class="imp-note" data-grow-setup-switchsummary-w6i2/);
+  assert.match(wizard, /const sent=Object\.prototype\.hasOwnProperty\.call\(payload,kind\);/);
+  assert.match(wizard, /const state322=!sent\?'left as it is'\s*\r?\n?\s*:payload\[kind\]===true\?'turning ON'\s*\r?\n?\s*:state\.switches\[kind\]===true\?'staying paused'\s*\r?\n?\s*:'switching OFF';/);
+  assert.match(wizard, /data-grow-setup-switchsummary-state-v322="\$\{esc\(state322\)\}"/);
+  assert.match(wizard, /data-grow-setup-switchsummary-kind-w6i2="\$\{esc\(kind\)\}"/);
+  // The retired reading — scope treated as an on/off decision — must not come back.
+  assert.doesNotMatch(wizard, /const on=state\.switches\[kind\]===true&&!state\.keepPaused;/);
   // The tiers-only claim line survives, keyed on the switches rather than on a model name.
   assert.match(wizard, /const tiersOnlyClaimLineV305=\(\)=>!\(state\.switches\.tiers===true&&state\.switches\.points!==true&&state\.switches\.stamps!==true\)\?''/);
   assert.match(wizard, /While Tier membership runs on its own, customers cannot claim point gifts\./);
@@ -818,17 +899,31 @@ test('W6I2 (g) turning a programme on NEVER deletes: the wizard writes through a
     'publish_loyalty_config',             // the publish itself
     'save_loyalty_config_draft',          // programme row / tier_basis / expiry / reward envelope
     'save_loyalty_tier_draft_v143',       // one tier row at a time
-    'save_referral_program'               // W6I2: the referral rail, applied at Go-live only
+    /* V322 (OWNER RULING R1/R4 — "why referral is a stored credits? please remove it as i already
+       said no more store credits"): the referral payout stopped being money, so its writer got a
+       new name and a new argument (p_reward_points, an integer count of points, replacing
+       p_reward_cents). Renaming rather than re-purposing is the point: the pre-v322 money
+       signature stays installed for the cached bundle's window, and a stale bundle calling the old
+       name cannot accidentally be read as paying points. The allowlist's own claim — every data
+       call the wizard makes is enumerated, and none of them can destroy a row — is unchanged. */
+    'save_referral_program_v322'          // W6I2: the referral rail, applied at Go-live only
   ].sort(), `wizard RPC allowlist drifted: ${JSON.stringify(rpcNames)}`);
-  /* save_referral_program is the ONE live-table write the wizard performs besides the spine, and
-     it is deliberately not a draft write: public.referral_programs is not versioned. It runs at
+  /* save_referral_program_v322 is the ONE live-table write the wizard performs besides the spine,
+     and it is deliberately not a draft write: public.referral_programs is not versioned. It runs at
      Go-live, beside the switches, never on a screen's Next — otherwise a setup the owner walks
      away from would have turned referrals on for real. */
-  const referralWrites = [...wizard.matchAll(/sb\.rpc\('save_referral_program'/g)].length;
+  const referralWrites = [...wizard.matchAll(/sb\.rpc\('save_referral_program_v322'/g)].length;
   assert.equal(referralWrites, 1, 'exactly one referral write');
+  // The retired money signature is not called from the wizard at all.
+  assert.doesNotMatch(wizard, /sb\.rpc\('save_referral_program'/);
+  assert.doesNotMatch(wizard, /p_reward_cents/);
   const switchApply = wizard.slice(wizard.indexOf('async function applyProgrammeSwitchesV314(fromRetry){'),
     wizard.indexOf('const programRowV305=model=>{'));
-  assert.match(switchApply, /sb\.rpc\('save_referral_program'/, 'and it lives inside the Go-live switch application');
+  assert.match(switchApply, /sb\.rpc\('save_referral_program_v322'/, 'and it lives inside the Go-live switch application');
+  /* V322 (OWNER RULING R6): and it is reached only when referral is IN SCOPE. The spine payload no
+     longer names a programme the owner did not select, so its companion write must not either — a
+     run that never went near the referral screens leaves referral_programs exactly as it found it. */
+  assert.match(switchApply, /if\(state\.switches\.referral!==true\)\{state\.modeError='';if\(fromRetry\)render\(\);return true\}/);
   const referralBranch = wizard.slice(wizard.indexOf("if(kind==='referral')return withBusy"),
     wizard.indexOf("if(kind==='reward'||kind==='stampGift')return withBusy"));
   assert.ok(referralBranch.length > 80, 'the referral branch was found and sliced');
