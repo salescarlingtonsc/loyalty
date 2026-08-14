@@ -114,7 +114,12 @@ test('offer details open a company sheet with contact, current offers and a per-
   assert.match(app,/<span class="muted small" data-company-row-lines>\$\{lines\|\|'Company profile'\}<\/span>/);
   assert.match(app,/const summary=\[branch\.address,branch\.phone\]/);
   assert.match(app,/\.customer-company-row,\.customer-business-offer\{[^}]*min-height:52px/);
-  assert.match(app,/companyButton\.onclick=\(\)=>\{[\s\S]{0,260}showCustomerBusinessDetailV178\(business,\{inheritHistoryId:handOff\}\)/);
+  /* v326 (owner: "when I click this, straightaway go to company profile inside, don't need
+     another pop-out"): this specific company row — inside showCustomerOfferDetailV173 — now
+     navigates straight to the business's own programme page instead of opening this sheet.
+     showCustomerBusinessDetailV178 itself is untouched and still opened elsewhere (the header's
+     own [data-company-detail] wiring), which the rest of this test still covers below. */
+  assert.match(app,/companyButton\.onclick=\(\)=>\{[\s\S]{0,260}const target=`#\/wallet\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}`/);
 
   const sheet=section('function showCustomerBusinessDetailV178','function showCustomerOfferDetailV173');
   assert.match(sheet,/overlay\.className='modal customer-surface customer-business-detail-modal'/);

@@ -40,9 +40,17 @@ test('actual-render fixture uses realistic spa data and exactly two primary offe
 
 test('actual-render fixture keeps identity compact, wraps long tokens, and exposes a real modal',()=>{
   assert.match(fixture,/customer-programme-compact-head/);
+  /* v326 (owner: "in phone view, please put side by side to swipe, don't arrange above &
+     bottom"): the combined .customer-promotions-grid,.promotion-editor-grid single-column rule
+     split in two — the customer offers row now scrolls horizontally at this breakpoint instead,
+     while the business-side promotion editor grid keeps its original single-column stack. */
   assert.match(
     fixture,
-    /@media\(max-width:760px\)\{[\s\S]*\.customer-promotions-grid,\.promotion-editor-grid\{grid-template-columns:1fr\}/
+    /@media\(max-width:760px\)\{[\s\S]*\.promotion-editor-grid\{grid-template-columns:1fr\}/
+  );
+  assert.match(
+    fixture,
+    /\.customer-promotions-grid\{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory/
   );
   assert.match(fixture,/meta name="viewport" content="width=device-width,initial-scale=1"/);
   assert.match(fixture,/overflow-wrap:anywhere;word-break:break-word/);
@@ -78,8 +86,15 @@ test('captured Chrome evidence is current and meets responsive acceptance thresh
     assert.ok(capture.cards.every(card=>/^Valid .+ – .+$/.test(card.validity)));
   }
 
+  /* v326 (owner: "in phone view, please put side by side to swipe, don't arrange above &
+     bottom"): offer cards used to stack vertically on phone widths; they now sit in one
+     horizontally-scrolling row, so card two starts beside card one (same top, to its right)
+     rather than below it. */
   for(const capture of [metrics.mobile390,metrics.mobile412]){
-    assert.ok(capture.cards[1].rect.top>=capture.cards[0].rect.bottom);
+    assert.ok(Math.abs(capture.cards[1].rect.top-capture.cards[0].rect.top)<2,
+      'cards sit in the same row on phone widths');
+    assert.ok(capture.cards[1].rect.left>=capture.cards[0].rect.right,
+      'card two starts beside card one, not overlapping it');
   }
 
   const firstTerms=metrics.mobile390.cards[0].details;

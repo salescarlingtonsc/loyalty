@@ -110,7 +110,12 @@ test('a handed-off dialog entry is neither unwound twice nor pushed twice',()=>{
 
 test('the offer sheet opens the company sheet and keeps only the booking action',()=>{
   const sheet=section(app,'function showCustomerOfferDetailV173','function wireCustomerHomeOffersV167');
-  assert.match(sheet,/showCustomerBusinessDetailV178\(business,\{inheritHistoryId:handOff\}\)/);
+  /* v326 (owner: "when I click this, straightaway go to company profile inside, don't need
+     another pop-out"): the company row now navigates straight to the business's own programme
+     page instead of opening the showCustomerBusinessDetailV178 sheet. */
+  assert.match(sheet,/const target=`#\/wallet\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}`/);
+  assert.doesNotMatch(sheet,/showCustomerBusinessDetailV178\(business,\{inheritHistoryId:handOff\}\)/,
+    'the row no longer opens a second pop-out modal');
   assert.doesNotMatch(sheet,/data-offer-detail-nav>\$\{esc\(ct\('openProgramme'/,
     'the owner struck the "Open <business> rewards" button off the offer sheet');
   const company=section(app,'function showCustomerBusinessDetailV178','function showCustomerOfferDetailV173');

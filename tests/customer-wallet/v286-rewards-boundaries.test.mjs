@@ -73,10 +73,18 @@ test('the company-details affordance and tier survive at 390px', () => {
   assert.match(indexHtml,
     /@media\(max-width:560px\)\{\.customer-programme-identity-hint-long\{display:none\}\.customer-programme-identity-hint-short\{display:inline\}/,
     'at 560px the long wording gives way to the short label — the affordance stays visible');
+  /* v326 (owner mockup: cover photo, logo, name and Book now on one row; phone/address of their
+     own beneath): "Address, phone and offers ›" and the responsive hint-long/hint-short swap
+     moved out of the identity button entirely — the contact area below the cover photo now has
+     its own room for that text at every width, so the squeeze-behind-the-name affordance this
+     test used to guard no longer exists. The tier label survives, just without the trailing
+     "· " it used to need before a hint span that is no longer there. */
   const merchant = section(appJs, 'function customerMerchantExperienceMarkupV95', 'function actionableWalletCardMarkup');
   const identity = section(merchant, '<button class="customer-programme-identity"', '</button>');
-  assert.match(identity, /\$\{hasTier&&currentTierLabel\?`\$\{esc\(currentTierLabel\)\} · `:''\}/,
-    'the tier label sits outside the width-swapped spans, so mobile keeps it');
-  assert.match(identity, /<span class="customer-programme-identity-hint-long">Address, phone and offers ›<\/span>/);
-  assert.match(identity, /<span class="customer-programme-identity-hint-short">Details ›<\/span>/);
+  assert.match(identity, /\$\{hasTier&&currentTierLabel\?`<span class="muted small customer-programme-identity-hint">\$\{esc\(currentTierLabel\)\}<\/span>`:''\}/,
+    'the tier label survives inside the identity button');
+  assert.doesNotMatch(identity, /customer-programme-identity-hint-long|customer-programme-identity-hint-short/,
+    'the width-swapped hint spans moved out of the identity button with the redesign');
+  assert.match(merchant, /Address, phone and offers ›/,
+    'the affordance text lives in the header contact area now, not squeezed behind the name');
 });

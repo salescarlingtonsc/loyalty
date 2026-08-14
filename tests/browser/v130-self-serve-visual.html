@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="004cbad98db324b5307cf99402aa935030634ed0515f38ee71b17be3012f1772"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="790e48561fb5cdf00b4571ba0418f7ed5900ac6aa06ed1694f9be68570764058"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1635,6 +1635,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-booking-filter:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
 /* v291 · the Book-with chooser: every joined business, sector-grouped once there is >1 sector */
 .customer-booking-chooser h2{font-size:1.05rem}
+/* v326 · same search-field treatment as .customer-my-rewards-search, filtering the chips below */
+.customer-booking-search{position:relative;display:flex;align-items:center;gap:8px;min-width:0;max-width:420px;padding:0 12px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
+.customer-booking-search input{flex:1;min-width:0;min-height:44px;padding:0;border:0;background:none;color:var(--ink);font:inherit}
+.customer-booking-search input:focus{outline:none}
+.customer-booking-search:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
 .customer-booking-sector{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 0}
 .customer-booking-chips{display:flex;gap:10px;overflow-x:auto;padding:10px 2px 4px;-webkit-overflow-scrolling:touch}
 .customer-booking-chip{display:flex;align-items:center;gap:10px;flex:0 0 auto;min-height:56px;max-width:240px;padding:8px 14px 8px 8px;border:1px solid var(--control-border);border-radius:16px;background:var(--card);color:var(--ink);text-align:left}
@@ -1745,6 +1750,22 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    is what does not fit at 390px, not the affordance, so the short label and the tier stay. */
 .customer-programme-identity-hint-short{display:none}
 .customer-programme-book{flex:0 0 auto}
+/* v326 (owner mockup: cover photo, logo, name, Book now on the photo; phone/address/branch as
+   their own lines below). Two-classes-on-one-element beats the base .customer-programme-compact-head
+   flex/padding rules on specificity alone, at every viewport, so the 760px mobile padding
+   override above keeps working unmodified. */
+.customer-programme-compact-head.customer-programme-compact-head-v326{display:block;padding:0;gap:0;overflow:hidden}
+.customer-programme-cover-v326{position:relative;min-height:104px;padding:14px 16px;display:flex;align-items:flex-end;background:var(--merchant-cover,none) center/cover no-repeat,linear-gradient(135deg,var(--merchant-accent,#28212f),color-mix(in srgb,var(--merchant-accent,#28212f) 55%,#17161a))}
+.customer-programme-cover-v326::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,.05),rgba(15,13,18,.58));pointer-events:none}
+.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;align-items:center;gap:12px;width:100%}
+.customer-programme-head-row-v326 .customer-programme-identity{flex:1;min-width:0}
+.customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
+.customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
+.customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
+.customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
+.customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
+.customer-programme-contact-line-v326 a{color:inherit}
+.customer-programme-contact-more-v326{border:0;background:none;padding:0;margin-top:2px;color:var(--coral);font-weight:600;font-size:.85rem;text-align:left;cursor:pointer}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
 /* V300: how many times a reward has actually been redeemed, on its card. */
@@ -1912,7 +1933,13 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 @media(max-width:720px){.promotion-studio-progress{grid-template-columns:minmax(0,1fr)}}
 .promotion-studio-progress li{padding:11px;border-radius:13px;background:var(--bg);border:1px solid var(--hair);font-size:.84rem;font-weight:750}.promotion-studio-progress li strong{display:block;color:var(--coral);margin-bottom:3px}.promotion-editor-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:16px}.promotion-preview{position:sticky;top:92px;align-self:start}.promotion-preview .customer-promotion-card{min-height:410px}.promotion-item-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}.promotion-item-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--bg)}.promotion-item-row:last-child{border-bottom:0}.promotion-quota{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.promotion-quota-meter{height:8px;flex:1 1 180px;overflow:hidden;border-radius:999px;background:var(--hair)}.promotion-quota-meter span{display:block;height:100%;width:var(--quota-progress,0%);background:var(--coral)}
 @media(max-width:760px){
-  .customer-promotions-grid,.promotion-editor-grid{grid-template-columns:1fr}
+  .promotion-editor-grid{grid-template-columns:1fr}
+  /* v326 (owner: "in phone view, please put side by side to swipe, don't arrange above &
+     bottom"): the customer's own Latest offers row used to collapse to one stacked column on
+     phone widths. It now scrolls horizontally instead, one card at a time — the business-side
+     promotion editor grid above is untouched, it was never what the owner was pointing at. */
+  .customer-promotions-grid{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  .customer-promotions-grid>*{flex:0 0 82%;scroll-snap-align:start;min-width:0}
   .customer-promotion-card{min-height:320px}
   .customer-programme-compact-head{padding:12px}
   .promotion-preview{position:static}
@@ -1960,7 +1987,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-section h2{font-size:18px;margin-bottom:4px}
 .wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
-.wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:#fff;min-width:0}
+.wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:var(--bg);min-width:0}
 .wallet-reward-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}

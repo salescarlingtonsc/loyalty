@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="ded6c3a046b0ef61f46e8a85ee1fd185166b710925e25e8f5068ffd0331e8c03">
+<meta name="v104-production-source-sha256" content="888b1ffeb33f31e849e4300cdb50db87a3205f899948d628cdc7783dd5dd16cc">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1643,6 +1643,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-booking-filter:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
 /* v291 · the Book-with chooser: every joined business, sector-grouped once there is >1 sector */
 .customer-booking-chooser h2{font-size:1.05rem}
+/* v326 · same search-field treatment as .customer-my-rewards-search, filtering the chips below */
+.customer-booking-search{position:relative;display:flex;align-items:center;gap:8px;min-width:0;max-width:420px;padding:0 12px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
+.customer-booking-search input{flex:1;min-width:0;min-height:44px;padding:0;border:0;background:none;color:var(--ink);font:inherit}
+.customer-booking-search input:focus{outline:none}
+.customer-booking-search:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
 .customer-booking-sector{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 0}
 .customer-booking-chips{display:flex;gap:10px;overflow-x:auto;padding:10px 2px 4px;-webkit-overflow-scrolling:touch}
 .customer-booking-chip{display:flex;align-items:center;gap:10px;flex:0 0 auto;min-height:56px;max-width:240px;padding:8px 14px 8px 8px;border:1px solid var(--control-border);border-radius:16px;background:var(--card);color:var(--ink);text-align:left}
@@ -1753,6 +1758,22 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    is what does not fit at 390px, not the affordance, so the short label and the tier stay. */
 .customer-programme-identity-hint-short{display:none}
 .customer-programme-book{flex:0 0 auto}
+/* v326 (owner mockup: cover photo, logo, name, Book now on the photo; phone/address/branch as
+   their own lines below). Two-classes-on-one-element beats the base .customer-programme-compact-head
+   flex/padding rules on specificity alone, at every viewport, so the 760px mobile padding
+   override above keeps working unmodified. */
+.customer-programme-compact-head.customer-programme-compact-head-v326{display:block;padding:0;gap:0;overflow:hidden}
+.customer-programme-cover-v326{position:relative;min-height:104px;padding:14px 16px;display:flex;align-items:flex-end;background:var(--merchant-cover,none) center/cover no-repeat,linear-gradient(135deg,var(--merchant-accent,#28212f),color-mix(in srgb,var(--merchant-accent,#28212f) 55%,#17161a))}
+.customer-programme-cover-v326::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,.05),rgba(15,13,18,.58));pointer-events:none}
+.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;align-items:center;gap:12px;width:100%}
+.customer-programme-head-row-v326 .customer-programme-identity{flex:1;min-width:0}
+.customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
+.customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
+.customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
+.customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
+.customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
+.customer-programme-contact-line-v326 a{color:inherit}
+.customer-programme-contact-more-v326{border:0;background:none;padding:0;margin-top:2px;color:var(--coral);font-weight:600;font-size:.85rem;text-align:left;cursor:pointer}
 .customer-programme-tabs{margin-bottom:14px;padding:0}
 .customer-programme-tablist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px;border-bottom:1px solid var(--hair)}
 /* V300: how many times a reward has actually been redeemed, on its card. */
@@ -1920,7 +1941,13 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 @media(max-width:720px){.promotion-studio-progress{grid-template-columns:minmax(0,1fr)}}
 .promotion-studio-progress li{padding:11px;border-radius:13px;background:var(--bg);border:1px solid var(--hair);font-size:.84rem;font-weight:750}.promotion-studio-progress li strong{display:block;color:var(--coral);margin-bottom:3px}.promotion-editor-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:16px}.promotion-preview{position:sticky;top:92px;align-self:start}.promotion-preview .customer-promotion-card{min-height:410px}.promotion-item-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}.promotion-item-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--bg)}.promotion-item-row:last-child{border-bottom:0}.promotion-quota{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.promotion-quota-meter{height:8px;flex:1 1 180px;overflow:hidden;border-radius:999px;background:var(--hair)}.promotion-quota-meter span{display:block;height:100%;width:var(--quota-progress,0%);background:var(--coral)}
 @media(max-width:760px){
-  .customer-promotions-grid,.promotion-editor-grid{grid-template-columns:1fr}
+  .promotion-editor-grid{grid-template-columns:1fr}
+  /* v326 (owner: "in phone view, please put side by side to swipe, don't arrange above &
+     bottom"): the customer's own Latest offers row used to collapse to one stacked column on
+     phone widths. It now scrolls horizontally instead, one card at a time — the business-side
+     promotion editor grid above is untouched, it was never what the owner was pointing at. */
+  .customer-promotions-grid{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  .customer-promotions-grid>*{flex:0 0 82%;scroll-snap-align:start;min-width:0}
   .customer-promotion-card{min-height:320px}
   .customer-programme-compact-head{padding:12px}
   .promotion-preview{position:static}
@@ -1968,7 +1995,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-section h2{font-size:18px;margin-bottom:4px}
 .wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
-.wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:#fff;min-width:0}
+.wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:var(--bg);min-width:0}
 .wallet-reward-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}
@@ -2151,7 +2178,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source ded6c3a046b0ef61f46e8a85ee1fd185166b710925e25e8f5068ffd0331e8c03</p>
+  <p class="v104-provenance">Local production-render harness · source 888b1ffeb33f31e849e4300cdb50db87a3205f899948d628cdc7783dd5dd16cc</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2163,7 +2190,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="ded6c3a046b0ef61f46e8a85ee1fd185166b710925e25e8f5068ffd0331e8c03";
+const PRODUCTION_SOURCE_SHA256="888b1ffeb33f31e849e4300cdb50db87a3205f899948d628cdc7783dd5dd16cc";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -3118,10 +3145,15 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
      the v308 tripwire refuses points.active AND stamps.active on one business, so at a stamps firm
      any points card in the stack is a paused one with nothing to spend. */
   const stampsHost=rewardsHost&&show.stamps&&entries.stamps?.active===true;
+  /* v326 (owner: "if programme is paused/not live, remove from customer app"): the Tier card
+     alone drops out entirely while its own programme is paused, rather than keeping its card
+     with a "Programme paused" message. Stamps/points/referral paused behaviour is untouched —
+     only Tier was annotated. */
+  const tierPausedV326=entries.tiers?.active===false;
   const cards=[
     show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
     show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost}):'',
-    show.tiers?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
+    show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:

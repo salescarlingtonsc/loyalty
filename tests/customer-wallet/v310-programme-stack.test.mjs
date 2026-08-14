@@ -16,7 +16,8 @@ import {readFile} from 'node:fs/promises';
  *      Cloudflare window AND the rollback path;
  *   2. the order is fixed, whichever programmes are on;
  *   3. a programme the firm never ran renders nothing (no filler cards);
- *   4. a PAUSED programme keeps its card and says so, and pausing one never blanks another;
+ *   4. a PAUSED programme keeps its card and says so, and pausing one never blanks another —
+ *      except Tier (v326 owner ruling): a paused Tier card drops out of the stack entirely;
  *   5. exactly one .customer-programme-balance in the stack (one hero);
  *   6. the Tier card never references loyalty.balance — spendable is not lifetime;
  *   7. the referral card renders only from the server's own {enabled:true};
@@ -165,13 +166,17 @@ test('a paused programme keeps its card, says so, and never blanks the others',(
   assert.match(tiers,/Explorer/,'the tier card is untouched by the points pause');
 });
 
-test('each card reads its OWN active flag, not a single programme-wide one',()=>{
+/* v326 (owner: "if programme is paused/not live, remove from customer app" — annotated on the
+   Tier card specifically): unlike every other card in the stack, a paused TIER card no longer
+   renders at all, rather than showing "Programme paused". This is the one deliberate exception
+   to rule 4 above; stamps/points/referral paused behaviour is untouched. */
+test('each card reads its OWN active flag, not a single programme-wide one — Tier is the paused exception',()=>{
   const tierPaused=render(spine({points:running(),tiers:paused()}));
-  const points=section('data-programme-card="points"','data-programme-card="tiers"',tierPaused);
-  assert.match(points,/customer-programme-balance/,'points is running, so its figure stands');
-  const tiers=tierPaused.slice(tierPaused.indexOf('data-programme-card="tiers"'));
-  assert.match(tiers,/Programme paused/);
-  assert.doesNotMatch(tiers,/Explorer/,'a paused tier programme does not show a rung it is not awarding');
+  assert.deepEqual(cardOrder(tierPaused),['points'],
+    'a paused Tier programme drops its card entirely; points is running, so its own card is the only one left');
+  assert.match(tierPaused,/customer-programme-balance/,'points is running, so its figure stands');
+  assert.doesNotMatch(tierPaused,/data-programme-card="tiers"/,'no tier card at all while its programme is paused');
+  assert.doesNotMatch(tierPaused,/Explorer/,'a paused tier programme does not show a rung it is not awarding');
 });
 
 /* -------------------------------------------------------------------- 5 · exactly one hero */

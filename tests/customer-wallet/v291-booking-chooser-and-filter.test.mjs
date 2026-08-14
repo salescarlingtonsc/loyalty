@@ -20,10 +20,14 @@ function section(start, end) {
   return appJs.slice(from, to);
 }
 
+/* v326 (owner: crossed out "Book with", circled "here put filter to search company name"): the
+   chooser gained a live search field over the same chips, which needs CUI.icon for its magnifier —
+   stubbed here exactly as every other isolated markup test stubs it. */
 const chooserSource = section('function customerBookingChooserV291', 'function customerBookingEmptyMarkupV183');
-const chooser = new Function('esc', 'customerBookingBusinessLogoV195', `${chooserSource}
+const chooser = new Function('esc', 'CUI', 'customerBookingBusinessLogoV195', `${chooserSource}
   return customerBookingChooserV291;`)(
   (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+  { icon: () => '' },
   () => '<span class="customer-booking-logo"></span>');
 
 test('every joined business appears — bookable ones book, the rest are honest, none are hidden', () => {

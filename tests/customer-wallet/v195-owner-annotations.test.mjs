@@ -162,7 +162,13 @@ test('the programme header no longer repeats the programme name', () => {
   assert.doesNotMatch(identity, /esc\(presentation\.name\)/,
     '"Cubbly Stamp" under "Cubbly" told the customer nothing they had not just read');
   assert.match(identity, /\$\{esc\(business\.name\|\|presentation\.name\)\}/, 'the company name stays');
-  assert.match(identity, /Address, phone and offers ›/);
+  /* v326 (owner mockup: cover photo, logo, name and Book now on one row; phone/address of their
+     own beneath): "Address, phone and offers ›" moved out of the identity button into its own
+     contact area below, which loads real phone/address inline and falls back to this same link
+     when they are not yet available. */
+  assert.doesNotMatch(identity, /Address, phone and offers ›/,
+    'the identity button itself is now just logo, name and tier — the contact line moved below it');
+  assert.match(merchant, /Address, phone and offers ›/);
 });
 
 /* ------------------------------------------- 5 · the standalone Rewards card, and where it went */
@@ -293,7 +299,12 @@ test('the company row shows the address and phone, and opens the company profile
   assert.match(sheet, /const summary=\[branch\.address,branch\.phone\]/);
   assert.match(sheet, /if\(summary\.length\)rowLines\.textContent=summary\.join\(' · '\)/,
     'a business with no address or phone keeps the honest default instead of an empty line');
-  assert.match(sheet, /showCustomerBusinessDetailV178\(business,\{inheritHistoryId:handOff\}\)/);
+  /* v326 (owner: "when I click this, straightaway go to company profile inside, don't need
+     another pop-out"): the row now navigates straight to the business's own programme page
+     instead of opening a second modal (showCustomerBusinessDetailV178). */
+  assert.match(sheet, /const target=`#\/wallet\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}`/);
+  assert.doesNotMatch(sheet, /companyButton\.onclick=\(\)=>\{\s*const handOff=CUI\.currentDialogHistoryId\?\.\(\)\|\|0;\s*deactivate\(\{restoreFocus:false,handOffHistory:handOff>0\}\);\s*showCustomerBusinessDetailV178\(business,\{inheritHistoryId:handOff\}\);/,
+    'the row no longer opens a second pop-out modal');
 });
 
 /* ---------------------------------------------------- 8 · v196 follow-ups on the same surfaces */

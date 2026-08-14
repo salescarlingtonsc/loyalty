@@ -108,7 +108,10 @@ test('Android Back closes a customer dialog without leaving the route',()=>{
 
 test('the merchant accent can never render unreadable customer copy',()=>{
   assert.match(app,/const heroColor=contrastSafeBrandColor\(/);
-  assert.match(app,/--merchant-accent:\$\{esc\(contrastSafeBrandColor\(presentation\.heroColor\)\)\}/);
+  /* v326: the header now composes --merchant-accent through accentV326=esc(contrastSafeBrandColor(...))
+     instead of inlining the call at the style attribute — same guard, one level of indirection. */
+  assert.match(app,/const accentV326=esc\(contrastSafeBrandColor\(presentation\.heroColor\)\);/);
+  assert.match(app,/--merchant-accent:\$\{accentV326\}/);
   assert.match(app,/const accent=contrastSafeBrandColor\(/);
   assert.ok(app.indexOf('function contrastSafeBrandColor(')>=0,'the guard must exist');
 });

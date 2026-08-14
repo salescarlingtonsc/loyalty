@@ -1426,9 +1426,18 @@ function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to
 function customerBookingChooserV291(groups=[]){
   const businesses=groups.filter(group=>group.business_slug);
   if(!businesses.length)return '';
-  const chip=group=>group.bookingEnabled
-    ?`<button class="customer-booking-chip" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${customerBookingBusinessLogoV195(group)}<span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">Book now</span></span></button>`
-    :`<a class="customer-booking-chip customer-booking-chip--quiet" href="#/wallet/${encodeURIComponent(group.business_slug)}">${customerBookingBusinessLogoV195(group)}<span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">No online booking yet</span></span></a>`;
+  const chip=group=>{
+    const searchAttr=`data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').trim().toLowerCase())}"`;
+    return group.bookingEnabled
+      ?`<button class="customer-booking-chip" type="button" ${searchAttr} data-repeat-booking data-business-slug="${esc(group.business_slug)}">${customerBookingBusinessLogoV195(group)}<span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">Book now</span></span></button>`
+      :`<a class="customer-booking-chip customer-booking-chip--quiet" ${searchAttr} href="#/wallet/${encodeURIComponent(group.business_slug)}">${customerBookingBusinessLogoV195(group)}<span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">No online booking yet</span></span></a>`;
+  };
+  /* v326 (owner: crossed out the fixed "Book with" header, circled "here put filter to search
+     company name"): the header is now a live text filter over the same chips, the identical
+     search pattern already used for the customer's reward-account list
+     (wireCustomerProgrammeSearchV195/#customerProgrammeSearch) — filters what already
+     rendered, no new request. */
+  const searchHead=`<div class="customer-booking-search"><label class="sr-only" for="customerBookingSearch">Search company name</label>${CUI.icon('search',{size:17})}<input id="customerBookingSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerBookingSearchStatus"></div><p class="muted small" id="customerBookingSearchStatus" role="status" hidden></p>`;
   const industries=[...new Set(businesses.map(group=>String(group.industry||'').trim()).filter(Boolean))];
   if(industries.length>1){
     const bySector=new Map();
@@ -1437,10 +1446,38 @@ function customerBookingChooserV291(groups=[]){
       if(!bySector.has(key))bySector.set(key,[]);
       bySector.get(key).push(group);
     }
-    return `<section class="card customer-booking-chooser"><h2>Book with</h2>
-      ${[...bySector.entries()].map(([sector,members])=>`<h3 class="customer-booking-sector" data-merchant-content>${esc(sector)}</h3><div class="customer-booking-chips">${members.map(chip).join('')}</div>`).join('')}</section>`;
+    return `<section class="card customer-booking-chooser">${searchHead}
+      ${[...bySector.entries()].map(([sector,members])=>`<div data-booking-search-group><h3 class="customer-booking-sector" data-merchant-content>${esc(sector)}</h3><div class="customer-booking-chips">${members.map(chip).join('')}</div></div>`).join('')}</section>`;
   }
-  return `<section class="card customer-booking-chooser"><h2>Book with</h2><div class="customer-booking-chips">${businesses.map(chip).join('')}</div></section>`;
+  return `<section class="card customer-booking-chooser">${searchHead}<div class="customer-booking-chips">${businesses.map(chip).join('')}</div></section>`;
+}
+/* v326: filters the chips customerBookingChooserV291 already rendered — same shape as
+   wireCustomerProgrammeSearchV195, kept as its own function since it targets a different
+   input/host and groups by sector wrapper instead of category section. */
+function wireCustomerBookingSearchV326(host=document){
+  const input=host.querySelector('#customerBookingSearch');
+  if(!input)return;
+  const status=host.querySelector('#customerBookingSearchStatus');
+  const items=[...host.querySelectorAll('[data-booking-search-item]')];
+  const groups=[...host.querySelectorAll('[data-booking-search-group]')];
+  const apply=()=>{
+    const query=String(input.value||'').trim().toLowerCase();
+    let shown=0;
+    items.forEach(item=>{
+      const match=!query||String(item.dataset.bookingSearchName||'').includes(query);
+      item.hidden=!match;
+      if(match)shown++;
+    });
+    groups.forEach(group=>{
+      const visible=[...group.querySelectorAll('[data-booking-search-item]')].some(item=>!item.hidden);
+      group.hidden=!visible;
+    });
+    if(!status)return;
+    status.hidden=!query;
+    status.textContent=query?(shown?`${shown} of ${items.length} shown`:`No business matches “${query}”.`):'';
+  };
+  input.addEventListener('input',apply);
+  apply();
 }
 function customerBookingEmptyMarkupV183(tab='bookings',emptyCopy='',groups=[]){
   const label=(CUSTOMER_BOOKING_TABS_V178.find(([name])=>name===tab)||[])[1]||'Bookings';
@@ -1579,6 +1616,7 @@ async function renderCustomerBookings(){
       };
     });
     wireCustomerRepeatBookingV167($('walletBody'));
+    wireCustomerBookingSearchV326($('walletBody'));
     /* v290 (the road from 8 to 9): a request still sitting in the business's inbox finally has a
        customer-side exit. The RPC re-resolves ownership exactly as the reader does, so this
        button can only ever withdraw a row this page was allowed to show. */
@@ -2577,10 +2615,21 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
   const shareButton=overlay.querySelector('[data-share-offer]');
   if(shareButton)shareButton.onclick=()=>shareCustomerOfferV264(item,business);
   const companyButton=overlay.querySelector('[data-company-detail]');
+  /* v326 (owner: "when I click this, straightaway go to company profile inside, don't need
+     another pop-out"): this row used to open a second modal (showCustomerBusinessDetailV178)
+     on top of the offer sheet. It now takes the customer straight to the business's own
+     programme page instead, the same one-way sheet-to-page hand-off wireCustomerSheetNavV183
+     already uses for every other in-sheet link. */
   if(companyButton)companyButton.onclick=()=>{
+    const target=`#/wallet/${encodeURIComponent(business.slug||'')}`;
     const handOff=CUI.currentDialogHistoryId?.()||0;
     deactivate({restoreFocus:false,handOffHistory:handOff>0});
-    showCustomerBusinessDetailV178(business,{inheritHistoryId:handOff});
+    if(handOff>0){
+      try{history.replaceState(null,'',target)}catch{location.hash=target;return}
+      route();
+      return;
+    }
+    nav(target);
   };
   if(business.id){
     const contactHost=overlay.querySelector('[data-offer-contact]');
@@ -3499,10 +3548,15 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
      the v308 tripwire refuses points.active AND stamps.active on one business, so at a stamps firm
      any points card in the stack is a paused one with nothing to spend. */
   const stampsHost=rewardsHost&&show.stamps&&entries.stamps?.active===true;
+  /* v326 (owner: "if programme is paused/not live, remove from customer app"): the Tier card
+     alone drops out entirely while its own programme is paused, rather than keeping its card
+     with a "Programme paused" message. Stamps/points/referral paused behaviour is untouched —
+     only Tier was annotated. */
+  const tierPausedV326=entries.tiers?.active===false;
   const cards=[
     show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
     show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost}):'',
-    show.tiers?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
+    show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
@@ -3528,14 +3582,30 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
   /* v194 (owner: "show company details, phone number, address" beside the business name): the
      header is now the way in to the company sheet, and the booking action moved up here — "make
      it smaller and put upstair" — out of the full-width card that sat below the offers. */
+  /* v326 (owner mockup: cover photo behind the logo, name and Book now; phone/address as their
+     own lines beneath). presentation.heroImageUrl was already fetched (brand.hero_image_url)
+     but never rendered anywhere — this is the first consumer, not a new read. Phone/address load
+     inline below via the exact same customer_get_offer_business_contact_v173 call
+     showCustomerBusinessDetailV178 already makes on click; the identity button and the fallback
+     link both keep opening that same sheet (offers, full contact) via the existing
+     [data-company-detail] wiring — nothing about that click path changed. "Other branch" from
+     the mockup is left out: this surface has no branch list loaded to link to. */
+  const accentV326=esc(contrastSafeBrandColor(presentation.heroColor));
+  const coverUrlV326=presentation.heroImageUrl?String(presentation.heroImageUrl):'';
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
-    <header class="customer-programme-compact-head" style="--merchant-accent:${esc(contrastSafeBrandColor(presentation.heroColor))}">
-      <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${esc(business.name||presentation.name)}">
-        <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
-        <span class="customer-programme-compact-copy"><b>${esc(business.name||presentation.name)}</b>
-          <span class="muted small customer-programme-identity-hint">${hasTier&&currentTierLabel?`${esc(currentTierLabel)} · `:''}<span class="customer-programme-identity-hint-long">Address, phone and offers ›</span><span class="customer-programme-identity-hint-short">Details ›</span></span></span>
-      </button>
-      ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
+    <header class="customer-programme-compact-head customer-programme-compact-head-v326" style="--merchant-accent:${accentV326}${coverUrlV326?`;--merchant-cover:url('${esc(coverUrlV326)}')`:''}">
+      <div class="customer-programme-cover-v326" aria-hidden="true"></div>
+      <div class="customer-programme-head-row-v326">
+        <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${esc(business.name||presentation.name)}">
+          <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
+          <span class="customer-programme-compact-copy"><b>${esc(business.name||presentation.name)}</b>
+            ${hasTier&&currentTierLabel?`<span class="muted small customer-programme-identity-hint">${esc(currentTierLabel)}</span>`:''}</span>
+        </button>
+        ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
+      </div>
+      <div class="customer-programme-contact-v326" data-company-contact-inline-v326>
+        <button type="button" class="customer-programme-contact-more-v326" data-company-detail>Address, phone and offers ›</button>
+      </div>
     </header>
     ${customerPointsExplainerMarkupV167(business)}
     ${programmeStackV310(programmeCapabilities)
@@ -4028,6 +4098,26 @@ async function renderCustomerWallet(businessSlug=null){
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
+  /* v326: the header's phone/address lines load inline using the exact same read
+     showCustomerBusinessDetailV178 already makes on click — this just hydrates the header a
+     beat earlier. On error/empty it silently keeps the "Address, phone and offers ›" fallback
+     already in the markup and already wired above, so nothing about the click path breaks. */
+  const contactHostV326=$('walletBody').querySelector('[data-company-contact-inline-v326]');
+  if(contactHostV326&&(businessId||b.id)){
+    Promise.resolve(customerRpc('customer_get_offer_business_contact_v173',{p_business:businessId||b.id}))
+      .then(({data,error})=>{
+        if(error||!contactHostV326.isConnected)return;
+        const branch=data?.branch||{};
+        const lines=[
+          branch.address?`<p class="muted small customer-programme-contact-line-v326">${CUI.icon('bookings',{size:14})}<span>${esc(branch.address)}</span></p>`:'',
+          branch.phone?`<p class="muted small customer-programme-contact-line-v326"><a href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${esc(branch.phone)}</a></p>`:''
+        ].filter(Boolean).join('');
+        if(!lines)return;
+        contactHostV326.innerHTML=`${lines}<button type="button" class="customer-programme-contact-more-v326" data-company-detail>More offers ›</button>`;
+        const moreButton=contactHostV326.querySelector('[data-company-detail]');
+        if(moreButton)moreButton.onclick=()=>showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug});
+      }).catch(()=>{});
+  }
   /* V290: "Show at counter" used to change its own label and nothing else — there was no code for
      staff to check and no record that the offer was ever used. It now creates a short-lived
      promotion intent and renders the same QR the reward path renders, so the counter can verify
