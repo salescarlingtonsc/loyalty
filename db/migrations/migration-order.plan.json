@@ -1899,6 +1899,18 @@
       "path": "db/migrations/20260814_nestly_v318_align_system_managed_stage_flags.sql",
       "semanticVersion": "v318",
       "proposedDeployVersion": "20260814001500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v326_points_gift_lifecycle.sql",
+      "semanticVersion": "v326",
+      "proposedDeployVersion": "20260814180912"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v326a_gift_rpc_anon_revoke.sql",
+      "semanticVersion": "v326a",
+      "proposedDeployVersion": "20260814181116"
     }
   ]
 }

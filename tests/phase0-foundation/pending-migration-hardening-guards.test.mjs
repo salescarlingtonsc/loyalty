@@ -83,6 +83,10 @@ const KNOWN_SEARCH_PATH_SUPERSETS = [
   'nestly_v197_persistent_join_qr :: app.v197_join_token :: extensions',
   'nestly_v197_persistent_join_qr :: public.business_create_customer_join_qr_v89 :: extensions',
   'nestly_v197_persistent_join_qr :: public.business_ensure_customer_join_qr_v91 :: extensions',
+  // v326 re-defines customer_create_redemption_intent_v89 (adding `and not reward.paused` to its
+  // reward lookup) but is not the origin of its `extensions` need — that is unchanged from the
+  // v89 pin two lines above, for the same app.v89_sha256/app.v89_redemption_token dependency.
+  'nestly_v326_points_gift_lifecycle :: public.customer_create_redemption_intent_v89 :: extensions',
 ];
 
 // Pinned inventory of pending definer functions whose search_path is a strict canonical SUBSET —

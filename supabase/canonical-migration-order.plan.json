@@ -1894,6 +1894,18 @@
       "version": "20260814001500",
       "name": "nestly_v318_align_system_managed_stage_flags",
       "sourcePath": "db/migrations/20260814_nestly_v318_align_system_managed_stage_flags.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814180912",
+      "name": "nestly_v326_points_gift_lifecycle",
+      "sourcePath": "db/migrations/20260815_nestly_v326_points_gift_lifecycle.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814181116",
+      "name": "nestly_v326a_gift_rpc_anon_revoke",
+      "sourcePath": "db/migrations/20260815_nestly_v326a_gift_rpc_anon_revoke.sql"
     }
   ]
 }

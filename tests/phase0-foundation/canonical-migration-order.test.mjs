@@ -109,14 +109,14 @@ test('materializer creates one byte-preserving 311-file chain and deterministic 
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 270); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
-  assert.equal(manifest.itemCount, 315); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 315); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
+  assert.equal(manifest.pendingCount, 272); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle
+  assert.equal(manifest.itemCount, 317); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 317); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v318_align_system_managed_stage_flags' // tail
+    'nestly_v326a_gift_rpc_anon_revoke' // tail
   );
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);

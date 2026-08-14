@@ -309,7 +309,14 @@ const sqlTestByMigrationName = new Map([
      FINAL claim closes the cycle. Bound BY FULL NAME rather than by the 'v323' semantic label,
      because the label map is already doubled for v313/v314 and a full name cannot collide with
      a parallel session's renumbering. */
-  ['nestly_v323_stamp_quest_milestones', 'db/tests/v323_stamp_quest_milestones.sql']
+  ['nestly_v323_stamp_quest_milestones', 'db/tests/v323_stamp_quest_milestones.sql'],
+  /* v326 gives loyalty_rewards a real third state (on/paused/deleted), all immediate-write, and
+     the audit trail for why (the redeem_reward_core landmine, the stale-draft resurrection risk)
+     lives in the migration's own header comment. v326a is a same-day anon-EXECUTE hardening
+     follow-up with no independent behaviour of its own — it shares v326's suite, same pattern as
+     v47a/v47b sharing v47's. Bound by full name for the same collision reason as v323 above. */
+  ['nestly_v326_points_gift_lifecycle', 'db/tests/v326_points_gift_lifecycle.sql'],
+  ['nestly_v326a_gift_rpc_anon_revoke', 'db/tests/v326_points_gift_lifecycle.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -813,7 +820,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 270); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
+  assert.equal(pending.length, 272); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
