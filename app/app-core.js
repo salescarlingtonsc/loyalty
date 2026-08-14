@@ -425,6 +425,11 @@ let growTopicV229='';
    that confirmation, `error` the last failed switch, both cleared by the router. */
 let growSwitchPendingV322='';
 let growSwitchErrorV322='';
+/* V324 (owner markup on the Limited Offer page, 2026-08-14): three named buckets — Published,
+   Draft, History — replacing the flat list. Module-level for the same reason as above: switching
+   tabs re-renders growPage from scratch. Cleared by the router alongside growTopicV229 so leaving
+   the page and coming back always opens on Published. */
+let growOffersTabV324='published';
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -756,7 +761,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';

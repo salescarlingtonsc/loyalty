@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="42493d481e8d8b152e19af73d1890ad6a2e62e36c48fd54c6383f6d1ac67262e"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="b5d0e274802732064a3e22cea1aa6036bac72938d93c28cf890aecd1cbc890be"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2139,7 +2139,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 42493d481e8d8b152e19af73d1890ad6a2e62e36c48fd54c6383f6d1ac67262e</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b5d0e274802732064a3e22cea1aa6036bac72938d93c28cf890aecd1cbc890be</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6125,6 +6125,76 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const growLimitedOfferCategoryHtmlV319=`<div class="programme-category" data-programme-category-v268="promotions"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
         ${growLimitedOfferListHtmlV319}
       </div></div>`;
+  /* V324 (owner markup 2026-08-14 on the Limited Offer rail page specifically — the drilled
+     Promotions topic above is untouched and keeps the flat growLimitedOfferListHtmlV319 the V319
+     pins require byte-identical). "the only source of truth" for three buckets, and the rule for
+     each is a DATE test, not a status label, because that is the one fact that can never disagree
+     with itself: an item's ends_at is either in the past or it is not.
+
+       Published — active===true and not yet ended. Covers both live-now and scheduled-to-start;
+         the owner's own words group both as "ongoing… with stated expiry".
+       Draft     — active===false and not yet ended. A promotion never published and never retired.
+       History   — ends_at<=now, REGARDLESS of active. This is the one non-obvious call: deleting a
+         Published item (below) calls the same v183 RPC the deep editor already uses, which does
+         NOT hard-delete a published row — it retires it (active=false, ends_at pulled to now), on
+         purpose, because promotion_alert_runs_v122 and the attempt-receipts table reference the
+         id. Bucketing by DATE FIRST, active SECOND, is what keeps a retired item out of Draft
+         (where a false `active` would otherwise land it) and lets it read exactly the way a
+         naturally-expired offer does — which is the correct fact: retiring early and running out
+         the clock are the same "no longer available" event from a customer's side, so "will be
+         discard away" (the owner's words for Published) and "once expired goes to history" (their
+         words for the SAME bucket, stated separately) are one rule, not two. */
+  const growOffersNowV324=new Date();
+  const growOfferBucketV324=item=>{
+    const ends=item.ends_at?new Date(item.ends_at):null;
+    if(ends&&ends<=growOffersNowV324)return 'history';
+    return item.active===true?'published':'draft';
+  };
+  const growOffersBucketedV324={published:[],draft:[],history:[]};
+  growPromotionItemsV296.forEach(item=>{growOffersBucketedV324[growOfferBucketV324(item)].push(item)});
+  const growOffersCanWriteV324=isOwner&&canRewards;
+  /* "Delete"/"Retire" match the deep editor's own wording exactly (promotionsPage, V183 —
+     "the button says which of the two will happen"), not the owner's one word for both: a
+     Published item's RECORD survives underneath (reports and alert history still reference it),
+     a Draft's does not, and that difference is the entire reason V183 exists as two code paths.
+     Saying "Delete" for both here would make the same honesty gap V183 was written to close. */
+  const growOffersRowHtmlV324=(item,bucket)=>{
+    const life=promotionLifecycleV186(item,growOffersNowV324);
+    const detail=String(item.offerFacts||item.tagline||item.description||'').replace(/\s+/g,' ').trim().slice(0,120);
+    /* Caught only by rendering a retired item, not by reading the source: promotionLifecycleV186
+       checks `active` BEFORE `ends_at`, so a retired promotion (active=false, ends_at pulled to
+       now by business_delete_promotion_v183) gets life.label='Draft' — the same label a real,
+       never-touched draft gets. Read literally, History would show a row saying "Draft" directly
+       under a heading the owner defined as "expired only", which is the confusion that heading
+       exists to prevent. History already knows a row belongs there because its date has passed
+       (growOfferBucketV324), so its label says that fact directly rather than trusting the
+       word life.label chose for a different question ("is this active"). */
+    const label=bucket==='draft'?'Draft'
+      :bucket==='history'?(item.ends_at?`Ended ${promotionDateTextV104(item.ends_at)}`:'Ended')
+      :life.label;
+    const deleteLabel=bucket==='published'?'Retire':'Delete';
+    return `<div class="promotion-item-row" data-merchant-content>
+      ${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}
+      <div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b>
+      <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        ${growOffersCanWriteV324?`<a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a>`:''}
+        ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="btn ghost sm" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
+      </div></div>`;
+  };
+  const growOffersEmptyV324={published:'No promotion is published right now.',
+    draft:'No draft saved yet.',history:'Nothing has ended yet.'};
+  const growOffersTabsV324=[['published','Published'],['draft','Draft'],['history','History']];
+  /* role="group", not "tablist": this is a FILTER over one page's own data (like the "Away
+     threshold" segment above), not the peer-tab pattern growPage's own test forbids
+     (v98-grow-unified-ux.test.mjs — "one overview-first journey... rather than four peer tabs").
+     aria-pressed alone already says which bucket is showing. */
+  const growOffersTabStripV324=`<div class="v150-segment" role="group" aria-label="Offer status" data-grow-offers-tabstrip-v324>
+    ${growOffersTabsV324.map(([key,title])=>`<button type="button" aria-pressed="${growOffersTabV324===key}" data-grow-offers-tab-v324="${key}">${esc(title)}${growOffersBucketedV324[key].length?` (${growOffersBucketedV324[key].length})`:''}</button>`).join('')}
+  </div>`;
+  const growOffersListHtmlV324=growOffersBucketedV324[growOffersTabV324].length
+    ?growOffersBucketedV324[growOffersTabV324].map(item=>growOffersRowHtmlV324(item,growOffersTabV324)).join('')
+    :`<p class="muted small" style="padding:14px 0">${esc(growOffersEmptyV324[growOffersTabV324])}</p>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
       ${/* V319: the heading follows the rail. V245's rule — "nav row, page heading and tile group
@@ -6198,8 +6268,12 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
            the Limited Offer rail child below. */''}
       ${topicOnV229('promotions')?growLimitedOfferCategoryHtmlV319:''}
       ${programmeView==='offers'?`<div class="grow-limited-offer-v319" data-grow-limited-offer-v319>
-        <p class="muted small" style="padding:0 0 10px">These are the current offers customers see in their app. Edit one here and the change reaches the customer programme when you publish it.</p>
-        ${growLimitedOfferCategoryHtmlV319}
+        <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap;padding:0 0 10px">
+          <p class="muted small" style="flex:1 1 260px;margin:0">These are the current offers customers see in their app. Edit one here and the change reaches the customer programme when you publish it.</p>
+          ${growOffersCanWriteV324?'<a class="btn sm grow-offers-add-v324" href="#/promotions" aria-label="Add another promotion"><span aria-hidden="true">+</span> Add</a>':''}
+        </div>
+        ${growOffersTabStripV324}
+        <div class="grow-programme-list" style="margin-top:14px" data-grow-offers-list-v324>${growOffersListHtmlV324}</div>
       </div>`:''}
       ${topicOnV229('referrals')?`
       <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
@@ -6666,6 +6740,40 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      exclusions when the stamp card is going on. The page is re-rendered from the server's own
      reply (writeProgrammeSwitchesV314 refreshes S.programmes from it), never optimistically. */
   const growRerenderV322=()=>growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  /* V324: switching Published/Draft/History tabs is a pure client-side filter over data already
+     on the page — no field on any offer changed, so this re-renders the same way the switch panel
+     above deliberately does NOT: nothing here is worth a `hidden`-only optimisation, because the
+     row set itself changes, not just what is shown of one row. */
+  outerMain.querySelectorAll('[data-grow-offers-tab-v324]').forEach(button=>button.onclick=()=>{
+    const tab=button.dataset.growOffersTabV324;
+    if(!['published','draft','history'].includes(tab))return;
+    growOffersTabV324=tab;
+    growRerenderV322();
+  });
+  /* V324: reuses business_delete_promotion_v183 exactly as the deep editor (promotionsPage) calls
+     it — same RPC, same confirm wording, same toast wording — rather than a second write path for
+     the same action. A Published delete RETIRES (active=false, ends_at pulled to now); the row
+     reappears under History on the next render because growOfferBucketV324 buckets by date first.
+     A Draft delete is a real hard-delete — the confirm says so, the same as it always has. */
+  outerMain.querySelectorAll('[data-grow-offer-delete-v324]').forEach(button=>button.onclick=async()=>{
+    const id=button.dataset.growOfferDeleteV324;
+    const published=!!button.dataset.growOfferPublishedV324;
+    const name=button.dataset.growOfferNameV324||'this offer';
+    const question=published
+      ?`Retire "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
+      :`Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
+    if(!confirm(question))return;
+    CUI.setButtonBusy(button,{busy:true,label:published?'Retiring…':'Deleting…'});
+    const {error}=await sb.rpc('business_delete_promotion_v183',{
+      p_business:S.biz.id,p_promotion_id:id,p_expected_version:null});
+    if(!isGrowCurrent())return;
+    if(error){
+      CUI.setButtonBusy(button,{busy:false});
+      toast(ownerErrorText(error));return;
+    }
+    toast(published?'Offer retired — customers no longer see it':'Draft deleted');
+    growRerenderV322();
+  });
   /* V324: show/hide the inline confirm block in place — see the template comment above. Every
      row's confirm `<li>` is already in the DOM, so this is a `hidden` toggle, never a re-render.
      Only one row may be open at a time, matching what growSwitchPendingV322 always meant. */
@@ -6936,7 +7044,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'42493d481e8d8b152e19af73d1890ad6a2e62e36c48fd54c6383f6d1ac67262e',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'b5d0e274802732064a3e22cea1aa6036bac72938d93c28cf890aecd1cbc890be',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
