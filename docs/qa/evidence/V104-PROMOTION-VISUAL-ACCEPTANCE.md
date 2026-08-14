@@ -133,6 +133,43 @@ Card heights are unchanged from the v192 figures above (625px desktop,
 452/587px at 390, 385/689px at 412) — this release did not touch the promotion
 card, and the re-capture proves it.
 
+## v328 re-capture (2026-08-15) — fixed a capture-tooling bug, not a production bug
+
+`tests/grow/v104-promotion-visual-fixture.test.mjs` was failing on `main` at the
+`firstTerms.open===true` assertion (mobile390 card 0's Terms disclosure). The
+committed `mobile390`/`mobile412` `details.open` values were `false` and
+`desktop1440.modal` was `null`, so the query-string-driven Terms/modal captures
+had silently never fired.
+
+Root cause: whichever static server produced the metrics committed in `5c01f5c`
+served `/tests/browser/v104-promotions-visual.html?openTerms=0` through a
+clean-URL redirect (`.html` → extensionless) that **dropped the query string**
+on the 301. `verify-v104-promotions-visual.mjs` followed the redirect, loaded
+the fixture with no `openTerms`/`openModal` params, and captured the
+always-closed/no-modal state — a harness artifact, not a change in
+`customerPromotionCardV104` or its CSS. Confirmed by recapturing through a
+server that serves the `.html` path directly (no redirect): `details.open` and
+`modal` come back correct and match the source's actual behaviour.
+
+The v326 owner requirement this suite guards — offer cards side by side on
+phone widths — was **already correctly implemented**; `capture.cards[1].rect`
+vs `capture.cards[0].rect` passed before and after this recapture. Only the
+Terms-disclosure and modal-open metrics (and their PNGs) were wrong.
+
+Recaptured `v104-promotions-production-render-metrics.json` and all three PNGs
+from the current production source (hash unchanged,
+`888b1ffeb33f31e849e4300cdb50db87a3205f899948d628cdc7783dd5dd16cc`):
+
+```text
+node --test tests/grow/v104-promotion-visual-fixture.test.mjs
+4 tests, 4 passed, 0 failed
+```
+
+`npm run validate` run in full afterward: 3064/3065, the one failure being the
+known env-bound `tests/mobile/v131-store-publication-readiness.test.mjs` check
+(missing `node_modules/@capacitor` privacy manifests in this worktree),
+unrelated to this change.
+
 ## Still pending
 
 - authenticated owner image upload, draft, publish and unpublish against the
