@@ -68,8 +68,12 @@ begin
     'authenticated', 'v327-owner-' || v_owner || '@example.test', '', now(), now(), now()
   );
 
-  insert into public.businesses(id, name, slug, currency, is_synthetic, booking_staff_choice, booking_auto_confirm)
-  values (v_business, 'V327 Multi Branch', v_slug, 'SGD', true, true, false);
+  -- enabled_modules defaults to dashboard/clients/sales/loyalty/retention only — 'bookings'
+  -- and 'appointments' must be explicit, or the owner's manual-confirm in assertion 5 42501s
+  -- on app.staff_module_mode_v94 before ever reaching the branch fallback being tested.
+  insert into public.businesses(id, name, slug, currency, is_synthetic, booking_staff_choice, booking_auto_confirm, enabled_modules)
+  values (v_business, 'V327 Multi Branch', v_slug, 'SGD', true, true, false,
+    array['dashboard','clients','sales','loyalty','retention','bookings','appointments']);
   insert into public.businesses(id, name, slug, currency, is_synthetic)
   values (v_single_business, 'V327 Single Branch', v_single_slug, 'SGD', true);
   perform pg_temp.approve_v327_workspace(v_business);
@@ -167,7 +171,7 @@ begin
   -- 5. manual confirm: with no staff override, the CUSTOMER''s branch choice must win over the
   --    shop default (branch_b is_default = true, but the customer asked for branch_a).
   perform pg_temp.as_v327_user(v_owner);
-  v_decision := public.staff_decide_booking_request_v73_v94_base(v_business, v_request, 'confirm', null);
+  v_decision := public.staff_decide_booking_request_v73(v_business, v_request, 'confirm', null);
   assert v_decision->>'outcome' = 'applied', 'the manual confirm must succeed';
   select appointment.branch_id into v_appointment_branch
     from public.appointments appointment

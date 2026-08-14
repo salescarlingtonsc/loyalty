@@ -535,331 +535,49 @@ grant execute on function public.internal_public_booking_submit(
 ) to service_role;
 
 -- 5. Manual confirm: honour the customer's own branch choice when staff leaves the override
---    unset. p_branch here is the existing STAFF override (app.require_branch_module_v94
---    resolves it before calling this base function) and keeps priority outright — this only
---    fills the gap when that override is null, which was previously "whichever branch sorts
---    first". staff_decide_booking_request_v73_v94_base is the v94-renamed body of the original
---    v73 function; the wrapper (public.staff_decide_booking_request_v73) is untouched.
-create or replace function public.staff_decide_booking_request_v73_v94_base(
-  p_business uuid,
-  p_request uuid,
-  p_decision text,
-  p_branch uuid default null
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path to 'pg_catalog', 'public', 'app', 'pg_temp'
+--    unset. staff_decide_booking_request_v73_v94_base (the v94-renamed body of the original
+--    v73 function) is NOT touched — it already takes p_branch as a concrete, already-resolved
+--    branch. The resolution happens one level up, in app.require_branch_module_v94, called
+--    from the public wrapper BEFORE the base function ever runs: a null p_branch there was
+--    always resolved to "whichever active branch sorts first", so patching the base function
+--    would have been dead code — require_branch_module_v94 never forwards a null branch. The
+--    fix belongs in the wrapper: substitute the booking request's own branch_id in place of a
+--    null staff override before that resolution runs, so require_branch_module_v94 validates
+--    and returns the CUSTOMER's branch instead of the shop default. An explicit staff-supplied
+--    p_branch still wins outright, exactly as before.
+create or replace function public.staff_decide_booking_request_v73(
+  p_business uuid,p_request uuid,p_decision text,p_branch uuid default null
+) returns jsonb language plpgsql security definer
+set search_path to 'pg_catalog','public','app','pg_temp'
 as $$
 declare
-  v_actor uuid := auth.uid();
-  v_request public.booking_requests%rowtype;
-  v_waitlist public.waitlist%rowtype;
-  v_appointment public.appointments%rowtype;
-  v_client uuid;
   v_branch uuid;
-  v_duration integer;
-  v_available integer;
-  v_booking jsonb;
+  v_customer_branch uuid;
 begin
-  if p_business is null or p_request is null or p_decision is null
-     or p_decision not in ('confirm', 'decline') then
-    raise exception 'invalid booking decision request' using errcode = '22023';
+  if p_branch is null then
+    select request.branch_id into v_customer_branch
+      from public.booking_requests request
+     where request.id=p_request and request.business_id=p_business;
   end if;
-  if v_actor is null then
-    raise exception 'authenticated staff session is required' using errcode = '42501';
-  end if;
-
-  -- This is the natural idempotency lock. Every later lock follows it.
-  select request.* into v_request
-    from public.booking_requests request
-   where request.id = p_request
-     and request.business_id = p_business
-   for update;
-  if not found then
-    raise exception 'booking request not found' using errcode = '22023';
-  end if;
-
-  select waitlist_row.* into v_waitlist
-    from public.waitlist waitlist_row
-   where waitlist_row.booking_request_id = p_request
-     and waitlist_row.business_id = p_business
-   for update;
-
-  if p_decision = 'decline' then
-    if not app.can_module_write(p_business, 'bookings') then
-      raise exception 'booking write access is required' using errcode = '42501';
-    end if;
-    if v_request.status = 'declined' then
-      return app.booking_decision_result_v73(
-        p_business, p_request, p_decision, 'replayed', true
-      );
-    end if;
-    if v_request.status in ('confirmed', 'expired', 'cancelled') then
-      return app.booking_decision_result_v73(
-        p_business, p_request, p_decision, 'terminal_conflict', false
-      );
-    end if;
-    if v_request.status not in ('new', 'pending', 'waitlisted') then
-      return app.booking_decision_result_v73(
-        p_business, p_request, p_decision, 'state_conflict', false
-      );
-    end if;
-    if (v_request.status = 'waitlisted' and v_waitlist.id is null)
-       or (v_waitlist.id is not null
-           and v_waitlist.status not in ('waiting', 'contacted')) then
-      return app.booking_decision_result_v73(
-        p_business, p_request, p_decision, 'waitlist_conflict', false
-      );
-    end if;
-
-    update public.booking_requests
-       set status = 'declined',
-           expires_at = null
-     where id = p_request
-       and business_id = p_business;
-    if v_waitlist.id is not null then
-      update public.waitlist
-         set status = 'removed'
-       where id = v_waitlist.id
-         and business_id = p_business;
-    end if;
-    insert into public.audit_log(
-      business_id, actor, action, entity, entity_id, detail
-    ) values (
-      p_business, v_actor, 'BOOKING_REQUEST_DECISION_V73',
-      'booking_requests', p_request,
-      jsonb_build_object(
-        'decision', 'decline',
-        'from_status', v_request.status,
-        'to_status', 'declined',
-        'waitlist_id', v_waitlist.id
-      )
-    );
-    return app.booking_decision_result_v73(
-      p_business, p_request, p_decision, 'applied', false
+  v_branch:=app.require_branch_module_v94(
+    p_business,coalesce(p_branch,v_customer_branch),'bookings','rw'
+  );
+  if p_decision='confirm' then
+    perform app.require_branch_module_v94(
+      p_business,v_branch,'appointments','rw'
     );
   end if;
-
-  -- Confirm always requires the appointments write boundary as well.
-  if not app.can_module_write(p_business, 'appointments') then
-    raise exception 'appointment write access is required' using errcode = '42501';
-  end if;
-
-  if v_request.status = 'confirmed' then
-    select appointment.* into v_appointment
-      from public.appointments appointment
-     where appointment.id = v_request.appointment_id
-       and appointment.business_id = p_business;
-    if not found or v_appointment.branch_id is null
-       or not app.can_see_branch(p_business, v_appointment.branch_id) then
-      return app.booking_decision_result_v73(
-        p_business, p_request, p_decision, 'terminal_conflict', false
-      );
-    end if;
-    return app.booking_decision_result_v73(
-      p_business, p_request, p_decision, 'replayed', true
-    );
-  end if;
-  if v_request.status in ('declined', 'expired', 'cancelled') then
-    return app.booking_decision_result_v73(
-      p_business, p_request, p_decision, 'terminal_conflict', false
-    );
-  end if;
-  if v_request.status not in ('new', 'pending', 'waitlisted') then
-    return app.booking_decision_result_v73(
-      p_business, p_request, p_decision, 'state_conflict', false
-    );
-  end if;
-  if (v_request.status = 'waitlisted' and v_waitlist.id is null)
-     or (v_waitlist.id is not null
-         and v_waitlist.status not in ('waiting', 'contacted')) then
-    return app.booking_decision_result_v73(
-      p_business, p_request, p_decision, 'waitlist_conflict', false
-    );
-  end if;
-
-  if p_branch is not null then
-    select branch.id into v_branch
-      from public.branches branch
-     where branch.id = p_branch
-       and branch.business_id = p_business
-       and branch.active;
-  else
-    -- v327: the branch the CUSTOMER asked for wins over the shop default when staff leaves
-    -- the override unset. If that branch is gone or was deactivated since the request came
-    -- in, fall through to the shop default exactly as before.
-    if v_request.branch_id is not null then
-      select branch.id into v_branch
-        from public.branches branch
-       where branch.id = v_request.branch_id
-         and branch.business_id = p_business
-         and branch.active;
-    end if;
-    if v_branch is null then
-      select branch.id into v_branch
-        from public.branches branch
-       where branch.business_id = p_business
-         and branch.active
-       order by branch.is_default desc, branch.created_at, branch.id
-       limit 1;
-    end if;
-  end if;
-  if v_branch is null then
-    raise exception 'an active booking branch is required' using errcode = '22023';
-  end if;
-  if not app.can_see_branch(p_business, v_branch) then
-    raise exception 'appointment write access for this branch is required'
-      using errcode = '42501';
-  end if;
-
-  -- Waitlisted table requests do not hold capacity. Serialize against the table
-  -- type and re-read actual current availability before creating an appointment.
-  if v_request.table_type_id is not null
-     and (
-       v_request.status = 'waitlisted'
-       or (
-         v_request.status = 'pending'
-         and v_request.expires_at is not null
-         and v_request.expires_at <= clock_timestamp()
-       )
-     ) then
-    perform 1
-      from public.booking_tables table_type
-     where table_type.id = v_request.table_type_id
-       and table_type.business_id = p_business
-       and table_type.active
-     for update;
-    if not found then
-      return app.booking_decision_result_v73(
-        p_business, p_request, p_decision, 'capacity_conflict', false
-      );
-    end if;
-    select greatest(
-      table_type.quantity
-      - (
-        select count(*)::integer
-          from public.booking_requests held_request
-         where held_request.table_type_id = v_request.table_type_id
-           and held_request.status in ('new', 'pending')
-           and held_request.id <> p_request
-           and (
-             held_request.expires_at is null
-             or held_request.expires_at > clock_timestamp()
-           )
-      )
-      - (
-        select count(*)::integer
-          from public.appointments held_appointment
-         where held_appointment.table_type_id = v_request.table_type_id
-           and held_appointment.status = 'booked'
-      ),
-      0
-    ) into v_available
-      from public.booking_tables table_type
-     where table_type.id = v_request.table_type_id
-       and table_type.business_id = p_business;
-    if coalesce(v_available, 0) <= 0 then
-      return app.booking_decision_result_v73(
-        p_business, p_request, p_decision, 'capacity_conflict', false
-      );
-    end if;
-  end if;
-
-  -- Keep guest client creation/consent inside a subtransaction. If scheduling
-  -- conflicts, the exception handler rolls every tentative side effect back.
-  begin
-    if v_request.customer_client_id is not null then
-      select client.id into v_client
-        from public.clients client
-       where client.id = v_request.customer_client_id
-         and client.business_id = p_business;
-      if not found then
-        raise exception 'bound booking client is unavailable' using errcode = '23503';
-      end if;
-    else
-      v_client := app.upsert_portal_client(
-        p_business, v_request.name, v_request.phone, v_request.email
-      );
-      perform app.apply_booking_consent(
-        p_business, v_client, v_request.marketing_consent
-      );
-    end if;
-
-    select greatest(service.duration_min, 15) into v_duration
-      from public.services service
-     where service.id = v_request.service_id
-       and service.business_id = p_business;
-    v_duration := coalesce(v_duration, 60);
-
-    v_booking := public.book_appointment_smart_v47(
-      p_business, v_client, v_branch, v_request.service_id,
-      coalesce(v_request.preferred_at, clock_timestamp() + interval '1 day'),
-      v_duration, null, 'round_robin', v_request.notes,
-      'booking-request:' || p_request::text
-    );
-    if v_booking->>'status' = 'conflict' then
-      raise exception 'v73 scheduling conflict' using errcode = 'P0731';
-    end if;
-
-    select appointment.* into v_appointment
-      from public.appointments appointment
-     where appointment.id = (v_booking->>'appointment_id')::uuid
-       and appointment.business_id = p_business;
-    if not found then
-      raise exception 'scheduler returned no appointment' using errcode = 'P0001';
-    end if;
-
-    update public.appointments
-       set party_size = v_request.party_size,
-           source = 'portal',
-           table_type_id = v_request.table_type_id
-     where id = v_appointment.id
-       and business_id = p_business
-    returning * into v_appointment;
-
-    update public.booking_requests
-       set status = 'confirmed',
-           appointment_id = v_appointment.id,
-           expires_at = null
-     where id = p_request
-       and business_id = p_business;
-    if v_waitlist.id is not null then
-      update public.waitlist
-         set status = 'booked'
-       where id = v_waitlist.id
-         and business_id = p_business;
-    end if;
-
-    insert into public.audit_log(
-      business_id, actor, action, entity, entity_id, detail
-    ) values (
-      p_business, v_actor, 'BOOKING_REQUEST_DECISION_V73',
-      'booking_requests', p_request,
-      jsonb_build_object(
-        'decision', 'confirm',
-        'from_status', v_request.status,
-        'to_status', 'confirmed',
-        'appointment_id', v_appointment.id,
-        'branch_id', v_branch,
-        'waitlist_id', v_waitlist.id
-      )
-    );
-  exception
-    when sqlstate 'P0731' or exclusion_violation then
-      return app.booking_decision_result_v73(
-        p_business, p_request, p_decision, 'scheduling_conflict', false
-      );
-  end;
-
-  return app.booking_decision_result_v73(
-    p_business, p_request, p_decision, 'applied', false
+  return public.staff_decide_booking_request_v73_v94_base(
+    p_business,p_request,p_decision,v_branch
   );
 end
 $$;
 
-revoke all on function public.staff_decide_booking_request_v73_v94_base(
+revoke all on function public.staff_decide_booking_request_v73(
   uuid,uuid,text,uuid
-) from public,anon,authenticated,service_role;
+) from public,anon,authenticated;
+grant execute on function public.staff_decide_booking_request_v73(
+  uuid,uuid,text,uuid
+) to authenticated;
 
 commit;
