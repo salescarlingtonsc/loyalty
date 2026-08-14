@@ -1923,6 +1923,12 @@
       "path": "db/migrations/20260815_nestly_v327_global_customer_qr.sql",
       "semanticVersion": "v327",
       "proposedDeployVersion": "20260815090001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v328_staff_choice_manual_confirm.sql",
+      "semanticVersion": "v328",
+      "proposedDeployVersion": "20260815090002"
     }
   ]
 }

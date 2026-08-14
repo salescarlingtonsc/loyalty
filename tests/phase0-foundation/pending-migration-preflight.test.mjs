@@ -318,7 +318,12 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v326_points_gift_lifecycle', 'db/tests/v326_points_gift_lifecycle.sql'],
   ['nestly_v326a_gift_rpc_anon_revoke', 'db/tests/v326_points_gift_lifecycle.sql'],
   ['nestly_v327_customer_branch_choice', 'db/tests/v327_customer_branch_choice.sql'],
-  ['nestly_v327_global_customer_qr', 'db/tests/v327_global_customer_qr.sql']
+  ['nestly_v327_global_customer_qr', 'db/tests/v327_global_customer_qr.sql'],
+  /* v328 fixes staff_decide_booking_request_v73_v94_base always passing null/'round_robin' to
+     book_appointment_smart_v47 on the manual (non-auto-confirm) booking-confirm path, ignoring
+     the customer's own staff choice (v183, booking_requests.staff_id). Bound by full name for
+     the same collision reason as v323/v326 above. */
+  ['nestly_v328_staff_choice_manual_confirm', 'db/tests/v328_staff_choice_manual_confirm.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -822,7 +827,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 274); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision)
+  assert.equal(pending.length, 275); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
