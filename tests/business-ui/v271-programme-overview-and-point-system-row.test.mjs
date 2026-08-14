@@ -121,10 +121,10 @@ test('V271 (b) all three views exist, resolve from the hash, and keep the old on
      joins the list; V271's own three views and the two legacy hashes still resolve exactly as
      they did, which is what the assertions below check. */
   assert.match(app,
-    /const programmeView=\['overview','history','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
+    /const programmeView=\['overview','history','offers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
   // A view hash must never be mistaken for an engine deep link (that crashed on the surface map).
   assert.match(app,
-    /const hashParamIsProgrammeView=\['overview','history','ongoing','available','settings','setup'\]\.includes/);
+    /const hashParamIsProgrammeView=\['overview','history','offers','ongoing','available','settings','setup'\]\.includes/);
   // Each view names itself in the heading.
   assert.match(app, /programmeView==='overview'\?'Overview':programmeView==='history'\?'History'/);
 });
@@ -135,9 +135,11 @@ test('V271 (b) the three views are reachable, each with its own linkable hash', 
      linkable hash. V294 made them children of the Programmes nav group, so the in-page strip was
      the same three destinations printed a second time one line below. The strip is gone; the
      three hashes and their resolution are asserted here directly, and the rail entries below. */
-  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['List','#\/grow','menu'\],\['History','#\/grow\/history','waitlist'\]\]/);
+  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
   assert.match(app, /const navViewActiveV296=href=>\{/);
-  assert.match(app, /if\(routeKey==='grow'\)return routeView\?page\[1\]===routeView:\(page\[1\]!=='overview'&&page\[1\]!=='history'\)/);
+  /* V319: a fourth child ('offers') joined, so the "everything else belongs to the list" branch
+     had to exclude it too, or the Limited Offer hash would light two rail rows at once. */
+  assert.match(app, /if\(routeKey==='grow'\)return routeView\?page\[1\]===routeView:!\['overview','history','offers'\]\.includes\(String\(page\[1\]\|\|''\)\)/);
   assert.doesNotMatch(app, /data-grow-view-v271/);
   assert.doesNotMatch(app, /aria-label="Programme views"/);
   // The shared sub-module strip styling stays — other pages still use it.
@@ -147,14 +149,17 @@ test('V271 (b) the three views are reachable, each with its own linkable hash', 
 test('V271 (b) Overview and History replace the category list rather than stacking on it', () => {
   /* V301: the setup wizard replaces the category list for the same reason Overview and History
      do — showing both would put the same programme on the page twice, under two shapes. */
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers'\]\.includes\(programmeView\);/);
   assert.match(app, /const topicOnV229=key=>!growCategoryViewV271\?false:\(growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229\);/);
   assert.match(grow, /\$\{programmeView==='overview'\?growOverviewTableV271:''\}/);
   assert.match(grow, /\$\{programmeView==='history'\?growHistoryTableV271:''\}/);
 });
 
 test('V271 (b) Overview is a columnar table with the four columns the owner named', () => {
-  const table = section('const growOverviewTableV271=', 'const growHistoryTableV271=');
+  /* V319 (owner sketch: "two side view", two named categories) split this into two tables. The
+     columns the V271 owner named are the ones the REWARDS table still carries; the offers table
+     is checked separately below, because dropping a count nothing records was the point of it. */
+  const table = section('const growOverviewRewardsTableV319=', 'const growOverviewOffersTableV319=');
   assert.match(table, /\['Programme',row=>/);
   assert.match(table, /\['Type',row=>esc\(row\.type\)\]/);
   assert.match(table, /\['Started',row=>growDateCellV271\(row\.started\)\]/);

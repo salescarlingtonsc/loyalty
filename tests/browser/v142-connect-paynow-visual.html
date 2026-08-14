@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="901b36c13b0bcb88adb9fb9d413890e678efa6912854b9b33f80cc6b5ac40b76"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="a093c4a0fbd1992d7e6afc62cdf0c188c45aa1ba156e6db91ab3a231ba2d3062"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -737,6 +737,21 @@ input[type=range]:focus{box-shadow:none}
 .retention-taxonomy-actions{display:flex;align-items:center;flex:0 1 auto;flex-wrap:wrap;gap:8px;min-width:0}
 /* Grow overview: one journey first, engine-specific editors only on demand. */
 .grow-overview{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-width:920px;margin:0 auto}
+/* V319 (owner sketch: "two side view", the two categories drawn as neighbouring columns).
+   The reading column widens ONLY on the Overview view, because that is the one view now carrying
+   two tables abreast; every other view keeps the 920px measure it was designed at. The pair
+   stacks well before either table would need to scroll sideways — a five-column table squeezed
+   into half of 920px is not a glance, which is what this view is for. */
+.grow-overview[data-programme-view="overview"]{max-width:1280px}
+/* Unequal on purpose: the rewards table carries five columns and the offers table four, so the
+   even split is what broke "Referrals" across two lines mid-word at 1440px. Below 1200px neither
+   has the room to sit beside the other without that returning, so they stack. */
+.grow-overview-split-v319{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,0.85fr);gap:18px;margin-top:14px;align-items:start}
+@media(max-width:1200px){.grow-overview-split-v319{grid-template-columns:minmax(0,1fr)}}
+.grow-overview-column-v319{min-width:0;display:grid;gap:8px}
+.grow-overview-column-title-v319{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
+.grow-overview-column-note-v319{margin:0}
+.grow-overview-column-v319 .cui-table-wrap{border:1px solid var(--line)}
 .grow-hero{display:grid;grid-template-columns:minmax(0,1fr);justify-items:start;gap:14px;padding:20px;
   border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(135deg,#fff 0%,var(--tint) 100%);box-shadow:var(--shadow)}
 .grow-hero-copy{max-width:620px}.grow-hero-copy h1{font-size:clamp(1.8rem,4vw,2.35rem);margin:0}
@@ -942,8 +957,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .dashboard-intro{display:flex;align-items:flex-start;gap:13px;padding:18px 20px;border:1px solid #DED7CC;border-radius:var(--r);background:#EDE7DE}
 .dashboard-intro>.cui-icon{color:var(--coral);margin-top:3px}.dashboard-intro h1{font-size:1.85rem}.dashboard-intro p{margin-top:4px;line-height:1.5}
 .performance-panel{padding:0;overflow:hidden;background:#fff}
-.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8}
+.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8;flex-wrap:wrap}
 .performance-heading>.cui-icon{color:var(--coral)}.performance-heading h2{font-size:1.08rem}.performance-heading p{margin-top:3px}
+/* V319 (owner: "filter time move here"): the period strip now lives in this heading. It takes the
+   free space between the title block and Minimise on a wide card, and drops to its own full-width
+   row — ahead of nothing, so the tap targets keep their size — once the header has to wrap. */
+.performance-heading>.dashboard-range-v319{margin-left:auto;justify-content:flex-end}
+@media(max-width:900px){.performance-heading>.dashboard-range-v319{order:3;flex-basis:100%;margin-left:0;justify-content:flex-start}}
 .performance-body{padding:20px}
 .dashboard-kpis{margin-top:16px}
 .dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
@@ -2085,7 +2105,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 901b36c13b0bcb88adb9fb9d413890e678efa6912854b9b33f80cc6b5ac40b76</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · a093c4a0fbd1992d7e6afc62cdf0c188c45aa1ba156e6db91ab3a231ba2d3062</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -4184,7 +4204,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'901b36c13b0bcb88adb9fb9d413890e678efa6912854b9b33f80cc6b5ac40b76',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'a093c4a0fbd1992d7e6afc62cdf0c188c45aa1ba156e6db91ab3a231ba2d3062',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

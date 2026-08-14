@@ -21,8 +21,8 @@ const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 test('V250 the Programmes nav is one flat link, with no sub-rows left', () => {
   /* V294: Programmes became a group whose children are the page's own three views — still no
      per-module sub-rows (the thing V250 removed stays removed). */
-  assert.match(app, /\{key:'grow',icon:'star',label:'Programmes'/);
-  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['List','#\/grow','menu'\],\['History','#\/grow\/history','waitlist'\]\]/);
+  assert.match(app, /\{key:'grow',icon:'star',label:'Rewards & Offer'/);
+  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
   assert.doesNotMatch(app, /'Programmes list'/);
   assert.doesNotMatch(app, /\['#\/grow\/ongoing'/);
   assert.doesNotMatch(app, /\['#\/grow\/available'/);
@@ -33,7 +33,7 @@ test('V245 nav row, page heading and tile group all say the same words', () => {
   /* V301 ADDITION (owner 2026-08-13, the one-page setup wizard): the fourth view names itself in
      the same ternary. The V245 vocabulary — Ongoing programmes / Pending setup / List — is
      unchanged, which is what this assertion exists to protect. */
-  assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes':programmeView==='available'\?'Pending setup':programmeView==='setup'\?'Set up rewards':'List'/);
+  assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes':programmeView==='available'\?'Pending setup':programmeView==='setup'\?'Set up rewards':'Rewards Programme'/);
   // ...and they are the exact strings the V244 groups use inside the list.
   assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
   assert.match(app, /growTileSectionV244\('Pending setup'/);

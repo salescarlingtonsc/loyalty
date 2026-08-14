@@ -350,7 +350,12 @@ test('customer profile never converts inaccessible facets into plausible zero va
   assert.match(client, /if\(canReadSales\)\{[\s\S]*?label:'VIP'/);
   assert.match(client, /canReadSales\?summaryRowV294\(/);
   assert.match(client, /canReadSales&&netVisits<=0\?`<p class="muted small"/);
-  assert.match(client, /loyaltyFactsAvailable\?summaryRowV294\(/);
+  /* V319: the points row is now also conditional on nothing else having claimed the balance (the
+     Points System programme row states it, per the owner's markup), and the credit row on there
+     being credit to state. The rule this test protects is unchanged: both still lead with
+     loyaltyFactsAvailable, so an unconfirmed loyalty facet renders no row rather than a zero. */
+  assert.match(client, /loyaltyFactsAvailable&&!balanceProgrammeRowV319\s*\r?\n?\s*\?summaryRowV294\(/);
+  assert.match(client, /loyaltyFactsAvailable&&\(cred!==0\|\|!balanceProgrammeRowV319\)/);
   assert.match(client, /canReadLoyalty\?`<section class="card c360-rewards-card" id="c360-loyalty"/);
   assert.match(client, /canReadRetention\?`<div class="card"><b>Retention reward history/);
   assert.match(client, /activitySources\.length\?/);

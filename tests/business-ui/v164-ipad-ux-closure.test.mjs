@@ -15,7 +15,7 @@ test('V164 sidebar terminology is merchant-facing', () => {
      declared `label`. The merchant-facing WORD this test guards is unchanged. */
   /* V294: Programmes became a group with Overview/List/History children. The merchant-facing
      WORD this test guards is unchanged. */
-  assert.match(appHtml, /\{key:'grow',icon:'star',label:'Programmes'/);
+  assert.match(appHtml, /\{key:'grow',icon:'star',label:'Rewards & Offer'/);
   /* V170 owner decision: Daily report (today's takings) was fully built and routed but
      absent from every nav group, so owners could not reach it. It now leads the money group. */
   /* V180 owner instruction: Expenses moved ahead of Business Insights (money in, money out,
@@ -85,7 +85,10 @@ test('V164 Staff Members defaults to a staff-list-first tab structure', () => {
 });
 
 test('V164 Programmes removes persistent setup CTA and keeps categorised overview', () => {
-  assert.match(appHtml, /<h1 id="growTitle">Programmes<\/h1>/);
+  /* V319 (owner markup 2026-08-14): the module is renamed "Rewards & Offer" — rail group and
+     page heading together, per V245's own rule that the two must say the same words. The
+     requirement this line protects is that the heading is the MODULE's name, not "Grow". */
+  assert.match(appHtml, /<h1 id="growTitle">Rewards &amp; Offer<\/h1>/);
   assert.match(appHtml, /Create and manage rewards, promotions and customer programmes\./);
   assert.match(appHtml, /<div class="v150-title-actions"><\/div>/);
   /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two

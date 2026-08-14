@@ -159,10 +159,14 @@ const stubSource=`(()=>{
       case 'preview_campaign_audience_v155':return {total:0};
       case 'require_module_scope_v145':return null;
       /* The owner's own screenshot state: a PAUSED programme with points already banked. */
+      /* V319: the owner's own tenant expires points — their screenshot reads "300 points expire
+         20 Sep 2026" — and the previous null here meant no step could ever see the expiry line.
+         The whole balance expires on one date, which is the case the owner marked up. The
+         no-expiry and part-expiry cases are covered by tests/business-ui/v319-*.test.mjs. */
       case 'staff_get_customer_actionable_loyalty_v145':return {points_balance:300,credit_balance_cents:1500,
         redemption_enabled:false,program:{id:'prog-1',active:false,unit:'points',earn_points_per_dollar:1,
         stamp_per_cents:500,redeem_points:100,reward_credit_cents:100},
-        rewards:[],next_reward:null,expiry:null};
+        rewards:[],next_reward:null,expiry:{units:300,expires_at:'2026-09-20T00:00:00+08:00'}};
       case 'staff_get_reward_entitlements_v99':return [];
       case 'list_customer_redemption_history_v145':return [];
       case 'staff_list_visit_feedback_v145':return {feedback:[]};
@@ -244,9 +248,19 @@ try{
   assertTrue(pausedPills.some(text=>text.trim()==='Paused'),'the Paused pill still says the programme is paused');
   assertTrue(programmesText.includes('Tiered membership')&&programmesText.includes('Not in a tier yet'),
     'the tier row states this customer’s tier standing (2 visits, Gold starts at 10)');
-  assertTrue(programmesText.includes('August Special'),
-    'the promotion row keeps its short customer-facing description (owner circled it approvingly)');
+  /* V319 (owner 2026-08-14 ringed the promotion rows in this card: "these are Ads Promotion, put
+     in different box"). The row itself is untouched — same name, same short customer-facing
+     description the V296 owner circled approvingly — it simply renders in its own card now, so
+     this step follows it there rather than dropping the assertion. */
+  assertTrue(!programmesText.includes('August Special'),
+    'the promotion has left the programmes card (owner: "put in different box")');
+  const offersText=await page.locator('#c360-offers-v319').innerText();
+  assertTrue(offersText.includes('August Special'),
+    'the promotion row keeps its short customer-facing description, in the Limited offers box');
   assertTrue(programmesText.includes('Referral programme'),'the referral row is untouched');
+  /* V319: and the balance the owner wrote "300" against now says when it expires. */
+  assertTrue(/expires \d{1,2} \w+ \d{4}|\d+ points expire /.test(programmesText),
+    'the Points System row states when these points expire (owner: "expires in xxx")');
 
   /* --------------------------- 2. gift cards page --------------------------- */
   /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"). V296 removed the
@@ -325,7 +339,12 @@ try{
     'the pill strip container is gone too');
   const growHead=page.locator('.side .navhead[data-grp="grow"]').first();
   if(await growHead.getAttribute('aria-expanded')!=='true')await growHead.click();
-  for(const [label,href,view] of [['Overview','#/grow/overview','overview'],['List','#/grow','list'],['History','#/grow/history','history']]){
+  /* V319 renamed the middle child ("List" → "Rewards Programme") and added a fourth. This loop
+     resolves by href, so the rename could not have broken it silently — the labels are corrected
+     so the step's own output names what the owner sees. */
+  for(const [label,href,view] of [['Overview','#/grow/overview','overview'],
+    ['Rewards Programme','#/grow','list'],['Limited Offer','#/grow/offers','offers'],
+    ['History','#/grow/history','history']]){
     const link=page.locator(`.side .navbody[data-body="grow"] a[href="${href}"]`).first();
     assertTrue(await link.count()===1,`rail child "${label}" is still the way to that view`);
     await link.click();
@@ -393,8 +412,92 @@ try{
   assertTrue(await page.evaluate(()=>document.querySelector('#lm option[value="redeem"]')!==null),
     'the underlying model key is still "redeem" — this was a label change only');
 
+  /* ------------------- 8. V319 (owner markup 2026-08-14, build 5bca979f0990) ------------------- */
+  /* The rename, the fourth rail child, the two-category Overview and the moved period strip —
+     driven through the real router in a real browser, because all four are things the owner
+     LOOKS at, and W6 increment 2 proved a green source pin says nothing about that. */
+  say('8. V319 — Rewards & Offer, the Limited Offer tab, the two-category Overview, and the moved period strip');
+  await go('#/grow');
+  await page.waitForSelector('[data-grow-topic-v229]',{timeout:20000});
+  const railGroupText=await page.locator('.side .navhead[data-grp="grow"]').first().innerText();
+  assertTrue(/Rewards\s*&\s*Offer/i.test(railGroupText),
+    'the rail group is titled "Rewards & Offer" (owner struck "PROGRAMMES" out)');
+  assertTrue(!/^\s*Programmes\s*$/i.test(railGroupText.trim()),'"Programmes" no longer titles the group');
+  const railChildText=await page.locator('.side .navbody[data-body="grow"]').first().innerText();
+  assertTrue(railChildText.includes('Rewards Programme'),'the "List" child now reads "Rewards Programme"');
+  assertTrue(railChildText.includes('Limited Offer'),'"Limited Offer" is a rail child of its own');
+  assertTrue(!/(^|\n)\s*List\s*(\n|$)/.test(railChildText),'"List" is gone as a rail label');
+
+  /* The Limited Offer tab renders the promotions category and NOTHING else — the failure mode
+     this guards is topicOnV229 answering true for every key on an unrecognised view. */
+  await go('#/grow/offers');
+  await page.waitForFunction(()=>document.getElementById('growOverview')?.dataset.programmeView==='offers',
+    null,{timeout:20000});
+  await page.waitForSelector('[data-grow-limited-offer-v319]',{timeout:20000});
+  const offerCategories=await page.locator('#growOverview [data-programme-category-v268]').evaluateAll(
+    nodes=>nodes.map(node=>node.dataset.programmeCategoryV268));
+  assertTrue(JSON.stringify(offerCategories)===JSON.stringify(['promotions']),
+    `the Limited Offer tab renders only the promotions category (got ${JSON.stringify(offerCategories)})`);
+  const offerTabText=await page.locator('[data-grow-limited-offer-v319]').innerText();
+  assertTrue(offerTabText.includes('August Special'),'each offer is listed by its own title');
+  assertTrue(await page.locator('[data-grow-limited-offer-v319] a[href^="#/promotions/"]').count()>0,
+    'and is editable from this tab (owner: "editable in this tab")');
+
+  /* Overview: two named categories, each holding only its own kind. */
+  await go('#/grow/overview');
+  await page.waitForSelector('[data-grow-overview-split-v319]',{timeout:20000});
+  const rewardsColumn=await page.locator('[data-grow-overview-category-v319="rewards"]').innerText();
+  const offersColumn=await page.locator('[data-grow-overview-category-v319="offers"]').innerText();
+  assertTrue(/Rewards\s*&\s*Loyalty/i.test(rewardsColumn),'the left category is headed "Rewards & Loyalty"');
+  assertTrue(offersColumn.includes('Limited Offer'),'the right category is headed "Limited Offer"');
+  assertTrue(offersColumn.includes('August Special'),'the live promotion is filed under Limited Offer');
+  assertTrue(!rewardsColumn.includes('August Special'),'and not also under Rewards & Loyalty');
+  assertTrue(!offersColumn.includes('Customers used'),
+    'the offers table drops a count nothing records, rather than printing "Not tracked" on every row');
+  /* Side by side at desktop width, as the owner drew them. */
+  const columnBoxes=await page.locator('[data-grow-overview-category-v319]').evaluateAll(
+    nodes=>nodes.map(node=>node.getBoundingClientRect().top));
+  assertTrue(columnBoxes.length===2&&Math.abs(columnBoxes[0]-columnBoxes[1])<4,
+    `the two categories sit side by side at 1440px (tops ${JSON.stringify(columnBoxes)})`);
+
+  /* Dashboard: the period strip is inside the Performance card and nowhere else. */
+  await go('#/dashboard');
+  await page.waitForSelector('#dashboardView .performance-heading',{timeout:20000});
+  assertTrue(await page.locator('#dashboardView .dashboard-range').count()===1,
+    'exactly one period strip exists — a move that left a copy would wire only the first');
+  assertTrue(await page.locator('#dashboardView .performance-heading .dashboard-range').count()===1,
+    'the period strip is in the Performance heading (owner: "filter time move here")');
+  assertTrue(await page.locator('#dashboardView>.v150-titlebar .dashboard-range').count()===0,
+    'and no longer in the page titlebar');
+  /* Still wired: pressing 7d must move the Performance period line it now sits beside. */
+  const periodBefore=await page.locator('#dashboardPerformancePeriod').innerText();
+  await page.locator('#dashboardView .dashboard-range .qbtn[data-d="7"]').click();
+  await page.waitForFunction(previous=>document.getElementById('dashboardPerformancePeriod')?.innerText!==previous,
+    periodBefore,{timeout:20000});
+  assertTrue(await page.locator('#dashboardView .dashboard-range .qbtn[data-d="7"].act').count()===1,
+    'the 7d control is still live after the move, and marks itself');
+
+  /* Evidence for docs/qa/evidence/V319-REWARDS-AND-OFFER-ACCEPTANCE.md. Captured from the same
+     run that asserted the four claims above, so the pictures cannot describe a different tree. */
+  const shots=[['v319-customer-profile','#/client/c1','#c360-offers-v319'],
+    ['v319-programmes-overview','#/grow/overview','[data-grow-overview-split-v319]'],
+    ['v319-limited-offer','#/grow/offers','[data-grow-limited-offer-v319]'],
+    ['v319-dashboard-performance','#/dashboard','#dashboardView .performance-heading .dashboard-range']];
+  for(const [name,hash,selector] of shots){
+    for(const [suffix,width,height] of [['desktop-1440',1440,1000],['mobile-390',390,844]]){
+      await page.setViewportSize({width,height});
+      await go(hash);
+      await page.waitForSelector(selector,{timeout:20000});
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+      await page.screenshot({path:fileURLToPath(new URL(`../../docs/qa/evidence/${name}-${suffix}.png`,import.meta.url)),
+        fullPage:true});
+    }
+  }
+  await page.setViewportSize({width:1440,height:1000});
+  assertTrue(true,`captured ${shots.length*2} evidence screenshots at 1440 and 390`);
+
   if(pageErrors.length)process.stdout.write(`note: page errors observed (non-fatal): ${JSON.stringify(pageErrors)}\n`);
-  process.stdout.write('V296 programmes batch walkthrough PASS (steps 1-7)\n');
+  process.stdout.write('V296 programmes batch walkthrough PASS (steps 1-8, step 8 = V319)\n');
 }catch(error){
   process.stdout.write(`V296 walkthrough FAIL at ${step}\n${error?.stack||error}\n`);
   if(pageErrors.length)process.stdout.write(`page errors: ${JSON.stringify(pageErrors)}\n`);

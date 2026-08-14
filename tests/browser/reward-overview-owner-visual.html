@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="868885764aa60a0f52ac32b695966e49cd7e0a2a97021d9cf5787c381ebc4f27"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="85a6b8ed4d95ec87c35ff550b7a7600ba6786c9711f8bd1628c1f2dcf610e532"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -737,6 +737,21 @@ input[type=range]:focus{box-shadow:none}
 .retention-taxonomy-actions{display:flex;align-items:center;flex:0 1 auto;flex-wrap:wrap;gap:8px;min-width:0}
 /* Grow overview: one journey first, engine-specific editors only on demand. */
 .grow-overview{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-width:920px;margin:0 auto}
+/* V319 (owner sketch: "two side view", the two categories drawn as neighbouring columns).
+   The reading column widens ONLY on the Overview view, because that is the one view now carrying
+   two tables abreast; every other view keeps the 920px measure it was designed at. The pair
+   stacks well before either table would need to scroll sideways — a five-column table squeezed
+   into half of 920px is not a glance, which is what this view is for. */
+.grow-overview[data-programme-view="overview"]{max-width:1280px}
+/* Unequal on purpose: the rewards table carries five columns and the offers table four, so the
+   even split is what broke "Referrals" across two lines mid-word at 1440px. Below 1200px neither
+   has the room to sit beside the other without that returning, so they stack. */
+.grow-overview-split-v319{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,0.85fr);gap:18px;margin-top:14px;align-items:start}
+@media(max-width:1200px){.grow-overview-split-v319{grid-template-columns:minmax(0,1fr)}}
+.grow-overview-column-v319{min-width:0;display:grid;gap:8px}
+.grow-overview-column-title-v319{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
+.grow-overview-column-note-v319{margin:0}
+.grow-overview-column-v319 .cui-table-wrap{border:1px solid var(--line)}
 .grow-hero{display:grid;grid-template-columns:minmax(0,1fr);justify-items:start;gap:14px;padding:20px;
   border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(135deg,#fff 0%,var(--tint) 100%);box-shadow:var(--shadow)}
 .grow-hero-copy{max-width:620px}.grow-hero-copy h1{font-size:clamp(1.8rem,4vw,2.35rem);margin:0}
@@ -942,8 +957,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .dashboard-intro{display:flex;align-items:flex-start;gap:13px;padding:18px 20px;border:1px solid #DED7CC;border-radius:var(--r);background:#EDE7DE}
 .dashboard-intro>.cui-icon{color:var(--coral);margin-top:3px}.dashboard-intro h1{font-size:1.85rem}.dashboard-intro p{margin-top:4px;line-height:1.5}
 .performance-panel{padding:0;overflow:hidden;background:#fff}
-.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8}
+.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8;flex-wrap:wrap}
 .performance-heading>.cui-icon{color:var(--coral)}.performance-heading h2{font-size:1.08rem}.performance-heading p{margin-top:3px}
+/* V319 (owner: "filter time move here"): the period strip now lives in this heading. It takes the
+   free space between the title block and Minimise on a wide card, and drops to its own full-width
+   row — ahead of nothing, so the tap targets keep their size — once the header has to wrap. */
+.performance-heading>.dashboard-range-v319{margin-left:auto;justify-content:flex-end}
+@media(max-width:900px){.performance-heading>.dashboard-range-v319{order:3;flex-basis:100%;margin-left:0;justify-content:flex-start}}
 .performance-body{padding:20px}
 .dashboard-kpis{margin-top:16px}
 .dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
@@ -2084,7 +2104,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 868885764aa60a0f52ac32b695966e49cd7e0a2a97021d9cf5787c381ebc4f27</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 85a6b8ed4d95ec87c35ff550b7a7600ba6786c9711f8bd1628c1f2dcf610e532</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5239,7 +5259,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      rail keeps Programmes lit, the three rail children keep working, and the wizard reuses the
      snapshot growPage has already read rather than loading the programme a second time.
      #/grow/setup/review carries 'review' in the focus slot and opens it on the final step. */
-  const programmeView=['overview','history','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
+  /* V319 (owner markup 2026-08-14): 'offers' is the fifth view — the Limited Offer rail child.
+     It is the promotions category on its own page rather than a filter, for the same reason
+     'overview' and 'history' are: the owner wrote "editable in this tab", so it needs a hash of
+     its own to link, bookmark and come back to. */
+  const programmeView=['overview','history','offers','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
   /* V303: 'review' is now a NAME, not the number 4. A tier model runs a five-step wizard, so a
      hardcoded 4 would have opened the Reward step and called it the publish gate. The wizard
      resolves the name against its own active step list. */
@@ -5365,7 +5389,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const growTopicSectionV235=growActiveTopicV229?.key==='stamps'?'points':(growActiveTopicV229?.key||null);
   /* V271: Overview and History replace the category list rather than sitting above it — showing
      both would put the same programme on the page twice under two different shapes. */
-  const growCategoryViewV271=!['overview','history','setup'].includes(programmeView);
+  /* V319: 'offers' joins them. Without this the view would fall through to topicOnV229's
+     "no tiles, no drilled topic" branch, which answers TRUE for every key — the Limited Offer
+     page would have rendered every category on the module. */
+  const growCategoryViewV271=!['overview','history','setup','offers'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -5596,9 +5623,14 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        whose end date has passed is now a draft rather than History, because it never ran. */
     (snapshot.promotions||[]).forEach(promotion=>{
       const lifecycle=promotionLifecycleV186(promotion);
+      /* V319: `ended` is deliberately only set once the offer HAS ended, because History's
+         "Ran until" column must not print a future date. The Limited Offer column on Overview
+         needs the opposite — when a RUNNING offer stops — so `endsAt` carries it rather than
+         loosening the field History depends on. `customers:null` is untouched: nothing records a
+         customer using a promotion, and this row must keep admitting that. */
       entries.push({name:promotion?.name||'Promotion',type:'Promotion',
         started:promotion?.starts_at||null,ended:lifecycle.state==='ended'?(promotion?.ends_at||null):null,
-        state:lifecycle.state,
+        endsAt:promotion?.ends_at||null,state:lifecycle.state,
         customers:null,detail:promotion?.tagline||''});
     });
     if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',
@@ -5630,13 +5662,48 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       ${rows.map(row=>`<tr>${columns.map(column=>`<td data-label="${esc(column[0])}">${column[1](row)}</td>`).join('')}</tr>`).join('')}
       </tbody></table></div>`
     :`<div class="empty" role="status">${empty}</div>`;
-  const growOverviewTableV271=growTableV271({label:'Ongoing programmes',rows:growOverviewRowsV271,
-    empty:'<b>Nothing is running yet.</b><p class="muted small" style="margin-top:6px">Open the <a href="#/grow">Programmes list</a> — every programme there comes with a suggested starting point.</p>',
+  /* V319 (owner sketch 2026-08-14 drawn over this table — a two-column frame headed "Rewards &
+     Loyalty" and "Limited Offer", with "these two are different categories" beside it, and the
+     two Promotion rows circled below). One table listed the points engine next to "National Day:
+     50% off first prata", and the owner is right that they are not the same kind of thing: a
+     reward programme runs indefinitely and is measured per customer, a limited offer runs to a
+     date and is presentation. Splitting them here is what makes both columns readable — a
+     "Customers used" cell reading "Not tracked" on every promotion row was the tell.
+
+     The split predicate is the entry's own type, so it cannot drift from the Limited Offer page:
+     both read the same 'Promotion' entries built above. */
+  const growLimitedOfferEntryV319=entry=>entry.type==='Promotion';
+  const growOverviewRewardRowsV319=growOverviewRowsV271.filter(entry=>!growLimitedOfferEntryV319(entry));
+  const growOverviewOfferRowsV319=growOverviewRowsV271.filter(growLimitedOfferEntryV319);
+  const growOverviewRewardsTableV319=growTableV271({label:'Rewards and loyalty programmes running now',rows:growOverviewRewardRowsV319,
+    empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
     columns:[['Programme',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
       ['Type',row=>esc(row.type)],
       ['Started',row=>growDateCellV271(row.started)],
       ['Customers used',row=>growCountCellV271(row.customers)],
       ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
+  /* No "Customers used" column here. Nothing in the schema records a customer redeeming a
+     promotion (see the V271 honesty note above), so the cell was "Not tracked" on every row of
+     this category without exception — a column that can only ever admit a gap is worse than the
+     column an owner actually wants, which is when the offer stops. 'Ends' is read from the same
+     ends_at promotionLifecycleV186 judges the row's state by, and an offer with no end date says
+     so rather than borrowing "Not tracked" from a count. */
+  const growOverviewOffersTableV319=growTableV271({label:'Limited offers running now',rows:growOverviewOfferRowsV319,
+    empty:'<b>No offer is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/offers">Limited Offer</a> to create one customers can see.</p>',
+    columns:[['Offer',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
+      ['Started',row=>growDateCellV271(row.started)],
+      ['Ends',row=>Number.isFinite(Date.parse(row.endsAt||''))?esc(promotionDateTextV104(row.endsAt)):'<span class="muted">No end date</span>'],
+      ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
+  const growOverviewTableV271=`<div class="grow-overview-split-v319" data-grow-overview-split-v319>
+    <section class="grow-overview-column-v319" data-grow-overview-category-v319="rewards" aria-labelledby="growOverviewRewardsHeadV319">
+      <h3 class="grow-overview-column-title-v319" id="growOverviewRewardsHeadV319">Rewards &amp; Loyalty</h3>
+      <p class="muted small grow-overview-column-note-v319">What customers earn and climb, running until you stop it.</p>
+      ${growOverviewRewardsTableV319}</section>
+    <section class="grow-overview-column-v319" data-grow-overview-category-v319="offers" aria-labelledby="growOverviewOffersHeadV319">
+      <h3 class="grow-overview-column-title-v319" id="growOverviewOffersHeadV319">Limited Offer</h3>
+      <p class="muted small grow-overview-column-note-v319">Current promotions customers see in the app. Edit them under <a href="#/grow/offers">Limited Offer</a>.</p>
+      ${growOverviewOffersTableV319}</section>
+  </div>`;
   const growHistoryTableV271=growTableV271({label:'Programme history',rows:growHistoryRowsV271,
     empty:'<b>Nothing has ended yet.</b><p class="muted small" style="margin-top:6px">Programmes appear here once they pass their end date or you retire them.</p>',
     columns:[['Programme',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
@@ -5655,14 +5722,41 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      hashes, so #/grow/overview, #/grow/history, every rail child and every existing deep link or
      history entry still lands on exactly the view it always did. */
   const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
+  /* V319: the promotions category, lifted out of the page template so the drilled Promotions
+     topic and the new Limited Offer rail child render the SAME rows from one definition rather
+     than two copies that can drift. Every row, permission gate and destination is exactly what
+     the drill already had — the owner asked for a place to edit these, not for a new editor. */
+  const growLimitedOfferListHtmlV319=snapshot.overviewErrors?.promotions
+    ?programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'})
+    :`<p class="muted small grow-promotions-count-v296" style="padding:0 14px 4px">${growPromotionItemsV296.length?`${publishedPromotions} published · ${promotionDrafts} draft${promotionDrafts===1?'':'s'}. Customers see up to six current offers.`:'No promotion has been created yet.'}</p>
+      ${growPromotionItemsV296.map(item=>{const life=promotionLifecycleV186(item);
+        const detailV296=[life.label,String(item.offerFacts||item.tagline||item.description||'').replace(/\s+/g,' ').trim().slice(0,120)].filter(Boolean).join(' · ');
+        return programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),
+          title:item.name||item.offerFacts||'Untitled draft',copy:detailV296,merchant:true,
+          status:life.state==='live'?'Live':life.state==='scheduled'?'Scheduled':life.state==='ended'?'Ended':'Draft',
+          statusTone:life.live?'on':life.state==='draft'?'new':'off',
+          canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner,
+          href:`#/promotions/${encodeURIComponent(item.id)}`,actionLabel:'Edit'})}).join('')}
+      ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),
+        title:growPromotionItemsV296.length?'Add another promotion':'Create your first promotion',
+        copy:'One factual offer and a photo, ready for the customer programme.',
+        status:'Not set up',statusTone:'off',canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner,
+        href:'#/promotions',actionLabel:'Set up'})}`;
+  const growLimitedOfferCategoryHtmlV319=`<div class="programme-category" data-programme-category-v268="promotions"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
+        ${growLimitedOfferListHtmlV319}
+      </div></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
-      <div class="cui-page-title"><h1 id="growTitle">Programmes</h1>
+      ${/* V319: the heading follows the rail. V245's rule — "nav row, page heading and tile group
+           all say the same words" — is why the rename cannot stop at the sidebar; a rail reading
+           "Rewards & Offer" that opens a page titled "Programmes" is the same navigation defect
+           V245 was raised about, in the other direction. */''}
+      <div class="cui-page-title"><h1 id="growTitle">Rewards &amp; Offer</h1>
         <p class="muted">Create and manage rewards, promotions and customer programmes.</p></div>
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Programmes</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Rewards &amp; Offer</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growTilesHtmlV229:''}
@@ -5714,26 +5808,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       </div></div>
       ${canWinback?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
       `:''}
-      ${topicOnV229('promotions')?`
-      <div class="programme-category" data-programme-category-v268="promotions"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
-        ${snapshot.overviewErrors?.promotions
-          ?programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'})
-          :`<p class="muted small grow-promotions-count-v296" style="padding:0 14px 4px">${growPromotionItemsV296.length?`${publishedPromotions} published · ${promotionDrafts} draft${promotionDrafts===1?'':'s'}. Customers see up to six current offers.`:'No promotion has been created yet.'}</p>
-          ${growPromotionItemsV296.map(item=>{const life=promotionLifecycleV186(item);
-            const detailV296=[life.label,String(item.offerFacts||item.tagline||item.description||'').replace(/\s+/g,' ').trim().slice(0,120)].filter(Boolean).join(' · ');
-            return programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),
-              title:item.name||item.offerFacts||'Untitled draft',copy:detailV296,merchant:true,
-              status:life.state==='live'?'Live':life.state==='scheduled'?'Scheduled':life.state==='ended'?'Ended':'Draft',
-              statusTone:life.live?'on':life.state==='draft'?'new':'off',
-              canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner,
-              href:`#/promotions/${encodeURIComponent(item.id)}`,actionLabel:'Edit'})}).join('')}
-          ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),
-            title:growPromotionItemsV296.length?'Add another promotion':'Create your first promotion',
-            copy:'One factual offer and a photo, ready for the customer programme.',
-            status:'Not set up',statusTone:'off',canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner,
-            href:'#/promotions',actionLabel:'Set up'})}`}
-      </div></div>
-      `:''}
+      ${/* V319: one definition, two entry points — the drilled Promotions topic (this line) and
+           the Limited Offer rail child below. */''}
+      ${topicOnV229('promotions')?growLimitedOfferCategoryHtmlV319:''}
+      ${programmeView==='offers'?`<div class="grow-limited-offer-v319" data-grow-limited-offer-v319>
+        <p class="muted small" style="padding:0 0 10px">These are the current offers customers see in their app. Edit one here and the change reaches the customer programme when you publish it.</p>
+        ${growLimitedOfferCategoryHtmlV319}
+      </div>`:''}
       ${topicOnV229('referrals')?`
       <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
@@ -6403,13 +6484,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      V172: #/grow/ongoing|available|settings put the TAB name in the hashParam slot — those
      are views of this overview, not engine deep-links, and must never mount a surface
      (mounting built {surface:'overview'} and crashed on the surface dictionary). */
-  const hashParamIsProgrammeView=['overview','history','ongoing','available','settings','setup'].includes(String(hashParam||''));
+  /* V319: 'offers' is a view name, not an editor action — without it here the Limited Offer hash
+     would be handed to the deep-editor mount below and open a surface the owner did not ask for. */
+  const hashParamIsProgrammeView=['overview','history','offers','ongoing','available','settings','setup'].includes(String(hashParam||''));
   if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'868885764aa60a0f52ac32b695966e49cd7e0a2a97021d9cf5787c381ebc4f27',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'85a6b8ed4d95ec87c35ff550b7a7600ba6786c9711f8bd1628c1f2dcf610e532',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

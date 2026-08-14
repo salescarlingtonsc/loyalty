@@ -59,14 +59,14 @@ test('V301 (a) the wizard is a real function, mounted from growPage', () => {
 
 test('V301 (a) "setup" resolves as a Programmes view, and is not mistaken for a deep link', () => {
   assert.match(app,
-    /const programmeView=\['overview','history','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
+    /const programmeView=\['overview','history','offers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
   // A view hash must never mount an engine surface — that crashed on the surface dictionary.
   assert.match(app,
-    /const hashParamIsProgrammeView=\['overview','history','ongoing','available','settings','setup'\]\.includes/);
+    /const hashParamIsProgrammeView=\['overview','history','offers','ongoing','available','settings','setup'\]\.includes/);
   // The three V271/V294 rail children keep resolving exactly as before.
-  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['List','#\/grow','menu'\],\['History','#\/grow\/history','waitlist'\]\]/);
+  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
   // The view replaces the category list rather than stacking on it.
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers'\]\.includes\(programmeView\);/);
   assert.match(grow, /programmeView==='setup'\?'Set up rewards'/);
 });
 

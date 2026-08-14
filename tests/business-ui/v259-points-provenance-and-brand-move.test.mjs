@@ -105,7 +105,13 @@ test('V259 a paused programme is still distinguished from one that was never bui
      "Rewards are not set up yet" sentence. The paragraph the pill already said is gone. */
   assert.doesNotMatch(clientDetail, /This programme is paused, so nothing can be redeemed right now\./);
   assert.match(clientDetail, /Rewards are not set up yet\. The owner can create them from Grow\./);
-  assert.match(clientDetail, /programmeRowHtmlV294=\(name,copy,live,label=null\)/);
+  /* V319 added two optional trailing parameters (copyHtml for the clickable balance, footHtml for
+     the paused note that now travels with the number it explains). The four this test names are
+     unchanged and still positional. */
+  assert.match(clientDetail, /programmeRowHtmlV294=\(name,copy,live,label=null,copyHtml=null,footHtml=''\)/);
+  /* And the paused note reaches the row, so "paused" is still told apart from "never built" at
+     the place the 0 is now printed. */
+  assert.match(clientDetail, /balanceLeadHtmlV319\([^)]*\),pointsPausedNoteV259\)/);
   assert.match(clientDetail, /<span class="pill \$\{live\?'on':'off'\}">\$\{esc\(label\|\|\(live\?'Live':'Paused'\)\)\}<\/span>/);
 });
 

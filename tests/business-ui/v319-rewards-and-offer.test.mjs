@@ -1,0 +1,333 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+
+/* V319 — the owner's three markups of 2026-08-14, on build 5bca979f0990.
+ *
+ *  1. Customer profile (Mumu): "300" written against the Points System row with "expires in xxx"
+ *     beside it, and on the summary card opposite the Points row, its expiry line and Spendable
+ *     credit all struck through. The two promotion rows ringed: "these are Ads Promotion, put in
+ *     different box".
+ *  2. Programmes: "PROGRAMMES" struck out, "Rewards & Offer" written above; "List" struck out,
+ *     "Rewards Programme" written; a new "Limited Offer" child added. Over the Overview table, a
+ *     two-column frame headed "Rewards & Loyalty" and "Limited Offer": "these two are different
+ *     categories"; and of the promotions, "editable in this tab".
+ *  3. Dashboard: the period strip ringed in the titlebar with an arrow drawn down to Performance:
+ *     "filter time move here".
+ *
+ * These assertions run the SHIPPED source and read what it emits, rather than grepping app.js for
+ * the lines they were written against. That distinction is not academic here: W6 increment 2
+ * shipped four inert toggles and a silently re-based tier ladder past nineteen green source pins.
+ */
+
+const appJs=readFileSync(new URL('../../app/app.js',import.meta.url),'utf8');
+const indexHtml=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+
+/* Exclusive of `end`, like the sibling suites. */
+const section=(start,end,source=appJs)=>{
+  const from=source.indexOf(start),to=source.indexOf(end,from+start.length);
+  assert.ok(from>=0&&to>from,`missing section ${start} … ${end}`);
+  return source.slice(from,to);
+};
+/* Inclusive of `end`, for whole statements. */
+const statement=(start,end,source=appJs)=>{
+  const from=source.indexOf(start),to=source.indexOf(end,from+start.length);
+  assert.ok(from>=0&&to>from,`missing statement ${start} … ${end}`);
+  return source.slice(from,to+end.length);
+};
+
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=cents=>`SGD ${(Number(cents||0)/100).toFixed(2)}`;
+
+/* ---------------------------------------------------------------- 1. customer profile ------- */
+
+/* The row builder and the three V319 helpers that feed it, evaluated exactly as they ship. Their
+   inputs (the balance, the expiry slice, which programme the firm runs) are injected, because the
+   whole question this suite answers is what the counter reads for a GIVEN customer. */
+const customerHarness=({pts,cred,nextExp,prog,loyaltyFactsAvailable=true,pointsMode='redeem'})=>new Function(
+  'esc','pts','cred','nextExp','prog','loyaltyFactsAvailable','pointsModeV319','money','CUI',`
+  const pointsUnit=prog?.unit==='stamps'?'stamps':'points';
+  ${statement('const balanceProgrammeRowV319=','\'points\');')}
+  ${statement('const pointsExpiryPhraseV319=(()=>{','})();')}
+  ${statement('const pointsHistoryButtonV319=','</button>\`;')}
+  ${statement('const programmeRowHtmlV294=','</span></div>\`;')}
+  const balanceLeadHtmlV319=(unitWord,tail)=>\`\${pointsHistoryButtonV319} \${esc(unitWord)}\${esc(pointsExpiryPhraseV319)}\${esc(tail)}\`;
+  return {balanceProgrammeRowV319,pointsExpiryPhraseV319,pointsHistoryButtonV319,
+    programmeRowHtmlV294,balanceLeadHtmlV319,pointsUnit};`)(
+  esc,pts,cred,nextExp,prog,loyaltyFactsAvailable,pointsMode,money,{icon:()=>''});
+
+const LIVE_POINTS={unit:'points',active:true,earn_points_per_dollar:1};
+
+test('V319 the Points System row states the balance and when it expires', () => {
+  const h=customerHarness({pts:300,cred:0,prog:LIVE_POINTS,
+    nextExp:{remaining:300,expires_at:'2026-09-20T00:00:00+08:00'}});
+  const row=h.programmeRowHtmlV294('Points System','',true,null,
+    h.balanceLeadHtmlV319(h.pointsUnit,' · 700 more for Free Facial cream'));
+  assert.match(row,/>Points System</);
+  assert.match(row,/>300</,'the balance the owner circled must be on the row');
+  /* Sep / Sept is the runtime's ICU, not ours — this is the SAME formatter the V249 expiry line
+     has always used, so the row cannot disagree with the collapsible beneath it. */
+  assert.match(row,/expires 20 Sept? 2026/,'"expires in xxx" — the row must say when');
+  assert.match(row,/700 more for Free Facial cream/,'the next milestone is not displaced by the expiry');
+  /* The number stays the way into the points ledger (V259: "not clickable to see where the points
+     came from"), and there is exactly one such control on the page. */
+  assert.equal((row.match(/id="c360PointsHistoryV259"/g)||[]).length,1);
+});
+
+test('V319 a partial expiry says how much expires, never implying the whole balance goes', () => {
+  const whole=customerHarness({pts:300,cred:0,prog:LIVE_POINTS,
+    nextExp:{remaining:300,expires_at:'2026-09-20T00:00:00+08:00'}});
+  assert.match(whole.pointsExpiryPhraseV319,/^ · expires 20 Sept? 2026$/);
+  const part=customerHarness({pts:300,cred:0,prog:LIVE_POINTS,
+    nextExp:{remaining:120,expires_at:'2026-09-20T00:00:00+08:00'}});
+  assert.match(part.pointsExpiryPhraseV319,/120 points expire 20 Sept? 2026/);
+  assert.doesNotMatch(part.pointsExpiryPhraseV319,/^ · expires/,
+    'a partial expiry must not read as though all 300 points go');
+  /* Nothing scheduled to expire adds nothing — no "no expiry" filler on the row. */
+  assert.equal(customerHarness({pts:300,cred:0,prog:LIVE_POINTS,nextExp:null}).pointsExpiryPhraseV319,'');
+});
+
+test('V319 the summary card only drops the points row when a programme row took it over', () => {
+  /* Points firm: a Points System row exists, so the duplicated summary row is the one struck out. */
+  assert.equal(customerHarness({pts:300,cred:0,prog:LIVE_POINTS,nextExp:null}).balanceProgrammeRowV319,'points');
+  /* Stamps firm: the Stamp card row carries it. */
+  assert.equal(customerHarness({pts:8,cred:0,prog:{unit:'stamps',active:true},nextExp:null}).balanceProgrammeRowV319,'stamps');
+  /* Tiers-only: there is NO Points System row, so nothing moved and the summary row must stay —
+     otherwise this firm's owner loses the balance and the points history with it. */
+  assert.equal(customerHarness({pts:300,cred:0,prog:LIVE_POINTS,nextExp:null,pointsMode:'tiers'}).balanceProgrammeRowV319,null);
+  /* No programme at all, and an unreadable loyalty facet: same rule, both keep the row. */
+  assert.equal(customerHarness({pts:0,cred:0,prog:null,nextExp:null}).balanceProgrammeRowV319,null);
+  assert.equal(customerHarness({pts:0,cred:0,prog:LIVE_POINTS,nextExp:null,loyaltyFactsAvailable:false}).balanceProgrammeRowV319,null);
+});
+
+test('V319 a paused programme still explains its 0, at the place the 0 is printed', () => {
+  const h=customerHarness({pts:0,cred:0,prog:{unit:'points',active:false},nextExp:null});
+  const pausedNote=section('const pointsPausedNoteV259=','const pointsUnit=');
+  assert.match(pausedNote,/customer360-points-paused-v259/);
+  const row=h.programmeRowHtmlV294('Points System','',false,null,
+    h.balanceLeadHtmlV319(h.pointsUnit,''),
+    '<p class="muted small customer360-points-paused-v259">Programme paused</p>');
+  assert.match(row,/pill off">Paused</);
+  assert.match(row,/customer360-points-paused-v259/);
+  /* The note is a SIBLING of the copy paragraph, never nested inside it — a <p> inside a <p> is
+     auto-closed by the parser and the row would come apart in a real browser. */
+  const copyParagraph=row.slice(row.indexOf('<p class="muted small" data-merchant-content>'));
+  assert.ok(copyParagraph.indexOf('</p>')<copyParagraph.indexOf('<p class="muted small customer360'),
+    'the paused note must open only after the copy paragraph has closed');
+});
+
+test('V319 the row builder still escapes every caller that did not opt into markup', () => {
+  const h=customerHarness({pts:0,cred:0,prog:LIVE_POINTS,nextExp:null});
+  const injected=h.programmeRowHtmlV294('<script>x</script>','<img src=x onerror=1>',true);
+  assert.doesNotMatch(injected,/<script>/);
+  assert.doesNotMatch(injected,/<img /);
+  assert.match(injected,/&lt;script&gt;/);
+});
+
+test('V319 promotions leave the programmes card for a box of their own', () => {
+  const build=section('const limitedOfferRowsV319=','if(referralProgrammeV294)');
+  /* Same rows, same shape, same source — only the card they land in changed. */
+  assert.match(build,/promotionsV294\|\|\[\]/);
+  assert.match(build,/filter\(item=>item\?\.active===true\)/);
+  assert.match(build,/slice\(0,6\)/);
+  assert.match(build,/programmeRowHtmlV294\(item\.name\|\|'Promotion'/);
+  /* And they are no longer pushed into the programmes list. */
+  const programmesList=section('const programmeRowsV294=[];','const programmesListV294=');
+  assert.doesNotMatch(programmesList,/programmeRowsV294\.push\(programmeRowHtmlV294\(item\.name/);
+
+  const card=statement('const limitedOfferCardV319=','\'\';');
+  assert.match(card,/limitedOfferRowsV319\.length/,'absent stays absent — no empty offers card');
+  assert.match(card,/id="c360-offers-v319"/);
+  assert.match(card,/<b>Limited offers<\/b>/);
+  /* Distinct from, and rendered after, the programmes card the owner kept — and after the
+     summary card, whose upper-right slot two prior owner reviews signed off. These grid cells
+     are auto-placed in DOM order, so inserting the box earlier silently moves the summary. */
+  const layout=section('<div class="split c360-content-split-v295"','${retentionMarkup}');
+  assert.ok(layout.indexOf('Available Customer Programmes')<layout.indexOf('summaryCardV294'));
+  assert.ok(layout.indexOf('summaryCardV294')<layout.indexOf('limitedOfferCardV319'));
+  assert.match(layout,/canReadLoyalty\?limitedOfferCardV319:''/,
+    'the offers box inherits the same loyalty read gate as the card it left');
+});
+
+/* ------------------------------------------------------------------ 2. programmes module ----- */
+
+const growHarness=()=>new Function('esc','assertOk',`
+  ${statement('function promotionDateTextV104(value){','\n}')}
+  ${statement('const growCountCellV271=','esc(String(Number(value)));')}
+  ${statement('const growDateCellV271=','\'<span class="muted">Not tracked</span>\';')}
+  ${statement('const growTableV271=','\`<div class="empty" role="status">\${empty}</div>\`;')}
+  const growUsageV271={};
+  return (rewardRows,offerRows)=>{
+    const growOverviewRowsV271=[...rewardRows,...offerRows];
+    ${statement('const growLimitedOfferEntryV319=','growOverviewRowsV271.filter(growLimitedOfferEntryV319);')}
+    ${statement('const growOverviewRewardsTableV319=','esc(row.detail)}</span>\`:\'<span class="muted">—</span>\']]});')}
+    ${statement('const growOverviewOffersTableV319=','esc(row.detail)}</span>\`:\'<span class="muted">—</span>\']]});')}
+    ${statement('const growOverviewTableV271=\`<div class="grow-overview-split-v319"','</div>\`;')}
+    return {html:growOverviewTableV271,rewards:growOverviewRewardRowsV319,offers:growOverviewOfferRowsV319};
+  };`)(esc);
+
+const REWARD_ROW={name:'Point system',type:'Point system',started:'2026-07-21T00:00:00+08:00',
+  ended:null,endsAt:null,state:'live',customers:3,detail:'SGD 1 spent → 1 point'};
+const OFFER_ROW={name:'National Day: 50% off first prata',type:'Promotion',
+  started:'2026-08-07T00:00:00+08:00',ended:null,endsAt:'2026-08-31T23:59:59+08:00',
+  state:'live',customers:null,detail:'Celebrate National Day'};
+
+test('V319 Overview is two categories side by side, split by what a row actually is', () => {
+  const build=growHarness();
+  const {html,rewards,offers}=build([REWARD_ROW],[OFFER_ROW]);
+  assert.deepEqual(rewards.map(r=>r.name),['Point system']);
+  assert.deepEqual(offers.map(r=>r.name),['National Day: 50% off first prata']);
+  assert.match(html,/data-grow-overview-category-v319="rewards"/);
+  assert.match(html,/data-grow-overview-category-v319="offers"/);
+  assert.match(html,/Rewards &amp; Loyalty/);
+  assert.match(html,/>Limited Offer</);
+  /* Left column first, as the owner drew them. */
+  assert.ok(html.indexOf('="rewards"')<html.indexOf('="offers"'));
+  /* Neither row appears under the other's heading. */
+  const rewardsHalf=html.slice(html.indexOf('="rewards"'),html.indexOf('="offers"'));
+  assert.doesNotMatch(rewardsHalf,/National Day/);
+  assert.match(html.slice(html.indexOf('="offers"')),/National Day/);
+});
+
+test('V319 the offers table drops a count nothing records and states when the offer stops', () => {
+  const {html}=growHarness()([REWARD_ROW],[OFFER_ROW]);
+  const offersHalf=html.slice(html.indexOf('="offers"'));
+  assert.doesNotMatch(offersHalf,/Customers used/,
+    'a column that can only ever say "Not tracked" is not a column');
+  assert.doesNotMatch(offersHalf,/Not tracked/);
+  assert.match(offersHalf,/<th>Ends<\/th>/);
+  assert.match(offersHalf,/31 August 2026/,'the end date comes from the house date cell, not a new format');
+  /* The rewards side keeps every column the V271 and V301 owners named. */
+  const rewardsHalf=html.slice(html.indexOf('="rewards"'),html.indexOf('="offers"'));
+  for(const column of ['Programme','Type','Started','Customers used','Setting'])
+    assert.match(rewardsHalf,new RegExp(`<th>${column}</th>`));
+});
+
+test('V319 an open-ended offer says so rather than borrowing a count\'s "Not tracked"', () => {
+  const {html}=growHarness()([],[{...OFFER_ROW,endsAt:null}]);
+  assert.match(html,/No end date/);
+  assert.doesNotMatch(html,/Not tracked/);
+});
+
+test('V319 each category empties independently, and points at its own door', () => {
+  const onlyOffers=growHarness()([],[OFFER_ROW]).html;
+  assert.match(onlyOffers,/No reward programme is running yet/);
+  assert.match(onlyOffers,/National Day/);
+  const onlyRewards=growHarness()([REWARD_ROW],[]).html;
+  assert.match(onlyRewards,/No offer is running yet/);
+  assert.match(onlyRewards,/href="#\/grow\/offers"/);
+  assert.match(onlyRewards,/Point system/);
+});
+
+test('V319 the rail says Rewards & Offer, and Limited Offer is a real routable child', () => {
+  const group=statement("{key:'grow',icon:'star'","['History','#/grow/history','waitlist']]},");
+  assert.match(group,/label:'Rewards & Offer'/);
+  assert.doesNotMatch(group,/label:'Programmes'/);
+  assert.match(group,/\['Rewards Programme','#\/grow','menu'\]/);
+  assert.match(group,/\['Limited Offer','#\/grow\/offers','loyalty'\]/);
+  assert.doesNotMatch(group,/\['List','#\/grow','menu'\]/);
+  /* The module gate is untouched — renaming a rail group must not change who can see it. */
+  assert.match(group,/items:\['loyalty','retention','referrals','memberships'\]/);
+});
+
+test('V319 #/grow/offers resolves as a view, lights one rail row, and renders only offers', () => {
+  assert.match(appJs,/const programmeView=\['overview','history','offers',/);
+  assert.match(appJs,/const hashParamIsProgrammeView=\['overview','history','offers',/,
+    'without this the hash is handed to the deep editor instead of the view');
+  assert.match(appJs,/const growCategoryViewV271=!\['overview','history','setup','offers'\]/,
+    'without this the offers view falls through to "render every category"');
+  /* Rail active-state: 'offers' belongs to its own child, not to the Rewards Programme list. */
+  const navActive=section('const navViewActiveV296=','const childRowsV294=');
+  assert.match(navActive,/!\['overview','history','offers'\]\.includes\(String\(page\[1\]\|\|''\)\)/);
+  /* The heading follows the rail's words. */
+  assert.match(appJs,/programmeView==='offers'\?'Limited Offer'/);
+  assert.match(appJs,/'Set up rewards':'Rewards Programme'/);
+});
+
+test('V319 the drilled topic and the Limited Offer tab render one definition, not two copies', () => {
+  assert.equal((appJs.match(/const growLimitedOfferCategoryHtmlV319=/g)||[]).length,1);
+  assert.match(appJs,/\$\{topicOnV229\('promotions'\)\?growLimitedOfferCategoryHtmlV319:''\}/);
+  assert.match(appJs,/programmeView==='offers'\?`<div class="grow-limited-offer-v319"/);
+  /* "editable in this tab" — every promotion row keeps its owner-gated Edit destination. */
+  const category=statement('const growLimitedOfferListHtmlV319=','actionLabel:\'Set up\'})}`;');
+  assert.match(category,/href:`#\/promotions\/\$\{encodeURIComponent\(item\.id\)\}`,actionLabel:'Edit'/);
+  assert.match(category,/href:'#\/promotions',actionLabel:'Set up'/);
+  assert.match(category,/canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner/);
+});
+
+/* ---------------------------------------------------------------------- 3. dashboard --------- */
+
+test('V319 the period strip left the page titlebar for the Performance card', () => {
+  /* Comments stripped first: this titlebar carries a V319 note that NAMES the class it no longer
+     renders, and an assertion that a comment can satisfy is no assertion. */
+  const titlebar=section('<header class="v150-titlebar">','</header>')
+    .replace(/<!--[\s\S]*?-->/g,'').replace(/\/\*[\s\S]*?\*\//g,'');
+  assert.doesNotMatch(titlebar,/dashboard-range/,'the strip no longer filters the whole page');
+  assert.doesNotMatch(titlebar,/data-d="/);
+  assert.doesNotMatch(titlebar,/id="apply"/);
+
+  const heading=statement('<header class="performance-heading ux154-collapsible-head">','</header>');
+  assert.match(heading,/class="dashboard-range dashboard-range-v319"/);
+  for(const days of ['1','7','30','90'])assert.match(heading,new RegExp(`data-d="${days}"`));
+  assert.match(heading,/id="df"/);assert.match(heading,/id="dt"/);assert.match(heading,/id="apply"/);
+  /* Beside the period line it rewrites, and before Minimise. */
+  assert.ok(heading.indexOf('id="dashboardPerformancePeriod"')<heading.indexOf('dashboard-range-v319'));
+  assert.ok(heading.indexOf('dashboard-range-v319')<heading.indexOf('id="dashboardPerformanceToggle"'));
+  /* Outside the collapsible body: minimising the figures must not take the control with them,
+     because it also moves the schedule day (V295's two-way link). */
+  const body=section('<div class="performance-body ux154-collapsible-body"','</section>');
+  assert.doesNotMatch(body,/dashboard-range/);
+});
+
+test('V319 moving the strip did not detach a single handler', () => {
+  const dash=section('async function dashboard(){','function normalizeSingaporeCustomerSearch(');
+  /* Every wiring site still resolves through dashboardRoot / $(), both of which contain the new
+     position exactly as they contained the old one. */
+  assert.match(dash,/dashboardRoot\.querySelectorAll\('\.qbtn\[data-d\]'\)/);
+  assert.match(dash,/dashboardRoot\.querySelectorAll\('\.dashboard-range input\[type="date"\]'\)/);
+  assert.match(dash,/\$\('apply'\)|dashboardRoot\.querySelector\('#apply'\)|getElementById\('apply'\)/);
+  /* Exactly one of each control on the page — a move that left a copy behind would wire the
+     first and leave the owner pressing the second. */
+  const view=statement('M().innerHTML=`<section id="dashboardView"','<div id="dashboardInsights" aria-live="polite"></div></section>`;');
+  assert.equal((view.match(/id="apply"/g)||[]).length,1);
+  assert.equal((view.match(/id="df"/g)||[]).length,1);
+  assert.equal((view.match(/class="dashboard-range/g)||[]).length,1);
+  assert.equal((view.match(/data-d="30"/g)||[]).length,1);
+});
+
+test('V319 the relocated strip has somewhere to sit at every width', () => {
+  /* The heading was nowrap flex above 390px, which would have squeezed the date pair. */
+  assert.match(indexHtml,/\.performance-heading\{[^}]*flex-wrap:wrap/);
+  assert.match(indexHtml,/\.performance-heading>\.dashboard-range-v319\{margin-left:auto/);
+  assert.match(indexHtml,/@media\(max-width:900px\)\{\.performance-heading>\.dashboard-range-v319\{order:3;flex-basis:100%/);
+  /* The two Overview columns are unequal (five columns beside four) and stack before either
+     table has to break a word across lines. */
+  assert.match(indexHtml,/\.grow-overview-split-v319\{display:grid;grid-template-columns:minmax\(0,1\.15fr\) minmax\(0,0\.85fr\)/);
+  assert.match(indexHtml,/@media\(max-width:1200px\)\{\.grow-overview-split-v319\{grid-template-columns:minmax\(0,1fr\)\}\}/);
+  /* Only the two-table view widens; every other Rewards & Offer view keeps its 920px measure. */
+  assert.match(indexHtml,/\.grow-overview\[data-programme-view="overview"\]\{max-width:1280px\}/);
+});
+
+/* --------------------------------------------------------------------- shipped bundles ------- */
+
+test('V319 every attribute this wave emits is read back with the casing the DOM gives it', () => {
+  /* W6 increment 2 shipped four dead toggles because a handler read dataset.growSetupSwitchW6I2
+     while the DOM spells the attribute growSetupSwitchW6i2. These three attributes are test hooks
+     with no dataset reader at all — this asserts that stays true, so the trap cannot reopen. */
+  for(const attribute of ['grow-overview-split-v319','grow-overview-category-v319','grow-limited-offer-v319']){
+    const camel=attribute.replace(/-([a-z])/g,(_,c)=>c.toUpperCase());
+    assert.match(appJs,new RegExp(`data-${attribute}`),`${attribute} must be emitted`);
+    assert.doesNotMatch(appJs,new RegExp(`dataset\\.${camel}`,'i'),
+      `${attribute} gained a dataset reader — pin the exact casing before relying on it`);
+  }
+});
+
+test('V319 the shipped business bundle carries all three changes', () => {
+  const bundle=readFileSync(new URL('../../app/app-business.js',import.meta.url),'utf8');
+  assert.match(bundle,/label:'Rewards & Offer'/);
+  assert.match(bundle,/\['Limited Offer','#\/grow\/offers','loyalty'\]/);
+  assert.match(bundle,/data-grow-overview-category-v319="offers"/);
+  assert.match(bundle,/dashboard-range dashboard-range-v319/);
+  assert.match(bundle,/id="c360-offers-v319"/);
+  assert.match(bundle,/pointsExpiryPhraseV319/);
+});

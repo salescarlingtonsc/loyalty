@@ -109,10 +109,13 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
      than `label`, and the old "Available programmes" sub-row is gone. The naming this test
      protects — that the module is called Programmes, not Grow — is unchanged. */
   /* V294: Programmes became a group (owner markup 2026-08-12), keeping the owner's word. */
-  assert.match(nav, /label:'Programmes'/);
+  assert.match(nav, /label:'Rewards & Offer'/);
   assert.doesNotMatch(nav, /flat:'Programmes'/);
   assert.match(app, /Ongoing programmes/);
-  assert.match(grow, /<h1 id="growTitle">Programmes<\/h1>/);
+  /* V319 (owner markup 2026-08-14): the module is renamed "Rewards & Offer" — rail group and
+     page heading together, per V245's own rule that the two must say the same words. The
+     requirement this line protects is that the heading is the MODULE's name, not "Grow". */
+  assert.match(grow, /<h1 id="growTitle">Rewards &amp; Offer<\/h1>/);
   /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two
      categories: Point system holds everything earned and spent in points, Other rewards
      holds the ones that do not use a balance. The behaviour this test protects — that the

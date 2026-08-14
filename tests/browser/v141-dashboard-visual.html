@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="943e79fa82b7ccefe261d990a2f146e12d346372246750f30d6799835806d9b6"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="a766c6ec5462a448151479b0d95ef88785ffbe48c8c296bef863184fb06faf1e"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -738,6 +738,21 @@ input[type=range]:focus{box-shadow:none}
 .retention-taxonomy-actions{display:flex;align-items:center;flex:0 1 auto;flex-wrap:wrap;gap:8px;min-width:0}
 /* Grow overview: one journey first, engine-specific editors only on demand. */
 .grow-overview{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-width:920px;margin:0 auto}
+/* V319 (owner sketch: "two side view", the two categories drawn as neighbouring columns).
+   The reading column widens ONLY on the Overview view, because that is the one view now carrying
+   two tables abreast; every other view keeps the 920px measure it was designed at. The pair
+   stacks well before either table would need to scroll sideways — a five-column table squeezed
+   into half of 920px is not a glance, which is what this view is for. */
+.grow-overview[data-programme-view="overview"]{max-width:1280px}
+/* Unequal on purpose: the rewards table carries five columns and the offers table four, so the
+   even split is what broke "Referrals" across two lines mid-word at 1440px. Below 1200px neither
+   has the room to sit beside the other without that returning, so they stack. */
+.grow-overview-split-v319{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,0.85fr);gap:18px;margin-top:14px;align-items:start}
+@media(max-width:1200px){.grow-overview-split-v319{grid-template-columns:minmax(0,1fr)}}
+.grow-overview-column-v319{min-width:0;display:grid;gap:8px}
+.grow-overview-column-title-v319{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
+.grow-overview-column-note-v319{margin:0}
+.grow-overview-column-v319 .cui-table-wrap{border:1px solid var(--line)}
 .grow-hero{display:grid;grid-template-columns:minmax(0,1fr);justify-items:start;gap:14px;padding:20px;
   border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(135deg,#fff 0%,var(--tint) 100%);box-shadow:var(--shadow)}
 .grow-hero-copy{max-width:620px}.grow-hero-copy h1{font-size:clamp(1.8rem,4vw,2.35rem);margin:0}
@@ -943,8 +958,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .dashboard-intro{display:flex;align-items:flex-start;gap:13px;padding:18px 20px;border:1px solid #DED7CC;border-radius:var(--r);background:#EDE7DE}
 .dashboard-intro>.cui-icon{color:var(--coral);margin-top:3px}.dashboard-intro h1{font-size:1.85rem}.dashboard-intro p{margin-top:4px;line-height:1.5}
 .performance-panel{padding:0;overflow:hidden;background:#fff}
-.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8}
+.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8;flex-wrap:wrap}
 .performance-heading>.cui-icon{color:var(--coral)}.performance-heading h2{font-size:1.08rem}.performance-heading p{margin-top:3px}
+/* V319 (owner: "filter time move here"): the period strip now lives in this heading. It takes the
+   free space between the title block and Minimise on a wide card, and drops to its own full-width
+   row — ahead of nothing, so the tap targets keep their size — once the header has to wrap. */
+.performance-heading>.dashboard-range-v319{margin-left:auto;justify-content:flex-end}
+@media(max-width:900px){.performance-heading>.dashboard-range-v319{order:3;flex-basis:100%;margin-left:0;justify-content:flex-start}}
 .performance-body{padding:20px}
 .dashboard-kpis{margin-top:16px}
 .dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
@@ -2770,11 +2790,15 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   M().innerHTML=`<section id="dashboardView" class="dashboard-page" data-render-epoch="${renderEpoch}" data-workspace-i18n>
     <header class="v150-titlebar">
       <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
-      <div class="v150-title-actions dashboard-range">
-
-        <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
-        <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
-      </div>
+      <!-- V319 (owner markup 2026-08-14: the whole period strip circled here, with an arrow drawn
+           down to the Performance card — "filter time move here"). Sitting beside the page title
+           and above the schedule glance, it read as a filter over the WHOLE page, while what it
+           actually rewrites is the Performance figures (and, since V295, the schedule day). It is
+           rendered inside the Performance heading now, beside the period line it sets. Nothing
+           about the controls themselves changes: same ids (df / dt / apply), same .qbtn[data-d]
+           set inside the same .dashboard-range container, and every handler below resolves them
+           through dashboardRoot, which contains the new position exactly as it did the old. -->
+      <div class="v150-title-actions"></div>
     </header>
     <section class="card dashboard-schedule-glance" aria-label="Schedule glance">
       <div class="dashboard-schedule-top">
@@ -2816,7 +2840,13 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     </section>
     <div id="dashboardBottlesV278"></div>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
-      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
+      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div>${/* V319: the period strip, moved here from the titlebar. It stays OUTSIDE the collapsible body
+     on purpose — minimising Performance hides the figures, and a control that vanished with them
+     would strand the schedule day this strip also moves (V295's two-way link). */''}
+        <div class="dashboard-range dashboard-range-v319" role="group" aria-label="Reporting period">
+          <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
+          <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
+        </div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
       <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
     <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
@@ -3134,6 +3164,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'943e79fa82b7ccefe261d990a2f146e12d346372246750f30d6799835806d9b6',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'a766c6ec5462a448151479b0d95ef88785ffbe48c8c296bef863184fb06faf1e',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

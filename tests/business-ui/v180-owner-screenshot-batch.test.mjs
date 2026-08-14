@@ -27,7 +27,7 @@ test('programmes nav is one destination, and old hashes still resolve', () => {
   /* V294 (owner markup 2026-08-12): Programmes is a GROUP again — but its children are the
      page's own three VIEWS (Overview/List/History), not the per-module sub-rows this test was
      written to keep out. Those stay banned below. */
-  assert.ok(app.includes("{key:'grow',icon:'star',label:'Programmes'"),
+  assert.ok(app.includes("{key:'grow',icon:'star',label:'Rewards & Offer'"),
     'Programmes must be one nav group');
   assert.ok(!app.includes('const links=['), 'the sub-nav link helper went with its rows');
   assert.ok(!app.includes("'Programmes list'"), 'the Programmes list row was struck out');
@@ -37,7 +37,7 @@ test('programmes nav is one destination, and old hashes still resolve', () => {
   // V271 added the owner's 'overview' and 'history' views to the same list; the three older
   // hashes are still in it, which is what this assertion has always been protecting.
   // V301 added 'setup' (the one-page rewards wizard) for the same reason and on the same terms.
-  assert.ok(app.includes("['overview','history','ongoing','available','settings','setup'].includes(String(hashParam||''))"),
+  assert.ok(app.includes("['overview','history','offers','ongoing','available','settings','setup'].includes(String(hashParam||''))"),
     'the removed hashes must still resolve to their views');
   assert.ok(!app.includes('class="programme-tabs"'), 'in-page tabs duplicated the sidebar');
 });
@@ -48,7 +48,7 @@ test('#/grow lands on the full list, not a filtered view', () => {
   /* V245: the owner asked "Pending setup — where is it?", so the view names now match the
      nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
   /* V301: the setup wizard names itself in the same ternary; every earlier view still does. */
-  assert.ok(app.includes("'Pending setup':programmeView==='setup'?'Set up rewards':'List'"), 'list heading missing');
+  assert.ok(app.includes("'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme'"), 'list heading missing');
 });
 
 test('staff row carries every detail on one line and opens an editable profile', () => {

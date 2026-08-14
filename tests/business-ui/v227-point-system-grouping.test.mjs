@@ -16,10 +16,16 @@ const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 /* V229 renamed the non-points group to Lifestyle rewards (the owner's word), split Promotions
    and Referrals into their own categories, and put a Tiered membership drill between points and
    lifestyle. The grouping this file protects is unchanged; only the boundary names moved. */
+/* V319 lifted the Promotions category out of the page template into
+   growLimitedOfferCategoryHtmlV319, so that ONE definition serves both the drilled topic and the
+   new Limited Offer rail child. Its markup therefore no longer sits after Lifestyle rewards in
+   source order — but it still renders after it, which is what this file is about. The promotions
+   boundary is taken from the render site rather than the markup, so the four groups are compared
+   in the order the owner sees them. */
 const pointsStart = app.indexOf('programme-category-title">Point system</div>');
 const tiersStart = app.indexOf('programme-category-title">Tiered membership</div>');
 const otherStart = app.indexOf('programme-category-title">Lifestyle rewards</div>');
-const growthStart = app.indexOf('programme-category-title">Promotions</div>');
+const growthStart = app.indexOf("topicOnV229('promotions')?growLimitedOfferCategoryHtmlV319");
 const points = app.slice(pointsStart, tiersStart);
 const other = app.slice(otherStart, growthStart);
 
@@ -55,7 +61,19 @@ test('V227 rewards that do not use a points balance are their own group', () => 
 });
 
 test('V227 the regrouping did not unbalance the markup', () => {
-  const segment = app.slice(pointsStart, growthStart);
+  /* V319: both ends are whole tags now. The old pair of boundaries both landed INSIDE a
+     `<div class="programme-category-title">`, so two unopened `</div>` at the front were
+     cancelled by two unclosed `<div` at the back and the count balanced for the wrong reason —
+     it would have stayed balanced through a genuinely unbalanced edit. Anchoring the start on
+     the category wrapper makes the assertion mean what it says. */
+  const segment = app.slice(
+    app.indexOf('<div class="programme-category" data-programme-category-v268="points"'), growthStart);
+  assert.ok(segment.length > 0, 'the points category wrapper must be found');
   assert.equal((segment.match(/<div/g) || []).length, (segment.match(/<\/div>/g) || []).length,
-    'the two category wrappers must each open and close');
+    'every category wrapper between points and promotions must open and close');
+  /* And the category lifted out to serve two entry points is balanced on its own. */
+  const lifted = app.slice(app.indexOf('const growLimitedOfferCategoryHtmlV319='),
+    app.indexOf('outerMain.innerHTML=`<div class="grow-overview"'));
+  assert.equal((lifted.match(/<div/g) || []).length, (lifted.match(/<\/div>/g) || []).length,
+    'the extracted promotions category must open and close');
 });

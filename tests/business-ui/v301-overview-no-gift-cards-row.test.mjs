@@ -29,7 +29,9 @@ function section(start, end) {
 
 const programmeEntries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
 const overviewSnapshot = section('async function growOverviewSnapshot', 'function ownerRewardJourneyV122');
-const overviewTable = section('const growOverviewTableV271=', 'const growHistoryTableV271=');
+/* V319 split Overview into a Rewards & Loyalty table and a Limited Offer table. The five columns
+   this test protects are the reward side's; the offers side is covered in the V319 suite. */
+const overviewTable = section('const growOverviewRewardsTableV319=', 'const growOverviewOffersTableV319=');
 
 test('V301 (a) the row builder never synthesizes a Gift cards entry', () => {
   assert.doesNotMatch(programmeEntries, /name:'Gift cards'/);
