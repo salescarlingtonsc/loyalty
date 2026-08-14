@@ -3336,6 +3336,96 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}
   </section>`;
 }
+/* ====== V323 — OWNER RULING R5: THE STAMP CARD IS A QUEST, AND CLAIMING DOES NOT RESET IT ======
+   "stamps is like a quest - complete one set of quest (3 stamp = xx rewards, 5 stamp = xx rewards,
+    8 stamp = xx rewards) … Milestones are non-consuming: reaching 5 does not reset progress toward
+    8; the card keeps filling to the end of the quest."
+
+   v322 shipped the AUTHORING half (a milestone is an ordinary catalogue reward whose cost is the
+   stamp count) and reported the claim half as blocked, because app.redeem_reward_core drained
+   points_batches FEFO for the reward's cost. v323 closes it: a milestone claim writes no ledger
+   row and no batch drain, and the card is a PROJECTION — filled = lifetime stamps on the stamps
+   programme minus the slots of every CLOSED cycle. A cycle closes when the LAST milestone is
+   claimed, which is the one moment the quest's stamps are consumed.
+
+   WHY THIS IS A SEPARATE RENDER RATHER THAN AN EDIT TO customerProgrammeStampsCardV310. That
+   function derives the card's length from ONE reward's cost_units (the server's cheapest
+   next_eligible_reward) and its progress from loyalty.balance, which comes from
+   app.c45_base_actionable_wallet_card — a value with no programme filter at all. Neither can
+   express a quest, and neither knows what has been claimed on THIS card. The v310 card stays
+   exactly as it is and is REPLACED IN PLACE once the v323 reader answers, so both directions of
+   the four-hour CDN window are safe: an old bundle against the new server never calls the reader
+   and renders as it does today, and a new bundle against the old server gets a missing-RPC error,
+   keeps the v310 card, and loses nothing.
+
+   IT NEVER PRINTS A POINTS FIGURE. Not loyalty.balance, not a cost, not the word "points" — a
+   v322-era defect was a stamp card printing points, and the payload this reads carries none. */
+function stampQuestNormaliseV323(card){
+  if(!card||typeof card!=='object'||card.enabled!==true||card.contract!=='v323')return null;
+  const whole=value=>Math.max(0,Math.floor(Number(value)||0));
+  const slots=whole(card.slots),filled=whole(card.filled);
+  const milestones=(Array.isArray(card.milestones)?card.milestones:[])
+    .map(rung=>({slot:whole(rung?.slot),name:String(rung?.name||'').trim(),
+      claimed:rung?.claimed_this_cycle===true,availability:String(rung?.availability||''),
+      isFinal:rung?.is_final===true,toGo:whole(rung?.stamps_to_go)}))
+    .filter(rung=>rung.slot>0)
+    .sort((a,b)=>a.slot-b.slot);
+  return {slots,filled,
+    /* The card shows the CURRENT cycle. Anything past its end is CARRIED and said out loud, never
+       absorbed into an invisible completed card the customer was never shown. */
+    shown:slots>0?Math.min(filled,slots):filled,
+    carried:slots>0?Math.max(filled-slots,0):0,
+    cycle:whole(card.cycle_index),
+    running:card.running!==false,
+    ready:card.ready===true,
+    potMigrated:card.pot_migrated===true,
+    milestones,
+    next:milestones.find(rung=>!rung.claimed)||null};
+}
+/* Rings, reusing the v310 shapes and NO new CSS rule. Seven browser fixtures inline
+   app/index.html's stylesheet under captured Chrome measurements pinned to a
+   production-source-sha256, so one new rule would force a full browser recapture for a cosmetic
+   change. A milestone slot takes the existing .is-goal mark; a collected slot takes .is-filled and
+   the existing tick. */
+function customerStampQuestRingsV323(quest){
+  const total=quest.slots;
+  if(!(total>0&&total<=PROGRAMME_STACK_RING_LIMIT_V310))return '';
+  const marks=new Map(quest.milestones.filter(rung=>rung.slot<=total).map(rung=>[rung.slot,rung]));
+  return `<div class="customer-programme-stamp-rings" role="img" data-stamp-quest-rings-v323="${esc(`${quest.shown}/${total}`)}" aria-label="${esc(ct('stampsQuestProgress',{filled:quest.shown,total}))}">${
+    Array.from({length:total},(unused,index)=>{
+      const slot=index+1,rung=marks.get(slot),collected=index<quest.shown;
+      return `<span class="customer-programme-stamp-ring${collected?' is-filled':''}${rung?' is-goal':''}" data-stamp-quest-slot-v323="${slot}"${rung?` data-stamp-quest-claimed-v323="${rung.claimed?'yes':'no'}"`:''} aria-hidden="true">${
+        collected?'<svg viewBox="0 0 16 16" width="12" height="12" focusable="false"><path d="M3.2 8.6l3.1 3.1L12.8 5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</span>`;
+    }).join('')
+  }</div>`;
+}
+function customerStampQuestBodyV323(quest){
+  /* A migrated pot is the one state where a figure would lie: the stamps moved to another
+     programme, so the card has no honest number left. One sentence, no rings, no promise. */
+  if(quest.potMigrated)
+    return `<p class="muted small customer-programme-card-line-v310" data-stamp-quest-line-v323="retired">${esc(ct('stampsQuestRetired'))}</p>`;
+  const figure=customerStampQuestRingsV323(quest)
+    ||`<p class="customer-programme-stamp-count" data-stamp-quest-count-v323="${quest.shown}"><b>${esc(customerPointTotalV103(quest.shown))}</b></p>`;
+  const progress=quest.slots>0
+    ?ct('stampsQuestProgress',{filled:quest.shown,total:quest.slots})
+    :ct('stampsNoGift',{count:customerPointTotalV103(quest.shown)});
+  const next=quest.next;
+  const gift=next?(next.name||ct('rewardsTab')):'';
+  const nextLine=!next?ct('stampsQuestAllClaimed')
+    :next.toGo===0?ct('stampsReady',{gift})
+    :ct('stampsRemaining',{count:customerPointTotalV103(next.toGo),gift});
+  const ladder=quest.milestones.length
+    ?`<ul class="customer-programme-stamp-quest-v323" data-stamp-quest-list-v323="${quest.milestones.length}">${
+      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
+        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`:''}</li>`).join('')
+    }</ul>`
+    :'';
+  return `${figure}
+    <p class="muted small customer-programme-card-line-v310" data-stamp-quest-line-v323="progress">${esc(progress)}</p>
+    <p class="muted small" data-stamp-quest-line-v323="next">${esc(nextLine)}</p>
+    ${quest.carried>0?`<p class="muted small" data-stamp-quest-line-v323="carried">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+    ${ladder}`;
+}
 /* 2 · POINTS & GIFTS. The one card that prints a raw point number — the stack's single hero. The
    body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
 function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false}){
@@ -4100,6 +4190,28 @@ async function renderCustomerWallet(businessSlug=null){
     const shareButton=$('customerReferralShare');
     if(shareButton)shareButton.onclick=()=>shareCustomerReferralV300(data,{...b,id:businessId||b.id,slug:businessSlug});
   };
+  /* v323 (R5): the stamp card is a QUEST. The v310 card has already painted from the wallet
+     payload; this replaces its figure and its sentence with the truth once the reader answers.
+     EVERY failure path leaves the v310 card exactly as it is — a missing RPC (an old server behind
+     a new bundle), a refusal, {enabled:false}, a paused programme, or an unparseable payload. A
+     stamp card that briefly says a slightly cruder true thing is better than one that blanks. */
+  const loadStampCardV323=async()=>{
+    const card=document.querySelector('[data-programme-card="stamps"]');
+    if(!card)return;
+    const {data,error}=await customerRpc('customer_get_stamp_card_v323',{p_business_slug:businessSlug});
+    if(!isWalletCurrent()||!card.isConnected)return;
+    if(error)return;
+    const quest=stampQuestNormaliseV323(data);
+    /* A paused programme keeps the v310 paused block and its retained figure — the standing W4b
+       rule that a programme which pauses must never silently lose the customer's progress. */
+    if(!quest||!quest.running)return;
+    const figure=card.querySelector('.customer-programme-stamp-rings, .customer-programme-stamp-count');
+    const line=card.querySelector('.customer-programme-card-line-v310');
+    if(!line)return;
+    line.insertAdjacentHTML('beforebegin',customerStampQuestBodyV323(quest));
+    if(figure)figure.remove();
+    line.remove();
+  };
   const loadGrowthOffers=async()=>{
     const host=$('walletGrowthOffers');
     if(!host||!window.NestlyGrowthOffers)return;
@@ -4489,7 +4601,7 @@ async function renderCustomerWallet(businessSlug=null){
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Rate your visit'))}</h2><p class="muted small">${esc(ct('Your review helps other people find this business.'))}</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
   };
-  await Promise.all([loadMemberCodeW6I2(),loadReferralCardV300(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
+  await Promise.all([loadMemberCodeW6I2(),loadReferralCardV300(),loadStampCardV323(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
   if(!isWalletCurrent())return;
 }
 

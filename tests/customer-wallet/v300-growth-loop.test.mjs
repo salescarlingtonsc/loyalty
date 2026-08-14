@@ -27,7 +27,10 @@ test('referral card renders only from a server yes and shares co-branded',()=>{
   assert.match(app,/const \{data,error\}=await customerRpc\('customer_get_referral_card_v300',\{p_business_slug:businessSlug\}\)/);
   assert.match(app,/if\(error\|\|data\?\.enabled!==true\)\{slot\.remove\(\);return\}/);
   assert.match(app,/<div id="walletReferralSlot" hidden><\/div>/);
-  assert.match(app,/loadReferralCardV300\(\),loadGrowthOffers\(\)/);
+  /* v323 inserted loadStampCardV323 between these two. The pin is RE-POINTED rather than
+     loosened: what it guards is that the referral card is fetched in the SAME Promise.all as the
+     rest of the wallet, not on a second render pass. */
+  assert.match(app,/loadReferralCardV300\(\),loadStampCardV323\(\),loadGrowthOffers\(\)/);
   assert.match(app,/shareCustomerReferralV300/);
   assert.match(app,/customer\.referral_shared/);
   assert.match(app,/showCustomerShareSheetV264\(\{text,url,business,onChannel:record,title:ct\('shareYourCode'\)\}\)/);

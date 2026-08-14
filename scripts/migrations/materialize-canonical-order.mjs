@@ -134,7 +134,7 @@ async function loadPlan() {
   assert.equal(plan.requireCatalogEvidenceForAllApplied, true,
     'every applied migration must retain catalog byte/hash evidence');
   assert.ok(Array.isArray(plan.items));
-assert.equal(plan.items.length, 314, 'canonical plan must contain 45 catalog and 269 pending migrations'); // + v311/v312 money wave (W5a/W5b) + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
+assert.equal(plan.items.length, 315, 'canonical plan must contain 45 catalog and 270 pending migrations'); // + v311/v312 money wave (W5a/W5b) + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v323 stamp quest milestones
 
   const seenVersions = new Set();
   const seenNames = new Set();
@@ -176,7 +176,7 @@ assert.equal(plan.items.length, 314, 'canonical plan must contain 45 catalog and
   const applied = plan.items.filter(({ kind }) => kind === 'catalog-applied');
   const pending = plan.items.filter(({ kind }) => kind === 'pending');
   assert.equal(applied.length, 45);
-assert.equal(pending.length, 269); // + v311/v312 money wave (W5a/W5b) + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
+assert.equal(pending.length, 270); // + v311/v312 money wave (W5a/W5b) + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v323 stamp quest milestones
   assert.deepEqual(applied.map(({ version, name }) => `${version}_${name}`), expectedCatalogIdentities,
     'catalog versions and names must match the trusted remote inventory exactly');
   assert.equal(applied.at(-1).version, plan.catalogCutoffVersion);

@@ -14753,7 +14753,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <p class="muted small" style="margin-top:-4px">Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.</p>
       ${rows}${chips}${rewardFormHtml()}
       <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?`The card customers see is ${esc(unitWord(length,'stamps'))} long — your last milestone.`:'The card gets its length from your last milestone.'}</p>
-      <p class="muted small" style="margin-top:8px" data-grow-setup-stampspend-v322>Claiming a milestone spends those stamps, so the card starts filling again from what is left. A milestone that keeps the card filling is not built yet.</p>`;
+      <p class="muted small" style="margin-top:8px" data-grow-setup-stampspend-v322>Claiming a milestone does not spend the stamps — the card keeps filling to the end. When the last milestone is claimed the card is complete and starts again from whatever is left over.</p>`;
   };
   const stepThreeHtml=()=>{
     /* A firm already on fixed redemption has no reward catalogue to fill in — its one reward IS

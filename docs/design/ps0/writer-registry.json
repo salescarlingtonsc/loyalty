@@ -3251,6 +3251,30 @@
     {
       "id": "db.backfill:20260814000300_nestly_v322_owner_programme_rulings.sql:credit_ledger",
       "reason": "NOT a backfill and NOT a migration-time write: the scanner matched credit_ledger inside the pre-image of the credit insert the needle REMOVES, preserved verbatim as the needle old_text so the rollback is in the file. V322 executes no DML against any VALUE_TABLE — its only data write is public.referral_programs.reward_points, converted from each firm's own published points price. The runtime writer these strings install is app.on_sale_recorded, which is already curated in writers[]."
+    },
+    {
+      "id": "browser.rpc:app/app.js:customer_get_stamp_card_v323",
+      "reason": "READ-ONLY. browser RPC 'customer_get_stamp_card_v323' resolves to public.customer_get_stamp_card_v323(text), which is STABLE and writes nothing at all. V323 (owner ruling R5): it is the customer's stamp QUEST - filled/total against the CURRENT cycle, which milestones are already collected on this card, which is next and how far. It exists as a separate reader rather than a key on public.customer_get_reward_catalog because that function hard-gates on loyalty_programs.active and raises 42501 otherwise, so a firm whose spine says stamps-on but whose published programme row is paused would see no card at all - a shape production holds today. It is gated exactly as public.customer_get_referral_card_v300 is (28000 without a session, 42501 without a verified customer_links row), granted to authenticated only, and returns exactly {\"enabled\": false} for a firm with no stamp card."
+    },
+    {
+      "id": "db.backfill:20260814000400_nestly_v323_stamp_quest_milestones.sql:loyalty_redemptions",
+      "reason": "NOT a backfill and NOT a migration-time write: the scanner matched loyalty_redemptions inside the needle STRINGS this migration splices into app.redeem_reward_core (the redemption INSERT gains a consumes_balance column, and its old_text pre-image is preserved verbatim in the file as the rollback). V323's own DDL against this table is ALTER TABLE only - one ADD COLUMN ... NOT NULL DEFAULT true fast default, one relaxed CHECK and one new paired shape CHECK. There is deliberately NO backfill UPDATE: public.loyalty_redemptions carries app.loyalty_redemption_immutable_guard on BEFORE UPDATE OR DELETE, so an UPDATE would raise restrict_violation on every existing row. Post-assertion 11.9 proves the migration wrote no row."
+    },
+    {
+      "id": "db.backfill:20260814000400_nestly_v323_stamp_quest_milestones.sql:loyalty_redemption_provenance",
+      "reason": "NOT a backfill and NOT a migration-time write: the scanner matched loyalty_redemption_provenance inside the same needle strings (the provenance INSERT gains consumes_balance and a NULL points_ledger_id on the non-consuming path). V323's DDL against this table is ALTER TABLE only - ADD COLUMN fast default, DROP NOT NULL on points_ledger_id, and the paired shape CHECK that binds the two. app.v34_immutable_evidence_guard makes any UPDATE impossible, so no backfill exists and post-assertion 11.3 asserts that every legacy row still carries its ledger id."
+    },
+    {
+      "id": "db.backfill:20260814000400_nestly_v323_stamp_quest_milestones.sql:loyalty_redemption_batch_drains",
+      "reason": "NOT a write of any kind: the scanner matched loyalty_redemption_batch_drains inside the FEFO block that needle 5 moves VERBATIM under `if v_consumes then`. The block is unchanged - it is preserved as both the needle old_text and, byte for byte, inside the new_text - because a POINTS reward's drain behaviour must be identical after V323. The stamps arm writes no drain row at all, which is the whole ruling."
+    },
+    {
+      "id": "db.backfill:20260814000400_nestly_v323_stamp_quest_milestones.sql:points_ledger",
+      "reason": "NOT a write of any kind: the scanner matched points_ledger inside the redeem-row INSERT carried in needle 5's old_text and new_text (the points path keeps it verbatim) and inside app.stamp_progress_v323's read-only sum over the stamps programme. V323 executes no DML against any VALUE_TABLE - post-assertion 11.9 proves it mints neither a stamp cycle nor a milestone claim, and the whole point of the ruling is that a milestone claim appends NOTHING to this table."
+    },
+    {
+      "id": "db.backfill:20260814000400_nestly_v323_stamp_quest_milestones.sql:points_batches",
+      "reason": "NOT a write of any kind: the scanner matched points_batches inside the same preserved FEFO loop and inside the affordability read whose ELSE arm is the live statement verbatim. Stamps batches keep being written by the untouched W5 earn loop and are simply NEVER DRAINED, which is what holds sum(remaining) = sum(points) on the stamps pot and keeps app.detect_programme_pot_split_v312 empty (post-assertion 11.6)."
     }
   ]
 }

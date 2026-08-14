@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 269,
-  "itemCount": 314,
+  "pendingCount": 270,
+  "itemCount": 315,
   "items": [
     {
       "order": 1,
@@ -3082,6 +3082,16 @@
     {
       "order": 308,
       "kind": "pending",
+      "version": "20260814000400",
+      "name": "nestly_v323_stamp_quest_milestones",
+      "path": "supabase/migrations/20260814000400_nestly_v323_stamp_quest_milestones.sql",
+      "octetLength": 76776,
+      "sha256": "b8f3f763e499fa1a3926ec16195182c9f36624b49dcb7f0c9db2dd0da72bec6b",
+      "provenance": "local-source"
+    },
+    {
+      "order": 309,
+      "kind": "pending",
       "version": "20260814001000",
       "name": "nestly_v313_conversion_first_prospecting",
       "path": "supabase/migrations/20260814001000_nestly_v313_conversion_first_prospecting.sql",
@@ -3090,7 +3100,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 309,
+      "order": 310,
       "kind": "pending",
       "version": "20260814001050",
       "name": "nestly_v313_rollback_data_snapshot",
@@ -3100,7 +3110,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 310,
+      "order": 311,
       "kind": "pending",
       "version": "20260814001100",
       "name": "nestly_v314_business_explorer_and_funnel",
@@ -3110,7 +3120,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 311,
+      "order": 312,
       "kind": "pending",
       "version": "20260814001200",
       "name": "nestly_v315_repair_dropped_lead_score_references",
@@ -3120,7 +3130,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 312,
+      "order": 313,
       "kind": "pending",
       "version": "20260814001300",
       "name": "nestly_v316_repair_taxonomy_and_match_queue",
@@ -3130,7 +3140,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 313,
+      "order": 314,
       "kind": "pending",
       "version": "20260814001400",
       "name": "nestly_v317_restore_wrongly_dropped_dependencies",
@@ -3140,7 +3150,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 314,
+      "order": 315,
       "kind": "pending",
       "version": "20260814001500",
       "name": "nestly_v318_align_system_managed_stage_flags",

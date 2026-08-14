@@ -272,14 +272,16 @@ test('V322 R5 the milestone list renders every milestone, in stamp order, with n
 });
 
 test('V322 R5 the screen states what claiming a milestone actually does today', () => {
-  /* The ruling also says reaching one milestone must not reset progress toward the next. It DOES:
-     app.redeem_reward_core drains points_batches for the reward's cost. Making it non-consuming is
-     a money-kernel change this wave was forbidden to make, so the screen states the truth rather
-     than implying a ladder the engine does not have. If someone later builds the non-consuming
-     claim, this pin is the reminder to delete the sentence with it. */
+  /* v323 RE-POINTED THIS PIN RATHER THAN DELETING IT, which is what the v322 note asked for. The
+     sentence this guarded ("Claiming a milestone spends those stamps…") was true only while the
+     claim drained points_batches FEFO. v323 closed exactly that gap, so the sentence became a lie
+     and had to go with the defect. The pin stays, aimed at the sentence that is now true, because
+     a screen that says nothing about what a claim costs is the state this rule exists to prevent. */
   const src = closure('const stampMilestonesHtmlV322=()=>', 'const stepThreeHtml=()=>');
   assert.match(src, /data-grow-setup-stampspend-v322/);
-  assert.match(src, /Claiming a milestone spends those stamps/);
+  assert.match(src, /Claiming a milestone does not spend the stamps/);
+  assert.doesNotMatch(src, /Claiming a milestone spends those stamps/);
+  assert.doesNotMatch(src, /is not built yet/);
   assert.doesNotMatch(src, /A full card wins a gift/);
 });
 

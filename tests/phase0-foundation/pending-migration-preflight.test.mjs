@@ -303,7 +303,13 @@ const sqlTestByMigrationName = new Map([
   // system-managed stage flags they depend on; both are exercised by the
   // v313 suite, which already asserts the corrected stage semantics.
   ['nestly_v317_restore_wrongly_dropped_dependencies', 'db/tests/v313_conversion_first_prospecting.sql'],
-  ['nestly_v318_align_system_managed_stage_flags', 'db/tests/v313_conversion_first_prospecting.sql']
+  ['nestly_v318_align_system_managed_stage_flags', 'db/tests/v313_conversion_first_prospecting.sql'],
+  /* v323 closes the one half of owner ruling R5 that v322 reported as blocked: a stamp
+     milestone claim is non-consuming, is recorded once per (client, cycle, milestone), and the
+     FINAL claim closes the cycle. Bound BY FULL NAME rather than by the 'v323' semantic label,
+     because the label map is already doubled for v313/v314 and a full name cannot collide with
+     a parallel session's renumbering. */
+  ['nestly_v323_stamp_quest_milestones', 'db/tests/v323_stamp_quest_milestones.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -807,7 +813,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 269); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
+  assert.equal(pending.length, 270); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

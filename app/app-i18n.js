@@ -23,7 +23,7 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'Referral works beside any programme, including the stamp card. The points land in whichever programme you are running.':'推荐可与任何计划并行，包括集章卡。积分会进入您正在运行的那个计划。',
     'What do customers get, and at how many stamps?':'顾客可获得什么？需要几个章？',
     'Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.':'您可以添加任意数量的里程碑 — 3 个章、5 个、8 个、12 个，没有上限。系统按所需章数排序。',
-    'Claiming a milestone spends those stamps, so the card starts filling again from what is left. A milestone that keeps the card filling is not built yet.':'兑换里程碑会消耗相应的章，卡片会从剩余章数继续累积。「兑换后不影响进度」的里程碑尚未开发。',
+    'Claiming a milestone does not spend the stamps — the card keeps filling to the end. When the last milestone is claimed the card is complete and starts again from whatever is left over.':'兑换里程碑不会消耗章——卡片会一直集到最后一格。领取最后一个里程碑后，这张卡即完成，并从剩余的章重新开始。',
     'Enter how many points the referring customer gets.':'请填写推荐人可获得的积分数。',
     'What this publish changes for customers':'本次发布会为顾客改变什么',
     /* v295: humanErrorV295 fallbacks — every sentence the mapper can show instead of a raw
@@ -224,7 +224,7 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'Referral works beside any programme, including the stamp card. The points land in whichever programme you are running.':'Rujukan berfungsi bersama mana-mana program, termasuk kad cop. Mata itu masuk ke dalam program yang sedang anda jalankan.',
     'What do customers get, and at how many stamps?':'Apa yang pelanggan dapat, dan pada berapa cop?',
     'Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.':'Tambah seberapa banyak pencapaian yang anda mahu — 3 cop, 5, 8, 12, tiada had. Ia disusun mengikut bilangan cop yang diperlukan.',
-    'Claiming a milestone spends those stamps, so the card starts filling again from what is left. A milestone that keeps the card filling is not built yet.':'Menuntut satu pencapaian membelanjakan cop tersebut, jadi kad mula diisi semula daripada baki yang ada. Pencapaian yang mengekalkan pengisian kad belum dibina.',
+    'Claiming a milestone does not spend the stamps — the card keeps filling to the end. When the last milestone is claimed the card is complete and starts again from whatever is left over.':'Menuntut satu pencapaian tidak membelanjakan cop — kad terus diisi hingga ke penghujung. Apabila pencapaian terakhir dituntut, kad itu lengkap dan bermula semula daripada baki yang ada.',
     'Enter how many points the referring customer gets.':'Masukkan berapa mata yang diterima pelanggan yang merujuk.',
     'What this publish changes for customers':'Apa yang penerbitan ini ubah untuk pelanggan',
     /* v295: humanErrorV295 fallbacks — every sentence the mapper can show instead of a raw
