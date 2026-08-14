@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="c465eb7d2e49e7c8407678b52cc8beb4b5d9c009e388647f2d0406de2a9a7143"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="0f6c949e434f4aa10c95ad6ac924ed3d2b145971f9a08e0095c84339bba31ead"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2139,7 +2139,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c465eb7d2e49e7c8407678b52cc8beb4b5d9c009e388647f2d0406de2a9a7143</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0f6c949e434f4aa10c95ad6ac924ed3d2b145971f9a08e0095c84339bba31ead</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5658,7 +5658,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   /* V301: the wizard's own last step IS the review, so the banner that routes to it would be a
      second, contradictory door on the same screen. */
   const growDraftPendingId=snapshot.draft?.id||null;
-  const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'
+  /* V324 (owner markup, photo 1: "remove this shaded area"): struck out on the main Rewards
+     Programme list specifically — the page with the Live-for-customers switches (v322 R6),
+     which already write immediately with no draft/publish step of their own. The banner still
+     answers a real question elsewhere (Tiers, Referral and the wizard's own edits still go
+     through a draft), so it stays on Overview/History/the drilled categories — this excludes only
+     'list', the one screen the owner marked, not the concept everywhere it is still true. */
+  const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'&&programmeView!=='list'
     ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
@@ -7147,7 +7153,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'c465eb7d2e49e7c8407678b52cc8beb4b5d9c009e388647f2d0406de2a9a7143',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'0f6c949e434f4aa10c95ad6ac924ed3d2b145971f9a08e0095c84339bba31ead',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

@@ -11011,7 +11011,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V301: the wizard's own last step IS the review, so the banner that routes to it would be a
      second, contradictory door on the same screen. */
   const growDraftPendingId=snapshot.draft?.id||null;
-  const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'
+  /* V324 (owner markup, photo 1: "remove this shaded area"): struck out on the main Rewards
+     Programme list specifically — the page with the Live-for-customers switches (v322 R6),
+     which already write immediately with no draft/publish step of their own. The banner still
+     answers a real question elsewhere (Tiers, Referral and the wizard's own edits still go
+     through a draft), so it stays on Overview/History/the drilled categories — this excludes only
+     'list', the one screen the owner marked, not the concept everywhere it is still true. */
+  const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'&&programmeView!=='list'
     ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
