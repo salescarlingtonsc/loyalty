@@ -3038,6 +3038,32 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
     </div>
   </article>`;
 }
+/* W4c lives HERE, not beside the slot it fills, and that placement is deliberate rather than
+   tidy: tests/browser/generate-v104-promotions-visual.mjs extracts production source from
+   `openCustomerPromotionDetailsV104` to `customerMerchantExperienceMarkupV95` and pins the result
+   with a production-source-sha256 that its CAPTURED CHROME MEASUREMENTS are keyed to. Declaring
+   these three inside that span would have invalidated a browser capture this build cannot redo,
+   for code the same span does not render. */
+/* W4c (built in W6 increment 2): "Show my code" — the standing member QR, the biggest customer-side
+   gap against Stampede. Its two halves come from the W4 design contract verbatim:
+   public.customer_get_member_code_v310(p_business_slug) returns a stable opaque per-(business,
+   client) code, and the counter reads it through the fourth `nestly:member:` branch in
+   redemptionPayloadFromQr.
+   The code is OPAQUE and per-business by contract, so this markup must never print anything else:
+   showing a phone number or a client id would hand every counter a customer identifier that works
+   at every other business too. */
+/* W4c's SERVER CONTRACT, named here because the client is built against it and shipped switched
+   off. Both halves are pinned in the W4 design contract and neither exists in the database yet:
+     · public.customer_get_member_code_v310(p_business_slug text) -> {code}
+       wallet-context gated (app.v32_customer_wallet_context), 42501 without a verified link,
+       returning a STABLE OPAQUE per-(business, client) code — opaque and per-business because a
+       code that worked at every business would hand one counter an identifier for all of them.
+     · public.staff_resolve_member_code_v310(p_business uuid, p_code text) -> {client_id, name}
+       staff-scoped, destination = the existing Customer 360 screen.
+   Both flags stay FALSE until a migration ships and registers them in docs/design/ps0/writer-
+   registry.json and the v21 authenticated-RPC allowlist. Flipping a flag without that registration
+   would put an ungranted function name in the browser bundle, which those two guards refuse. */
+const MEMBER_CODE_CONTRACT_W6I2=Object.freeze({readerShipped:false,resolverShipped:false});
 /* v295 (owner: the counter moment — "staff records the sale, the customer is holding the phone").
    The customer surface only ever read on render, so a balance earned while the app sat open was
    invisible until the customer navigated, and a balance earned while it sat in a pocket was

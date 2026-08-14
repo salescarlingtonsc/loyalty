@@ -3445,6 +3445,28 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
+/* The one place the reader would be called. It is a function rather than an inline call so the
+   RPC name lands in exactly one edit when the migration arrives, and so the gate above cannot be
+   bypassed by a second call site appearing somewhere else. */
+async function memberCodeForWalletW6I2(){
+  if(!MEMBER_CODE_CONTRACT_W6I2.readerShipped)return '';
+  return '';
+}
+function customerMemberCodeMarkupW6I2(code){
+  const value=String(code||'').trim();
+  if(!value)return '';
+  return `<section class="card customer-programme-card-v310" data-member-code-w6i2 aria-label="${esc(ct('showMyCode'))}">
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('customers',{size:17})}<span>${esc(ct('showMyCode'))}</span></h2>
+    <p class="muted small">${esc(ct('showMyCodeBody'))}</p>
+    <!-- Inline layout rather than a new class: this stylesheet is inlined verbatim into nine
+         checked-in browser fixtures that carry captured Chrome measurements under a
+         production-source-sha256, so one cosmetic rule would force a browser recapture of all
+         nine. .growth-redemption-token already ships in app/growth-offers.css. -->
+    <div id="customerMemberQrW6I2" style="display:grid;place-items:center;min-height:200px;margin:14px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff" aria-label="${esc(ct('showMyCode'))}"></div>
+    <details style="margin-top:10px"><summary class="small">${esc(ct('showMyCode'))}</summary>
+      <code class="growth-redemption-token" data-member-code-value-w6i2>${esc(value)}</code></details>
+  </section>`;
+}
 function actionableWalletCardMarkup(card,{detail=false}={}){
   const business=card?.business||{},loyalty=card?.loyalty||{},credit=card?.credit||{},packages=card?.packages||{};
   const unit=esc(loyalty.unit||'points'),currency=esc(business.currency||'SGD'),reward=card?.next_eligible_reward||null,visit=card?.visit_progress||{};
@@ -4019,6 +4041,39 @@ async function renderCustomerWallet(businessSlug=null){
      module off, backend not yet applied, denial, transport failure — removes the slot: this is
      a growth invitation, not the customer's money, so a retry card here would be noise about a
      feature the customer does not know exists. */
+  /* W4c: the member QR, gated EXACTLY like the W4b card stack — programmes_contract==='v310' with
+     at least one programme row — because a firm the spine cannot describe has no membership to
+     show a code for, and the pre-v310 tab surface never had this card at all.
+     CAPABILITY CHECK, deliberately silent: public.customer_get_member_code_v310 is NOT SHIPPED
+     (see SERVER ASKS in the W6 increment 2 build report). Any answer other than a code removes the
+     slot — a missing function, a denial, a transport failure, a firm with no code yet. This is an
+     identity convenience, not the customer's money, so a retry card here would be noise about a
+     feature the customer does not know exists. Same rule the referral card below follows, and the
+     same reason. */
+  const loadMemberCodeW6I2=async()=>{
+    const slot=$('customerMemberCodeSlotV310');
+    if(!slot)return;
+    /* Two gates, and the order matters. The SECOND is W4b's, verbatim: no v310 programmes contract
+       (or no programme rows) means this firm has no membership to show a code for, and the
+       pre-v310 tab surface never carried this card at all.
+       The FIRST is the capability gate. Until the reader ships, the slot is removed rather than
+       filled — an identity convenience the customer does not yet know exists must not become a
+       retry card, which is the same rule the referral card below follows for the same reason. */
+    if(!MEMBER_CODE_CONTRACT_W6I2.readerShipped||!programmeStackV310(programmeCapabilities)){
+      slot.remove();return;
+    }
+    const code=await memberCodeForWalletW6I2(businessSlug);
+    if(!isWalletCurrent()||!slot.isConnected)return;
+    if(!code){slot.remove();return}
+    slot.hidden=false;
+    slot.innerHTML=customerMemberCodeMarkupW6I2(code);
+    /* The QR is DRAWN, never inlined as a data URI, so the readable fallback inside the card stays
+       the honest answer when the library cannot load — a member who cannot show a QR can still
+       read the code out to the counter. */
+    void loadQrLibrary().then(()=>new QRCode($('customerMemberQrW6I2'),
+      {text:`nestly:member:${code}`,width:200,height:200,correctLevel:QRCode.CorrectLevel.M}))
+      .catch(()=>{});
+  };
   const loadReferralCardV300=async()=>{
     const slot=$('walletReferralSlot');
     if(!slot)return;
@@ -4421,7 +4476,7 @@ async function renderCustomerWallet(businessSlug=null){
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Rate your visit'))}</h2><p class="muted small">${esc(ct('Your review helps other people find this business.'))}</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
   };
-  await Promise.all([loadReferralCardV300(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
+  await Promise.all([loadMemberCodeW6I2(),loadReferralCardV300(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
   if(!isWalletCurrent())return;
 }
 

@@ -36,6 +36,10 @@ const v301Evidence=readFileSync(new URL('../../docs/qa/evidence/V301-PROGRAMMES-
    the current tree's byte identity lives in the W0 acceptance evidence. */
 const v306Evidence=readFileSync(new URL('../../docs/qa/evidence/V306-W0-PROGRAMME-HOTFIXES-ACCEPTANCE.md',import.meta.url),'utf8');
 const v310bEvidence=readFileSync(new URL('../../docs/qa/evidence/V310-W4B-CUSTOMER-STACK-ACCEPTANCE.md',import.meta.url),'utf8');
+/* W6 increment 2 regenerated this fixture — the V313/V314 acceptance recorded it as a residual
+   ("still inlines the pre-v314 wizard source"), and the switchboard rewrote the wizard it inlines.
+   Wave-keyed rather than vNNN: v315-v318 are held by a parallel session. */
+const w6i2Evidence=readFileSync(new URL('../../docs/qa/evidence/W6I2-PROGRAMMES-HOME-ACCEPTANCE.md',import.meta.url),'utf8');
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -131,5 +135,5 @@ test('server recommendation uses governed sectors and serializes stale tabs onto
 test('checked-in browser evidence identifies the exact extracted production component',()=>{
   const sourceHash=browserFixture.match(/name="production-source-sha256" content="([a-f0-9]{64})"/)?.[1];
   assert.ok(sourceHash,'generated browser fixture must carry its production source hash');
-  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}\n${v295FixesEvidence}\n${v296Evidence}\n${v299Evidence}\n${v300Evidence}\n${v301Evidence}\n${v306Evidence}\n${v310bEvidence}`,new RegExp(sourceHash));
+  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}\n${v295FixesEvidence}\n${v296Evidence}\n${v299Evidence}\n${v300Evidence}\n${v301Evidence}\n${v306Evidence}\n${v310bEvidence}\n${w6i2Evidence}`,new RegExp(sourceHash));
 });

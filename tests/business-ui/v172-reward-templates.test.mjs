@@ -56,7 +56,7 @@ test('template prefill fills the wizard form and lets the wizard derive points',
   const start = app.indexOf('const rewardHandoffV303=');
   assert.ok(start > 0, 'the wizard must consume the hand-off');
   assert.match(app.slice(start, start + 200),
-    /const rewardHandoffV303=stepNumberOrNullV305\('reward'\)===null\?null:pendingGrowSetupRewardV303;/,
+    /const rewardHandoffV303=stepNumberOrNullW6I2\('reward'\)===null\?null:pendingGrowSetupRewardV303;/,
     'and only where there is a Reward step to consume it on');
   const fn = app.slice(start, start + 1600);
   assert.match(fn, /pendingGrowSetupRewardV303=null/, 'prefill must be consumed once');

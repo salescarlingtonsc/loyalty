@@ -39,6 +39,12 @@ const section = (start, end) => {
 const wizard = section('async function growSetupWizardV301(', 'function growPublishFieldRowsV170(');
 const grow = section('async function growPage(', '/* ---------- Bring-back playbooks');
 const comparison = section('async function growSetupComparisonV301(', 'async function growSetupWizardV301(');
+/* Comments name every deleted symbol on purpose — that is how a later reader learns why it is
+   gone — so every "no such thing survives" assertion runs against code with the prose removed. */
+const stripComments = source => source
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^\s*\/\/.*$/gm, '');
+const appCode = stripComments(app);
 
 /* ---------------- A. one page, a view of Programmes, owner-gated ---------------- */
 
@@ -70,7 +76,7 @@ test('V301 (a) #/grow/setup/review opens the wizard on its final step', () => {
      against whichever step list its chosen model is running. */
   assert.match(app,
     /const growSetupStepV301=programmeView==='setup'&&String\(routedFocus\|\|''\)==='review'\?'review':1;/);
-  assert.match(wizard, /state\.step=String\(startStep\)==='review'\?stepCountV303\(\)/);
+  assert.match(wizard, /state\.step=String\(startStep\)==='review'\?railCountW6I2\(\)/);
 });
 
 test('V301 (a) a non-owner or a workspace without loyalty gets the read-only empty state', () => {
@@ -82,30 +88,27 @@ test('V301 (a) a non-owner or a workspace without loyalty gets the read-only emp
 
 /* ---------------- B. four steps, and every Next saves ---------------- */
 
-test('V301 (b) the stepper renders exactly the steps the owner named, four or five', () => {
-  assert.match(app, /const GROW_SETUP_STEPS_V301=\[\[1,'Choose'\],\[2,'Earning'\],\[3,'Reward'\],\[4,'Go live'\]\];/);
-  /* V303 (owner 2026-08-13: "tiered membership / stamps - still not able to build like points"): a
-     model that includes tiers gets ONE extra step, in the place the ladder belongs — after the
-     earning rule that feeds it, before the rewards it gates. The stepper, the "Step n of m"
-     heading and every advance branch read the active LIST, so the numbering follows the model
-     instead of being written down; the ids and the data-grow-setup-step-v301 contract are
-     unchanged and simply count against whichever list is active. */
-  assert.match(app, /const GROW_SETUP_STEPS_TIERS_V303=\[\[1,'Choose'\],\[2,'Earning'\],\[3,'Tiers'\],\[4,'Reward'\],\[5,'Go live'\]\];/);
-  /* V305 (owner 2026-08-13: "when i press 'tiered membership' - it shows both tier & points? can
-     you explain the logic?"). The five-step list stays — for Points + tiers, where both halves are
-     real. Tiers-ONLY gets its own four, because two of those five were wrong for it: a Reward step
-     under points_mode='tiers', where redemption is OFF, and a points earn-rate step under
-     tier_basis='visits', where the rate does not touch climbing at all. */
-  assert.match(app, /const GROW_SETUP_STEPS_TIERSONLY_V305=\[\[1,'Choose'\],\[2,'Climbing'\],\[3,'Tiers'\],\[4,'Go live'\]\];/);
-  assert.match(wizard, /const stepListV303=\(\)=>state\.pick==='tiers'\?GROW_SETUP_STEPS_TIERSONLY_V305\s*\r?\n?\s*:state\.pick==='both'\?GROW_SETUP_STEPS_TIERS_V303:GROW_SETUP_STEPS_V301;/);
-  assert.match(wizard, /stepListV303\(\)\.map\(\(\[number,label\]\)=>\{/);
-  // The body follows the step's KIND, never its number — on a tier model step 3 is the ladder.
-  assert.match(wizard, /return kind==='choose'\?stepOneHtml\(\):kind==='earn'\?stepTwoHtml\(\)/);
+test('W6I2 (b) the stepper renders one mini-rail per switched-on programme, in customer order', () => {
+  /* W6 increment 2 replaces three fixed step lists with ONE composed rail. Sixteen subsets of four
+     switches cannot be served by a list per model, and a firm running points AND stamps needs both
+     rails on screen at once — which is the state the exclusive pick could not express at all. */
+  assert.match(app, /const GROW_SETUP_RAIL_W6I2=\[\s*\r?\n?\s*\['stamps',\[\['stampEarn','Stamps'\],\['stampGift','Stamp gift'\]\]\],\s*\r?\n?\s*\['points',\[\['earn','Earning'\],\['reward','Gifts'\],\['expiry','Expiry'\]\]\],\s*\r?\n?\s*\['tiers',\[\['climb','Climbing'\],\['tiers','Tiers'\]\]\],\s*\r?\n?\s*\['referral',\[\['referral','Referral'\]\]\]\s*\r?\n?\s*\];/);
+  // Screen 0 first, Go-live last, and every switched-on programme's screens in between.
+  assert.match(wizard, /const steps=\[\{kind:'choose',label:'Programmes',programme:null\}\];/);
+  assert.match(wizard, /if\(state\.switches\[programme\]!==true\)return;/);
+  assert.match(wizard, /steps\.push\(\{kind:'live',label:'Go live',programme:null\}\);/);
+  // The three fixed lists are gone from the whole file — a survivor is a rail that cannot compose.
+  for (const gone of ['GROW_SETUP_STEPS_V301', 'GROW_SETUP_STEPS_TIERS_V303',
+                      'GROW_SETUP_STEPS_TIERSONLY_V305', 'stepListV303', 'stepCountV303'])
+    assert.doesNotMatch(app, new RegExp(`(const|function)\\\\s+${gone}\\\\b`), `${gone} is declared`);
+  // The body follows the step's KIND, never its number.
+  assert.match(wizard, /return kind==='choose'\?stepOneHtml\(\)/);
+  assert.match(wizard, /:kind==='earn'\|\|kind==='stampEarn'\?stepTwoHtml\(\)/);
   assert.match(wizard, /:kind==='climb'\?climbStepHtmlV305\(\)/);
-  assert.match(wizard, /:kind==='tiers'\?tiersStepHtml\(\):kind==='reward'\?stepThreeHtml\(\):stepFourHtml\(\);/);
+  assert.match(wizard, /:kind==='reward'\|\|kind==='stampGift'\?stepThreeHtml\(\)/);
   assert.match(wizard, /data-grow-setup-goto-v301="\$\{number\}"/);
   // Completed steps carry a tick and stay clickable; unvisited ones are not yet reachable.
-  assert.match(wizard, /const done=number<state\.step,current=number===state\.step;/);
+  assert.match(wizard, /const number=index\+1,done=number<state\.step,current=number===state\.step;/);
   assert.match(wizard, /const reachable=state\.visited\.has\(number\)\|\|number<state\.step;/);
   assert.match(wizard, /\$\{done\?'✓':number\}/);
   // 44px tap targets and a strip that scrolls rather than wrapping at 390px.
@@ -135,7 +138,7 @@ test('V301 (b) each step Next writes through the SAME draft RPCs the editor writ
      publish routes wrote nothing. A per-door copy of the call is exactly what let that happen, so
      there is now ONE writer and the wizard calls it. */
   assert.match(app, /sb\.rpc\('set_programmes_v314',\{\s*\r?\n?\s*p_business:businessId,p_switches:switches,p_idempotency_key:key\|\|crypto\.randomUUID\(\)\}\)/);
-  assert.match(wizard, /await writeProgrammeSwitchesV314\(S\.biz\.id,state\.pick,\s*\r?\n?\s*\{paused:state\.keepPaused===true,key:state\.switchKeyV314\}\)/);
+  assert.match(wizard, /await writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\},\s*\r?\n?\s*\{paused:state\.keepPaused===true,key:state\.switchKeyV314\}\)/);
   const publishStep = wizard.slice(wizard.indexOf("const activeResult=await saveDraft({active:"));
   assert.ok(publishStep.indexOf("publish_loyalty_config") < publishStep.indexOf('applyProgrammeSwitchesV314(false)'),
     'the switches may only be applied AFTER the publish they belong with');
@@ -151,33 +154,67 @@ test('V301 (b) each step Next writes through the SAME draft RPCs the editor writ
   assert.match(app, /const PROGRAMME_SWITCHES_V314=\{/);
 });
 
-test('V301 (b) step 1 persists only a CHANGED family, and never a partial fresh model', () => {
-  assert.match(wizard, /const modelForFamily=\(\)=>state\.family==='stamps'\?'stamps'\s*\r?\n?\s*:\(baseModel&&baseModel!=='stamps'\?baseModel:'points_tiers'\);/);
+test('V301 (b) step 1 persists only a CHANGED model, and never a partial fresh one', () => {
+  /* W6 increment 2: loyalty_model is decided by the SWITCHES, not by a family. Stamps ALONE is a
+     stamps firm; with points or tiers also on, the catalogue is the points one. 'classic' survives
+     for the firms on the fixed redeem pair — orphaning that pair breaks their one reward. */
+  assert.match(wizard, /const modelForSwitchesW6I2=\(\)=>\{/);
+  assert.match(wizard, /if\(state\.switches\.stamps===true&&state\.switches\.points!==true&&state\.switches\.tiers!==true\)\s*\r?\n?\s*return 'stamps';/);
+  assert.match(wizard, /return baseModel&&baseModel!=='stamps'\?baseModel:'points_tiers';/);
   assert.match(wizard, /if\(model===baseModel\)return goto\(state\.step\+1\);/);
   assert.match(wizard, /const result=await saveDraft\(\{loyalty_model:model\}\);/);
 });
 
-test('V303 (b) step 1 offers the SAME four models the deep editor offers', () => {
-  /* Owner 2026-08-13, third round, with the editor's own four-way list in the screenshot:
-     "tiered membership / stamps - still not able to build like points". A firm that wants tiers
-     must be able to say so HERE, or the wizard is a points-only door and the Tiered membership
-     card leads nowhere new. Three of the four are the same points engine under
-     businesses.points_mode; the fourth is the stamp engine on loyalty_programs.loyalty_model. */
-  assert.match(app, /const GROW_SETUP_MODELS_V303=\[/);
-  for (const [key, title] of [['redeem', 'Points System'], ['tiers', 'Tiered membership'],
-    ['both', 'Points \\+ tiers'], ['stamps', 'Stamp card']])
-    assert.match(app, new RegExp(`\\['${key}','(?:points|stamps)','[a-z]+','${title}',`),
-      `step 1 must offer ${title}`);
-  // One plain sentence per card, reusing the editor's own descriptions.
-  assert.match(app, /Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits\./);
-  assert.match(app, /Points buy rewards while visits build the tier — the two never affect each other\./);
-  // Selecting only highlights; the family rides along because steps 2 and 3 branch on it.
-  assert.match(wizard, /data-grow-setup-model-v303="\$\{key\}" data-grow-setup-family-v301="\$\{family\}"/);
-  assert.match(wizard, /state\.pick=button\.dataset\.growSetupModelV303;/);
-  // Preselected from the hand-off if a card was pressed, else derived from what is actually live.
+test('W6I2 (b) screen 0 is a SWITCHBOARD: four independent toggles, any subset on', () => {
+  /* The owner ruling (FOUR-PROGRAMME-INDEPENDENCE-PLAN §2-3): four programmes, each strictly
+     independent, any subset live at once. The old control was a role="radiogroup" of four
+     exclusive models — a shape that PROMISES picking one un-picks the others, which after the
+     v314 inversion is simply false. */
+  assert.match(app, /const GROW_SETUP_SWITCHES_W6I2=\[/);
+  for (const [kind, title] of [['points', 'Points & gifts'], ['tiers', 'Tier membership'],
+    ['stamps', 'Stamp card'], ['referral', 'Referral']])
+    assert.ok(app.includes(`['${kind}','`) && app.includes(`','${title}',`),
+      `the switchboard must offer ${title}`);
+  // role="switch", not role="radio" in a radiogroup. That attribute IS the ruling.
+  assert.match(wizard, /role="group" aria-label="Programmes"/);
+  assert.match(wizard, /role="switch" aria-checked="\$\{on\}" data-grow-setup-switch-w6i2="\$\{esc\(kind\)\}"/);
+  assert.doesNotMatch(wizard, /role="radiogroup" aria-label="Programme model"/);
+  // The twelve-row integrity matrix and the four-model table are gone from the whole file.
+  for (const gone of ['GROW_SETUP_MODELS_V303', 'GROW_SETUP_INTEGRITY_V305', 'integrityLineHtmlV305'])
+    assert.doesNotMatch(app, new RegExp(`(const|function)\\\\s+${gone}\\\\b`), `${gone} is declared`);
+  // One footer sentence replaces the matrix, unconditionally — it is true of every state now.
+  assert.match(app, /const GROW_SETUP_SWITCH_FOOTER_W6I2=\s*\r?\n?\s*'You can turn any of these on or off later, on their own\. They do not affect each other\.';/);
+  assert.match(wizard, /data-grow-setup-switchfoot-w6i2>\$\{esc\(GROW_SETUP_SWITCH_FOOTER_W6I2\)\}/);
+  /* A toggle flips ONE switch and leaves the other three alone. This is the single assertion that
+     would have caught an exclusive control wearing switch clothing. */
+  assert.match(wizard, /state\.switches=\{\.\.\.state\.switches,\[kind\]:state\.switches\[kind\]!==true\};/);
+  // Nothing is written on screen 0: the toggles only re-render, which rebuilds the rail.
+  const toggleHandler = wizard.slice(wizard.indexOf("host.querySelectorAll('[data-grow-setup-switch-w6i2]')"),
+    wizard.indexOf("host.querySelectorAll('[data-grow-setup-basis-v305]')"));
+  assert.ok(toggleHandler.length > 100, 'the toggle handler was found and sliced');
+  assert.doesNotMatch(toggleHandler, /sb\.rpc|sb\.from|saveDraft/);
+  // Preselected from the spine, then the hand-off (ON only), then the sector default.
   assert.match(wizard, /const handoffV303=pendingGrowSetupModelV303;pendingGrowSetupModelV303=null;/);
-  assert.match(wizard, /const handoffModelV303=handoffV303\?\.model\|\|null;/);
-  assert.match(wizard, /const derivedModelV303=baseModel==='stamps'\?'stamps'/);
+  assert.match(wizard, /const handoffKindW6I2=PROGRAMME_KINDS_W6I2\.includes\(String\(handoffV303\?\.kind\|\|''\)\)/);
+  assert.match(wizard, /if\(handoffKindW6I2\)set\[handoffKindW6I2\]=true;/);
+  assert.match(app, /const GROW_SETUP_SECTOR_DEFAULTS_W6I2=\{/);
+  assert.match(wizard, /if\(PROGRAMME_KINDS_W6I2\.some\(kind=>set\[kind\]===true\)\)return set;/);
+  // Zero on: publish is refused, in words, rather than as a dead button.
+  assert.match(wizard, /Nothing is turned on\. Turn on at least one programme to publish\./);
+  assert.match(wizard, /\|\|!anySwitchOnW6I2\(\)/);
+  /* The toggle reads the attribute under the name the DOM actually gives it. `data-…-w6i2`
+     reaches the dataset as `…W6i2` — the HTML rule uppercases only a letter directly after a
+     hyphen — and reading it as `…W6I2` returns undefined, which made all four switches inert. */
+  assert.match(wizard, /const kind=button\.dataset\.growSetupSwitchW6i2;/);
+});
+
+test('W6I2 (b) one running percentage across the whole sequence', () => {
+  /* Plan §5: "a single running % across the whole sequence" — replacing stepCountV303()'s
+     per-model count, which restarted its meaning every time the model changed. */
+  assert.match(wizard, /const railPercentW6I2=\(\)=>\{/);
+  assert.match(wizard, /return Math\.max\(0,Math\.min\(100,Math\.round\(\(\(state\.step-1\)\/total\)\*100\)\)\);/);
+  assert.match(wizard, /data-grow-setup-percent-w6i2="\$\{railPercentW6I2\(\)\}"/);
+  assert.match(wizard, /Step \$\{state\.step\} of \$\{railCountW6I2\(\)\} · \$\{esc\(railStepW6I2\(\)\.label\)\}/);
 });
 
 test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier writer', () => {
@@ -209,7 +246,13 @@ test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier
   // The threshold is labelled in its own unit rather than left as a bare number.
   assert.match(wizard, /const tierUnitLabelV303=\(\)=>tierBasisV303\(\)==='visits'\?'Visits to reach it':'Points to reach it';/);
   // One tap fills three rows and writes nothing until Next.
-  assert.match(wizard, /const TIER_DEFAULTS_V303=\[\['Bronze',0\],\['Silver',10\],\['Gold',25\]\];/);
+  /* D7 (plan §7): Silver / Gold / Diamond, exactly three, and the wizard PRODUCES them rather
+     than offering them — a ladder screen that opens empty is a ladder screen a layman leaves
+     empty. No retroactive enforcement: the prefill fires only on a firm with NO ladder at all. */
+  assert.match(wizard, /const TIER_DEFAULTS_V303=\[\['Silver',0\],\['Gold',200\],\['Diamond',500\]\];/);
+  assert.match(wizard, /const TIER_DEFAULTS_VISITS_W6I2=\[\['Silver',0\],\['Gold',5\],\['Diamond',15\]\];/);
+  assert.match(wizard, /const prefillTiersW6I2=\(\)=>\{\s*\r?\n?\s*if\(state\.switches\.tiers!==true\|\|state\.tiers\.length\)return false;/);
+  assert.match(wizard, /if\(stepKindW6I2\(\)==='tiers'\)prefillTiersW6I2\(\);/);
   assert.match(wizard, /data-grow-setup-tier-default-v303/);
 });
 
@@ -218,9 +261,13 @@ test('V301 (b) step 2 mirrors the #lsave field set, minus what belongs to publis
      Climbing step writes the IDENTICAL row rather than a second, nearly-identical one. Same
      fields, one writer — the assertions follow it there. */
   assert.match(wizard, /const programRowV305=model=>\{/);
-  assert.match(wizard, /const row=\{business_id:S\.biz\.id,kind:'points',loyalty_model:model,\s*\r?\n?\s*expiry_mode:String\(base\?\.expiry_mode\|\|'none'\)\};/);
-  assert.match(wizard, /if\(model==='stamps'\)row\.stamp_per_cents=Math\.round\(state\.stampSpend\*100\);/);
-  assert.match(wizard, /else row\.earn_points_per_dollar=state\.earn;/);
+  /* W6 increment 2: expiry comes from STATE (the OWNER AMENDMENT's reachable knob), and BOTH
+     engines' settings ride one version row when both switches are on — the earn loop reads the
+     spine and then this row's own stamp_per_cents / earn_points_per_dollar, never loyalty_model. */
+  assert.match(wizard, /expiry_mode:state\.expiryMode\};/);
+  assert.match(wizard, /row\.expiry_days=row\.expiry_mode==='none'\?null:Math\.max\(1,Math\.round\(Number\(state\.expiryDays\)\|\|365\)\);/);
+  assert.match(wizard, /if\(state\.switches\.stamps===true\)row\.stamp_per_cents=Math\.round\(state\.stampSpend\*100\);/);
+  assert.match(wizard, /if\(model!=='stamps'\)row\.earn_points_per_dollar=state\.earn;/);
   // V262's stored cost-per-point pair, written for a fresh programme exactly as #lsave would.
   assert.match(wizard, /else if\(writesCostDefault\(\)\)\{row\.redeem_points=costBasis;row\.reward_credit_cents=Math\.round\(0\.01\*100\*costBasis\)\}/);
   assert.match(wizard, /const costBasis=Number\(base\?\.redeem_points\)>0\?Math\.round\(Number\(base\.redeem_points\)\):800;/);
@@ -382,7 +429,7 @@ test('V304 Remove writes active:false through the same writers, with Undo and no
   // The last one cannot go: the step's own validation would strand the owner on an error.
   assert.match(wizard, /state\.error='Keep at least one tier, or switch model in Choose\.';/);
   assert.match(wizard, /state\.error='Keep at least one reward customers can get — add its replacement first\.';/);
-  assert.match(wizard, /if\(tierModelV303\(\)&&activeTiersV304\(\)\.length<=1\)\{/);
+  assert.match(wizard, /if\(tierModelW6I2\(\)&&activeTiersV304\(\)\.length<=1\)\{/);
   /* The list must be able to CARRY an archived row, or a removed reward vanishes before its Undo
      can be pressed — and the draft's active:false has to beat the published row that still says
      active, which the old pre-merge filter made impossible. */
@@ -433,7 +480,13 @@ test('V301 (c) the acknowledgement is INLINE and gates the button, never a dialo
   assert.match(wizard, /id="growSetupAckV301"/);
   // Same wording as the existing gate.
   assert.match(wizard, /I have read the changes above and want customers to get them now\./);
-  assert.match(wizard, /\$\{stepKindV303\(\)==='live'&&state\.needAck&&!state\.ack\?' disabled':''\}/);
+  /* W6 increment 2: four reasons can now block the button and they are collected in ONE
+     predicate — the advanced-rule tick, D3's member-movement tick, "nothing is turned on", and a
+     points-earned ladder with the points programme off (a ladder that can never move). */
+  assert.match(wizard, /const publishBlockedW6I2=\(\)=>stepKindW6I2\(\)==='live'/);
+  assert.match(wizard, /&&\(\(state\.needAck&&!state\.ack\)\|\|\(tierMovementRiskW6I2\(\)&&!state\.tierAck\)\|\|!anySwitchOnW6I2\(\)/);
+  assert.match(wizard, /\|\|pointsLadderStalledW6I2\(\)\);/);
+  assert.match(wizard, /id="growSetupNextV301"\$\{publishBlockedW6I2\(\)\?' disabled':''\}/);
 });
 
 test('V301 (c) the change list reuses the publish gate’s own comparison helpers', () => {
@@ -512,11 +565,18 @@ test('V301 (e) the pending point-engine cards and the bare Point system row open
      which programme the owner came ABOUT — and that is what V294's editor entry context means.
      A firm running points+tiers opens the Points System card on the 'both' model, and its full
      editor must still be the points one. */
-  assert.match(grow, /pendingGrowSetupModelV303=\{model:growSetupModelForTileV303\(tile\.dataset\.growTopicV229\),\s*\r?\n?\s*from:String\(tile\.dataset\.growTopicV229\|\|''\)\};/);
+  /* W6 increment 2: the tile hands over a PROGRAMME KIND, and it can only ever turn that switch
+     ON. growSetupModelForTileV303 answered "which of four exclusive models is this card", which
+     meant opening the Stamp card tile proposed a live points programme OFF. Every other switch now
+     keeps whatever the spine says. */
+  assert.match(grow, /pendingGrowSetupModelV303=\{kind:growSetupKindForTileW6I2\(tile\.dataset\.growTopicV229\),\s*\r?\n?\s*from:String\(tile\.dataset\.growTopicV229\|\|''\)\};/);
   assert.match(wizard, /const editorContextV303=\(\)=>handoffV303\?\.from/);
   assert.match(wizard, /\?\(handoffV303\.from==='tiers'\?'ctx-tiers':'ctx-points'\)/);
-  assert.match(grow, /const growSetupModelForTileV303=key=>key==='stamps'\?'stamps'/);
-  assert.match(grow, /:key==='tiers'\?'tiers'/);
+  assert.match(grow, /const growSetupKindForTileW6I2=key=>key==='stamps'\?'stamps':key==='tiers'\?'tiers':'points';/);
+  assert.doesNotMatch(appCode, /growSetupModelForTileV303/);
+  // The replacement word on an off programme: nothing is replaced any more.
+  assert.match(grow, /if\(label==='Off'\)return 'Turn on →';/);
+  assert.doesNotMatch(appCode, /'Switch to this →'/);
   // "Set up →" while this model is not reaching customers, "Edit →" once it is.
   assert.match(grow, /if\(growSetupEntryV301\(topic\.key\)\)return growTopicOngoingV244\(topic\)\?'Edit →'/);
   assert.match(grow, /if\(kind==='earning'&&!rewardJourney\.earning&&canSetupGrow\)return nav\('#\/grow\/setup'\);/);
@@ -535,13 +595,13 @@ test('V303 (e) Add reward and per-reward Edit never open a dialog again', () => 
      V305: and only when the chosen model HAS a Reward step. Tiers-only does not, and the old
      stepNumberForV303 fallback ("the last step") would have dropped the owner on the publish gate
      with a reward form armed. */
-  assert.match(wizard, /const rewardHandoffV303=stepNumberOrNullV305\('reward'\)===null\?null:pendingGrowSetupRewardV303;\s*\r?\n?\s*pendingGrowSetupRewardV303=null;/);
-  assert.match(wizard, /state\.step=stepNumberForV303\('reward'\);/);
+  assert.match(wizard, /const rewardHandoffV303=stepNumberOrNullW6I2\('reward'\)===null\?null:pendingGrowSetupRewardV303;\s*\r?\n?\s*pendingGrowSetupRewardV303=null;/);
+  assert.match(wizard, /state\.step=stepNumberForW6I2\('reward'\);/);
   assert.match(wizard, /\?state\.rewards\.find\(reward=>reward\.id===String\(rewardHandoffV303\.id\|\|''\)\)/);
   // "Add another reward" on the success panel lands on the same step, wherever it is numbered.
-  assert.match(wizard, /goto\(stepNumberForV303\('reward'\)\);/);
+  assert.match(wizard, /goto\(stepNumberForW6I2\('reward'\)\);/);
   // ...and is not offered at all where there is no Reward step to go back to.
-  assert.match(wizard, /\$\{stepNumberOrNullV305\('reward'\)===null\?'':'<button type="button" class="btn ghost sm" id="growSetupAddAnotherV301">Add another reward<\/button>'\}/);
+  assert.match(wizard, /\$\{stepNumberOrNullW6I2\('reward'\)===null\?'':'<button type="button" class="btn ghost sm" id="growSetupAddAnotherV301">Add another reward<\/button>'\}/);
   /* Reward HISTORY cards carry the same contract but the job there is un-archiving, which the
      wizard's three-field form cannot do and does not show — so those keep the full editor. */
   assert.match(app, /data-reward-history-v294/);
@@ -583,134 +643,145 @@ test('V301 (f) the Studio rule builder’s publish flow carries the same guard',
 
 /* ---------------- G. V305: four scenarios, four step lists, and integrity said out loud ------- */
 
-test('V305 (g) each of the owner’s four scenarios runs the steps its own semantics allow', () => {
-  /* Owner 2026-08-13: "when i press 'tiered membership' - it shows both tier & points? can you
-     explain the logic?" and "firms should be able to choose either they wants points only /
-     tiered only / tier + points / stamps - these are 4 scenarios".
-     The logic could not be explained because it was wrong. Tiered membership ran
-     Choose · Earning · Tiers · Reward · Go live, and two of those steps contradict the engine the
-     card selects:
-       · points_mode='tiers' turns redemption OFF (growTiersModeNoteV229 states this on the
-         Programmes page: rewards stay saved, customers cannot claim them while tiers run alone),
-         so a Reward step offered rewards the engine would refuse;
-       · tier_basis='visits' — the default — means the points earn rate has no effect on climbing,
-         so an earn-rate step asked for a number that changes nothing.
-     Four lists now, one per scenario. */
-  assert.match(app, /const GROW_SETUP_STEPS_V301=\[\[1,'Choose'\],\[2,'Earning'\],\[3,'Reward'\],\[4,'Go live'\]\];/);
-  assert.match(app, /const GROW_SETUP_STEPS_TIERSONLY_V305=\[\[1,'Choose'\],\[2,'Climbing'\],\[3,'Tiers'\],\[4,'Go live'\]\];/);
-  assert.match(app, /const GROW_SETUP_STEPS_TIERS_V303=\[\[1,'Choose'\],\[2,'Earning'\],\[3,'Tiers'\],\[4,'Reward'\],\[5,'Go live'\]\];/);
-  // Tiers-only carries NO Reward step and NO separate Earning step — that is the whole report.
-  const tiersOnly = app.match(/const GROW_SETUP_STEPS_TIERSONLY_V305=\[\[[\s\S]*?\]\];/)[0];
-  assert.ok(!/Reward/.test(tiersOnly), 'tiers-only has no Reward step');
-  assert.ok(!/'Earning'/.test(tiersOnly), 'tiers-only has no standalone Earning step');
-  assert.ok(/'Climbing'/.test(tiersOnly), 'tiers-only asks the Climbing question instead');
-  // Points System and Stamp card are untouched; Points + tiers keeps all five.
-  assert.match(wizard, /const stepListV303=\(\)=>state\.pick==='tiers'\?GROW_SETUP_STEPS_TIERSONLY_V305\s*\r?\n?\s*:state\.pick==='both'\?GROW_SETUP_STEPS_TIERS_V303:GROW_SETUP_STEPS_V301;/);
-  // The new kind is a first-class step kind, not a special case bolted onto 'earn'.
-  assert.match(wizard, /label==='Climbing'\?'climb'/);
-  assert.match(wizard, /kind==='climb'\?'Climbing'/);
-  // Step numbering still comes from whichever list is active — nothing is written down.
+test('W6I2 (g) the rail composes, and a programme turned off takes its screens with it', () => {
+  /* The owner report V305 answered — "when i press 'tiered membership' - it shows both tier &
+     points?" — was that a fixed step list showed screens the chosen model could not honour. The
+     switchboard answers it structurally: a screen is on the rail if and only if its programme is
+     switched on, so there is no subset for which the rail can be wrong. */
+  assert.match(wizard, /const railW6I2=\(\)=>\{/);
+  assert.match(wizard, /const railCountW6I2=\(\)=>railW6I2\(\)\.length;/);
+  assert.match(wizard, /const railStepW6I2=\(\)=>railW6I2\(\)\[state\.step-1\]\|\|\{kind:'live',label:'Go live',programme:null\};/);
+  assert.match(wizard, /const stepKindW6I2=\(\)=>railStepW6I2\(\)\.kind;/);
+  // Customer-facing order, pinned: STAMPS → POINTS & GIFTS → TIER → REFERRAL (W4 stack order).
+  const rail = app.slice(app.indexOf('const GROW_SETUP_RAIL_W6I2=['), app.indexOf('const GROW_SETUP_SECTOR_DEFAULTS_W6I2='));
+  assert.deepEqual([...rail.matchAll(/^\s*\['(stamps|points|tiers|referral)',\[/gm)].map(m => m[1]),
+    ['stamps', 'points', 'tiers', 'referral']);
+  /* Turning a switch off mid-rail rebases the visited set and returns to screen 0. A step number
+     that meant "Gifts" a moment ago can mean "Tiers" now, and carrying the old set forward would
+     unlock a screen the owner has never seen. */
+  assert.match(wizard, /state\.visited=new Set\(\[1\]\);\s*\r?\n?\s*state\.step=1;/);
+  // The engine each screen speaks is a property of the SCREEN, not of the whole wizard — which is
+  // what lets points and stamps both be on the rail without either re-labelling the other.
+  assert.match(wizard, /const familyW6I2=\(\)=>railStepW6I2\(\)\.programme==='stamps'\?'stamps':'points';/);
+  assert.doesNotMatch(appCode, /state\.family/);
+  assert.doesNotMatch(appCode, /state\.pick/);
   assert.match(wizard, /data-grow-setup-step-v301="\$\{state\.step\}"/);
-  assert.match(wizard, /Step \$\{state\.step\} of \$\{stepCountV303\(\)\}/);
 });
 
-test('V305 (g) the Climbing step asks the one question that decides the ladder', () => {
-  assert.match(app, /const GROW_SETUP_CLIMB_V305=\[\s*\r?\n?\s*\['visits','Visits',/);
-  assert.match(app, /\['points','Points earned',/);
-  // Visits is the default, exactly as tier_basis already defaults — V306 through the DB→UI
-  // translator, so a stored 'points_earned' opens on Points earned instead of collapsing to visits.
+test('W6I2 (g) the tier basis is a first-class CHOICE — owner amendment 2026-08-14', () => {
+  /* The W6 design contract §1.3 had this control deleted and every ladder forced onto points
+     earned. The OWNER AMENDMENT overrides it: "a firm may climb its ladder by VISITS or by POINTS
+     EARNED (points-earned stays the default the wizard suggests)". Suggestion, never a downgrade. */
+  assert.match(app, /const GROW_SETUP_CLIMB_V305=\[\s*\r?\n?\s*\['points','Points earned',/);
+  assert.match(app, /\['visits','Visits',/);
+  // Points earned is listed FIRST and marked as the suggestion — but only for a NEW ladder.
+  assert.match(wizard, /const tierBasisStoredW6I2=\['visits','spend','points_earned'\]\.includes\(String\(base\?\.tier_basis\|\|''\)\);/);
+  assert.match(wizard, /key==='points'&&!tierBasisStoredW6I2\?'<span class="muted small"><b>Suggested<\/b><\/span>':''/);
+  // A stored basis round-trips to itself — the amendment's "never silently downgrade".
+  assert.match(wizard, /if\(v==='points_earned'\)return 'points';/);
+  assert.match(wizard, /if\(v==='spend'\)return 'spend';/);
+  assert.match(wizard, /if\(v==='visits'\)return 'visits';/);
   assert.match(wizard, /tierBasis:tierBasisFromDbV306\(base\?\.tier_basis\),/);
+  // The Climbing screen is screen 1 of EVERY tier rail now, not only a tiers-only one.
+  assert.match(app, /\['tiers',\[\['climb','Climbing'\],\['tiers','Tiers'\]\]\]/);
   assert.match(wizard, /const climbStepHtmlV305=\(\)=>`<p class="grow-setup-lead-v301">How do customers climb tiers\?<\/p>/);
-  /* The earn rate is revealed INLINE on the same step, and only under a points basis — that is the
-     only basis under which an earn rate means climbing speed. It reuses the Earning step's own id,
-     so readStepFields, the live example and the input listener are one implementation. */
-  assert.match(wizard, /\$\{state\.tierBasis==='points'\s*\r?\n?\s*\?`<div data-grow-setup-climbearn-v305/);
-  assert.match(wizard, /data-grow-setup-climbearn-v305[\s\S]{0,400}?id="growSetupEarnV301"/);
+  /* The plan's silent accrual (points programme accrues=true, customer_visible=false) has NO
+     physical representation — public.business_programmes is (id,business_id,kind,active,sort,…)
+     and nothing else — so a points-earned ladder with the points programme off is a ladder that
+     can never move: no earn row is ever written and the tier metric stays 0 forever. The screen
+     used to claim that accrual exists and to collect an earn rate the engine could never apply.
+     The dependency is real now, and stated. */
+  assert.match(wizard, /const pointsLadderStalledW6I2=\(\)=>state\.switches\.tiers===true&&state\.tierBasis==='points'/);
+  assert.match(wizard, /&&state\.switches\.points!==true;/);
+  assert.doesNotMatch(wizard, /Points only move the ladder here/);
+  assert.doesNotMatch(wizard, /data-grow-setup-climbearn-v305/);
+  assert.match(wizard, /Turn on Points &amp; gifts to use this ladder/);
+  assert.match(wizard, /id="growSetupTurnOnPointsW6I2"/);
+  assert.match(wizard, /The rate customers earn at is set on the Earning screen\./);
+  assert.match(wizard, /This ladder counts lifetime spend\./);
   assert.match(wizard, /Tier levels are counted from completed visits, so there is no points rate to set here\./);
-  assert.match(wizard, /if\(kind==='earn'\|\|kind==='climb'\)\{/);
-  // Next writes tier_basis (and the earn fields) through the SAME draft writer every step uses.
+  // Next writes tier_basis (and the earn fields) through the SAME draft writer every screen uses.
   assert.match(wizard, /if\(kind==='climb'\)return withBusy\(async\(\)=>\{/);
   assert.match(wizard, /const result=await saveDraft\(programRowV305\(model\)\);/);
-  assert.match(wizard, /if\(state\.tierBasis==='points'&&!\(state\.earn>0\)\)\{/);
-  // Selecting a basis only re-renders; nothing is written until Next, like the model cards.
-  assert.match(wizard, /host\.querySelectorAll\('\[data-grow-setup-basis-v305\]'\)\.forEach\(button=>button\.onclick=\(\)=>\{/);
+  // Selecting a basis only re-renders; nothing is written until Next.
   assert.match(wizard, /state\.tierBasis=button\.dataset\.growSetupBasisV305==='points'\?'points':'visits';/);
-  // The threshold label re-reads the chosen basis, so a typed number never silently changes unit.
-  assert.match(wizard, /const tierBasisV303=\(\)=>state\.tierBasis;/);
   assert.match(wizard, /const tierUnitLabelV303=\(\)=>tierBasisV303\(\)==='visits'\?'Visits to reach it':'Points to reach it';/);
 });
 
-test('V305 (g) Points + tiers keeps five steps and gains the basis control on the ladder step', () => {
-  /* Owner: "so if the points only rewards is already activated and firms press tier + points
-     (technically the points structure remains the same and just needs to edit the tiered
-     membership) - vice versa". The Points + tiers path is therefore unchanged except for the one
-     thing the tier half needs and did not have: a way to say how the tier is earned. */
-  assert.match(wizard, /const basis=state\.pick==='both'/);
-  assert.match(wizard, /data-grow-setup-basisrow-v305><b class="grow-setup-basislabel-v305">Tier level is earned by<\/b>\$\{climbOptionsHtmlV305\(true\)\}/);
-  // It sits ABOVE the ladder, so it is answered before the thresholds it re-units are typed.
-  assert.match(wizard, /return `<p class="grow-setup-lead-v301">What tiers do customers climb\?<\/p>\$\{basis\}\$\{rows\}/);
-  // ONE control, two placements — the compact flag changes chrome only.
-  assert.match(wizard, /const climbOptionsHtmlV305=compact=>/);
-  assert.match(wizard, /data-grow-setup-basis-v305="\$\{key\}"/);
-  // Saved with the tiers step's own Next, and only when it changed — V306 in the DB's spelling.
-  assert.match(wizard, /if\(state\.tierBasis!==initialTierBasisV305\)\{\s*\r?\n?\s*const basisResult=await runSaveV304\(\(\)=>saveDraft\(\{tier_basis:tierBasisToDbV306\(state\.tierBasis\)\}\)\);/);
-  /* The baseline is translated too. Comparing a UI-spelled state against a DB-spelled baseline is
-     what would make a points_earned firm look "changed" the moment the wizard opened. */
-  assert.match(wizard, /const initialTierBasisV305=tierBasisFromDbV306\(base\?\.tier_basis\);/);
+test('W6I2 (g) every expiry knob is reachable — owner amendment 2026-08-14', () => {
+  /* "every expiry knob survives per-programme — points expiry in all its modes (e.g. yearly via
+     expiry_days=365, inactivity)". Before this wave the wizard had NO expiry control: the row it
+     wrote carried whatever was already stored, so an owner who only used the wizard could never
+     reach the knob. Surviving has to mean reachable. */
+  assert.match(app, /\['points',\[\['earn','Earning'\],\['reward','Gifts'\],\['expiry','Expiry'\]\]\]/);
+  assert.match(wizard, /const expiryStepHtmlW6I2=\(\)=>\{/);
+  // The DB's own three modes, in the deep editor's own words.
+  assert.match(wizard, /<option value="none"\$\{state\.expiryMode==='none'\?' selected':''\}>Never expire<\/option>/);
+  assert.match(wizard, /Fixed shelf life from earn \(oldest expire first\)/);
+  assert.match(wizard, /Expire after inactivity \(clock resets on every earn\)/);
+  // Yearly is fixed + 365, exactly as the amendment spells it — not a fourth mode.
+  assert.match(wizard, /else if\(preset==='year'\)\{state\.expiryMode='fixed';state\.expiryDays=365\}/);
+  assert.match(wizard, /One year \(365 days\)/);
+  assert.match(wizard, /After 365 quiet days/);
+  // The days field follows the SAME helper the deep editor's lx/lxd pair follows.
+  assert.match(wizard, /const needsDays=expiryModeRequiresDays\(state\.expiryMode\);/);
+  assert.match(wizard, /if\(expiryModeRequiresDays\(state\.expiryMode\)&&!\(Number\(state\.expiryDays\)>0\)\)\{/);
+  // Rung-level windows keep their home, and the screen says where that is.
+  assert.match(wizard, /Rung start and end dates stay in the full editor under More reward settings\./);
+  assert.match(wizard, /each rung's start and end dates live under More reward settings\./);
 });
 
-test('V305 (g) reward validation is scoped away from tiers-only, tier validation is not', () => {
-  /* The "add one reward" rule lives INSIDE the reward branch, and tiers-only never reaches a
-     reward kind because its list has no Reward label — so the rule cannot strand an owner on a
-     step that does not exist. The tier rule applies to both tier models, unchanged. */
-  const rewardBranch = wizard.slice(wizard.indexOf("if(kind==='reward')return withBusy"),
-    wizard.indexOf('return withBusy(async()=>{\n      const activeResult=await saveDraft'));
-  assert.ok(rewardBranch.length > 200, 'the reward branch was found and sliced');
-  assert.match(rewardBranch, /if\(!hasForm&&!activeRewardsV304\(\)\.length\)\{/);
-  assert.match(rewardBranch, /state\.error='Add one reward customers can get\. Give it a name and a cost\.';/);
-  // The tier rule stays where it was, on the step both tier models run.
-  assert.match(wizard, /state\.error='Add at least one tier customers can reach\.';/);
-  assert.match(wizard, /const tierModelV303=\(\)=>state\.pick==='tiers'\|\|state\.pick==='both';/);
-  // And the Go-live summary describes the ladder rather than a catalogue tiers-only cannot claim.
-  assert.match(wizard, /const rewardOrLadderLineV305=\(\)=>state\.pick!=='tiers'\?rewardLine\(\)/);
-  assert.match(wizard, /const earnOrClimbLineV305=\(\)=>state\.pick==='tiers'&&state\.tierBasis==='visits'/);
+test('W6I2 (g) D3: a threshold or basis change states the movement and requires a tick', () => {
+  /* Plan decision D3: "raising a tier threshold re-evaluates members immediately; the publish
+     preview must state 'N members would move down' and require explicit confirmation."
+     WHAT changes is computed from data the screen already holds (published liveTiers vs the draft
+     ladder), so the confirmation gate never depends on a server that may not answer. */
+  assert.match(wizard, /const publishedTiersW6I2=\(\)=>\(Array\.isArray\(liveTiers\)\?liveTiers:\[\]\)/);
+  assert.match(wizard, /const tierThresholdChangesW6I2=\(\)=>\{/);
+  assert.match(wizard, /direction:draft\.threshold>live\.threshold\?'harder':'easier'/);
+  /* And the basis half compares the draft against the PUBLISHED basis, so it survives leaving the
+     wizard and coming back — exactly like the threshold half above. */
+  assert.match(wizard, /const tierBasisChangedW6I2=\(\)=>publishedTierBasisW6I2!==null&&state\.tierBasis!==publishedTierBasisW6I2;/);
+  // Only a change that can move someone DOWN needs the tick. Easier thresholds move people up.
+  assert.match(wizard, /&&\(tierBasisChangedW6I2\(\)\|\|tierThresholdChangesW6I2\(\)\.some\(change=>change\.direction!=='easier'\)\);/);
+  assert.match(wizard, /id="growSetupTierAckW6I2"/);
+  assert.match(wizard, /I understand members can move down a tier when I publish\./);
+  /* HOW MANY move is a per-client aggregation the browser cannot do, so it is read from
+     preview_publish_impact behind a CAPABILITY CHECK. The key does not exist on the server yet;
+     an absent key must print an honest sentence, never a zero it cannot stand behind. */
+  assert.match(wizard, /const tierMovementCountsW6I2=\(\)=>\{/);
+  assert.match(wizard, /if\(!movements\|\|typeof movements!=='object'\)return null;/);
+  assert.match(wizard, /if\(movements\.evaluated===false\)return \{evaluated:false,reason:String\(movements\.reason\|\|''\)\};/);
+  assert.match(wizard, /How many members move is not counted yet on this workspace/);
+  assert.match(wizard, /There are too many members to count the moves before publishing\./);
+  // The preview is read when the gate PAINTS, not only when Publish is pressed.
+  const load = wizard.slice(wizard.indexOf('async function loadComparison(){'), wizard.indexOf('const readStepFields='));
+  assert.match(load, /sb\.rpc\('preview_publish_impact',\{p_config_version_id:state\.versionId\}\)/);
+  assert.match(load, /state\.impact=impact;/);
+  // And it is fail-soft in both directions: a failed read leaves the honest sentence, not a crash.
+  assert.match(load, /\.then\(response=>response\.error\?null:\(response\.data\|\|null\)\)\.catch\(\(\)=>null\)/);
 });
 
-test('V305 (g) integrity is SAID: step 1 names what a model switch preserves', () => {
-  /* Owner: "you need to ensure programs integrity". The engine already preserves everything — a
-     points_mode switch is a switch, never a delete — but an owner cannot see that, so a correct
-     switch still reads as "am I about to lose my rewards?". The full twelve-direction matrix is
-     written down and shown under the cards whenever the highlighted card differs from what is
-     live. Every one of them names what SURVIVES. */
-  const matrix = app.slice(app.indexOf('const GROW_SETUP_INTEGRITY_V305={'),
-    app.indexOf('const GROW_SETUP_CLIMB_V305='));
-  const models = ['redeem', 'tiers', 'both', 'stamps'];
-  for (const from of models) for (const to of models) {
-    if (from === to) continue;
-    assert.match(matrix, new RegExp(`'${from}>${to}':'`), `the ${from} → ${to} line is written down`);
-  }
-  assert.ok(matrix.match(/'[a-z]+>[a-z]+':'/g).length === 12, 'twelve directions, no diagonal');
-  // The owner's own examples, verbatim in intent.
-  assert.match(matrix, /'redeem>both':'Your points set-up stays exactly as it is — you are only adding tiers\.'/);
-  assert.match(matrix, /'redeem>tiers':'Your rewards stay saved, but customers cannot claim them while Tiered membership runs alone\.'/);
-  assert.match(matrix, /'both>redeem':'Tiers stop showing to customers but stay saved\. Points continue unchanged\.'/);
-  assert.match(matrix, /'redeem>stamps':'Your points programme stays saved\. The stamp card replaces it for customers\.'/);
-  // Shown only when the choice differs from LIVE, and never invented for a direction not listed.
-  assert.match(wizard, /const line=GROW_SETUP_INTEGRITY_V305\[`\$\{derivedModelV303\}>\$\{state\.pick\}`\];/);
-  assert.match(wizard, /return line\?`<p class="grow-setup-integrity-v305" data-grow-setup-integrity-v305=/);
-  assert.match(wizard, /\$\{integrityLineHtmlV305\(\)\}/);
-  /* V314 (W6 increment 1): the Go-live MODE lines are gone with modeChangeLineV303 — they
-     compared the pick against businesses.points_mode, which the switchboard inversion froze, so
-     they would have gone stale for exactly the owners who switch. The switchboard's own "what
-     changes" sentence is increment 2's deliverable. The integrity matrix above is untouched and is
-     now the only place a model transition is narrated. The tiers-only claim line survives: it is a
-     statement about the state being published, not about a transition, and it never read
-     points_mode. */
-  assert.doesNotMatch(wizard, /const modeChangeLineV303=/);
-  assert.match(wizard, /const tiersOnlyClaimLineV305=\(\)=>state\.pick!=='tiers'\?''/);
-  assert.match(wizard, /While Tiered membership runs on its own, customers cannot claim point rewards\./);
+test('W6I2 (g) the Go-live summary names every switched-on programme, and the switch set', () => {
+  /* One line could stand for a programme when there was one. With four independent switches a
+     single line simply omits three of them, so the summary is composed the same way the rail is. */
+  assert.match(wizard, /if\(state\.switches\.stamps===true\)parts\.push\(/);
+  assert.match(wizard, /if\(state\.switches\.points===true\)parts\.push\(/);
+  assert.match(wizard, /if\(state\.switches\.referral===true\)parts\.push\(referralExampleTextW6I2\(\)\);/);
+  assert.match(wizard, /return parts\.length\?parts\.join\(' · '\):'No programme is turned on\.';/);
+  // The four flags are restated on the gate — they are the one live thing publish changes.
+  assert.match(wizard, /const switchSummaryBlockW6I2=\(\)=>`<div class="imp-note" data-grow-setup-switchsummary-w6i2/);
+  assert.match(wizard, /const on=state\.switches\[kind\]===true&&!state\.keepPaused;/);
+  // The tiers-only claim line survives, keyed on the switches rather than on a model name.
+  assert.match(wizard, /const tiersOnlyClaimLineV305=\(\)=>!\(state\.switches\.tiers===true&&state\.switches\.points!==true&&state\.switches\.stamps!==true\)\?''/);
+  assert.match(wizard, /While Tier membership runs on its own, customers cannot claim point gifts\./);
   assert.match(wizard, /data-grow-setup-claimline-v305/);
-  assert.match(html, /\.grow-setup-integrity-v305\{/);
+  /* The whole switchboard is built from classes the page ALREADY ships — no new CSS, which is
+     what keeps nine checked-in browser fixtures (they inline this stylesheet under a
+     production-source-sha256 and carry captured Chrome measurements) from all needing a recapture
+     for a cosmetic rule. */
+  assert.match(html, /\.grow-setup-options-v301\{display:grid/);
+  assert.match(html, /\.pill\.on\{/);
   assert.match(html, /\.grow-setup-basisopt-v305\{[^}]*min-height:44px/);
 });
 
@@ -733,30 +804,40 @@ test('V305 (g) the Go-live change list cannot contradict the integrity promise',
   assert.match(comparison, /options:growRewardDiffOptionsFromSnapshotV291\(pseudoSnapshot,unit\)\}\),/);
 });
 
-test('V305 (g) a model switch NEVER deletes: the wizard writes through an exact allowlist', () => {
+test('W6I2 (g) turning a programme on NEVER deletes: the wizard writes through an exact allowlist', () => {
   /* Owner: "you need to ensure programs integrity". The strongest form of that promise is that
      there is nothing in this surface that COULD destroy a reward, a tier or an earn rule. Every
      data call the wizard makes is enumerated here; a new one has to be added deliberately, with a
-     reason, rather than arriving unnoticed inside a step. */
+     reason, rather than arriving unnoticed inside a screen. */
   const rpcNames = [...new Set([...wizard.matchAll(/sb\.rpc\('([a-z0-9_]+)'/g)].map(m => m[1]))].sort();
   assert.deepEqual(rpcNames, [
     'create_loyalty_config_draft',        // the draft, created on the first save only
     'ensure_published_reward_in_draft_v138', // materialise-before-edit, never a delete
     'get_loyalty_reward_draft',           // read-back
-    'preview_publish_impact',             // read-only gate
+    'preview_publish_impact',             // read-only gate, and D3's movement counts
     'publish_loyalty_config',             // the publish itself
-    'save_loyalty_config_draft',          // programme row / tier_basis / reward envelope
-    'save_loyalty_tier_draft_v143'        // one tier row at a time
+    'save_loyalty_config_draft',          // programme row / tier_basis / expiry / reward envelope
+    'save_loyalty_tier_draft_v143',       // one tier row at a time
+    'save_referral_program'               // W6I2: the referral rail, applied at Go-live only
   ].sort(), `wizard RPC allowlist drifted: ${JSON.stringify(rpcNames)}`);
-  /* V314 REMEDIATION: set_programmes_v314 left this list because the wizard no longer calls it
-     directly — it goes through the one module-scope writer every door now shares. The switch is
-     still in the allowlist in spirit, and the assertion that it is the wizard's ONLY off-draft
-     write is the one below. */
+  /* save_referral_program is the ONE live-table write the wizard performs besides the spine, and
+     it is deliberately not a draft write: public.referral_programs is not versioned. It runs at
+     Go-live, beside the switches, never on a screen's Next — otherwise a setup the owner walks
+     away from would have turned referrals on for real. */
+  const referralWrites = [...wizard.matchAll(/sb\.rpc\('save_referral_program'/g)].length;
+  assert.equal(referralWrites, 1, 'exactly one referral write');
+  const switchApply = wizard.slice(wizard.indexOf('async function applyProgrammeSwitchesV314(fromRetry){'),
+    wizard.indexOf('const programRowV305=model=>{'));
+  assert.match(switchApply, /sb\.rpc\('save_referral_program'/, 'and it lives inside the Go-live switch application');
+  const referralBranch = wizard.slice(wizard.indexOf("if(kind==='referral')return withBusy"),
+    wizard.indexOf("if(kind==='reward'||kind==='stampGift')return withBusy"));
+  assert.ok(referralBranch.length > 80, 'the referral branch was found and sliced');
+  assert.doesNotMatch(referralBranch, /sb\.rpc|sb\.from/);
   assert.equal([...wizard.matchAll(/writeProgrammeSwitchesV314\(/g)].length, 1,
     'the wizard reaches the spine through exactly one call to the shared writer');
-  /* V314 (W6 increment 1): ZERO direct table writes now. The businesses.points_mode update was
-     the last one, and it became an owner-gated RPC whose only effect is four boolean flags on
-     public.business_programmes — still a switch, still never a row deletion. */
+  /* ZERO direct table writes. The businesses.points_mode update was the last one, and it became
+     an owner-gated RPC whose only effect is four boolean flags on public.business_programmes —
+     still a switch, still never a row deletion. */
   const tableWrites = [...new Set([...wizard.matchAll(/sb\.from\('([a-z_]+)'\)\.([a-z]+)\(/g)]
     .map(m => `${m[1]}.${m[2]}`))].sort();
   assert.deepEqual(tableWrites, [], `wizard table access drifted: ${JSON.stringify(tableWrites)}`);

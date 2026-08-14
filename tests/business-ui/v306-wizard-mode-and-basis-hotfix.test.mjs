@@ -54,7 +54,12 @@ test('V306/V314 the Stamp card reaches an engine that lets a stamp be redeemed',
   assert.doesNotMatch(wizard, /points_mode:/);
   // The write is one owner-gated RPC, after publish, reached through the one shared writer.
   assert.match(app, /sb\.rpc\('set_programmes_v314',\{/);
-  assert.match(wizard, /writeProgrammeSwitchesV314\(S\.biz\.id,state\.pick,/);
+  /* W6 increment 2: the wizard hands the writer a SWITCH SET, not a model key. state.pick is gone
+     with the exclusive pick it named — the switchboard can express points AND stamps, which no
+     model key spells — and the mapping table above survives for the three surfaces that genuinely
+     still offer one of four. */
+  assert.match(wizard, /writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\},/);
+  assert.doesNotMatch(app, /state\.pick/);
 });
 
 test('V314 the Go-live step no longer narrates a frozen column', () => {
@@ -76,7 +81,15 @@ test('V314 the Go-live step no longer narrates a frozen column', () => {
 });
 
 test('V306 tier_basis crosses the DB boundary through two translators', () => {
-  assert.match(wizard, /const tierBasisFromDbV306=db=>\{const v=String\(db\|\|'visits'\);return v==='points_earned'\?'points':v==='spend'\?'spend':'visits'\};/);
+  /* W6 increment 2 (OWNER AMENDMENT 2026-08-14) changes ONE thing in the read translator: the
+     fallback for a firm with NOTHING stored moves from 'visits' to 'points', because points-earned
+     is the standard the wizard now suggests for a NEW ladder. Every stored value still round-trips
+     to itself — that is what the three explicit branches are for, and it is why the amendment's
+     "never silently downgrade" survives a changed default. */
+  assert.match(wizard, /const tierBasisFromDbV306=db=>\{/);
+  assert.match(wizard, /if\(v==='points_earned'\)return 'points';/);
+  assert.match(wizard, /if\(v==='spend'\)return 'spend';/);
+  assert.match(wizard, /if\(v==='visits'\)return 'visits';/);
   assert.match(wizard, /const tierBasisToDbV306=ui=>ui==='points'\?'points_earned':ui;/);
 });
 
@@ -110,7 +123,7 @@ test('V306 the radio still offers exactly visits and points — spend stays a de
      built to ask one. It survives instead: tierBasisFromDbV306 passes it through, tierBasisToDbV306
      passes it back, so it round-trips untouched and only an actual click moves a firm off it. */
   const climb = app.slice(app.indexOf('const GROW_SETUP_CLIMB_V305=['),
-    app.indexOf('const GROW_SETUP_MODELS_V303=['));
+    app.indexOf('function mergeRewardsV302('));
   assert.match(climb, /\['visits','Visits',/);
   assert.match(climb, /\['points','Points earned',/);
   assert.equal(climb.match(/\['[a-z_]+','/g).length, 2, 'exactly two options');

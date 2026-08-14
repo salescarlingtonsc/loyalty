@@ -53,7 +53,9 @@ test('V244 a pending tile says which job it is, not a generic View', () => {
   assert.equal(action({ status: ['Not set up', 'off'] }), 'Set up →');
   assert.equal(action({ status: ['Draft', 'new'] }), 'Finish setup →');
   assert.equal(action({ status: ['Paused', 'off'] }), 'Resume →');
-  assert.equal(action({ status: ['Off', 'off'] }), 'Switch to this →');
+  /* W6 increment 2: 'Switch to this →' promised a replacement, which is what an exclusive model
+     pick was. Nothing is replaced any more — a programme is turned on beside the others. */
+  assert.equal(action({ status: ['Off', 'off'] }), 'Turn on →');
   assert.equal(action({ status: ['Not included', 'off'] }), 'See plan →');
 });
 

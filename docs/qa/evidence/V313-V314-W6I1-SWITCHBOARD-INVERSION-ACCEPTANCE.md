@@ -615,17 +615,33 @@ yet; increments 5 and 6 will — must use the new one.
 first three apply attempts each aborted whole with the same signature: our backend reported
 waiting on an AccessExclusiveLock on `storage.objects` while a PostgREST backend held
 `storage.objects` (AccessShare) and waited to read `loyalty_rewards`, which we held. The
-counterparty is a **continuous retry stream of `public.business_publish_media_replacement_v95`**
-(two PostgREST workers observed re-running it at every sample; completed calls in
-`pg_stat_statements` number only 13 at 24 ms mean, so the stream is mostly ERRORING calls, which
-that view does not record — the V281 rollback-storm shape, still live and reported separately).
+counterparty transaction was running `public.business_publish_media_replacement_v95`.
 Per-statement lock probes proved our DDL requests nothing on `storage.*` (the analytics log API
 was down, so the reported waiter attribution stays unexplained), and the structural cure needs no
 attribution: both migrations now open with `set local lock_timeout='25s'` and one ordered
 `LOCK TABLE` acquiring `storage.objects` (conditionally — rigs replay app/public only) plus every
-table the migration will alter. With everything contested held up front, no cycle can form; the
-media stream (millisecond transactions) queues behind the migration for the seconds it runs.
-Attempt 4 (v313) and the v314 apply both went through cleanly.
+table the migration will alter. With everything contested held up front, no cycle can form;
+concurrent media transactions (millisecond-scale) queue behind the migration for the seconds it
+runs. Attempt 4 (v313) and the v314 apply both went through cleanly.
+
+> **CORRECTION 2026-08-14, same day, from a parallel session's independent investigation.**
+> This section originally attributed the deadlocks to a *continuous erroring retry stream* of that
+> RPC, inferred from seeing it on the same two PostgREST pids at every sample plus a gap between
+> expected calls and `pg_stat_statements.calls`. **That diagnosis was wrong and is withdrawn.**
+> `pg_stat_activity.query` holds the LAST statement a backend ran and keeps showing it after the
+> statement finishes, so repeated sightings on pooled connections prove nothing; `backend_start`
+> age (~7.4 days) is ordinary pooled-connection age, not a stuck client. The shipped caller
+> (`app/v95-media-sync.js`) calls the RPC exactly once per button press — no loop, no retry, no
+> edge caller — and already surfaces the version conflict to the user. Diagnose with `state` +
+> `query_start`, never query text: `idle in transaction (aborted)` is what actually deadlocks a
+> concurrent migration. **What does not change:** the three 40P01s were real, the lock prelude is
+> the correct structural cure, and it is what let the applies through. **What does change:** there
+> is no media retry storm; the separately-raised storm task is void, and the migration files'
+> own prelude comments still carry the original wording — read them against this correction. One
+> genuine latent issue surfaced by the same investigation and left open: the RPC raises
+> `40001` (serialization_failure) for a business-logic version conflict, which invites automatic
+> retries from any layer that treats 40001 as retryable; a non-retryable class (23514/22023) is
+> the right shape.
 
 **Incident 2 — the versions backfill tripped the v27 immutability guard (23001), a case the rig
 fixture never held.** On the first non-deadlocked attempt, `update public.loyalty_reward_versions
