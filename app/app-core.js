@@ -432,6 +432,9 @@ function disposeCurrentRoute(){
   activeCustomerRedemptionCleanup({restoreFocus:false});
   activeCustomerJoinScannerCleanup({restoreFocus:false});
   activeCustomerWalletLiveCleanupV295();
+  /* v322: the wallet's cheap-tick cache belongs to the page that is leaving. The next render is a
+     real one, which re-checks features, profile and personas and re-seeds the probe. */
+  if(typeof customerWalletForgetSurfaceCacheV322==='function')customerWalletForgetSurfaceCacheV322();
   document.querySelectorAll('.appointment-detail-modal').forEach(dialog=>dialog.remove());
 }
 let rtChannel=null;       // the single realtime channel for this session
@@ -1774,7 +1777,64 @@ const CUSTOMER_COPY=Object.freeze({
        only. No member identifier exists on this surface yet and the counter scanner parses three
        prefixes, none of them an identity — a QR the counter cannot scan is worse than no QR. */
     showMyCode:'Show my code',
-    showMyCodeBody:'Show this to the team at the counter.'
+    showMyCodeBody:'Show this to the team at the counter.',
+    /* v322 (owner screenshot review, 2026-08-14). Everything the customer READS on a shop page is
+       written here, in all four mandate languages, because the measured review found nine of the
+       tallest card's sentences bypassing ct() — a Chinese phone showing an English tier card.
+       Business-authored names (a reward, a tier's label) stay as the business typed them. */
+    walletBalanceLabel:'Your balance',
+    showQr:'Show QR',
+    seeRewards:'See rewards',
+    useOffer:'Use {amount}',
+    claimShow:'Show QR for {gift}',
+    nextUpTitle:'Next up',
+    nextUpBar:'{count} of {goal}',
+    expiryLine:'{count} {unit} expire on {date}.',
+    earnRateSpend:'{count} {unit} for every {amount} you spend.',
+    earnRateVisit:'{count} {unit} on every visit.',
+    tierNowLabel:'Your tier',
+    tierNotYet:'Getting started',
+    firstVisitTitle:'How rewards work here',
+    firstVisitDistance:'Collect {count} {unit} here and {gift} is yours.',
+    firstVisitNoReward:'This shop has not set a reward yet. What you collect is kept for you.',
+    firstVisitGotIt:'Got it',
+    tierTopPill:'Top tier',
+    tierBothVisits:'Visits move you up. Points stay yours to spend.',
+    tierBothPoints:'Points you earn move you up — spending them never lowers your tier.',
+    tierBothSpend:'What you spend moves you up. Points stay yours to spend.',
+    tierLadderTitle:'All tiers and what they unlock',
+    tierLadderCount:'{count} tiers',
+    tierRungCurrent:'Your tier',
+    tierRungReached:'Reached',
+    tierRungLocked:'Not yet yours',
+    tierFromFirst:'From your first visit',
+    tierFromVisits:'From {count} visits',
+    tierFromPoints:'From {count} points earned',
+    tierFromSpend:'From {amount} spent',
+    tierToGoVisits:'{count} visits to go',
+    tierToGoPoints:'{count} points to go',
+    tierToGoSpend:'{amount} to go',
+    tierNoBenefits:'Benefits not published yet.',
+    stampsAtCounter:'Stamps are added at the counter on each visit.',
+    rewardsLede:'Pick a reward, then show its QR at the counter.',
+    rewardReadyChip:'Ready',
+    rewardToGo:'{count} to go',
+    rewardLockedChip:'Locked',
+    rewardEndedChip:'Ended',
+    rewardSoonChip:'Soon',
+    rewardLimitChip:'Limit reached',
+    rewardOffChip:'Not available',
+    rewardTierLock:'Reach {tier} to unlock this reward.',
+    rewardValidEverywhere:'Valid at every location and service.',
+    rewardEligibleBranches:'{count} locations',
+    rewardEligibleServices:'{count} services',
+    rewardEligibleProducts:'{count} products',
+    rewardHowToUse:'How to use',
+    rewardTermsTitle:'Terms',
+    rewardUseWithin:'Use within {count} days after claiming.',
+    rewardsUncheckedTitle:'Redemption can’t be checked right now',
+    rewardsUncheckedBody:'These rewards are shown for reference only — no QR can be issued yet.',
+    rewardsRetry:'Try again'
   }),
   'zh-CN':Object.freeze({
     home:'首页',programmes:'我的奖励',rewardsTab:'奖励',explore:'发现',bookings:'预约',scanQr:'扫码',profileTab:'我的',
@@ -1965,7 +2025,60 @@ const CUSTOMER_COPY=Object.freeze({
     claimableNow:'现在可领取',
     claimableCount:'{count} 项可领取',
     showMyCode:'出示我的代码',
-    showMyCodeBody:'请向柜台的工作人员出示。'
+    showMyCodeBody:'请向柜台的工作人员出示。',
+    walletBalanceLabel:'我的余额',
+    showQr:'出示二维码',
+    seeRewards:'看看奖励',
+    useOffer:'使用{amount}',
+    claimShow:'出示{gift}的二维码',
+    nextUpTitle:'下一个目标',
+    nextUpBar:'已累积{count}／{goal}',
+    expiryLine:'{count}{unit}将于{date}到期。',
+    earnRateSpend:'每消费{amount}可得{count}{unit}。',
+    earnRateVisit:'每次到店可得{count}{unit}。',
+    tierNowLabel:'我的等级',
+    tierNotYet:'刚刚开始',
+    firstVisitTitle:'这里的奖励怎么用',
+    firstVisitDistance:'在这里累积{count}{unit}，就能换到{gift}。',
+    firstVisitNoReward:'这家店还没有设置奖励。您累积的都会为您保留。',
+    firstVisitGotIt:'知道了',
+    tierTopPill:'最高等级',
+    tierBothVisits:'到访次数决定等级，积分依然可以照常使用。',
+    tierBothPoints:'赚到的积分帮你升级，使用积分不会降级。',
+    tierBothSpend:'消费金额决定等级，积分依然可以照常使用。',
+    tierLadderTitle:'所有等级与专属礼遇',
+    tierLadderCount:'共{count}个等级',
+    tierRungCurrent:'当前等级',
+    tierRungReached:'已达成',
+    tierRungLocked:'尚未达成',
+    tierFromFirst:'首次到访即可',
+    tierFromVisits:'到访满{count}次',
+    tierFromPoints:'累计赚取{count}积分',
+    tierFromSpend:'消费满{amount}',
+    tierToGoVisits:'还差{count}次到访',
+    tierToGoPoints:'还差{count}积分',
+    tierToGoSpend:'还差{amount}',
+    tierNoBenefits:'礼遇尚未公布。',
+    stampsAtCounter:'每次到店，请柜台为您盖章。',
+    rewardsLede:'选一份奖励，在柜台出示二维码即可。',
+    rewardReadyChip:'可领取',
+    rewardToGo:'还差{count}',
+    rewardLockedChip:'未解锁',
+    rewardEndedChip:'已结束',
+    rewardSoonChip:'即将开始',
+    rewardLimitChip:'已达上限',
+    rewardOffChip:'暂不可用',
+    rewardTierLock:'升到{tier}即可解锁这份奖励。',
+    rewardValidEverywhere:'所有门店与服务均可使用。',
+    rewardEligibleBranches:'{count}家门店可用',
+    rewardEligibleServices:'{count}项服务可用',
+    rewardEligibleProducts:'{count}件商品可用',
+    rewardHowToUse:'使用方法',
+    rewardTermsTitle:'条款',
+    rewardUseWithin:'领取后请在{count}天内使用。',
+    rewardsUncheckedTitle:'暂时无法确认兑换',
+    rewardsUncheckedBody:'以下奖励仅供参考，目前还无法生成二维码。',
+    rewardsRetry:'重试'
   }),
   ms:Object.freeze({
     home:'Laman Utama',programmes:'Ganjaran Saya',rewardsTab:'Ganjaran',explore:'Terokai',bookings:'Tempahan',scanQr:'Imbas QR',profileTab:'Profil',
@@ -2156,7 +2269,60 @@ const CUSTOMER_COPY=Object.freeze({
     claimableNow:'Sedia sekarang',
     claimableCount:'{count} sedia untuk dituntut',
     showMyCode:'Tunjukkan kod saya',
-    showMyCodeBody:'Tunjukkan ini kepada pasukan di kaunter.'
+    showMyCodeBody:'Tunjukkan ini kepada pasukan di kaunter.',
+    walletBalanceLabel:'Baki anda',
+    showQr:'Tunjuk QR',
+    seeRewards:'Lihat ganjaran',
+    useOffer:'Guna {amount}',
+    claimShow:'Tunjuk QR untuk {gift}',
+    nextUpTitle:'Seterusnya',
+    nextUpBar:'{count} daripada {goal}',
+    expiryLine:'{count} {unit} tamat tempoh pada {date}.',
+    earnRateSpend:'{count} {unit} bagi setiap {amount} yang anda belanja.',
+    earnRateVisit:'{count} {unit} setiap kali anda datang.',
+    tierNowLabel:'Peringkat anda',
+    tierNotYet:'Baru bermula',
+    firstVisitTitle:'Cara ganjaran berfungsi di sini',
+    firstVisitDistance:'Kumpul {count} {unit} di sini dan {gift} jadi milik anda.',
+    firstVisitNoReward:'Kedai ini belum menetapkan ganjaran. Apa yang anda kumpul disimpan untuk anda.',
+    firstVisitGotIt:'Faham',
+    tierTopPill:'Peringkat tertinggi',
+    tierBothVisits:'Lawatan menaikkan peringkat anda. Mata kekal milik anda untuk dibelanjakan.',
+    tierBothPoints:'Mata yang anda kumpul menaikkan peringkat — membelanjakannya tidak menurunkannya.',
+    tierBothSpend:'Perbelanjaan menaikkan peringkat anda. Mata kekal milik anda untuk dibelanjakan.',
+    tierLadderTitle:'Semua peringkat dan faedahnya',
+    tierLadderCount:'{count} peringkat',
+    tierRungCurrent:'Peringkat anda',
+    tierRungReached:'Sudah dicapai',
+    tierRungLocked:'Belum dicapai',
+    tierFromFirst:'Bermula dari lawatan pertama',
+    tierFromVisits:'Dari {count} lawatan',
+    tierFromPoints:'Dari {count} mata dikumpul',
+    tierFromSpend:'Dari {amount} dibelanjakan',
+    tierToGoVisits:'{count} lawatan lagi',
+    tierToGoPoints:'{count} mata lagi',
+    tierToGoSpend:'{amount} lagi',
+    tierNoBenefits:'Faedah belum diumumkan.',
+    stampsAtCounter:'Cop ditambah di kaunter setiap kali anda datang.',
+    rewardsLede:'Pilih ganjaran, kemudian tunjuk QR-nya di kaunter.',
+    rewardReadyChip:'Sedia',
+    rewardToGo:'{count} lagi',
+    rewardLockedChip:'Berkunci',
+    rewardEndedChip:'Tamat',
+    rewardSoonChip:'Tidak lama lagi',
+    rewardLimitChip:'Had tercapai',
+    rewardOffChip:'Tidak tersedia',
+    rewardTierLock:'Capai {tier} untuk membuka ganjaran ini.',
+    rewardValidEverywhere:'Sah di semua cawangan dan perkhidmatan.',
+    rewardEligibleBranches:'{count} cawangan',
+    rewardEligibleServices:'{count} perkhidmatan',
+    rewardEligibleProducts:'{count} produk',
+    rewardHowToUse:'Cara guna',
+    rewardTermsTitle:'Terma',
+    rewardUseWithin:'Guna dalam {count} hari selepas dituntut.',
+    rewardsUncheckedTitle:'Penebusan tidak dapat disemak sekarang',
+    rewardsUncheckedBody:'Ganjaran ini ditunjukkan sebagai rujukan sahaja — QR belum boleh dikeluarkan.',
+    rewardsRetry:'Cuba lagi'
   }),
   ta:Object.freeze({
     home:'முகப்பு',programmes:'என் வெகுமதிகள்',rewardsTab:'வெகுமதிகள்',explore:'கண்டறிய',bookings:'முன்பதிவுகள்',scanQr:'QR ஸ்கேன்',profileTab:'சுயவிவரம்',
@@ -2347,7 +2513,60 @@ const CUSTOMER_COPY=Object.freeze({
     claimableNow:'இப்போது தயார்',
     claimableCount:'{count} பெறத் தயார்',
     showMyCode:'என் குறியீட்டைக் காட்டு',
-    showMyCodeBody:'கவுண்டரில் உள்ள குழுவிடம் இதைக் காட்டுங்கள்.'
+    showMyCodeBody:'கவுண்டரில் உள்ள குழுவிடம் இதைக் காட்டுங்கள்.',
+    walletBalanceLabel:'உங்கள் இருப்பு',
+    showQr:'QR காட்டு',
+    seeRewards:'பரிசுகளைப் பார்க்க',
+    useOffer:'{amount} பயன்படுத்து',
+    claimShow:'{gift}க்கான QR காட்டு',
+    nextUpTitle:'அடுத்தது',
+    nextUpBar:'{goal}இல் {count}',
+    expiryLine:'{count} {unit} {date} அன்று காலாவதியாகும்.',
+    earnRateSpend:'நீங்கள் செலவழிக்கும் ஒவ்வொரு {amount}க்கும் {count} {unit}.',
+    earnRateVisit:'ஒவ்வொரு வருகைக்கும் {count} {unit}.',
+    tierNowLabel:'உங்கள் நிலை',
+    tierNotYet:'இப்போது தொடங்குகிறது',
+    firstVisitTitle:'இங்கு பரிசுகள் எப்படி வேலை செய்கின்றன',
+    firstVisitDistance:'இங்கே {count} {unit} சேர்த்தால் {gift} உங்களுடையது.',
+    firstVisitNoReward:'இந்தக் கடை இன்னும் பரிசு அமைக்கவில்லை. நீங்கள் சேர்ப்பது உங்களுக்காகவே வைக்கப்படும்.',
+    firstVisitGotIt:'புரிந்தது',
+    tierTopPill:'உயர்ந்த நிலை',
+    tierBothVisits:'வருகைகள் உங்கள் நிலையை உயர்த்தும். புள்ளிகள் செலவழிக்க உங்களிடமே இருக்கும்.',
+    tierBothPoints:'நீங்கள் சேர்க்கும் புள்ளிகள் நிலையை உயர்த்தும் — செலவழித்தால் நிலை குறையாது.',
+    tierBothSpend:'நீங்கள் செலவழிப்பது நிலையை உயர்த்தும். புள்ளிகள் செலவழிக்க உங்களிடமே இருக்கும்.',
+    tierLadderTitle:'எல்லா நிலைகளும் அவற்றின் சலுகைகளும்',
+    tierLadderCount:'{count} நிலைகள்',
+    tierRungCurrent:'உங்கள் நிலை',
+    tierRungReached:'அடைந்தது',
+    tierRungLocked:'இன்னும் இல்லை',
+    tierFromFirst:'முதல் வருகையிலிருந்தே',
+    tierFromVisits:'{count} வருகைகளிலிருந்து',
+    tierFromPoints:'சேர்த்த {count} புள்ளிகளிலிருந்து',
+    tierFromSpend:'{amount} செலவழித்ததிலிருந்து',
+    tierToGoVisits:'இன்னும் {count} வருகைகள்',
+    tierToGoPoints:'இன்னும் {count} புள்ளிகள்',
+    tierToGoSpend:'இன்னும் {amount}',
+    tierNoBenefits:'சலுகைகள் இன்னும் அறிவிக்கப்படவில்லை.',
+    stampsAtCounter:'ஒவ்வொரு வருகையிலும் கவுண்டரில் முத்திரை சேர்க்கப்படும்.',
+    rewardsLede:'ஒரு பரிசைத் தேர்ந்தெடுத்து, கவுண்டரில் அதன் QRஐக் காட்டுங்கள்.',
+    rewardReadyChip:'தயார்',
+    rewardToGo:'இன்னும் {count}',
+    rewardLockedChip:'பூட்டப்பட்டது',
+    rewardEndedChip:'முடிந்தது',
+    rewardSoonChip:'விரைவில்',
+    rewardLimitChip:'வரம்பு முடிந்தது',
+    rewardOffChip:'கிடைக்கவில்லை',
+    rewardTierLock:'இந்தப் பரிசைப் பெற {tier} நிலையை அடையுங்கள்.',
+    rewardValidEverywhere:'எல்லா கிளைகளிலும் சேவைகளிலும் செல்லும்.',
+    rewardEligibleBranches:'{count} கிளைகள்',
+    rewardEligibleServices:'{count} சேவைகள்',
+    rewardEligibleProducts:'{count} பொருட்கள்',
+    rewardHowToUse:'எப்படிப் பயன்படுத்துவது',
+    rewardTermsTitle:'விதிமுறைகள்',
+    rewardUseWithin:'பெற்ற பிறகு {count} நாட்களுக்குள் பயன்படுத்தவும்.',
+    rewardsUncheckedTitle:'இப்போது பரிமாற்றத்தைச் சரிபார்க்க முடியவில்லை',
+    rewardsUncheckedBody:'இந்தப் பரிசுகள் தகவலுக்காக மட்டுமே — இப்போது QR வழங்க முடியாது.',
+    rewardsRetry:'மீண்டும் முயற்சி'
   })
 });
 const normalizeCustomerLocale=value=>{const v=String(value||'').trim();if(v==='zh')return 'zh-CN';return CUSTOMER_LOCALES.includes(v)?v:'en'};
@@ -2664,26 +2883,30 @@ function wireCustomerRelationshipCheck(renderer){
 /* v178: the header bell is a first-class shell control, so every customer shell — including the
    QR-join screens that render before a route context exists — reads the same resolved flag. */
 let customerInboxEnabledV178=false;
-async function loadCustomerSurfaceContext(isCurrent=()=>true){
+/* v319: `silent` is a background re-read of a surface that is ALREADY on screen and correct. Every
+   failure branch below repaints the whole page with a retry card, which is the right answer for a
+   first load and the wrong one for a poll — one flaky 20-second read would replace the customer's
+   working wallet with an error. Silent callers get a null and the page they already had. */
+async function loadCustomerSurfaceContext(isCurrent=()=>true,{silent=false}={}){
   const features=await loadCustomerFeatureCapabilities();
   customerInboxEnabledV178=features?.customer_in_app_inbox===true;
   if(!isCurrent())return null;
-  if(features._load_error){renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
-  if(!features.customer_wallet){renderCustomerWalletUnavailable();return null}
+  if(features._load_error){if(!silent)renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
+  if(!features.customer_wallet){if(!silent)renderCustomerWalletUnavailable();return null}
   const [profileResult,personaResult]=await Promise.all([
     features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
     customerRpc('get_my_personas')
   ]);
   if(!isCurrent())return null;
   let {data:personas,error:personasError}=personaResult;
-  if(personasError){renderCustomerCapabilityRetry('We could not load your customer destinations. Please try again.');return null}
+  if(personasError){if(!silent)renderCustomerCapabilityRetry('We could not load your customer destinations. Please try again.');return null}
   let staff=sortStaffWorkspaces(personas?.staff||[]),customer=personas?.customer||[];
   if(profileResult.error&&!customer.length){
-    renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');return null;
+    if(!silent)renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');return null;
   }
   const profile=profileResult.error?null:(profileResult.data?.profile??null);
   const registeredCustomer=profile!==null;
-  if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
+  if(!customerSurfaceQualifies(profile,customer)){if(!silent)renderNoCustomerDestination(staff);return null}
   S.hasCustomerPersona=true;S.customerProfile=profile;
   /* v293/v294: the wallet renders in the member's stored language — all four
      of English, 中文, Bahasa Melayu and தமிழ் ('zh' folds to zh-CN). Sign-out
@@ -3038,6 +3261,27 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
     </div>
   </article>`;
 }
+/* The V167 meter, with its sentence routed through ct(). V167's own English is untouched: it is
+   what the fallback path renders and five suites pin it. */
+function customerRewardProgressMarkupV310({loyalty={},reward=null}={}){
+  if(!reward)return '';
+  const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
+    available=reward.available_now===true||cost===0,
+    progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100,
+    gift=String(reward.name||'').trim()||ct('rewardsTab');
+  const sentence=available?ct('pointsReady',{gift})
+    :ct('pointsRemaining',{count:customerPointTotalV103(reward.remaining_units||0),gift});
+  return `<div class="customer-reward-progress-copy"><p class="muted small">${esc(sentence)}</p><div class="customer-reward-progress" role="progressbar" aria-label="${esc(gift)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
+}
+/* v322 (Part D · the first-visit moment). A customer opening a shop for the first time was shown a
+   balance and a distance and never told what any of it was FOR. This fires once per business —
+   naming the shop's real cheapest reward and the true distance to it, or saying plainly that the
+   shop has not set one yet, which is the honest answer when nothing is in reach. It never invents
+   an earn rate (see customerEarnRateLineV322 and the server contract in the build report).
+   "Once" is recorded at PAINT, not at dismissal: a moment a customer scrolls past is a moment they
+   have had. The module flag keeps it on screen for the life of the page it appeared on, so a
+   background repaint cannot make it vanish mid-sentence. */
+let customerFirstVisitMomentKeyV322='';
 /* W4c lives HERE, not beside the slot it fills, and that placement is deliberate rather than
    tidy: tests/browser/generate-v104-promotions-visual.mjs extracts production source from
    `openCustomerPromotionDetailsV104` to `customerMerchantExperienceMarkupV95` and pins the result
@@ -3098,21 +3342,40 @@ function watchCustomerWalletV295(isCurrent,refresh){
   const arm=()=>{
     if(timer)clearTimeout(timer);
     if(!alive()||ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295||document.visibilityState!=='visible')return;
-    timer=setTimeout(()=>{
+    timer=setTimeout(async()=>{
       timer=0;
       if(!alive()||document.visibilityState!=='visible')return;
-      ticks+=1;refresh();
+      ticks+=1;
+      /* v319: the watcher re-arms ITSELF. Before, the only thing that armed the next tick was the
+         full re-render the tick triggered — which is precisely the rebuild v319 removed, so a
+         silent refresh would have polled once and then gone quiet. */
+      try{await refresh()}catch{}
+      arm();
     },CUSTOMER_WALLET_POLL_MS_V295);
   };
-  function onVisibility(){
+  async function onVisibility(){
     if(!alive())return stop();
     if(document.visibilityState!=='visible'){if(timer)clearTimeout(timer);timer=0;return}
-    ticks=0;refresh();          // back in the customer's hand: read now, and re-arm the window
+    ticks=0;                    // back in the customer's hand: read now, and re-arm the window
+    try{await refresh()}catch{}
+    arm();
   }
   document.addEventListener('visibilitychange',onVisibility);
   activeCustomerWalletLiveCleanupV295=stop;
   arm();
   return {stop,rearm:arm};
+}
+/* v322 (A7). A tick cost ELEVEN reads to change nothing in the common case, every twenty seconds
+   and on every return to the foreground. It now asks ONE question first — the actionable card the
+   whole surface is drawn from — and stops there when the answer has not moved. The full read set
+   runs only when it has, and it reuses this very answer rather than asking twice. */
+let customerWalletProbeSignatureV322='';
+let customerSurfaceContextCacheV322=null;
+function customerWalletForgetSurfaceCacheV322(){
+  customerSurfaceContextCacheV322=null;customerWalletProbeSignatureV322='';
+  /* The first-visit moment belongs to the page that is leaving. It was recorded as shown when it
+     painted, so the next open of that shop does not repeat it. */
+  customerFirstVisitMomentKeyV322='';
 }
 async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
   const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;

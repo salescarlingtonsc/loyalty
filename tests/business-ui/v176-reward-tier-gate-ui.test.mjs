@@ -44,14 +44,18 @@ test('saveReward sends BOTH the tier id and the threshold it stood at', () => {
 });
 
 test('the customer card locks the reward instead of hiding it, and names the tier', () => {
-  assert.ok(app.includes('tier_locked:\'Unlocks at a higher tier\''),
+  /* v322: the same three facts, in the row the reward is now drawn as, and localized — every one
+     of these strings was English on a Chinese, Malay and Tamil phone. */
+  assert.ok(app.includes("tier_locked:ct('rewardLockedChip')"),
     'tier_locked missing from the customer availability map');
+  assert.ok(app.includes("rewardLockedChip:'Locked'"), 'the locked chip needs its English entry');
   assert.ok(app.includes('const rewardLockLineV176='), 'no lock-line helper');
-  assert.ok(/return label\?`Reach \$\{label\} to unlock this reward`/.test(app),
+  assert.ok(app.includes("ct('rewardTierLock',{tier:label})"),
     'the locked line must name the tier — that is what makes climbing worth it');
-  assert.ok(app.includes("r.availability==='tier_locked'?'<span class=\"pill\">🔒 Locked</span>':''"),
-    'no locked pill on the customer card');
-  assert.ok(app.includes('esc(rewardLockLineV176(r)||availability[r.availability]'),
+  assert.ok(app.includes("rewardTierLock:'Reach {tier} to unlock this reward.'"));
+  assert.ok(app.includes('customer-reward-row-chip-v322">${esc(chip)}'),
+    'no state chip on the customer row');
+  assert.ok(app.includes('${esc(rewardLockLineV176(r))}'),
     'the status line must prefer the tier-specific copy');
 });
 

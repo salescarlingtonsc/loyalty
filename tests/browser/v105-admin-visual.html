@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="758f966589829089abbe5c7a4d32f3b07e3a874abd29e969bbe3cf275853bae7">
+<meta name="v105-production-component-sha256" content="15a0fad30eb17ada7c19ecb76f4de0928e24d97ac6204f18f83263986b92bbf5">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1735,6 +1735,10 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    three slots per card. The tab rules above are NOT retired: they are what the pre-v310 fallback
    path renders for the whole Cloudflare window and on rollback. */
 .customer-programme-stack{display:grid;gap:12px;margin-bottom:14px}
+/* v322 (C5): measured at 1440 the stack was one 1040px phone column, so four cards were four
+   screens of scrolling on a desktop that could show them side by side. The reward ROWS inside a
+   card stay single-column — a row is read left to right, not two abreast. */
+@media(min-width:1024px){.customer-programme-stack{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
 .customer-programme-card-v310{padding:16px 18px 18px;margin:0}
 .customer-programme-card-head-v310{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:1.05rem}
 .customer-programme-card-head-v310 svg{flex:none;color:var(--coral)}
@@ -1760,10 +1764,66 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-claimable-strip-count{font-size:12.5px;font-weight:650;color:var(--ink2)}
 .customer-claimable-strip-items{display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
 .customer-claimable-strip-items span:not(:last-child)::after{content:' ·'}
+/* v322 (A4/C1) — THE WALLET STRIP. The owner's screenshot had a reward name printed under the iOS
+   clock and the "Ready" pill under the wifi icon: the surface scrolls beneath a transparent status
+   bar and nothing covered it. The strip is sticky, OPAQUE (var(--card), which is opaque in both
+   themes) and carries its own safe-area inset, so whatever scrolls up passes behind it instead of
+   through the clock. It is also the one place the balance is printed. */
+/* No negative bleed: the shell's side padding is a max(env()) expression that differs by
+   breakpoint, and guessing it at 18px pushed the strip 4px past the right edge at 390 — a page
+   that scrolls sideways. Nothing renders in those gutters, so the strip still covers everything
+   that can scroll under it. */
+.customer-wallet-strip-v322{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+  margin:0 0 12px;padding:max(12px,env(safe-area-inset-top)) 14px 12px;
+  background:var(--card);border-radius:0 0 16px 16px;border-bottom:1px solid var(--hair);
+  box-shadow:0 6px 18px -14px rgba(23,22,26,.5)}
+.customer-wallet-strip-figure-v322{min-width:0;flex:1 1 auto;display:grid;gap:1px}
+.customer-wallet-strip-shop-v322{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.customer-wallet-strip-v322 .customer-programme-balance{font-size:clamp(1.5rem,5.4vw,1.95rem)}
+.customer-wallet-strip-slot-v322{display:flex;align-items:center;gap:8px;flex:none}
+.customer-wallet-strip-slot-v322 .btn{min-height:44px}
+/* v322 (B1/C1.2) — READY NOW as rows a thumb can hit, not a status band. */
+.customer-claimable-rows-v322{display:grid;gap:6px;margin-top:8px}
+.customer-claimable-row-v322{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;
+  padding:8px 12px;border:1px solid var(--coral);border-radius:12px;background:var(--card);
+  color:var(--ink);font:inherit;font-weight:650;text-align:left;cursor:pointer}
+.customer-claimable-row-v322:hover{background:var(--tint)}
+.customer-claimable-row-name-v322{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-claimable-row-go-v322{flex:none;display:inline-flex;color:var(--coral)}
+/* v322 (C1.3) — NEXT UP: one line, one thin bar, then the two quiet facts. */
+.customer-next-up-v322{margin:0 0 12px;padding:12px 14px;border:1px solid var(--hair);border-radius:14px;background:var(--card)}
+.customer-next-up-title-v322{font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.customer-next-up-line-v322{margin-top:4px;font-size:1.02rem;font-weight:650}
+.customer-next-up-v322 .customer-reward-progress{margin-top:8px}
+.customer-next-up-earn-v322,.customer-next-up-expiry-v322{margin-top:6px}
+/* v322 (C2) — REWARDS AS ROWS. Four to six fit a phone screen where two cards used to; the row is
+   the tap target and the ONE red control lives inside the row it belongs to, closed by default. */
+.wallet-rewards.customer-reward-rows-v322{display:grid;grid-template-columns:1fr;gap:0}
+.customer-reward-row-v322{border-bottom:1px solid var(--hair)}
+.customer-reward-row-v322:last-child{border-bottom:0}
+.customer-reward-row-head-v322{display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 2px;cursor:pointer;list-style:none}
+.customer-reward-row-head-v322::-webkit-details-marker{display:none}
+.customer-reward-row-name-v322{flex:1 1 auto;min-width:0;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-reward-row-cost-v322{flex:none;font-weight:700;color:var(--coral);font-variant-numeric:tabular-nums}
+.customer-reward-row-cost-v322 span{font-weight:600;font-size:.82em}
+.customer-reward-row-chip-v322{flex:none}
+.customer-reward-row-body-v322{display:grid;gap:6px;padding:2px 2px 12px}
+.customer-reward-row-body-v322 img{width:100%;max-width:220px;border-radius:10px}
+.customer-reward-row-body-v322 .wallet-reward-actions{margin-top:4px}
 /* W4c's member-code slot, shipped hidden and empty so W4c is markup and wiring only. */
 .customer-member-code-slot{margin:0 0 12px}
+/* v322 (C3) — the compact tier card: a badge, ONE bar to the next rung, one sentence. No rail. */
+.customer-tier-standing-v322{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.customer-tier-badge-v322{font-size:1.32rem;letter-spacing:-.02em}
+.customer-tier-bar.is-single{margin:10px 0 6px}
+/* v322 (C3) — the ladder sheet is VERTICAL at every width, so a nine-rung ladder is a list to
+   scroll rather than nine names crushed onto one track. */
+.customer-tier-rungs.is-vertical-v322{grid-template-columns:1fr}
 .customer-tier-now{font-size:1.02rem}
 .customer-tier-bar{position:relative;margin:14px 0 40px}
+/* v319: past four rungs the rail carries icons alone (customerTierRailCompactV319), so the 40px
+   reserved for a row of labels under the track is dead space the owner reads as a squeezed card. */
+.customer-tier-bar.is-compact{margin-bottom:24px}
 .customer-tier-bar-track{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
 .customer-tier-bar-track span{display:block;height:100%;border-radius:inherit;background:var(--grad)}
 .customer-tier-milestones{position:absolute;inset:0;pointer-events:none}
@@ -1771,7 +1831,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-tier-milestone i{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:var(--card);border:2px solid var(--line);color:var(--muted)}
 .customer-tier-milestone i svg{width:13px;height:13px}
 .customer-tier-milestone.is-achieved i,.customer-tier-milestone.is-current i{border-color:var(--coral);color:var(--coral)}
-.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap}
+.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap;max-width:82px;overflow:hidden;text-overflow:ellipsis}
+/* v319: the top rung sits ON 100%, so a label centred under it hangs half outside the card. Shift
+   the TEXT only — by half its own width, which lands its right edge on the end of the track — and
+   leave the marker itself exactly where the scale puts it. */
+.customer-tier-milestone:last-child b{transform:translateX(-50%)}
 .customer-tier-milestone.is-achieved i{background:var(--coral);border-color:var(--coral);color:#fff}
 .customer-tier-milestone.is-current i{background:var(--coral);border-color:var(--coral);color:#fff;box-shadow:0 0 0 3px var(--tint)}
 .customer-tier-milestone.is-current b{color:var(--coral)}
@@ -2899,7 +2963,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 758f96658982</span>
+<span class="v105-provenance">v105 production-component harness · 15a0fad30eb1</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3024,7 +3088,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'758f966589829089abbe5c7a4d32f3b07e3a874abd29e969bbe3cf275853bae7',
+  sourceHash:'15a0fad30eb17ada7c19ecb76f4de0928e24d97ac6204f18f83263986b92bbf5',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

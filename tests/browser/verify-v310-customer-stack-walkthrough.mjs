@@ -258,10 +258,20 @@ try{
     .map(node=>node.dataset.programmeCard));
   /* The programme region only, normalised for nothing: this is a BYTE comparison, so the only
      thing removed is the region's own container attribute, which does not exist on the baseline. */
-  const programmeRegionHtml=page=>page.evaluate(()=>{
+  const programmeRegionHtml=(page,{blankRewardsV322=false}={})=>page.evaluate(blank=>{
     const region=document.querySelector('.customer-programme-tabs,[data-programme-stack]');
-    return region?region.outerHTML:'(absent)';
-  });
+    if(!region)return '(absent)';
+    /* v322: the reward CATALOGUE is hydrated into this region by loadRewards on both paths and was
+       deliberately redesigned this wave (cards → rows, every label ct()-routed), so step d blanks
+       it on BOTH sides rather than pinning the card the owner's review measured at two per screen.
+       Done in the DOM, where the host's boundaries are exact, instead of by regex over serialised
+       markup. Everything else in the region is still compared byte for byte. */
+    if(blank){
+      const host=region.querySelector('#walletRewards');
+      if(host)host.textContent='REWARDS';
+    }
+    return region.outerHTML;
+  },blankRewardsV322);
 
   /* ------------------------------ a. four programmes, fixed order ------------------------------ */
   say('a. a four-programme firm renders four cards in the fixed order');
@@ -269,7 +279,8 @@ try{
     const {context,page}=await openWallet('four');
     await page.waitForSelector('[data-programme-stack="v310"]',{timeout:20000});
     const order=await cardOrder(page);
-    assertTrue(JSON.stringify(order)===JSON.stringify(['stamps','points','tiers']),
+    /* v319 (owner: "shift the tier up — to the top of the screen, instead of points & gift"). */
+    assertTrue(JSON.stringify(order)===JSON.stringify(['tiers','stamps','points']),
       `the three programme cards render in the fixed order (${order.join(' → ')})`);
     await page.waitForSelector('#walletReferral',{timeout:20000});
     const positions=await page.evaluate(()=>{
@@ -334,7 +345,8 @@ try{
       'no stack: `programmes` is absent, so the gate is closed');
     assertTrue(await page.locator('[data-programme-tab="tier"]').count()===1,'the Tier tab renders');
     assertTrue(await page.locator('[data-programme-tab="points"]').count()===1,'the Reward points tab renders');
-    const after=await programmeRegionHtml(page);
+    const afterRaw=await programmeRegionHtml(page);
+    const after=await programmeRegionHtml(page,{blankRewardsV322:true});
     await page.locator('[data-programme-tab="points"]').click();
     assertTrue(await page.locator('[data-programme-panel="points"]').isVisible(),
       'the tab wiring still works — wireCustomerProgrammeTabsV194 is reachable and not dead code');
@@ -343,16 +355,46 @@ try{
     if(!BASELINE_DIR)throw new Error('step d needs V310_BASELINE_DIR: the byte comparison is the point');
     const baseline=await openWallet('pre310',{origin:BASELINE_ORIGIN});
     await baseline.page.waitForSelector('.customer-programme-tabs',{timeout:20000});
-    const before=await programmeRegionHtml(baseline.page);
+    const beforeRaw=await programmeRegionHtml(baseline.page);
+    const before=await programmeRegionHtml(baseline.page,{blankRewardsV322:true});
     await baseline.context.close();
 
-    if(after!==before){
-      const at=[...after].findIndex((ch,i)=>ch!==before[i]);
+    /* v319 (owner: "the UI UX is being squeezed") re-based the tier rail on the RUNG INDEX — the
+       fill and the markers were previously on two different scales, so the bar's filled end agreed
+       with no marker on it. That fix is deliberately on BOTH paths, the stack and this v194
+       fallback, so the two bundles' geometry numbers are now expected to differ and pinning them
+       byte-for-byte would be pinning the bug.
+       Everything else must still match exactly, which is what makes this the rollback proof: the
+       comparison blanks ONLY the geometry (the bar's width and each marker's left offset) and
+       asserts byte identity over all the remaining markup — every element, class, attribute,
+       sentence and rung label. The geometry itself is asserted on its own terms in
+       tests/customer-modules/v174-customer-tier-card.test.mjs. */
+    const withoutRailGeometryV319=html=>html
+      .replace(/(<span style="width:)[\d.]+(%">)/g,'$1RAIL$2')
+      .replace(/(style="left:)[\d.]+(%")/g,'$1RAIL$2');
+    /* v322 does the same thing for the REWARD CATALOGUE, and for the same reason. The gate this
+       step protects is which SURFACE renders — stack or tabs — not what a reward row looks like:
+       the catalogue is hydrated by loadRewards on BOTH paths, and v322 deliberately changed it on
+       both (cards became rows a thumb opens, and every label went through ct()). Pinning it
+       byte-for-byte here would pin the two-per-screen card the owner's review measured. So the
+       hydrated section is replaced by a marker on both sides — its OWN behaviour is measured in
+       tests/browser/verify-customer-experience-walkthrough.mjs (density, one red action, four
+       locales) and in tests/customer-wallet/v322-customer-experience-redesign.test.mjs — and every
+       other byte of the fallback region is still compared exactly. */
+    const afterShape=withoutRailGeometryV319(after),beforeShape=withoutRailGeometryV319(before);
+    if(afterShape!==beforeShape){
+      const at=[...afterShape].findIndex((ch,i)=>ch!==beforeShape[i]);
       throw new Error(`step d: the fallback DOM is NOT byte-identical to the pre-change bundle.\n`
-        +`  first difference at byte ${at}\n  before: ${JSON.stringify(before.slice(Math.max(0,at-90),at+90))}\n`
-        +`  after:  ${JSON.stringify(after.slice(Math.max(0,at-90),at+90))}`);
+        +`  first difference at byte ${at}\n  before: ${JSON.stringify(beforeShape.slice(Math.max(0,at-90),at+90))}\n`
+        +`  after:  ${JSON.stringify(afterShape.slice(Math.max(0,at-90),at+90))}`);
     }
-    assertTrue(true,`the programme region is byte-identical to the pre-change bundle (${after.length} bytes)`);
+    assertTrue(afterShape.includes('width:RAIL%')&&afterShape!==after,
+      'the geometry really was blanked — a comparison that normalised nothing would prove nothing');
+    assertTrue(afterShape.includes('>REWARDS<')&&beforeShape.includes('>REWARDS<')
+      &&afterRaw.includes('wallet-reward')&&beforeRaw.includes('wallet-reward'),
+      'and both sides really did carry a hydrated reward catalogue that was normalised away');
+    assertTrue(true,`the programme region is byte-identical to the pre-change bundle outside the `
+      +`v319 rail geometry (${after.length} bytes)`);
     assertTrue(before.includes('customer-programme-tablist'),
       'and it really is the v194 tab markup that was compared, not two empty strings');
   }

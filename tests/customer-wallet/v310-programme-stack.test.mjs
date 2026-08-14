@@ -45,6 +45,7 @@ const harness=new Function('esc','CUI','walletDate',`
   ${section('const programmeStackV310=','function customerMerchantExperienceMarkupV95')}
   return {programmeStackV310,customerProgrammeStackV310,programmeStackCardVisibleV310,
     customerStampTargetV310,customerProgrammeSummaryTabsV194,customerProgrammeTierCardV310,
+    customerWalletStripMarkupV322,programmePotKindV322,customerNextUpMarkupV322,
     PROGRAMME_STACK_ORDER_V310,ct,
     setLocale:value=>{customerLocale=value}};`)(
   value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
@@ -70,6 +71,17 @@ const render=(programmes,extra={})=>harness.customerProgrammeStackV310({
   programmes,tier:TIER,loyalty:LOYALTY,presentation:{unit:'points',balance:180},
   reward:REWARD,rewardsHost:true,...extra});
 const cardOrder=html=>[...html.matchAll(/data-programme-card="([a-z]+)"/g)].map(match=>match[1]);
+/* v319: one card's markup, whatever position the stack puts it in. The slices below used to name
+   the card that happened to come next ('points' … up to 'tiers'), which made every per-card
+   assertion silently depend on the order — so moving the tier card to the top broke three tests
+   that have nothing to say about order. The order is pinned once, in its own test, above. */
+const card=(kind,html)=>{
+  const from=html.indexOf(`data-programme-card="${kind}"`);
+  assert.ok(from>=0,`missing card data-programme-card="${kind}"`);
+  const rest=html.slice(from+1);
+  const nextCard=rest.search(/data-programme-card="|id="walletReferralSlot"/);
+  return nextCard<0?html.slice(from):html.slice(from,from+1+nextCard);
+};
 
 /* ------------------------------------------------------------------ 1 · the gate is the window */
 
@@ -115,16 +127,18 @@ test('every legacy renderer the fallback path needs is still declared',()=>{
 
 /* --------------------------------------------------------------------- 2 · the order is fixed */
 
-test('the order is stamps → points → tier → referral however the firm turned them on',()=>{
-  assert.deepEqual([...harness.PROGRAMME_STACK_ORDER_V310],['stamps','points','tiers','referral']);
+/* v319 (owner, 2026-08-14: "shift the tier up — to the top of the screen, instead of points &
+   gift"). Tier leads the stack; the two accruing cards follow; referral is still last. */
+test('the order is tier → stamps → points → referral however the firm turned them on',()=>{
+  assert.deepEqual([...harness.PROGRAMME_STACK_ORDER_V310],['tiers','stamps','points','referral']);
   const all=render(spine({stamps:running(),points:running(),tiers:running(),referral:running()}));
-  assert.deepEqual(cardOrder(all),['stamps','points','tiers']);
-  assert.ok(all.indexOf('walletReferralSlot')>all.indexOf('data-programme-card="tiers"'),
-    'referral is position 4, after the tier card');
+  assert.deepEqual(cardOrder(all),['tiers','stamps','points']);
+  assert.ok(all.indexOf('walletReferralSlot')>all.indexOf('data-programme-card="points"'),
+    'referral is position 4, after the accruing cards');
   /* The payload is spine `sort` order, but the stack must not inherit it: a server that reorders
      its rows must not reorder the customer's cards. */
   const shuffled=render([...spine({stamps:running(),points:running(),tiers:running()})].reverse());
-  assert.deepEqual(cardOrder(shuffled),['stamps','points','tiers']);
+  assert.deepEqual(cardOrder(shuffled),['tiers','stamps','points']);
 });
 
 /* ------------------------------------------------------ 3 · no filler cards, ever */
@@ -153,38 +167,42 @@ test('a programme the firm never ran renders nothing at all',()=>{
 
 test('a paused programme keeps its card, says so, and never blanks the others',()=>{
   const html=render(spine({points:paused('2026-07-01T00:00:00Z'),tiers:running(),stamps:running()}));
-  assert.deepEqual(cardOrder(html),['stamps','points','tiers'],
+  assert.deepEqual(cardOrder(html),['tiers','stamps','points'],
     'pausing points removes neither the stamps card nor the tier card');
-  const points=section('data-programme-card="points"','data-programme-card="tiers"',html);
+  const points=card('points',html);
   assert.match(points,/Programme paused/);
   assert.match(points,/Anything you already earned is kept/);
   assert.match(points,/1 Jul 2026/,'the card says since when, from the server’s own breadcrumb');
   assert.doesNotMatch(points,/customer-programme-balance/,
     'a paused programme discloses no balance — the server zeroes it, and a bare 0 is a lie');
-  const tiers=html.slice(html.indexOf('data-programme-card="tiers"'));
-  assert.match(tiers,/Explorer/,'the tier card is untouched by the points pause');
+  assert.match(card('tiers',html),/Explorer/,'the tier card is untouched by the points pause');
 });
 
 test('each card reads its OWN active flag, not a single programme-wide one',()=>{
   const tierPaused=render(spine({points:running(),tiers:paused()}));
-  const points=section('data-programme-card="points"','data-programme-card="tiers"',tierPaused);
-  assert.match(points,/customer-programme-balance/,'points is running, so its figure stands');
-  const tiers=tierPaused.slice(tierPaused.indexOf('data-programme-card="tiers"'));
+  /* v322: the hero number moved to the wallet strip, so a RUNNING points card is recognised by
+     what it now owns — the gift shelf — rather than by a balance it no longer prints. */
+  assert.match(card('points',tierPaused),/id="walletRewards"/,
+    'points is running, so its card carries the gifts its balance pays for');
+  assert.doesNotMatch(card('points',tierPaused),/programmePaused/);
+  const tiers=card('tiers',tierPaused);
   assert.match(tiers,/Programme paused/);
   assert.doesNotMatch(tiers,/Explorer/,'a paused tier programme does not show a rung it is not awarding');
 });
 
 /* -------------------------------------------------------------------- 5 · exactly one hero */
 
-test('exactly one .customer-programme-balance in a four-programme stack',()=>{
+test('exactly one .customer-programme-balance on the surface, and it is the strip',()=>{
+  /* v322 (C1): the one-hero rule is unchanged — the owner of the number changed. It is the wallet
+     strip at the top of the screen now, so no card in the stack repeats it. */
   const html=render(spine({stamps:running(),points:running(),tiers:running(),referral:running()}));
-  assert.equal((html.match(/class="customer-programme-balance"/g)||[]).length,1,
-    'one number, one owner: the Points card');
-  const points=section('data-programme-card="points"','data-programme-card="tiers"',html);
-  assert.match(points,/class="customer-programme-balance"/);
-  const stamps=section('data-programme-card="stamps"','data-programme-card="points"',html);
-  assert.doesNotMatch(stamps,/class="customer-programme-balance"/,
-    'the stamps figure is the ring row, not a second hero number');
+  assert.equal((html.match(/class="customer-programme-balance"/g)||[]).length,0,
+    'no card in the stack prints the balance');
+  const strip=harness.customerWalletStripMarkupV322({business:{name:'Hougang ABC'},
+    presentation:{unit:'points',balance:180},loyalty:LOYALTY,reward:REWARD,rewardsAvailable:true});
+  assert.equal(((strip+html).match(/class="customer-programme-balance"/g)||[]).length,1,
+    'one number, one owner: the wallet strip');
+  assert.match(strip,/customer-programme-balance/);
 });
 
 test('no stack shape ever prints the hero twice',()=>{
@@ -253,7 +271,8 @@ test('no rings when no reward cost is known, and never a default of ten',()=>{
   assert.equal(harness.customerStampTargetV310({}),0);
   assert.equal(harness.customerStampTargetV310({cost_units:0}),0);
   assert.equal(harness.customerStampTargetV310({cost_units:8}),8);
-  const html=render(spine({stamps:running()}),{reward:null});
+  const html=render(spine({stamps:running()}),{reward:null,
+    loyalty:{enabled:true,balance:180,unit:'stamps'},presentation:{unit:'stamps',balance:180}});
   const stamps=html.slice(html.indexOf('data-programme-card="stamps"'));
   assert.doesNotMatch(stamps,/customer-programme-stamp-rings/,
     'an unknown N is stated as an unknown N — the plain count and nothing drawn');
@@ -286,7 +305,11 @@ test('the stamps card never says "Reward points"',()=>{
 });
 
 test('the gifts host lands on the accruing card, never on both',()=>{
-  const stampsFirm=render(spine({stamps:running(),points:paused()}));
+  /* v322: the host follows the POT, and at a stamps firm the pot is stamps (the server derives
+     loyalty.unit from the firm's one loyalty_programs row). */
+  const stampsFirm=render(spine({stamps:running(),points:paused()}),
+    {loyalty:{enabled:true,balance:8,unit:'stamps'},presentation:{unit:'stamps',balance:8},
+      reward:{name:'Free pastry',cost_units:10,remaining_units:2,available_now:false}});
   assert.equal((stampsFirm.match(/id="walletRewards"/g)||[]).length,1);
   const stamps=section('data-programme-card="stamps"','data-programme-card="points"',stampsFirm);
   assert.match(stamps,/id="walletRewards"/,'at a stamps firm the gifts sheet hangs off the stamps card');

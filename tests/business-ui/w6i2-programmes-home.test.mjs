@@ -216,7 +216,11 @@ test('W6I2 B2 the wizard produces exactly three rungs, Silver / Gold / Diamond (
   assert.equal([...wizard.matchAll(/\['Silver',0\]/g)].length, 2, 'three rungs, one table per basis');
   // PRODUCED, not offered — and only for a firm with NO ladder, so D7's "no retroactive
   // enforcement" holds and a tenant on six rungs stays on six.
-  assert.match(wizard, /const prefillTiersW6I2=\(\)=>\{\s*\r?\n?\s*if\(state\.switches\.tiers!==true\|\|state\.tiers\.length\)return false;/);
+  // W6 RISK C: "no ladder" now has to be DISTINGUISHED from "the ladder could not be read", so the
+  // fail-closed guard is the first line of the function and the emptiness guard is the second. The
+  // pin used to require them to be one line, which is the collapse itself. The behaviour is in
+  // tests/business-ui/w6-risk-c-tier-read-envelope.test.mjs.
+  assert.match(wizardCode, /const prefillTiersW6I2=\(\)=>\{\s*\r?\n?\s*if\(tiersUnreadableW6I2\(\)\)return false;\s*\r?\n?\s*if\(state\.switches\.tiers!==true\|\|state\.tiers\.length\)return false;/);
   assert.match(wizard, /state\.tiersDirty\.add\(id\);/);
   assert.equal([...wizard.matchAll(/if\(stepKindW6I2\(\)==='tiers'\)prefillTiersW6I2\(\);/g)].length, 2,
     'prefilled on arrival at the ladder screen and on a wizard that opens directly on it');
@@ -275,7 +279,12 @@ test('W6I2 B4 the referral rail writes referral_programs at Go-live, never on a 
 /* ================= C. D3, and the half of it the server has not shipped ================= */
 
 test('W6I2 C1 a threshold or basis change NAMES what moves, from data already on the screen', () => {
-  assert.match(wizard, /const publishedTiersW6I2=\(\)=>\(Array\.isArray\(liveTiers\)\?liveTiers:\[\]\)/);
+  /* W6 RISK C: this pin used to require `(Array.isArray(liveTiers)?liveTiers:[])`, which is the
+     null-collapse it was meant to protect — a failed read became an empty ladder and the gate below
+     went silent for exactly the firms it could not see. The published ladder now arrives as a
+     three-state envelope and this reader takes its rows; whether there IS a published ladder is
+     asked through tiersUnreadableW6I2(), never through this list's length. */
+  assert.match(wizard, /const publishedTiersW6I2=\(\)=>liveTiersW6I2\.rows/);
   assert.match(wizard, /const tierThresholdChangesW6I2=\(\)=>\{/);
   assert.match(wizard, /direction:draft\.threshold>live\.threshold\?'harder':'easier'/);
   assert.match(wizard, /return \{name:live\.name,from:live\.threshold,to:null,direction:'removed'\};/);

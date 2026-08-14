@@ -242,7 +242,15 @@ test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier
      `active` is now the row's own, because the SAME writer performs Remove (active:false) and Undo
      (active:true) — hardcoding true would have made removal unwritable through it. */
   assert.match(wizard, /points_multiplier:tier\.multiplier,perk_note:tier\.perkNote,sort:tier\.sort,\s*\r?\n?\s*active:tier\.active!==false,/);
-  assert.match(app, /\.select\('id,name,threshold,points_multiplier,perk_note,sort,active,effective_from,expires_at'\)/);
+  /* W6 RISK C: this pin used to require `active` in the published-ladder select — a column
+     public.loyalty_tiers has never had. `active` lives on loyalty_tier_versions, and
+     publish_loyalty_config projects only the active versions, so every published rung is active by
+     construction. PostgREST answers an unknown column with 42703, so the pin was guarding a read
+     that failed for every tenant on every load. The column list is now the published table's own,
+     and the wizard's `active` handling above is unchanged: a row that arrives without the key is
+     read as active by `tier?.active!==false`, which is exactly right for a published rung. */
+  assert.match(app, /const LOYALTY_TIER_COLUMNS_W6I2='id,name,threshold,points_multiplier,perk_note,sort,effective_from,expires_at';/);
+  assert.doesNotMatch(app, /\.select\('id,name,threshold,points_multiplier,perk_note,sort,active,effective_from,expires_at'\)/);
   // The threshold is labelled in its own unit rather than left as a bare number.
   assert.match(wizard, /const tierUnitLabelV303=\(\)=>tierBasisV303\(\)==='visits'\?'Visits to reach it':'Points to reach it';/);
   // One tap fills three rows and writes nothing until Next.
@@ -251,7 +259,10 @@ test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier
      empty. No retroactive enforcement: the prefill fires only on a firm with NO ladder at all. */
   assert.match(wizard, /const TIER_DEFAULTS_V303=\[\['Silver',0\],\['Gold',200\],\['Diamond',500\]\];/);
   assert.match(wizard, /const TIER_DEFAULTS_VISITS_W6I2=\[\['Silver',0\],\['Gold',5\],\['Diamond',15\]\];/);
-  assert.match(wizard, /const prefillTiersW6I2=\(\)=>\{\s*\r?\n?\s*if\(state\.switches\.tiers!==true\|\|state\.tiers\.length\)return false;/);
+  /* W6 RISK C: "the firm has NO ladder" is the only licence to produce one, and an unreadable read
+     is not that claim — so the fail-closed guard is the first line and the emptiness guard the
+     second. See tests/business-ui/w6-risk-c-tier-read-envelope.test.mjs for the behaviour. */
+  assert.match(stripComments(wizard), /const prefillTiersW6I2=\(\)=>\{\s*\r?\n?\s*if\(tiersUnreadableW6I2\(\)\)return false;\s*\r?\n?\s*if\(state\.switches\.tiers!==true\|\|state\.tiers\.length\)return false;/);
   assert.match(wizard, /if\(stepKindW6I2\(\)==='tiers'\)prefillTiersW6I2\(\);/);
   assert.match(wizard, /data-grow-setup-tier-default-v303/);
 });
@@ -734,9 +745,11 @@ test('W6I2 (g) every expiry knob is reachable — owner amendment 2026-08-14', (
 test('W6I2 (g) D3: a threshold or basis change states the movement and requires a tick', () => {
   /* Plan decision D3: "raising a tier threshold re-evaluates members immediately; the publish
      preview must state 'N members would move down' and require explicit confirmation."
-     WHAT changes is computed from data the screen already holds (published liveTiers vs the draft
-     ladder), so the confirmation gate never depends on a server that may not answer. */
-  assert.match(wizard, /const publishedTiersW6I2=\(\)=>\(Array\.isArray\(liveTiers\)\?liveTiers:\[\]\)/);
+     WHAT changes is computed from data the screen already holds (the published ladder envelope vs
+     the draft ladder), so the confirmation gate never depends on a server that may not answer.
+     W6 RISK C: the pin here used to be `(Array.isArray(liveTiers)?liveTiers:[])`, which made a
+     failed read indistinguishable from a firm with no rungs and so silenced this very gate. */
+  assert.match(wizard, /const publishedTiersW6I2=\(\)=>liveTiersW6I2\.rows/);
   assert.match(wizard, /const tierThresholdChangesW6I2=\(\)=>\{/);
   assert.match(wizard, /direction:draft\.threshold>live\.threshold\?'harder':'easier'/);
   /* And the basis half compares the draft against the PUBLISHED basis, so it survives leaving the

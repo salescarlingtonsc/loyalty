@@ -186,6 +186,12 @@ const sqlTestBySemanticVersion = new Map([
 ]);
 
 const sqlTestByMigrationName = new Map([
+  // W6 wave 1. Bound BY FULL MIGRATION NAME, not by semantic label: v313 and v314 are each
+  // already used TWICE across the two parallel sessions, so the semantic fallback cannot
+  // disambiguate and a label-bound entry would silently serve the wrong suite.
+  ['nestly_v321_referral_spine_gate_and_leaks', 'db/tests/v321_referral_spine_gate_and_leaks.sql'],
+  ['nestly_v320_gift_authoring_programme_and_stock',
+   'db/tests/v320_gift_authoring_programme_and_stock.sql'],
   // The conversion-first prospecting work was renumbered v313/v314 after the
   // parallel programme session claimed v311/v312; bound BY NAME so the mapping
   // survives any future semantic-label reuse.
@@ -804,7 +810,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 268); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion)
+  assert.equal(pending.length, 270); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v319 W6 wave 1 (referral spine gate + the four referral leaks) + v320 W6 wave 1 (gift authoring programme choice + the total_stock column)
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

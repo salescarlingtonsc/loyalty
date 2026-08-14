@@ -27,7 +27,7 @@ test('customer surfaces expose Book again only through booking-enabled paths',()
   assert.match(app,/a\.status==='completed'/);
   // v194 shrank the programme's own booking action into the header; Book again on the booking
   // tabs is unchanged and still gated on the business having customer booking enabled.
-  assert.match(app,/\$\{bookingEnabled\?`<a class="btn sm customer-programme-book"/);
+  assert.match(app,/\$\{bookingEnabled\?`<a class="btn ghost sm customer-programme-book"/);
   assert.match(app,/group\.bookingEnabled&&group\.business_slug[\s\S]{0,400}?Book again/);
   assert.match(app,/repeat_service=/);
   assert.match(app,/customerRepeatBookingPreferencesV167/);

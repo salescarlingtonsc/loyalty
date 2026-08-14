@@ -1848,6 +1848,18 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v321_referral_spine_gate_and_leaks.sql",
+      "semanticVersion": "v321",
+      "proposedDeployVersion": "20260814000300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v320_gift_authoring_programme_and_stock.sql",
+      "semanticVersion": "v320",
+      "proposedDeployVersion": "20260814000400"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260814_nestly_v313_conversion_first_prospecting.sql",
       "semanticVersion": "v313",
       "proposedDeployVersion": "20260814001000"

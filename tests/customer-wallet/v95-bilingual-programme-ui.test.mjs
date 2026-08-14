@@ -67,7 +67,9 @@ test('merchant home consumes the v95 presentation contract with truthful capabil
   assert.match(presentation,/customer-promotions-grid/);
   /* v194 (owner: "Booking option make it smaller and put upstair"): booking is a compact action in
      the identity header, not a full-width card below the offers. Still gated on bookingEnabled. */
-  assert.match(presentation,/\$\{bookingEnabled\?`<a class="btn sm customer-programme-book" href="#\/b\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}"/);
+  /* v322 (C2, "red is for the next action only"): the same compact header action, now drawn as a
+     secondary control so the one solid red thing on the first screen is the wallet strip's. */
+  assert.match(presentation,/\$\{bookingEnabled\?`<a class="btn ghost sm customer-programme-book" href="#\/b\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}"/);
   assert.doesNotMatch(presentation,/bookingEnabled\?`<section/);
   assert.doesNotMatch(presentation,/id="customerMerchantScan"/);
 });

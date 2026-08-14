@@ -27,7 +27,10 @@ test('V183 Home leads with offers and delegates the reward grid to the My Reward
   const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const fallback=wallet.slice(wallet.indexOf("if(!businessSlug){"),wallet.indexOf("const args={p_business_slug:businessSlug}"));
-  const homeMarkup=home.slice(home.lastIndexOf("$('walletBody').innerHTML=`${isHome?"),home.lastIndexOf('wireCustomerHomeOffersV167(repaint)'));
+  /* v319: the write goes through a `paint()` helper now, so a silent refresh can hold the scroll
+     and stand down mid-interaction. The markup — and the ordering this suite is about — is the
+     same string it always was. */
+  const homeMarkup=home.slice(home.lastIndexOf('if(!paint(`${isHome?'),home.lastIndexOf('wireCustomerHomeOffersV167(repaint)'));
   const homeBranch=homeMarkup.slice(0,homeMarkup.indexOf(':`'));
 
   /* v194 removed the two quick-link cards (they repeated the permanent nav). Offers are what

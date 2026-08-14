@@ -21,7 +21,9 @@ const rewards = section(appJs, '  const loadRewards=async()=>{', '  const loadAc
 test('a failed actions read is named, not silently swallowed', () => {
   assert.match(rewards, /const redemptionUncheckedV286=!!actionsResult\.error;/,
     'the failure of customer_get_business_actions_v89 must be carried into the render');
-  assert.match(rewards, /Redemption can’t be checked right now/);
+  /* v322: the same sentence, routed through ct() so it is not English on a Tamil phone. */
+  assert.match(rewards, /ct\('rewardsUncheckedTitle'\)/);
+  assert.match(appJs, /rewardsUncheckedTitle:'Redemption can’t be checked right now'/);
   assert.match(rewards, /id="walletRewardsRedemptionRetry"/,
     'the section needs the same labelled retry every other wallet section offers');
   assert.match(appJs, /if\(\$\('walletRewardsRedemptionRetry'\)\)\$\('walletRewardsRedemptionRetry'\)\.onclick=loadRewards;/,
@@ -32,19 +34,22 @@ test('the QR lede is suppressed when no QR can be issued', () => {
   assert.match(rewards, /\$\{redemptionUncheckedV286\s*\r?\n?\s*\?`<div class="wallet-section-head" data-rewards-redemption-unchecked/,
     'the failure banner replaces the lede rather than sitting beside it');
   assert.match(rewards,
-    /:`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter/,
+    /:`<p class="muted small customer-programme-rewards-lede">\$\{esc\(ct\('rewardsLede'\)\)\}/,
     'the "show its QR at the counter" promise sits in the else branch — printed only when redemption was checked');
 });
 
 test('no card claims counter availability the page could not verify', () => {
+  /* v322: the state moved onto the row's chip, where the row states its own status. Unchecked
+     redemption still cannot print a counter-availability claim. */
   assert.match(rewards,
-    /if\(redemptionUncheckedV286\)availability\.available_at_counter='Redemption can’t be checked right now';/,
+    /\(redemptionUncheckedV286&&r\.availability==='available_at_counter'\)\?ct\('rewardOffChip'\)/,
     '"Available at counter" must not survive a redemption check that never happened');
-  const guard = rewards.indexOf('if(redemptionUncheckedV286)availability.available_at_counter');
-  const map = rewards.indexOf("available_at_counter:'Available at counter'");
-  const card = rewards.indexOf('esc(rewardLockLineV176(r)||availability[r.availability]');
-  assert.ok(map > 0 && guard > map && card > guard,
-    'the override sits between the map it corrects and the card that reads it');
+  /* The order still has to read: state map, then the correction, then the row that prints it. */
+  const map = rewards.indexOf("available_at_counter:ct('rewardReadyChip')");
+  const guard = rewards.indexOf("(redemptionUncheckedV286&&r.availability==='available_at_counter')");
+  const row = rewards.indexOf('customer-reward-row-chip-v322');
+  assert.ok(map > 0 && guard > map && row > guard,
+    'the override sits between the map it corrects and the row that reads it');
 });
 
 /* ---------------------------- 2 · the wallet read that was fetched and thrown away */

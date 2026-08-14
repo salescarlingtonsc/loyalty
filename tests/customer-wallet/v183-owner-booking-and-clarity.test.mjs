@@ -51,8 +51,11 @@ test('the offers shelf title is one icon-led line',()=>{
 
 test('a reward states the exchange — cost first, then what it buys',()=>{
   const rewards=section(app,'const loadRewards=async','const loadTransactions=');
-  assert.match(rewards,/<b class="wallet-reward-trade"><span class="wallet-reward-cost">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/span>/);
-  assert.match(rewards,/<span class="wallet-reward-arrow" aria-hidden="true">→<\/span><span>\$\{esc\(r\.customer_name\|\|'Reward'\)\}<\/span>/);
+  /* v322 (C2): the same exchange, as a ROW — name first (what it is), then the cost. Two cards
+     per screen became six rows, and the arrow glyph went with the card. */
+  assert.match(rewards,/<span class="customer-reward-row-name-v322">\$\{esc\(name\)\}<\/span>/);
+  assert.match(rewards,/<span class="customer-reward-row-cost-v322">\$\{esc\(customerPointTotalV103\(cost\)\)\} <span class="muted">\$\{esc\(unitWordV322\)\}<\/span><\/span>/);
+  assert.match(rewards,/name=r\.customer_name\|\|ct\('rewardsTab'\)/);
   assert.doesNotMatch(rewards,/<span class="pill">\$\{esc\(customerPointTotalV103\(r\.cost_points\|\|0\)\)\}/,
     'the duplicate cost pill is gone now that the cost leads the line');
 });

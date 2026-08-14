@@ -10588,12 +10588,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      passes every column on both its save and its pause paths — so a two-field edit that did not
      carry the rest would blank a multiplier or a benefit list the owner set in the advanced
      editor. Reading them here is what lets the wizard hand them straight back untouched. */
-  const loyaltyTiersV229=canRewards
-    ?await sb.from('loyalty_tiers')
-      .select('id,name,threshold,points_multiplier,perk_note,sort,active,effective_from,expires_at')
-      .eq('business_id',S.biz.id).order('threshold')
-      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
-    :[];
+  /* W6 RISK C: a THREE-STATE answer — {state:'unknown'|'empty'|'rows', rows}. `unknown` is a read
+     that failed and it is never treated as "this firm has no tiers": see readLoyaltyTiersW6I2 for
+     why the two were collapsed, what that cost Cubbly, and why `active` is gone from the column
+     list. A workspace without the loyalty module never reaches the ladder at all — canSetupGrow
+     requires canRewards — so its answer is a genuine, and genuinely empty, non-read. */
+  const loyaltyTiersV229=canRewards?await readLoyaltyTiersW6I2(S.biz.id):tiersReadW6I2([]);
   if(!isGrowCurrent())return;
   /* V271: the two reads the Overview and History tables need and nothing else can supply.
      business_programme_usage_v271 is the only honest source for "how many customers used this" —
@@ -10859,9 +10859,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Do tier membership for your customers!',
       status:loyaltyModelTileStatusV235('tiers'),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?''
-        :loyaltyTiersV229===null?'Tier details could not be loaded'
-        :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
-        :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
+        :loyaltyTiersV229.state==='unknown'?'Tier details could not be loaded'
+        :(loyaltyTiersV229.rows.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
+        :loyaltyTiersV229.rows.length?`${loyaltyTiersV229.rows.length} tier${loyaltyTiersV229.rows.length===1?'':'s'}: ${loyaltyTiersV229.rows.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Create the ladder customers climb'},
     {key:'stamps',icon:'check',title:'Stamp card',blurb:'Customers earn stamps and redeem!',
       status:loyaltyModelTileStatusV235('stamps'),
@@ -11235,9 +11235,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>`:''}
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
-          :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
+          /* W6 RISK C: an unreadable ladder says so. Printing "No tiers yet" over a firm that has
+             nine rungs is the sentence that told Cubbly's owner to build their ladder a second
+             time, and the "Set up tiers" button underneath repeated the same lie in an action. */
+          :loyaltyTiersV229.state==='unknown'?`<div class="grow-programme-row" style="cursor:default" data-grow-tiersunknown-w6i2><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Your tiers could not be read</b><p class="muted small">Nothing has changed. Any tiers you already have are still there — this page just could not load them.</p></div><span class="grow-programme-meta"><button type="button" class="btn ghost sm" id="growTiersRetryW6I2">Try again</button></span></div>`
+          :(loyaltyTiersV229.rows.length?loyaltyTiersV229.rows.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
           :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
-        ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
+        ${pointsModeV229!=='redeem'&&loyaltyTiersV229.state!=='unknown'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229.rows.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}
       ${topicOnV229('lifestyle')?`
       <div class="programme-category" data-programme-category-v268="lifestyle"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
@@ -11907,6 +11911,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growOverviewDraftPublish)growOverviewDraftPublish.onclick=()=>nav('#/grow/setup/review');
   const growRewardsRetry=$('growRewardsRetry');
   if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam,routedFocus);
+  /* W6 RISK C: the ladder read is the one read on this page whose failure used to be indistinguish-
+     able from an empty answer, so it is the one that needs a way out. Same recovery as the rewards
+     retry beside it — re-run the page, which re-runs the read. */
+  const growTiersRetryW6I2=$('growTiersRetryW6I2');
+  if(growTiersRetryW6I2)growTiersRetryW6I2.onclick=()=>growPage(routedSurface,hashParam,routedFocus);
   document.querySelectorAll('[data-reward-cost]').forEach(input=>input.addEventListener('input',()=>{
     const productId=input.dataset.rewardCost;
     const card=input.closest('[data-product-profitability]');
@@ -13170,6 +13179,54 @@ const GROW_SETUP_SECTOR_DEFAULTS_W6I2={
   fitness:['tiers','referral'],
   retail:['points'],other:['points']
 };
+/* ---- W6 RISK C: THE TIER LADDER IS A THREE-STATE ANSWER, AND IT FAILS CLOSED -----------------
+   Until now the published ladder was read as `r.error?null:(r.data||[])` and every consumer then
+   wrote `Array.isArray(x)?x:[]`, which collapses the two answers that matter most: "the read
+   failed, so I do not know what this firm's ladder is" and "the read succeeded and this firm has
+   no ladder". They demand OPPOSITE behaviour. Not knowing must stop a write to the ladder and must
+   keep a warning on screen; knowing there is nothing is what licenses the D7 three-rung prefill.
+
+   Collapsed, the wizard read an unknown ladder as an empty one, invented Silver/Gold/Diamond, and
+   its own Next wrote them into a draft that create_loyalty_config_draft had ALREADY filled with
+   the firm's real rungs — and the D3 movement gate, which only fires when the published ladder has
+   rows, went quiet for exactly the firms whose ladder it could not see.
+
+   THE COLUMN THAT MADE IT PERMANENT (found against production 2026-08-14). The V303 read asked for
+   `active`, which public.loyalty_tiers DOES NOT HAVE: `active` lives on loyalty_tier_versions, and
+   publish_loyalty_config projects only the active versions ("… and active"), so every row in the
+   published table is active by construction. PostgREST answers an unknown column with 42703, so
+   the read had been failing for EVERY tenant on EVERY page load since V303 shipped — the Tiered
+   membership card had been reading "Tier details could not be loaded" and the wizard's Tiers step
+   had been opening empty in front of owners who already had a ladder. Cubbly's went 3 → 6 → 9
+   rungs across three sessions, duplicating thresholds 0 and 20, because the screen kept showing
+   an empty ladder and the owner kept re-creating it. The column list below is the published
+   table's own, so the read succeeds; the envelope is what makes the failure honest when it does
+   not. Both halves are needed: the envelope alone would refuse the Tiers step forever.
+
+   RULE, stated once so it is not re-litigated per consumer: an unreadable ladder never permits a
+   write to the ladder and never suppresses a warning. */
+const LOYALTY_TIER_COLUMNS_W6I2='id,name,threshold,points_multiplier,perk_note,sort,effective_from,expires_at';
+const tiersUnknownW6I2=()=>({state:'unknown',rows:[]});
+const tiersReadW6I2=rows=>{
+  const list=Array.isArray(rows)?rows:[];
+  return {state:list.length?'rows':'empty',rows:list};
+};
+/* Normalises whatever a consumer was handed into the envelope, and everything it cannot recognise
+   is UNKNOWN — including null and undefined, which is what an omitted argument looks like. A bare
+   array stays a successful read, because an array is only ever produced by one, and its length
+   then decides `empty` vs `rows` rather than a caller's claim about itself. */
+const tiersEnvelopeW6I2=value=>{
+  if(Array.isArray(value))return tiersReadW6I2(value);
+  if(value&&typeof value==='object'&&['empty','rows'].includes(String(value.state)))
+    return tiersReadW6I2(value.rows);
+  return tiersUnknownW6I2();
+};
+/* The ONE read of the published ladder, so the column list and the three-state answer cannot drift
+   apart between the Programmes page and the wizard's own retry. */
+const readLoyaltyTiersW6I2=businessId=>sb.from('loyalty_tiers')
+  .select(LOYALTY_TIER_COLUMNS_W6I2).eq('business_id',businessId).order('threshold')
+  .then(result=>result.error?tiersUnknownW6I2():tiersReadW6I2(result.data))
+  .catch(()=>tiersUnknownW6I2());
 /* V305's climbing question, kept and promoted. It is the OWNER AMENDMENT's "tier basis is an owner
    CHOICE of visits OR points-earned" control, verbatim — the same two options, the same
    data attribute, the same write. What changed is where it lives (the tier rail's first screen,
@@ -13299,7 +13356,10 @@ async function growSetupComparisonV301(draftVersionId){
 /* The wizard itself. ONE node, four steps, zero dialogs — the tests assert the absence of
    `.modal` inside it, because "no popups" is the whole point of this surface. State lives in
    this closure so a step change never loses a typed value, and only the wizard's own node is
-   re-rendered, so the Programmes page around it (and the rail) is untouched between steps. */
+   re-rendered, so the Programmes page around it (and the rail) is untouched between steps.
+   `liveTiers` is the published ladder as the THREE-STATE envelope readLoyaltyTiersW6I2 returns
+   ({state:'unknown'|'empty'|'rows', rows}); a bare array is still accepted and read as a successful
+   answer, and anything else — including an omitted argument — is UNKNOWN, which fails closed. */
 async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTiers=null}){
   if(!host)return;
   const currency=S.biz?.currency||'SGD';
@@ -13357,6 +13417,21 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     incoming.forEach(tier=>{if(tier.id)byId.set(tier.id,tier)});
     return [...byId.values()].sort((a,b)=>a.threshold-b.threshold);
   };
+  /* W6 RISK C — the published ladder arrives as a three-state envelope and it is normalised HERE,
+     once, so no consumer below can go back to reading it as a possibly-null array. An argument that
+     is not an envelope and not an array (null, undefined, an omitted parameter) is UNKNOWN, which
+     is the fail-closed answer: not knowing the ladder must never license writing to it. `let`
+     because the Tiers step's Try again re-reads and replaces it. */
+  let liveTiersW6I2=tiersEnvelopeW6I2(liveTiers);
+  const tiersUnreadableW6I2=()=>liveTiersW6I2.state==='unknown';
+  const TIERS_UNREADABLE_REFUSAL_W6I2='We could not read your current tiers. Reload before editing the ladder.';
+  const TIERS_UNREADABLE_MOVEMENT_W6I2='The published ladder could not be read, so we cannot say who moves.';
+  const draftTierRowsW6I2=Array.isArray(snapshot?.draftDetail?.tiers)?snapshot.draftDetail.tiers:[];
+  /* One spelling of "what this session's ladder starts as", used by the initial seed and by the
+     retry. Under `unknown` the envelope carries no rows, so the seed is the draft's ladder alone —
+     never an invented one. */
+  const tiersSeedW6I2=envelope=>mergeTiersV303(tierListFrom(envelope.rows),tierListFrom(draftTierRowsW6I2))
+    .filter(tier=>tier.active!==false);
   /* W6 increment 2: which SWITCHES screen 0 opens with. The spine is the authority (v314), so the
      toggles are seeded from the four spine rows and from nothing else when they can be read. The
      card the owner pressed rides along as a hand-off — they have already said which programme they
@@ -13427,8 +13502,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      is the draft's, and comparing against it makes the D3 gate intra-session only: change the basis,
      press Next (the draft now says points-earned), leave, come back, and the gate sees no change
      while publishing still re-sorts every member. That is the same shape the threshold half already
-     avoids — it compares the draft against `liveTiers`, which is PUBLISHED, so a rung raised in a
-     previous session still gates on re-entry. This is the basis half of the same comparison, and
+     avoids — it compares the draft against `liveTiersW6I2`, which is PUBLISHED, so a rung raised in
+     a previous session still gates on re-entry. This is the basis half of the same comparison, and
      the two sources are never conflated: this one is what customers are on today, and re-basing is
      measured against it. null = no published basis to move anyone off. */
   const publishedTierBasisW6I2=['visits','spend','points_earned'].includes(String(live?.tier_basis||''))
@@ -13496,9 +13571,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     rewards:mergeRewardsV302(rewardListFrom(snapshot?.rewards),
       rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:[]))
       .filter(reward=>reward.active!==false),
-    tiers:mergeTiersV303(tierListFrom(liveTiers),
-      tierListFrom(Array.isArray(snapshot?.draftDetail?.tiers)?snapshot.draftDetail.tiers:[]))
-      .filter(tier=>tier.active!==false),
+    /* W6 RISK C: seeded through tiersSeedW6I2, so an UNKNOWN published ladder contributes nothing
+       rather than being read as an empty one. See readLoyaltyTiersW6I2. */
+    tiers:tiersSeedW6I2(liveTiersW6I2),
     /* Which tier ids this session has actually touched. Only those are written on Next: a step
        that re-saved every listed tier would bump the snapshot hash of rows nobody edited and put
        a wizard-shaped write on the audit trail for each of them. */
@@ -13974,8 +14049,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      'N members would move down' and require explicit confirmation."
      Two halves, and they degrade independently:
        · WHAT changes is computed HERE, from data this screen already holds — the published ladder
-         arrived as `liveTiers` and the draft ladder is state.tiers. No read, no RPC, always
-         available, and it is the half that decides whether a confirmation is required.
+         arrived as `liveTiersW6I2` and the draft ladder is state.tiers. No read, no RPC, always
+         available, and it is the half that decides whether a confirmation is required. W6 RISK C
+         added the third answer that half can give: when the published ladder is UNKNOWN it cannot
+         name what changes, so it says so and still demands the tick.
        · HOW MANY members move is a per-client tier-metric aggregation over every customer at the
          business. It cannot be computed in the browser: under 'visits' it needs a visit count per
          client and under 'points_earned' a lifetime-earn sum per client, and paging either into
@@ -13984,7 +14061,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
          the server, through preview_publish_impact's `tier_movements` key — WHICH DOES NOT EXIST
          YET. See SERVER ASKS in the build report. The block reads it behind a capability check and
          says so honestly when it is absent, rather than printing a zero it cannot stand behind. */
-  const publishedTiersW6I2=()=>(Array.isArray(liveTiers)?liveTiers:[])
+  /* W6 RISK C: `rows` is empty under BOTH 'empty' and 'unknown', so this list alone can no longer
+     be asked "is there a published ladder?" — tiersUnreadableW6I2() answers that, and every gate
+     below asks it FIRST. Published rows carry no `active` column (publish_loyalty_config projects
+     only the active versions), so the filter passes them all; it stays for a draft-shaped row. */
+  const publishedTiersW6I2=()=>liveTiersW6I2.rows
     .filter(tier=>tier&&tier.active!==false)
     .map(tier=>({id:String(tier.tier_id||tier.id||''),name:String(tier.name||'Tier').trim(),
       threshold:Math.max(0,Number(tier.threshold)||0)}));
@@ -14007,9 +14088,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      moves nobody. */
   const tierBasisChangedW6I2=()=>publishedTierBasisW6I2!==null&&state.tierBasis!==publishedTierBasisW6I2;
   /* Anything that can only move a member DOWN needs the tick. A threshold that got easier moves
-     people up, which nobody has to be warned about. */
-  const tierMovementRiskW6I2=()=>state.switches.tiers===true&&publishedTiersW6I2().length>0
-    &&(tierBasisChangedW6I2()||tierThresholdChangesW6I2().some(change=>change.direction!=='easier'));
+     people up, which nobody has to be warned about.
+     W6 RISK C — AN UNREADABLE LADDER IS AT RISK BY DEFAULT. The old predicate required
+     publishedTiersW6I2().length>0, and a failed read produced zero rows, so the one case where we
+     genuinely cannot rule out a downgrade was the one case that skipped the warning and the tick.
+     Fail closed: we cannot say nobody moves, so we say we cannot say, and the tick is required. */
+  const tierMovementRiskW6I2=()=>state.switches.tiers!==true?false
+    :tiersUnreadableW6I2()?true
+    :publishedTiersW6I2().length>0
+      &&(tierBasisChangedW6I2()||tierThresholdChangesW6I2().some(change=>change.direction!=='easier'));
   const tierMovementCountsW6I2=()=>{
     const movements=state.impact&&typeof state.impact==='object'?state.impact.tier_movements:null;
     if(!movements||typeof movements!=='object')return null;
@@ -14025,8 +14112,18 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* No key at all: the server has not shipped the count yet. Say that, rather than a zero. */
     return 'How many members move is not counted yet on this workspace, so check the ladder before you publish.';
   };
+  /* One spelling of the D3 admission, because the unreadable branch below needs the same tick and
+     two copies of a checkbox is how two checkboxes start saying different things. */
+  const tierAckLabelW6I2=()=>`<label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupTierAckW6I2" style="width:auto;margin-top:3px"${state.tierAck?' checked':''}> <span>I understand members can move down a tier when I publish.</span></label>`;
   const tierMovementBlockW6I2=({gate=false}={})=>{
     if(!tierMovementRiskW6I2())return '';
+    /* W6 RISK C: we could not read the published ladder, so we cannot name a single change and we
+       must not imply there are none. The block still appears and the tick is still required — the
+       owner is admitting a risk we cannot size, and they are told exactly that. */
+    if(tiersUnreadableW6I2())return `<div class="imp-note" data-grow-setup-tiermove-w6i2 data-grow-setup-tiersunknown-w6i2 style="margin-top:12px">
+      <b>Members are re-sorted the moment you publish</b>
+      <p class="muted small" style="margin-top:6px">${esc(TIERS_UNREADABLE_MOVEMENT_W6I2)} Reload the page to try again, or publish knowing that.</p>
+      ${gate?tierAckLabelW6I2():''}</div>`;
     const changes=tierThresholdChangesW6I2();
     const unit=tierBasisV303()==='visits'?'visits':'points';
     const lines=[
@@ -14041,7 +14138,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <b>Members are re-sorted the moment you publish</b>
       <ul class="studio-change-list-v295" style="margin-top:6px">${lines.join('')}</ul>
       <p class="muted small" style="margin-top:6px" data-grow-setup-tiermove-count-w6i2>${esc(tierMovementCountLineW6I2())}</p>
-      ${gate?`<label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growSetupTierAckW6I2" style="width:auto;margin-top:3px"${state.tierAck?' checked':''}> <span>I understand members can move down a tier when I publish.</span></label>`:''}</div>`;
+      ${gate?tierAckLabelW6I2():''}</div>`;
   };
   /* Under a points basis the earn rate is asked for ONCE, on the Points & gifts Earning screen —
      which the rule above guarantees is on the rail whenever this basis is chosen. The screen used
@@ -14144,6 +14241,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      enforcement. Local only: the rows are marked dirty and written by the screen's own Next, so an
      owner who prefills and walks away has created nothing, exactly like the one-tap chip. */
   const prefillTiersW6I2=()=>{
+    /* W6 RISK C — THE FAIL-CLOSED LINE. "This firm has no ladder" is the ONLY licence to invent
+       one, and an unreadable read is not that claim. Collapsed, this fired on every firm whose
+       ladder could not be read: three fresh-uuid rungs pushed and marked dirty, then written by the
+       step's own Next into a draft create_loyalty_config_draft had already filled with the firm's
+       REAL rungs — 9 rungs becoming 12, three of them colliding, and publish projecting all twelve.
+       An unreadable ladder never permits a write to the ladder. */
+    if(tiersUnreadableW6I2())return false;
     if(state.switches.tiers!==true||state.tiers.length)return false;
     tierDefaultsW6I2().forEach(([name,threshold],index)=>{
       const id=crypto.randomUUID();
@@ -14165,6 +14269,17 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const rewardRowPointsTextV304=points=>` · ${unitWord(Math.max(0,Number(points)||0),rewardUnit())}`;
   const tierRowThresholdTextV304=threshold=>` · ${Math.max(0,Number(threshold)||0)} ${tierBasisV303()==='visits'?'visits':'points'}`;
   const tiersStepHtml=()=>{
+    /* W6 RISK C: the ladder could not be read, so this screen shows NO ladder, NO ready-made chip
+       and NO add form. Every one of the three writes a rung — the chip and the prefill locally, the
+       form immediately through save_loyalty_tier_draft_v143 — and a rung added on top of a ladder
+       nobody can see is a duplicate of one that is probably already there. The owner gets the true
+       state, a way to try again, and Next refuses in the same words. */
+    if(tiersUnreadableW6I2())return `<p class="grow-setup-lead-v301">What tiers do customers climb?</p>
+      <div class="imp-note" data-grow-setup-tiersunknown-w6i2 role="status">
+        <b>Your tiers could not be read</b>
+        <p class="muted small" style="margin-top:6px">Nothing has changed and nothing is lost. Any tiers you already have are still live — this screen just could not load them, and adding tiers now would make a second copy of a ladder you may already have.</p>
+        <div class="row" style="margin-top:10px"><button type="button" class="btn sm" id="growSetupTiersRetryW6I2">Try again</button></div></div>
+      ${tierMovementBlockW6I2()}`;
     const form=state.tierForm||{name:'',threshold:''};
     /* V304: a removed row keeps its place for the rest of this visit, muted, with Undo beside it.
        No confirm() and no modal — the undo IS the safety, and it is on the row itself. */
@@ -14395,7 +14510,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     :pointsLadderStalledW6I2()
       ?POINTS_LADDER_REFUSAL_W6I2
       :(tierMovementRiskW6I2()&&!state.tierAck)
-        ?'Tick the box above to confirm members can move down a tier before publishing.'
+        /* W6 RISK C: when the ladder is unreadable the tick admits a risk we cannot size, so the
+           refusal says that rather than naming a downgrade we have not actually seen. */
+        ?(tiersUnreadableW6I2()
+          ?`${TIERS_UNREADABLE_MOVEMENT_W6I2} Tick the box above to publish anyway, or reload and try again.`
+          :'Tick the box above to confirm members can move down a tier before publishing.')
         :'Tick the box above to confirm this change before publishing.';
   const goto=step=>{
     state.step=Math.min(railCountW6I2(),Math.max(1,step));
@@ -14575,6 +14694,29 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       state.editingV304=tier.id;
       render();$('growSetupTierNameV303')?.focus({preventScroll:true});
     });
+    /* W6 RISK C: the Tiers step's own Try again. It re-runs the SAME read the Programmes page ran,
+       so a transient failure costs a tap rather than a reload, and on success it re-seeds the
+       ladder through the one seed helper. Re-seeding cannot clobber an in-session edit because the
+       unreadable step allows none — that is the point of it. */
+    const tiersRetryW6I2=$('growSetupTiersRetryW6I2');
+    if(tiersRetryW6I2)tiersRetryW6I2.onclick=()=>withBusy(async()=>{
+      const fresh=await readLoyaltyTiersW6I2(S.biz.id);
+      if(!isCurrent())return;
+      liveTiersW6I2=fresh;
+      if(fresh.state==='unknown'){
+        state.error='Your tiers still could not be read. Check your connection, then try again.';
+        return render();
+      }
+      state.tiers=tiersSeedW6I2(fresh);
+      /* The tick admits a SPECIFIC set of moves. A successful retry can REVEAL a downgrade the
+         owner ticked past while the ladder was unreadable ("we cannot say who moves"), so the
+         admission has to be re-earned against what the ladder now says — the same rule the tier
+         write and the basis change already follow. Without this, the one gate this envelope
+         exists to make fail-CLOSED fails OPEN on the only path that can change the comparison
+         mid-session. */
+      state.tierAck=false;
+      render();
+    },'growSetupTiersRetryW6I2');
     /* The one-tap ladder. It only PREFILLS the list — nothing is written until Next — so an owner
        who presses it and then changes their mind has created nothing. */
     host.querySelectorAll('[data-grow-setup-tier-default-v303]').forEach(button=>button.onclick=()=>{
@@ -14961,6 +15103,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        puts the open form through the SAME saveTierFormV304 the in-form "Add tier" button uses,
        and then writes whatever the one-tap ladder left dirty. */
     if(kind==='tiers')return withBusy(async()=>{
+      /* W6 RISK C — THE REFUSAL, in the flow and not only in the render. The rendered step already
+         withholds the ladder, the chip and the form when the published ladder is unreadable, but a
+         disabled screen is a hint and this is the guard: Next is the line that turned three
+         invented rungs into three written ones, so it refuses BEFORE it flushes anything. */
+      if(tiersUnreadableW6I2()){state.error=TIERS_UNREADABLE_REFUSAL_W6I2;return render()}
       flushTierSaveV304();
       const form=state.tierForm;
       const hasForm=Boolean(form&&form.name.trim().length>=1);

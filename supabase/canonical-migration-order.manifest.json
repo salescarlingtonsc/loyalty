@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 268,
-  "itemCount": 313,
+  "pendingCount": 270,
+  "itemCount": 315,
   "items": [
     {
       "order": 1,
@@ -3072,6 +3072,26 @@
     {
       "order": 307,
       "kind": "pending",
+      "version": "20260814000300",
+      "name": "nestly_v321_referral_spine_gate_and_leaks",
+      "path": "supabase/migrations/20260814000300_nestly_v321_referral_spine_gate_and_leaks.sql",
+      "octetLength": 68693,
+      "sha256": "96aad94c2b6ca310db13ba1c97b128c8204d2e80ac74246bf354ec20cca4d23b",
+      "provenance": "local-source"
+    },
+    {
+      "order": 308,
+      "kind": "pending",
+      "version": "20260814000400",
+      "name": "nestly_v320_gift_authoring_programme_and_stock",
+      "path": "supabase/migrations/20260814000400_nestly_v320_gift_authoring_programme_and_stock.sql",
+      "octetLength": 61917,
+      "sha256": "2989421900e11070c3498fc20623b87de9d1b61b01c344ec158d74feddaf3622",
+      "provenance": "local-source"
+    },
+    {
+      "order": 309,
+      "kind": "pending",
       "version": "20260814001000",
       "name": "nestly_v313_conversion_first_prospecting",
       "path": "supabase/migrations/20260814001000_nestly_v313_conversion_first_prospecting.sql",
@@ -3080,7 +3100,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 308,
+      "order": 310,
       "kind": "pending",
       "version": "20260814001050",
       "name": "nestly_v313_rollback_data_snapshot",
@@ -3090,7 +3110,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 309,
+      "order": 311,
       "kind": "pending",
       "version": "20260814001100",
       "name": "nestly_v314_business_explorer_and_funnel",
@@ -3100,7 +3120,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 310,
+      "order": 312,
       "kind": "pending",
       "version": "20260814001200",
       "name": "nestly_v315_repair_dropped_lead_score_references",
@@ -3110,7 +3130,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 311,
+      "order": 313,
       "kind": "pending",
       "version": "20260814001300",
       "name": "nestly_v316_repair_taxonomy_and_match_queue",
@@ -3120,7 +3140,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 312,
+      "order": 314,
       "kind": "pending",
       "version": "20260814001400",
       "name": "nestly_v317_restore_wrongly_dropped_dependencies",
@@ -3130,7 +3150,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 313,
+      "order": 315,
       "kind": "pending",
       "version": "20260814001500",
       "name": "nestly_v318_align_system_managed_stage_flags",

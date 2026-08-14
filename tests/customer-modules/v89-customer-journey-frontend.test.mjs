@@ -292,13 +292,18 @@ test('Quick Earn scanner follows front-desk and manager loyalty-write assignment
 test('classic and catalog rewards share the v89 availability enum and produce truthful intent arguments',async()=>{
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const wallet=section(app,'async function renderCustomerWallet','async function renderCustomerInAppInbox');
-  assert.match(wallet,/available_at_counter:'Available at counter'/);
-  assert.match(wallet,/disabled:'Unavailable for redemption'/);
+  /* v322: the enum is unchanged — the LABELS are ct()-routed, because they were English on a
+     Chinese, Malay and Tamil phone. */
+  assert.match(wallet,/available_at_counter:ct\('rewardReadyChip'\)/);
+  assert.match(wallet,/disabled:ct\('rewardOffChip'\)/);
   assert.doesNotMatch(wallet,/Ask the business to enable QR redemption|QR redemption is not enabled by this business/);
-  assert.match(wallet,/not_started:'Available soon'/);
-  assert.match(wallet,/ended:'Offer ended'/);
-  assert.match(wallet,/limit_reached:'Claim limit reached'/);
-  assert.match(wallet,/insufficient_balance:'More points needed'/);
+  assert.match(wallet,/not_started:ct\('rewardSoonChip'\)/);
+  assert.match(wallet,/ended:ct\('rewardEndedChip'\)/);
+  assert.match(wallet,/limit_reached:ct\('rewardLimitChip'\)/);
+  /* v322: a reward short of points states the DISTANCE ("180 to go") rather than a scolding
+     "More points needed", so its slot in the map is deliberately empty and the row fills it. */
+  assert.match(wallet,/insufficient_balance:'',/);
+  assert.match(wallet,/chip=short\?ct\('rewardToGo',\{count:customerPointTotalV103\(gap\)\}\)/);
   assert.match(wallet,/actionsResult\.data\?\.redemption\?\.classic/);
   assert.match(wallet,/customerRewardCanRedeem\(r,redemptionEnabled\)/);
   assert.match(wallet,/customerRedemptionIntentArgsV89/);

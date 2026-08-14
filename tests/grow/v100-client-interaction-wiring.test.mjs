@@ -55,7 +55,8 @@ test('v100 telemetry records interaction starts and views without asserting outc
   assert.doesNotMatch(scanner,/recordProductInteractionV100\([^)]*(?:completed|redeemed)/);
 
   const wallet=between('async function renderCustomerWallet','/* ---------- auth ---------- */');
-  assert.match(wallet,/if\(businessId\)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100\('customer\.programme_viewed',businessId/);
+  /* v319: `&&!silent` — a background re-read of a page the customer never left is not a view. */
+  assert.match(wallet,/if\(businessId&&!silent\)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100\('customer\.programme_viewed',businessId/);
   assert.doesNotMatch(wallet,/'customer\.programme_viewed',b\.id/);
 
   const grow=between('async function growPage','/* ---------- Bring-back playbooks');

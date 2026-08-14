@@ -69,7 +69,7 @@ test('each eligible reward says Show QR at counter and opens the existing pendin
   const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
   const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
   assert.doesNotMatch(merchant,/presentation\.rewards\.map|presentation\.rewards\.length/);
-  assert.match(wallet,/customerRewardCanRedeem\(r,redemptionEnabled\)[\s\S]*?<span>Show QR at counter<\/span>/);
+  assert.match(wallet,/customerRewardCanRedeem\(r,redemptionEnabled\)[\s\S]*?<span>\$\{esc\(ct\('showQr'\)\)\}<\/span>/);
   assert.match(wallet,/customer_create_redemption_intent_v89/);
   assert.match(wallet,/intent\?\.status!=='pending'\|\|!intent\?\.qr_token/);
   assert.match(wallet,/showPendingRedemptionQr\(\{intent,businessName:b\.name,rewardName:/);

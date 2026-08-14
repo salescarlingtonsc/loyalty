@@ -104,8 +104,8 @@ test('v39 capabilities are module- and data-aware and the SPA loads only relevan
   assert.match(app,/Nothing to show yet/i);
   assert.match(app,/Load more/i);
   // v195: the same instruction, on the reward list itself rather than on a card wrapping it.
-  assert.match(app,/Pick a reward, then show its QR at the counter/i);
-  assert.match(app,/>Show QR at counter<\/span>/i);
+  assert.match(app,/rewardsLede:'Pick a reward, then show its QR at the counter\.'/);
+  assert.match(app,/<span>\$\{esc\(ct\('showQr'\)\)\}<\/span>/);
   assert.doesNotMatch(app,/sb\.rpc\(['"](?:redeem_reward|redeem_points)['"][\s\S]{0,200}wallet/i);
 });
 

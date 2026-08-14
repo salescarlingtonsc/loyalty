@@ -2983,14 +2983,53 @@ function customerTierRungIconV195(index,total){
   if(index<=0)return 'star';
   return index>=total-1?'diamond':'crown';
 }
+/* v319 (owner, 2026-08-14: "the UI UX is being squeezed"). Two defects, one rail.
+   (1) SCALE. The markers were placed at threshold/topThreshold while the fill was drawn at
+   tier.progress_percent — and progress_percent is NOT a position on that scale. The server
+   computes it as (metric - current.threshold) / (next.threshold - current.threshold)
+   (20260813_nestly_v310_programme_read_path.sql:690-693), i.e. progress THROUGH THE CURRENT
+   SEGMENT, 0-100 every time a rung is reached. So the bar's filled end agreed with no marker on
+   it: a Gold customer 57% of the way to Diamond drew a fill at 57% while the Gold marker sat at
+   34%. Both now speak one language — the RUNG INDEX.
+   (2) CROWDING. Thresholds on a real ladder are near-exponential, so on the threshold scale the
+   lower rungs pile onto the left of the track: at nine tiers the owner's screenshot shows four
+   icons overlapping and their labels printed on top of one another. Even spacing gives every rung
+   the same room whatever the business set its numbers to, and the label budget below keeps the
+   text from colliding at any tier count.
+   The scale is (index+1)/count, not index/(count-1): 0% is "no tier yet", which is a real state
+   (metric below the first threshold — v_current is null and the server measures progress from 0),
+   and it needs somewhere on the track to live. The top rung still lands exactly on 100%. */
+const TIER_RAIL_LABEL_LIMIT_V319=4;
+function customerTierRungsV319(tier={}){
+  return (Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+}
+/* Past four rungs the names cannot fit side by side at 390px, so the rail carries icons alone.
+   Nothing is lost: the current rung is named in the sentence above the bar, the next rung in the
+   sentence below it, and every rung with its benefits in the ladder disclosure underneath. */
+function customerTierRailCompactV319(tier={}){
+  return customerTierRungsV319(tier).length>TIER_RAIL_LABEL_LIMIT_V319;
+}
+/* `segmentShare`, not `within`: scripts/quality/app-surface-graph.mjs decides regex-vs-division from
+   the preceding character and treats a trailing `n` as the end of `return`, so `within/100` reads
+   as the start of a regex literal and the splitter loses paren depth for the rest of the file. */
+function customerTierRailProgressV319(tier={},progressPercent=0){
+  const segmentShare=Math.max(0,Math.min(100,Number(progressPercent)||0));
+  const rungs=customerTierRungsV319(tier);
+  if(rungs.length<2)return segmentShare;
+  /* The server names the rung the customer is ON; `achieved` is the fallback for a payload that
+     did not, and "no rung achieved yet" is the honest -1 that puts the fill in the opening
+     runway rather than pretending the first tier was reached. */
+  const named=rungs.findIndex(rung=>rung.current===true);
+  const index=named>=0?named:rungs.filter(rung=>rung.achieved===true).length-1;
+  return Math.round(Math.max(0,Math.min(100,((index+1+segmentShare/100)/rungs.length)*100))*100)/100;
+}
 function customerTierMilestonesMarkupV194(tier={}){
-  const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+  const rungs=customerTierRungsV319(tier);
   if(rungs.length<2)return '';
-  const top=Math.max(...rungs.map(rung=>Math.max(0,Number(rung.threshold)||0)));
-  if(!(top>0))return '';
+  const withLabels=!customerTierRailCompactV319(tier);
   return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map((rung,index)=>{
-    const at=Math.max(0,Math.min(100,(Math.max(0,Number(rung.threshold)||0)/top)*100));
-    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i><b>${esc(rung.label)}</b></span>`;
+    const at=((index+1)/rungs.length)*100;
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i>${withLabels?`<b>${esc(rung.label)}</b>`:''}</span>`;
   }).join('')}</div>`;
 }
 /* v310 (W4b): the two sentences this panel writes in English — the distance to the next rung and
@@ -3008,7 +3047,7 @@ function customerTierDistanceCountV310(remaining,basis){
   if(basis==='spend')return `SGD ${Number(remaining).toLocaleString('en-SG',{maximumFractionDigits:0})}`;
   return Math.ceil(remaining).toLocaleString('en-SG');
 }
-function customerTierPanelMarkupV194(tier={},{localizeV310=false}={}){
+function customerTierPanelMarkupV194(tier={},{localizeV310=false,compactV322=false}={}){
   const current=tier.current,next=tier.next;
   /* V230 (owner: "only 1 can be live at any go ... reflected in the customer portal"). When the
      firm redeems points for rewards, the tier ladder is not the story — showing it alongside
@@ -3037,19 +3076,36 @@ function customerTierPanelMarkupV194(tier={},{localizeV310=false}={}){
     const visits=Math.ceil(remaining);
     return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${next.label}`;
   })();
-  const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
+  const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis,{localize:localizeV310}):'';
   /* V240: when a firm runs both, the customer holds two independent things — a tier they climb
      and points they spend. Saying so once here stops "will redeeming cost me my tier?".
      V258: the sentence now reads the firm's actual basis. 'points_earned' counts LIFETIME
-     points earned, which redemption never reduces, so the reassurance is still true there. */
+     points earned, which redemption never reduces, so the reassurance is still true there.
+     v322: and it now says so in the customer's own language on the stack path — the measured
+     review found this exact sentence in English on a Chinese, Malay and Tamil phone. */
   const bothNoteV258=String(tier.points_mode||'')==='both'
-    ?`<p class="muted small" style="margin-top:6px">${basis==='points_earned'?'Points you earn move you up — spending them never lowers your tier.':basis==='spend'?'What you spend moves you up. Points stay yours to spend.':'Visits move you up. Points stay yours to spend.'}</p>`:'';
-  return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV258}
-    ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
+    ?`<p class="muted small" style="margin-top:6px">${localizeV310
+      ?esc(ct(basis==='points_earned'?'tierBothPoints':basis==='spend'?'tierBothSpend':'tierBothVisits'))
+      :basis==='points_earned'?'Points you earn move you up — spending them never lowers your tier.':basis==='spend'?'What you spend moves you up. Points stay yours to spend.':'Visits move you up. Points stay yours to spend.'}</p>`:'';
+  /* v322 (A5/C3, measured: nine rungs on a 324px track, the ninth marker hanging 11px off the end).
+     A rail is the wrong SHAPE for a phone however carefully it is laid out — nine names cannot fit
+     across a thumb's width, so the compact card drops the rail entirely: the tier the customer
+     holds as a badge, ONE bar to the next rung only, one sentence, and the whole ladder behind the
+     row underneath. The rail itself is untouched on the v194 fallback path, which is byte-pinned. */
+  const standingV322=compactV322
+    ?`<p class="customer-tier-standing-v322"><span class="muted small">${esc(ct('tierNowLabel'))}</span><b class="customer-tier-badge-v322">${esc(current?.label||ct('tierNotYet'))}</b>${next?'':current?`<span class="pill ok">${esc(ct('tierTopPill'))}</span>`:''}</p>`
+    :`<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>`;
+  const railV322=compactV322
+    /* One bar, and it says exactly what the server measured: progress THROUGH the segment the
+       customer is standing in (progress_percent), not a position on a ladder of thresholds. */
+    ?`<div class="customer-tier-bar is-single"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div></div>`
+    :`<div class="customer-tier-bar${customerTierRailCompactV319(tier)?' is-compact':''}"><div class="customer-tier-bar-track"><span style="width:${customerTierRailProgressV319(tier,progress)}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>`;
+  return `${standingV322}${bothNoteV258}
+    ${next?`${railV322}
     <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
       :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · ${esc(localizeV310?ct('tierTop'):'you are at the highest tier.')}</p>`
         :localizeV310?`<p class="muted small customer-tier-remaining">${esc(ct('tierTop'))}</p>`:''}
-    ${customerTierLadderMarkupV186(tier)}`;
+    ${customerTierLadderMarkupV186(tier,{localize:localizeV310,vertical:compactV322})}`;
 }
 /* v186 (owner: "i want to see different tiers and its benefits… mask other tiers, still can see
    the benefits but very obvious that is not their tier"). A ladder you cannot see is not a
@@ -3058,18 +3114,22 @@ function customerTierPanelMarkupV194(tier={},{localizeV310=false}={}){
    rest are desaturated and dimmed but fully readable, and each carries a word for its state so
    the meaning survives greyscale, colour blindness and a screen reader.
    Renders nothing for a single-tier programme, where a "ladder" would be a lie. */
-function customerTierLadderMarkupV186(tier={}){
+function customerTierLadderMarkupV186(tier={},{localize=false,vertical=false}={}){
   const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
   if(rungs.length<2)return '';
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
-  const requirement=threshold=>customerTierRequirementTextV189(threshold,basis);
+  const requirement=threshold=>customerTierRequirementTextV189(threshold,basis,{localize});
+  /* v322: `vertical` is C3's sheet — one rung per row at every width, so a nine-rung ladder reads
+     as a list a thumb scrolls rather than nine names crushed onto one track. */
   return `<details class="customer-tier-ladder">
-    <summary><span>All tiers and what they unlock</span><span class="muted small">${rungs.length} tiers</span></summary>
-    <ol class="customer-tier-rungs" aria-label="Every tier and what it unlocks">${rungs.map(rung=>{
+    <summary><span>${localize?esc(ct('tierLadderTitle')):'All tiers and what they unlock'}</span><span class="muted small">${localize?esc(ct('tierLadderCount',{count:rungs.length})):`${rungs.length} tiers`}</span></summary>
+    <ol class="customer-tier-rungs${vertical?' is-vertical-v322':''}" aria-label="${localize?esc(ct('tierLadderTitle')):'Every tier and what it unlocks'}">${rungs.map(rung=>{
       const isCurrent=rung.current===true;
       const achieved=rung.achieved===true&&!isCurrent;
-      const state=isCurrent?'Your tier':achieved?'Reached':'Not yet yours';
+      const state=localize
+        ?ct(isCurrent?'tierRungCurrent':achieved?'tierRungReached':'tierRungLocked')
+        :isCurrent?'Your tier':achieved?'Reached':'Not yet yours';
       const benefits=(Array.isArray(rung.benefits)?rung.benefits:[]).filter(value=>String(value||'').trim());
       const remaining=Math.max(0,Number(rung.threshold||0)-metric);
       return `<li class="customer-tier-rung${isCurrent?' is-current':''}${achieved?' is-achieved':''}"${isCurrent?' aria-current="true"':''}>
@@ -3077,24 +3137,37 @@ function customerTierLadderMarkupV186(tier={}){
           <b>${esc(rung.label)}</b>
           <span class="pill ${isCurrent?'ok':'off'}">${esc(state)}</span>
         </div>
-        <p class="muted small" style="margin-top:3px">${esc(requirement(rung.threshold))}${!isCurrent&&!achieved&&remaining>0?` · ${esc(customerTierRemainingTextV186(remaining,basis))}`:''}</p>
+        <p class="muted small" style="margin-top:3px">${esc(requirement(rung.threshold))}${!isCurrent&&!achieved&&remaining>0?` · ${esc(customerTierRemainingTextV186(remaining,basis,{localize}))}`:''}</p>
         ${benefits.length
           ?`<ul class="rec-why" style="margin-top:6px">${benefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`
-          :'<p class="muted small" style="margin-top:6px">Benefits not published yet.</p>'}
+          :`<p class="muted small" style="margin-top:6px">${localize?esc(ct('tierNoBenefits')):'Benefits not published yet.'}</p>`}
       </li>`;
     }).join('')}</ol>
   </details>`;
 }
 /* What a rung costs, in the business's own basis. Shared by the tier card header and the ladder
-   so the two can never word the same threshold differently. */
-function customerTierRequirementTextV189(threshold,basis){
+   so the two can never word the same threshold differently.
+   v322: `localize` is the stack path; the English below is what the byte-pinned v194 fallback
+   renders and what five suites pin, so it stays exactly as written. */
+function customerTierRequirementTextV189(threshold,basis,{localize=false}={}){
   const value=Math.max(0,Number(threshold)||0);
+  const count=value.toLocaleString('en-SG');
+  if(localize){
+    if(!value)return ct('tierFromFirst');
+    if(basis==='spend')return ct('tierFromSpend',{amount:`SGD ${value.toLocaleString('en-SG',{maximumFractionDigits:0})}`});
+    return ct(basis==='points_earned'?'tierFromPoints':'tierFromVisits',{count});
+  }
   if(!value)return 'From your first visit';
   if(basis==='spend')return `From SGD ${value.toLocaleString('en-SG',{maximumFractionDigits:0})} spent`;
   if(basis==='points_earned')return `From ${value.toLocaleString('en-SG')} points earned`;
   return `From ${value.toLocaleString('en-SG')} visit${value===1?'':'s'}`;
 }
-function customerTierRemainingTextV186(remaining,basis){
+function customerTierRemainingTextV186(remaining,basis,{localize=false}={}){
+  if(localize){
+    if(basis==='spend')return ct('tierToGoSpend',{amount:`SGD ${Number(remaining).toLocaleString('en-SG',{maximumFractionDigits:0})}`});
+    return ct(basis==='points_earned'?'tierToGoPoints':'tierToGoVisits',
+      {count:Math.ceil(remaining).toLocaleString('en-SG')});
+  }
   if(basis==='spend')return `SGD ${Number(remaining).toLocaleString('en-SG',{maximumFractionDigits:0})} to go`;
   if(basis==='points_earned')return `${Math.ceil(remaining).toLocaleString('en-SG')} points to go`;
   const visits=Math.ceil(remaining);
@@ -3239,9 +3312,13 @@ function wireCustomerProgrammeTabsV194(host=document){
 const programmeStackV310=caps=>
   Array.isArray(caps?.programmes)&&caps.programmes.length>0&&caps?.programmes_contract==='v310'
     ?caps.programmes:null;
-/* Fixed, regardless of which are on. Stamps and points are the figure the customer came for, tier
-   is where they are going, referral is what they can give away. */
-const PROGRAMME_STACK_ORDER_V310=Object.freeze(['stamps','points','tiers','referral']);
+/* Fixed, regardless of which are on. v319 (owner, 2026-08-14: "shift the tier up — to the top of
+   the screen, instead of points & gift"): tier leads. It is the standing that names the customer
+   at this business and the one fact that does not change when they spend, so it is what the page
+   should open with; stamps and points are the balance underneath it, referral is what they can
+   give away. The tab fallback (customerProgrammeSummaryTabsV194) already opened on Tier, so this
+   is the stack catching up to the surface it replaced rather than a second opinion. */
+const PROGRAMME_STACK_ORDER_V310=Object.freeze(['tiers','stamps','points','referral']);
 const programmeStackEntryV310=(programmes,kind)=>
   (Array.isArray(programmes)?programmes:[]).find(entry=>entry&&entry.kind===kind)||null;
 /* The server answers presentation with customer_visible, and the client OBEYS it rather than
@@ -3264,18 +3341,6 @@ function customerProgrammePausedMarkupV310(entry){
   return `<p class="customer-programme-paused" style="font-size:clamp(1.3rem,5vw,1.7rem);line-height:1.15;letter-spacing:-.02em"><b>${esc(ct('programmePaused'))}</b></p>
     <p class="muted small" style="margin-top:6px">${esc(ct('programmePausedBody'))}</p>
     ${since?`<p class="muted small customer-programme-paused-since"><time datetime="${esc(since)}">${esc(walletDate(since))}</time></p>`:''}`;
-}
-/* The V167 meter, with its sentence routed through ct(). V167's own English is untouched: it is
-   what the fallback path renders and five suites pin it. */
-function customerRewardProgressMarkupV310({loyalty={},reward=null}={}){
-  if(!reward)return '';
-  const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
-    available=reward.available_now===true||cost===0,
-    progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100,
-    gift=String(reward.name||'').trim()||ct('rewardsTab');
-  const sentence=available?ct('pointsReady',{gift})
-    :ct('pointsRemaining',{count:customerPointTotalV103(reward.remaining_units||0),gift});
-  return `<div class="customer-reward-progress-copy"><p class="muted small">${esc(sentence)}</p><div class="customer-reward-progress" role="progressbar" aria-label="${esc(gift)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
 }
 /* How many rings the card draws. N is the cost of the cheapest stamp reward we already know about
    — the server's own next_eligible_reward, which is that reward by construction. If no reward is
@@ -3301,39 +3366,63 @@ function customerProgrammeStampRingsV310(collected,target){
       index<filled?'<svg viewBox="0 0 16 16" width="12" height="12" focusable="false"><path d="M3.2 8.6l3.1 3.1L12.8 5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</span>`).join('')
   }</div>`;
 }
+/* ======================================================== v322 · WHICH CARD OWNS THE ONE POT
+   The measured review found the stamps card and the points card printing the SAME 240 and the
+   SAME 60, both naming the same "Free flat white", because the stack hands each card the single
+   `loyalty` object and the single `next_eligible_reward`.
+   That is not a rendering slip, it is the shape of the server's answer, and it was read against
+   the live contract before this was written: `customer_portal_capabilities.programmes[]` carries
+   only {kind, active, customer_visible, running_since, paused_since, balance_scope} — no
+   per-programme balance and no per-programme reward — and app.c45_base_actionable_wallet_card
+   derives `loyalty.unit`/`loyalty.model` from the firm's ONE loyalty_programs row and sums ONE
+   points_ledger for `loyalty.balance`. So there is exactly one pot and one unit, whatever the
+   spine shows, and exactly one card may speak it. The other accruing card speaks its own unit
+   with no number rather than repeating a figure that is not its own.
+   (The per-programme figures needed to give both cards real numbers are named as a server contract
+   in the build report; nothing here invents them.) */
+function programmePotKindV322({loyalty={},presentation={}}={}){
+  const unit=String(loyalty.model||loyalty.unit||presentation.unit||'points');
+  return unit==='stamps'?'stamps':'points';
+}
 /* 1 · STAMPS. Never the words "Reward points", never a raw point figure — the rings ARE the
    figure, and when N is unknown the plain count stands in. It deliberately does not use
    .customer-programme-balance: that class is the stack's single hero and belongs to the Points
    card (see the one-hero rule below). */
-function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false}){
+function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,ownsPotV322=true}){
   const paused=entry?.active===false;
   const collected=Number(loyalty.balance??presentation.balance??0);
-  const target=paused?0:customerStampTargetV310(reward);
+  const target=paused||!ownsPotV322?0:customerStampTargetV310(reward);
   const rings=customerProgrammeStampRingsV310(collected,target);
   const gift=String(reward?.name||'').trim();
   const remaining=Math.max(0,Number(reward?.remaining_units??0));
+  /* v322 (A2): when the pot is a POINTS pot this card has no stamp figure to print, and the old
+     fallback printed the points balance under a heading that says "Stamp card". A stamp card that
+     cannot count stamps says something true about stamps instead, and no number at all. */
   const sentence=paused?''
+    :!ownsPotV322?ct('stampsAtCounter')
     :!reward?ct('stampsNoGift',{count:customerPointTotalV103(collected)})
     :(reward.available_now===true||remaining===0)?ct('stampsReady',{gift:gift||ct('rewardsTab')})
     :ct('stampsRemaining',{count:customerPointTotalV103(remaining),gift:gift||ct('rewardsTab')});
-  const figure=paused?''
+  const figure=paused||!ownsPotV322?''
     :rings||`<p class="customer-programme-stamp-count"><b>${esc(customerPointTotalV103(collected))}</b> <span class="muted">${esc(ct(presentation.unit))}</span></p>`;
   return `<section class="card customer-programme-card-v310" data-programme-card="stamps" aria-label="${esc(ct('stampsCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:17})}<span>${esc(ct('stampsCardTitle'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('check',{size:17})}<span>${esc(ct('stampsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry):`${figure}
     <p class="muted small customer-programme-card-line-v310">${esc(sentence)}</p>`}
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}
   </section>`;
 }
-/* 2 · POINTS & GIFTS. The one card that prints a raw point number — the stack's single hero. The
-   body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
-function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false}){
+/* 2 · POINTS & GIFTS. v322: the big balance moved UP to the wallet strip, which is the first thing
+   on the screen, so this card no longer repeats it — it is the gift shelf now (C1/C4: "points
+   detail"), and its own figures are the reward costs in the rows below. When the pot is a stamps
+   pot, this card prints no figure either: one pot, one card that speaks it. */
+function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,ownsPotV322=true}){
   const paused=entry?.active===false||loyalty.enabled===false;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('giftcard',{size:17})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
-      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,
-        progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
+      :`${ownsPotV322?'':`<p class="muted small customer-programme-card-line-v310">${esc(ct('stampsAtCounter'))}</p>`}
+    ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}`}
   </section>`;
 }
 /* 3 · TIER — the no-duplicate-balance rule. customerProgrammeTierPanelV230 prints
@@ -3355,31 +3444,218 @@ function customerProgrammeTierCardV310({tier={},entry=null,pointsCardPresent=fal
   const paused=entry?.active===false;
   const tierForStack={...tier,points_mode:pointsCardPresent?'both':''};
   return `<section class="card customer-programme-card-v310" data-programme-card="tiers" aria-label="${esc(ct('tierCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:17})}<span>${esc(ct('tierCardTitle'))}</span></h2>
-    ${paused?customerProgrammePausedMarkupV310(entry):customerTierPanelMarkupV194(tierForStack,{localizeV310:true})}
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('crown',{size:17})}<span>${esc(ct('tierCardTitle'))}</span></h2>
+    ${paused?customerProgrammePausedMarkupV310(entry):customerTierPanelMarkupV194(tierForStack,{localizeV310:true,compactV322:true})}
   </section>`;
 }
 /* The claimable-now strip. It fires NO new read: it is built only from facts the page already
    holds when it paints — the server's own next_eligible_reward.available_now, and a birthday
    benefit already in an actionable state. Nothing actionable renders nothing at all: an empty
    "Ready now" strip would be a promise the surface cannot keep. */
-function customerClaimableFactsV310({reward=null,birthday=null}={}){
+/* v322 (B1): the facts carry WHAT to do with them, because the measured review found this strip
+   announcing "1 ready to claim · Free flat white" as a static role="status" band — a label at the
+   one moment the customer wants an action. Each row is a button now: a reward row opens that
+   reward's QR through the catalogue's own redeem control (one tap), a birthday row goes to the
+   section that activates it. Nothing here invents a claim path the page does not already have. */
+function customerClaimableFactsV322({reward=null,birthday=null}={}){
   const facts=[];
-  if(reward&&reward.available_now===true)facts.push(String(reward.name||'').trim()||ct('rewardsTab'));
+  if(reward&&reward.available_now===true)facts.push({
+    label:String(reward.name||'').trim()||ct('rewardsTab'),kind:'reward'});
   /* The birthday surface's real vocabulary is ready_to_activate / available / unavailable
      (birthdayBenefitMarkup) — 'ready' is not a status this codebase emits. */
   const birthdayStatus=String(birthday?.status||'').trim();
-  if(birthdayStatus==='ready_to_activate'||birthdayStatus==='available')
-    facts.push(String(birthday?.label||birthday?.display||'').trim()||ct('claimableNow'));
+  if(birthdayStatus==='ready_to_activate'||birthdayStatus==='available')facts.push({
+    label:String(birthday?.label||birthday?.display||'').trim()||ct('claimableNow'),kind:'birthday'});
   return facts;
 }
 function customerClaimableStripMarkupV310(facts){
-  if(!facts.length)return '';
-  return `<div class="customer-claimable-strip" id="customerClaimableStripV310" role="status">
-    <span class="customer-claimable-strip-label">${CUI.icon('redeem',{size:16})}<b>${esc(ct('claimableNow'))}</b></span>
-    <span class="customer-claimable-strip-count">${esc(ct('claimableCount',{count:facts.length}))}</span>
-    <span class="customer-claimable-strip-items">${facts.map(fact=>`<span>${esc(fact)}</span>`).join('')}</span>
+  const rows=(Array.isArray(facts)?facts:[]).map(fact=>typeof fact==='string'?{label:fact,kind:'reward'}:fact)
+    .filter(fact=>fact&&fact.label);
+  if(!rows.length)return '';
+  return `<section class="customer-claimable-strip" id="customerClaimableStripV310" aria-labelledby="customerClaimableTitleV322">
+    <p class="customer-claimable-strip-label" id="customerClaimableTitleV322">${CUI.icon('redeem',{size:16})}<b>${esc(ct('claimableNow'))}</b>
+      <span class="customer-claimable-strip-count">${esc(ct('claimableCount',{count:rows.length}))}</span></p>
+    <div class="customer-claimable-rows-v322">${rows.map(fact=>
+      `<button type="button" class="customer-claimable-row-v322" data-cux-claim-v322="${esc(fact.kind)}" data-cux-claim-label-v322="${esc(fact.label)}" aria-label="${esc(ct('claimShow',{gift:fact.label}))}">
+        <span class="customer-claimable-row-name-v322">${esc(fact.label)}</span>
+        <span class="customer-claimable-row-go-v322" aria-hidden="true">${CUI.icon('scan',{size:18})}</span>
+      </button>`).join('')}</div>
+  </section>`;
+}
+/* v322 (C1.1 · THE WALLET STRIP). The first thing on the scrolling surface: the shop, ONE big
+   number, and the single most useful action. It is sticky with an OPAQUE backdrop and a
+   safe-area inset, which is A4 — the owner's screenshot had "Free Facial cream" printed under the
+   iOS clock and the "Ready" pill under the wifi icon.
+   The number here is the stack's single hero (.customer-programme-balance, the same class the card
+   used to carry), so no card below repeats it. */
+function customerWalletStripMarkupV322({business={},presentation={},loyalty={},reward=null,rewardsAvailable=false}={}){
+  const paused=loyalty.enabled===false;
+  const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
+  const unit=ct(presentation.unit||programmePotKindV322({loyalty,presentation}));
+  const ready=reward&&reward.available_now===true;
+  const readyName=ready?(String(reward.name||'').trim()||ct('rewardsTab')):'';
+  /* One SOLID action, never two: red is the next action, and everything else on this surface is
+     text. A bring-back credit arrives with the growth-offer read and upgrades this slot in place
+     (customerWalletStripActionsV322), so nothing is promised before it is known. */
+  const action=ready
+    ?`<button type="button" class="btn sm customer-wallet-strip-action-v322" data-cux-claim-v322="reward" data-cux-claim-label-v322="${esc(readyName)}">${CUI.icon('scan',{size:16})}<span>${esc(ct('showQr'))}</span></button>`
+    :rewardsAvailable
+      ?`<button type="button" class="btn sm customer-wallet-strip-action-v322" data-cux-see-rewards-v322>${CUI.icon('giftcard',{size:16})}<span>${esc(ct('seeRewards'))}</span></button>`
+      :'';
+  return `<div class="customer-wallet-strip-v322" id="customerWalletStripV322" data-wallet-strip-v322>
+    <div class="customer-wallet-strip-figure-v322">
+      <span class="muted small customer-wallet-strip-shop-v322">${esc(business.name||presentation.name||'')}</span>
+      ${paused
+        ?`<b class="customer-programme-paused">${esc(ct('programmePaused'))}</b>`
+        :`<p class="customer-programme-balance" aria-label="${esc(`${balance} ${unit}`)}"><b>${esc(balance)}</b> <span class="muted">${esc(unit)}</span></p>`}
+    </div>
+    <div class="customer-wallet-strip-slot-v322" id="customerWalletStripSlotV322">${action}</div>
   </div>`;
+}
+/* v322 (C1.3 · NEXT UP, and B3/B4 underneath it). The motivation engine the measured review found
+   missing as a glanceable line: one sentence, one thin bar, then the two quiet facts a customer
+   needs — how earning works, and when what they hold dies. Absent entirely when there is no target,
+   because "next up: nothing" is furniture. */
+function customerNextUpMarkupV322({loyalty={},presentation={},reward=null,expiry=null,capabilities={},firstVisitV322=''}={}){
+  if(loyalty.enabled===false)return '';
+  const cost=Math.max(0,Number(reward?.cost_units)||0);
+  const remaining=Math.max(0,Number(reward?.remaining_units??0));
+  const stamps=programmePotKindV322({loyalty,presentation})==='stamps';
+  const gift=String(reward?.name||'').trim()||ct('rewardsTab');
+  const balance=Math.max(0,Number(loyalty.balance??presentation.balance??0));
+  const line=reward&&reward.available_now!==true&&remaining>0
+    ?ct(stamps?'stampsRemaining':'pointsRemaining',{count:customerPointTotalV103(remaining),gift})
+    :'';
+  const progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):0;
+  const earn=customerEarnRateLineV322({loyalty,presentation,capabilities});
+  const expiryLine=customerExpiryLineV322({presentation,expiry});
+  if(!line&&!earn&&!expiryLine&&!firstVisitV322)return '';
+  /* On a customer's FIRST open of this shop the block wears the first-visit moment instead of its
+     own heading — one place, one number. Saying "300 more for Free flat white" twice, once as a
+     welcome and once as a target, is the duplication this whole wave exists to remove. */
+  return `<section class="customer-next-up-v322" id="customerNextUpV322" aria-labelledby="customerNextUpTitleV322"${firstVisitV322?' data-first-visit-v322="true"':''}>
+    ${firstVisitV322||`<h2 class="customer-next-up-title-v322" id="customerNextUpTitleV322">${esc(ct('nextUpTitle'))}</h2>`}
+    ${line&&!firstVisitV322?`<p class="customer-next-up-line-v322">${esc(line)}</p>`:''}
+    ${line?`<div class="customer-reward-progress" role="progressbar" aria-label="${esc(gift)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div>`:''}
+    ${earn?`<p class="muted small customer-next-up-earn-v322">${esc(earn)}</p>`:''}
+    ${expiryLine?`<p class="muted small customer-next-up-expiry-v322">${esc(expiryLine)}</p>`:''}
+  </section>`;
+}
+/* B4 — the shop page never said the points expire, while Home said it from the SAME payload
+   (app.c45_base_actionable_wallet_card's `expiry` block: mode, expiring_units, next_expiry_at).
+   No new read, and nothing is claimed when the firm runs no expiry at all. */
+function customerExpiryLineV322({presentation={},expiry=null}={}){
+  const units=Math.max(0,Number(expiry?.expiring_units||0));
+  const at=String(expiry?.next_expiry_at||'').trim();
+  if(!units||!at)return '';
+  return ct('expiryLine',{count:customerPointTotalV103(units),unit:ct(presentation.unit||'points'),
+    date:walletDate(at)});
+}
+/* B3 — "a new customer is never told how earning works". SERVER CONTRACT, NOT YET SHIPPED: no
+   customer-facing RPC returns the earn rate today. It was checked against production rather than
+   assumed — loyalty_programs.earn_points_per_dollar / stamp_per_cents exist, and neither
+   customer_portal_capabilities, customer_get_actionable_business, customer_get_business_summary,
+   customer_get_business_presentation_v95 nor customer_get_loyalty_details projects them (only
+   staff_get_customer_actionable_loyalty_v145 does, and that is the staff side).
+   So this renders NOTHING today rather than inventing a rate, and renders the honest line the
+   moment the payload carries `earn`. The exact contract is written into the build report. */
+function customerEarnRateLineV322({loyalty={},presentation={},capabilities={}}={}){
+  const earn=loyalty.earn||capabilities.earn||null;
+  if(!earn||typeof earn!=='object')return '';
+  const unit=ct(presentation.unit||'points');
+  const perCents=Math.max(0,Number(earn.stamp_per_cents||0));
+  const perDollar=Number(earn.points_per_dollar||0);
+  const trim=value=>Number(value).toLocaleString('en-SG',{maximumFractionDigits:2});
+  if(perCents>0)return ct('earnRateSpend',{count:1,unit,
+    amount:`SGD ${trim(perCents/100)}`});
+  if(perDollar>0)return ct('earnRateSpend',{count:trim(perDollar),unit,amount:'SGD 1'});
+  if(Number(earn.per_visit||0)>0)return ct('earnRateVisit',{count:trim(earn.per_visit),unit});
+  return '';
+}
+function customerFirstVisitMomentMarkupV322({business={},presentation={},loyalty={},reward=null}={}){
+  if(loyalty.enabled===false)return '';
+  const key=`peekaa.customer.first-visit.v322.${String(business.id||business.slug||presentation.name||'programme')}`;
+  let seen=false;
+  try{seen=localStorage.getItem(key)==='shown'}catch{}
+  if(seen&&customerFirstVisitMomentKeyV322!==key)return '';
+  customerFirstVisitMomentKeyV322=key;
+  try{localStorage.setItem(key,'shown')}catch{}
+  const remaining=Math.max(0,Number(reward?.remaining_units??0));
+  const gift=String(reward?.name||'').trim();
+  const line=reward&&gift&&remaining>0
+    ?ct('firstVisitDistance',{count:customerPointTotalV103(remaining),
+      unit:ct(presentation.unit||programmePotKindV322({loyalty,presentation})),gift})
+    :ct('firstVisitNoReward');
+  return `<p class="customer-next-up-title-v322" id="customerNextUpTitleV322">${esc(ct('firstVisitTitle'))}</p>
+    <p class="customer-next-up-line-v322">${esc(line)}</p>`;
+}
+/* v322 (B1/B2 · the shortcuts). "Ready now" and the strip's action are ways INTO the catalogue that
+   is already on the page — they open that reward's own redeem control, so there is exactly one
+   redemption path and the QR a customer sees from the top of the screen is the QR the counter
+   scans. Re-run after every catalogue hydration, because the rows it points at are replaced then. */
+/* v322 (B2). Measured: the SGD 5.00 the business paid to bring a lapsed customer back sat 2.27
+   screens down, below the tier ladder, the points card and the referral card, on a 3.14-screen
+   page. It belongs in the strip — but the growth-offer read resolves AFTER the first paint, so the
+   strip cannot promise it up front. This upgrades the slot in place the moment the answer lands,
+   and it is a shortcut to the offer's own control, not a second redemption path. A ready reward
+   keeps the solid action when both exist; the credit then rides beside it as the quiet one. */
+function customerWalletStripOfferActionV322(offers=[]){
+  const slot=$('customerWalletStripSlotV322');
+  if(!slot)return;
+  const offer=(Array.isArray(offers)?offers:[])[0];
+  if(!offer||!offer.entitlementId)return;
+  /* The growth module's own formatter, so the strip and the offer card can never print the same
+     credit two different ways. */
+  const money=window.NestlyGrowthOffers?.money?.(offer.valueCents,offer.currency)
+    ||`${String(offer.currency||'SGD')} ${(Math.max(0,Number(offer.valueCents||0))/100).toFixed(2)}`;
+  const hasPrimary=!!slot.querySelector('[data-cux-claim-v322]');
+  const existing=slot.querySelector('[data-cux-see-rewards-v322]');
+  if(existing)existing.remove();
+  slot.insertAdjacentHTML('afterbegin',
+    `<button type="button" class="btn ${hasPrimary?'ghost ':''}sm customer-wallet-strip-action-v322" data-cux-strip-offer-v322="${esc(offer.entitlementId)}">${CUI.icon('redeem',{size:16})}<span>${esc(ct('useOffer',{amount:money}))}</span></button>`);
+  slot.querySelectorAll('[data-cux-strip-offer-v322]').forEach(button=>{
+    button.onclick=()=>{
+      const id=String(button.dataset.cuxStripOfferV322||'');
+      const control=document.querySelector(`#walletGrowthOffers [data-growth-customer-action="redeem"][data-entitlement-id="${CSS.escape(id)}"]`);
+      if(control)return control.click();
+      $('walletGrowthOffers')?.scrollIntoView({block:'center'});
+    };
+  });
+}
+function customerWireClaimShortcutsV322(){
+  const smooth=()=>globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches?'auto':'smooth';
+  const rewardRows=()=>[...document.querySelectorAll('[data-reward-row-v322]')];
+  const revealRewards=()=>{
+    const host=$('walletRewards')||document.querySelector('[data-programme-card="points"]');
+    if(!host)return false;
+    host.scrollIntoView({block:'start',behavior:smooth()});
+    const first=rewardRows()[0];
+    if(first)first.open=true;
+    return true;
+  };
+  const claimReward=label=>{
+    const rows=rewardRows().filter(row=>row.dataset.rewardReadyV322==='true');
+    const match=rows.find(row=>row.dataset.rewardNameV322===label)||rows[0];
+    if(!match)return revealRewards();
+    match.open=true;
+    const redeem=match.querySelector('[data-customer-redeem]');
+    if(!redeem)return revealRewards();
+    redeem.click();
+    return true;
+  };
+  document.querySelectorAll('[data-cux-claim-v322]').forEach(button=>{
+    button.onclick=()=>{
+      const label=String(button.dataset.cuxClaimLabelV322||'');
+      if(button.dataset.cuxClaimV322==='birthday'){
+        $('walletBirthdayParticipation')?.scrollIntoView({block:'center',behavior:smooth()});
+        return;
+      }
+      claimReward(label);
+    };
+  });
+  document.querySelectorAll('[data-cux-see-rewards-v322]').forEach(button=>{
+    button.onclick=()=>revealRewards();
+  });
 }
 /* W4c's landing site, shipped empty so W4c is markup and wiring only. It stays hidden and carries
    nothing: there is no member identifier on this surface yet (customer_get_profile returns
@@ -3389,19 +3665,29 @@ function customerClaimableStripMarkupV310(facts){
 function customerMemberCodeSlotMarkupV310(){
   return '<div id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden></div>';
 }
-function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null}={}){
+function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,expiry=null,capabilities={},firstVisitMomentV322=''}={}){
   const entries=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
     .map(kind=>[kind,programmeStackEntryV310(programmes,kind)]));
   const show=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
     .map(kind=>[kind,programmeStackCardVisibleV310(entries[kind])]));
-  /* The gifts host lives on whichever of the two accruing cards is present — stamps first, because
-     the v308 tripwire refuses points.active AND stamps.active on one business, so at a stamps firm
-     any points card in the stack is a paused one with nothing to spend. */
-  const stampsHost=rewardsHost&&show.stamps&&entries.stamps?.active===true;
+  /* v322 (A3). The gifts host used to be "stamps whenever a stamps programme is active", on the
+     v308 assumption that points and stamps could never both be live — which is exactly what the
+     four-programme change allows, and the measured review found the catalogue rendering inside the
+     card headed "Stamp card" while the card headed "Points & gifts" held no gifts.
+     The rule now follows the MONEY: the catalogue is priced in the pot's unit
+     (customer_get_reward_catalog reads the same single points_ledger), so it belongs to the card
+     that speaks that unit. If that card is not on screen it falls back to the other accruing card,
+     so a catalogue is never orphaned. */
+  const potKind=programmePotKindV322({loyalty,presentation});
+  const potCardVisible=potKind==='stamps'?show.stamps:show.points;
+  const hostKind=potCardVisible?potKind:(show.points?'points':show.stamps?'stamps':'');
+  const stampsHost=rewardsHost&&hostKind==='stamps';
   const cards=[
-    show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
-    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost}):'',
+    /* v319: the paint order IS PROGRAMME_STACK_ORDER_V310 — tier first. The gifts host above is
+       unaffected: it is decided by which card speaks the pot's unit, never by which is on top. */
     show.tiers?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
+    show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost,ownsPotV322:potKind==='stamps'}):'',
+    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&hostKind==='points',ownsPotV322:potKind==='points'}):'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
@@ -3410,7 +3696,10 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        for the read path, not for this decision. */
     '<div id="walletReferralSlot" hidden></div>'
   ].filter(Boolean).join('');
-  return `${customerClaimableStripMarkupV310(customerClaimableFactsV310({reward,birthday}))}
+  /* v322 (C1): ready → next up → the cards. Both blocks are built from facts the page already
+     holds; neither fires a read. */
+  return `${customerClaimableStripMarkupV310(customerClaimableFactsV322({reward,birthday}))}
+    ${customerNextUpMarkupV322({loyalty,presentation,reward,expiry,capabilities,firstVisitV322:firstVisitMomentV322})}
     ${customerMemberCodeSlotMarkupV310()}
     <div class="customer-programme-stack" data-programme-stack="v310">${cards}</div>`;
 }
@@ -3427,18 +3716,27 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
   /* v194 (owner: "show company details, phone number, address" beside the business name): the
      header is now the way in to the company sheet, and the booking action moved up here — "make
      it smaller and put upstair" — out of the full-width card that sat below the offers. */
-  return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
+  /* v322 (C1): the strip is the FIRST thing on the scrolling surface — shop, one number, one
+     action — and it is what closes the status-bar collision. The shop header stays as the way into
+     the company sheet, and the v167 explainer moved BELOW the stack: with a next-up line and an
+     expiry line on the first screen, a dismissible "how rewards work" note was buying its space
+     with the tier card's. */
+  return `${programmeStackV310(programmeCapabilities)?customerWalletStripMarkupV322({business,presentation,loyalty,reward,
+      rewardsAvailable:rewardsHost}):''}
+    ${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <header class="customer-programme-compact-head" style="--merchant-accent:${esc(contrastSafeBrandColor(presentation.heroColor))}">
       <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${esc(business.name||presentation.name)}">
         <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
         <span class="customer-programme-compact-copy"><b>${esc(business.name||presentation.name)}</b>
           <span class="muted small customer-programme-identity-hint">${hasTier&&currentTierLabel?`${esc(currentTierLabel)} · `:''}<span class="customer-programme-identity-hint-long">Address, phone and offers ›</span><span class="customer-programme-identity-hint-short">Details ›</span></span></span>
       </button>
-      ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
+      ${bookingEnabled?`<a class="btn ghost sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
-    ${customerPointsExplainerMarkupV167(business)}
+    ${programmeStackV310(programmeCapabilities)?'':customerPointsExplainerMarkupV167(business)}
     ${programmeStackV310(programmeCapabilities)
-      ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null})
+      ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,
+        expiry:actionableCard?.expiry||null,capabilities:programmeCapabilities,
+        firstVisitMomentV322:customerFirstVisitMomentMarkupV322({business,presentation,loyalty,reward})})
       :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
     ${programmeStackV310(programmeCapabilities)?'':'<div id="walletReferralSlot" hidden></div>'}
@@ -3660,14 +3958,20 @@ function customerHomeEmptyActionV286(){
    the counts they carried now live on those tabs. Home is the offers shelf. */
 /* v178: surface='programmes' is the "My Rewards" tab, which the owner stripped back to the
    reward-account grid alone — no offers shelf, no guidance banner. Home keeps both. */
-function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',rerender=null}={}){
+function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',rerender=null,silent=false}={}){
   const cards=Array.isArray(payload?.cards)?payload.cards:[],isHome=surface!=='programmes';
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
+  /* v319: a silent refresh holds the customer's scroll and open disclosures, and stands down
+     entirely while they are interacting; the caller has already established that a fact moved. */
+  const paint=html=>{
+    if(silent)return customerWalletSilentPaintV319(html);
+    $('walletBody').innerHTML=html;return true;
+  };
   if(!cards.length){
-    $('walletBody').innerHTML=`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
+    if(!paint(`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`))return;
     $('customerFirstScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(repaint);
-    return;
+    return true;
   }
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
      grid is the My Rewards tab's job. Home is now offers first, then a two-way jump-off. */
@@ -3676,28 +3980,173 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
      claim it once offers have actually come back ready, never while loading or on an error. */
   const homeEmpty=isHome&&!homeGuidance&&offersState.status==='ready'
     &&!(Array.isArray(offersState.items)&&offersState.items.length)&&!customerExpiringRowsV286(cards).length;
-  $('walletBody').innerHTML=`${isHome?`${customerExpiringRewardsMarkupV195(cards)}
+  if(!paint(`${isHome?`${customerExpiringRewardsMarkupV195(cards)}
     ${customerHomeOffersMarkupV167(offersState)}
     ${homeGuidance}${homeEmpty?customerHomeEmptyActionV286():''}`
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}
-    ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
+    ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`))return;
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
   if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));
   wireCustomerHomeOffersV167(repaint);
+  return true;
 }
-async function renderCustomerWallet(businessSlug=null){
-  const walletRenderEpoch=++customerWalletRenderEpoch;
+/* v319 (owner, 2026-08-14: "keep refreshing by itself — i need it to load seamlessly, must be
+   immediate"). v295's watcher was right about the fact — a balance earned at the counter while the
+   customer holds the phone must appear — and wrong about the method: its refresh was this function,
+   which starts by rebuilding root.innerHTML down to a "Loading Peekaa…" card. So every 20 seconds,
+   and on every return to the foreground, the whole page tore down and grew back: the scroll jumped
+   to the top, open disclosures closed, focus was thrown to <main>, and the surface_viewed /
+   account_open analytics fired again for a customer who had not gone anywhere.
+
+   A silent refresh does the reads and then does NOTHING unless an answer changed:
+     · no shell rebuild — the page on screen is the page that stays
+     · a FACT SIGNATURE over the payloads the cards are drawn from; identical signature, identical
+       pixels, so the DOM is never touched and there is nothing to see
+     · a changed signature repaints in place, holding the scroll position (this is the moment the
+       feature exists for — the points the customer just earned)
+     · no focus move, no popup, no re-counted analytics, and no error card: a poll that fails
+       leaves the working page alone (the reads are guarded below and in
+       loadCustomerSurfaceContext)
+   `immediate` is the other half: the foreground listener still reads the instant the app comes
+   back, it just no longer announces itself by blanking the screen first. */
+let customerWalletFactSignatureV319='';
+/* The signature is taken over the SERVER PAYLOADS the visible cards are drawn from, never over the
+   rendered HTML: on the business page the markup carries loading shells that the section loaders
+   fill in afterwards, so the DOM never equals a freshly built string and an HTML diff would report
+   "changed" on every single tick. Every non-silent render records its own signature, so the first
+   poll after a real render compares against exactly what is on screen. */
+function customerWalletFactSignatureOfV319(facts){
+  try{return JSON.stringify(facts)}catch{return ''}
+}
+function customerWalletFactsUnchangedV319(silent,signature){
+  return silent&&!!signature&&signature===customerWalletFactSignatureV319;
+}
+/* Committed only once a paint has actually landed. A silent paint that stood down (the customer is
+   mid-interaction) must leave the old signature in place, or the next tick would read the new
+   facts as "already shown" and the customer would never see them. */
+function customerWalletFactsPaintedV319(signature){customerWalletFactSignatureV319=signature}
+/* v322 (A6). v319 made the NO-CHANGE tick genuinely invisible and left the CHANGE tick — the one
+   moment the feature exists for — as the old flicker: measured on a 600ms connection, four skeleton
+   blocks came back for ~1183ms, the document collapsed 2235px→1865px, and a customer reading at
+   1237px was clamped to 1072px. The cause is that the repaint re-emits the whole body, INCLUDING
+   the walletSectionShell() placeholders, and then thirteen loaders re-hydrate them.
+   The fix is to stop re-emitting what is already hydrated: the live section nodes are MOVED across
+   the swap, so their content and their height never leave the page, the loaders update them in
+   place (each replaces its own innerHTML only once its answer is back), and there is no collapse
+   for the scroll restore to land against. */
+/* [what is on screen, where the fresh markup put its placeholder]. The referral pair is the one
+   that is not an identity: the page emits a hidden #walletReferralSlot and the loader REPLACES it
+   with #walletReferral, so a live referral card matched against its own id would find nothing in
+   the new markup, be dropped, and re-fetch — which is a card disappearing and the page collapsing
+   under a customer who is reading the bottom of it. */
+const CUSTOMER_WALLET_LIVE_NODES_V322=Object.freeze([
+  ['walletSections','walletSections'],
+  ['walletRewards','walletRewards'],
+  ['walletReferral','walletReferralSlot'],
+  ['customerMemberCodeSlotV310','customerMemberCodeSlotV310']]);
+function customerWalletSilentPaintV319(html){
+  const host=$('walletBody');
+  if(!host)return false;
+  /* Never yank the DOM out from under a customer who is mid-interaction: a focused control inside
+     the body, or an open sheet, means this repaint can wait for the next tick. */
+  if(document.querySelector('.modal'))return false;
+  const focused=document.activeElement;
+  if(focused&&focused!==document.body&&host.contains(focused))return false;
+  const scroller=document.scrollingElement||document.documentElement;
+  const scrollTop=scroller?scroller.scrollTop:0;
+  const live=new Map();
+  for(const [id,placeholderId] of CUSTOMER_WALLET_LIVE_NODES_V322){
+    const node=host.querySelector(`#${id}`);
+    /* A shell that has not hydrated yet is NOT live — carrying it over would freeze a skeleton. */
+    if(node&&!node.querySelector('.wallet-skeleton'))live.set(placeholderId,node);
+  }
+  const isPreserved=node=>[...live.values()].some(kept=>kept===node||kept.contains(node));
+  /* Disclosures inside a preserved node carry their own state across the move; only the freshly
+     emitted ones need restoring, and they are restored in their own order. */
+  const freshOpen=[...host.querySelectorAll('details')].filter(node=>!isPreserved(node)).map(node=>node.open);
+  const staging=document.createElement('div');
+  staging.innerHTML=html;
+  for(const [placeholderId,node] of live){
+    const placeholder=staging.querySelector(`#${placeholderId}`);
+    if(placeholder)placeholder.replaceWith(node);
+  }
+  host.replaceChildren(...staging.childNodes);
+  const keptNodes=[...live.values()];
+  [...host.querySelectorAll('details')]
+    .filter(node=>!keptNodes.some(kept=>kept===node||kept.contains(node)))
+    .forEach((node,index)=>{if(freshOpen[index]===true)node.open=true});
+  if(scroller){
+    scroller.scrollTop=scrollTop;
+    /* And hold it while the layout settles. The restore is only ever re-applied UPWARD-correcting
+       (the browser clamped us because the document was briefly shorter); a customer who scrolls
+       further down themselves is never pulled back. */
+    customerWalletHoldScrollV322(scroller,scrollTop);
+  }
+  return true;
+}
+function customerWalletHoldScrollV322(scroller,target){
+  if(!scroller||!(target>0))return;
+  const deadline=(globalThis.performance?.now?.()||Date.now())+600;
+  const settle=()=>{
+    if(!scroller.isConnected)return;
+    if(scroller.scrollTop<target-1&&scroller.scrollHeight>=target+1)scroller.scrollTop=target;
+    if((globalThis.performance?.now?.()||Date.now())<deadline)
+      (globalThis.requestAnimationFrame||globalThis.setTimeout)(settle);
+  };
+  (globalThis.requestAnimationFrame||globalThis.setTimeout)(settle);
+}
+function customerWalletProbeFactsV322(data){
+  /* Never the envelope: customer_get_actionable_business returns `as_of` = statement_timestamp(),
+     which is different on every single call and would make every tick look like a change. */
+  return data?.card??data?.cards??data??null;
+}
+function customerWalletRememberProbeV322(businessSlug,data){
+  customerWalletProbeSignatureV322=customerWalletFactSignatureOfV319(
+    ['probe',businessSlug||'',customerWalletProbeFactsV322(data)]);
+}
+async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
+  /* A silent pass rides the CURRENT epoch instead of opening a new one. Bumping it would make the
+     watcher that scheduled this very refresh look stale to itself and stop. The guard still works:
+     any real navigation renders non-silently, bumps the epoch, and every await below sees it. */
+  const walletRenderEpoch=silent?customerWalletRenderEpoch:++customerWalletRenderEpoch;
   const isWalletCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
-  const context=await loadCustomerSurfaceContext(isWalletCurrent);if(!context)return;
+  if(silent&&!$('walletBody')?.isConnected)return;
+  /* v322 (A7): the cheap tick. One read decides whether there is anything to do at all; the ten
+     that draw the page run only when that answer has moved, and they are handed this same answer
+     so it is never asked twice. A failed probe changes nothing and keeps the working page, which
+     is the v319 rule for every silent branch. */
+  let probeCardV322=null;
+  const cachedContextV322=silent?customerSurfaceContextCacheV322:null;
+  /* Only where the probe IS the page's own read: with the actionable wallet off, this surface is
+     drawn from customer_get_wallet instead and the probe would be asking a question the server
+     refuses for this account. */
+  if(silent&&cachedContextV322?.features?.customer_actionable_wallet===true){
+    const probeResult=await customerRpc(businessSlug?'customer_get_actionable_business':'customer_get_actionable_wallet',
+      businessSlug?{p_business_slug:businessSlug}:undefined);
+    if(!isWalletCurrent())return;
+    if(probeResult.error)return;
+    const probeSignature=customerWalletFactSignatureOfV319(
+      ['probe',businessSlug||'',customerWalletProbeFactsV322(probeResult.data)]);
+    if(probeSignature&&probeSignature===customerWalletProbeSignatureV322)return;
+    customerWalletProbeSignatureV322=probeSignature;
+    probeCardV322=probeResult.data;
+  }
+  /* A poll is not an authorization event: the features, profile and personas were checked by the
+     render that put this page on screen, and every real navigation re-checks them by rendering
+     non-silently. Reusing them is what makes an idle tick cost ONE read instead of three. */
+  const context=cachedContextV322||await loadCustomerSurfaceContext(isWalletCurrent,{silent});
+  if(!context)return;
+  if(!silent)customerSurfaceContextCacheV322=context;
   const customerFeatures=context.features;
-  renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
+  if(!silent)renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
     body:`<div class="card"><p class="muted">Loading ${esc(BRAND.customerLabel)}…</p></div>`});
   let actionableCard=null,programmeCards=[];
   if(customerFeatures.customer_actionable_wallet===true){
     if(!businessSlug){
-      const {data,error}=await customerRpc('customer_get_actionable_wallet');
+      const {data,error}=probeCardV322?{data:probeCardV322,error:null}:await customerRpc('customer_get_actionable_wallet');
       if(!isWalletCurrent())return;
+      if(!silent)customerWalletRememberProbeV322(businessSlug,data);
       if(!error&&Array.isArray(data?.cards)&&data.cards.length){
         /* v286: this pair used raw sb.rpc, so it carried NO abortSignal while every other read in
            the Promise.all aborts at 12s (v177) — and Promise.all waits for the slowest, so one
@@ -3727,11 +4176,19 @@ async function renderCustomerWallet(businessSlug=null){
         messagesAvailable:customerFeatures.customer_in_app_inbox===true,
         claimsAvailable:false
       };
-      renderActionableWalletHome(data,{
+      const homeOffersStateV319=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
+      const homePendingRedemptionV319=offersResult.error?null:offersResult.data?.pending_redemption||null;
+      /* v319: nothing the customer can see has moved — leave the page exactly as it is. */
+      const homeSignatureV319=customerWalletFactSignatureOfV319(['home',data,customerHomeOverview.walletCards,
+        homeOffersStateV319,homePendingRedemptionV319,customerHomeOverview.activeRequestCount]);
+      if(customerWalletFactsUnchangedV319(silent,homeSignatureV319))return;
+      if(!renderActionableWalletHome(data,{
         legacyCards:customerHomeOverview.walletCards,
-        offersState:offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]},
-        pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null
-      });
+        offersState:homeOffersStateV319,
+        pendingRedemption:homePendingRedemptionV319,
+        silent
+      }))return;
+      customerWalletFactsPaintedV319(homeSignatureV319);
       /* v194: My Rewards counts the REWARD ACCOUNTS this customer holds; Bookings counts what is
          still live — a request awaiting the business plus an upcoming appointment. Both come from
          data already fetched above, so neither badge costs a round trip. */
@@ -3754,22 +4211,28 @@ async function renderCustomerWallet(businessSlug=null){
         customerHomeOverview.messageCount=messageResult?.error?null:Math.max(0,Number(messageResult?.data?.unread_count||0));
         paintCustomerInboxBellV286(customerHomeOverview.messageCount);
       });
-      focusCustomerRoute();
+      if(!silent)focusCustomerRoute();
       return;
       }
     }
     if(businessSlug){
       const [{data,error},walletResult]=await Promise.all([
-        customerRpc('customer_get_actionable_business',{p_business_slug:businessSlug}),
+        probeCardV322?Promise.resolve({data:probeCardV322,error:null})
+          :customerRpc('customer_get_actionable_business',{p_business_slug:businessSlug}),
         customerRpc('customer_get_actionable_wallet')
       ]);
       if(!isWalletCurrent())return;
-      /* V289: 42501 is "you hold no link to this business", not a load failure. */
-      if(walletRpcDenied(error))return renderCustomerNotJoinedV289(businessSlug);
-      if(error)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
+      if(!silent)customerWalletRememberProbeV322(businessSlug,data);
+      /* V289: 42501 is "you hold no link to this business", not a load failure.
+         v319: on a silent poll every one of these three answers keeps the working page instead of
+         replacing it — a customer reading their wallet must not lose it to one failed background
+         read, and "not joined" is not a state a poll can newly discover for a page that is
+         already rendered. */
+      if(walletRpcDenied(error))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
+      if(error)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
       actionableCard=data?.card||null;
       programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
-      if(!actionableCard)return renderCustomerNotJoinedV289(businessSlug);
+      if(!actionableCard)return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
     }
   }
   if(!businessSlug){
@@ -3780,7 +4243,7 @@ async function renderCustomerWallet(businessSlug=null){
       customerRpc('customer_get_home_offers_v167',{p_locale:merchantCopyLocale()})
     ]);
     if(!isWalletCurrent())return;
-    if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null,undefined,error);
+    if(error)return silent?undefined:renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null,undefined,error);
     const cards=mergeCustomerProgrammeSelectorMediaV96(
       Array.isArray(data)?data:[],selectorMediaResult.error?null:selectorMediaResult.data
     );
@@ -3789,19 +4252,27 @@ async function renderCustomerWallet(businessSlug=null){
     const bookingCount=appointmentCount+activeRequestCount;
     const bookingsAvailable=!bookingRequestResult.error||cards.length>0;
     const offersState=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
-    $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
-      ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
+    const fallbackPendingRedemptionV319=offersResult.error?null:offersResult.data?.pending_redemption||null;
+    const fallbackSignatureV319=customerWalletFactSignatureOfV319(['fallback-home',cards,offersState,
+      fallbackPendingRedemptionV319,bookingsAvailable?bookingCount:0]);
+    if(customerWalletFactsUnchangedV319(silent,fallbackSignatureV319))return;
+    const fallbackHomeMarkupV319=`${customerHomeOffersMarkupV167(offersState)}
+      ${customerHomeFallbackActionV167({pendingRedemption:fallbackPendingRedemptionV319,legacyCards:cards,offers:offersState.items})}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}
       `;
+    if(silent){if(!customerWalletSilentPaintV319(fallbackHomeMarkupV319))return}
+    else $('walletBody').innerHTML=fallbackHomeMarkupV319;
+    customerWalletFactsPaintedV319(fallbackSignatureV319);
     /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
        lands here through the legacy read must not see empty tabs where the other path shows
        counts. A booking read that failed contributes 0, never a guess. */
     applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
-    focusCustomerRoute();
-    /* v295: Home carries balances too — same watcher, same bounds. */
-    watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet());
+    if(!silent)focusCustomerRoute();
+    /* v295: Home carries balances too — same watcher, same bounds.
+       v319: the watcher now re-arms itself, so a silent pass must not build a second one. */
+    if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(null,{silent:true}));
     return;
   }
   const args={p_business_slug:businessSlug};
@@ -3813,8 +4284,8 @@ async function renderCustomerWallet(businessSlug=null){
   if(!isWalletCurrent())return;
   /* V289: same denial, same honest answer — the summary and capability reads refuse an unlinked
      business with 42501 before they refuse anything else. */
-  if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return renderCustomerNotJoinedV289(businessSlug);
-  if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
+  if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
+  if(summaryError||capabilitiesError)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
   /* v286 (audit: a wasted round trip that also cost a control). This customer_get_wallet read was
      fetched and then never referenced, so with customer_actionable_wallet off programmeCards
      stayed empty: the multi-business switcher above the header vanished (it bails under two
@@ -3829,10 +4300,13 @@ async function renderCustomerWallet(businessSlug=null){
   const businessId=customerBusinessIdV103({
     summaryBusiness:b,actionableCard,programmeCards,businessSlug
   });
-  if(businessId)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.programme_viewed',businessId,{
+  /* v319: a background re-read is not a view. The customer has not opened, navigated to or looked
+     again at anything — counting it would inflate programme_viewed, surface_viewed and the DAU
+     write by one every 20 seconds for a phone lying face-up on a counter. */
+  if(businessId&&!silent)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.programme_viewed',businessId,{
       context:{entry_point:'customer_wallet',locale:customerLocale,surface_version:'v100'}
     });
-  if(businessId){
+  if(businessId&&!silent){
     customerWalletBusinessIdV256=businessId;
     recordCustomerSessionStartV256(businessId,customerLocale);
     typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.surface_viewed',businessId,{
@@ -3880,7 +4354,7 @@ async function renderCustomerWallet(businessSlug=null){
   /* v255 (audit finding: promotion views were class C — nothing recorded between "we published
      it" and "someone redeemed"). Deduped per browser session so a wallet the customer reopens
      five times is one view, not five. */
-  if(businessId)for(const offerV256 of presentation.offers){
+  if(businessId&&!silent)for(const offerV256 of presentation.offers){
     const promotionIdV256=String(offerV256?.id||offerV256?.promotion_id||'');
     if(!isUuidV100(promotionIdV256)||customerPromotionsSeenV256.has(promotionIdV256))continue;
     customerPromotionsSeenV256.add(promotionIdV256);
@@ -3897,7 +4371,14 @@ async function renderCustomerWallet(businessSlug=null){
   const showMembershipMetric=capabilities.membership===true&&membership.active===true;
   const showSecondaryMetrics=!actionableCard&&(showCreditMetric||showPackageMetric||showMembershipMetric);
   const hasWalletSection=true;
-  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities})}
+  /* v319: the whole programme page is drawn from these eight answers. If none of them moved, the
+     repaint would be pixel-for-pixel identical — and it would still cost the customer their scroll
+     position, their open History disclosure and every already-hydrated wallet section, which is
+     exactly what the owner was seeing every twenty seconds. */
+  const programmeSignatureV319=customerWalletFactSignatureOfV319(['programme',businessSlug,summary,
+    capabilities,actionableCard,programmeCards,presentation,businessActions]);
+  if(customerWalletFactsUnchangedV319(silent,programmeSignatureV319))return;
+  const programmeBodyMarkupV319=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities})}
     ${showSecondaryMetrics?`<div class="wallet-metrics">
       ${showCreditMetric?`<div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents)/100).toFixed(2)}</b></div>`:''}
       ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
@@ -3920,8 +4401,14 @@ async function renderCustomerWallet(businessSlug=null){
       ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
+  if(silent){if(!customerWalletSilentPaintV319(programmeBodyMarkupV319))return}
+  else $('walletBody').innerHTML=programmeBodyMarkupV319;
+  customerWalletFactsPaintedV319(programmeSignatureV319);
   wireCustomerRepeatBookingV167($('walletBody'));
   wireCustomerProgrammeTabsV194($('walletBody'));
+  /* v322: the strip and the Ready-now rows are live from the first paint; loadRewards re-wires
+     them against the hydrated catalogue when it lands. */
+  customerWireClaimShortcutsV322();
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
@@ -3999,13 +4486,17 @@ async function renderCustomerWallet(businessSlug=null){
       card?.querySelector('button,a')?.focus();
     });
   }
-  showCustomerPromotionPopupV122({
+  /* v319: a promotion popup is an interruption, and an interruption the customer did not ask for
+     twenty seconds after the last one is the thing the owner is complaining about. It belongs to
+     arriving on the page, so a background re-read never raises it. */
+  if(!silent)showCustomerPromotionPopupV122({
     business:b,businessSlug,items:presentation.offers,
     prompt:promotionPromptResult.error?null:promotionPromptResult.data
   });
-  focusCustomerRoute();
-  /* v295: keep the balance honest while the customer is looking at it. */
-  watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug));
+  if(!silent)focusCustomerRoute();
+  /* v295: keep the balance honest while the customer is looking at it.
+     v319: silently — and the watcher re-arms itself now, so only a real render builds one. */
+  if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}));
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
      rating; a high rating only adds an extra prominent share card. review_url rides the existing
@@ -4131,13 +4622,22 @@ async function renderCustomerWallet(businessSlug=null){
       },
       onRetry:loadGrowthOffers
     });
+    /* v322 (B2): the bring-back credit reaches the top strip the moment it is known. */
+    customerWalletStripOfferActionV322(offers);
   };
+  /* v322 (A7): customer_get_business_actions_v89 was read TWICE for one page — once in the paint's
+     own Promise.all above, and again here, milliseconds later, for the same business. The first
+     answer is handed to the first hydration; a RELOAD (a retry, or the reload after a redemption)
+     still re-reads, because by then the answer really can have changed. */
+  let businessActionsForRewardsV322=businessActionsResult;
   const loadRewards=async()=>{
     const host=$('walletRewards');if(!host)return;
     host.setAttribute('aria-busy','true');
+    const reuseActionsV322=businessActionsForRewardsV322;
+    businessActionsForRewardsV322=null;
     const [catalogResult,actionsResult]=await Promise.all([
       customerRpc('customer_get_reward_catalog',args),
-      businessId?customerRpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId()
+      reuseActionsV322||(businessId?customerRpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId())
     ]);
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
@@ -4192,14 +4692,16 @@ async function renderCustomerWallet(businessSlug=null){
        check. */
     const redemptionUncheckedV286=!!actionsResult.error;
     if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards',ct('No rewards are available right now.'),businessSlug,'rewards',loadRewards,isWalletCurrent);
+    /* v322 (B5): every one of these was English on a Chinese, Malay and Tamil phone. The states
+       themselves are unchanged — they come from the server's own availability vocabulary. */
     const availability={
-      available_at_counter:'Available at counter',
-      disabled:'Unavailable for redemption',
-      insufficient_balance:'More points needed',
-      not_started:'Available soon',
-      ended:'Offer ended',
-      limit_reached:'Claim limit reached',
-      tier_locked:'Unlocks at a higher tier'
+      available_at_counter:ct('rewardReadyChip'),
+      disabled:ct('rewardOffChip'),
+      insufficient_balance:'',
+      not_started:ct('rewardSoonChip'),
+      ended:ct('rewardEndedChip'),
+      limit_reached:ct('rewardLimitChip'),
+      tier_locked:ct('rewardLockedChip')
     };
     /* A tier-gated reward stays VISIBLE and locked rather than hidden: naming the tier is the
        whole reason a member climbs. Uses the tier name the server resolved, so this line can
@@ -4207,36 +4709,54 @@ async function renderCustomerWallet(businessSlug=null){
     const rewardLockLineV176=(r)=>{
       if(r.availability!=='tier_locked')return '';
       const label=r.tier_requirement?.tier_label;
-      return label?`Reach ${label} to unlock this reward`:'Unlocks at a higher tier';
+      return label?ct('rewardTierLock',{tier:label}):ct('rewardLockedChip');
     };
-    /* v286: with redemption unchecked, "Available at counter" is a claim this page cannot stand
-       behind — the honest line is that we could not check. Every other status (tier-locked, short
-       of points, ended) comes from the catalog and the balance, so those stay true and unchanged. */
-    if(redemptionUncheckedV286)availability.available_at_counter='Redemption can’t be checked right now';
     host.setAttribute('aria-busy','false');
     const rewardUnit=loyalty.unit||'points',rewardBalance=Math.max(0,Number(loyalty.balance)||0);
-    /* v195: this now renders inside the Reward points tab, which already prints the balance in
-       full. The repeated balance and the three-step "how rewards work" strip went with the card
-       the owner crossed out; one line of instruction survives, on the control it describes. */
+    const unitWordV322=ct(rewardUnit);
+    /* v322 (C2 · REWARDS BECOME ROWS). Measured: about two reward CARDS fitted a 390px screen, the
+       same "Valid across all eligible services and locations." printed on every one of them, and
+       every card carried its own solid red button. A row is name + cost + one state chip, and the
+       row IS the tap target: opening it reveals that reward's terms and the ONE red control. The
+       row is a <details>, which the page already uses for History and the tier ladder — native
+       keyboard and screen-reader behaviour, no new interaction to teach. */
     host.innerHTML=`${redemptionUncheckedV286
-      ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>Redemption can’t be checked right now</h2><p class="muted small">These rewards are shown for reference only — we could not reach this business’s redemption settings, so no QR can be issued yet.</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">Retry</button></div>`
-      :`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>`}
-      <div class="wallet-rewards">${rewards.map(r=>{
+      ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>${esc(ct('rewardsUncheckedTitle'))}</h2><p class="muted small">${esc(ct('rewardsUncheckedBody'))}</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">${esc(ct('rewardsRetry'))}</button></div>`
+      :`<p class="muted small customer-programme-rewards-lede">${esc(ct('rewardsLede'))}</p>`}
+      <div class="wallet-rewards customer-reward-rows-v322">${rewards.map(r=>{
       const ready=!!(r.action_key&&customerRewardCanRedeem(r,redemptionEnabled)),
         cost=Math.max(0,Number(r.cost_points)||0),gap=Math.max(0,cost-rewardBalance),
         progress=cost>0?Math.min(100,Math.max(0,Math.round((rewardBalance/cost)*100))):100,
-        short=r.availability==='insufficient_balance';
-      return `<article class="wallet-reward">
-      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.customer_name||'Reward')}</span></b><span class="spacer"></span>${ready?'<span class="pill ok">Ready</span>':''}${r.availability==='tier_locked'?'<span class="pill">🔒 Locked</span>':''}</div>
-      ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}${short?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap"><b>${esc(customerPointTotalV103(gap))} more ${esc(rewardUnit)}</b></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(rewardLockLineV176(r)||availability[r.availability]||'Ask at counter')}</p>
-      ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
-      ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
-      ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
-      ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
-      <div class="wallet-reward-actions">${ready
-        ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:17})}<span>Show QR at counter</span></button>`
-        :''}</div></article>`}).join('')}</div>`;
+        short=r.availability==='insufficient_balance',
+        name=r.customer_name||ct('rewardsTab'),
+        chip=short?ct('rewardToGo',{count:customerPointTotalV103(gap)})
+          :(redemptionUncheckedV286&&r.availability==='available_at_counter')?ct('rewardOffChip')
+          :availability[r.availability]||'',
+        detail=customerRewardDescriptionV183(r.description),
+        restricted=r.eligibility?[['branches','rewardEligibleBranches'],['services','rewardEligibleServices'],['products','rewardEligibleProducts']]
+          .filter(([key])=>r.eligibility[key]?.scope==='restricted')
+          .map(([key,copyKey])=>ct(copyKey,{count:Number(r.eligibility[key].count||0)})):[];
+      return `<details class="customer-reward-row-v322" data-reward-row-v322="${esc(r.action_key||'')}"${ready?' data-reward-ready-v322="true"':''} data-reward-name-v322="${esc(name)}">
+      <summary class="customer-reward-row-head-v322">
+        <span class="customer-reward-row-name-v322">${esc(name)}</span>
+        <span class="customer-reward-row-cost-v322">${esc(customerPointTotalV103(cost))} <span class="muted">${esc(unitWordV322)}</span></span>
+        ${chip?`<span class="pill ${ready?'ok':'off'} customer-reward-row-chip-v322">${esc(chip)}</span>`:''}
+      </summary>
+      <div class="customer-reward-row-body-v322">
+        ${r.image_ref?(String(r.image_ref).startsWith('https://')?'':`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}
+        ${detail?`<p class="muted small">${esc(detail)}</p>`:''}
+        ${short?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} / ${esc(customerPointTotalV103(cost))} ${esc(unitWordV322)}</span>`:''}
+        ${rewardLockLineV176(r)?`<p class="muted small">${esc(rewardLockLineV176(r))}</p>`:''}
+        ${r.entitlement_expiry_days?`<p class="muted small">${esc(ct('rewardUseWithin',{count:Number(r.entitlement_expiry_days)}))}</p>`:''}
+        ${r.eligibility?`<p class="muted small">${esc(restricted.length?restricted.join(' · '):ct('rewardValidEverywhere'))}</p>`:''}
+        ${r.instructions?`<p class="muted small"><b>${esc(ct('rewardHowToUse'))}</b> ${esc(r.instructions)}</p>`:''}
+        ${r.terms?`<p class="muted small"><b>${esc(ct('rewardTermsTitle'))}</b> ${esc(r.terms)}</p>`:''}
+        ${ready?`<div class="wallet-reward-actions"><button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:17})}<span>${esc(ct('showQr'))}</span></button></div>`:''}
+      </div></details>`}).join('')}</div>`;
     if($('walletRewardsRedemptionRetry'))$('walletRewardsRedemptionRetry').onclick=loadRewards;
+    /* v322 (B1): the "Ready now" rows and the strip's own action are shortcuts INTO this catalogue
+       — they open the very control below, so there is one redemption path, not two. */
+    customerWireClaimShortcutsV322();
     let redemptionAttempt=null;
     host.querySelectorAll('[data-customer-redeem]').forEach(button=>button.onclick=async()=>{
       const reward=rewards.find(item=>item.action_key===button.dataset.customerRedeem);
@@ -4244,13 +4764,13 @@ async function renderCustomerWallet(businessSlug=null){
       if(!redemptionAttempt||redemptionAttempt.actionKey!==reward.action_key){
         redemptionAttempt={actionKey:reward.action_key,key:crypto.randomUUID()};
       }
-      button.disabled=true;button.querySelector('span').textContent='Preparing QR…';
+      button.disabled=true;button.querySelector('span').textContent=ct('Preparing QR…');
       const {data:intent,error:intentError}=await sb.rpc('customer_create_redemption_intent_v89',
         customerRedemptionIntentArgsV89({
           businessId,reward,idempotencyKey:redemptionAttempt.key
         }));
       if(!isWalletSectionCurrent(host)||!button.isConnected)return;
-      button.disabled=false;button.querySelector('span').textContent='Show QR at counter';
+      button.disabled=false;button.querySelector('span').textContent=ct('showQr');
       if(intentError){
         toast(intentError.code==='PGRST202'||intentError.code==='42883'
           ?'Something’s not working right now. Please try again shortly.'

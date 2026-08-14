@@ -109,7 +109,9 @@ test('published tier benefits cross from owner drafts into the verified customer
      where the owner asked for every tier's benefits, not just the customer's own. The invariant
      this test protects is unchanged: published tier benefits reach the verified wallet. */
   assert.match(source,/customerTierPanelMarkupV194\(tier\)/);
-  assert.match(source,/customerTierLadderMarkupV186\(tier\)/);
+  /* v322: the ladder is called with the stack's localize flag and C3's vertical shape; the
+     invariant this test protects — published benefits reach the verified wallet — is unchanged. */
+  assert.match(source,/customerTierLadderMarkupV186\(tier,\{localize:localizeV310,vertical:compactV322\}\)/);
   assert.match(source,/const benefits=\(Array\.isArray\(rung\.benefits\)\?rung\.benefits:\[\]\)/);
   assert.match(source,/benefits\.map\(benefit=>`<li>\$\{esc\(benefit\)\}<\/li>`\)/);
   assert.match(migration,/create or replace function public\.customer_get_effective_tier_v143/);

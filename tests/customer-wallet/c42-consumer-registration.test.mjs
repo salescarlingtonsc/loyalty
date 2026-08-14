@@ -239,5 +239,5 @@ test('wallet gates a phone-registration-enabled session on a completed private p
   assert.match(context, /customerSurfaceQualifies\(profile,customer\)/i);
   assert.match(context, /renderNoCustomerDestination\(staff\)/i);
   assert.doesNotMatch(context, /renderCustomerRegistrationProfile\(\)/i);
-  assert.match(wallet,/loadCustomerSurfaceContext\(isWalletCurrent\)/);
+  assert.match(wallet,/loadCustomerSurfaceContext\(isWalletCurrent,\{silent\}\)/);
 });

@@ -160,6 +160,76 @@ heals it. Red-first: the spine read turns exactly that test red (39/40), restore
 | red-first | 11 reverts in the fix pass + 2 in this review, each naming a failing test and restored byte-exact |
 | dataset sweep | 406 `dataset.X` reads vs emitted `data-*` across `app.js` and all four bundles — 0 unmatched |
 
+## Deferred RISK C closed — the tier ladder is a three-state read, and it fails closed
+
+Client-only, no migration, no dependency; shipped alone because it is the destructive one.
+
+**The defect as designed.** `app/app.js` read `loyalty_tiers` as `r.error?null:(r.data||[])` and every
+consumer then wrote `Array.isArray(x)?x:[]`, collapsing "the read failed" into "this firm has no
+rungs". Those demand opposite behaviour: `prefillTiersW6I2()` fires on `state.tiers.length===0`,
+pushes three fresh-uuid rungs and marks them dirty, and the Tiers step's own Next writes them into a
+draft `create_loyalty_config_draft` has already filled with the firm's real rungs; and
+`tierMovementRiskW6I2()` required `publishedTiersW6I2().length>0`, so the D3 downgrade warning and
+its tick vanished for exactly the firms whose ladder could not be read.
+
+**The finding the contract did not contain, verified against production `gadpooereceldfpfxsod`
+2026-08-14.** The read was not merely fallible — it was failing for every tenant on every load. The
+V303 select asked `public.loyalty_tiers` for `active`, a column that table does not have:
+
+```
+information_schema.columns / public.loyalty_tiers
+  id · business_id · name · threshold · points_multiplier · perk_note · sort · effective_from · expires_at
+```
+
+`active` belongs to `loyalty_tier_versions`; `public.publish_loyalty_config` (`prosrc` md5
+`6bcc491a86d0f19a7284dc6deda83097`, untouched by this change) deletes the projection and re-inserts
+those columns `where config_version_id=p_version and business_id=… and active`, so every published
+rung is active by construction. PostgREST answers an unknown column with `42703`.
+
+**It had already fired.** Cubbly (`8492e8d6-8888-4383-ada0-7e1ed69f0caa`, `tier_basis='visits'`) grew
+its ladder across three consecutive owner sessions while the Tiers step showed an empty one:
+
+| config version | rungs | ladder |
+|---|---|---|
+| `2128c300…` 2026-08-13 07:40 | 3 | Essential@0 · Gold@20 · Diamond@100 |
+| `fd5f6901…` 2026-08-13 14:57 | 6 | + a second Essential@0, a second Gold@20, Diamond@30 |
+| `6960c6ed…` 2026-08-14 03:50 | 9 | + Bronze@0, Silver@10, Gold@25 |
+
+In `fd5f6901…` the first three rows share one `created_at` (the draft copy of the real ladder) and
+the next three arrive 17s, 27s and 40s later — added on top of a ladder the screen was not showing.
+The published projection now holds nine rungs, three of them colliding at thresholds 0 and 20.
+
+**The fix, both halves.** `LOYALTY_TIER_COLUMNS_W6I2` is the published table's own column list, so
+the read succeeds; and `readLoyaltyTiersW6I2()` returns `{state:'unknown'|'empty'|'rows', rows}`,
+normalised once per consumer through `tiersEnvelopeW6I2()`, which treats anything unrecognised —
+including `null` and an omitted argument — as `unknown`. Rule, stated in the source: an unreadable
+ladder never permits a write to the ladder and never suppresses a warning.
+
+| consumer | `unknown` | `empty` | `rows` |
+|---|---|---|---|
+| Programmes-page tier card | "Your tiers could not be read" + **Try again**; the Edit/Set-up tiers action is withheld | "No tiers yet" | the ladder |
+| `prefillTiersW6I2()` | refuses | prefills 3 (D7 unchanged) | skips (no retroactive enforcement) |
+| Tiers step body | no list, no ready-made chip, no add form; honest panel + **Try again** that re-reads | as before | as before |
+| Tiers step `Next` | refuses: *"We could not read your current tiers. Reload before editing the ladder."* | proceeds | proceeds |
+| `tierMovementRiskW6I2()` / the block | AT RISK — *"The published ladder could not be read, so we cannot say who moves."*, tick required | no gate | computed |
+| `state.tiers` seed | the draft's ladder alone | as before | as before |
+
+**Verification.** `tests/business-ui/w6-risk-c-tier-read-envelope.test.mjs` — 17 behavioural tests
+that run the real wizard source against a `sb` stub which answers `loyalty_tiers` the way PostgREST
+does, returning `42703` for any column the published table lacks, so re-adding a version-only column
+to the select turns the suite red instead of production. Red-first: 10 mutants, each reverting one
+half of the fix, each turning at least one **named** test red, `app/app.js` restored byte-exact
+(sha256 `d292fd7203f5af69624ba8c2c441c640493ace50516ef91669f862396614e715`) after every cycle.
+
+Three shipped source pins were pinning the defect and were replaced, each with the reason recorded
+inline: `W6I2 C1` and `W6I2 (g)` required the `Array.isArray(liveTiers)?liveTiers:[]` collapse, and
+`V303 (c)` required both that collapse's sibling and `active` in the select.
+
+| fixture | production-source-sha256 (regenerated for this change) |
+|---|---|
+| `tests/browser/reward-overview-owner-visual.html` | `7b480dbd9e377a47ce2dd712627fa8f3272521fe1919538300e99aa6ae61867c` |
+| `tests/browser/v129-trial-test-visual.html` | `9f12f5eb7576b07187bde0e98b7eea7732d5d63a73cef57d6cd8f73322a3034c` |
+
 ## Standing invariants for the next increment
 
 1. `public.set_programmes_v314` remains the ONE writer of the spine. The wizard sends all four

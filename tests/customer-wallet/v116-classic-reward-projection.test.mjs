@@ -41,7 +41,7 @@ test('customer wallet merges the v89 classic action and renders a direct redeem 
   assert.match(rewards,/customer_get_business_actions_v89/);
   assert.match(rewards,/redemption\?\.classic/);
   assert.match(rewards,/action_key:'classic_points'/);
-  assert.match(rewards,/Show QR at counter/);
+  assert.match(rewards,/ct\('showQr'\)/);   // v322: the same control, its label localized
 });
 
 test('capability RPC remains customer-authenticated and does not broaden table access',async()=>{

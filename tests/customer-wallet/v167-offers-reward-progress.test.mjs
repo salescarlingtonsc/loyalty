@@ -41,7 +41,9 @@ test('customer Home always renders populated, empty, and retryable offer states'
   assert.match(app,/if\(!cards\.length\)\{[\s\S]*customerHomeOffersMarkupV167\(offersState\)[\s\S]*customer-first-quest/);
   assert.doesNotMatch(walletRender,/customer_get_actionable_wallet'\);[\s\S]{0,180}if\(error\)return renderCustomerWalletRetry/);
   assert.match(app,/if\(!error&&Array\.isArray\(data\?\.cards\)&&data\.cards\.length\)/);
-  assert.match(walletRender,/if\(businessSlug\)\{\s*const \[\{data,error\},walletResult\]=await Promise\.all\(\[\s*(?:sb\.rpc|customerRpc)\('customer_get_actionable_business'/);
+  /* v322 (A7): the same pair of reads, except a silent tick already asked the first question and
+     hands its answer down rather than asking twice. */
+  assert.match(walletRender,/if\(businessSlug\)\{\s*const \[\{data,error\},walletResult\]=await Promise\.all\(\[\s*probeCardV322\?Promise\.resolve\(\{data:probeCardV322,error:null\}\)\s*:customerRpc\('customer_get_actionable_business'/);
 });
 
 test('new-offer state is versioned, device-local, bounded, and malformed-storage safe',()=>{
@@ -81,7 +83,7 @@ test('reward progress is formatted, bounded, accessible, and safe for zero-cost 
   assert.match(app,/customerPointTotalV103\(reward\.remaining_units\|\|0\)/);
   /* v183: the reward row now states the exchange — "150 points → Free facial add-on" — so the
      formatted cost is rendered from the same clamped `cost` the progress bar uses. */
-  assert.match(app,/<span class="wallet-reward-cost">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/span>/);
+  assert.match(app,/<span class="customer-reward-row-cost-v322">\$\{esc\(customerPointTotalV103\(cost\)\)\} <span class="muted">\$\{esc\(unitWordV322\)\}<\/span><\/span>/);
   assert.match(app,/customerPointTotalV103\(Math\.abs\(delta\)\)/);
   assert.match(app,/customerPointTotalV103\(earned\)/);
   assert.match(app,/is ready to redeem/);

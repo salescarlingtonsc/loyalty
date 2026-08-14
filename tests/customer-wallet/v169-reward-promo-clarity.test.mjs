@@ -19,7 +19,9 @@ test('rewards are shown under the balance that pays for them, with the steps sai
      tab that now owns it, and the instruction survives as one line. */
   assert.match(rewards,/rewardBalance=Math\.max\(0,Number\(loyalty\.balance\)\|\|0\)/);
   assert.match(app,/<p class="customer-programme-balance"><b>\$\{esc\(balance\)\}<\/b>/);
-  assert.match(rewards,/Pick a reward, then show its QR at the counter/);
+  /* v322: the same one line, through ct(), so it is not English on a Chinese phone. */
+  assert.match(rewards,/customer-programme-rewards-lede">\$\{esc\(ct\('rewardsLede'\)\)\}/);
+  assert.match(app,/rewardsLede:'Pick a reward, then show its QR at the counter\.'/);
   assert.doesNotMatch(rewards,/<ol class="wallet-reward-steps"/);
   assert.doesNotMatch(rewards,/<b>3<\/b> Staff scans — points used/);
   assert.match(rewards,/CUI\.icon\('scan'/,'the redeem control still carries its QR pictogram');
@@ -31,20 +33,25 @@ test('a reward short of points shows computed progress with an accessible text e
   assert.match(rewards,/gap=Math\.max\(0,cost-rewardBalance\)/);
   assert.match(rewards,/progress=cost>0\?Math\.min\(100,Math\.max\(0,Math\.round\(\(rewardBalance\/cost\)\*100\)\)\):100/);
   assert.match(rewards,/<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:\$\{progress\}%">/);
-  assert.match(rewards,/\$\{esc\(customerPointTotalV103\(gap\)\)\} more \$\{esc\(rewardUnit\)\}/);
-  assert.match(rewards,/<span class="sr-only">\$\{esc\(customerPointTotalV103\(rewardBalance\)\)\} of \$\{esc\(customerPointTotalV103\(cost\)\)\}/);
+  /* v322: the gap is the row's own state chip ("180 to go"), and the screen-reader equivalent
+     rides beside the bar exactly as before. */
+  assert.match(rewards,/ct\('rewardToGo',\{count:customerPointTotalV103\(gap\)\}\)/);
+  assert.match(rewards,/<span class="sr-only">\$\{esc\(customerPointTotalV103\(rewardBalance\)\)\} \/ \$\{esc\(customerPointTotalV103\(cost\)\)\}/);
   // V176 put the tier-lock line first ("Reach Gold to unlock"), with the availability label
   // remaining as the fallback — which is exactly the secondary-text role this asserts.
-  assert.match(rewards,/\$\{esc\(rewardLockLineV176\(r\)\|\|availability\[r\.availability\]\|\|'Ask at counter'\)\}/,
+  /* v322: a tier lock is the sentence inside the opened row; every other state is the row's own
+     chip, which is where a customer looks for it. */
+  assert.match(rewards,/\$\{esc\(rewardLockLineV176\(r\)\)\}/,
     'the existing availability label must remain as secondary text');
+  assert.match(rewards,/chip=short\?ct\('rewardToGo'/);
   assert.match(app,/\.wallet-reward-progress span\{[^}]*width:var\(--reward-progress,0%\)/s);
 });
 
 test('a redeemable reward is chipped Ready and keeps the QR redemption contract',()=>{
   assert.match(rewards,/ready=!!\(r\.action_key&&customerRewardCanRedeem\(r,redemptionEnabled\)\)/);
-  assert.match(rewards,/\$\{ready\?'<span class="pill ok">Ready<\/span>':''\}/);
-  assert.match(rewards,/data-customer-redeem="\$\{esc\(r\.action_key\)\}"><span>Show QR at counter<\/span>|data-customer-redeem="\$\{esc\(r\.action_key\)\}">\$\{CUI\.icon\('scan',\{size:17\}\)\}<span>Show QR at counter<\/span>/);
-  assert.match(rewards,/button\.querySelector\('span'\)\.textContent='Show QR at counter'/);
+  assert.match(rewards,/<span class="pill \$\{ready\?'ok':'off'\} customer-reward-row-chip-v322">\$\{esc\(chip\)\}<\/span>/);
+  assert.match(rewards,/data-customer-redeem="\$\{esc\(r\.action_key\)\}">\$\{CUI\.icon\('scan',\{size:17\}\)\}<span>\$\{esc\(ct\('showQr'\)\)\}<\/span>/);
+  assert.match(rewards,/button\.querySelector\('span'\)\.textContent=ct\('showQr'\)/);
   assert.match(rewards,/customer_create_redemption_intent_v89/);
   assert.doesNotMatch(rewards,/Redeem now/);
 });

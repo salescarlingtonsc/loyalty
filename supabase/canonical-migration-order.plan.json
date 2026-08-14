@@ -1843,6 +1843,18 @@
     },
     {
       "kind": "pending",
+      "version": "20260814000300",
+      "name": "nestly_v321_referral_spine_gate_and_leaks",
+      "sourcePath": "db/migrations/20260814_nestly_v321_referral_spine_gate_and_leaks.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260814000400",
+      "name": "nestly_v320_gift_authoring_programme_and_stock",
+      "sourcePath": "db/migrations/20260814_nestly_v320_gift_authoring_programme_and_stock.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260814001000",
       "name": "nestly_v313_conversion_first_prospecting",
       "sourcePath": "db/migrations/20260814_nestly_v313_conversion_first_prospecting.sql"

@@ -83,9 +83,13 @@ test('a single-tier programme renders no ladder at all', () => {
 test('the ladder hangs off the tier panel', () => {
   // v194: the panel is the Tier tab of the programme card, and the ladder folds behind a
   // disclosure — "too many wordings, make it clickable".
-  assert.match(app, /\$\{customerTierLadderMarkupV186\(tier\)\}`;/);
+  /* v322: the ladder now takes the stack's localize flag and C3's vertical shape; the fallback
+     path still calls it with neither, so its English and its grid are untouched. */
+  assert.match(app, /\$\{customerTierLadderMarkupV186\(tier,\{localize:localizeV310,vertical:compactV322\}\)\}`;/);
   assert.match(app, /<details class="customer-tier-ladder">/);
-  assert.match(app, /<summary><span>All tiers and what they unlock<\/span>/);
+  assert.match(app, /<summary><span>\$\{localize\?esc\(ct\('tierLadderTitle'\)\):'All tiers and what they unlock'\}<\/span>/);
+  assert.match(app, /tierLadderTitle:'All tiers and what they unlock'/,
+    'the English is the same sentence, now with three more languages beside it');
 });
 
 /* ------------------------------------------------------------------------------ the server */
@@ -117,7 +121,7 @@ test('the contract is additive — every earlier field survives', () => {
 
 test('a member at the top tier still sees the bar they cleared', () => {
   const card = section(app, 'function customerTierPanelMarkupV194', 'function customerProgrammeSummaryTabsV194');
-  assert.match(card, /const currentRequirement=current&&!next\?customerTierRequirementTextV189\(current\.threshold,basis\):''/);
+  assert.match(card, /const currentRequirement=current&&!next\?customerTierRequirementTextV189\(current\.threshold,basis,\{localize:localizeV310\}\):''/);
   assert.match(card, /you are at the highest tier\./);
 });
 
@@ -129,7 +133,7 @@ test('the header line and the ladder word a threshold identically', () => {
   assert.equal(customerTierRequirementTextV189(3000, 'spend'), 'From SGD 3,000 spent');
   assert.equal(customerTierRequirementTextV189(1, 'visits'), 'From 1 visit');
   assert.equal(customerTierRequirementTextV189(5, 'visits'), 'From 5 visits');
-  assert.match(app, /const requirement=threshold=>customerTierRequirementTextV189\(threshold,basis\)/,
+  assert.match(app, /const requirement=threshold=>customerTierRequirementTextV189\(threshold,basis,\{localize\}\)/,
     'the ladder must use the same helper, so the two can never diverge');
 });
 
