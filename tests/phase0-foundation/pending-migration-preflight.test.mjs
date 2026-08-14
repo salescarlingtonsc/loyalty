@@ -316,7 +316,8 @@ const sqlTestByMigrationName = new Map([
      follow-up with no independent behaviour of its own — it shares v326's suite, same pattern as
      v47a/v47b sharing v47's. Bound by full name for the same collision reason as v323 above. */
   ['nestly_v326_points_gift_lifecycle', 'db/tests/v326_points_gift_lifecycle.sql'],
-  ['nestly_v326a_gift_rpc_anon_revoke', 'db/tests/v326_points_gift_lifecycle.sql']
+  ['nestly_v326a_gift_rpc_anon_revoke', 'db/tests/v326_points_gift_lifecycle.sql'],
+  ['nestly_v327_customer_branch_choice', 'db/tests/v327_customer_branch_choice.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -820,7 +821,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 272); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle
+  assert.equal(pending.length, 273); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
