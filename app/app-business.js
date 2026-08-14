@@ -9887,6 +9887,19 @@ function promotionDateInputV104(value){
   const byType=Object.fromEntries(parts.map(part=>[part.type,part.value]));
   return `${byType.year}-${byType.month}-${byType.day}`;
 }
+/* V324 (owner markup 2026-08-14, arrow onto the Overview "Started" column: "all date use
+   dd/mm/yyyy format"). Same instant as promotionDateTextV104 — a bare yyyy-mm-dd is anchored at
+   NOON Singapore, never midnight, so a date can never fall back a day on a browser west of SGT —
+   and only the output pattern differs. en-GB is the locale that prints day-first with 2-digit
+   parts; the timeZone stays Asia/Singapore, which is what makes the two formatters agree on which
+   day it is. Applied to the Rewards & Offer tables only; the long form is still what every other
+   surface renders, so this is deliberately a second formatter and not an edit to the first. */
+function promotionDateShortV324(value){
+  if(!value)return '';
+  const instant=/^\d{4}-\d{2}-\d{2}$/.test(String(value))
+    ?new Date(`${value}T12:00:00+08:00`):new Date(value);
+  return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Singapore',day:'2-digit',month:'2-digit',year:'numeric'}).format(instant);
+}
 function promotionBoundaryV104(date,{end=false}={}){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date||'')))return null;
   return new Date(`${date}T${end?'23:59:59.999':'00:00:00.000'}+08:00`).toISOString();
@@ -11308,7 +11321,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     ?`<span class="muted">${growUsageV271?'Not tracked':'Not available'}</span>`
     :esc(String(Number(value)));
   const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
-    ?esc(promotionDateTextV104(value)):'<span class="muted">Not tracked</span>';
+    ?esc(promotionDateShortV324(value)):'<span class="muted">Not tracked</span>';
   const growProgrammeEntriesV271=(()=>{
     const entries=[];
     const milestoneById=new Map();
@@ -11407,10 +11420,34 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growLimitedOfferEntryV319=entry=>entry.type==='Promotion';
   const growOverviewRewardRowsV319=growOverviewRowsV271.filter(entry=>!growLimitedOfferEntryV319(entry));
   const growOverviewOfferRowsV319=growOverviewRowsV271.filter(growLimitedOfferEntryV319);
+  /* V324 (owner markup 2026-08-14 over this same table). Two marks, and they are one change:
+     the TYPE column is struck through, and the "Free Facial cream / Reward" row is ringed with
+     "those reward is under point system" beside it. Type was the only thing on the row saying
+     how a reward related to the programme above it, so deleting the column without replacing
+     what it carried would have left two rows reading as siblings when one belongs to the other.
+     The indent says it instead, and says it in the place the eye already is — the name.
+
+     The predicate is the entry's own type, exactly as growLimitedOfferEntryV319 is, so it cannot
+     drift from how the rows were built. It deliberately does NOT name a parent programme: entries
+     are pushed earning-first and rewards after, so the row above a child IS its programme, and
+     hard-coding "Point system" would start lying the moment a stamps firm's milestones (v322 R5)
+     render here. The indent claims the row is subordinate, nothing more. */
+  const growOverviewChildRowV324=row=>row.type==='Reward';
+  /* The indent claims "this belongs to the row above", so it may only be drawn when there IS a
+     row above for it to belong to. History is the case that proves it: a firm that retired three
+     rewards but never retired the points programme has a table of nothing but children, and
+     indenting all three would point at a parent that is not on the screen. Same guard covers an
+     Overview whose only live rows are rewards. */
+  const growOverviewNameColumnV324=(rows,label)=>[label,row=>{
+    const at=rows.indexOf(row);
+    const parentAbove=at>0&&rows.slice(0,at).some(entry=>!growOverviewChildRowV324(entry));
+    return growOverviewChildRowV324(row)&&parentAbove
+      ?`<span class="grow-overview-child-v324"><b data-merchant-content>${esc(row.name)}</b></span>`
+      :`<b data-merchant-content>${esc(row.name)}</b>`;
+  }];
   const growOverviewRewardsTableV319=growTableV271({label:'Rewards and loyalty programmes running now',rows:growOverviewRewardRowsV319,
     empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
-    columns:[['Programme',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
-      ['Type',row=>esc(row.type)],
+    columns:[growOverviewNameColumnV324(growOverviewRewardRowsV319,'Programme'),
       ['Started',row=>growDateCellV271(row.started)],
       ['Customers used',row=>growCountCellV271(row.customers)],
       ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
@@ -11424,25 +11461,49 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     empty:'<b>No offer is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/offers">Limited Offer</a> to create one customers can see.</p>',
     columns:[['Offer',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
       ['Started',row=>growDateCellV271(row.started)],
-      ['Ends',row=>Number.isFinite(Date.parse(row.endsAt||''))?esc(promotionDateTextV104(row.endsAt)):'<span class="muted">No end date</span>'],
+      ['Ends',row=>Number.isFinite(Date.parse(row.endsAt||''))?esc(promotionDateShortV324(row.endsAt)):'<span class="muted">No end date</span>'],
       ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
-  const growOverviewTableV271=`<div class="grow-overview-split-v319" data-grow-overview-split-v319>
-    <section class="grow-overview-column-v319" data-grow-overview-category-v319="rewards" aria-labelledby="growOverviewRewardsHeadV319">
-      <h3 class="grow-overview-column-title-v319" id="growOverviewRewardsHeadV319">Rewards &amp; Loyalty</h3>
-      <p class="muted small grow-overview-column-note-v319">What customers earn and climb, running until you stop it.</p>
-      ${growOverviewRewardsTableV319}</section>
-    <section class="grow-overview-column-v319" data-grow-overview-category-v319="offers" aria-labelledby="growOverviewOffersHeadV319">
-      <h3 class="grow-overview-column-title-v319" id="growOverviewOffersHeadV319">Limited Offer</h3>
-      <p class="muted small grow-overview-column-note-v319">Current promotions customers see in the app. Edit them under <a href="#/grow/offers">Limited Offer</a>.</p>
-      ${growOverviewOffersTableV319}</section>
+  /* V324: ONE frame, both views. The owner wrote "history UI/UX follow overview" with an arrow
+     from the History rail row to Overview, so the two pages are built from the same function
+     rather than two copies that drift apart the next time either is touched. The scope suffix
+     keeps the heading ids unique per view — only one of the two is ever in the DOM at a time
+     (programmeView decides), but an id that is only accidentally unique is a bug waiting for the
+     day both render.
+
+     Also on the same markup: both column notes are struck through ("delete these unnecessary
+     wordings") and a ringed "+" is drawn beside each heading. The sentence is replaced by the
+     control it was describing — the Limited Offer note existed to carry a link to the editor,
+     and the button carries it now, so nothing is lost by deleting the words. History takes no
+     "+": nothing is added to a list of things that already ended. */
+  const growOverviewFrameV324=({scope,rewards,offers,addable=true})=>`<div class="grow-overview-split-v319" data-grow-overview-split-v319>
+    <section class="grow-overview-column-v319" data-grow-overview-category-v319="rewards" aria-labelledby="growOverviewRewardsHead${scope}">
+      <div class="grow-overview-column-head-v324"><h3 class="grow-overview-column-title-v319" id="growOverviewRewardsHead${scope}">Rewards &amp; Loyalty</h3>
+        ${addable?'<a class="btn ghost sm grow-overview-add-v324" href="#/grow" aria-label="Add another reward programme"><span aria-hidden="true">+</span></a>':''}</div>
+      ${rewards}</section>
+    <section class="grow-overview-column-v319" data-grow-overview-category-v319="offers" aria-labelledby="growOverviewOffersHead${scope}">
+      <div class="grow-overview-column-head-v324"><h3 class="grow-overview-column-title-v319" id="growOverviewOffersHead${scope}">Limited Offer</h3>
+        ${addable?'<a class="btn ghost sm grow-overview-add-v324" href="#/grow/offers" aria-label="Add another limited offer"><span aria-hidden="true">+</span></a>':''}</div>
+      ${offers}</section>
   </div>`;
-  const growHistoryTableV271=growTableV271({label:'Programme history',rows:growHistoryRowsV271,
-    empty:'<b>Nothing has ended yet.</b><p class="muted small" style="margin-top:6px">Programmes appear here once they pass their end date or you retire them.</p>',
-    columns:[['Programme',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
-      ['Type',row=>esc(row.type)],
+  const growOverviewTableV271=growOverviewFrameV324({scope:'V319',rewards:growOverviewRewardsTableV319,offers:growOverviewOffersTableV319});
+  /* V324: "don't need this" is written across the WHY IT STOPPED column, so it goes. The two
+     remaining date columns still carry the distinction the owner cared about — a row that reached
+     its end date has one, a row retired by hand does not — without a column that repeated in
+     words what the dates already said. Type goes for the same reason it went on Overview, and the
+     child indent replaces it here too. */
+  const growHistoryRewardRowsV324=growHistoryRowsV271.filter(entry=>!growLimitedOfferEntryV319(entry));
+  const growHistoryOfferRowsV324=growHistoryRowsV271.filter(growLimitedOfferEntryV319);
+  const growHistoryRewardsTableV324=growTableV271({label:'Reward programmes that have ended',rows:growHistoryRewardRowsV324,
+    empty:'<b>No reward programme has ended yet.</b><p class="muted small" style="margin-top:6px">Programmes appear here once they pass their end date or you retire them.</p>',
+    columns:[growOverviewNameColumnV324(growHistoryRewardRowsV324,'Programme'),
       ['Ran from',row=>growDateCellV271(row.started)],
-      ['Ran until',row=>growDateCellV271(row.ended)],
-      ['Why it stopped',row=>esc(row.state==='ended'?'Reached its end date':'Retired by you')]]});
+      ['Ran until',row=>growDateCellV271(row.ended)]]});
+  const growHistoryOffersTableV324=growTableV271({label:'Limited offers that have ended',rows:growHistoryOfferRowsV324,
+    empty:'<b>No offer has ended yet.</b><p class="muted small" style="margin-top:6px">Offers appear here once they pass their end date or you retire them.</p>',
+    columns:[['Offer',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
+      ['Ran from',row=>growDateCellV271(row.started)],
+      ['Ran until',row=>growDateCellV271(row.ended)]]});
+  const growHistoryTableV271=growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false});
   /* One strip, three destinations, each with its own hash so it is linkable and back-button-safe.
      It reuses the house sub-module strip rather than reviving the V173-era one, which V173/V180
      removed because it duplicated the sidebar's own sub-rows. These three are not sidebar rows —
@@ -11483,12 +11544,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            all say the same words" — is why the rename cannot stop at the sidebar; a rail reading
            "Rewards & Offer" that opens a page titled "Programmes" is the same navigation defect
            V245 was raised about, in the other direction. */''}
-      <div class="cui-page-title"><h1 id="growTitle">Rewards &amp; Offer</h1>
-        <p class="muted">Create and manage rewards, promotions and customer programmes.</p></div>
+      ${/* V324: the owner struck out BOTH this subtitle and the card kicker below it, and wrote
+           "Overview" against the heading. The page was saying its own name three times before any
+           content — H1 "Rewards & Offer", a subtitle restating it as a sentence, then a kicker
+           reading "REWARDS & OFFER" directly above the H2. The H1 stays (V319's rule above is
+           still right: the heading follows the rail) and the two restatements go, which leaves
+           exactly what the owner wrote in the margin — the module, then the view. */''}
+      <div class="cui-page-title"><h1 id="growTitle">Rewards &amp; Offer</h1></div>
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):'<p class="customer-quest-kicker">Rewards &amp; Offer</p>'}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growProgrammeSwitchPanelV322():''}

@@ -89,7 +89,10 @@ test('V164 Programmes removes persistent setup CTA and keeps categorised overvie
      page heading together, per V245's own rule that the two must say the same words. The
      requirement this line protects is that the heading is the MODULE's name, not "Grow". */
   assert.match(appHtml, /<h1 id="growTitle">Rewards &amp; Offer<\/h1>/);
-  assert.match(appHtml, /Create and manage rewards, promotions and customer programmes\./);
+  /* V324 (owner markup 2026-08-14): the subtitle is struck through. The requirement this test
+     exists for is the one above — the heading is the MODULE's name, not "Grow" — and it is
+     untouched; what went was a second sentence restating that name underneath it. */
+  assert.doesNotMatch(appHtml, /Create and manage rewards, promotions and customer programmes\./);
   assert.match(appHtml, /<div class="v150-title-actions"><\/div>/);
   /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two
      categories: Point system holds everything earned and spent in points, Other rewards

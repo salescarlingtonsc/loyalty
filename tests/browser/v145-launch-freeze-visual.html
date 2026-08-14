@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="f9375a4682a9345d571b8b1bdc6176744f86ce90e31e95868cd211a18ac3fe0a"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="63136a16e24a0d6919fa0047b484962f5ed65e4fe930289bbdcf5bd82f4293b8"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -752,6 +752,27 @@ input[type=range]:focus{box-shadow:none}
 .grow-overview-column-title-v319{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
 .grow-overview-column-note-v319{margin:0}
 .grow-overview-column-v319 .cui-table-wrap{border:1px solid var(--line)}
+/* V324 (owner markup 2026-08-14): a line drawn between the two columns with "separate them", a
+   ringed "+" beside each heading, and the reward row ringed as belonging to the programme above.
+   The divider is a border on the second column and only exists at the width where the two are
+   actually side by side — below 1200px the split stacks, and a left border on a stacked column
+   is a stray vertical line, not a separator. */
+.grow-overview-column-head-v324{display:flex;align-items:center;gap:10px}
+.grow-overview-column-head-v324 .grow-overview-column-title-v319{margin:0}
+.grow-overview-add-v324{margin-left:auto;min-width:30px;padding:2px 9px;font-size:1.05rem;line-height:1.35;font-weight:800;border-radius:999px}
+@media(min-width:1201px){.grow-overview-split-v319{gap:28px}
+  .grow-overview-column-v319[data-grow-overview-category-v319="offers"]{border-left:1px solid var(--hair);padding-left:28px}}
+/* A date is one token to a reader and must never break across lines — dd/mm/yyyy in a narrow
+   column wraps after the "20" and prints the year as "20 26", which is worse than the long form
+   it replaced. Only above the 767px stack point: below it the responsive table gives each cell
+   the full row width, and nowrap there could push a long value out of the card instead. */
+@media(min-width:768px){.grow-overview-column-v319 .cui-table td[data-label="Started"],
+  .grow-overview-column-v319 .cui-table td[data-label="Ends"],
+  .grow-overview-column-v319 .cui-table td[data-label="Ran from"],
+  .grow-overview-column-v319 .cui-table td[data-label="Ran until"]{white-space:nowrap}}
+.grow-overview-child-v324{display:block;position:relative;padding-left:17px}
+.grow-overview-child-v324::before{content:"";position:absolute;left:4px;top:2px;bottom:calc(50% - 1px);width:7px;border-left:1.5px solid var(--hair);border-bottom:1.5px solid var(--hair);border-bottom-left-radius:4px}
+@media(max-width:820px){.grow-overview-child-v324{padding-left:0}.grow-overview-child-v324::before{display:none}}
 .grow-hero{display:grid;grid-template-columns:minmax(0,1fr);justify-items:start;gap:14px;padding:20px;
   border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(135deg,#fff 0%,var(--tint) 100%);box-shadow:var(--shadow)}
 .grow-hero-copy{max-width:620px}.grow-hero-copy h1{font-size:clamp(1.8rem,4vw,2.35rem);margin:0}
@@ -1876,7 +1897,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-promotion-validity{font-weight:750}.customer-promotion-detail-list{display:grid;gap:10px;margin:16px 0}.customer-promotion-detail-list>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px}.customer-promotion-detail-list dt{color:var(--muted);font-size:.78rem;font-weight:750}.customer-promotion-detail-list dd{margin:0;overflow-wrap:anywhere}
 .customer-promotion-card-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}.customer-promotion-card-actions .btn{background:#fff;color:#17161a;box-shadow:none}.customer-promotion-card details{min-width:0}.customer-promotion-card details[open]{flex:1 1 100%;width:100%}.customer-promotion-card details summary{color:rgba(255,255,255,.88)}
 #customerPromotionDetailsModal .modal-card,#customerPromotionDetailsModal .row,#customerPromotionDetailsModal h2{min-width:0}#customerPromotionDetailsModal h2{flex:1 1 auto}#customerPromotionDetailsModal h2,#customerPromotionDetailsModal p,#customerPromotionDetailsModal dd{overflow-wrap:anywhere;word-break:break-word}
-.promotion-studio{display:grid;gap:16px}.promotion-studio-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;list-style:none}.promotion-studio-progress li{padding:11px;border-radius:13px;background:var(--bg);font-size:.84rem;font-weight:750}.promotion-studio-progress li strong{display:block;color:var(--coral);margin-bottom:3px}.promotion-editor-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:16px}.promotion-preview{position:sticky;top:92px;align-self:start}.promotion-preview .customer-promotion-card{min-height:410px}.promotion-item-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}.promotion-item-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--bg)}.promotion-item-row:last-child{border-bottom:0}.promotion-quota{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.promotion-quota-meter{height:8px;flex:1 1 180px;overflow:hidden;border-radius:999px;background:var(--hair)}.promotion-quota-meter span{display:block;height:100%;width:var(--quota-progress,0%);background:var(--coral)}
+.promotion-studio{display:grid;gap:16px}
+/* V324 (owner markup 2026-08-14, ringing all three steps: "add background box, easier to see").
+   The steps were already on var(--bg), which is the PAGE colour — so on the Promotions page the
+   three tiles were tinted the same as what was behind them and read as loose text, which is what
+   the owner was looking at. The strip becomes a card-surfaced box and each step sits on the page
+   tint inside it, so the contrast now runs box-against-page and step-against-box. */
+.promotion-studio-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;list-style:none;padding:10px;border-radius:17px;background:var(--card);border:1px solid var(--hair)}
+@media(max-width:720px){.promotion-studio-progress{grid-template-columns:minmax(0,1fr)}}
+.promotion-studio-progress li{padding:11px;border-radius:13px;background:var(--bg);border:1px solid var(--hair);font-size:.84rem;font-weight:750}.promotion-studio-progress li strong{display:block;color:var(--coral);margin-bottom:3px}.promotion-editor-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:16px}.promotion-preview{position:sticky;top:92px;align-self:start}.promotion-preview .customer-promotion-card{min-height:410px}.promotion-item-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}.promotion-item-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--bg)}.promotion-item-row:last-child{border-bottom:0}.promotion-quota{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.promotion-quota-meter{height:8px;flex:1 1 180px;overflow:hidden;border-radius:999px;background:var(--hair)}.promotion-quota-meter span{display:block;height:100%;width:var(--quota-progress,0%);background:var(--coral)}
 @media(max-width:760px){
   .customer-promotions-grid,.promotion-editor-grid{grid-template-columns:1fr}
   .customer-promotion-card{min-height:320px}
@@ -2105,7 +2134,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · f9375a4682a9345d571b8b1bdc6176744f86ce90e31e95868cd211a18ac3fe0a</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 63136a16e24a0d6919fa0047b484962f5ed65e4fe930289bbdcf5bd82f4293b8</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5434,7 +5463,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'f9375a4682a9345d571b8b1bdc6176744f86ce90e31e95868cd211a18ac3fe0a',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'63136a16e24a0d6919fa0047b484962f5ed65e4fe930289bbdcf5bd82f4293b8',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

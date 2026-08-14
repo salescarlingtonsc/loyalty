@@ -160,8 +160,15 @@ test('V271 (b) Overview is a columnar table with the four columns the owner name
      columns the V271 owner named are the ones the REWARDS table still carries; the offers table
      is checked separately below, because dropping a count nothing records was the point of it. */
   const table = section('const growOverviewRewardsTableV319=', 'const growOverviewOffersTableV319=');
-  assert.match(table, /\['Programme',row=>/);
-  assert.match(table, /\['Type',row=>esc\(row\.type\)\]/);
+  /* V324: the Programme column is built by a helper that needs the row LIST as well as the row —
+     the child indent may only be drawn when a parent row precedes — so it is no longer an inline
+     `['Programme',row=>…]` pair. The column and its heading are unchanged. */
+  /* V324 (owner markup 2026-08-14) struck the Type column through. What it carried — that a
+     reward belongs to the programme above rather than beside it — moved into the name cell as an
+     indent, so the information survives the column. See v319-rewards-and-offer.test.mjs, which
+     renders both rows and asserts the parent is NOT indented and the child is. */
+  assert.doesNotMatch(table, /\['Type',row=>esc\(row\.type\)\]/);
+  assert.match(table, /growOverviewNameColumnV324\(growOverviewRewardRowsV319,'Programme'\)/);
   assert.match(table, /\['Started',row=>growDateCellV271\(row\.started\)\]/);
   assert.match(table, /\['Customers used',row=>growCountCellV271\(row\.customers\)\]/);
   // Only what is running is on this table.
@@ -175,8 +182,13 @@ test('V271 (b) Overview is a columnar table with the four columns the owner name
 test('V271 (b) an unsourceable cell says so — it is never a zero', () => {
   assert.match(app,
     /const growCountCellV271=value=>value==null\s*\r?\n?\s*\?`<span class="muted">\$\{growUsageV271\?'Not tracked':'Not available'\}<\/span>`\s*\r?\n?\s*:esc\(String\(Number\(value\)\)\);/);
+  /* V324 (owner: "all date use dd/mm/yyyy format"). The cell's CONTRACT is what this test is
+     about and it is unchanged — an unparseable date still says "Not tracked" and never a zero or
+     a blank. Only the formatter it delegates to changed, and promotionDateShortV324 resolves the
+     same instant as promotionDateTextV104 (noon SGT for a bare date), so the two cannot disagree
+     about which day it is. */
   assert.match(app,
-    /const growDateCellV271=value=>Number\.isFinite\(Date\.parse\(value\|\|''\)\)\s*\r?\n?\s*\?esc\(promotionDateTextV104\(value\)\):'<span class="muted">Not tracked<\/span>';/);
+    /const growDateCellV271=value=>Number\.isFinite\(Date\.parse\(value\|\|''\)\)\s*\r?\n?\s*\?esc\(promotionDateShortV324\(value\)\):'<span class="muted">Not tracked<\/span>';/);
   // Promotions are a programme with no usage record at all.
   const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
   assert.match(entries, /type:'Promotion',[\s\S]{0,220}?customers:null/);
@@ -221,10 +233,16 @@ test('V271 (b) every Overview number names its source', () => {
 test('V271 (b) History is what STOPPED — a paused programme is not filed as expired', () => {
   assert.match(app,
     /const growHistoryRowsV271=growProgrammeEntriesV271\.filter\(entry=>entry\.state==='ended'\|\|entry\.state==='retired'\);/);
-  const table = section('const growHistoryTableV271=', '/* One strip, three destinations');
+  /* V324: History now renders through the same two-column frame as Overview ("history UI/UX
+     follow overview"), so its columns are defined on the two per-category tables above the frame
+     call — the section starts there. */
+  const table = section('const growHistoryRewardRowsV324=', '/* One strip, three destinations');
   assert.match(table, /\['Ran from',row=>growDateCellV271\(row\.started\)\]/);
   assert.match(table, /\['Ran until',row=>growDateCellV271\(row\.ended\)\]/);
-  assert.match(table, /\['Why it stopped',row=>esc\(row\.state==='ended'\?'Reached its end date':'Retired by you'\)\]/);
+  /* "don't need this" is written across the WHY IT STOPPED column in the same markup. The
+     distinction it spelled out still reaches the screen through "Ran until": a programme that
+     reached its end date has one, a retired row does not. */
+  assert.doesNotMatch(table, /\['Why it stopped',/);
   // The two ways a programme lands here, derived rather than assumed.
   const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
   assert.match(entries, /reward\.active===false\?'retired'/);

@@ -115,10 +115,14 @@ test('V268 (b) drilling into a category shows where you are, for every category'
   assert.match(app, /const growBreadcrumbV268=topic=>!topic\?''/);
   assert.match(app, /class="grow-breadcrumb-current-v268">\$\{esc\(topic\.title\)\}/);
   // Rendered from the ACTIVE topic, so no category can be missing its trail.
-  /* V319 renamed the module. The kicker names the level above, so it follows the rail group and
-     the page heading; the shape this test protects — a breadcrumb when drilled in, the module's
-     own name when not — is unchanged. */
-  assert.match(app, /\$\{growActiveTopicV229\?growBreadcrumbV268\(growActiveTopicV229\):'<p class="customer-quest-kicker">Rewards &amp; Offer<\/p>'\}/);
+  /* V319 renamed the module and the kicker followed it. V324 (owner markup 2026-08-14) struck
+     the kicker out: it printed "REWARDS & OFFER" directly beneath an <h1> already reading
+     "Rewards & Offer", so the not-drilled-in branch was restating the heading rather than
+     naming a level above it. What this test protects is the DRILLED-IN half — a breadcrumb
+     whenever there is an active topic — and that is unchanged, so it is asserted here directly
+     instead of through the ternary's other arm. */
+  assert.match(app, /\$\{growActiveTopicV229\?growBreadcrumbV268\(growActiveTopicV229\):''\}/);
+  assert.doesNotMatch(app, /<p class="customer-quest-kicker">Rewards &amp; Offer<\/p>/);
   // One back control, not two: the trail keeps the existing id and handler.
   assert.equal(app.split('id="growTopicBackV229"').length - 1, 1);
   assert.match(app, /if\(growTopicBack\)growTopicBack\.onclick=\(\)=>\{growTopicV229='';/);

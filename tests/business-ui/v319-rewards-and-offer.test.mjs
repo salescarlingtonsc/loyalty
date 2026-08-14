@@ -153,6 +153,7 @@ test('V319 promotions leave the programmes card for a box of their own', () => {
 
 const growHarness=()=>new Function('esc','assertOk',`
   ${statement('function promotionDateTextV104(value){','\n}')}
+  ${statement('function promotionDateShortV324(value){','\n}')}
   ${statement('const growCountCellV271=','esc(String(Number(value)));')}
   ${statement('const growDateCellV271=','\'<span class="muted">Not tracked</span>\';')}
   ${statement('const growTableV271=','\`<div class="empty" role="status">\${empty}</div>\`;')}
@@ -160,9 +161,11 @@ const growHarness=()=>new Function('esc','assertOk',`
   return (rewardRows,offerRows)=>{
     const growOverviewRowsV271=[...rewardRows,...offerRows];
     ${statement('const growLimitedOfferEntryV319=','growOverviewRowsV271.filter(growLimitedOfferEntryV319);')}
+    ${statement('const growOverviewChildRowV324=',':\`<b data-merchant-content>\${esc(row.name)}</b>\`;\n  }];')}
     ${statement('const growOverviewRewardsTableV319=','esc(row.detail)}</span>\`:\'<span class="muted">—</span>\']]});')}
     ${statement('const growOverviewOffersTableV319=','esc(row.detail)}</span>\`:\'<span class="muted">—</span>\']]});')}
-    ${statement('const growOverviewTableV271=\`<div class="grow-overview-split-v319"','</div>\`;')}
+    ${statement('const growOverviewFrameV324=','</div>\`;')}
+    ${statement('const growOverviewTableV271=growOverviewFrameV324(','});')}
     return {html:growOverviewTableV271,rewards:growOverviewRewardRowsV319,offers:growOverviewOfferRowsV319};
   };`)(esc);
 
@@ -196,11 +199,18 @@ test('V319 the offers table drops a count nothing records and states when the of
     'a column that can only ever say "Not tracked" is not a column');
   assert.doesNotMatch(offersHalf,/Not tracked/);
   assert.match(offersHalf,/<th>Ends<\/th>/);
-  assert.match(offersHalf,/31 August 2026/,'the end date comes from the house date cell, not a new format');
-  /* The rewards side keeps every column the V271 and V301 owners named. */
+  /* V324 (owner: "all date use dd/mm/yyyy format"). Still the house date cell and still the same
+     instant — Singapore, noon-anchored — so this pins the FORMAT change without loosening the
+     rule the V319 author wrote this line for: both date columns come from one formatter. */
+  assert.match(offersHalf,/31\/08\/2026/,'the end date comes from the house date cell, in the owner\'s format');
+  assert.doesNotMatch(offersHalf,/31 August 2026/,'the long form is what the owner struck out');
+  /* The rewards side keeps every column the V271 and V301 owners named, MINUS Type, which the
+     owner struck through on 2026-08-14 — see the V324 child-indent test below for what now
+     carries the relationship that column used to state. */
   const rewardsHalf=html.slice(html.indexOf('="rewards"'),html.indexOf('="offers"'));
-  for(const column of ['Programme','Type','Started','Customers used','Setting'])
+  for(const column of ['Programme','Started','Customers used','Setting'])
     assert.match(rewardsHalf,new RegExp(`<th>${column}</th>`));
+  assert.doesNotMatch(rewardsHalf,/<th>Type<\/th>/,'the owner struck the Type column');
 });
 
 test('V319 an open-ended offer says so rather than borrowing a count\'s "Not tracked"', () => {
@@ -217,6 +227,67 @@ test('V319 each category empties independently, and points at its own door', () 
   assert.match(onlyRewards,/No offer is running yet/);
   assert.match(onlyRewards,/href="#\/grow\/offers"/);
   assert.match(onlyRewards,/Point system/);
+});
+
+/* V324 — the owner's 2026-08-14 markup over this same table. Each assertion is the mark itself:
+   the struck Type column, the ringed reward row ("those reward is under point system"), the
+   ringed "+" beside each heading, and the arrow onto the date column. */
+
+const CHILD_REWARD_ROW={name:'Free Facial cream',type:'Reward',started:'2026-08-06T00:00:00+08:00',
+  ended:null,endsAt:null,state:'live',customers:0,detail:'1000 points'};
+
+test('V324 a reward reads as belonging to the programme above it, not as its sibling', () => {
+  const {html}=growHarness()([REWARD_ROW,CHILD_REWARD_ROW],[]);
+  const rewardsHalf=html.slice(html.indexOf('="rewards"'));
+  /* Read the two name cells rather than slicing the string: the indent is an element that OPENS
+     before the name it wraps, so any assertion cut at the name itself lands inside the markup it
+     is trying to judge and reports the child's own tag against the parent. */
+  const cells=[...rewardsHalf.matchAll(/<td data-label="Programme">([\s\S]*?)<\/td>/g)].map(m=>m[1]);
+  assert.equal(cells.length,2);
+  /* Order comes from how the entries were built — parent first, child after — because the indent
+     claims subordination to the row above and nothing else. */
+  assert.match(cells[0],/Point system/);
+  assert.match(cells[1],/Free Facial cream/);
+  /* The child is indented; the programme it sits under is NOT. That contrast is the whole point —
+     an indent applied to every row says nothing. */
+  assert.doesNotMatch(cells[0],/grow-overview-child-v324/,'the Point system row is a parent and takes no indent');
+  assert.match(cells[1],/<span class="grow-overview-child-v324"><b data-merchant-content>Free Facial cream<\/b><\/span>/);
+});
+
+test('V324 with no programme above it, a lone reward is not indented under nothing', () => {
+  /* The case History actually produces: a firm retires three rewards and never retires the points
+     programme, so the table is all children. An indent there points at a parent that is not on
+     the screen — the elbow has to be earned by a row above it, not by the row's own type. */
+  const {html}=growHarness()([CHILD_REWARD_ROW,{...CHILD_REWARD_ROW,name:'Free Lotion'}],[]);
+  assert.doesNotMatch(html,/grow-overview-child-v324/);
+  assert.match(html,/Free Facial cream/);
+  assert.match(html,/Free Lotion/);
+});
+
+test('V324 a promotion is never indented — the child rule is scoped to rewards', () => {
+  const {html}=growHarness()([REWARD_ROW],[OFFER_ROW]);
+  const offersHalf=html.slice(html.indexOf('="offers"'));
+  assert.doesNotMatch(offersHalf,/grow-overview-child-v324/);
+});
+
+test('V324 each column heading carries its own add control, pointing at its own editor', () => {
+  const {html}=growHarness()([REWARD_ROW],[OFFER_ROW]);
+  const rewardsHalf=html.slice(html.indexOf('="rewards"'),html.indexOf('="offers"'));
+  const offersHalf=html.slice(html.indexOf('="offers"'));
+  assert.match(rewardsHalf,/class="btn ghost sm grow-overview-add-v324" href="#\/grow"/);
+  assert.match(offersHalf,/class="btn ghost sm grow-overview-add-v324" href="#\/grow\/offers"/);
+  /* A "+" alone is not a label. The owner's low-literacy-first rule (CLAUDE.md) is why the
+     accessible name has to say what is being added, in words, on each one. */
+  assert.match(rewardsHalf,/aria-label="Add another reward programme"/);
+  assert.match(offersHalf,/aria-label="Add another limited offer"/);
+});
+
+test('V324 the Started column is dd/mm/yyyy, on both categories', () => {
+  const {html}=growHarness()([REWARD_ROW],[OFFER_ROW]);
+  assert.match(html,/21\/07\/2026/,'21 July 2026, as the owner asked to see it');
+  assert.match(html,/07\/08\/2026/);
+  assert.doesNotMatch(html,/21 July 2026/);
+  assert.doesNotMatch(html,/7 August 2026/);
 });
 
 test('V319 the rail says Rewards & Offer, and Limited Offer is a real routable child', () => {

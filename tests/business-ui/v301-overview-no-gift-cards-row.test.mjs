@@ -40,9 +40,14 @@ test('V301 (a) the row builder never synthesizes a Gift cards entry', () => {
   assert.doesNotMatch(programmeEntries, /snapshot\.giftcards/);
 });
 
-test('V301 (b) the Overview table keeps all five owner-named columns', () => {
-  assert.match(overviewTable, /\['Programme',row=>/);
-  assert.match(overviewTable, /\['Type',row=>esc\(row\.type\)\]/);
+test('V301 (b) the Overview table keeps the owner-named columns', () => {
+  /* V324: the Programme column moved into growOverviewNameColumnV324, which takes the row list
+     as well as the row so the child indent can require a parent above it. */
+  assert.match(overviewTable, /growOverviewNameColumnV324\(growOverviewRewardRowsV319,'Programme'\)/);
+  /* V324 (owner markup 2026-08-14): Type is struck through — four columns now, not five. The
+     row-to-programme relationship it carried moved into the name cell as an indent; this suite's
+     own subject (no synthesized Gift cards row) is untouched by that. */
+  assert.doesNotMatch(overviewTable, /\['Type',row=>esc\(row\.type\)\]/);
   assert.match(overviewTable, /\['Started',row=>growDateCellV271\(row\.started\)\]/);
   assert.match(overviewTable, /\['Customers used',row=>growCountCellV271\(row\.customers\)\]/);
   assert.match(overviewTable, /\['Setting',row=>row\.detail/);
