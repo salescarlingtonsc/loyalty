@@ -366,6 +366,64 @@ test('V322 R6 a non-owner sees the live state and no controls', () => {
   assert.match(markup, /Owner only/);
 });
 
+/* =================================================================================================
+ * V324 — opening or cancelling the confirmation is a `hidden` toggle, not a re-render
+ * ============================================================================================== */
+
+test('V324 the confirm block ships in the DOM for every row, hidden unless it is the pending one', () => {
+  /* Was `${pending?'<li … data-grow-switchconfirm-v322=...>…</li>':''}` — present only when
+     pending, so opening it had no path but a full growPage() re-render. Now it is unconditional
+     markup with a conditional `hidden`, so JS can show/hide it without touching the network. */
+  const panel = closure('const growProgrammeSwitchPanelV322=()=>{', 'const growOngoingTopicsV244=');
+  assert.doesNotMatch(stripComments(panel), /\$\{pending\?`<li class="imp-note"/,
+    'the confirm block must not be conditionally EMITTED — hidden with an attribute instead');
+  assert.match(panel, /<li class="imp-note" data-grow-switchconfirm-v322="\$\{esc\(kind\)\}"[^>]*\$\{pending\?'':' hidden'\}>/);
+});
+
+test('V324 the `hidden` attribute is not silently lost to the row list\'s own flex layout', () => {
+  /* Confirmed by driving a real click in real Chromium, not by reading source: the confirm `<li>`
+     is a direct child of `.grow-setup-rewardlist-v301`, and that list's OWN
+     `.grow-setup-rewardlist-v301>li{display:flex}` rule is an author rule, which wins the cascade
+     over the UA `[hidden]{display:none}` stylesheet regardless of specificity — so the very first
+     render of this change had the `hidden` attribute present on every row while all four sat
+     visibly open on screen. Every other flex/grid list in this file already carries the same
+     `[hidden]{display:none!important}` override for exactly this reason (see
+     .grow-programme-row[hidden] two lines below it); this list needs its own. */
+  const css = readFileSync(join(root, 'app', 'index.html'), 'utf8');
+  assert.match(css, /\.grow-setup-rewardlist-v301>li\[hidden\]\{display:none!important\}/);
+});
+
+test('V324 opening or cancelling the confirmation never calls growRerenderV322', () => {
+  /* growRerenderV322 is growPage() — a full re-fetch of growOverviewSnapshot and a loading-state
+     wipe of outerMain. Right for the CONFIRM click (server state actually changed). Wrong for
+     OPENING or CANCELLING, which change nothing anyone but this browser tab needs to know about. */
+  const openHandler = closure("outerMain.querySelectorAll('[data-grow-switchtoggle-v322]')",
+    "outerMain.querySelectorAll('[data-grow-switchconfirm-no-v322]')");
+  const cancelHandler = closure("outerMain.querySelectorAll('[data-grow-switchconfirm-no-v322]')",
+    "outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]')");
+  assert.doesNotMatch(openHandler, /growRerenderV322\(\)/, 'opening the confirmation must not re-render the page');
+  assert.doesNotMatch(cancelHandler, /growRerenderV322\(\)/, 'Cancel must not re-render the page');
+  assert.match(openHandler, /growSwitchSetOpenV324\(kind\)/);
+  assert.match(cancelHandler, /growSwitchSetOpenV324\(''\)/);
+});
+
+test("V324 growSwitchSetOpenV324 toggles `hidden` on every row and keeps exactly one open", () => {
+  const helper = closure('const growSwitchSetOpenV324=kind=>{', '};');
+  assert.match(helper, /li\.hidden=li\.dataset\.growSwitchconfirmV322!==kind/,
+    'every confirm row is visited — opening one must close whichever other one was open');
+  assert.match(helper, /growSwitchPendingV322=kind;growSwitchErrorV322=''/,
+    'the module-level flags stay in sync even though no re-render reads them until the next one');
+});
+
+test('V324 confirming the switch is UNCHANGED — it still writes and still re-renders', () => {
+  /* The one case that legitimately needs the network: state actually changes on the server, and
+     other parts of the page (rewardJourney, the programme tiles) depend on the new spine. */
+  const confirmHandler = closure("outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]')",
+    '/* V229: tiles drill in');
+  assert.match(confirmHandler, /writeProgrammeSwitchesV314\(/);
+  assert.match(confirmHandler, /growRerenderV322\(\)/, 'a real write still repaints from the server reply');
+});
+
 test('V322 R6 the panel switches in ONE call and keeps referral_programs in step', () => {
   const handler = closure("outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]')",
     '/* V229: tiles drill in');

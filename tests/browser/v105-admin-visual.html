@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="20daf85975d51f06611c7075a4c12a0a1b0dff2817cee8f0ae9b6b3d1a959a44">
+<meta name="v105-production-component-sha256" content="a86ced4f13b8867a1be58e3d679d655e4596a09dc9b7d9032acc3574eba02046">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1118,6 +1118,12 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
 .grow-setup-rewardlist-v301{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px}
 .grow-setup-rewardlist-v301>li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+/* V324: the `hidden` attribute this list's rows now carry (the switch confirm/cancel row) loses
+   the cascade to the `display:flex` rule directly above — an author rule always beats the UA
+   `[hidden]{display:none}` sheet regardless of specificity, which is why every OTHER flex/grid
+   list in this file already carries the same override (.grow-programme-row[hidden], two lines
+   below). Caught by actually clicking the button in a real browser, not by reading the source. */
+.grow-setup-rewardlist-v301>li[hidden]{display:none!important}
 .grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:.84rem;cursor:pointer}
 .grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
@@ -2948,7 +2954,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 20daf85975d5</span>
+<span class="v105-provenance">v105 production-component harness · a86ced4f13b8</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3073,7 +3079,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'20daf85975d51f06611c7075a4c12a0a1b0dff2817cee8f0ae9b6b3d1a959a44',
+  sourceHash:'a86ced4f13b8867a1be58e3d679d655e4596a09dc9b7d9032acc3574eba02046',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

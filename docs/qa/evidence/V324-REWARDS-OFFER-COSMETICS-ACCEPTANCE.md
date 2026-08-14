@@ -3,10 +3,52 @@
 Date: 2026-08-14
 Branch: `codex/v324-rewards-offer-cosmetics`
 Base: `main` @ `b847691` (v322 — the six owner rulings)
-Production-component source hash: `ca8282b83ef9b6f6e031636fc218b717114a7f9995a1571e363f55a5aed1939b`
+Production-component source hash: `b0d2457ef7a40216a944c0bb05f6d75f900e656192ee72c022461f4e5482be1e`
 
 **Client-only. No migration, no RPC, no schema change.** The `nestly_vNNN` migration namespace is
 untouched by this work; v324 is a version number for the client change only.
+
+## Addendum — a second owner request, same session
+
+After the first eight-screenshot pass shipped, the owner marked up a live v322 screen (the
+Rewards Programme page's "What customers can use right now" switches, R6's own feature) and asked
+for one thing: **pressing Turn on/off should pop up a confirm/cancel, not refresh the entire
+website.**
+
+The confirmation itself was not missing — v322 already built it, inline on the row, by design
+("no modal, which is the standing rule for this surface"). What the owner was reacting to is that
+*opening* it did `growSwitchPendingV322=kind;growRerenderV322()` — and `growRerenderV322` is
+`growPage()`, which wipes `outerMain` to a loading skeleton and re-fetches
+`growOverviewSnapshot()` from the server before repainting the whole Programmes page. Two clicks
+that change nothing on the server — open the confirm, then Cancel it — were each paying for a full
+network round trip and a visible flash. That is "refreshing the entire website."
+
+**Fix:** the confirm `<li>` for every row is now always in the DOM, `hidden` unless it is the
+pending one (`app/app.js`, `growProgrammeSwitchPanelV322`). Opening or cancelling toggles that
+attribute directly (`growSwitchSetOpenV324`, `app/app.js`) — no network call, no re-render.
+**Confirming is unchanged**: that click still does the one real `writeProgrammeSwitchesV314` call
+and still re-renders from the server's reply afterward, because it is the one moment where the
+server state — and therefore the rest of the page — actually changed.
+
+**A real bug caught only by driving an actual click in real Chromium, not by reading the diff:**
+the confirm `<li>` is a direct child of `.grow-setup-rewardlist-v301`, and that list's own
+`.grow-setup-rewardlist-v301>li{display:flex}` rule is an *author* rule — it wins the cascade over
+the UA `[hidden]{display:none}` sheet regardless of specificity. The first render of this fix had
+the `hidden` attribute landing correctly and doing nothing: all four confirm rows sat open on
+screen from page load. `app/index.html` now carries
+`.grow-setup-rewardlist-v301>li[hidden]{display:none!important}`, matching the pattern this file
+already uses everywhere else it mixes `hidden` with a flex/grid list
+(`.grow-programme-row[hidden]`, two lines below it, is the same fix for the same reason).
+
+**Verified two ways.** Source-level: `V324 opening or cancelling the confirmation never calls
+growRerenderV322`, `V324 growSwitchSetOpenV324 toggles hidden on every row`, `V324 confirming the
+switch is UNCHANGED`, `V324 the hidden attribute is not silently lost to the row list's own flex
+layout` (`tests/business-ui/v322-owner-rulings.test.mjs`) — 35/35 pass in that file. Behavioural:
+the real `growProgrammeSwitchPanelV322` markup and the real click-wiring block, both lifted
+verbatim from `app/app.js`, mounted in a page carrying the real production `<style>` and driven
+with actual Playwright clicks in Chromium — a render counter confirmed it stayed at 1 through
+"open confirm" and "Cancel", `computedDisplay` on the confirm row was `flex` before the CSS fix and
+`none` after, and focus lands on Cancel when a row opens. Scratchpad-only, not checked in.
 
 ## Why this is a separate change from v322
 
@@ -62,9 +104,9 @@ so a date can never fall back a day on a browser west of SGT.
 
 ## Verification
 
-**Suite: 2994 tests, 2993 pass, 1 fail.** The one failure is the known env-bound
-`tests/mobile` store-readiness check (no `node_modules/@capacitor` in a fresh worktree), which
-reproduces identically on an untouched `main` worktree and is unrelated to this change.
+**Suite (final, both passes): 2999 tests, 2998 pass, 1 fail.** The one failure is the known
+env-bound `tests/mobile` store-readiness check (no `node_modules/@capacitor` in a fresh worktree),
+which reproduces identically on an untouched `main` worktree and is unrelated to this change.
 
 **Ten pre-existing tests went red and all ten were source-text assertions**, not behavioural ones —
 they pinned the exact source of what the owner has now struck out (the `Type` column literal, the
@@ -89,9 +131,9 @@ against it.
 report `PASS` with the current source hash:
 
 - `v104-promotions-*.png` + `v104-promotions-production-render-metrics.json` — source hash
-  `a4b956d423960aec0e942e674fe39f7cc105eb89ff7c2eab45f2379e22776670`. CTA heights ≥44px and the
+  `99c3c0b40aeac7cff1d32fe6a2909d246571caa239948162c5f4fd8f9907793f`. CTA heights ≥44px and the
   no-horizontal-scroll assertions hold at 1440 / 390 / 412.
-- `v142-connect-paynow` — source hash `19fc53349acbad41781bc01dd4959d77ee31b3c5325315e66d2d92787d86e7ec`.
+- `v142-connect-paynow` — source hash `d94288b8bef85c32ab2bee103bb738c9371dbfafbce6218b1dd68c604f7ab80b`.
 
 **What the v104 capture does NOT cover, stated because the name invites the assumption.** It
 renders the CUSTOMER-facing offers list and its terms modal — it re-ran green here because it

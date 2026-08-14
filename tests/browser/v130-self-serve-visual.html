@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="5cf52f224245fa75b3609528891e2b86fcbb7a305b6d7d63008860ddff351bad"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="004cbad98db324b5307cf99402aa935030634ed0515f38ee71b17be3012f1772"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1111,6 +1111,12 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
 .grow-setup-rewardlist-v301{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px}
 .grow-setup-rewardlist-v301>li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+/* V324: the `hidden` attribute this list's rows now carry (the switch confirm/cancel row) loses
+   the cascade to the `display:flex` rule directly above — an author rule always beats the UA
+   `[hidden]{display:none}` sheet regardless of specificity, which is why every OTHER flex/grid
+   list in this file already carries the same override (.grow-programme-row[hidden], two lines
+   below). Caught by actually clicking the button in a real browser, not by reading the source. */
+.grow-setup-rewardlist-v301>li[hidden]{display:none!important}
 .grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:.84rem;cursor:pointer}
 .grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}

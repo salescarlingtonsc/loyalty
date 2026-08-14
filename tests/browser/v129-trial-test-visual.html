@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5181d23104a4f8e2cf79cc911008506536e1eb233b16063c47c1e9caf8738fcf"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="b14f9bd2aabe035c152d440e22521abe97ee79568d4b75cbbc1dd5725eeffb96"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1112,6 +1112,12 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
 .grow-setup-rewardlist-v301{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px}
 .grow-setup-rewardlist-v301>li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+/* V324: the `hidden` attribute this list's rows now carry (the switch confirm/cancel row) loses
+   the cascade to the `display:flex` rule directly above — an author rule always beats the UA
+   `[hidden]{display:none}` sheet regardless of specificity, which is why every OTHER flex/grid
+   list in this file already carries the same override (.grow-programme-row[hidden], two lines
+   below). Caught by actually clicking the button in a real browser, not by reading the source. */
+.grow-setup-rewardlist-v301>li[hidden]{display:none!important}
 .grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:.84rem;cursor:pointer}
 .grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
@@ -2134,7 +2140,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 5181d23104a4f8e2cf79cc911008506536e1eb233b16063c47c1e9caf8738fcf</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · b14f9bd2aabe035c152d440e22521abe97ee79568d4b75cbbc1dd5725eeffb96</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -10718,7 +10724,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${canSetupGrow
             ?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${on}" data-grow-switchtoggle-v322="${esc(kind)}">${on?'Turn off':'Turn on'}</button>`
             :'<span class="muted small">Owner only</span>'}</li>
-        ${pending?`<li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px">
+        ${/* V324 (owner: "when pressing on or off just pop up a confirm or cancel — not
+             refreshing the entire website"). This block used to exist in the DOM only when
+             pending===true, so opening it meant growRerenderV322() — a full growPage() call,
+             which re-fetches growOverviewSnapshot and replaces outerMain with a loading
+             skeleton before repainting the whole Programmes page. Right for the CONFIRM click,
+             which changes server state and other parts of the page do depend on (rewardJourney,
+             tiles). Wrong for just OPENING or CANCELLING the confirmation, which change nothing
+             on the server. The block is now always in the DOM, `hidden` unless it is the pending
+             one, so the two click handlers below can show/hide it with the `hidden` attribute —
+             no network call, no re-render, no loading flash. */''}
+        <li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px"${pending?'':' hidden'}>
           <b>${on?`Turn ${esc(title)} off for customers?`:`Turn ${esc(title)} on for customers?`}</b>
           <p class="muted small" style="margin-top:6px">${on
             ?`Customers stop earning and stop being able to claim from ${esc(title)} straight away. Everything you have set up stays saved and comes back when you turn it on again.`
@@ -10730,7 +10746,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
                nothing — the same split W6I2 defect 3 closed from the other direction. Say it here
                rather than let the owner find out from a customer who never got their reward. */
             ?'<p class="muted small" style="margin-top:6px" data-grow-switchreferralzero-v322>No referral reward is set yet, so nothing would be paid. Set the points on the Referrals page first.</p>':''}
-          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${esc(kind)}">${on?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div></li>`:''}`;
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${esc(kind)}">${on?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div></li>`;
       }).join('')}</ul>
       ${growSwitchErrorV322?`<div class="err" role="alert" style="margin-top:12px">${esc(growSwitchErrorV322)}</div>`:''}</section>`;
   };
@@ -11615,13 +11631,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      exclusions when the stamp card is going on. The page is re-rendered from the server's own
      reply (writeProgrammeSwitchesV314 refreshes S.programmes from it), never optimistically. */
   const growRerenderV322=()=>growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  /* V324: show/hide the inline confirm block in place — see the template comment above. Every
+     row's confirm `<li>` is already in the DOM, so this is a `hidden` toggle, never a re-render.
+     Only one row may be open at a time, matching what growSwitchPendingV322 always meant. */
+  const growSwitchSetOpenV324=kind=>{
+    outerMain.querySelectorAll('[data-grow-switchconfirm-v322]').forEach(li=>{
+      li.hidden=li.dataset.growSwitchconfirmV322!==kind;
+    });
+    growSwitchPendingV322=kind;growSwitchErrorV322='';
+  };
   outerMain.querySelectorAll('[data-grow-switchtoggle-v322]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.growSwitchtoggleV322;
     if(!PROGRAMME_KINDS_W6I2.includes(kind))return;
-    growSwitchPendingV322=kind;growSwitchErrorV322='';growRerenderV322();
+    growSwitchSetOpenV324(kind);
+    /* Cancel, not the switch action, gets initial focus — the row just opened on the strength of
+       one click and the default landing spot should be the one that undoes it. */
+    outerMain.querySelector(`[data-grow-switchconfirm-v322="${kind}"] [data-grow-switchconfirm-no-v322]`)?.focus();
   });
   outerMain.querySelectorAll('[data-grow-switchconfirm-no-v322]').forEach(button=>button.onclick=()=>{
-    growSwitchPendingV322='';growSwitchErrorV322='';growRerenderV322();
+    growSwitchSetOpenV324('');
   });
   outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]').forEach(button=>button.onclick=async()=>{
     const kind=button.dataset.growSwitchconfirmYesV322;
@@ -18573,6 +18601,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'5181d23104a4f8e2cf79cc911008506536e1eb233b16063c47c1e9caf8738fcf',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'b14f9bd2aabe035c152d440e22521abe97ee79568d4b75cbbc1dd5725eeffb96',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

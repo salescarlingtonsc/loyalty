@@ -1143,6 +1143,12 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
 .grow-setup-rewardlist-v301{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px}
 .grow-setup-rewardlist-v301>li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+/* V324: the `hidden` attribute this list's rows now carry (the switch confirm/cancel row) loses
+   the cascade to the `display:flex` rule directly above — an author rule always beats the UA
+   `[hidden]{display:none}` sheet regardless of specificity, which is why every OTHER flex/grid
+   list in this file already carries the same override (.grow-programme-row[hidden], two lines
+   below). Caught by actually clicking the button in a real browser, not by reading the source. */
+.grow-setup-rewardlist-v301>li[hidden]{display:none!important}
 .grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:.84rem;cursor:pointer}
 .grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
@@ -2209,7 +2215,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=7b0afb1c949a","business":"/app-business.js?b=d4dea981e085","i18n":"/app-i18n.js?b=d8bb81bcc4f3"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=7b0afb1c949a","business":"/app-business.js?b=4853fde32500","i18n":"/app-i18n.js?b=d8bb81bcc4f3"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

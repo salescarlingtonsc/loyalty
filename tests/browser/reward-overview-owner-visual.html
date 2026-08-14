@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="ca8282b83ef9b6f6e031636fc218b717114a7f9995a1571e363f55a5aed1939b"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="b0d2457ef7a40216a944c0bb05f6d75f900e656192ee72c022461f4e5482be1e"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1112,6 +1112,12 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-example-v301{margin:10px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--tint);color:#8a4a2e;font-size:.88rem;font-weight:650}
 .grow-setup-rewardlist-v301{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px}
 .grow-setup-rewardlist-v301>li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+/* V324: the `hidden` attribute this list's rows now carry (the switch confirm/cancel row) loses
+   the cascade to the `display:flex` rule directly above — an author rule always beats the UA
+   `[hidden]{display:none}` sheet regardless of specificity, which is why every OTHER flex/grid
+   list in this file already carries the same override (.grow-programme-row[hidden], two lines
+   below). Caught by actually clicking the button in a real browser, not by reading the source. */
+.grow-setup-rewardlist-v301>li[hidden]{display:none!important}
 .grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:.84rem;cursor:pointer}
 .grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
@@ -2133,7 +2139,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ca8282b83ef9b6f6e031636fc218b717114a7f9995a1571e363f55a5aed1939b</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b0d2457ef7a40216a944c0bb05f6d75f900e656192ee72c022461f4e5482be1e</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5741,7 +5747,17 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
           ${canSetupGrow
             ?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${on}" data-grow-switchtoggle-v322="${esc(kind)}">${on?'Turn off':'Turn on'}</button>`
             :'<span class="muted small">Owner only</span>'}</li>
-        ${pending?`<li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px">
+        ${/* V324 (owner: "when pressing on or off just pop up a confirm or cancel — not
+             refreshing the entire website"). This block used to exist in the DOM only when
+             pending===true, so opening it meant growRerenderV322() — a full growPage() call,
+             which re-fetches growOverviewSnapshot and replaces outerMain with a loading
+             skeleton before repainting the whole Programmes page. Right for the CONFIRM click,
+             which changes server state and other parts of the page do depend on (rewardJourney,
+             tiles). Wrong for just OPENING or CANCELLING the confirmation, which change nothing
+             on the server. The block is now always in the DOM, `hidden` unless it is the pending
+             one, so the two click handlers below can show/hide it with the `hidden` attribute —
+             no network call, no re-render, no loading flash. */''}
+        <li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px"${pending?'':' hidden'}>
           <b>${on?`Turn ${esc(title)} off for customers?`:`Turn ${esc(title)} on for customers?`}</b>
           <p class="muted small" style="margin-top:6px">${on
             ?`Customers stop earning and stop being able to claim from ${esc(title)} straight away. Everything you have set up stays saved and comes back when you turn it on again.`
@@ -5753,7 +5769,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
                nothing — the same split W6I2 defect 3 closed from the other direction. Say it here
                rather than let the owner find out from a customer who never got their reward. */
             ?'<p class="muted small" style="margin-top:6px" data-grow-switchreferralzero-v322>No referral reward is set yet, so nothing would be paid. Set the points on the Referrals page first.</p>':''}
-          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${esc(kind)}">${on?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div></li>`:''}`;
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${esc(kind)}">${on?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div></li>`;
       }).join('')}</ul>
       ${growSwitchErrorV322?`<div class="err" role="alert" style="margin-top:12px">${esc(growSwitchErrorV322)}</div>`:''}</section>`;
   };
@@ -6638,13 +6654,25 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      exclusions when the stamp card is going on. The page is re-rendered from the server's own
      reply (writeProgrammeSwitchesV314 refreshes S.programmes from it), never optimistically. */
   const growRerenderV322=()=>growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  /* V324: show/hide the inline confirm block in place — see the template comment above. Every
+     row's confirm `<li>` is already in the DOM, so this is a `hidden` toggle, never a re-render.
+     Only one row may be open at a time, matching what growSwitchPendingV322 always meant. */
+  const growSwitchSetOpenV324=kind=>{
+    outerMain.querySelectorAll('[data-grow-switchconfirm-v322]').forEach(li=>{
+      li.hidden=li.dataset.growSwitchconfirmV322!==kind;
+    });
+    growSwitchPendingV322=kind;growSwitchErrorV322='';
+  };
   outerMain.querySelectorAll('[data-grow-switchtoggle-v322]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.growSwitchtoggleV322;
     if(!PROGRAMME_KINDS_W6I2.includes(kind))return;
-    growSwitchPendingV322=kind;growSwitchErrorV322='';growRerenderV322();
+    growSwitchSetOpenV324(kind);
+    /* Cancel, not the switch action, gets initial focus — the row just opened on the strength of
+       one click and the default landing spot should be the one that undoes it. */
+    outerMain.querySelector(`[data-grow-switchconfirm-v322="${kind}"] [data-grow-switchconfirm-no-v322]`)?.focus();
   });
   outerMain.querySelectorAll('[data-grow-switchconfirm-no-v322]').forEach(button=>button.onclick=()=>{
-    growSwitchPendingV322='';growSwitchErrorV322='';growRerenderV322();
+    growSwitchSetOpenV324('');
   });
   outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]').forEach(button=>button.onclick=async()=>{
     const kind=button.dataset.growSwitchconfirmYesV322;
@@ -6896,7 +6924,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'ca8282b83ef9b6f6e031636fc218b717114a7f9995a1571e363f55a5aed1939b',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'b0d2457ef7a40216a944c0bb05f6d75f900e656192ee72c022461f4e5482be1e',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

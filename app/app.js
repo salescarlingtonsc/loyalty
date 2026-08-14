@@ -21059,7 +21059,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${canSetupGrow
             ?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${on}" data-grow-switchtoggle-v322="${esc(kind)}">${on?'Turn off':'Turn on'}</button>`
             :'<span class="muted small">Owner only</span>'}</li>
-        ${pending?`<li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px">
+        ${/* V324 (owner: "when pressing on or off just pop up a confirm or cancel — not
+             refreshing the entire website"). This block used to exist in the DOM only when
+             pending===true, so opening it meant growRerenderV322() — a full growPage() call,
+             which re-fetches growOverviewSnapshot and replaces outerMain with a loading
+             skeleton before repainting the whole Programmes page. Right for the CONFIRM click,
+             which changes server state and other parts of the page do depend on (rewardJourney,
+             tiles). Wrong for just OPENING or CANCELLING the confirmation, which change nothing
+             on the server. The block is now always in the DOM, `hidden` unless it is the pending
+             one, so the two click handlers below can show/hide it with the `hidden` attribute —
+             no network call, no re-render, no loading flash. */''}
+        <li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px"${pending?'':' hidden'}>
           <b>${on?`Turn ${esc(title)} off for customers?`:`Turn ${esc(title)} on for customers?`}</b>
           <p class="muted small" style="margin-top:6px">${on
             ?`Customers stop earning and stop being able to claim from ${esc(title)} straight away. Everything you have set up stays saved and comes back when you turn it on again.`
@@ -21071,7 +21081,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
                nothing — the same split W6I2 defect 3 closed from the other direction. Say it here
                rather than let the owner find out from a customer who never got their reward. */
             ?'<p class="muted small" style="margin-top:6px" data-grow-switchreferralzero-v322>No referral reward is set yet, so nothing would be paid. Set the points on the Referrals page first.</p>':''}
-          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${esc(kind)}">${on?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div></li>`:''}`;
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${esc(kind)}">${on?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div></li>`;
       }).join('')}</ul>
       ${growSwitchErrorV322?`<div class="err" role="alert" style="margin-top:12px">${esc(growSwitchErrorV322)}</div>`:''}</section>`;
   };
@@ -21956,13 +21966,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      exclusions when the stamp card is going on. The page is re-rendered from the server's own
      reply (writeProgrammeSwitchesV314 refreshes S.programmes from it), never optimistically. */
   const growRerenderV322=()=>growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  /* V324: show/hide the inline confirm block in place — see the template comment above. Every
+     row's confirm `<li>` is already in the DOM, so this is a `hidden` toggle, never a re-render.
+     Only one row may be open at a time, matching what growSwitchPendingV322 always meant. */
+  const growSwitchSetOpenV324=kind=>{
+    outerMain.querySelectorAll('[data-grow-switchconfirm-v322]').forEach(li=>{
+      li.hidden=li.dataset.growSwitchconfirmV322!==kind;
+    });
+    growSwitchPendingV322=kind;growSwitchErrorV322='';
+  };
   outerMain.querySelectorAll('[data-grow-switchtoggle-v322]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.growSwitchtoggleV322;
     if(!PROGRAMME_KINDS_W6I2.includes(kind))return;
-    growSwitchPendingV322=kind;growSwitchErrorV322='';growRerenderV322();
+    growSwitchSetOpenV324(kind);
+    /* Cancel, not the switch action, gets initial focus — the row just opened on the strength of
+       one click and the default landing spot should be the one that undoes it. */
+    outerMain.querySelector(`[data-grow-switchconfirm-v322="${kind}"] [data-grow-switchconfirm-no-v322]`)?.focus();
   });
   outerMain.querySelectorAll('[data-grow-switchconfirm-no-v322]').forEach(button=>button.onclick=()=>{
-    growSwitchPendingV322='';growSwitchErrorV322='';growRerenderV322();
+    growSwitchSetOpenV324('');
   });
   outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]').forEach(button=>button.onclick=async()=>{
     const kind=button.dataset.growSwitchconfirmYesV322;
