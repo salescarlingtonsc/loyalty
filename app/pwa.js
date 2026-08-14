@@ -14,7 +14,6 @@
   let registration=null;
   let updateRequested=false;
   let installTimer=0;
-  let autoUpdateTimer=0;
 
   function statusHost(){
     let host=document.getElementById('pwaStatus');
@@ -135,28 +134,22 @@
     }
   }
 
-  function isUnsafeToAutoUpdate(){
-    const active=document.activeElement;
-    if(active&&['INPUT','TEXTAREA','SELECT'].includes(active.tagName))return true;
-    if(active?.isContentEditable)return true;
-    return Boolean(document.querySelector('dialog[open],[role="dialog"],.modal,[data-prevent-auto-update="true"],[data-dirty="true"]'));
-  }
-
+  /* V321 (owner, 2026-08-14: "the website still keeps refreshing itself. - remove this").
+     isUnsafeToAutoUpdate() is gone with the auto-update it guarded. It tried to judge whether a
+     moment was safe to reload the page under someone — no field focused, no dialog open — and
+     "safe-looking" is simply not the same as "invited": reading a customer's profile, comparing
+     two figures on a report, or thinking, are all safe by that test and all ruined by a reload.
+     It could not have worked anyway. */
   function applyUpdate(worker){
     if(!worker)return;
     updateRequested=true;
     worker.postMessage({type:'SKIP_WAITING'});
   }
 
+  /* The prompt below already existed, as the fallback for moments the old code deemed unsafe. It
+     is now the ONLY path: Peekaa never reloads itself. A person presses "Update now", or dismisses
+     it and keeps working on the shell they already have until they next open the app. */
   function offerUpdate(worker){
-    globalObject.clearTimeout(autoUpdateTimer);
-    if(!isUnsafeToAutoUpdate()){
-      autoUpdateTimer=globalObject.setTimeout(()=>{
-        if(!isUnsafeToAutoUpdate())applyUpdate(worker);
-        else offerUpdate(worker);
-      },1200);
-      return;
-    }
     showPrompt({
       title:'A Peekaa update is ready',
       body:'Refresh once to use the latest app shell. Your saved business data is not stored in this cache.',
@@ -205,22 +198,15 @@
   globalObject.navigator?.serviceWorker?.addEventListener('controllerchange',()=>{
     if(updateRequested)globalObject.location.reload();
   });
-  globalObject.navigator?.serviceWorker?.addEventListener('message',event=>{
-    if(event.data?.type!=='PEEKAA_SW_ACTIVATED'||!event.data?.cacheVersion)return;
-    /* V289 (audit A3, G3a): this notification reaches EVERY open tab, not only the one that
-       accepted the update, so it was a second uninvited reload path — the tab half-way through an
-       OTP had consented to nothing. The page that asked for the update reloads through
-       updateRequested/controllerchange anyway; any other tab now keeps whatever the person is in
-       the middle of and picks the new shell up on its next safe moment. */
-    if(!updateRequested&&isUnsafeToAutoUpdate())return;
-    const key=`peekaa-sw-reloaded:${event.data.cacheVersion}`;
-    try{
-      if(globalObject.sessionStorage.getItem(key)==='1')return;
-      globalObject.sessionStorage.setItem(key,'1');
-    }catch{}
-    globalObject.location.reload();
-  });
+  /* V321: the PEEKAA_SW_ACTIVATED listener is DELETED. V289 had already caught it as "a second
+     uninvited reload path" — the broadcast reaches every open tab, not just the one that accepted
+     an update — and narrowed it to tabs that looked idle. Narrowing was not enough: a tab that
+     merely looks idle still belongs to someone. The tab that asked for the update reloads through
+     updateRequested/controllerchange above, which is the consented path and the only one left.
+     Other tabs pick the new shell up whenever they are next opened. */
   document.addEventListener('visibilitychange',()=>{
+    /* Still only CHECKS. With the auto-apply gone this can no longer reload anything; the most it
+       does now is raise the dismissible "update is ready" prompt. */
     if(document.visibilityState==='visible')registration?.update?.();
   });
 

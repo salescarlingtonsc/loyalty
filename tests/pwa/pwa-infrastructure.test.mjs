@@ -194,7 +194,21 @@ test('every installable page exposes consistent PWA and iOS metadata', async () 
     assert.match(html, /apple-mobile-web-app-capable" content="yes"/, `${page} iOS mode`);
     assert.match(html, /rel="apple-touch-icon" sizes="180x180"/, `${page} iOS icon`);
     assert.match(html, /href="\/pwa\.css"/, `${page} PWA UI`);
-    assert.match(html, /src="\/pwa\.js" defer/, `${page} PWA lifecycle`);
+    /* V321: /pwa.js is served with `public, max-age=14400, must-revalidate` and, unlike the
+       app-*.js chunks, carries no build fingerprint — so a browser that already held it would run
+       the OLD lifecycle script, and its auto-refresh, for up to four more hours after the fix
+       deployed. The `?v=` query is the convention customer-ui.js already uses; bump it whenever
+       pwa.js changes behaviour.
+
+       It is applied to the three pages someone actually sits on with the app running, and
+       deliberately NOT to privacy.html / terms.html / data-request.html: those documents' bytes
+       are hashed into BUSINESS_LEGAL_V138 as the record of exactly what each owner accepted, so a
+       cache-busting query would rewrite consent history to save a cache round-trip on a page
+       nobody keeps open. They keep the unversioned tag and pick up the new script on their own
+       revalidation. */
+    const appPage = ['index.html', 'join.html', 'offline.html'].includes(page);
+    assert.match(html, appPage ? /src="\/pwa\.js\?v=v321-no-self-refresh" defer/ : /src="\/pwa\.js" defer/,
+      `${page} PWA lifecycle`);
   }
 });
 
@@ -376,15 +390,21 @@ test('install, update and native-wrapper lifecycle contracts remain wired', asyn
   assert.match(source, /registration\.waiting/);
   assert.match(source, /updatefound/);
   assert.match(source, /worker\.state==='installed'/);
-  assert.match(source, /function isUnsafeToAutoUpdate/);
-  assert.match(source, /setTimeout\(\(\)=>\{/);
-  assert.match(source, /if\(!isUnsafeToAutoUpdate\(\)\)applyUpdate\(worker\)/);
-  assert.match(source, /dialog\[open\],\[role="dialog"\],\.modal,\[data-prevent-auto-update="true"\],\[data-dirty="true"\]/);
+  /* V321 (owner 2026-08-14: "the website still keeps refreshing itself. - remove this"). The
+     1.2s auto-apply timer, the isUnsafeToAutoUpdate() guard that decided when a reload was
+     "safe", and the PEEKAA_SW_ACTIVATED listener that reloaded OTHER tabs are all gone. What
+     remains is an offer: a dismissible prompt, and a reload only once someone presses "Update
+     now". These are inverted rather than deleted — the point is that none of it comes back. */
+  /* Comments stripped: the note explaining a removal names the thing removed, and an assertion a
+     comment can satisfy is no assertion. */
+  const sourceCode = source.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  assert.doesNotMatch(sourceCode, /isUnsafeToAutoUpdate/);
+  assert.doesNotMatch(sourceCode, /autoUpdateTimer/);
+  assert.doesNotMatch(sourceCode, /peekaa-sw-reloaded:/);
+  assert.doesNotMatch(sourceCode, /PEEKAA_SW_ACTIVATED/);
   assert.match(source, /worker\.postMessage\(\{type:'SKIP_WAITING'\}\)/);
   assert.match(source, /controllerchange/);
   assert.match(source, /location\.reload\(\)/);
-  assert.match(source, /PEEKAA_SW_ACTIVATED/);
-  assert.match(source, /peekaa-sw-reloaded:/);
   assert.match(source, /register\(SW_URL,\{scope:'\/',updateViaCache:'none'\}\)/);
   assert.match(source, /Capacitor\?\.isNativePlatform/);
   assert.match(source, /navigator\?\.platform==='MacIntel'/);

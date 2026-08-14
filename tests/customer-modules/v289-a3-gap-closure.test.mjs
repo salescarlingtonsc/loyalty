@@ -119,7 +119,18 @@ test('G3: the worker waits for consent instead of taking over on install', () =>
   assert.doesNotMatch(install, /skipWaiting/, 'install must not promote itself over a live page');
   assert.match(sw, /event\.data\?\.type==='SKIP_WAITING'\)self\.skipWaiting\(\)/,
     'the guarded applyUpdate path must still be able to promote the waiting worker');
-  assert.match(pwa, /if\(!isUnsafeToAutoUpdate\(\)\)applyUpdate\(worker\)/);
+  /* V321 goes further than V289 could (owner 2026-08-14: "the website still keeps refreshing
+     itself. - remove this"). V289 stopped the WORKER promoting itself on install; the PAGE still
+     auto-applied the update 1.2s after finding one, whenever it judged the moment safe. Consent
+     is now the only trigger — applyUpdate is reachable from the prompt's action and nowhere else. */
+  const pwaCode = pwa.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  assert.doesNotMatch(pwaCode, /isUnsafeToAutoUpdate/);
+  assert.doesNotMatch(pwaCode, /setTimeout\([^)]*applyUpdate/);
+  /* The declaration `function applyUpdate(worker){` matches the bare name too, so exclude it —
+     what is being counted is CALL sites. */
+  assert.equal((pwaCode.match(/(?<!function\s)applyUpdate\(worker\)/g) || []).length, 1,
+    'applyUpdate must have exactly one call site — the "Update now" button');
+  assert.match(pwa, /onAction:\(\)=>applyUpdate\(worker\)/);
   assert.match(pwa, /worker\.postMessage\(\{type:'SKIP_WAITING'\}\)/);
 });
 
@@ -127,8 +138,15 @@ test('G3: activation notifies open pages but never re-navigates them', () => {
   const activate = sw.slice(sw.indexOf("self.addEventListener('activate'"), sw.indexOf("self.addEventListener('message'"));
   assert.match(activate, /PEEKAA_SW_ACTIVATED/);
   assert.doesNotMatch(activate, /await client\.navigate\(/, 'a tab that consented to nothing must not be reloaded');
-  assert.match(pwa, /if\(!updateRequested&&isUnsafeToAutoUpdate\(\)\)return;/,
-    'the activation broadcast must not become a second uninvited reload path');
+  /* V321: V289 narrowed the broadcast's reload to tabs that LOOKED idle. Narrowing was not
+     enough — a tab that looks idle still belongs to someone — so the page no longer listens for
+     the broadcast at all. The worker may still announce the version; nothing acts on it. */
+  assert.doesNotMatch(pwa.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,''), /PEEKAA_SW_ACTIVATED/,
+    'the activation broadcast must not be a reload path at all, narrowed or otherwise');
+  assert.equal((pwa.match(/location\.reload\(\)/g) || []).length, 2,
+    'exactly two reloads may exist in pwa.js: the offline Retry button, and the consented update');
+  assert.match(pwa, /if\(updateRequested\)globalObject\.location\.reload\(\)/,
+    'the one update reload stays gated on the person having asked for it');
 });
 
 test('G3: the shell cache is versioned forward and the app document joins it', () => {
