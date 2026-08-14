@@ -10,6 +10,11 @@ const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/<!--[\s\S]*?-->/g, ' ');
 const bookings = strip(app.slice(app.indexOf('async function bookingsPage'),
   app.indexOf('\nasync function ', app.indexOf('async function bookingsPage') + 1)));
+/* V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): the
+   overflow/auto-confirm booking rules moved out of bookingsPage into bookingRulesCardHtmlV325 /
+   wireBookingRulesV325, rendered by Customer Interface's Appointment Setting step. */
+const bookingRules = strip(app.slice(app.indexOf('function bookingRulesCardHtmlV325('),
+  app.indexOf('function customerInterfacePreviewSideCardHtmlV325(')));
 
 /* (1) "inventory change to Products" */
 test('V223 the module is called Products in the nav, matching its own page', () => {
@@ -21,7 +26,11 @@ test('V223 the module is called Products in the nav, matching its own page', () 
 test('V223 seating controls appear only for a business that seats guests', () => {
   // V235: the controls are behind seatsGuestsV235 — the V223 flag AND a sector that seats.
   assert.match(bookings, /\$\{seatsGuestsV235\?`<div class="row"><b>Tables \/ capacity<\/b>/);
-  assert.match(bookings, /\$\{seatsGuestsV235\?`<label>When you're full<\/label>/);
+  /* V325: the overflow rule ("When you're full") moved to bookingRulesCardHtmlV325 along with
+     the rest of the hold-timer/auto-confirm booking rules — Bookings keeps a pointer, not a
+     second copy. */
+  assert.doesNotMatch(bookings, /When you're full/);
+  assert.match(bookingRules, /\$\{seatsGuestsV235\?`<label>When you're full<\/label>/);
   assert.match(bookings, /const seatsGuestsV235=seatingSectorV235&&S\.biz\.takes_table_reservations===true;/);
   /* V235 (owner: "how can a spa have table seating at all"): the QUESTION itself is sector-gated,
      so an appointment business is never offered a switch it can never truthfully turn on. */
@@ -37,11 +46,11 @@ test('V223 seating controls appear only for a business that seats guests', () =>
   // Handlers must not assume elements that may not be rendered.
   assert.match(bookings, /if\(\$\('tblAdd'\)\)\$\('tblAdd'\)\.onclick/);
   assert.match(bookings, /if\(!\$\('capBody'\)\)return;/);
-  assert.match(bookings, /const overflow=\$\('setOverflow'\)\?\$\('setOverflow'\)\.value:null;/);
-  assert.match(bookings, /const autoConfirm=\$\('setAutoConfirm'\)\?\$\('setAutoConfirm'\)\.checked:null;/);
+  assert.match(bookingRules, /const overflow=\$\('setOverflow'\)\?\$\('setOverflow'\)\.value:null;/);
+  assert.match(bookingRules, /const autoConfirm=\$\('setAutoConfirm'\)\?\$\('setAutoConfirm'\)\.checked:null;/);
   // A null must not be mirrored into local state — the server keeps the stored value.
-  assert.match(bookings, /if\(overflow!==null\)S\.biz\.booking_overflow=overflow;/);
-  assert.match(bookings, /if\(autoConfirm!==null\)S\.biz\.booking_auto_confirm=autoConfirm;/);
+  assert.match(bookingRules, /if\(overflow!==null\)S\.biz\.booking_overflow=overflow;/);
+  assert.match(bookingRules, /if\(autoConfirm!==null\)S\.biz\.booking_auto_confirm=autoConfirm;/);
   // Flipping the switch changes which controls belong on the page, so it redraws.
   assert.match(bookings, /if\(seatingChanged\)bookingsPage\(\)/);
   assert.match(bookings, /p_takes_table_reservations:takesTables/);

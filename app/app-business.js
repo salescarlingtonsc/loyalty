@@ -103,17 +103,26 @@ const sectorHidesAppointmentsV276=()=>
 /* V296: the single source of truth for the Customer Interface sub-tabs — [key, label, href, icon].
    navHtml renders them as rail children; customerInterfacePageV243 renders the matching sections and
    shows exactly one. Adding a section here is the only edit a new sub-tab needs. */
+/* V325 (owner-authorized restructure, 2026-08-14 Customer Interface cosmetics brief). The four
+   flat sub-tabs became a numbered 6-step stepper: Business Profile, Appointment Setting, Preview,
+   Done, Customer programme, Sign-up & fields. Every hash that existed before ('brand', 'preview',
+   'programme', 'interface') keeps resolving to exactly the same content it always did — only the
+   label and stepper position changed, per the "add new hashes, never rename/remove an existing
+   one" guardrail. 'appointment' and 'done' are new steps with new hashes. The 5th tuple slot,
+   `step`, is the stepper's 1-based number — a display concern the pre-V325 rail never needed. */
 const CUSTOMER_INTERFACE_VIEWS_V296=[
-  ['preview','Preview','#/customer-interface','customers'],
-  ['brand','Workspace & brand','#/customer-interface/brand','settings'],
-  ['programme','Customer programme','#/customer-interface/programme','loyalty'],
+  ['brand','Business Profile','#/customer-interface/brand','settings',1],
+  ['appointment','Appointment Setting','#/customer-interface/appointment','appointments',2],
+  ['preview','Preview','#/customer-interface','customers',3],
+  ['done','Done','#/customer-interface/done','check',4],
+  ['programme','Customer programme','#/customer-interface/programme','loyalty',5],
   /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"). V296 moved the
      gift-card issuance switch here rather than delete it, on the reading that a capability must
      survive the page it lived on. The owner has now removed the capability from this workspace's
      surface, so the sub-tab goes with the section it named. Nothing customer-side changes: a
      customer still sees their outstanding gift-card balance in the wallet, and no DB object —
      businesses.gift_card_sales_enabled included — is touched by this. */
-  ['interface','Sign-up & fields','#/customer-interface/interface','customers']
+  ['interface','Sign-up & fields','#/customer-interface/interface','customers',6]
 ];
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
@@ -6695,6 +6704,12 @@ async function servicesPage(){
       <p class="muted small" style="margin-top:5px">Use the same service name with different variations, durations and prices.</p>
       <label>Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
       <label>Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
+      <!-- V325 (owner-authorized exception #3, 2026-08-14 Customer Interface cosmetics brief):
+           buffer_before_min/buffer_after_min already existed on services with no UI anywhere.
+           Two more fields on the existing add form, wired into the existing insert — no new
+           save path, no new RPC. -->
+      <label>Buffer before (minutes)</label><input id="sbb" type="number" min="0" step="5" value="0">
+      <label>Buffer after (minutes)</label><input id="sba" type="number" min="0" step="5" value="0">
       <div style="margin-top:16px" class="row"><button class="btn" id="sadd">Save service</button><button class="btn ghost sm" id="cancelServiceForm">Cancel</button></div></div>`:''}
     <div class="card"><div class="v150-soft-head"><b>Services catalogue</b><p>Active services can be selected for bookings and sales.</p></div><div id="slist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div>
     <div id="commissionWrap"></div></div>`;
@@ -6715,6 +6730,8 @@ async function servicesPage(){
           <div><label for="svcEditVariant">Variation (optional)</label><input id="svcEditVariant" value="${esc(s.variant_label||'')}"></div>
           <div><label for="svcEditPrice">Price (${S.biz.currency||'SGD'})</label><input id="svcEditPrice" type="number" min="0" step="0.01" value="${((s.price_cents||0)/100).toFixed(2)}"></div>
           <div><label for="svcEditDuration">Duration (minutes)</label><input id="svcEditDuration" type="number" min="5" step="5" value="${Number(s.duration_min)||60}"></div>
+          <div><label for="svcEditBufferBefore">Buffer before (minutes)</label><input id="svcEditBufferBefore" type="number" min="0" step="5" value="${Number(s.buffer_before_min)||0}"></div>
+          <div><label for="svcEditBufferAfter">Buffer after (minutes)</label><input id="svcEditBufferAfter" type="number" min="0" step="5" value="${Number(s.buffer_after_min)||0}"></div>
         </div>
         <div class="row" style="margin-top:12px"><button class="btn sm" data-svc-save="${s.id}">Save changes</button><button class="btn ghost sm" data-svc-cancel="1">Cancel</button><span class="muted small" id="svcEditStatus" role="status" aria-live="polite"></span></div></td></tr>`:''}`;
       }).join('')}</table></div>`
@@ -6725,16 +6742,19 @@ async function servicesPage(){
   if(canWrite)$('sadd').onclick=async()=>{
     const name=$('sn').value.trim(),variant=$('sv').value.trim()||null,
       price=Math.round(parseFloat($('sp').value||'0')*100),dur=parseInt($('sd').value||'60');
+    const bufferBefore=parseInt($('sbb')?.value||'0',10)||0,bufferAfter=parseInt($('sba')?.value||'0',10)||0;
     if(name.length<2) return toast('Name required');
     const btn=$('sadd');CUI.setButtonBusy(btn,{busy:true,label:'Saving…'});
     const {data,error}=await sb.from('services').insert({
-      business_id:S.biz.id,name,variant_label:variant,price_cents:price,duration_min:dur
+      business_id:S.biz.id,name,variant_label:variant,price_cents:price,duration_min:dur,
+      buffer_before_min:bufferBefore,buffer_after_min:bufferAfter
     }).select().single();
     CUI.setButtonBusy(btn,{busy:false});
     if(error) return fail(error);
     svCache=[...svCache,data].sort((a,b)=>a.name.localeCompare(b.name));
     renderSvc();
-    toast('Service added');$('sn').value='';$('sv').value='';$('sp').value='';$('sn').focus();
+    toast('Service added');$('sn').value='';$('sv').value='';$('sp').value='';
+    if($('sbb'))$('sbb').value='0';if($('sba'))$('sba').value='0';$('sn').focus();
     if($('serviceFormCard'))$('serviceFormCard').style.display='none';
   };
   if(canWrite&&$('openServiceForm'))$('openServiceForm').onclick=()=>{$('serviceFormCard').style.display='block';$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false');$('sn')?.focus()};
@@ -6757,12 +6777,15 @@ async function servicesPage(){
       const variant=$('svcEditVariant').value.trim()||null;
       const price=Math.round(parseFloat($('svcEditPrice').value||'0')*100);
       const duration=parseInt($('svcEditDuration').value||'0',10);
+      const bufferBefore=parseInt($('svcEditBufferBefore')?.value||'0',10)||0;
+      const bufferAfter=parseInt($('svcEditBufferAfter')?.value||'0',10)||0;
       if(name.length<2){if(status)status.textContent='Give the service a name.';return}
       if(!(price>=0)){if(status)status.textContent='Enter a price of 0 or more.';return}
       if(!(duration>=5)){if(status)status.textContent='Enter a duration of at least 5 minutes.';return}
       CUI.setButtonBusy(b,{busy:true,label:'Saving…'});
       const {data,error}=await sb.from('services')
-        .update({name,variant_label:variant,price_cents:price,duration_min:duration}).eq('id',id).select().limit(1);
+        .update({name,variant_label:variant,price_cents:price,duration_min:duration,
+          buffer_before_min:bufferBefore,buffer_after_min:bufferAfter}).eq('id',id).select().limit(1);
       if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
       if(error){if(status)status.textContent=ownerErrorText(error);return}
       const row=svCache.find(x=>x.id===id);
@@ -7186,10 +7209,6 @@ async function bookingsPage(){
   const canDeclineBooking=canWriteModule('bookings');
   const canDecideChange=canWriteModule('appointments');
   const decisionNotices=new Map(),pendingDecisions=new Set();
-  /* V223: the hold-timer copy promises the waitlist gets flagged. Only say so when this
-     workspace actually has a waitlist — it now travels with Bookings, but a business can still
-     have Bookings without the Waitlist module. */
-  const waitlistLinkedV223=(S.myModules||S.biz.enabled_modules||[]).includes('waitlist');
   /* V235 (owner: "how can a spa have table seating at all"). V223 hid the seating CONTROLS
      behind the flag but still asked every sector the question, so an appointment business was
      offered a switch it can never truthfully turn on. The question now belongs to seated
@@ -7207,9 +7226,11 @@ async function bookingsPage(){
       <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
     <div class="card" data-bookings-shell="changes" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
-      ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-        <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>`
-        :`<p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Only the owner can change this setting.</p>`}
+      <!-- V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): the
+           auto-approve toggle itself moved to Customer Interface > Appointment Setting, following
+           the same "move whole, leave a pointer" pattern V259 used for Workspace & brand. This
+           readout is not a second copy of the control — it only reflects the stored value. -->
+      <p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Change this in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     ${isOwner?`<div class="split" style="margin-bottom:16px">
@@ -7222,7 +7243,9 @@ async function bookingsPage(){
              only for a business that says it seats guests. -->
         ${seatingSectorV235?`<label style="display:flex;align-items:center;gap:8px;margin:0 0 6px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
           <input type="checkbox" id="setTakesTablesV223" style="width:auto" ${S.biz.takes_table_reservations?'checked':''}> We seat guests at tables</label>
-        <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>`:''}
+        <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>
+        <div style="margin:0 0 14px"><button class="btn ghost sm" id="setTakesTablesSaveV325">Save</button></div>
+        <div id="setTakesTablesErrV325"></div>`:''}
         ${seatsGuestsV235?`<div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
         <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
         <!-- V291 (audit A2 #21): four controls on one non-wrapping flex row pushed the Add
@@ -7231,30 +7254,15 @@ async function bookingsPage(){
           <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
           <input id="tblQty" type="number" min="1" value="1" placeholder="Qty" style="max-width:76px">
           <button class="btn sm" id="tblAdd" style="flex:0 0 auto">Add</button></div>
-        <div id="capBody" style="margin-top:14px">${CUI.tableSkeleton({rows:3,columns:6})}</div>
-        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">`:''}
-        <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
-        <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
-        <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
-        <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
-        ${seatsGuestsV235?`<label>When you're full</label><select id="setOverflow">
-          <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
-          <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-          <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>`:''}
-        <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
-        <div id="setErr"></div>
-        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
-        <!-- v183 (owner: "if services allow customers to choose staff please enable it… if staff
-             is not worth, allow toggle in business"). Opening hours are what turn the customer's
-             live slot grid on; without them the portal falls back to a plain time request. -->
-        <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Customer booking availability</b>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-          <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
-        <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
-        <div id="setAvailabilityBody" aria-busy="true" style="margin-top:14px"><p class="muted small">Loading opening hours…</p></div>
-        <div style="margin-top:14px"><button class="btn sm" id="setAvailabilitySave">Save availability</button></div>
-        <div id="setAvailabilityErr" role="status"></div>
+        <div id="capBody" style="margin-top:14px">${CUI.tableSkeleton({rows:3,columns:6})}</div>`:''}
+        <!-- V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief):
+             the hold-timer/overflow/auto-confirm booking rules, the staff-choice toggle and
+             opening hours moved to Customer Interface > Appointment Setting — same markup, ids
+             and save handlers as before, just moved (bookingRulesCardHtmlV325 /
+             wireBookingRulesV325). The seating toggle and Tables/capacity above are untouched:
+             the owner's relocation list did not name them, and Tables/capacity carries its own
+             local edit state. -->
+        <p class="muted small" style="margin-top:14px">Booking rules, opening hours and who customers may choose now live in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>
       </div>
       <div class="card"><b>Import existing bookings (CSV)</b>
         <p class="muted small" style="margin:6px 0 10px">Columns recognised: <b>name</b> (required), phone, email, party_size, preferred_at, notes, table_type. Bookings import as pending for you to review.</p>
@@ -7274,14 +7282,6 @@ async function bookingsPage(){
   routeMain.dataset.bookingsTabsV195=String(bookingsShellTokenV288);
   enhanceBookingsTabsV195(M());
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
-  if(isOwner)$('aac').onchange=async()=>{
-    const to=$('aac').checked;
-    const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
-    if(!isCurrent())return;
-    if(error){$('aac').checked=!to;return fail(error)}
-    Object.assign(S.biz,{auto_approve_changes:to});
-    toast(to?'Auto-approve turned on':'Auto-approve turned off');
-  };
   async function load(){
     const {data:br,error}=await sb.from('booking_requests').select('*, services(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
     if(!isCurrent())return;
@@ -7448,102 +7448,28 @@ async function bookingsPage(){
   };
   loadCapacity();
 
-  /* ---- Booking rules: hold timer / overflow / auto-confirm (owner only) ---- */
-  $('setSave').onclick=async()=>{
-    const hold=parseInt($('setHold').value||'0');
-    /* V223: overflow and auto-confirm are seating rules and are only rendered when the business
-       seats guests. Sending null leaves each one exactly as it was rather than resetting it. */
-    const overflow=$('setOverflow')?$('setOverflow').value:null;
-    const autoConfirm=$('setAutoConfirm')?$('setAutoConfirm').checked:null;
-    const takesTables=$('setTakesTablesV223')?$('setTakesTablesV223').checked:null;
-    $('setSave').disabled=true;
-    const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:hold,
-      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm,
+  /* ---- V325: the seating toggle's own tiny save (owner only) ----
+     The hold-timer/overflow/auto-confirm booking rules, staff-choice and opening hours moved to
+     Customer Interface > Appointment Setting (bookingRulesCardHtmlV325 / wireBookingRulesV325);
+     see the comment above the seating toggle's markup. This still calls the SAME
+     set_booking_settings RPC — the one write path — just for the one field this page still owns,
+     sending null for everything else so the RPC's own coalesce leaves those fields untouched. */
+  if($('setTakesTablesSaveV325'))$('setTakesTablesSaveV325').onclick=async()=>{
+    const takesTables=$('setTakesTablesV223').checked;
+    $('setTakesTablesSaveV325').disabled=true;
+    const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:null,
+      p_overflow:null,p_notify:S.biz.notify_new_bookings,p_auto_confirm:null,
       p_takes_table_reservations:takesTables});
     if(!isCurrent())return;
-    $('setSave').disabled=false;
-    if(error){$('setErr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Those settings could not be saved.'))}</div>`;return}
-    $('setErr').innerHTML='';
-    /* V223: only mirror what was actually sent. The server coalesces a null, keeping the stored
-       value, so copying null into S.biz would make the local copy disagree with the database. */
-    const seatingChanged=takesTables!==null&&takesTables!==(S.biz.takes_table_reservations===true);
-    Object.assign(S.biz,{booking_hold_minutes:hold});
-    if(overflow!==null)S.biz.booking_overflow=overflow;
-    if(autoConfirm!==null)S.biz.booking_auto_confirm=autoConfirm;
-    if(takesTables!==null)S.biz.takes_table_reservations=takesTables;
-    toast('Booking rules saved');
+    $('setTakesTablesSaveV325').disabled=false;
+    if(error){$('setTakesTablesErrV325').innerHTML=`<div class="err">${esc(humanErrorV295(error,'That setting could not be saved.'))}</div>`;return}
+    $('setTakesTablesErrV325').innerHTML='';
+    const seatingChanged=takesTables!==(S.biz.takes_table_reservations===true);
+    S.biz.takes_table_reservations=takesTables;
+    toast('Saved');
     /* Turning seating on or off changes which controls belong on this page, so redraw rather
        than leaving the owner to guess that a reload is needed. */
     if(seatingChanged)bookingsPage().catch(fail);
-  };
-
-  /* ---- v183 customer booking availability: opening hours + who customers may ask for ---- */
-  const loadBookingAvailability=async()=>{
-    const host=$('setAvailabilityBody');if(!host)return;
-    /* V228: the team rota moved to Staff Members, so this only loads the shop's own hours. */
-    const [branchResult,hoursResult]=await Promise.all([
-      sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
-      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id)
-    ]);
-    if(!isCurrent()||!host.isConnected)return;
-    host.setAttribute('aria-busy','false');
-    if(branchResult.error||hoursResult.error){
-      host.innerHTML='<p class="err small">Opening hours could not be loaded. Nothing has been changed.</p>';
-      const save=$('setAvailabilitySave');if(save)save.disabled=true;
-      return;
-    }
-    const branches=(branchResult.data||[]).filter(branch=>branch.active!==false);
-    const branch=branches[0]||null;
-    const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
-    host.dataset.branchId=branch?.id||'';
-    host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
-      <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
-      <div class="v183-hours">${V183_DAYS.map((label,weekday)=>
-        v183HourRowMarkup('shop',weekday,label,hours.get(weekday),{opens:'09:00',closes:'18:00'})).join('')}</div>
-`;
-    host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
-      const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
-      const within=box.closest('.v183-hours')||host;
-      const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
-      const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
-      if(opens)opens.disabled=box.checked;
-      if(closes)closes.disabled=box.checked;
-    });
-  };
-  loadBookingAvailability();
-  $('setAvailabilitySave').onclick=async()=>{
-    const host=$('setAvailabilityBody'),save=$('setAvailabilitySave'),err=$('setAvailabilityErr');
-    const branchId=host?.dataset?.branchId||'';
-    save.disabled=true;err.innerHTML='';
-    const staffChoice=$('setStaffChoice').checked;
-    /* An open day needs a real, ordered range; anything else is recorded as closed rather
-       than half-saved. Scoped reads keep a person's rota out of the shop's own grid. */
-    const readDayGrid=(scope,within)=>{
-      const open=[],closed=[];
-      within.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
-        const weekday=Number(box.dataset.dayClosed);
-        const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
-        const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
-        if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
-        open.push({weekday,opens,closes});
-      });
-      return {open,closed};
-    };
-    const shop=readDayGrid('shop',host);
-    const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
-    const closedDays=shop.closed;
-    const results=await Promise.all([
-      sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
-      branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
-      branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
-    ]);
-    if(!isCurrent())return;
-    save.disabled=false;
-    const failure=results.find(result=>result?.error);
-    if(failure){err.innerHTML=`<div class="err">${esc(failure.error.message)}</div>`;return}
-    S.biz.booking_staff_choice=staffChoice;
-    toast('Customer booking availability saved');
-    loadBookingAvailability();
   };
 
   /* ---- CSV import of existing bookings (owner only) ---- */
@@ -20992,6 +20918,15 @@ function branchBillingSentenceV280(counts){
   return `${total} ${total===1?'branch':'branches'} · ${included} included in your plan · ${billable} billable`
     +(lapsed?` · ${lapsed} payment lapsed`:'');
 }
+/* V325 (owner-authorized exception #2, 2026-08-14 Customer Interface cosmetics brief). The
+   Customer Interface "Business Profile" step gets a lighter card that edits the SAME
+   branches.address/phone columns Branches already edits — a business can have multiple
+   branches, so that card cannot fork into a duplicate single-branch form. This is the ONE write
+   path both screens call; branchesPage's own edit form below now calls it too instead of running
+   its own update. */
+async function saveBranchFieldsV325(branchId,fields){
+  return sb.from('branches').update(fields).eq('id',branchId).eq('business_id',S.biz.id);
+}
 async function branchesPage(){
   if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Branches','branches');
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -21036,7 +20971,7 @@ async function branchesPage(){
          operational, copies the settings the owner chose, and returns the billing command
          we hand to Stripe. The branch only switches on when the payment confirms. */
       if(editId){
-        const {error}=await sb.from('branches').update(payload).eq('id',editId).eq('business_id',S.biz.id);
+        const {error}=await saveBranchFieldsV325(editId,payload);
         if(error){fail(error);CUI.setButtonBusy($('brSave'),{busy:false});return}
         toast('Branch updated');
         $('brForm').style.display='none';
@@ -24555,6 +24490,10 @@ function workspaceBrandPanelHtmlV259(){
       <p class="muted small" id="biSectorHint" style="margin-top:4px">Set by Peekaa for your sector.</p>
       <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
       <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
+      <!-- V325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief):
+           businesses.bio, nullable, shown to customers on the public booking portal alongside
+           the booking policy above. -->
+      <label for="bbio">Company bio (shown on your portal)</label><textarea id="bbio" rows="2" maxlength="500" placeholder="A short description shown to customers">${esc(S.biz.bio||'')}</textarea>
       <label for="blegal">Registered company name (for receipts)</label>
       <input id="blegal" maxlength="200" placeholder="e.g. HOUGANG ABC PTE. LTD." value="${esc(S.biz.legal_name||'')}">
       <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
@@ -24583,13 +24522,235 @@ function wireWorkspaceBrandV259(){
        ride this same UPDATE — no new call site. */
     const legalName=($('blegal')?.value||'').trim()||null;
     const registrationNumber=($('buen')?.value||'').trim()||null;
+    /* V325: bio rides this same UPDATE — no new call site. */
+    const bio=($('bbio')?.value||'').trim()||null;
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
       brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,
-      legal_name:legalName,registration_number:registrationNumber}).eq('id',S.biz.id);
+      legal_name:legalName,registration_number:registrationNumber,bio}).eq('id',S.biz.id);
     if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber});
+    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber,bio});
     toast('Saved');route();
   };
+}
+/* V325 (owner-authorized restructure, 2026-08-14 Customer Interface cosmetics brief). The numbered
+   stepper at the top of the page — a picture of CUSTOMER_INTERFACE_VIEWS_V296 itself, so a new
+   step only ever needs adding to that one array. Each circle is a routable link to the step's own
+   hash, exactly like the rail children it sits alongside; nothing here bypasses the router. */
+function customerInterfaceStepperHtmlV325(activeKey){
+  return `<div class="ci-stepper-v325" role="tablist" aria-label="Customer Interface setup steps">
+    ${CUSTOMER_INTERFACE_VIEWS_V296.map(([key,label,href,,step])=>{
+      const active=key===activeKey;
+      return `<a class="ci-step-v325${active?' active':''}" role="tab" aria-selected="${active}" href="${esc(href)}">
+        <span class="ci-step-dot-v325">${step}</span><span class="ci-step-label-v325">${esc(label)}</span></a>`;
+    }).join('<span class="ci-step-line-v325" aria-hidden="true"></span>')}
+  </div>`;
+}
+/* V325: a plain, static terminal step. No new state field and no new logic — the owner asked
+   for "a confirmation section", not a completion flag to track. */
+function customerInterfaceDoneCardHtmlV325(){
+  return `<div class="card" style="margin-top:16px;text-align:center;padding:36px 20px">
+    <div style="font-size:2.4rem;line-height:1" aria-hidden="true">${CUI.icon('check',{size:44})}</div>
+    <h2 style="margin:14px 0 6px;font-size:1.15rem">You're all set</h2>
+    <p class="muted small">Customers will see these details in their app.</p>
+  </div>`;
+}
+/* V325 (owner-authorized exception #2). Address/phone genuinely live with branch management —
+   a business can have several — so this is a lighter, inline-editable card for the SAME
+   branches.address/phone columns Branches already edits, through the SAME saveBranchFieldsV325
+   write path. Branches keeps its full add/remove/staff-assignment form; this card only edits
+   contact details for branches that already exist. */
+function businessProfileBranchCardHtmlV325(){
+  return `<div class="card" style="margin-top:16px"><b>Branch contact details</b>
+    <p class="muted small" style="margin:6px 0 10px">Address and phone shown to customers, per branch. Add or remove branches entirely in <a href="#/branches">Branches</a>.</p>
+    <div id="ciBranchContactV325">${CUI.loadingState({title:'Loading branches',iconName:'branches'})}</div>
+  </div>`;
+}
+async function loadBranchContactCardV325(){
+  const host=$('ciBranchContactV325');
+  if(!host)return;
+  const {data:branches,error}=await sb.from('branches').select('id,name,address,phone,is_default,active')
+    .eq('business_id',S.biz.id).eq('active',true).order('is_default',{ascending:false}).order('name');
+  if(!host.isConnected)return;
+  if(error){host.innerHTML=`<p class="err small">${esc(error.message||'Branches could not be loaded.')}</p>`;return}
+  const list=branches||[];
+  if(!list.length){host.innerHTML='<p class="muted small">No branches yet. <a href="#/branches">Add one in Branches</a>.</p>';return}
+  host.innerHTML=list.map((b,i)=>`<div class="ci-branch-row-v325" style="${i?'margin-top:14px;padding-top:14px;border-top:1px solid var(--line)':''}">
+      <b data-merchant-content>${esc(b.name)}</b>${b.is_default?' <span class="pill new">Default</span>':''}
+      <div class="split" style="margin-top:8px">
+        <div><label for="ciBrPhoneV325-${esc(b.id)}">Phone</label><input id="ciBrPhoneV325-${esc(b.id)}" value="${esc(b.phone||'')}"></div>
+        <div><label for="ciBrAddrV325-${esc(b.id)}">Address</label><input id="ciBrAddrV325-${esc(b.id)}" value="${esc(b.address||'')}"></div>
+      </div>
+      <div style="margin-top:10px"><button class="btn ghost sm" data-branch-save-v325="${esc(b.id)}">Save</button></div>
+    </div>`).join('');
+  host.querySelectorAll('[data-branch-save-v325]').forEach(button=>button.onclick=async()=>{
+    const id=button.dataset.branchSaveV325;
+    const phone=($('ciBrPhoneV325-'+id)?.value||'').trim()||null;
+    const address=($('ciBrAddrV325-'+id)?.value||'').trim()||null;
+    CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
+    const {error:saveError}=await saveBranchFieldsV325(id,{phone,address});
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+    if(saveError)return fail(saveError);
+    toast('Branch details saved');
+  });
+}
+/* V325 (owner-authorized exception #3). Buffer times are per-service, so a whole services list
+   does not belong on a business-profile-style settings screen — a pointer card, matching how
+   this same page already points at Branches, is enough. */
+function serviceBufferPointerCardHtmlV325(){
+  return `<div class="card" style="margin-top:16px"><b>Service buffer times</b>
+    <p class="muted small" style="margin:6px 0 0">Buffer before/after each appointment is set per service. Open <a href="#/services">Services</a>, edit a service, and set its buffer times there.</p></div>`;
+}
+/* V325 (owner-authorized exception #2, relocation). The auto-cancel/overflow/auto-confirm/
+   staff-choice booking rules, opening hours and the reschedule/cancel auto-approve toggle lived
+   in Bookings; the owner asked for them to live in this Appointment Setting step instead — SAME
+   markup, ids and save handlers as bookingsPage() used, just moved (the V259 pattern). The "we
+   seat guests at tables" toggle, Tables/capacity and the bookings CSV import stay in Bookings:
+   none of those were named in the owner's list, and Tables/capacity carries its own local edit
+   state that does not belong on a settings screen. Bookings keeps a one-line pointer card. */
+function bookingRulesCardHtmlV325(){
+  const waitlistLinkedV223=(S.myModules||S.biz.enabled_modules||[]).includes('waitlist');
+  const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
+  const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
+  const isOwner=S.myRole==='owner';
+  return `<div class="card" style="margin-top:16px"><b>Change requests</b>
+      <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline each one in Bookings.</p>
+      ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>`
+        :`<p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Only the owner can change this setting.</p>`}</div>
+    <div class="card" style="margin-top:16px">
+      <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
+      <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
+      <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
+      <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
+      ${seatsGuestsV235?`<label>When you're full</label><select id="setOverflow">
+        <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
+        <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>`:''}
+      <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
+      <div id="setErr"></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+      <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Customer booking availability</b>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
+      <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
+      <div id="setAvailabilityBody" aria-busy="true" style="margin-top:14px"><p class="muted small">Loading opening hours…</p></div>
+      <div style="margin-top:14px"><button class="btn sm" id="setAvailabilitySave">Save availability</button></div>
+      <div id="setAvailabilityErr" role="status"></div>
+    </div>`;
+}
+function wireBookingRulesV325(isCurrent=()=>true){
+  const isOwner=S.myRole==='owner';
+  if($('aac')&&isOwner)$('aac').onchange=async()=>{
+    const to=$('aac').checked;
+    const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
+    if(!isCurrent())return;
+    if(error){$('aac').checked=!to;return fail(error)}
+    Object.assign(S.biz,{auto_approve_changes:to});
+    toast(to?'Auto-approve turned on':'Auto-approve turned off');
+  };
+  if(!$('setSave'))return;
+  $('setSave').onclick=async()=>{
+    const hold=parseInt($('setHold').value||'0');
+    /* No setTakesTablesV223 on this card — that toggle stayed in Bookings, so this always
+       sends null for p_takes_table_reservations, which the RPC coalesces into a no-op. */
+    const overflow=$('setOverflow')?$('setOverflow').value:null;
+    const autoConfirm=$('setAutoConfirm')?$('setAutoConfirm').checked:null;
+    $('setSave').disabled=true;
+    const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:hold,
+      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm,
+      p_takes_table_reservations:null});
+    if(!isCurrent())return;
+    $('setSave').disabled=false;
+    if(error){$('setErr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Those settings could not be saved.'))}</div>`;return}
+    $('setErr').innerHTML='';
+    Object.assign(S.biz,{booking_hold_minutes:hold});
+    if(overflow!==null)S.biz.booking_overflow=overflow;
+    if(autoConfirm!==null)S.biz.booking_auto_confirm=autoConfirm;
+    toast('Booking rules saved');
+  };
+  const loadBookingAvailability=async()=>{
+    const host=$('setAvailabilityBody');if(!host)return;
+    const [branchResult,hoursResult]=await Promise.all([
+      sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
+      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id)
+    ]);
+    if(!isCurrent()||!host.isConnected)return;
+    host.setAttribute('aria-busy','false');
+    if(branchResult.error||hoursResult.error){
+      host.innerHTML='<p class="err small">Opening hours could not be loaded. Nothing has been changed.</p>';
+      const save=$('setAvailabilitySave');if(save)save.disabled=true;
+      return;
+    }
+    const branches=(branchResult.data||[]).filter(branch=>branch.active!==false);
+    const branch=branches[0]||null;
+    const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
+    host.dataset.branchId=branch?.id||'';
+    host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
+      <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
+      <div class="v183-hours">${V183_DAYS.map((label,weekday)=>
+        v183HourRowMarkup('shop',weekday,label,hours.get(weekday),{opens:'09:00',closes:'18:00'})).join('')}</div>
+`;
+    host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
+      const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
+      const within=box.closest('.v183-hours')||host;
+      const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+      const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+      if(opens)opens.disabled=box.checked;
+      if(closes)closes.disabled=box.checked;
+    });
+  };
+  loadBookingAvailability();
+  if(!$('setAvailabilitySave'))return;
+  $('setAvailabilitySave').onclick=async()=>{
+    const host=$('setAvailabilityBody'),save=$('setAvailabilitySave'),err=$('setAvailabilityErr');
+    const branchId=host?.dataset?.branchId||'';
+    save.disabled=true;err.innerHTML='';
+    const staffChoice=$('setStaffChoice').checked;
+    const readDayGrid=(scope,within)=>{
+      const open=[],closed=[];
+      within.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
+        const weekday=Number(box.dataset.dayClosed);
+        const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+        const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+        if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
+        open.push({weekday,opens,closes});
+      });
+      return {open,closed};
+    };
+    const shop=readDayGrid('shop',host);
+    const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
+    const closedDays=shop.closed;
+    const results=await Promise.all([
+      sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
+      branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
+      branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
+    ]);
+    if(!isCurrent())return;
+    save.disabled=false;
+    const failure=results.find(result=>result?.error);
+    if(failure){err.innerHTML=`<div class="err">${esc(failure.error.message)}</div>`;return}
+    S.biz.booking_staff_choice=staffChoice;
+    toast('Customer booking availability saved');
+    loadBookingAvailability();
+  };
+}
+/* V325 (owner-authorized restructure). A second, small phone-frame preview for the persistent
+   side panel on steps 1-2 (Business Profile, Appointment Setting). Reuses the SAME public preview
+   URL helper (customerInterfacePreviewUrlV243, defined just below) and the SAME phone-frame CSS
+   classes as the step-3 preview card — only the markup differs (this one is always visible, not
+   behind a details/summary toggle, so it needs none of that card's open/lazy-load wiring). That
+   wiring lives in wireCustomerInterfacePreviewV243, whose exact source is asserted byte-for-byte
+   by tests/business-ui/v243-customer-interface-module.test.mjs, so this is a second small
+   function rather than an edit to it. */
+function customerInterfacePreviewSideCardHtmlV325(){
+  const previewUrl=customerInterfacePreviewUrlV243();
+  return `<div class="card customer-preview-v243 customer-preview-side-v325">
+      <b>Live preview</b><span class="muted small" style="display:block;margin-top:2px">What customers see as you edit</span>
+      <div class="customer-preview-phone-v243" style="margin-top:10px"><div class="customer-preview-screen-v243">
+        <iframe data-preview-src="${esc(previewUrl)}" src="${esc(previewUrl)}" title="Customer app preview" loading="lazy" referrerpolicy="no-referrer"></iframe>
+      </div></div>
+    </div>`;
 }
 /* The public page a customer meets before joining. Relative to this document, so it is the same
    origin on every deploy (production, preview, or a native WebView) without a hard-coded host. */
@@ -24793,10 +24954,26 @@ async function customerInterfacePageV243(hashParam){
      still on the page, still wired, one rail click away. */
   const ciSectionV296=(key,html)=>`<section class="customer-interface-view-v296" data-workspace-i18n data-ci-view-v296="${key}" aria-label="${esc((CUSTOMER_INTERFACE_VIEWS_V296.find(view=>view[0]===key)||[])[1]||key)}"${customerInterfaceViewV296===key?'':' hidden'}>${html}</section>`;
   const ciActiveLabelV296=(CUSTOMER_INTERFACE_VIEWS_V296.find(view=>view[0]===customerInterfaceViewV296)||[])[1]||'Preview';
+  /* V325 (owner-authorized restructure, 2026-08-14 Customer Interface cosmetics brief). Steps 1
+     and 2 (Business Profile, Appointment Setting) pair their form with a persistent copy of the
+     SAME preview card used by step 3, in a two-column layout on desktop that stacks on narrow
+     viewports — reusing `.split`, the grid this business console already collapses to one column
+     at <=900px (see app/index.html), rather than inventing a new breakpoint. Step 3 (Preview) IS
+     that card, so it stays single-column there instead of showing the same phone frame twice. */
+  const ciWithPreviewV325=formHtml=>`<div class="split ci-step-layout-v325">
+      <div class="ci-step-main-v325">${formHtml}</div>
+      <div class="ci-step-preview-v325">${customerInterfacePreviewSideCardHtmlV325()}</div>
+    </div>`;
   M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>Customer Interface</h1><p class="muted small">Everything a customer sees and uses · <b data-ci-active-view-v296>${esc(ciActiveLabelV296)}</b></p></div></div>
+    ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
+    ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
+    ${workspaceBrandPanelHtmlV259()}
+    ${businessProfileBranchCardHtmlV325()}`))}
+    ${ciSectionV296('appointment',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionAppointmentV325','Appointment Setting','Booking rules, auto-approve and opening hours for your customers.')}
+    ${bookingRulesCardHtmlV325()}
+    ${serviceBufferPointerCardHtmlV325()}`))}
     ${ciSectionV296('preview',customerInterfacePreviewCardHtmlV243())}
-    ${canEditCustomerInterface?`${ciSectionV296('brand',`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Workspace & brand','Your name, logo, colour and the policy your customers read.')}
-    ${workspaceBrandPanelHtmlV259()}`)}
+    ${ciSectionV296('done',customerInterfaceDoneCardHtmlV325())}
     ${ciSectionV296('programme',`${customerInterfaceSectionHeadingV269('ciSectionProgrammeV269','Customer programme','How your points, tiers and rewards are presented in the customer wallet.')}
     <div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>`)}
     ${ciSectionV296('interface',`${customerInterfaceSectionHeadingV269('ciSectionInterfaceV269','Sign-up & fields','Sign-up, the fields you ask customers for, and what they may do in their app.')}
@@ -24808,6 +24985,8 @@ async function customerInterfacePageV243(hashParam){
   /* V259: brand/identity first, then the customer programme, then sign-up QR and app actions —
      the order the panels are rendered in above. */
   wireWorkspaceBrandV259();
+  loadBranchContactCardV325();
+  wireBookingRulesV325(()=>customerInterfaceHostV288.isConnected&&M()===customerInterfaceHostV288);
   loadCustomerProgrammePresentationEditorV95();
   /* V296: a re-render triggered by adding or retiring a customer field must come back to the
      sub-tab the owner is standing on, not jump to the preview. */

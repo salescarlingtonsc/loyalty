@@ -233,7 +233,10 @@ test('the availability engine prefers a rota over shop hours and offers nothing 
 test('the business owns the switch, the opening hours and who is bookable',()=>{
   assert.match(app,/id="setStaffChoice"[^>]*\$\{S\.biz\.booking_staff_choice\?'checked':''\}/);
   assert.match(app,/Let customers choose a team member/);
-  const save=section(app,"$('setAvailabilitySave').onclick=",'/* ---- CSV import of existing bookings');
+  /* V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): this
+     handler moved from bookingsPage into wireBookingRulesV325, rendered by Customer Interface's
+     Appointment Setting step — same code, just relocated, so the end marker moved with it. */
+  const save=section(app,"$('setAvailabilitySave').onclick=",'function customerInterfacePreviewSideCardHtmlV325(');
   assert.match(save,/sb\.from\('businesses'\)\.update\(\{booking_staff_choice:staffChoice\}\)/);
   assert.match(save,/sb\.from\('branch_hours'\)\.upsert\(rows,\{onConflict:'branch_id,weekday'\}\)/);
   assert.match(save,/sb\.from\('branch_hours'\)\.delete\(\)/,'unchecking a day removes its hours');

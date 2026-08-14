@@ -121,7 +121,12 @@ test('global appointment, setup, and booking decision controls match their mutat
   assert.match(bookings,/const canConvertBooking=canWriteModule\('bookings'\)/);
   assert.match(bookings,/const canDeclineBooking=canWriteModule\('bookings'\)/);
   assert.match(bookings,/const canDecideChange=canWriteModule\('appointments'\)/);
-  assert.match(bookings,/Only the owner can change this setting/);
+  /* V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): the
+     auto-approve control (and its non-owner readout) moved to Customer Interface > Appointment
+     Setting; Bookings keeps only a value readout + pointer link, for every role. */
+  assert.match(bookings,/Auto-approve is \$\{S\.biz\.auto_approve_changes\?'on':'off'\}\. Change this in/);
+  const bookingRulesRoleMatrix=section('function bookingRulesCardHtmlV325(){','function wireBookingRulesV325(');
+  assert.match(bookingRulesRoleMatrix,/Only the owner can change this setting/);
   assert.match(bookings,/staff_decide_booking_request_v73/);
   assert.match(bookings,/decision==='confirm'\?canConvertBooking:decision==='decline'\?canDeclineBooking/);
   assert.doesNotMatch(bookings,/from\('booking_requests'\)\.update/);

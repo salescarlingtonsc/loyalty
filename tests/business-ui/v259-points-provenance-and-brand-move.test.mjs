@@ -142,11 +142,13 @@ test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
   assert.equal((app.match(/function workspaceBrandPanelHtmlV259\(\)\{/g) || []).length, 1);
   assert.equal((app.match(/function wireWorkspaceBrandV259\(\)\{/g) || []).length, 1);
   // every field the single UPDATE writes is still in the one panel
-  for (const id of ['bn', 'bi', 'bc', 'bp', 'blegal', 'buen', 'bru']) {
+  /* V325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief): 'bbio'
+     joined this same interleaved form and the same single UPDATE — still one form, one save. */
+  for (const id of ['bn', 'bi', 'bc', 'bp', 'bbio', 'blegal', 'buen', 'bru']) {
     assert.match(brandPanel, new RegExp(`id="${id}"`), `${id} must not be split out of the form`);
   }
   assert.match(brandWiring, /sb\.from\('businesses'\)\.update\(\{name:\$\('bn'\)\.value\.trim\(\),/);
-  assert.match(brandWiring, /legal_name:legalName,registration_number:registrationNumber\}\)\.eq\('id',S\.biz\.id\)/);
+  assert.match(brandWiring, /legal_name:legalName,registration_number:registrationNumber,bio\}\)\.eq\('id',S\.biz\.id\)/);
 });
 
 /* V269 SUPERSEDES the pointer half of this test: the owner read the pointer card and told us to

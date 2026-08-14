@@ -20,6 +20,11 @@ const shell = readFileSync(join(root, 'app', 'index.html'), 'utf8');
 const loyalty = app.slice(app.indexOf('async function loyaltyPage('), app.indexOf('async function retentionPage('));
 const bookings = app.slice(app.indexOf('async function bookingsPage'),
   app.indexOf('\nasync function ', app.indexOf('async function bookingsPage') + 1));
+/* V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): the
+   hold-timer/overflow/auto-confirm booking rules moved out of bookingsPage into
+   bookingRulesCardHtmlV325, which Customer Interface's Appointment Setting step renders. */
+const bookingRules = app.slice(app.indexOf('function bookingRulesCardHtmlV325('),
+  app.indexOf('function wireBookingRulesV325('));
 
 test('(a) the model choice is a three-way segmented toggle that marks what is live', () => {
   for (const key of ['redeem', 'tiers', 'stamps']) {
@@ -85,14 +90,21 @@ test('(d) the table-seating question is sector-gated, and booking rules survive'
   assert.match(bookings, /const seatsGuestsV235=seatingSectorV235&&S\.biz\.takes_table_reservations===true;/);
   // The toggle itself only renders for a seated sector...
   assert.match(bookings, /\$\{seatingSectorV235\?`<label[^`]*id="setTakesTablesV223"/s);
-  // ...and so does everything downstream of it.
+  // ...and so does Tables / capacity, which stays in Bookings.
   assert.match(bookings, /\$\{seatsGuestsV235\?`<div class="row"><b>Tables \/ capacity<\/b>/);
-  assert.match(bookings, /\$\{seatsGuestsV235\?`<label>When you're full<\/label>/);
-  // Booking rules are NOT inside the gate — every sector still sets its hold timer.
-  const rules = bookings.slice(bookings.indexOf('Booking rules'), bookings.indexOf('id="setSave"'));
+  /* V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): the
+     hold-timer/overflow/auto-confirm booking rules moved to bookingRulesCardHtmlV325 — same
+     markup, just moved, per the V259 pattern. Bookings keeps a pointer instead of a second copy. */
+  assert.doesNotMatch(bookings, /When you're full/, 'the overflow rule must not have a second copy in Bookings');
+  assert.match(bookings, /Booking rules, opening hours and who customers may choose now live in <a href="#\/customer-interface\/appointment">/);
+  assert.match(bookingRules, /\$\{seatsGuestsV235\?`<label>When you're full<\/label>/);
+  // Booking rules are NOT inside the seating gate — every sector still sets its hold timer.
+  const rules = bookingRules.slice(bookingRules.indexOf('Booking rules'), bookingRules.indexOf('id="setSave"'));
   assert.ok(!rules.includes('${seatingSectorV235?'), 'the booking-rules block must render for every sector');
-  assert.match(bookings, /const takesTables=\$\('setTakesTablesV223'\)\?\$\('setTakesTablesV223'\)\.checked:null;/,
-    'a hidden toggle must send null, leaving the stored value alone');
+  // The seating toggle's own relocated save sends every other field null — it never touches
+  // the hold timer/overflow/auto-confirm rules that moved to Customer Interface.
+  assert.match(bookings, /const takesTables=\$\('setTakesTablesV223'\)\.checked;/);
+  assert.match(bookings, /p_hold_minutes:null,\s*\n\s*p_overflow:null,p_notify:S\.biz\.notify_new_bookings,p_auto_confirm:null,/);
 });
 
 test('(e) two "% off" benefit lines are flagged, never merged or deleted', () => {

@@ -1897,6 +1897,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260814001600",
+      "name": "nestly_v325_business_bio",
+      "sourcePath": "db/migrations/20260814_nestly_v325_business_bio.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260814180912",
       "name": "nestly_v326_points_gift_lifecycle",
       "sourcePath": "db/migrations/20260815_nestly_v326_points_gift_lifecycle.sql"

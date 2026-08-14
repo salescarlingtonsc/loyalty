@@ -185,7 +185,10 @@ const sqlTestBySemanticVersion = new Map([
   ['v314', 'db/tests/v313_v314_programme_switchboard.sql'],
   /* v322 (the owner rulings of 2026-08-14, server half: referral pays points, and the stamps
      exclusivity guard returns to public.set_programmes_v314). */
-  ['v322', 'db/tests/v322_owner_programme_rulings.sql']
+  ['v322', 'db/tests/v322_owner_programme_rulings.sql'],
+  /* v325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief):
+     businesses.bio, a nullable additive column with no backfill. */
+  ['v325', 'db/tests/v325_business_bio.sql']
 ]);
 
 const sqlTestByMigrationName = new Map([
@@ -827,7 +830,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 275); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm
+  assert.equal(pending.length, 276); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

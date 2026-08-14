@@ -116,11 +116,18 @@ test('V269 Customer Interface presents the three sections the owner named, in or
      it holds, and the moved gift-card switch adds a fourth section after them. */
   /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"): the fourth
      section V296 added is gone again, leaving exactly the three sections this test is named for. */
-  assert.deepEqual(headings, ['Workspace & brand', 'Customer programme', 'Sign-up & fields']);
+  /* V325 (owner-authorized restructure, 2026-08-14 Customer Interface cosmetics brief): the
+     stepper renamed "Workspace & brand" to "Business Profile" (step 1) and added a new
+     "Appointment Setting" section (step 2, the relocated booking-rules card). Preview and Done
+     are static/unchanged-content steps that do not call customerInterfaceSectionHeadingV269, so
+     they never appeared in this heading list and still do not. */
+  assert.deepEqual(headings, ['Business Profile', 'Appointment Setting', 'Customer programme', 'Sign-up & fields']);
   // each heading immediately precedes the panel it names
   const order = [
     "customerInterfaceSectionHeadingV269('ciSectionBrandV269'",
     'workspaceBrandPanelHtmlV259()',
+    "customerInterfaceSectionHeadingV269('ciSectionAppointmentV325'",
+    'bookingRulesCardHtmlV325()',
     "customerInterfaceSectionHeadingV269('ciSectionProgrammeV269'",
     'id="customerProgrammeEditorV95"',
     "customerInterfaceSectionHeadingV269('ciSectionInterfaceV269'",

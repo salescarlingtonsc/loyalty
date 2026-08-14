@@ -1902,6 +1902,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260814_nestly_v325_business_bio.sql",
+      "semanticVersion": "v325",
+      "proposedDeployVersion": "20260814001600"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260815_nestly_v326_points_gift_lifecycle.sql",
       "semanticVersion": "v326",
       "proposedDeployVersion": "20260814180912"
