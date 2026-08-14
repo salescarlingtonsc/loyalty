@@ -2998,7 +2998,7 @@
       "path": "db/migrations/20260815_nestly_v326_points_gift_lifecycle.sql",
       "semanticVersion": "v326",
       "proposedDeployVersion": "20260814180912",
-      "sha256": "0f4022bf0d946587a8a626c0cdc5c57d5f515ff185a50216b710a10dbc208ce7"
+      "sha256": "615e9c448ce2d289f36fbecb8604dd6693e6981f6a7bfca0b5b7821c35bb6767"
     },
     {
       "order": 316,

@@ -391,6 +391,27 @@
       "call_site_finding": "none"
     },
     {
+      "id": "browser.rpc:app/app.js:business_set_reward_paused_v326",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_set_reward_paused_v326",
+      "resolves_to": "business_set_reward_paused_v326/3 (owner-only via app.c45_owner_loyalty_write; naturally idempotent — a repeat set to the same paused value is a no-op, checked with IS DISTINCT FROM before the write)",
+      "call_site_finding": "none — the Points System page's per-gift on/off; immediate-write on loyalty_rewards.paused, no draft, audit_log'd"
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_delete_reward_v326",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_delete_reward_v326",
+      "resolves_to": "business_delete_reward_v326/2 (owner-only via app.c45_owner_loyalty_write; soft-delete, sets loyalty_rewards.active=false, moves the gift to History)",
+      "call_site_finding": "none — also syncs any currently open draft's own loyalty_reward_versions row to active=false, so publishing an unrelated draft later cannot resurrect the delete (see the v326 migration header for the full landmine this closes); audit_log'd"
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_create_reward_v326",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_create_reward_v326",
+      "resolves_to": "business_create_reward_v326/5 (owner-only via app.c45_owner_loyalty_write; writes both loyalty_rewards AND a matching loyalty_reward_versions row at the business's currently PUBLISHED config version, which is what makes the new gift immediately redeemable with no draft/publish step)",
+      "call_site_finding": "none — validates non-empty name and positive points server-side; audit_log'd"
+    },
+    {
       "id": "browser.rpc:app/app.js:record_sv_topup_sale",
       "surface": "browser_rpc_binding",
       "rpc": "record_sv_topup_sale",

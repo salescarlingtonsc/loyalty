@@ -55,11 +55,11 @@ test('V250 (b) the filtered hashes still resolve and the list keeps both V244 se
   // still resolve — deleting a destination was never part of adding one.
   /* V301 added a fourth ('setup', the one-page rewards wizard) on exactly those terms: it is an
      ADDITION to the same list, and the three V250-era hashes are still in it. */
-  assert.match(app, /const programmeView=\['overview','history','offers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
+  assert.match(app, /const programmeView=\['overview','history','offers','points','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
   // V245 heading logic still names each view.
   assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes':programmeView==='available'\?'Pending setup':programmeView==='setup'\?'Set up rewards':'Rewards Programme'/);
   // ...and no view hash is mistaken for an engine deep link.
-  assert.match(app, /const hashParamIsProgrammeView=\['overview','history','offers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)/);
+  assert.match(app, /const hashParamIsProgrammeView=\['overview','history','offers','points','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)/);
   // The SECTIONS the owner kept are still what #/grow opens with.
   assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
   assert.match(app, /growTileSectionV244\('Pending setup'/);

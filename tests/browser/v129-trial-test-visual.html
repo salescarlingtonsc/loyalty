@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ea4bd58f9900758ec9241f28f7eafaf2fab483d371c6624121fbe3be61ca48dc"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="af9e5cb44f1dd07cf6dff03f0e9b77b34af85a7bb194762261a72b2739ce4dfd"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1758,15 +1758,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head.customer-programme-compact-head-v326{display:block;padding:0;gap:0;overflow:hidden}
 .customer-programme-cover-v326{position:relative;min-height:104px;padding:14px 16px;display:flex;align-items:flex-end;background:var(--merchant-cover,none) center/cover no-repeat,linear-gradient(135deg,var(--merchant-accent,#28212f),color-mix(in srgb,var(--merchant-accent,#28212f) 55%,#17161a))}
 .customer-programme-cover-v326::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,.05),rgba(15,13,18,.58));pointer-events:none}
-.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;width:100%}
-.customer-programme-head-row-top-v327{display:flex;align-items:center;gap:12px;width:100%}
+.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;align-items:center;gap:12px;width:100%}
 .customer-programme-head-row-v326 .customer-programme-identity{flex:1;min-width:0}
 .customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
 .customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
 .customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
-/* v327 (owner: "clicked tier > auto scroll to tier below"): a real button now, not text nested
-   inside the identity control — underline signals it does something on its own. */
-.customer-programme-tier-jump-v327{align-self:flex-start;margin:0 0 0 66px;padding:0;border:0;background:none;font:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
 .customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
 .customer-programme-contact-line-v326 a{color:inherit}
@@ -2171,7 +2167,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ea4bd58f9900758ec9241f28f7eafaf2fab483d371c6624121fbe3be61ca48dc</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · af9e5cb44f1dd07cf6dff03f0e9b77b34af85a7bb194762261a72b2739ce4dfd</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -9130,9 +9126,11 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     :Promise.resolve(none);
   /* V291: credit_cents, entitlement_expiry_days, usage_limit and the tier gate join the read.
      They were already stored and already editable; only the comparison could not see them, which
-     is exactly why a change to them published silently. */
+     is exactly why a change to them published silently. V326 adds `paused` — the new immediate-
+     write flag the Points System page reads for each gift's on/off state; it is deliberately not
+     part of any draft comparison (see the v326 migration's own header comment for why). */
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
+    ?sb.from('loyalty_rewards').select('id,active,paused,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
   /* Live reward eligibility, plus the names the diff prints. All four are fail-soft: a failed
      read drops the branch/service rows from the comparison rather than claiming "All branches". */
@@ -10521,7 +10519,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      It is the promotions category on its own page rather than a filter, for the same reason
      'overview' and 'history' are: the owner wrote "editable in this tab", so it needs a hash of
      its own to link, bookmark and come back to. */
-  const programmeView=['overview','history','offers','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
+  /* V326 (owner 5-photo Points System flow): 'points' is the new dedicated management page —
+     Published/History tabs, the Point System on/off + earn-rate summary, and immediate-write
+     gift rows. It replaces the wizard as the points tile's destination entirely (see the tile
+     click handler below), whether or not a points programme has ever been configured — an
+     unconfigured business sees this same page with an empty/set-up-prompt state instead of the
+     wizard, per owner ruling (AskUserQuestion, 2026-08-15: "Photo 3 always, with an empty state"). */
+  const programmeView=['overview','history','offers','points','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
   /* V303: 'review' is now a NAME, not the number 4. A tier model runs a five-step wizard, so a
      hardcoded 4 would have opened the Reward step and called it the publish gate. The wizard
      resolves the name against its own active step list. */
@@ -10655,8 +10659,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      both would put the same programme on the page twice under two different shapes. */
   /* V319: 'offers' joins them. Without this the view would fall through to topicOnV229's
      "no tiles, no drilled topic" branch, which answers TRUE for every key — the Limited Offer
-     page would have rendered every category on the module. */
-  const growCategoryViewV271=!['overview','history','setup','offers'].includes(programmeView);
+     page would have rendered every category on the module. V326: 'points' joins for the same
+     reason — its own page, not a topic drill. */
+  const growCategoryViewV271=!['overview','history','setup','offers','points'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -11106,6 +11111,96 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ['Ran from',row=>growDateCellV271(row.started)],
       ['Ran until',row=>growDateCellV271(row.ended)]]});
   const growHistoryTableV271=growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false});
+  /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3 ==========================
+     The dedicated #/grow/points page: Published | History (no Draft — every change here is
+     immediate-write, see the RPCs below), a "Point system" summary row reusing the EXACT R6
+     on/off mechanism (writeProgrammeSwitchesV314/data-grow-switchtoggle-v322, scoped to
+     kind='points' — one more row in that same confirm/cancel micro-UI, not a second one), and
+     individual gift rows with their own on/off (business_set_reward_paused_v326) and delete
+     (business_delete_reward_v326, which moves the gift to History). Reads snapshot.rewards
+     directly rather than rewardJourney.milestones — the journey's availability semantics
+     (not_started/ended/programme_paused) don't carry `paused`, and this page needs a plain
+     on/off/deleted three-way the journey was never shaped for. */
+  const growPointsRawRewardsV326=Array.isArray(snapshot.rewards)?snapshot.rewards:[];
+  const growPointsPublishedV326=growPointsRawRewardsV326.filter(reward=>reward?.active!==false)
+    .sort((a,b)=>Number(a.sort||0)-Number(b.sort||0)||Number(a.cost_points||0)-Number(b.cost_points||0));
+  const growPointsHistoryV326=growPointsRawRewardsV326.filter(reward=>reward?.active===false)
+    .sort((a,b)=>Number(b.sort||0)-Number(a.sort||0));
+  /* Same test the points tile's own summary line already uses (growTopicDefsV229 above) — points
+     is "configured" the moment it is the live loyalty MODEL, whether currently on or paused. */
+  const growPointsConfiguredV326=liveLoyaltyModelKeysV240.includes('redeem');
+  const growPointsOnV326=programmeSpineOnV314('points')===true;
+  const growPointsLosingV326=growPointsOnV326?[]:programmeExclusionsV322('points').filter(other=>programmeSpineOnV314(other)===true);
+  const growPointsGiftRowV326=(reward,{history=false}={})=>{
+    const name=reward.customer_name||reward.name||'Gift';
+    const points=Math.max(0,Number(reward.cost_points||0));
+    const dateText=promotionDateShortV324(reward.created_at);
+    const meta=`<span><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content> · ${points} point${points===1?'':'s'}</span>${dateText?`<span class="muted small"> · Added ${esc(dateText)}</span>`:''}</span>`;
+    if(history)return `<li data-grow-points-giftrow-v326="${esc(reward.id)}">${meta}<span class="pill off">In history</span></li>`;
+    const paused=reward.paused===true;
+    const confirmOpen=growPointsDeletePendingV326===String(reward.id);
+    return `<li data-grow-points-giftrow-v326="${esc(reward.id)}">${meta}
+      <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="muted small" data-grow-points-giftstate-v326="${paused?'off':'on'}"> · ${paused?'Off':'ON for customers'}</span>
+        ${canSetupGrow?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'Turn on':'Turn off'}</button>
+        <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`:''}
+      </span></li>
+      <li class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(reward.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
+        <b>Delete ${esc(name)}?</b>
+        <p class="muted small" style="margin-top:6px">It moves to History. Customers can no longer redeem it.</p>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-gift-delete-yes-v326="${esc(reward.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-points-gift-delete-no-v326="1">Cancel</button></div>
+      </li>`;
+  };
+  const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<li class="imp-note" data-grow-points-addform-v326>
+    <b>Add a gift</b>
+    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growPointsAddNameV326">Name</label><br><input id="growPointsAddNameV326" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growPointsAddDraftV326.name)}" placeholder="e.g. Lotion"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddPointsV326">Points</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"></p>
+    ${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>Save gift</button><button type="button" class="btn ghost sm" data-grow-points-add-cancel-v326="1">Cancel</button></div>
+  </li>`:growPointsAddOpenV326==='prompt'?`<li class="imp-note" data-grow-points-addprompt-v326>
+    <b>Gift saved and live for customers.</b>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-again-v326="1">Add another gift</button><button type="button" class="btn ghost sm" data-grow-points-add-done-v326="1">Done</button></div>
+  </li>`:'';
+  const growPointsTabStripV326=`<div class="v150-segment" role="group" aria-label="Gift status" data-grow-points-tabstrip-v326>
+    <button type="button" aria-pressed="${growPointsManageTabV326==='published'}" data-grow-points-manage-tab-v326="published">Published${growPointsPublishedV326.length?` (${growPointsPublishedV326.length})`:''}</button>
+    <button type="button" aria-pressed="${growPointsManageTabV326==='history'}" data-grow-points-manage-tab-v326="history">History${growPointsHistoryV326.length?` (${growPointsHistoryV326.length})`:''}</button>
+  </div>`;
+  const growPointsManageV326=!canRewards
+    ?CUI.emptyState({iconName:'till',title:'Loyalty is not included',
+        body:'This workspace does not include the loyalty module, so there is no Points System to manage.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
+    :!growPointsConfiguredV326
+    ?CUI.emptyState({iconName:'till',title:'Points System is not set up yet',
+        body:'Choose points, set the earning rate, and add a first gift customers can redeem for.',
+        actionHtml:canSetupGrow
+          ?'<button type="button" class="btn sm" id="growPointsSetupV326">Set up Points System</button>'
+          :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
+    :`<ul class="grow-setup-rewardlist-v301" data-grow-points-summary-v326>
+        <li data-grow-points-header-v326><span><b>Point system</b><p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
+          <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="muted small" data-grow-switchstate-v322="${growPointsOnV326?'on':'off'}"> · ${growPointsOnV326?'ON for customers':'off'}</span>
+            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit</button>
+            <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">Add gifts</button>
+            <button type="button" class="btn ghost sm" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="points">${growPointsOnV326?'Turn off':'Turn on'}</button>`:''}
+          </span></li>
+        <li class="imp-note" data-grow-switchconfirm-v322="points" style="margin-top:8px"${growSwitchPendingV322==='points'?'':' hidden'}>
+          <b>${growPointsOnV326?'Turn Point system off for customers?':'Turn Point system on for customers?'}</b>
+          <p class="muted small" style="margin-top:6px">${growPointsOnV326
+            ?'Customers stop earning and stop being able to claim rewards straight away. Everything you have set up stays saved and comes back when you turn it on again.'
+            :growPointsLosingV326.length
+              ?`The stamp card runs on its own, so turning this on switches ${esc(growPointsLosingV326.map(other=>(growProgrammeSwitchKindsV322.find(row=>row[0]===other)||[,other])[1]).join(' and '))} off. Their setup stays saved.`
+              :'Customers can start earning straight away.'}</p>
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="points">${growPointsOnV326?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div>
+        </li>
+        ${growPointsAddFormV326}
+      </ul>
+      ${growSwitchErrorV322&&growSwitchPendingV322==='points'?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
+      ${growPointsTabStripV326}
+      <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-points-giftlist-v326>
+        ${growPointsManageTabV326==='published'
+          ?(growPointsPublishedV326.length?growPointsPublishedV326.map(reward=>growPointsGiftRowV326(reward)).join(''):'<li class="muted small" style="cursor:default">No gift yet — add one above.</li>')
+          :(growPointsHistoryV326.length?growPointsHistoryV326.map(reward=>growPointsGiftRowV326(reward,{history:true})).join(''):'<li class="muted small" style="cursor:default">Nothing has been deleted yet.</li>')}
+      </ul>`;
   /* One strip, three destinations, each with its own hash so it is linkable and back-button-safe.
      It reuses the house sub-module strip rather than reviving the V173-era one, which V173/V180
      removed because it duplicated the sidebar's own sub-rows. These three are not sidebar rows —
@@ -11226,7 +11321,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?'Points System':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growProgrammeSwitchPanelV322():''}
@@ -11239,6 +11334,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})):''}
       ${programmeView==='overview'?growOverviewTableV271:''}
       ${programmeView==='history'?growHistoryTableV271:''}
+      ${programmeView==='points'?growPointsManageV326:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
            rewards, Add another reward and Start from a template onto the Point system row).
@@ -11852,31 +11948,26 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
   outerMain.querySelectorAll('[data-grow-topic-v229]').forEach(tile=>tile.onclick=()=>{
+    /* V326 (owner 5-photo Points System flow, photo 2: "clicked into point system > photo 3").
+       The Points System tile no longer opens the wizard at all, live or not — it always opens
+       its own dedicated page (#/grow/points), which shows the summary + gift list when a points
+       programme is configured and a "set up" prompt when it is not (AskUserQuestion, 2026-08-15:
+       "Photo 3 always, with an empty state" — the wizard is one click away from that prompt, not
+       the tile's own destination any more). Tiers and stamps are UNCHANGED — see V303 below —
+       until their own equivalent pages are built. */
+    if(tile.dataset.growTopicV229==='points')return nav('#/grow/points');
     /* V301: a point-engine card that is not live yet opens the one-page wizard rather than the
        drill — the drill is where an owner MANAGES a running programme, and the owner's report is
        that it is not where anyone can START one. */
-    /* V303: all three point-engine cards, live or not. The card that was pressed decides which
-       model the wizard opens on, handed over as a one-shot so a later plain visit to #/grow/setup
-       still derives the choice from what is actually live. */
+    /* V303: both remaining point-engine cards (tiers, stamps), live or not. The card that was
+       pressed decides which model the wizard opens on, handed over as a one-shot so a later
+       plain visit to #/grow/setup still derives the choice from what is actually live. */
     if(growSetupEntryV301(tile.dataset.growTopicV229)){
       /* The card key rides along with the model because the two answer different questions: the
          model is what the wizard edits, the card is which programme the owner came here ABOUT —
-         and that is what V294's editor entry context means ("this in tier programme, not here!").
-         A firm running points+tiers opens the Points System card on the 'both' model, and its
-         full editor must still be the points one. */
+         and that is what V294's editor entry context means ("this in tier programme, not here!"). */
       pendingGrowSetupModelV303={kind:growSetupKindForTileW6I2(tile.dataset.growTopicV229),
         from:String(tile.dataset.growTopicV229||'')};
-      /* V324 (owner: pressed the already-live Points System card, twice, and landed on the
-         wizard's Programmes step both times — "still the same" — because this hand-off has
-         never said which STEP to open on, only which model. An Edit of something already running
-         should open where the editing happens, not restart the five-screen walkthrough two clicks
-         short of it. Reuses the SAME hand-off the reward-card Edit path already uses to land on
-         Gifts (mode:'view' arms no specific form, unlike 'edit' — it only moves the step); a
-         no-op for tiers/stamps today, since that hand-off only recognises the 'reward' step —
-         their own landing fix is the next build in this queue, not guessed at here. */
-      const topicPressedV324=growTopicDefsV229.find(topic=>topic.key===tile.dataset.growTopicV229);
-      if(topicPressedV324&&growTopicOngoingV244(topicPressedV324)&&growSetupKindForTileW6I2(tile.dataset.growTopicV229)==='points')
-        pendingGrowSetupRewardV303={mode:'view'};
       return nav('#/grow/setup');
     }
     growTopicV229=tile.dataset.growTopicV229;
@@ -11884,6 +11975,108 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   const growTopicBack=$('growTopicBackV229');
   if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
+  /* ============ V326 — POINTS SYSTEM PAGE WIRING ============================================
+     The Point system row's own on/off toggle deliberately reuses data-grow-switchtoggle-v322/
+     data-grow-switchconfirm-yes-v322/-no-v322 verbatim (kind="points") — those selectors are
+     already wired above, over the whole of outerMain, so that exact mechanism (one open confirm
+     at a time, one writeProgrammeSwitchesV314 call, no draft) works here with zero new code.
+     Everything below is genuinely new: the tab strip, per-gift on/off + delete (immediate-write
+     RPCs the switch panel has no equivalent of), the add-gift form, and the empty-state CTA. */
+  const growPointsSetupCta=$('growPointsSetupV326');
+  if(growPointsSetupCta)growPointsSetupCta.onclick=()=>{
+    pendingGrowSetupModelV303={kind:'points',from:'points'};
+    nav('#/grow/setup');
+  };
+  outerMain.querySelectorAll('[data-grow-points-manage-tab-v326]').forEach(button=>button.onclick=()=>{
+    const tab=button.dataset.growPointsManageTabV326;
+    if(!['published','history'].includes(tab))return;
+    growPointsManageTabV326=tab;
+    growRerenderV322();
+  });
+  const growPointsEditLink=outerMain.querySelector('[data-grow-points-edit-v326]');
+  if(growPointsEditLink)growPointsEditLink.onclick=()=>{
+    /* Lands the wizard on the Earning step (see rewardHandoffV303 in growSetupWizardV301) rather
+       than the Gifts step the old mode:'view' hand-off used — gift management is this page's own
+       job now, not the wizard's. */
+    pendingGrowSetupModelV303={kind:'points',from:'points'};
+    pendingGrowSetupRewardV303={mode:'earning'};
+    nav('#/grow/setup');
+  };
+  const growPointsAddOpen=outerMain.querySelector('[data-grow-points-add-v326]');
+  if(growPointsAddOpen)growPointsAddOpen.onclick=()=>{
+    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';
+    growRerenderV322();
+  };
+  const growPointsAddCancel=outerMain.querySelector('[data-grow-points-add-cancel-v326]');
+  if(growPointsAddCancel)growPointsAddCancel.onclick=()=>{
+    growPointsAddOpenV326='';growPointsErrorV326='';
+    growRerenderV322();
+  };
+  const growPointsAddAgain=outerMain.querySelector('[data-grow-points-add-again-v326]');
+  if(growPointsAddAgain)growPointsAddAgain.onclick=()=>{
+    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';
+    growRerenderV322();
+  };
+  const growPointsAddDone=outerMain.querySelector('[data-grow-points-add-done-v326]');
+  if(growPointsAddDone)growPointsAddDone.onclick=()=>{
+    growPointsAddOpenV326='';
+    growRerenderV322();
+  };
+  const growPointsAddSave=outerMain.querySelector('[data-grow-points-add-save-v326]');
+  if(growPointsAddSave)growPointsAddSave.onclick=async()=>{
+    if(growPointsBusyV326)return;
+    const nameField=$('growPointsAddNameV326'),pointsField=$('growPointsAddPointsV326');
+    const name=String(nameField?.value||'').trim();
+    const points=Math.round(Number(pointsField?.value||''));
+    growPointsAddDraftV326={name,points:pointsField?.value||''};
+    if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322();}
+    if(!Number.isFinite(points)||points<=0){growPointsErrorV326='Points must be a positive number.';return growRerenderV322();}
+    const spineId=(programmeSpineRowsV314()||[]).find(row=>row.kind==='points')?.id;
+    if(!spineId){growPointsErrorV326='The points programme could not be found. Reload and try again.';return growRerenderV322();}
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322();
+    const {error}=await sb.rpc('business_create_reward_v326',{
+      p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0});
+    if(!isGrowCurrent())return;
+    growPointsBusyV326=false;
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    toast('Gift added and live for customers');
+    growPointsAddOpenV326='prompt';
+    growRerenderV322();
+  };
+  outerMain.querySelectorAll('[data-grow-points-gift-toggle-v326]').forEach(button=>button.onclick=async()=>{
+    if(growPointsBusyV326)return;
+    const id=button.dataset.growPointsGiftToggleV326;
+    const want=button.getAttribute('aria-checked')!=='true';
+    growPointsBusyV326=true;growPointsErrorV326='';
+    button.disabled=true;
+    const {error}=await sb.rpc('business_set_reward_paused_v326',{
+      p_business:S.biz.id,p_reward:id,p_paused:!want});
+    if(!isGrowCurrent())return;
+    growPointsBusyV326=false;
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    toast(want?'Turned on for customers':'Turned off for customers');
+    growRerenderV322();
+  });
+  outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]').forEach(button=>button.onclick=()=>{
+    growPointsDeletePendingV326=button.dataset.growPointsGiftDeleteV326;
+    growRerenderV322();
+  });
+  outerMain.querySelectorAll('[data-grow-points-gift-delete-no-v326]').forEach(button=>button.onclick=()=>{
+    growPointsDeletePendingV326='';
+    growRerenderV322();
+  });
+  outerMain.querySelectorAll('[data-grow-points-gift-delete-yes-v326]').forEach(button=>button.onclick=async()=>{
+    if(growPointsBusyV326)return;
+    const id=button.dataset.growPointsGiftDeleteYesV326;
+    growPointsBusyV326=true;growPointsErrorV326='';
+    button.disabled=true;
+    const {error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
+    if(!isGrowCurrent())return;
+    growPointsBusyV326=false;growPointsDeletePendingV326='';
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    toast('Moved to History');
+    growRerenderV322();
+  });
   /* V314 (W6 increment 1) — the [data-points-mode-v229] wiring is DELETED with the cards it
      drove. It was the second of the two surviving `businesses.points_mode` writers, and after the
      inversion both were success-reporting no-ops: the tripwire pins the column, PostgREST returns
@@ -12072,8 +12265,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      are views of this overview, not engine deep-links, and must never mount a surface
      (mounting built {surface:'overview'} and crashed on the surface dictionary). */
   /* V319: 'offers' is a view name, not an editor action — without it here the Limited Offer hash
-     would be handed to the deep-editor mount below and open a surface the owner did not ask for. */
-  const hashParamIsProgrammeView=['overview','history','offers','ongoing','available','settings','setup'].includes(String(hashParam||''));
+     would be handed to the deep-editor mount below and open a surface the owner did not ask for.
+     V326: 'points' joins for the same reason — it is the new Points System page, not a deep link
+     into mountGrowSurface. */
+  const hashParamIsProgrammeView=['overview','history','offers','points','ongoing','available','settings','setup'].includes(String(hashParam||''));
   if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
@@ -13817,9 +14012,14 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      is on. A firm running stamps and tiers alone has no points catalogue, and sending the owner to
      "the last step" instead would have opened the publish gate with a gift form they never asked
      for. */
-  const rewardHandoffV303=stepNumberOrNullW6I2('reward')===null?null:pendingGrowSetupRewardV303;
+  const rewardHandoffV303=pendingGrowSetupRewardV303;
   pendingGrowSetupRewardV303=null;
-  if(rewardHandoffV303){
+  /* V326: the Points System page's "edit" link lands here on the Earning step specifically —
+     it needs the earn RATE, not the gift list (that's the page's own job now). Guarded on
+     'earn' existing on the rail rather than 'reward', since this hand-off never touches Gifts. */
+  if(rewardHandoffV303?.mode==='earning'){
+    if(stepNumberOrNullW6I2('earn')!==null)state.step=stepNumberForW6I2('earn');
+  }else if(rewardHandoffV303&&stepNumberOrNullW6I2('reward')!==null){
     state.step=stepNumberForW6I2('reward');
     const wanted=rewardHandoffV303.mode==='edit'
       ?state.rewards.find(reward=>reward.id===String(rewardHandoffV303.id||''))
@@ -18861,6 +19061,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'ea4bd58f9900758ec9241f28f7eafaf2fab483d371c6624121fbe3be61ca48dc',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'af9e5cb44f1dd07cf6dff03f0e9b77b34af85a7bb194762261a72b2739ce4dfd',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

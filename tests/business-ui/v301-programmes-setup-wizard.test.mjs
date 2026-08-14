@@ -59,14 +59,14 @@ test('V301 (a) the wizard is a real function, mounted from growPage', () => {
 
 test('V301 (a) "setup" resolves as a Programmes view, and is not mistaken for a deep link', () => {
   assert.match(app,
-    /const programmeView=\['overview','history','offers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
+    /const programmeView=\['overview','history','offers','points','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
   // A view hash must never mount an engine surface — that crashed on the surface dictionary.
   assert.match(app,
-    /const hashParamIsProgrammeView=\['overview','history','offers','ongoing','available','settings','setup'\]\.includes/);
+    /const hashParamIsProgrammeView=\['overview','history','offers','points','ongoing','available','settings','setup'\]\.includes/);
   // The three V271/V294 rail children keep resolving exactly as before.
   assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
   // The view replaces the category list rather than stacking on it.
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points'\]\.includes\(programmeView\);/);
   assert.match(grow, /programmeView==='setup'\?'Set up rewards'/);
 });
 
@@ -665,8 +665,13 @@ test('V303 (e) Add reward and per-reward Edit never open a dialog again', () => 
   /* The wizard consumes it ONCE and opens on the Reward step with that reward loaded.
      V305: and only when the chosen model HAS a Reward step. Tiers-only does not, and the old
      stepNumberForV303 fallback ("the last step") would have dropped the owner on the publish gate
-     with a reward form armed. */
-  assert.match(wizard, /const rewardHandoffV303=stepNumberOrNullW6I2\('reward'\)===null\?null:pendingGrowSetupRewardV303;\s*\r?\n?\s*pendingGrowSetupRewardV303=null;/);
+     with a reward form armed.
+     V326: the up-front gate moved inline — the declaration now unconditionally reads the
+     one-shot, and the Reward-step check guards the reward/edit/add branch specifically,
+     alongside the new mode:'earning' branch's own guard on the 'earn' step (the Points System
+     page's "edit" link). Same invariant, reached a different way now a second mode exists. */
+  assert.match(wizard, /const rewardHandoffV303=pendingGrowSetupRewardV303;\s*\r?\n?\s*pendingGrowSetupRewardV303=null;/);
+  assert.match(wizard, /\}else if\(rewardHandoffV303&&stepNumberOrNullW6I2\('reward'\)!==null\)\{/);
   assert.match(wizard, /state\.step=stepNumberForW6I2\('reward'\);/);
   assert.match(wizard, /\?state\.rewards\.find\(reward=>reward\.id===String\(rewardHandoffV303\.id\|\|''\)\)/);
   // "Add another reward" on the success panel lands on the same step, wherever it is numbered.

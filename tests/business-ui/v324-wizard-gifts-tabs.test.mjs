@@ -1,11 +1,19 @@
 /* V324 — the wizard's Gifts step (stepThreeHtml) gets the same Published/Draft/History split as
  * everywhere else, on the REACHABLE screen this time.
  *
- * Points System (and the other two point-engine cards) route straight to this wizard,
- * unconditionally — growSetupEntryV301: "the wizard IS this module's UX, for the first set-up and
- * for editing, live or not" (V303, after three owner rounds rejecting the alternative). The first
- * build of this feature landed in growPage's drilled 'points' category, which that routing makes
- * unreachable for an owner. This file is the corrected build, on stepThreeHtml.
+ * Tiers and stamps still route straight to this wizard, unconditionally — growSetupEntryV301:
+ * "the wizard IS this module's UX, for the first set-up and for editing, live or not" (V303,
+ * after three owner rounds rejecting the alternative). The first build of this feature landed in
+ * growPage's drilled 'points' category, which that routing made unreachable for an owner. This
+ * file is the corrected build, on stepThreeHtml — and stepThreeHtml itself is UNCHANGED by V326:
+ * a firm can still open the wizard directly (first-time setup, or the Points System page's
+ * "edit" link) and its Gifts step still needs this exact tab split.
+ *
+ * V326 (owner 5-photo Points System flow): the Points System TILE itself no longer routes through
+ * this wizard at all — it always opens the new #/grow/points page instead. See
+ * tests/business-ui/v324-points-system-page.test.mjs for that page's own tab split, which reuses
+ * this file's tab-strip pattern as a template but is otherwise independent (immediate-write, not
+ * draft-based; no Draft tab).
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -144,18 +152,24 @@ test('V324 switching reward tabs in the wizard never touches the network', () =>
   assert.match(handler, /render\(\)/);
 });
 
-test('V324 clicking an already-live Points System tile arms a step hand-off, not just a model one', () => {
-  /* Owner: pressed "Points System" (already live, "Edit →") twice and landed on the wizard's
-     Programmes step both times — "still the same" — because the tile click only ever set
-     pendingGrowSetupModelV303 (which model to open), never which STEP. Scoped to kind==='points'
-     only: the hand-off this reuses (pendingGrowSetupRewardV303) only recognises the 'reward' step,
-     so arming it for a tiers/stamps tile would silently do nothing — worse than not trying, because
-     it would look fixed in a diff without being fixed in the browser. Tiers/stamps get their own
-     landing fix when their own tabs are built, not a guess here. */
-  const handler = code.slice(code.indexOf('if(growSetupEntryV301(tile.dataset.growTopicV229)){'),
+test('V326 the Points System tile no longer arms a wizard step hand-off — it opens its own page', () => {
+  /* SUPERSEDES the old "arms a step hand-off, not just a model one" fix (V324, commit c1fd58c):
+     that fix landed the wizard on the Gifts step because the tile still opened the wizard. Owner
+     ruling 2026-08-15 ("Photo 3 always, with an empty state") replaced the destination entirely —
+     the tile now opens #/grow/points unconditionally, live or not, first-time or not, and never
+     touches pendingGrowSetupModelV303/pendingGrowSetupRewardV303 at click time. Those hand-offs
+     still exist (the page's own "edit" link and the empty-state "Set up" CTA use them), just not
+     from this click. */
+  const handler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-topic-v229]')"),
     code.indexOf("growTopicV229=tile.dataset.growTopicV229;"));
-  assert.match(handler, /growTopicOngoingV244\(topicPressedV324\)&&growSetupKindForTileW6I2\(tile\.dataset\.growTopicV229\)==='points'/);
-  assert.match(handler, /pendingGrowSetupRewardV303=\{mode:'view'\}/);
+  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\)return nav\('#\/grow\/points'\);/);
+  // ...and that check runs BEFORE growSetupEntryV301 is ever consulted for the pressed tile.
+  const pointsCheckIndex = handler.indexOf("tile.dataset.growTopicV229==='points'");
+  const entryCheckIndex = handler.indexOf('growSetupEntryV301(tile.dataset.growTopicV229)');
+  assert.ok(pointsCheckIndex >= 0 && entryCheckIndex > pointsCheckIndex,
+    'points must be handled before falling through to the wizard-entry branch');
+  assert.doesNotMatch(handler, /growTopicOngoingV244\(topicPressedV324\)&&growSetupKindForTileW6I2/,
+    'the old ongoing+points step hand-off no longer belongs at the tile click site');
 });
 
 test('V324 the reward-added-id diff reuses growRewardPendingChangesV291 — the same function Overview already tests', () => {

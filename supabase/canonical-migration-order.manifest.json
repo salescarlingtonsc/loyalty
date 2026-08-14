@@ -3165,8 +3165,8 @@
       "version": "20260814180912",
       "name": "nestly_v326_points_gift_lifecycle",
       "path": "supabase/migrations/20260814180912_nestly_v326_points_gift_lifecycle.sql",
-      "octetLength": 70825,
-      "sha256": "0f4022bf0d946587a8a626c0cdc5c57d5f515ff185a50216b710a10dbc208ce7",
+      "octetLength": 71135,
+      "sha256": "615e9c448ce2d289f36fbecb8604dd6693e6981f6a7bfca0b5b7821c35bb6767",
       "provenance": "local-source"
     },
     {

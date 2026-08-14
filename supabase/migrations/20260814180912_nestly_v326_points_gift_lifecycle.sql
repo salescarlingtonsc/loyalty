@@ -1154,6 +1154,7 @@ end
 $function$;
 
 revoke execute on function public.business_set_reward_paused_v326(uuid, uuid, boolean) from public;
+grant execute on function public.business_set_reward_paused_v326(uuid, uuid, boolean) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.business_delete_reward_v326(p_business uuid, p_reward uuid)
  RETURNS jsonb
@@ -1200,6 +1201,7 @@ end
 $function$;
 
 revoke execute on function public.business_delete_reward_v326(uuid, uuid) from public;
+grant execute on function public.business_delete_reward_v326(uuid, uuid) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.business_create_reward_v326(p_business uuid, p_programme uuid, p_name text, p_points integer, p_credit_cents integer DEFAULT 0)
  RETURNS jsonb
@@ -1272,5 +1274,6 @@ end
 $function$;
 
 revoke execute on function public.business_create_reward_v326(uuid, uuid, text, integer, integer) from public;
+grant execute on function public.business_create_reward_v326(uuid, uuid, text, integer, integer) to authenticated;
 
 commit;
