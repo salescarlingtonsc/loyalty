@@ -1688,6 +1688,41 @@ async function renderCustomerMessages(){
   await renderCustomerInAppInbox(null,isCurrent);
 }
 
+/* v327: the ONE global Peekaa member QR — one per identity, not one per business (see the
+   supersession note on MEMBER_CODE_CONTRACT_W6I2 above renderCustomerQrJoin). Drawn client-side
+   from the opaque token public.customer_get_member_qr_v327 returns; nothing here ever sees or
+   displays the customer's phone number or an enumerable client id. */
+async function loadCustomerMemberQrV327(isCurrent){
+  const card=$('customerMemberQrCardV327');
+  if(!card)return;
+  const slot=$('customerMemberQrSlotV327'),status=$('customerMemberQrStatusV327');
+  let {data,error}=await sb.rpc('customer_get_member_qr_v327');
+  if(!isCurrent()||!card.isConnected)return;
+  if(error?.code==='42501'){
+    // No platform identity yet — create one (same call the claim flow makes) and retry once.
+    const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:crypto.randomUUID()});
+    if(!isCurrent()||!card.isConnected)return;
+    if(!identity.error)({data,error}=await sb.rpc('customer_get_member_qr_v327'));
+    if(!isCurrent()||!card.isConnected)return;
+  }
+  card.removeAttribute('aria-busy');
+  if(error||!data?.member_qr){
+    slot.innerHTML='';
+    status.innerHTML=`<span class="err">Your code could not be loaded.</span> <button class="btn ghost sm" id="customerMemberQrRetryV327" style="margin-left:6px">Try again</button>`;
+    const retry=$('customerMemberQrRetryV327');
+    if(retry)retry.onclick=()=>loadCustomerMemberQrV327(isCurrent);
+    return;
+  }
+  slot.innerHTML='<div id="customerMemberQrCanvasV327"></div>';
+  status.textContent='';
+  void loadQrLibrary().then(()=>{
+    if(!isCurrent()||!slot.isConnected)return;
+    new QRCode($('customerMemberQrCanvasV327'),
+      {text:data.member_qr,width:200,height:200,correctLevel:QRCode.CorrectLevel.M});
+  }).catch(()=>{
+    if(isCurrent()&&slot.isConnected)slot.innerHTML='<p class="muted small">Your QR could not be drawn on this device.</p>';
+  });
+}
 /* V282 consent history. Both consent stores — the v263 per-channel audit and the v92 platform and
    partner consent events — have been append-only since the day they were written, and neither was
    readable by the person the evidence is about. The list is deliberately READ-ONLY: it is a record
@@ -1764,8 +1799,19 @@ async function renderCustomerProfile(){
     :detailsLoadFailedV286
       ?`<section class="card" id="customerProfileDetailsError"><h2>We couldn’t load your details</h2><p class="muted small" style="margin-top:6px">Your name and date of birth did not load just now. Nothing has been changed, and everything below still works.</p><button class="btn" id="customerProfileDetailsRetry" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Try again</span></button></section>`
       :'<section class="card"><h2>Profile editing is not available</h2><p class="muted small" style="margin-top:6px">Profile editing isn’t available for this account.</p></section>';
+  /* v327: one Peekaa-wide QR, not tied to any single business — shown only once the platform
+     identity capability itself is on (independent of profile/phone-registration availability). */
+  const memberQrCardHtmlV327=context.features.customer_identity===true
+    ?`<section class="card" id="customerMemberQrCardV327" style="margin-top:14px" aria-busy="true">
+        <h2>My Peekaa QR</h2>
+        <p class="muted small" style="margin-top:6px">Show this at any Peekaa business to be recognised as you — the same code works everywhere you're a member. It never reveals your phone number.</p>
+        <div id="customerMemberQrSlotV327" style="display:grid;place-items:center;min-height:200px;margin:14px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;max-width:240px"><p class="muted small">Loading your code…</p></div>
+        <p id="customerMemberQrStatusV327" class="muted small" role="status" aria-live="polite"></p>
+      </section>`
+    :'';
   $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Profile</h1><p class="muted">${profile?`Keep your name up to date and manage your ${esc(BRAND.customerLabel)} account.`:`Your ${esc(BRAND.customerLabel)} account details.`}</p></div></header>
     ${personalDetailsHtmlV286}
+    ${memberQrCardHtmlV327}
     <section class="card" id="customerAppearance" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Appearance</h2><p class="muted small">Peekaa looks the same as your businesses do by default. Switch to dark if you prefer it.</p></div></div>
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
     </section>
@@ -1795,6 +1841,7 @@ async function renderCustomerProfile(){
          reached by finishing the page rather than by hunting an icon. -->
     <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button></div></section>`;
   bindPasswordVisibility($('walletBody'));
+  if($('customerMemberQrCardV327'))void loadCustomerMemberQrV327(isCurrent);
   $('customerProfileSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   /* v190: applied immediately on change — the person is looking at the surface they just picked,
      so a save button would be a step with nothing behind it. */
@@ -3638,6 +3685,43 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
+/* W4c lives HERE, not beside the slot it fills, and that placement is deliberate rather than
+   tidy: tests/browser/generate-v104-promotions-visual.mjs extracts production source from
+   `openCustomerPromotionDetailsV104` to `customerMerchantExperienceMarkupV95` and pins the result
+   with a production-source-sha256 that its CAPTURED CHROME MEASUREMENTS are keyed to. Declaring
+   these three inside that span would have invalidated a browser capture this build cannot redo,
+   for code the same span does not render. */
+/* W4c (built in W6 increment 2): "Show my code" — the standing member QR, the biggest customer-side
+   gap against Stampede. Its two halves come from the W4 design contract verbatim:
+   public.customer_get_member_code_v310(p_business_slug) returns a stable opaque per-(business,
+   client) code, and the counter reads it through the fourth `nestly:member:` branch in
+   redemptionPayloadFromQr.
+   The code is OPAQUE and per-business by contract, so this markup must never print anything else:
+   showing a phone number or a client id would hand every counter a customer identifier that works
+   at every other business too. */
+/* W4c's SERVER CONTRACT, named here because the client is built against it and shipped switched
+   off. Both halves are pinned in the W4 design contract and neither exists in the database yet:
+     · public.customer_get_member_code_v310(p_business_slug text) -> {code}
+       wallet-context gated (app.v32_customer_wallet_context), 42501 without a verified link,
+       returning a STABLE OPAQUE per-(business, client) code — opaque and per-business because a
+       code that worked at every business would hand one counter an identifier for all of them.
+     · public.staff_resolve_member_code_v310(p_business uuid, p_code text) -> {client_id, name}
+       staff-scoped, destination = the existing Customer 360 screen.
+   Both flags stay FALSE until a migration ships and registers them in docs/design/ps0/writer-
+   registry.json and the v21 authenticated-RPC allowlist. Flipping a flag without that registration
+   would put an ungranted function name in the browser bundle, which those two guards refuse.
+
+   SUPERSEDED (v327, owner directive 2026-08-15): this whole per-(business,client) contract is
+   dead. The owner wants ONE global Peekaa member code recognised at every merchant, not an opaque
+   code that is deliberately different at each one — the "opaque and per-business by contract"
+   line above is exactly the property that got reversed. customer_get_member_code_v310 /
+   staff_resolve_member_code_v310 are retired unbuilt; the live implementation is
+   public.customer_get_member_qr_v327 (reader) and public.staff_scan_member_qr_v327 (resolver),
+   wired from renderCustomerProfile and the till's "Scan customer QR" button respectively. Both
+   flags below stay false permanently — this contract will never ship — and the dead markup/reader
+   functions immediately following are kept only because ripping them out is not this migration's
+   job; nothing live still calls them. */
+const MEMBER_CODE_CONTRACT_W6I2=Object.freeze({readerShipped:false,resolverShipped:false});
 /* The one place the reader would be called. It is a function rather than an inline call so the
    RPC name lands in exactly one edit when the migration arrives, and so the gate above cannot be
    bypassed by a second call site appearing somewhere else. */

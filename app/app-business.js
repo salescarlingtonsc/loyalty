@@ -532,7 +532,7 @@ function merchantRedemptionReceiptHtml(data={}){
     <button class="btn" id="merchantScannerReceiptClose" type="button" style="width:100%;margin-top:16px">Close receipt</button>`;
 }
 function openMerchantRedemptionScanner({
-  businessId,branchId,saleId=null,customerName='',isCurrent=()=>true,onComplete=()=>{}
+  businessId,branchId,saleId=null,customerName='',isCurrent=()=>true,onComplete=()=>{},onMemberResolved=null
 }={}){
   activeMerchantScannerCleanup();
   const overlay=document.createElement('div');
@@ -581,17 +581,29 @@ function openMerchantRedemptionScanner({
       status.textContent='Choose an accessible branch before confirming this reward.';
       return;
     }
-    /* W4c: a member code resolves an IDENTITY and navigates. It settles nothing, so it takes none
-       of the idempotency machinery below and returns before it.
-       CAPABILITY GATE (MEMBER_CODE_CONTRACT_W6I2): the resolver it needs is not shipped. Calling
-       it anyway would put an unregistered RPC name in this bundle, which the writer registry and
-       the v21 authenticated-grant allowlist both refuse on purpose — a browser must never name a
-       function no migration grants. So the parser branch lands now (a member QR is recognised as a
-       Peekaa code rather than rejected as junk) and the lookup lands with the migration. */
+    /* v327: a member code resolves the scanning business's OWN client relationship for the global
+       Peekaa identity behind the QR (auto-provisioning one on first scan) and settles nothing
+       itself, so it takes none of the idempotency machinery below. Only call sites that pass
+       onMemberResolved (the till's "Scan customer QR" step) can act on it — a member QR scanned
+       into a reward-redemption context (entitlement/offer scanners) has nothing to redeem. */
     if(payload.kind==='member'){
-      status.textContent=MEMBER_CODE_CONTRACT_W6I2.resolverShipped
-        ?'Member lookup is not wired on this build.'
-        :'Member codes need the latest Peekaa service update. Search this customer by name or phone instead.';
+      if(!onMemberResolved){
+        status.textContent='This is a customer’s Peekaa member code, not a redemption code. It cannot be used here.';
+        return;
+      }
+      submitting=true;status.textContent='Looking up this customer…';
+      const {data,error}=await sb.rpc('staff_scan_member_qr_v327',{p_business:businessId,p_member_qr:token});
+      if(closed||!isCurrent())return;
+      submitting=false;
+      if(error||data?.status!=='found'){
+        status.textContent=error?.code==='PGRST202'||error?.code==='42883'
+          ?'Member lookup needs the latest Peekaa service update.'
+          :(data?.message||'This member QR could not be resolved. Ask the customer to open their QR again.');
+        return;
+      }
+      status.textContent='Customer found.';
+      onMemberResolved(data);
+      close();
       return;
     }
     const attemptFingerprint=`${payload.kind}:${token}:${saleId||''}`;
@@ -5152,7 +5164,11 @@ async function tillPage(){
     $('tFind').onclick=doFind;
     if(canScanRedemption())$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
-      isCurrent:isTillCurrent,onComplete:()=>resetToStart()
+      isCurrent:isTillCurrent,onComplete:()=>resetToStart(),
+      /* v327: a scanned Peekaa member QR resolves straight into the same customer-card step a
+         phone lookup would (cust=the RPC's response — same shape as lookup_client_by_phone),
+         skipping the phone keypad entirely. */
+      onMemberResolved:data=>{cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();}
     });
     if(canReadModule('sales')&&$('tViewSalesHistoryV253'))$('tViewSalesHistoryV253').onclick=()=>nav('#/sales');
     if($('tWalkin'))$('tWalkin').onclick=startWalkinSale;

@@ -87,6 +87,11 @@ const KNOWN_SEARCH_PATH_SUPERSETS = [
   // reward lookup) but is not the origin of its `extensions` need — that is unchanged from the
   // v89 pin two lines above, for the same app.v89_sha256/app.v89_redemption_token dependency.
   'nestly_v326_points_gift_lifecycle :: public.customer_create_redemption_intent_v89 :: extensions',
+  // v327's own token derivation, same reason as the v197 pin above it: extensions.hmac. The three
+  // RPCs built on top of it (customer_get_member_qr_v327, customer_rotate_member_qr_v327,
+  // staff_scan_member_qr_v327) call it and app.v89_sha256 but never extensions.* directly, so their
+  // own search_path stays canonical with no extra schema.
+  'nestly_v327_global_customer_qr :: app.v327_member_qr_token :: extensions',
 ];
 
 // Pinned inventory of pending definer functions whose search_path is a strict canonical SUBSET —

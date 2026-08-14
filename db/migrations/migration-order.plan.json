@@ -1911,6 +1911,12 @@
       "path": "db/migrations/20260815_nestly_v326a_gift_rpc_anon_revoke.sql",
       "semanticVersion": "v326a",
       "proposedDeployVersion": "20260814181116"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v327_global_customer_qr.sql",
+      "semanticVersion": "v327",
+      "proposedDeployVersion": "20260815000000"
     }
   ]
 }

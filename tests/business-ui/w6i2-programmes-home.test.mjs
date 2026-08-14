@@ -403,18 +403,30 @@ test('W6I2 D1 the counter parses a fourth code kind, and only a fourth', () => {
     'the member branch must return before any idempotency key is minted');
 });
 
-test('W6I2 D2 the member QR is built against a named contract and shipped OFF', () => {
-  /* Both server halves are unshipped. Naming an ungranted function in this bundle is refused on
-     purpose by docs/design/ps0/writer-registry.json and the v21 authenticated-RPC allowlist, so the
-     capability gate is a declared constant rather than an error branch around a call. */
+test('W6I2 D2 the OLD per-business member code contract stays declared dead, permanently', () => {
+  /* SUPERSEDED (v327): the owner reversed the W4c decision — one QR must be recognised at every
+     merchant, not a code that is deliberately different per business. customer_get_member_code_v310
+     / staff_resolve_member_code_v310 are retired unbuilt; readerShipped/resolverShipped stay false
+     forever, not "until a migration ships" — the real implementation lives elsewhere. */
   assert.match(code, /const MEMBER_CODE_CONTRACT_W6I2=Object\.freeze\(\{readerShipped:false,resolverShipped:false\}\);/);
   assert.doesNotMatch(code, /sb\.rpc\('customer_get_member_code_v310'/);
   assert.doesNotMatch(code, /sb\.rpc\('staff_resolve_member_code_v310'/);
   assert.doesNotMatch(code, /customerRpc\('customer_get_member_code_v310'/);
   // One reader shim, so the RPC name lands in exactly one edit when the migration arrives.
   assert.match(code, /async function memberCodeForWalletW6I2\(\)\{\s*\r?\n?\s*if\(!MEMBER_CODE_CONTRACT_W6I2\.readerShipped\)return '';/);
-  assert.match(code, /status\.textContent=MEMBER_CODE_CONTRACT_W6I2\.resolverShipped/);
-  assert.match(code, /Member codes need the latest Peekaa service update\./);
+});
+
+test('W6I2 D2a v327 ships the GLOBAL member QR the owner asked for instead', () => {
+  /* One identity, one code, resolved to whichever business scans it — the opposite shape from D2's
+     dead per-business contract. Reader: public.customer_get_member_qr_v327 (renderCustomerProfile).
+     Resolver: public.staff_scan_member_qr_v327 (the till's "Scan customer QR" -> onMemberResolved). */
+  assert.match(code, /sb\.rpc\('customer_get_member_qr_v327'\)/);
+  assert.match(code, /sb\.rpc\('staff_scan_member_qr_v327',\{p_business:businessId,p_member_qr:token\}\)/);
+  const submit = section("const submit=async value=>{", "const decodeSource=(source,width,height)=>{");
+  assert.match(submit, /if\(payload\.kind==='member'\)\{/);
+  assert.match(submit, /if\(!onMemberResolved\)\{/);
+  assert.match(submit, /onMemberResolved\(data\);/);
+  assert.match(code, /onMemberResolved:data=>\{cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw\(\);\}/);
 });
 
 test('W6I2 D3 the member card is gated exactly like the W4b stack, and the slot is removed otherwise', () => {

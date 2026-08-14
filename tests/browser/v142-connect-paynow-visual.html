@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="38462028daacd3e16cf06949ab089f99d96b1d0fd3426fe977c00152589bb7de"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="306d51f9e377af4f52ea86695ebe643f7cc747f24f9e0661d14b175070848395"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2171,7 +2171,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 38462028daacd3e16cf06949ab089f99d96b1d0fd3426fe977c00152589bb7de</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 306d51f9e377af4f52ea86695ebe643f7cc747f24f9e0661d14b175070848395</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -2978,7 +2978,11 @@ async function tillPage(){
     $('tFind').onclick=doFind;
     if(canScanRedemption())$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
-      isCurrent:isTillCurrent,onComplete:()=>resetToStart()
+      isCurrent:isTillCurrent,onComplete:()=>resetToStart(),
+      /* v327: a scanned Peekaa member QR resolves straight into the same customer-card step a
+         phone lookup would (cust=the RPC's response — same shape as lookup_client_by_phone),
+         skipping the phone keypad entirely. */
+      onMemberResolved:data=>{cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();}
     });
     if(canReadModule('sales')&&$('tViewSalesHistoryV253'))$('tViewSalesHistoryV253').onclick=()=>nav('#/sales');
     if($('tWalkin'))$('tWalkin').onclick=startWalkinSale;
@@ -4270,7 +4274,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'38462028daacd3e16cf06949ab089f99d96b1d0fd3426fe977c00152589bb7de',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'306d51f9e377af4f52ea86695ebe643f7cc747f24f9e0661d14b175070848395',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),
