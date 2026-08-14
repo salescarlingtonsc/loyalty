@@ -3185,8 +3185,8 @@
       "version": "20260815090000",
       "name": "nestly_v327_customer_branch_choice",
       "path": "supabase/migrations/20260815090000_nestly_v327_customer_branch_choice.sql",
-      "octetLength": 34024,
-      "sha256": "6b90d43f44de35524eed42ff1ab577b0616ad128b53322a21ee73ef416b3c216",
+      "octetLength": 24281,
+      "sha256": "3f8061114de99661bdca4fa265ac4fcf84f759a807237e96866372bda6efb082",
       "provenance": "local-source"
     }
   ]
