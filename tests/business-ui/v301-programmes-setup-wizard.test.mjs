@@ -199,9 +199,15 @@ test('W6I2 (b) screen 0 is a SWITCHBOARD: four independent toggles, any subset o
     ['stamps', 'Stamp card'], ['referral', 'Referral']])
     assert.ok(app.includes(`['${kind}','`) && app.includes(`','${title}',`),
       `the switchboard must offer ${title}`);
-  // role="switch", not role="radio" in a radiogroup. That attribute IS the ruling.
+  // role="checkbox", not role="radio" in a radiogroup — independently pickable, not exclusive.
   assert.match(wizard, /role="group" aria-label="Programmes"/);
-  assert.match(wizard, /role="switch" aria-checked="\$\{on\}" data-grow-setup-switch-w6i2="\$\{esc\(kind\)\}"/);
+  /* V324 (owner, twice): "selecting or deselecting is not the same as on/off". Was role="switch" —
+     WAI-ARIA's own definition of a switch is a control with immediate live effect, which this one
+     never has (nothing is written until Go-live; see the untouched assertion at line ~243 below).
+     role="checkbox" keeps the exact property this test exists to protect — independently pickable,
+     not a radiogroup — without borrowing the vocabulary of the live on/off control one page over
+     (data-grow-switchtoggle-v322, which correctly keeps role="switch"). */
+  assert.match(wizard, /role="checkbox" aria-checked="\$\{on\}" data-grow-setup-switch-w6i2="\$\{esc\(kind\)\}"/);
   assert.doesNotMatch(wizard, /role="radiogroup" aria-label="Programme model"/);
   // The twelve-row integrity matrix and the four-model table are gone from the whole file.
   for (const gone of ['GROW_SETUP_MODELS_V303', 'GROW_SETUP_INTEGRITY_V305', 'integrityLineHtmlV305'])

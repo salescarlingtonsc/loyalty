@@ -63,12 +63,20 @@ const scanner = section('function redemptionPayloadFromQr(', 'function redemptio
 
 /* ================= A. four independent switches ================= */
 
-test('W6I2 A1 the switchboard is FOUR switches, not one of four models', () => {
-  /* The ruling, in one attribute. role="switch" with aria-checked says "this thing is on or off";
-     role="radio" inside a radiogroup says "this thing is on and the others are not". After v314 the
-     spine can hold points AND stamps, so only the first is true. */
+test('W6I2 A1 the switchboard is FOUR independently-pickable controls, not one of four models', () => {
+  /* The ruling, in one attribute. role="checkbox" with aria-checked says "this thing is picked or
+     not, independently of its neighbours"; role="radio" inside a radiogroup says "this thing is on
+     and the others are not". After v314 the spine can hold points AND stamps, so only the first is
+     true — that property is what this test protects, and it survived the V324 rename below. */
   assert.match(wizard, /role="group" aria-label="Programmes"/);
-  assert.match(wizard, /role="switch" aria-checked="\$\{on\}" data-grow-setup-switch-w6i2="\$\{esc\(kind\)\}"/);
+  /* V324 (owner, stated twice): "selecting or deselecting is not the same as turning a programme
+     on or off — it is to select what programme to edit". This control was role="switch", which per
+     WAI-ARIA names a control with immediate live effect — the opposite of what it does (nothing is
+     written until Go-live; A2 below is the assertion that proves it). role="checkbox" keeps the
+     not-a-radiogroup property this test is named for, without the switch's baked-in "live now"
+     implication — which the ACTUALLY live control one page over correctly keeps
+     (data-grow-switchtoggle-v322, role="switch"). */
+  assert.match(wizard, /role="checkbox" aria-checked="\$\{on\}" data-grow-setup-switch-w6i2="\$\{esc\(kind\)\}"/);
   assert.doesNotMatch(wizardCode, /role="radiogroup" aria-label="Programme model"/);
   assert.doesNotMatch(wizardCode, /data-grow-setup-model-v303/);
   // Four kinds, exactly the four the RPC accepts. A fifth would fail with 22023 at publish time,
@@ -79,14 +87,18 @@ test('W6I2 A1 the switchboard is FOUR switches, not one of four models', () => {
   assert.deepEqual([...table.matchAll(/\['(points|tiers|stamps|referral)',/g)].map(m => m[1]),
     ['points', 'tiers', 'stamps', 'referral']);
   /* Low-literacy-first (standing rule): a pictogram, a label of at most three words, one plain
-     education line, and the ON/OFF state as a WORD rather than a colour — colour alone is not a
+     education line, and the picked state as a WORD rather than a colour — colour alone is not a
      state for a counter hand who may not read English fluently. */
   for (const title of ['Points & gifts', 'Tier membership', 'Stamp card', 'Referral'])
     assert.ok(table.includes(`','${title}',`), `${title} must be one of the four`);
   assert.ok([...table.matchAll(/','([A-Za-z][^']*)',\n/g)].every(m => m[1].split(/\s+/).length <= 3),
     'every switch label is at most three words');
   assert.match(wizard, /\$\{CUI\.icon\(icon,\{size:26\}\)\}/);
-  assert.match(wizard, /<span class="pill \$\{on\?'on':'off'\}" data-grow-setup-switch-state-w6i2="\$\{on\?'on':'off'\}">\$\{on\?'ON':'OFF'\}<\/span>/);
+  /* V324: was 'ON'/'OFF' — the literal word the LIVE Programmes-page switch uses for "customers
+     can use this right now". 'Selected'/'Not selected' says what this control means instead. The
+     internal data-state attribute keeps its on/off values — nothing reads it as a live fact, and
+     changing it would be churn with no reader who benefits. */
+  assert.match(wizard, /<span class="pill \$\{on\?'on':'off'\}" data-grow-setup-switch-state-w6i2="\$\{on\?'on':'off'\}">\$\{on\?'Selected':'Not selected'\}<\/span>/);
 });
 
 test('W6I2 A2 flipping one switch leaves the other three exactly as they were', () => {

@@ -14390,14 +14390,26 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       ${GROW_SETUP_SWITCHES_W6I2.map(([kind,icon,title,blurb])=>{
         const on=state.switches[kind]===true;
         /* The state is a WORD in a pill, not a colour. A counter hand reading this may not read
-           English fluently, and colour alone is not a state — the pill carries ON/OFF, the picked
-           border carries the same fact a second way, and aria-checked carries it to a screen
-           reader. Every class here is one the page already ships, so this control adds no CSS and
-           the whole surface keeps rendering identically at 390px. */
-        return `<button type="button" class="grow-setup-option-v301${on?' is-picked':''}" role="switch" aria-checked="${on}" data-grow-setup-switch-w6i2="${esc(kind)}">
+           English fluently, and colour alone is not a state — the pill carries the word, the
+           picked border carries the same fact a second way, and aria-checked carries it to a
+           screen reader. Every class here is one the page already ships, so this control adds no
+           CSS and the whole surface keeps rendering identically at 390px.
+
+           V324 (owner, repeated twice: "selecting or deselecting is not the same as on/off — it
+           is to select what programme to edit"). The word WAS "ON"/"OFF", role="switch" — the
+           exact vocabulary the LIVE customer-facing switches on the Programmes page use
+           (data-grow-switchtoggle-v322, which correctly keeps role="switch"). Two controls on two
+           screens, three clicks apart, reading identically while meaning opposite things: this one
+           changes nothing until Go-live and never switches a live programme off (see
+           programmeScopeSwitchesV322 — an unticked kind is simply absent from the payload, never
+           sent as false). "Selected"/"Not selected" and role="checkbox" say what this control
+           actually does: mark a programme in or out of THIS session, independently of its
+           neighbours — checkbox, not radio, for the same reason A2 below tests that flipping one
+           leaves the other three untouched. */
+        return `<button type="button" class="grow-setup-option-v301${on?' is-picked':''}" role="checkbox" aria-checked="${on}" data-grow-setup-switch-w6i2="${esc(kind)}">
         <span class="grow-setup-option-icon-v301">${CUI.icon(icon,{size:26})}</span><b>${esc(title)}</b>
         <span class="muted small">${esc(blurb)}</span>
-        <span class="pill ${on?'on':'off'}" data-grow-setup-switch-state-w6i2="${on?'on':'off'}">${on?'ON':'OFF'}</span></button>`;
+        <span class="pill ${on?'on':'off'}" data-grow-setup-switch-state-w6i2="${on?'on':'off'}">${on?'Selected':'Not selected'}</span></button>`;
       }).join('')}
     </div>
     ${exclusiveNoticeHtmlV322()}

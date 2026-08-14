@@ -3,7 +3,7 @@
 Date: 2026-08-14
 Branch: `codex/v324-rewards-offer-cosmetics`
 Base: `main` @ `b847691` (v322 — the six owner rulings)
-Production-component source hash: `b0d2457ef7a40216a944c0bb05f6d75f900e656192ee72c022461f4e5482be1e`
+Production-component source hash: `ed75a2b1f7ef8d4d2a2035a8d1d4a835d6f820736625cbd6d7acad744ebfa250`
 
 **Client-only. No migration, no RPC, no schema change.** The `nestly_vNNN` migration namespace is
 untouched by this work; v324 is a version number for the client change only.
@@ -49,6 +49,37 @@ verbatim from `app/app.js`, mounted in a page carrying the real production `<sty
 with actual Playwright clicks in Chromium — a render counter confirmed it stayed at 1 through
 "open confirm" and "Cancel", `computedDisplay` on the confirm row was `flex` before the CSS fix and
 `none` after, and focus lands on Cancel when a row opens. Scratchpad-only, not checked in.
+
+## Addendum 2 — the wizard's own control was borrowing the wrong word
+
+The owner then repeated, on a clean (unmarked) screenshot of the setup wizard's Programmes step,
+a rule already stated once for that same screen: **selecting or deselecting a programme here is
+not the same as turning it on or off for customers — it is choosing which programme this session
+edits.**
+
+The behaviour was already correct and independently verified: the click handler
+(`data-grow-setup-switch-w6i2`) only mutates the wizard's local `state.switches` and re-renders —
+no `sb.rpc`, no `sb.from`, no write of any kind — and the publish function
+(`programmeScopeSwitchesV322`, `app.js:909`) builds its payload by iterating only the KEYS present
+in scope; an unticked kind is never in the object at all, so it can never be sent as `false`. That
+is the R6 defect fix, already covered by 35 tests in `v322-owner-rulings.test.mjs`.
+
+What was NOT correct, on inspection: the control's `role` and its state pill. It was
+`role="switch"` with a pill reading **ON**/**OFF** — the literal ARIA role for "a control with
+immediate live effect" and the literal word the ACTUALLY live control (the Programmes page's
+`data-grow-switchtoggle-v322`, one page over) uses for "customers can use this right now". Two
+controls, three clicks apart, reading identically while meaning opposites — exactly the confusion
+the owner's rule exists to prevent, even though the paragraph of copy beneath the tiles already
+said as much in words.
+
+**Fix:** `role="switch"` → `role="checkbox"` (independently pickable, not exclusive — the same
+property the role change protects, without the "live now" implication); pill text `ON`/`OFF` →
+`Selected`/`Not selected`. The internal `data-grow-setup-switch-state-w6i2` attribute values are
+unchanged (`on`/`off`) — nothing reads them as a live fact, so relabeling them would be churn.
+
+Both pinned tests updated with the reasoning inline (`v301-programmes-setup-wizard.test.mjs`,
+`w6i2-programmes-home.test.mjs`) — 113/113 across the three affected files. Full suite 2999: 2998
+pass, the one known env-bound failure.
 
 ## Why this is a separate change from v322
 
