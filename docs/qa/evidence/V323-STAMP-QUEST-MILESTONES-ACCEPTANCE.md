@@ -323,3 +323,18 @@ post-assertion 11.9 proves it mints neither a stamp cycle nor a milestone claim 
   who sets it to 1 on a final gift caps the customer at one completed card **ever** — a real product
   trap that belongs in owner copy, not in a per-programme reinterpretation of a shared column.
 - **No commit, push, deploy or migration apply.**
+
+## Regenerated production-component fixtures (v323 rebase onto v324)
+
+`app/app.js` and `app/index.html` changed in this wave, and three checked-in browser fixtures
+inline them under a `production-source-sha256`. All three were regenerated with their own
+generators, and the V104 Chromium captures were re-taken in a real headless Chrome
+(`verify-v104-promotions-visual.mjs` → `{"status":"PASS"}`).
+
+| fixture | production-source-sha256 |
+|---|---|
+| `tests/browser/reward-overview-owner-visual.html` | `42493d481e8d8b152e19af73d1890ad6a2e62e36c48fd54c6383f6d1ac67262e` |
+| `tests/browser/v129-trial-test-visual.html` | `20db94e6e45f8c2248e4b655abf21a0300ac95f108dd8d7c41200bd63106ff3a` |
+| `tests/browser/v104-promotions-visual.html` | `ded6c3a046b0ef61f46e8a85ee1fd185166b710925e25e8f5068ffd0331e8c03` |
+
+V104 render metrics: `341342f1a4087206b77904ab5835e835138c2e15d1a3422c21a7cb936e5a71aa`.

@@ -13,7 +13,7 @@ functions, invokes `customerPromotionCardV104` for two realistic spa offers,
 and records a SHA-256 provenance value.
 
 Production source SHA-256:
-`8f0f2c6b90d952f2127ff7a4c9f43d81118df5270af1e4a9adfddfa5d30878d7`
+`ded6c3a046b0ef61f46e8a85ee1fd185166b710925e25e8f5068ffd0331e8c03`
 
 The shared production stylesheet changed during the 2026-08-01 rewards
 overview work. `verify-v104-promotions-visual.mjs` therefore refreshed the

@@ -1,6 +1,6 @@
 {
   "desktop1440": {
-    "sourceHash": "99c3c0b40aeac7cff1d32fe6a2909d246571caa239948162c5f4fd8f9907793f",
+    "sourceHash": "ded6c3a046b0ef61f46e8a85ee1fd185166b710925e25e8f5068ffd0331e8c03",
     "viewport": {
       "clientWidth": 1440,
       "scrollWidth": 1440
@@ -17,7 +17,7 @@
           "bottom": 847.203125,
           "left": 200
         },
-        "validity": "Valid 1 August 2026 – 30 August 2026",
+        "validity": "Valid 1 August 2026 \u2013 30 August 2026",
         "ctaHeight": 44,
         "details": {
           "open": false,
@@ -53,7 +53,7 @@
             "scrollHeight": 21
           },
           {
-            "text": "Valid 1 August 2026 – 30 August 2026",
+            "text": "Valid 1 August 2026 \u2013 30 August 2026",
             "clientWidth": 481,
             "scrollWidth": 481,
             "clientHeight": 21,
@@ -93,7 +93,7 @@
           "bottom": 847.203125,
           "left": 727
         },
-        "validity": "Valid 15 August 2026 – 15 September 2026",
+        "validity": "Valid 15 August 2026 \u2013 15 September 2026",
         "ctaHeight": 44,
         "details": {
           "open": false,
@@ -136,7 +136,7 @@
             "scrollHeight": 105
           },
           {
-            "text": "Valid 15 August 2026 – 15 September 2026",
+            "text": "Valid 15 August 2026 \u2013 15 September 2026",
             "clientWidth": 481,
             "scrollWidth": 481,
             "clientHeight": 21,
@@ -195,7 +195,7 @@
           "scrollHeight": 102
         },
         {
-          "text": "Valid 15 August 2026 – 15 September 2026",
+          "text": "Valid 15 August 2026 \u2013 15 September 2026",
           "clientWidth": 366,
           "scrollWidth": 366,
           "clientHeight": 17,
@@ -219,7 +219,7 @@
     }
   },
   "mobile390": {
-    "sourceHash": "99c3c0b40aeac7cff1d32fe6a2909d246571caa239948162c5f4fd8f9907793f",
+    "sourceHash": "ded6c3a046b0ef61f46e8a85ee1fd185166b710925e25e8f5068ffd0331e8c03",
     "viewport": {
       "clientWidth": 390,
       "scrollWidth": 390
@@ -236,7 +236,7 @@
           "bottom": 652.84375,
           "left": 14
         },
-        "validity": "Valid 1 August 2026 – 30 August 2026",
+        "validity": "Valid 1 August 2026 \u2013 30 August 2026",
         "ctaHeight": 44,
         "details": {
           "open": true,
@@ -272,7 +272,7 @@
             "scrollHeight": 42
           },
           {
-            "text": "Valid 1 August 2026 – 30 August 2026",
+            "text": "Valid 1 August 2026 \u2013 30 August 2026",
             "clientWidth": 330,
             "scrollWidth": 330,
             "clientHeight": 21,
@@ -312,7 +312,7 @@
           "bottom": 1253.765625,
           "left": 14
         },
-        "validity": "Valid 15 August 2026 – 15 September 2026",
+        "validity": "Valid 15 August 2026 \u2013 15 September 2026",
         "ctaHeight": 44,
         "details": {
           "open": false,
@@ -355,7 +355,7 @@
             "scrollHeight": 126
           },
           {
-            "text": "Valid 15 August 2026 – 15 September 2026",
+            "text": "Valid 15 August 2026 \u2013 15 September 2026",
             "clientWidth": 330,
             "scrollWidth": 330,
             "clientHeight": 21,
@@ -389,7 +389,7 @@
     "modal": null
   },
   "mobile412": {
-    "sourceHash": "99c3c0b40aeac7cff1d32fe6a2909d246571caa239948162c5f4fd8f9907793f",
+    "sourceHash": "ded6c3a046b0ef61f46e8a85ee1fd185166b710925e25e8f5068ffd0331e8c03",
     "viewport": {
       "clientWidth": 412,
       "scrollWidth": 412
@@ -406,7 +406,7 @@
           "bottom": 585.671875,
           "left": 14
         },
-        "validity": "Valid 1 August 2026 – 30 August 2026",
+        "validity": "Valid 1 August 2026 \u2013 30 August 2026",
         "ctaHeight": 44,
         "details": {
           "open": false,
@@ -442,7 +442,7 @@
             "scrollHeight": 42
           },
           {
-            "text": "Valid 1 August 2026 – 30 August 2026",
+            "text": "Valid 1 August 2026 \u2013 30 August 2026",
             "clientWidth": 352,
             "scrollWidth": 352,
             "clientHeight": 21,
@@ -482,7 +482,7 @@
           "bottom": 1288.6875,
           "left": 14
         },
-        "validity": "Valid 15 August 2026 – 15 September 2026",
+        "validity": "Valid 15 August 2026 \u2013 15 September 2026",
         "ctaHeight": 44,
         "details": {
           "open": true,
@@ -525,7 +525,7 @@
             "scrollHeight": 126
           },
           {
-            "text": "Valid 15 August 2026 – 15 September 2026",
+            "text": "Valid 15 August 2026 \u2013 15 September 2026",
             "clientWidth": 352,
             "scrollWidth": 352,
             "clientHeight": 21,
