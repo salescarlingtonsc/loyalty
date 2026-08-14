@@ -5363,9 +5363,11 @@ function customerBookingChooserV291(groups=[]){
   if(!businesses.length)return '';
   const chip=group=>{
     const searchAttr=`data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').trim().toLowerCase())}"`;
+    /* v327 (owner: "photo 1 - remove this icon (shaded)"): the blurry business-photo thumbnail
+       came off the search-result chip — name and status text only now. */
     return group.bookingEnabled
-      ?`<button class="customer-booking-chip" type="button" ${searchAttr} data-repeat-booking data-business-slug="${esc(group.business_slug)}">${customerBookingBusinessLogoV195(group)}<span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">Book now</span></span></button>`
-      :`<a class="customer-booking-chip customer-booking-chip--quiet" ${searchAttr} href="#/wallet/${encodeURIComponent(group.business_slug)}">${customerBookingBusinessLogoV195(group)}<span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">No online booking yet</span></span></a>`;
+      ?`<button class="customer-booking-chip" type="button" ${searchAttr} data-repeat-booking data-business-slug="${esc(group.business_slug)}"><span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">Book now</span></span></button>`
+      :`<a class="customer-booking-chip customer-booking-chip--quiet" ${searchAttr} href="#/wallet/${encodeURIComponent(group.business_slug)}"><span class="customer-booking-chip-copy"><b data-merchant-content>${esc(group.business_name)}</b><span class="muted small">No online booking yet</span></span></a>`;
   };
   /* v326 (owner: crossed out the fixed "Book with" header, circled "here put filter to search
      company name"): the header is now a live text filter over the same chips, the identical
@@ -7726,16 +7728,36 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
      the mockup is left out: this surface has no branch list loaded to link to. */
   const accentV326=esc(contrastSafeBrandColor(presentation.heroColor));
   const coverUrlV326=presentation.heroImageUrl?String(presentation.heroImageUrl):'';
+  /* v327 (owner: "photo 2 - add company name" / "Company Name (missing)"): the v326 markup put
+     .customer-programme-cover-v326 and .customer-programme-head-row-v326 as SIBLINGS, both
+     children of the <header>. The cover div was empty — pure decoration — so the row (with its
+     name text forced to color:#fff for legibility against the intended photo backdrop) landed in
+     normal document flow BELOW the cover, on the plain white <header> background inherited from
+     the pre-v326 base rule. White text on white: invisible, exactly what the owner saw. The row
+     is now nested INSIDE the cover div so it genuinely paints over the photo/gradient, matching
+     what .customer-programme-head-row-v326{position:relative;z-index:1} was already written to
+     assume. Caught only by actually rendering the function with data and looking at the
+     screenshot — every existing test only pattern-matches the source text, never executes it
+     (see the source-regex-tests-are-vacuous lesson). */
+  /* v327 (owner: "clicked tier > auto scroll to tier below"): the tier label used to be nested
+     text inside the identity <button> (unclickable on its own — nesting a control inside another
+     control is invalid HTML anyway). It's now a sibling button of its own, kept on the second
+     line of the header so it still reads directly under the name, wired below to jump to the
+     Tier card. */
+  const headV327=esc(business.name||presentation.name);
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <header class="customer-programme-compact-head customer-programme-compact-head-v326" style="--merchant-accent:${accentV326}${coverUrlV326?`;--merchant-cover:url('${esc(coverUrlV326)}')`:''}">
-      <div class="customer-programme-cover-v326" aria-hidden="true"></div>
-      <div class="customer-programme-head-row-v326">
-        <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${esc(business.name||presentation.name)}">
-          <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
-          <span class="customer-programme-compact-copy"><b>${esc(business.name||presentation.name)}</b>
-            ${hasTier&&currentTierLabel?`<span class="muted small customer-programme-identity-hint">${esc(currentTierLabel)}</span>`:''}</span>
-        </button>
-        ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
+      <div class="customer-programme-cover-v326">
+        <div class="customer-programme-head-row-v326">
+          <div class="customer-programme-head-row-top-v327">
+            <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${headV327}">
+              <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
+              <span class="customer-programme-compact-copy"><b>${headV327}</b></span>
+            </button>
+            ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
+          </div>
+          ${hasTier&&currentTierLabel?`<button type="button" class="customer-programme-identity-hint customer-programme-tier-jump-v327" data-tier-scroll-v327>${esc(currentTierLabel)}</button>`:''}
+        </div>
       </div>
       <div class="customer-programme-contact-v326" data-company-contact-inline-v326>
         <button type="button" class="customer-programme-contact-more-v326" data-company-detail>Address, phone and offers ›</button>
@@ -8328,6 +8350,22 @@ async function renderCustomerWallet(businessSlug=null){
         if(moreButton)moreButton.onclick=()=>showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug});
       }).catch(()=>{});
   }
+  /* v327 (owner: "clicked tier > auto scroll to tier below"): the header's tier badge jumps to
+     the Tier card. Covers both the v310 stack (its own [data-programme-card="tiers"] section)
+     and the v194 tabs fallback (switches to the tier tab first, since scrolling to a hidden
+     panel would land the customer on an unrelated part of the page). */
+  const tierJumpV327=$('walletBody').querySelector('[data-tier-scroll-v327]');
+  if(tierJumpV327)tierJumpV327.onclick=()=>{
+    const stackCard=$('walletBody').querySelector('[data-programme-card="tiers"]');
+    if(stackCard){
+      stackCard.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+      return;
+    }
+    const tierTab=$('walletBody').querySelector('[data-programme-tab="tier"]');
+    const tabsCard=$('walletBody').querySelector('.customer-programme-tabs');
+    if(tierTab&&tierTab.getAttribute('aria-selected')!=='true')tierTab.click();
+    tabsCard?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  };
   /* V290: "Show at counter" used to change its own label and nothing else — there was no code for
      staff to check and no record that the offer was ever used. It now creates a short-lived
      promotion intent and renders the same QR the reward path renders, so the counter can verify

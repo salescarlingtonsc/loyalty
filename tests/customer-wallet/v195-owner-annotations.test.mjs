@@ -159,9 +159,14 @@ test('both tabs carry a pictogram beside their name', () => {
 test('the programme header no longer repeats the programme name', () => {
   const merchant = section(appJs, 'function customerMerchantExperienceMarkupV95', 'function actionableWalletCardMarkup');
   const identity = section(merchant, '<button class="customer-programme-identity"', '</button>');
+  /* v327: the name computation moved into a `headV327` variable (declared once, used for both
+     the button's aria-label and its visible text) so the two can never disagree — the guard here
+     is now on that variable's own definition, not on an inline expression inside the button. */
+  assert.match(merchant, /const headV327=esc\(business\.name\|\|presentation\.name\);/,
+    'the company name stays, computed once');
   assert.doesNotMatch(identity, /esc\(presentation\.name\)/,
     '"Cubbly Stamp" under "Cubbly" told the customer nothing they had not just read');
-  assert.match(identity, /\$\{esc\(business\.name\|\|presentation\.name\)\}/, 'the company name stays');
+  assert.match(identity, /\$\{headV327\}/, 'the identity button uses the shared name variable');
   /* v326 (owner mockup: cover photo, logo, name and Book now on one row; phone/address of their
      own beneath): "Address, phone and offers ›" moved out of the identity button into its own
      contact area below, which loads real phone/address inline and falls back to this same link

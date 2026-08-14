@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="fdb7be8c0643d5f4640bd621f467b21884de6e8a0feaa029671ae62412355854"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ea4bd58f9900758ec9241f28f7eafaf2fab483d371c6624121fbe3be61ca48dc"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1758,11 +1758,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head.customer-programme-compact-head-v326{display:block;padding:0;gap:0;overflow:hidden}
 .customer-programme-cover-v326{position:relative;min-height:104px;padding:14px 16px;display:flex;align-items:flex-end;background:var(--merchant-cover,none) center/cover no-repeat,linear-gradient(135deg,var(--merchant-accent,#28212f),color-mix(in srgb,var(--merchant-accent,#28212f) 55%,#17161a))}
 .customer-programme-cover-v326::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,.05),rgba(15,13,18,.58));pointer-events:none}
-.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;align-items:center;gap:12px;width:100%}
+.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;width:100%}
+.customer-programme-head-row-top-v327{display:flex;align-items:center;gap:12px;width:100%}
 .customer-programme-head-row-v326 .customer-programme-identity{flex:1;min-width:0}
 .customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
 .customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
 .customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
+/* v327 (owner: "clicked tier > auto scroll to tier below"): a real button now, not text nested
+   inside the identity control — underline signals it does something on its own. */
+.customer-programme-tier-jump-v327{align-self:flex-start;margin:0 0 0 66px;padding:0;border:0;background:none;font:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
 .customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
 .customer-programme-contact-line-v326 a{color:inherit}
@@ -2167,7 +2171,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · fdb7be8c0643d5f4640bd621f467b21884de6e8a0feaa029671ae62412355854</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ea4bd58f9900758ec9241f28f7eafaf2fab483d371c6624121fbe3be61ca48dc</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -18857,6 +18861,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'fdb7be8c0643d5f4640bd621f467b21884de6e8a0feaa029671ae62412355854',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'ea4bd58f9900758ec9241f28f7eafaf2fab483d371c6624121fbe3be61ca48dc',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

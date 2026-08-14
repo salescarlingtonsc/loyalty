@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9a0481dd6975bc24607ad7ec78227bb2604e275b865b3c10d30ac609ac532f7e"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="c9b43812ffd56ffcdeaba0a696fa148f2e729023092026206dd5e38de30d59f4"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1758,11 +1758,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head.customer-programme-compact-head-v326{display:block;padding:0;gap:0;overflow:hidden}
 .customer-programme-cover-v326{position:relative;min-height:104px;padding:14px 16px;display:flex;align-items:flex-end;background:var(--merchant-cover,none) center/cover no-repeat,linear-gradient(135deg,var(--merchant-accent,#28212f),color-mix(in srgb,var(--merchant-accent,#28212f) 55%,#17161a))}
 .customer-programme-cover-v326::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,.05),rgba(15,13,18,.58));pointer-events:none}
-.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;align-items:center;gap:12px;width:100%}
+.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;width:100%}
+.customer-programme-head-row-top-v327{display:flex;align-items:center;gap:12px;width:100%}
 .customer-programme-head-row-v326 .customer-programme-identity{flex:1;min-width:0}
 .customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
 .customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
 .customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
+/* v327 (owner: "clicked tier > auto scroll to tier below"): a real button now, not text nested
+   inside the identity control — underline signals it does something on its own. */
+.customer-programme-tier-jump-v327{align-self:flex-start;margin:0 0 0 66px;padding:0;border:0;background:none;font:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
 .customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
 .customer-programme-contact-line-v326 a{color:inherit}
@@ -2167,7 +2171,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 9a0481dd6975bc24607ad7ec78227bb2604e275b865b3c10d30ac609ac532f7e</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · c9b43812ffd56ffcdeaba0a696fa148f2e729023092026206dd5e38de30d59f4</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5496,7 +5500,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'9a0481dd6975bc24607ad7ec78227bb2604e275b865b3c10d30ac609ac532f7e',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'c9b43812ffd56ffcdeaba0a696fa148f2e729023092026206dd5e38de30d59f4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

@@ -81,9 +81,14 @@ test('the company-details affordance and tier survive at 390px', () => {
      "· " it used to need before a hint span that is no longer there. */
   const merchant = section(appJs, 'function customerMerchantExperienceMarkupV95', 'function actionableWalletCardMarkup');
   const identity = section(merchant, '<button class="customer-programme-identity"', '</button>');
-  assert.match(identity, /\$\{hasTier&&currentTierLabel\?`<span class="muted small customer-programme-identity-hint">\$\{esc\(currentTierLabel\)\}<\/span>`:''\}/,
-    'the tier label survives inside the identity button');
-  assert.doesNotMatch(identity, /customer-programme-identity-hint-long|customer-programme-identity-hint-short/,
+  /* v327 (owner: "clicked tier > auto scroll to tier below"): the tier label moved out of the
+     identity button entirely into its own sibling <button data-tier-scroll-v327> — nesting a
+     control inside another control is invalid HTML, and it needed to be its own click target. */
+  assert.match(merchant, /\$\{hasTier&&currentTierLabel\?`<button type="button" class="customer-programme-identity-hint customer-programme-tier-jump-v327" data-tier-scroll-v327>\$\{esc\(currentTierLabel\)\}<\/button>`:''\}/,
+    'the tier label survives, now as its own clickable button');
+  assert.doesNotMatch(identity, /customer-programme-identity-hint/,
+    'the tier hint is no longer nested inside the identity button');
+  assert.doesNotMatch(merchant, /customer-programme-identity-hint-long|customer-programme-identity-hint-short/,
     'the width-swapped hint spans moved out of the identity button with the redesign');
   assert.match(merchant, /Address, phone and offers ›/,
     'the affordance text lives in the header contact area now, not squeezed behind the name');
