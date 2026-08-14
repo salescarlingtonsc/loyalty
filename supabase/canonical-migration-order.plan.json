@@ -1906,6 +1906,12 @@
       "version": "20260814181116",
       "name": "nestly_v326a_gift_rpc_anon_revoke",
       "sourcePath": "db/migrations/20260815_nestly_v326a_gift_rpc_anon_revoke.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090000",
+      "name": "nestly_v327_customer_branch_choice",
+      "sourcePath": "db/migrations/20260815_nestly_v327_customer_branch_choice.sql"
     }
   ]
 }

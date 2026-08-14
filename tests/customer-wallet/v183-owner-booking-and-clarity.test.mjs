@@ -248,7 +248,7 @@ test('the business owns the switch, the opening hours and who is bookable',()=>{
 test('the gateway validates the availability query and passes the person through',()=>{
   assert.match(gateway,/params\.get\('availability'\) === '1'/);
   assert.match(gateway,/enforceRateLimit\(req, 'booking-availability', 120, 60\)/);
-  assert.match(gateway,/if \(\(service && !UUID_PATTERN\.test\(service\)\) \|\| \(staff && !UUID_PATTERN\.test\(staff\)\)\) return publicError\(req\)/);
+  assert.match(gateway,/if \(\(service && !UUID_PATTERN\.test\(service\)\) \|\| \(staff && !UUID_PATTERN\.test\(staff\)\)\s*\n\s*\|\| \(branch && !UUID_PATTERN\.test\(branch\)\)\) return publicError\(req\)/);
   assert.match(gateway,/if \(!Number\.isInteger\(days\) \|\| days < 1 \|\| days > 14\) return publicError\(req\)/);
   assert.match(gateway,/p_staff: body\.staff \|\| null/);
   assert.match(validation,/\(!body\.staff \|\| UUID_PATTERN\.test\(String\(body\.staff\)\)\)/);

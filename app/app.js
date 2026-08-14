@@ -35285,12 +35285,22 @@ async function renderPortal(slug){
      off there is no team step at all and no roster is exposed. */
   const bookableStaff=(biz.booking_staff_choice===true&&Array.isArray(biz.staff))?biz.staff:[];
   const staffChoice=bookableStaff.length>0;
+  /* v327 (owner: multi-branch businesses need a branch step between Service and Team, and
+     Team then only offers staff assigned to that branch). Only exposed when there is a real
+     choice to make — a single-branch business (still most of them) gets no new step at all,
+     matching the "off by default, exposes nothing" contract v183 set for staff choice. */
+  const bookableBranches=Array.isArray(biz.branches)?biz.branches:[];
+  const branchChoice=bookableBranches.length>1;
   const middleStep=usesTables?'table':(staffChoice?'team':'');
-  const steps=['service',middleStep,'time','details'].filter(Boolean);
-  const stepMeta={service:{label:'Service'},table:{label:'Table'},team:{label:'Team'},time:{label:'Time'},details:{label:'Details'}};
+  const steps=['service',branchChoice?'branch':'',middleStep,'time','details'].filter(Boolean);
+  const stepMeta={service:{label:'Service'},branch:{label:'Branch'},table:{label:'Table'},team:{label:'Team'},time:{label:'Time'},details:{label:'Details'}};
   let selSvc=repeatService?.id||null;     // null = general reservation, or a validated public service uuid
   let serviceChosen=!!repeatService||!hasServices;
   let selTable=null;                     // reservation table type uuid (null = any/general)
+  // The server lists branches with the shop default first — preselecting it keeps a
+  // multi-branch booking to the same tap count as before for the common case, while still
+  // letting the customer change it.
+  let selBranch=branchChoice?bookableBranches[0].id:null;
   let selStaff=null;                     // a validated staff uuid, or null for "anyone available"
   let availabilityState={status:'idle',key:'',data:null};
   let selectedSlot='';                   // an ISO instant chosen from the live slot grid
@@ -35305,8 +35315,15 @@ async function renderPortal(slug){
   const svcObj=()=>services.find(s=>s.id===selSvc)||null;
   /* A team member is offered for a service when the business made no assignments for that
      service at all, or when this person is one of the people it assigned. Mirrors
-     app.v183_bookable_staff() exactly so the page never offers someone the server will reject. */
+     app.v183_bookable_staff() exactly so the page never offers someone the server will reject.
+     v327: also scoped to the chosen branch — unlike services, a branch assignment is exact
+     (no "nobody assigned = everyone" fallback), because every staff member is assigned to at
+     least one branch from the moment they're created. */
   const staffForService=()=>bookableStaff.filter(member=>{
+    if(branchChoice&&selBranch){
+      const branches=Array.isArray(member?.branch_ids)?member.branch_ids:[];
+      if(!branches.includes(selBranch))return false;
+    }
     if(!selSvc)return true;
     const assigned=Array.isArray(member?.service_ids)?member.service_ids:[];
     if(!assigned.length)return true;
@@ -35326,7 +35343,7 @@ async function renderPortal(slug){
     const matches=staffForService().filter(member=>String(member?.name||'').trim().toLowerCase()===wanted);
     if(matches.length===1)selStaff=matches[0].id;
   }
-  const availabilityKey=()=>JSON.stringify({service:selSvc||'',staff:selStaff||''});
+  const availabilityKey=()=>JSON.stringify({service:selSvc||'',staff:selStaff||'',branch:selBranch||''});
   const slotLabel=iso=>{
     const at=new Date(iso);
     return Number.isNaN(at.getTime())?'':at.toLocaleTimeString('en-SG',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Singapore'});
@@ -35360,6 +35377,14 @@ async function renderPortal(slug){
       </div>`:`<p class="muted small">We'll note this as a general visit — pick your time on the next step.</p>`}
       <div class="pf-inlineerr" id="err-service" role="alert"></div>
       <div class="pf-nav"><button class="btn" id="next-service" type="button">Continue</button></div>
+    </section>`;
+    const branchStep=`<section class="pf-step" data-step="branch" hidden>
+      <h2 tabindex="-1">Which branch?</h2>
+      <p class="pf-hint">Choose where you'd like to visit.</p>
+      <div class="pf-choice" role="group" aria-label="Choose a branch">
+        ${bookableBranches.map(b=>`<button class="svc${selBranch===b.id?' sel':''}" type="button" aria-pressed="${selBranch===b.id}" data-branch="${esc(b.id)}"><span><b>${esc(b.name)}</b></span></button>`).join('')}
+      </div>
+      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="next-branch" type="button">Continue</button></div>
     </section>`;
     const tableStep=`<section class="pf-step" data-step="table" hidden>
       <h2 tabindex="-1">Choose a table</h2>
@@ -35409,7 +35434,7 @@ async function renderPortal(slug){
       <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="psend" disabled>${biz.booking_auto_confirm?'Confirm booking':'Send booking request'}</button></div>
       ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
     </section>`;
-    const stepBody={service:serviceStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
+    const stepBody={service:serviceStep,branch:branchStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
     root.innerHTML=`<div class="portal customer-surface" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
       <div class="head">${portalBackHrefV192?`<a class="btn ghost sm portal-back" href="${esc(portalBackHrefV192)}">${CUI.icon('back',{size:17})}<span>Back</span></a>`:''}<h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
       <div id="portalSignedInSlot"></div>
@@ -35435,6 +35460,7 @@ async function renderPortal(slug){
       const s=svcObj();
       const rows=[['Service', s?esc(s.name):'General visit']];
       if(s)rows.push(['Duration & price',`${s.duration_min} min · ${esc(currency)} ${(s.price_cents/100).toFixed(2)}`]);
+      if(branchChoice)rows.push(['Branch',selBranch?esc((bookableBranches.find(b=>b.id===selBranch)||{}).name||'Selected'):'Not chosen']);
       if(usesTables)rows.push(['Table', selTable?esc((tables.find(t=>t.table_type_id===selTable)||{}).name||'Selected'):'Any available']);
       else if(staffChoice)rows.push(['Team member',selStaff&&staffName()?esc(staffName()):'Anyone available']);
       rows.push(['When',esc(selectedSlot?fmtPicked(sgLocalInput(selectedSlot)):fmtPicked($('pt')?.value))]);
@@ -35492,7 +35518,7 @@ async function renderPortal(slug){
       if(manual)manual.hidden=true;
       let data=null;
       try{
-        data=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}&availability=1${selSvc?`&service=${encodeURIComponent(selSvc)}`:''}${selStaff?`&staff=${encodeURIComponent(selStaff)}`:''}&days=14`});
+        data=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}&availability=1${selSvc?`&service=${encodeURIComponent(selSvc)}`:''}${selStaff?`&staff=${encodeURIComponent(selStaff)}`:''}${branchChoice&&selBranch?`&branch=${encodeURIComponent(selBranch)}`:''}&days=14`});
       }catch{data=null}
       if(!isPortalCurrent()||!host.isConnected)return;
       availabilityState=data?{status:'ready',key,data}:{status:'error',key,data:null};
@@ -35524,6 +35550,11 @@ async function renderPortal(slug){
       const e=$('err-service');if(e)e.textContent='';
     });
     root.querySelectorAll('[data-tbl]').forEach(el=>el.onclick=()=>{selTable=el.dataset.tbl||null;setChoice('[data-tbl]',el);});
+    root.querySelectorAll('[data-branch]').forEach(el=>el.onclick=()=>{
+      selBranch=el.dataset.branch||null;setChoice('[data-branch]',el);
+      if(staffChoice&&!staffForService().some(member=>member.id===selStaff))selStaff=null;
+      selectedSlot='';renderTeamOptions();
+    });
     const wireTeamChoice=()=>root.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{
       selStaff=el.dataset.team||null;setChoice('[data-team]',el);selectedSlot='';
     });
@@ -35537,6 +35568,7 @@ async function renderPortal(slug){
     wireTeamChoice();
     root.querySelectorAll('[data-back]').forEach(el=>el.onclick=()=>showStep(stepIdx-1));
     if($('next-service'))$('next-service').onclick=()=>{if(hasServices&&!serviceChosen){$('err-service').textContent='Please choose a service, or “Just a reservation”.';CUI.announce('Please choose a service',{assertive:true});return;}showStep(stepIdx+1);};
+    if($('next-branch'))$('next-branch').onclick=()=>showStep(stepIdx+1);
     if($('next-table'))$('next-table').onclick=()=>showStep(stepIdx+1);
     if($('next-team'))$('next-team').onclick=()=>showStep(stepIdx+1);
     if($('next-time'))$('next-time').onclick=()=>{
@@ -35562,6 +35594,7 @@ async function renderPortal(slug){
         preferred:selectedSlot||sgIso($('pt')?.value),
         notes:notesFinal,table_type:usesTables?selTable:null,
         staff:usesTables?null:selStaff,
+        branch:branchChoice?selBranch:null,
         consent:$('pconsent').checked};
       const nextBookingKey=JSON.stringify(bookingPayload);
       if(!bookingSubmissionId||bookingSubmissionKey!==nextBookingKey){
