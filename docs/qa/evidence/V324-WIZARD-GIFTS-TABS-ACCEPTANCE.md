@@ -2,7 +2,7 @@
 
 Date: 2026-08-14
 Branch: `codex/v324-rewards-offer-cosmetics`
-Production-component source hash: `e29707b39b9e98c56ccd47a84fee2f38a4956de7ba8a31383077fd7a00e9ca0c`
+Production-component source hash: `c465eb7d2e49e7c8407678b52cc8beb4b5d9c009e388647f2d0406de2a9a7143`
 
 **Client-only. No migration, no new RPC.** Reuses `growRewardPendingChangesV291`, already shipped
 and tested for Overview's pending-change markers.
@@ -61,6 +61,35 @@ call, not two independent ones.
 - **History** — `active===false`, read from `rewardsAllV324` (not `state.rewards`, which can't see
   a pre-session retirement at all — see above).
 
+## Addendum — "still the same": the tabs existed but were two clicks away
+
+Shipping the tabs onto the reachable screen wasn't the whole fix. The owner clicked "Points
+System" twice after that deploy and landed on the wizard's **Programmes** step (Step 1 of 8) both
+times — the same screen shown before any of this work started. The tile's click handler had only
+ever carried *which model* to open the wizard on (`pendingGrowSetupModelV303`); it never said
+*which step*, so every click — including "Edit" on an already-live programme — restarted the
+five-screen walkthrough from the top. The tabs were real, but two Next-clicks away from where an
+owner lands.
+
+**Fix:** the tile click now reuses `pendingGrowSetupRewardV303` — the exact hand-off the
+reward-card Edit path already uses to jump to the Gifts step — with a new `mode:'view'` that arms
+no form, only moves `state.step`. Scoped to `kind==='points'` only: that hand-off recognises just
+the `'reward'` step, so arming it for a Tiered/Stamp tile would silently no-op rather than jump
+anywhere — worse than not trying, because it would read as fixed in the diff without being fixed
+in the browser. Tiered/Stamp get this same treatment when their own tabs are built.
+
+**A real bug caught mid-fix, before it shipped:** the hand-off consumer's existing branch was
+`else if(rewardHandoffV303.mode!=='edit')`, which pre-fills an "Add reward" form — written when
+`'add'` was the only other mode that existed. `mode:'view'` would have silently fallen into that
+same branch and opened a **blank Add Reward form** instead of just landing on the tab view. Caught
+by re-reading the consumer before assuming the new mode was safe to add, not by the tests (which
+were written after, and could easily have encoded the same wrong assumption). Narrowed to
+`mode==='add'` specifically, with a dedicated test pinning that the old catch-all is gone and a
+second test confirming the original add-template path (used by "Start from a template") still
+works — a fixed-length-slice test elsewhere in the suite (`v172-reward-templates.test.mjs`,
+`app.slice(start, start+1600)`) caught a first version of this comment being too long and pushing
+the real code past its window; shortened.
+
 ## Verification
 
 **13 behavioural tests** (`tests/business-ui/v324-wizard-gifts-tabs.test.mjs`), real bytes lifted
@@ -86,5 +115,5 @@ pre/post-session-retirement split (pre-session-retired items present only in `re
 three screenshots, all three tabs, no console errors, visually identical row style to the actual
 wizard the owner is looking at.
 
-Suite: 3045 tests, 3043 pass — the one unrelated failure is the known env-bound
-`tests/mobile` `@capacitor` check. Full validate pipeline green.
+Suite (final, both passes): 3048 tests, 3046 pass — the one unrelated failure is the known
+env-bound `tests/mobile` `@capacitor` check. Full validate pipeline green.

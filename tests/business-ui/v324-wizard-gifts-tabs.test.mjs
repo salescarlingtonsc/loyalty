@@ -144,6 +144,20 @@ test('V324 switching reward tabs in the wizard never touches the network', () =>
   assert.match(handler, /render\(\)/);
 });
 
+test('V324 clicking an already-live Points System tile arms a step hand-off, not just a model one', () => {
+  /* Owner: pressed "Points System" (already live, "Edit →") twice and landed on the wizard's
+     Programmes step both times — "still the same" — because the tile click only ever set
+     pendingGrowSetupModelV303 (which model to open), never which STEP. Scoped to kind==='points'
+     only: the hand-off this reuses (pendingGrowSetupRewardV303) only recognises the 'reward' step,
+     so arming it for a tiers/stamps tile would silently do nothing — worse than not trying, because
+     it would look fixed in a diff without being fixed in the browser. Tiers/stamps get their own
+     landing fix when their own tabs are built, not a guess here. */
+  const handler = code.slice(code.indexOf('if(growSetupEntryV301(tile.dataset.growTopicV229)){'),
+    code.indexOf("growTopicV229=tile.dataset.growTopicV229;"));
+  assert.match(handler, /growTopicOngoingV244\(topicPressedV324\)&&growSetupKindForTileW6I2\(tile\.dataset\.growTopicV229\)==='points'/);
+  assert.match(handler, /pendingGrowSetupRewardV303=\{mode:'view'\}/);
+});
+
 test('V324 the reward-added-id diff reuses growRewardPendingChangesV291 — the same function Overview already tests', () => {
   const block = statement('const rewardAddedIdsV324=new Set(growRewardPendingChangesV291(', 'map(reward=>String(reward.id)));');
   assert.match(block, /liveRewards:rewardListFrom\(snapshot\?\.rewards\)/);

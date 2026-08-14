@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="1496e0057b71065226168cf70f69ca5dab4ff53d3fb5d4e15171cc1e7a24c4c0"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="53d19e6643f8b181190bc750f3355ee077937261a0af6c6271fdce5b40f037ac"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2140,7 +2140,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1496e0057b71065226168cf70f69ca5dab4ff53d3fb5d4e15171cc1e7a24c4c0</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 53d19e6643f8b181190bc750f3355ee077937261a0af6c6271fdce5b40f037ac</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -11829,6 +11829,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          full editor must still be the points one. */
       pendingGrowSetupModelV303={kind:growSetupKindForTileW6I2(tile.dataset.growTopicV229),
         from:String(tile.dataset.growTopicV229||'')};
+      /* V324 (owner: pressed the already-live Points System card, twice, and landed on the
+         wizard's Programmes step both times — "still the same" — because this hand-off has
+         never said which STEP to open on, only which model. An Edit of something already running
+         should open where the editing happens, not restart the five-screen walkthrough two clicks
+         short of it. Reuses the SAME hand-off the reward-card Edit path already uses to land on
+         Gifts (mode:'view' arms no specific form, unlike 'edit' — it only moves the step); a
+         no-op for tiers/stamps today, since that hand-off only recognises the 'reward' step —
+         their own landing fix is the next build in this queue, not guessed at here. */
+      const topicPressedV324=growTopicDefsV229.find(topic=>topic.key===tile.dataset.growTopicV229);
+      if(topicPressedV324&&growTopicOngoingV244(topicPressedV324)&&growSetupKindForTileW6I2(tile.dataset.growTopicV229)==='points')
+        pendingGrowSetupRewardV303={mode:'view'};
       return nav('#/grow/setup');
     }
     growTopicV229=tile.dataset.growTopicV229;
@@ -13778,7 +13789,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :null;
     if(wanted)state.form={id:wanted.id,name:wanted.name,
       budget:(wanted.budgetCents/100).toFixed(2),points:String(wanted.points)};
-    else if(rewardHandoffV303.mode!=='edit'){
+    /* V324: was `mode!=='edit'`, which also caught the new mode:'view' and would have armed a
+       blank add-form instead of just moving the step. Narrowed to the one mode this branch is
+       actually for. */
+    else if(rewardHandoffV303.mode==='add'){
       const budgetCents=Math.max(0,Number(rewardHandoffV303.budgetCents)||0);
       state.form={id:null,name:String(rewardHandoffV303.name||''),
         budget:budgetCents>0?(budgetCents/100).toFixed(2):'',
@@ -18810,6 +18824,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'1496e0057b71065226168cf70f69ca5dab4ff53d3fb5d4e15171cc1e7a24c4c0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'53d19e6643f8b181190bc750f3355ee077937261a0af6c6271fdce5b40f037ac',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

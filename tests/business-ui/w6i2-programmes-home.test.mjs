@@ -595,7 +595,7 @@ const rowAsSelected = (columns, stored = STORED_PROGRAM) =>
   Object.fromEntries(columns.filter(column => column in stored).map(column => [column, stored[column]]));
 
 function mountWizard({ spine = null, industry = 'salon', snapshot = {}, liveTiers = null,
-  startStep = 1, rpcHandlers = {}, pointsMode = 'redeem' } = {}) {
+  startStep = 1, rpcHandlers = {}, pointsMode = 'redeem', pendingReward = null } = {}) {
   const dom = makeDom(), rpc = [];
   const S = { biz: { id: 'biz-1', currency: 'SGD', industry, points_mode: pointsMode },
     programmes: spine, programmesBusinessId: spine ? 'biz-1' : null, myRole: 'owner' };
@@ -618,7 +618,7 @@ function mountWizard({ spine = null, industry = 'salon', snapshot = {}, liveTier
   const api = wizardFactory(S, sb, escReal, { icon: () => '' }, dom.$, () => {},
     error => String(error?.message || error || ''), () => {},
     mode => mode === 'fixed' || mode === 'inactivity',
-    async () => ({ error: null, lines: [], unreadable: [], draftActive: null }), null, null);
+    async () => ({ error: null, lines: [], unreadable: [], draftActive: null }), null, pendingReward);
   const full = { currentVersion: 'v1', loyalty: null, rewards: [{ id: 'r1', customer_name: 'Free coffee',
     cost_points: 100, active: true, estimated_cost_cents: 300 }], draft: null, draftDetail: null,
     referral: null, ...snapshot };
@@ -1051,6 +1051,29 @@ test('W6I2 E7 an absent tier_movements key prints the honest sentence, never a z
   await new Promise(resolve => setTimeout(resolve, 5));
   assert.match(w.dom.markup, /How many members move is not counted yet on this workspace/);
   assert.doesNotMatch(w.dom.markup, /0 members would move down/);
+});
+
+test('V324 pendingGrowSetupRewardV303={mode:"view"} lands on the Gifts step with no form armed', async () => {
+  /* Owner: pressed the already-live Points System card twice and landed on the Programmes step
+     both times ("still the same") — the hand-off only ever carried WHICH MODEL to open, never
+     WHICH STEP. This is the fix: mode:'view' reuses the same hand-off the reward-card Edit path
+     already uses to reach the 'reward' step, but arms no specific reward's form and no blank
+     add-template either — it exists purely to move state.step. */
+  const w = mountWizard({ spine: spineRows(['points']), pendingReward: { mode: 'view' }, startStep: 1 });
+  await w.open();
+  assert.match(w.title(), /Gifts/, 'the hand-off must land on the Gifts step, not restart at Programmes');
+  const nameInput = w.dom.$('growSetupRewardNameV301');
+  assert.ok(nameInput, 'the Gifts step reward form must be on screen');
+  assert.equal(nameInput.value, '', 'mode:"view" must not pre-fill a name — that would be the add-template branch, not a plain landing');
+});
+
+test('V324 pendingGrowSetupRewardV303={mode:"add",name,budgetCents} still pre-fills the template — the view-mode fix must not break it', () => {
+  /* The bug this guards: `mode!=='edit'` used to catch BOTH 'add' and the new 'view', so fixing
+     view meant narrowing that condition to `mode==='add'` — which could just as easily have
+     broken the add-template path it was originally written for. */
+  assert.match(app, /else if\(rewardHandoffV303\.mode==='add'\)\{/);
+  assert.doesNotMatch(app, /else if\(rewardHandoffV303\.mode!=='edit'\)\{/,
+    'the old catch-all condition must be gone, not merely shadowed');
 });
 
 test('W6I2 E8 editing the ladder after ticking D3 takes the tick back', async () => {

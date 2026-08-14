@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="e29707b39b9e98c56ccd47a84fee2f38a4956de7ba8a31383077fd7a00e9ca0c"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="c465eb7d2e49e7c8407678b52cc8beb4b5d9c009e388647f2d0406de2a9a7143"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2139,7 +2139,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e29707b39b9e98c56ccd47a84fee2f38a4956de7ba8a31383077fd7a00e9ca0c</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c465eb7d2e49e7c8407678b52cc8beb4b5d9c009e388647f2d0406de2a9a7143</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3626,7 +3626,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :null;
     if(wanted)state.form={id:wanted.id,name:wanted.name,
       budget:(wanted.budgetCents/100).toFixed(2),points:String(wanted.points)};
-    else if(rewardHandoffV303.mode!=='edit'){
+    /* V324: was `mode!=='edit'`, which also caught the new mode:'view' and would have armed a
+       blank add-form instead of just moving the step. Narrowed to the one mode this branch is
+       actually for. */
+    else if(rewardHandoffV303.mode==='add'){
       const budgetCents=Math.max(0,Number(rewardHandoffV303.budgetCents)||0);
       state.form={id:null,name:String(rewardHandoffV303.name||''),
         budget:budgetCents>0?(budgetCents/100).toFixed(2):'',
@@ -6931,6 +6934,17 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
          full editor must still be the points one. */
       pendingGrowSetupModelV303={kind:growSetupKindForTileW6I2(tile.dataset.growTopicV229),
         from:String(tile.dataset.growTopicV229||'')};
+      /* V324 (owner: pressed the already-live Points System card, twice, and landed on the
+         wizard's Programmes step both times — "still the same" — because this hand-off has
+         never said which STEP to open on, only which model. An Edit of something already running
+         should open where the editing happens, not restart the five-screen walkthrough two clicks
+         short of it. Reuses the SAME hand-off the reward-card Edit path already uses to land on
+         Gifts (mode:'view' arms no specific form, unlike 'edit' — it only moves the step); a
+         no-op for tiers/stamps today, since that hand-off only recognises the 'reward' step —
+         their own landing fix is the next build in this queue, not guessed at here. */
+      const topicPressedV324=growTopicDefsV229.find(topic=>topic.key===tile.dataset.growTopicV229);
+      if(topicPressedV324&&growTopicOngoingV244(topicPressedV324)&&growSetupKindForTileW6I2(tile.dataset.growTopicV229)==='points')
+        pendingGrowSetupRewardV303={mode:'view'};
       return nav('#/grow/setup');
     }
     growTopicV229=tile.dataset.growTopicV229;
@@ -7133,7 +7147,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'e29707b39b9e98c56ccd47a84fee2f38a4956de7ba8a31383077fd7a00e9ca0c',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'c465eb7d2e49e7c8407678b52cc8beb4b5d9c009e388647f2d0406de2a9a7143',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

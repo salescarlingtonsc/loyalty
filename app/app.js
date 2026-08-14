@@ -22313,6 +22313,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          full editor must still be the points one. */
       pendingGrowSetupModelV303={kind:growSetupKindForTileW6I2(tile.dataset.growTopicV229),
         from:String(tile.dataset.growTopicV229||'')};
+      /* V324 (owner: pressed the already-live Points System card, twice, and landed on the
+         wizard's Programmes step both times — "still the same" — because this hand-off has
+         never said which STEP to open on, only which model. An Edit of something already running
+         should open where the editing happens, not restart the five-screen walkthrough two clicks
+         short of it. Reuses the SAME hand-off the reward-card Edit path already uses to land on
+         Gifts (mode:'view' arms no specific form, unlike 'edit' — it only moves the step); a
+         no-op for tiers/stamps today, since that hand-off only recognises the 'reward' step —
+         their own landing fix is the next build in this queue, not guessed at here. */
+      const topicPressedV324=growTopicDefsV229.find(topic=>topic.key===tile.dataset.growTopicV229);
+      if(topicPressedV324&&growTopicOngoingV244(topicPressedV324)&&growSetupKindForTileW6I2(tile.dataset.growTopicV229)==='points')
+        pendingGrowSetupRewardV303={mode:'view'};
       return nav('#/grow/setup');
     }
     growTopicV229=tile.dataset.growTopicV229;
@@ -24262,7 +24273,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :null;
     if(wanted)state.form={id:wanted.id,name:wanted.name,
       budget:(wanted.budgetCents/100).toFixed(2),points:String(wanted.points)};
-    else if(rewardHandoffV303.mode!=='edit'){
+    /* V324: was `mode!=='edit'`, which also caught the new mode:'view' and would have armed a
+       blank add-form instead of just moving the step. Narrowed to the one mode this branch is
+       actually for. */
+    else if(rewardHandoffV303.mode==='add'){
       const budgetCents=Math.max(0,Number(rewardHandoffV303.budgetCents)||0);
       state.form={id:null,name:String(rewardHandoffV303.name||''),
         budget:budgetCents>0?(budgetCents/100).toFixed(2):'',
