@@ -60,7 +60,11 @@ test('V249/V294 the KPI tiles fold into the summary card and the identity line k
   assert.ok(cardStart > 0, 'the summary card exists');
   const summaryCard = profile.slice(cardStart, profile.indexOf('</aside>`;', cardStart));
   assert.match(summaryCard, /Business-wide points/);
-  assert.match(summaryCard, /Business-wide spendable credit/);
+  /* V320 (owner 2026-08-14: "i do not want spendable credits to exist in the app"). V249's
+     "demoted, never deleted" applied to the two figures it moved off the KPI tiles; the owner has
+     since deleted one of them outright. Points still obeys the rule — it moved to the programme
+     row in V319, it did not vanish. Credit is asserted absent so it cannot drift back. */
+  assert.doesNotMatch(summaryCard.replace(/\/\*[\s\S]*?\*\//g,''), /spendable credit/i);
   assert.match(summaryCard, /isProfileAdmin\?'Visits':'Visible visits'/);
   assert.match(summaryCard, /isProfileAdmin\?'Lifetime spend':'Visible sales'/);
   assert.match(summaryCard, /PDPA consent/);

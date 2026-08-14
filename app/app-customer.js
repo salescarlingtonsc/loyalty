@@ -3892,14 +3892,16 @@ async function renderCustomerWallet(businessSlug=null){
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
-  const showCreditMetric=loyalty.enabled===true&&Number(loyalty.credit_balance_cents||0)>0;
+  /* V320 (owner 2026-08-14): "i do not want spendable credits to exist in the app" — the app, not
+     just the business workspace, so the customer's own Store credit metric goes with the staff
+     one. `customer_get_wallet` still returns credit_balance_cents and the ledger is untouched;
+     the wallet simply stops rendering it. */
   const showPackageMetric=capabilities.packages===true&&Number(packages.sessions_remaining||0)>0;
   const showMembershipMetric=capabilities.membership===true&&membership.active===true;
-  const showSecondaryMetrics=!actionableCard&&(showCreditMetric||showPackageMetric||showMembershipMetric);
+  const showSecondaryMetrics=!actionableCard&&(showPackageMetric||showMembershipMetric);
   const hasWalletSection=true;
   $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities})}
     ${showSecondaryMetrics?`<div class="wallet-metrics">
-      ${showCreditMetric?`<div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents)/100).toFixed(2)}</b></div>`:''}
       ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
       ${showMembershipMetric?`<div class="wallet-metric"><span class="muted small">Membership</span><b>Active</b></div>`:''}
     </div>`:''}

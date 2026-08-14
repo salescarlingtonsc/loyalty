@@ -78,10 +78,16 @@ test('each eligible reward says Show QR at counter and opens the existing pendin
 
 test('secondary programme metrics render only when they carry meaningful value',()=>{
   const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
-  assert.match(wallet,/const showCreditMetric=loyalty\.enabled===true&&Number\(loyalty\.credit_balance_cents\|\|0\)>0/);
+  /* V320 (owner 2026-08-14: "i do not want spendable credits to exist in the app"). The Store
+     credit metric is gone from this row entirely — not gated harder, removed — so the rule this
+     test protects now applies to the two metrics that remain. The credit metric's absence is
+     pinned below so it cannot quietly return. */
   assert.match(wallet,/const showPackageMetric=capabilities\.packages===true&&Number\(packages\.sessions_remaining\|\|0\)>0/);
   assert.match(wallet,/const showMembershipMetric=capabilities\.membership===true&&membership\.active===true/);
-  assert.match(wallet,/const showSecondaryMetrics=!actionableCard&&\(showCreditMetric\|\|showPackageMetric\|\|showMembershipMetric\)/);
+  assert.match(wallet,/const showSecondaryMetrics=!actionableCard&&\(showPackageMetric\|\|showMembershipMetric\)/);
+  assert.doesNotMatch(wallet,/showCreditMetric/);
+  assert.doesNotMatch(wallet,/<span class="muted small">Store credit<\/span>/);
+  assert.doesNotMatch(wallet,/loyalty\.credit_balance_cents/);
   assert.doesNotMatch(wallet,/membership\.active\?'Active':'Inactive'/);
 });
 

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9109acabaa165289e768a94758a0ab938e71742a6ffb7882a635bc04adb92af3"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="79afe9e7226b12d279185e83e72c78a4f9308a432142993bb238f9f420ac4c33"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2105,7 +2105,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 9109acabaa165289e768a94758a0ab938e71742a6ffb7882a635bc04adb92af3</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 79afe9e7226b12d279185e83e72c78a4f9308a432142993bb238f9f420ac4c33</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -3267,7 +3267,11 @@ async function clientsPage(){
   let histShown=50;
   const loyaltyFacts=loyaltyFactsAvailable?loyaltyProjection:null;
   const pts=Number(loyaltyFacts?.points_balance)||0;
-  const cred=Number(loyaltyFacts?.credit_balance_cents)||0;
+  /* V320 (owner, 2026-08-14, on the V319 hide-at-zero rule: "i do not want spendable credits to
+     exist in the app"). The read stays — staff_get_customer_actionable_loyalty_v145 returns
+     credit_balance_cents whether or not anything renders it, and the ledger is untouched — but
+     nothing in this profile prints it any more. See the V320 evidence doc for what still WRITES
+     credit (membership periods, gift-card redemption, referral payouts) and what that means. */
   const prog=loyaltyFacts?.program||null;
   const nextExp=loyaltyFacts?.expiry
     ?{remaining:Number(loyaltyFacts.expiry.units)||0,expires_at:loyaltyFacts.expiry.expires_at}
@@ -3494,9 +3498,9 @@ async function clientsPage(){
       ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
     pointsPanelDetailsV249=`<details class="c360-reward-adjust"><summary>Balance and earning</summary>
         <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
-        ${/* V319: spendable credit joins the collapsible so that hiding a zero-credit ROW on the
-             summary card above never puts the figure out of reach. */''}
-        <p class="small c360-credit-line-v319" style="margin-top:5px"><b>Spendable credit:</b> ${money(cred)}</p>
+        ${/* V319 put spendable credit here so hiding the zero-value row above never put the figure
+             out of reach. V320 removed it with the row (owner: "i do not want spendable credits to
+             exist in the app") — there is no longer a figure to keep reachable. */''}
         <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
@@ -3578,14 +3582,11 @@ async function clientsPage(){
         ?summaryRowV294(wholeBusinessLabels?'Points':'Business-wide points',pointsHistoryButtonV319,
             `${pointsPausedNoteV259}${pointsExpiryMarkup}`)
         :''}
-    ${/* V319: Spendable credit was struck out in the same stroke, but unlike points it is not
-         duplicated anywhere — it was simply "SGD 0.00" taking a row on a profile that has never
-         held credit. So the ROW goes when the figure is zero, and comes back the moment this
-         customer actually holds money, which is a fact the counter cannot be allowed to miss.
-         Either way the figure is one tap away under Balance and earning. */
-      loyaltyFactsAvailable&&(cred!==0||!balanceProgrammeRowV319)
-        ?summaryRowV294(wholeBusinessLabels?'Spendable credit':'Business-wide spendable credit',`<b>${money(cred)}</b>`)
-        :''}
+    ${/* V320 (owner 2026-08-14): "i do not want spendable credits to exist in the app". V319 had
+         hidden this row only at zero, on the reading that a real balance is a fact the counter
+         must not miss. The owner has overruled that reading, so the row is gone outright — at
+         every value, for every role. Deliberately no replacement anywhere in this profile: a
+         smaller or collapsed version of a row the owner removed is the same row. */''}
     ${summaryRowV294('PDPA consent',c.marketing_consent?'<span class="pill on">Yes</span>':'<span class="pill off">No</span>')}
     ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
          though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
@@ -3703,7 +3704,7 @@ async function clientsPage(){
     ?'complete business-wide access'
     :'access across every branch assigned to this staff account';
   const profileScopeNotice=unavailableProfileFacets.length?`<div class="card" role="status" style="margin-top:14px"><b>Some profile figures are unavailable</b><p class="muted small" style="margin-top:6px">${esc(unavailableProfileFacets.map(module=>MODULES[module]?.[1]||module).join(', '))} cannot be shown because ${esc(profileScopeLoadError?'the assigned-branch list could not be loaded':profileScopeLabel+' could not be confirmed')}. Peekaa does not replace missing data with zero.</p><button class="btn ghost sm" id="c360ScopeRetry" style="margin-top:10px">Reload profile</button></div>`:'';
-  const staffProfileScopeNote=!isProfileAdmin&&profileScopeBranchIds.length?`<div class="card" role="note" style="margin-top:14px"><b>Staff view scope</b><p class="muted small" style="margin-top:6px">Sales, visits and appointments cover every branch assigned to this staff account. Points, rewards and spendable credit are business-wide customer balances. Peekaa does not mix hidden branch sales into the visible totals.</p></div>`:'';
+  const staffProfileScopeNote=!isProfileAdmin&&profileScopeBranchIds.length?`<div class="card" role="note" style="margin-top:14px"><b>Staff view scope</b><p class="muted small" style="margin-top:6px">Sales, visits and appointments cover every branch assigned to this staff account. Points and rewards are business-wide customer balances. Peekaa does not mix hidden branch sales into the visible totals.</p></div>`:'';
   const correctionScopeNotice=reversalActionsUnavailable?`<div class="card" role="status" style="margin-top:14px"><b>Correction actions are temporarily unavailable</b><p class="muted small" style="margin-top:6px">Verified customer history and totals remain visible. Reverse controls are withheld until their separate safety check can be reloaded.</p><button class="btn ghost sm" id="c360CorrectionsRetry" style="margin-top:10px">Reload profile</button></div>`:'';
   const editCustomerMarkup=canWriteClients?`<section class="card c360-edit-card" id="c360EditCard" aria-labelledby="c360EditTitle" hidden>
       <div class="cui-card-head"><h2 id="c360EditTitle">Edit customer</h2><p>Correct this customer's name, contact details or consent. Every change is recorded with its before and after values.</p></div>
@@ -18153,6 +18154,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'9109acabaa165289e768a94758a0ab938e71742a6ffb7882a635bc04adb92af3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'79afe9e7226b12d279185e83e72c78a4f9308a432142993bb238f9f420ac4c33',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

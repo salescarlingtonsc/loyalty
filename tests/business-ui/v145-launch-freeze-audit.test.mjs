@@ -355,7 +355,11 @@ test('customer profile never converts inaccessible facets into plausible zero va
      being credit to state. The rule this test protects is unchanged: both still lead with
      loyaltyFactsAvailable, so an unconfirmed loyalty facet renders no row rather than a zero. */
   assert.match(client, /loyaltyFactsAvailable&&!balanceProgrammeRowV319\s*\r?\n?\s*\?summaryRowV294\(/);
-  assert.match(client, /loyaltyFactsAvailable&&\(cred!==0\|\|!balanceProgrammeRowV319\)/);
+  /* V320 (owner: "i do not want spendable credits to exist in the app"): the spendable-credit row
+     is gone at every value, so there is no gate left to assert — only its absence. */
+  const clientCode = client.replace(/\/\*[\s\S]*?\*\//g,'');
+  assert.doesNotMatch(clientCode, /Spendable credit/);
+  assert.doesNotMatch(clientCode, /credit_balance_cents/);
   assert.match(client, /canReadLoyalty\?`<section class="card c360-rewards-card" id="c360-loyalty"/);
   assert.match(client, /canReadRetention\?`<div class="card"><b>Retention reward history/);
   assert.match(client, /activitySources\.length\?/);
@@ -399,10 +403,15 @@ test('customer profile proves owner-wide or every assigned staff branch without 
   assert.match(client, /isProfileAdmin\?'Visits':'Visible visits'/);
   assert.match(client, /isProfileAdmin\?'Lifetime spend':'Visible sales'/);
   assert.match(client, /Business-wide points/);
-  assert.match(client, /Business-wide spendable credit/);
+  /* V320: the business-wide spendable-credit ROW is gone (owner: "i do not want spendable credits
+     to exist in the app"). The scope-honesty rule this test protects is unchanged and still
+     carried by the rows that remain — an employee reads "Visible visits" / "Visible sales" and
+     never a business-wide claim about figures they cannot see all of. */
   assert.match(client, /Staff view scope/);
   assert.match(client, /Sales, visits and appointments cover every branch assigned to this staff account/);
-  assert.match(client, /Points, rewards and spendable credit are business-wide customer balances/);
+  /* V320: the sentence no longer promises a spendable-credit figure the page will not show. What
+     it exists to say — which figures are branch-scoped and which are business-wide — is unchanged. */
+  assert.match(client, /Points and rewards are business-wide customer balances/);
   assert.match(client, /Peekaa does not mix hidden branch sales into the visible totals/);
   /* V226: the owner struck this subtitle out. What it guards — that an employee sees the scope
      of the figures stated as business-wide — is asserted on the label that remains. */
