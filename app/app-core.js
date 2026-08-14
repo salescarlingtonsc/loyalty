@@ -430,6 +430,13 @@ let growSwitchErrorV322='';
    tabs re-renders growPage from scratch. Cleared by the router alongside growTopicV229 so leaving
    the page and coming back always opens on Published. */
 let growOffersTabV324='published';
+/* V324 (owner: apply the same Published/Draft/History split to Point system's own reward
+   catalogue). The three groups already existed as data — rewardCardsV250 (live/scheduled/paused),
+   growPendingNewRewardsV268 (created in the current draft, never published) and
+   rewardHistoryCardsV294 (ended or retired) — merged into one grid with History collapsed
+   underneath. This only changes which one is showing; none of the three lists themselves moved,
+   so their card markup, click routing and the growTemplatesOpen flow are untouched. */
+let growPointsRewardTabV324='published';
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -761,7 +768,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';

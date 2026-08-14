@@ -11297,15 +11297,28 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       status:'Retired',tone:'off',editKind:'catalogue',rewardId:reward.id,
       pending:growPendingRewardsV268.get(String(reward.id))||null}))
   ];
-  const rewardCardGridV250=`<div class="reward-card-grid-v250" data-reward-card-grid-v250>
+  /* V324: role="group", not "tablist" — same reason as the Limited Offer strip (growPage's own
+     test forbids the peer-tab pattern); this filters one card list, it does not switch modules. */
+  const rewardTabStripV324=`<div class="v150-segment" role="group" aria-label="Reward status" data-grow-points-tabstrip-v324>
+    <button type="button" aria-pressed="${growPointsRewardTabV324==='published'}" data-grow-points-tab-v324="published">Published${rewardCardsV250.length?` (${rewardCardsV250.length})`:''}</button>
+    <button type="button" aria-pressed="${growPointsRewardTabV324==='draft'}" data-grow-points-tab-v324="draft">Draft${growPendingNewRewardsV268.length?` (${growPendingNewRewardsV268.length})`:''}</button>
+    <button type="button" aria-pressed="${growPointsRewardTabV324==='history'}" data-grow-points-tab-v324="history">History${rewardHistoryCardsV294.length?` (${rewardHistoryCardsV294.length})`:''}</button>
+  </div>`;
+  const rewardCardGridV250=`${rewardTabStripV324}
+    ${growPointsRewardTabV324==='published'?`<div class="reward-card-grid-v250" data-reward-card-grid-v250 style="margin-top:12px">
       ${rewardCardsV250.map(rewardCardHtmlV250).join('')}
-      ${growPendingNewRewardsV268.map(reward=>`<article class="reward-card-v250 reward-card-pending-new-v268" data-programme-kind="redeemable" data-grow-pending-new-v268><span class="pill new">Not live yet</span><b class="reward-card-name-v250" data-merchant-content>${esc(reward.name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${reward.cost} ${rewardJourney.unit}`)}</span><span class="grow-pending-line-v268">Customers see this once you publish.</span></article>`).join('')}
       ${canSetupGrow?`<button type="button" class="reward-card-v250 reward-card-add-v250" data-programme-kind="redeemable" data-rewards-overview-edit="add"><span class="reward-card-plus-v250" aria-hidden="true">+</span><b class="reward-card-name-v250">Add reward</b></button>`:''}
     </div>
-    ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}
-    ${rewardHistoryCardsV294.length?`<details class="reward-history-v294" data-reward-history-v294 style="margin:4px 14px 12px"><summary>Reward history · ${rewardHistoryCardsV294.length}</summary>
-      <p class="muted small" style="margin-top:6px">Retired and ended rewards. Customers cannot see them; open one to edit or bring it back.</p>
-      <div class="reward-card-grid-v250">${rewardHistoryCardsV294.map(rewardCardHtmlV250).join('')}</div></details>`:''}
+    ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}`:''}
+    ${growPointsRewardTabV324==='draft'?`<div class="reward-card-grid-v250" data-reward-card-grid-v250 style="margin-top:12px">
+      ${growPendingNewRewardsV268.map(reward=>`<article class="reward-card-v250 reward-card-pending-new-v268" data-programme-kind="redeemable" data-grow-pending-new-v268><span class="pill new">Not live yet</span><b class="reward-card-name-v250" data-merchant-content>${esc(reward.name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${reward.cost} ${rewardJourney.unit}`)}</span><span class="grow-pending-line-v268">Customers see this once you publish.</span></article>`).join('')}
+    </div>
+    ${growPendingNewRewardsV268.length?'':'<p class="muted small reward-card-empty-v250">No draft reward yet — new rewards you add stay here until you publish.</p>'}`:''}
+    ${growPointsRewardTabV324==='history'?`<p class="muted small" style="margin-top:12px">Retired and ended rewards. Customers cannot see them; open one to edit or bring it back.</p>
+    <div class="reward-card-grid-v250" data-reward-card-grid-v250 data-reward-history-v294 style="margin-top:8px">
+      ${rewardHistoryCardsV294.map(rewardCardHtmlV250).join('')}
+    </div>
+    ${rewardHistoryCardsV294.length?'':'<p class="muted small reward-card-empty-v250">Nothing has ended yet.</p>'}`:''}
     ${canSetupGrow?`<p class="reward-card-templates-v250"><button type="button" class="btn ghost sm" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel">${CUI.icon('star',{size:16})}<span>Start from a template</span></button></p>
     <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}`;
   /* ===== V271 Programmes Overview and History =====
@@ -12171,6 +12184,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const tab=button.dataset.growOffersTabV324;
     if(!['published','draft','history'].includes(tab))return;
     growOffersTabV324=tab;
+    growRerenderV322();
+  });
+  /* V324: the Point system reward grid's own Published/Draft/History filter. Same reasoning as
+     the Limited Offer tabs above — the card SET changes per tab, not just what is shown of one
+     card, so this re-renders rather than toggling `hidden`. */
+  outerMain.querySelectorAll('[data-grow-points-tab-v324]').forEach(button=>button.onclick=()=>{
+    const tab=button.dataset.growPointsTabV324;
+    if(!['published','draft','history'].includes(tab))return;
+    growPointsRewardTabV324=tab;
     growRerenderV322();
   });
   /* V324: reuses business_delete_promotion_v183 exactly as the deep editor (promotionsPage) calls

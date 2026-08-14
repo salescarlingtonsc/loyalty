@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="b5d0e274802732064a3e22cea1aa6036bac72938d93c28cf890aecd1cbc890be"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="0d10fbd68a3d1d6b583004556bfa926695a5dd021bf2d8692ef3efbc5c6cef1b"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2139,7 +2139,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b5d0e274802732064a3e22cea1aa6036bac72938d93c28cf890aecd1cbc890be</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0d10fbd68a3d1d6b583004556bfa926695a5dd021bf2d8692ef3efbc5c6cef1b</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5874,15 +5874,28 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       status:'Retired',tone:'off',editKind:'catalogue',rewardId:reward.id,
       pending:growPendingRewardsV268.get(String(reward.id))||null}))
   ];
-  const rewardCardGridV250=`<div class="reward-card-grid-v250" data-reward-card-grid-v250>
+  /* V324: role="group", not "tablist" — same reason as the Limited Offer strip (growPage's own
+     test forbids the peer-tab pattern); this filters one card list, it does not switch modules. */
+  const rewardTabStripV324=`<div class="v150-segment" role="group" aria-label="Reward status" data-grow-points-tabstrip-v324>
+    <button type="button" aria-pressed="${growPointsRewardTabV324==='published'}" data-grow-points-tab-v324="published">Published${rewardCardsV250.length?` (${rewardCardsV250.length})`:''}</button>
+    <button type="button" aria-pressed="${growPointsRewardTabV324==='draft'}" data-grow-points-tab-v324="draft">Draft${growPendingNewRewardsV268.length?` (${growPendingNewRewardsV268.length})`:''}</button>
+    <button type="button" aria-pressed="${growPointsRewardTabV324==='history'}" data-grow-points-tab-v324="history">History${rewardHistoryCardsV294.length?` (${rewardHistoryCardsV294.length})`:''}</button>
+  </div>`;
+  const rewardCardGridV250=`${rewardTabStripV324}
+    ${growPointsRewardTabV324==='published'?`<div class="reward-card-grid-v250" data-reward-card-grid-v250 style="margin-top:12px">
       ${rewardCardsV250.map(rewardCardHtmlV250).join('')}
-      ${growPendingNewRewardsV268.map(reward=>`<article class="reward-card-v250 reward-card-pending-new-v268" data-programme-kind="redeemable" data-grow-pending-new-v268><span class="pill new">Not live yet</span><b class="reward-card-name-v250" data-merchant-content>${esc(reward.name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${reward.cost} ${rewardJourney.unit}`)}</span><span class="grow-pending-line-v268">Customers see this once you publish.</span></article>`).join('')}
       ${canSetupGrow?`<button type="button" class="reward-card-v250 reward-card-add-v250" data-programme-kind="redeemable" data-rewards-overview-edit="add"><span class="reward-card-plus-v250" aria-hidden="true">+</span><b class="reward-card-name-v250">Add reward</b></button>`:''}
     </div>
-    ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}
-    ${rewardHistoryCardsV294.length?`<details class="reward-history-v294" data-reward-history-v294 style="margin:4px 14px 12px"><summary>Reward history · ${rewardHistoryCardsV294.length}</summary>
-      <p class="muted small" style="margin-top:6px">Retired and ended rewards. Customers cannot see them; open one to edit or bring it back.</p>
-      <div class="reward-card-grid-v250">${rewardHistoryCardsV294.map(rewardCardHtmlV250).join('')}</div></details>`:''}
+    ${rewardCardsV250.length||canSetupGrow?'':`<p class="muted small reward-card-empty-v250">${canRewards?'No reward is published yet, and you do not have edit access to create one.':'Loyalty is not included in this workspace.'}</p>`}`:''}
+    ${growPointsRewardTabV324==='draft'?`<div class="reward-card-grid-v250" data-reward-card-grid-v250 style="margin-top:12px">
+      ${growPendingNewRewardsV268.map(reward=>`<article class="reward-card-v250 reward-card-pending-new-v268" data-programme-kind="redeemable" data-grow-pending-new-v268><span class="pill new">Not live yet</span><b class="reward-card-name-v250" data-merchant-content>${esc(reward.name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${reward.cost} ${rewardJourney.unit}`)}</span><span class="grow-pending-line-v268">Customers see this once you publish.</span></article>`).join('')}
+    </div>
+    ${growPendingNewRewardsV268.length?'':'<p class="muted small reward-card-empty-v250">No draft reward yet — new rewards you add stay here until you publish.</p>'}`:''}
+    ${growPointsRewardTabV324==='history'?`<p class="muted small" style="margin-top:12px">Retired and ended rewards. Customers cannot see them; open one to edit or bring it back.</p>
+    <div class="reward-card-grid-v250" data-reward-card-grid-v250 data-reward-history-v294 style="margin-top:8px">
+      ${rewardHistoryCardsV294.map(rewardCardHtmlV250).join('')}
+    </div>
+    ${rewardHistoryCardsV294.length?'':'<p class="muted small reward-card-empty-v250">Nothing has ended yet.</p>'}`:''}
     ${canSetupGrow?`<p class="reward-card-templates-v250"><button type="button" class="btn ghost sm" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel">${CUI.icon('star',{size:16})}<span>Start from a template</span></button></p>
     <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}`;
   /* ===== V271 Programmes Overview and History =====
@@ -6750,6 +6763,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     growOffersTabV324=tab;
     growRerenderV322();
   });
+  /* V324: the Point system reward grid's own Published/Draft/History filter. Same reasoning as
+     the Limited Offer tabs above — the card SET changes per tab, not just what is shown of one
+     card, so this re-renders rather than toggling `hidden`. */
+  outerMain.querySelectorAll('[data-grow-points-tab-v324]').forEach(button=>button.onclick=()=>{
+    const tab=button.dataset.growPointsTabV324;
+    if(!['published','draft','history'].includes(tab))return;
+    growPointsRewardTabV324=tab;
+    growRerenderV322();
+  });
   /* V324: reuses business_delete_promotion_v183 exactly as the deep editor (promotionsPage) calls
      it — same RPC, same confirm wording, same toast wording — rather than a second write path for
      the same action. A Published delete RETIRES (active=false, ends_at pulled to now); the row
@@ -7044,7 +7066,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'b5d0e274802732064a3e22cea1aa6036bac72938d93c28cf890aecd1cbc890be',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'0d10fbd68a3d1d6b583004556bfa926695a5dd021bf2d8692ef3efbc5c6cef1b',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
