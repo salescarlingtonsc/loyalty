@@ -6,6 +6,17 @@
 --      onto that exact staff member, not whichever round-robin would otherwise pick;
 --   2. if that staff member is deactivated before the manual confirm runs, the confirm still
 --      succeeds (falls back to round-robin) instead of failing the whole decision.
+--
+-- Confirms through public.staff_decide_booking_request_v73, the public wrapper (granted to
+-- authenticated) that resolves the branch via app.require_branch_module_v94 and then calls the
+-- v94-renamed body this migration actually changes, staff_decide_booking_request_v73_v94_base —
+-- calling the base function directly bypasses its own ACL (revoked from every role) and would
+-- pass under a permission model the real confirm button never uses.
+--
+-- Staff names are deliberately NOT alphabetically "chosen before other": round-robin's tie-break
+-- (fewest recent appointments, then oldest last-booked nulls-first, then full_name, then id) would
+-- otherwise pick the "chosen" name by coincidence even on unpatched code, making the test pass for
+-- the wrong reason. "Zephyr" sorts after "Alpha" on purpose.
 
 begin;
 
@@ -59,28 +70,32 @@ begin
   );
 
   insert into public.businesses(
-    id, name, slug, currency, is_synthetic, booking_staff_choice, booking_auto_confirm
+    id, name, slug, currency, is_synthetic, booking_staff_choice, booking_auto_confirm,
+    enabled_modules
   ) values (
-    v_business, 'V328 Manual Confirm', v_slug, 'SGD', true, true, false
+    v_business, 'V328 Manual Confirm', v_slug, 'SGD', true, true, false,
+    array['dashboard','clients','sales','loyalty','retention','bookings','appointments']
   );
   perform pg_temp.approve_v328_workspace(v_business);
 
   insert into public.branches(id, business_id, name, timezone, active, is_default)
   values (v_branch, v_business, 'V328 Branch', 'Asia/Singapore', true, true);
+  insert into public.branch_hours(business_id, branch_id, weekday, opens_at, closes_at)
+  select v_business, v_branch, weekday, time '00:00', time '23:59'
+    from generate_series(0, 6) weekday;
 
   insert into public.staff(id, business_id, user_id, role, full_name, active, customer_bookable)
   values
     (v_owner_staff, v_business, v_owner, 'owner', 'V328 Owner', true, false),
-    (v_staff_chosen, v_business, null, 'staff', 'V328 Chosen', true, true),
-    (v_staff_other, v_business, null, 'staff', 'V328 Other', true, true);
-  -- Both are free the whole day; round-robin (tie-break on created_at/name/id) would not
-  -- reliably pick v_staff_chosen on its own, so a pass here proves the choice was honoured.
+    (v_staff_chosen, v_business, null, 'staff', 'V328 Zephyr Chosen', true, true),
+    (v_staff_other, v_business, null, 'staff', 'V328 Alpha Other', true, true);
   insert into public.staff_branches(business_id, staff_id, branch_id)
   values (v_business, v_staff_chosen, v_branch), (v_business, v_staff_other, v_branch);
-  insert into public.staff_hours(business_id, staff_id, weekday, starts_at, ends_at)
-  select v_business, staff_id, weekday, time '00:00', time '23:59'
-    from (values (v_staff_chosen), (v_staff_other)) staff(staff_id)
-    cross join generate_series(0, 6) weekday;
+  -- Staff creation already seeds a default staff_hours row per weekday (trigger); widen those
+  -- rather than inserting fresh ones, which would collide on the (staff_id, weekday) unique key.
+  update public.staff_hours
+     set starts_at = time '00:00', ends_at = time '23:59'
+   where staff_id in (v_staff_chosen, v_staff_other);
 
   insert into public.services(id, business_id, name, price_cents, duration_min, active, show_on_booking_page)
   values (v_service, v_business, 'V328 Service', 5000, 30, true, true);
@@ -97,7 +112,7 @@ begin
 
   -- 2. manual confirm with no staff override must land on the customer's choice, not round-robin.
   perform pg_temp.as_v328_user(v_owner);
-  v_decision := public.staff_decide_booking_request_v73_v94_base(v_business, v_request, 'confirm', null);
+  v_decision := public.staff_decide_booking_request_v73(v_business, v_request, 'confirm', null);
   assert v_decision->>'outcome' = 'applied', 'the manual confirm must succeed';
   select appointment.staff_id into v_appointment_staff
     from public.appointments appointment
@@ -135,26 +150,30 @@ begin
   );
 
   insert into public.businesses(
-    id, name, slug, currency, is_synthetic, booking_staff_choice, booking_auto_confirm
+    id, name, slug, currency, is_synthetic, booking_staff_choice, booking_auto_confirm,
+    enabled_modules
   ) values (
-    v_business, 'V328 Fallback', v_slug, 'SGD', true, true, false
+    v_business, 'V328 Fallback', v_slug, 'SGD', true, true, false,
+    array['dashboard','clients','sales','loyalty','retention','bookings','appointments']
   );
   perform pg_temp.approve_v328_workspace(v_business);
 
   insert into public.branches(id, business_id, name, timezone, active, is_default)
   values (v_branch, v_business, 'V328 Fallback Branch', 'Asia/Singapore', true, true);
+  insert into public.branch_hours(business_id, branch_id, weekday, opens_at, closes_at)
+  select v_business, v_branch, weekday, time '00:00', time '23:59'
+    from generate_series(0, 6) weekday;
 
   insert into public.staff(id, business_id, user_id, role, full_name, active, customer_bookable)
   values
     (v_owner_staff, v_business, v_owner, 'owner', 'V328 Owner', true, false),
-    (v_staff_chosen, v_business, null, 'staff', 'V328 Chosen', true, true),
-    (v_staff_fallback, v_business, null, 'staff', 'V328 Fallback', true, true);
+    (v_staff_chosen, v_business, null, 'staff', 'V328 Zephyr Chosen', true, true),
+    (v_staff_fallback, v_business, null, 'staff', 'V328 Alpha Fallback', true, true);
   insert into public.staff_branches(business_id, staff_id, branch_id)
   values (v_business, v_staff_chosen, v_branch), (v_business, v_staff_fallback, v_branch);
-  insert into public.staff_hours(business_id, staff_id, weekday, starts_at, ends_at)
-  select v_business, staff_id, weekday, time '00:00', time '23:59'
-    from (values (v_staff_chosen), (v_staff_fallback)) staff(staff_id)
-    cross join generate_series(0, 6) weekday;
+  update public.staff_hours
+     set starts_at = time '00:00', ends_at = time '23:59'
+   where staff_id in (v_staff_chosen, v_staff_fallback);
 
   insert into public.services(id, business_id, name, price_cents, duration_min, active, show_on_booking_page)
   values (v_service, v_business, 'V328 Fallback Service', 5000, 30, true, true);
@@ -171,7 +190,7 @@ begin
   update public.staff set active = false where id = v_staff_chosen;
 
   perform pg_temp.as_v328_user(v_owner);
-  v_decision := public.staff_decide_booking_request_v73_v94_base(v_business, v_request, 'confirm', null);
+  v_decision := public.staff_decide_booking_request_v73(v_business, v_request, 'confirm', null);
   assert v_decision->>'outcome' = 'applied',
     'the manual confirm must still succeed when the chosen staff member has since been deactivated';
   select appointment.staff_id into v_appointment_staff
