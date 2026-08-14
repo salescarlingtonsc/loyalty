@@ -13990,6 +13990,33 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      measured against it. null = no published basis to move anyone off. */
   const publishedTierBasisW6I2=['visits','spend','points_earned'].includes(String(live?.tier_basis||''))
     ?tierBasisFromDbV306(live.tier_basis):null;
+  /* V324 (owner: Published/Draft/History for the reward catalogue, "for point system rewards" —
+     built here rather than in the drilled Overview category, because growSetupEntryV301 sends
+     every point-engine card straight to this wizard, "live or not" (V303, three owner rounds of
+     the drill being rejected as the editing surface). The Overview build from earlier today
+     shipped correctly but is unreachable for an owner clicking the card.
+
+     ONE merge, stored once, so state.rewards (below) and the History bucket (built inside
+     stepThreeHtml) share the SAME object references — a Remove/Undo click mutates a reward
+     in-session, and that mutation must be visible to History immediately, not just to whichever
+     view happened to hold its own copy. state.rewards keeps its existing filtered contract
+     exactly as V304 left it (archived rows dropped, draft wins on id); rewardsAllV324 is the one
+     new thing, the SAME merge before that filter runs, kept for History alone. */
+  const mergedRewardsV324=mergeRewardsV302(rewardListFrom(snapshot?.rewards),
+    rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:[]));
+  /* The new-in-draft set, reused from the SAME diff Overview already computes and tests —
+     growRewardPendingChangesV291. A reward that is LIVE with a pending edit stays in Published
+     with its existing pending marker (unchanged from today); only a reward that exists ONLY in
+     the draft — customers have never seen it — counts as this wizard's Draft bucket. */
+  /* The 'unit' argument only formats one diff field's display text (Cost, e.g. "300 points"),
+     which this call never reads — only .added's id list is used below. familyW6I2() (points vs
+     stamps) is not available yet at this point in the function, and is not needed for a value
+     this call throws away regardless. */
+  const rewardAddedIdsV324=new Set(growRewardPendingChangesV291({
+    liveRewards:rewardListFrom(snapshot?.rewards),
+    draftRewards:rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:[]),
+    options:growRewardDiffOptionsFromSnapshotV291(snapshot,'points')
+  }).added.map(reward=>String(reward.id)));
   const state={
     step:1,
     visited:new Set([1]),
@@ -14059,9 +14086,12 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* V304: the archived rows are dropped HERE, after the merge, so a draft's active:false wins
        over a published row that still says active. Filtering before the merge (V302/V303) simply
        hid the draft's decision and put the removed reward back on the step. */
-    rewards:mergeRewardsV302(rewardListFrom(snapshot?.rewards),
-      rewardListFrom(Array.isArray(snapshot?.draftDetail?.rewards)?snapshot.draftDetail.rewards:[]))
-      .filter(reward=>reward.active!==false),
+    /* V324: filtered from mergedRewardsV324 (computed just above `state`), not a second
+       independent merge — so a Remove/Undo click, which mutates the object this array holds a
+       reference to, is visible from rewardsAllV324 too without any extra bookkeeping. */
+    rewards:mergedRewardsV324.filter(reward=>reward.active!==false),
+    rewardsAllV324:mergedRewardsV324,
+    rewardTabV324:'published',
     tiers:mergeTiersV303(tierListFrom(liveTiers),
       tierListFrom(Array.isArray(snapshot?.draftDetail?.tiers)?snapshot.draftDetail.tiers:[]))
       .filter(tier=>tier.active!==false),
@@ -14897,13 +14927,41 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :'';
     /* V304: Remove sits beside Edit on every row, and a removed row stays muted with Undo for the
        rest of this visit (owner: "i need to be able to add or delete"). Same shape as the tier
-       rows above, deliberately — one list pattern for both steps. */
+       rows above, deliberately — one list pattern for both steps. Unchanged by V324 below — the
+       History bucket reuses this SAME function for its rows, because a retired reward's row was
+       already exactly what History needed (Undo included). */
     const rewardRow=reward=>reward.active===false
       ?`<li class="is-removed-v304" data-grow-setup-rewardrow-v304="${esc(reward.id)}"><span><b data-merchant-content>${esc(reward.name)}</b><span class="muted small"> · Removed</span></span><button type="button" class="btn ghost sm" data-grow-setup-reward-undo-v304="${esc(reward.id)}">Undo</button></li>`
-      :`<li data-grow-setup-rewardrow-v304="${esc(reward.id)}"><span><b data-merchant-content data-grow-setup-rewardname-v304>${esc(reward.name)}</b><span class="muted small" data-grow-setup-rewardpoints-v304>${esc(rewardRowPointsTextV304(reward.points))}</span><span class="muted small" data-grow-setup-rowmark-v304="reward:${esc(reward.id)}">${esc(rowMarkTextV304(reward.id))}</span></span><span class="grow-setup-rowactions-v304"><button type="button" class="btn ghost sm" data-grow-setup-reward-edit-v301="${esc(reward.id)}">Edit</button><button type="button" class="btn ghost sm" data-grow-setup-reward-remove-v304="${esc(reward.id)}">Remove</button></span></li>`;
-    const rows=state.rewards.length
-      ?`<ul class="grow-setup-rewardlist-v301">${state.rewards.map(rewardRow).join('')}</ul>`
-      :'<p class="muted small">No reward yet. Add the first one below.</p>';
+      :`<li data-grow-setup-rewardrow-v304="${esc(reward.id)}"><span><b data-merchant-content data-grow-setup-rewardname-v304>${esc(reward.name)}</b><span class="muted small" data-grow-setup-rewardpoints-v304>${esc(rewardRowPointsTextV304(reward.points))}</span><span class="muted small" data-grow-setup-rowmark-v304="reward:${esc(reward.id)}">${esc(rowMarkTextV304(reward.id))}</span>${rewardAddedIdsV324.has(String(reward.id))?'<span class="pill new" style="margin-left:6px">Not live yet</span>':''}</span><span class="grow-setup-rowactions-v304"><button type="button" class="btn ghost sm" data-grow-setup-reward-edit-v301="${esc(reward.id)}">Edit</button><button type="button" class="btn ghost sm" data-grow-setup-reward-remove-v304="${esc(reward.id)}">Remove</button></span></li>`;
+    /* V324 (owner: "click into points system - it should similarly show 1. publish 2. draft
+       3. history (for point system rewards)"). Built HERE, not in the drilled Overview category
+       Points System used to open — growSetupEntryV301 sends every point-engine card straight to
+       THIS wizard, live or not, so this is the screen an owner actually reaches. Published/Draft
+       split on rewardAddedIdsV324 (the SAME growRewardPendingChangesV291 diff Overview already
+       uses): a reward that exists in the published set, edited or not, stays Published; only a
+       reward that exists ONLY in the draft — customers have never seen it — is Draft. History
+       reads rewardsAllV324, the unfiltered merge, because state.rewards itself never carried a
+       reward retired before this session opened (V304 filters those out on purpose) — and both
+       arrays share the same object references, so a Remove/Undo click updates History immediately
+       without a second write path. */
+    const publishedRewardsV324=state.rewards.filter(reward=>reward.active!==false&&!rewardAddedIdsV324.has(String(reward.id)));
+    const draftRewardsV324=state.rewards.filter(reward=>reward.active!==false&&rewardAddedIdsV324.has(String(reward.id)));
+    const historyRewardsV324=state.rewardsAllV324.filter(reward=>reward.active===false);
+    /* role="group", not "tablist" — same reason as every other V324 filter strip: this filters
+       one list's own rows, it is not growPage's peer-tab pattern. */
+    const rewardTabStripV324=`<div class="v150-segment" role="group" aria-label="Reward status" data-grow-setup-reward-tabstrip-v324>
+      <button type="button" aria-pressed="${state.rewardTabV324==='published'}" data-grow-setup-reward-tab-v324="published">Published${publishedRewardsV324.length?` (${publishedRewardsV324.length})`:''}</button>
+      <button type="button" aria-pressed="${state.rewardTabV324==='draft'}" data-grow-setup-reward-tab-v324="draft">Draft${draftRewardsV324.length?` (${draftRewardsV324.length})`:''}</button>
+      <button type="button" aria-pressed="${state.rewardTabV324==='history'}" data-grow-setup-reward-tab-v324="history">History${historyRewardsV324.length?` (${historyRewardsV324.length})`:''}</button>
+    </div>`;
+    const rewardListHtmlV324=list=>list.length
+      ?`<ul class="grow-setup-rewardlist-v301">${list.map(rewardRow).join('')}</ul>`
+      :'';
+    const rows=state.rewardTabV324==='published'
+      ?(publishedRewardsV324.length?rewardListHtmlV324(publishedRewardsV324):'<p class="muted small">Nothing is published yet.</p>')
+      :state.rewardTabV324==='draft'
+      ?(draftRewardsV324.length?rewardListHtmlV324(draftRewardsV324):'<p class="muted small">No draft reward yet — add one below and it stays here until you publish.</p>')
+      :(historyRewardsV324.length?rewardListHtmlV324(historyRewardsV324):'<p class="muted small">Nothing has been removed yet.</p>');
     const chips=`<div class="grow-setup-chips-v301" aria-label="Suggested rewards">${suggestionsV301().map((item,index)=>`<button type="button" class="grow-setup-chip-v301" data-grow-setup-suggest-v301="${index}">${esc(item.name)} — ${esc(unitWord(item.points,rewardUnit()))}</button>`).join('')}</div>`;
     /* Both accruing programmes on: the gift catalogue is still ONE list on this surface. v313 gave
        loyalty_rewards a programme_id, but save_loyalty_reward_draft has no field for it yet, so a
@@ -14913,7 +14971,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const sharedGiftNote=stampsHead&&state.switches.points===true
       ?'<p class="muted small" style="margin-top:10px">Your gift list is shared with Points &amp; gifts for now. Set the stamps a full card needs above; stamp-only gifts arrive with the stamp card update.</p>'
       :'';
-    return `<p class="grow-setup-lead-v301">What do customers get?</p>${stampsHead}${sharedGiftNote}${rows}${chips}${rewardFormHtml()}`;
+    return `<p class="grow-setup-lead-v301">What do customers get?</p>${stampsHead}${sharedGiftNote}${rewardTabStripV324}${rows}${chips}${rewardFormHtml()}`;
   };
   /* V303/V305/V306's modeChangeLineV303 is DELETED at V314 (W6 increment 1). It compared the
      chosen model against businesses.points_mode to decide whether to announce a mode change — and
@@ -15341,6 +15399,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         $('growSetupRewardNameV301')?.focus({preventScroll:true});
       },'growSetupRewardSaveV304');
     };
+    /* V324: a pure client-side filter over rows already on the page — no field on any reward
+       changed, so this re-renders the wizard step exactly like every other click here (Edit,
+       Remove, Undo all call the same render()), never a network round trip of its own. */
+    host.querySelectorAll('[data-grow-setup-reward-tab-v324]').forEach(button=>button.onclick=()=>{
+      const tab=button.dataset.growSetupRewardTabV324;
+      if(!['published','draft','history'].includes(tab))return;
+      state.rewardTabV324=tab;
+      render();
+    });
     host.querySelectorAll('[data-grow-setup-reward-remove-v304]').forEach(button=>button.onclick=()=>{
       const reward=state.rewards.find(item=>item.id===button.dataset.growSetupRewardRemoveV304);
       if(!reward)return;

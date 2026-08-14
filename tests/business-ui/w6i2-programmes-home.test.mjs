@@ -544,9 +544,22 @@ function makeDom() {
   return { host, $, get markup() { return markup } };
 }
 
+/* V324: growSetupWizardV301's own Published/Draft/History reward tabs call two functions defined
+   BEFORE this section's start marker, so the crude text-slice below never swept them in (unlike
+   mergeRewardsV302, which happens to sit lexically INSIDE the swept range and so "just worked").
+   Injected the same way the other real collaborators are — real bytes, not a reimplementation. */
+/* section() here is EXCLUSIVE of its end marker (unlike this repo's other statement()/closure()
+   helpers), so each extraction needs its own closing brace appended back on. */
+const growRewardPendingChangesSrc = section('function growRewardPendingChangesV291(', '\n}') + '\n}';
+const growRewardDiffOptionsSrc = section('function growRewardDiffOptionsFromSnapshotV291(', '\n}') + '\n}';
+const growRewardDiffFieldsSrc = section('function growRewardDiffFieldsV291(', '\n}') + '\n}';
+
 const wizardFactory = new Function('S', 'sb', 'esc', 'CUI', '$', 'toast', 'ownerErrorText',
   'localizeWorkspaceSubtreeV97', 'expiryModeRequiresDays', 'growSetupComparisonV301',
   'pendingGrowSetupModelV303', 'pendingGrowSetupRewardV303', `
+  ${growRewardDiffFieldsSrc}
+  ${growRewardDiffOptionsSrc}
+  ${growRewardPendingChangesSrc}
   ${spineHelpersSrc}
   ${wizardConstsSrc}
   ${section('async function growSetupWizardV301(', 'function growPublishFieldRowsV170(')}
