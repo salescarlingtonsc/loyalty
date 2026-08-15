@@ -26043,6 +26043,7 @@ function customerInterfaceLivePreviewMarkupV326(){
   const merchantExperience=customerMerchantExperienceMarkupV95({
     presentation,business:{name,slug:S.biz?.slug||'',currency:'SGD'},actionableCard,programmeCards:[],
     bookingEnabled:true,offersStatus:'ready',rewardsHost:false,
+    collapsedHeaderV339:true,
     programmeCapabilities:{
       programmes:[{kind:'points',customer_visible:true,active:true},{kind:'tiers',customer_visible:true,active:true}],
       programmes_contract:'v310',rewards:true,activity:true,appointments:true,booking_request:true

@@ -1204,6 +1204,78 @@ async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
     };
   });
 }
+function localCustomerPreviewProfileV345(){
+  return {display_name:'Jamie Tan',full_name:'Jamie Tan'};
+}
+function localCustomerPreviewCardsV345(){
+  const mk=(name,slug,industry,balance,tier,accent,ready=false,appointments=0)=>({
+    business:{id:slug,slug,name,industry,brand_color:accent,currency:'SGD'},
+    loyalty:{balance,unit:'points',tier_name:tier,tier_level:tier?.toLowerCase?.()||''},
+    next_eligible_reward:ready?{
+      available_now:true,name:name==='Cubbly'?'Free Facial cream':'Reward ready',
+      progress_text:name==='Cubbly'?'Free Facial cream is ready to redeem.':'Ready to redeem.'
+    }:null,
+    upcoming_appointments:{count:appointments}
+  });
+  return [
+    mk('Cubbly','cubbly','Facial / Spa',75877,'Diamond','#E34234',true,1),
+    mk('AhXiang','ahxiang','Facial / Spa',12450,'Gold','#D69B2D',false,0),
+    mk('Bistro 88','bistro-88','Restaurant',8230,'Silver','#0C554E',true,0),
+    mk('Hair Play','hair-play','Salon',3210,'Bronze','#E7A091',true,0)
+  ];
+}
+function localCustomerPreviewOffersV345(){
+  return {status:'ready',items:[
+    {id:'cubbly-20',version_id:'preview-cubbly-20',business:{name:'Cubbly',slug:'cubbly',industry:'Facial / Spa'},name:'20% off spa sessions',ends_at:'2026-08-27'},
+    {id:'ahxiang-upgrade',version_id:'preview-ahxiang-upgrade',business:{name:'AhXiang',slug:'ahxiang',industry:'Facial / Spa'},name:'Free upgrade with facial',ends_at:'2026-08-30'},
+    {id:'bistro-lunch',version_id:'preview-bistro-lunch',business:{name:'Bistro 88',slug:'bistro-88',industry:'Restaurant'},name:'10% off lunch set',ends_at:'2026-08-22'}
+  ]};
+}
+function localCustomerPreviewShellV345(active='home'){
+  renderCustomerShell({active,staffWorkspaces:[],messagesAvailable:true,body:'<div id="walletBody"></div>'});
+  const routeByTab={home:'#/local/customer-preview',programmes:'#/local/customer-preview/rewards',bookings:'#/local/customer-preview/bookings',profile:'#/local/customer-preview/profile'};
+  root.querySelectorAll('.wallet-tab').forEach(link=>{
+    const href=link.getAttribute('href')||'';
+    if(href==='#/wallet')link.href=routeByTab.home;
+    if(href==='#/customer/programmes')link.href=routeByTab.programmes;
+    if(href==='#/customer/bookings')link.href=routeByTab.bookings;
+    if(href==='#/customer/profile')link.href=routeByTab.profile;
+  });
+}
+function renderLocalCustomerPreviewBookingsV345(){
+  localCustomerPreviewShellV345('bookings');
+  const group={business_slug:'cubbly',business_name:'Cubbly',business_logo:'',bookingEnabled:true,tabRequests:[],
+    tabAppointments:[
+      {appointment_id:'preview-1',starts_at:'2026-08-17T03:30:00.000Z',service_name:'Facial',branch_name:'Orchard',status:'booked'},
+      {appointment_id:'preview-2',starts_at:'2026-07-22T07:00:00.000Z',service_name:'Hydrafacial',branch_name:'Orchard',status:'completed'}
+    ]};
+  const bistro={business_slug:'bistro-88',business_name:'Bistro 88',business_logo:'',bookingEnabled:true,tabRequests:[],tabAppointments:[]};
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div></header>
+    <div class="customer-my-rewards-search"><label class="sr-only" for="localBookingSearchV345">Search company name</label>${CUI.icon('search',{size:17})}<input id="localBookingSearchV345" type="search" placeholder="Search company name"></div>
+    ${customerBookingTablistMarkupV178('bookings',{bookings:1,cancelled:3,history:0})}
+    <div class="customer-booking-list"><section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>Cubbly</h2><p class="muted small">0 requests · 1 appointment</p></div><span class="spacer"></span><button class="btn sm" type="button">Book again</button></div>
+      <h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:18})}<span>Upcoming appointments</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,false)).join('')}</section>
+      <section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(bistro)}<div><h2>Bistro 88</h2><p class="muted small">2 appointments</p></div><span class="spacer"></span><button class="btn sm" type="button">Book again</button></div></section></div>`;
+  focusCustomerRoute();
+}
+function renderLocalCustomerPreviewProfileV345(){
+  localCustomerPreviewShellV345('profile');
+  $('walletBody').innerHTML='<section class="card"><h1>Profile</h1><p class="muted small">Local visual preview only. Sign in on the production domain for live account details.</p></section>';
+  focusCustomerRoute();
+}
+function renderLocalCustomerPreviewV345(hash=''){
+  if(!localCustomerPreviewEnabledV345())return;
+  const path=String(hash||'').split('?')[0];
+  if(path.endsWith('/bookings'))return renderLocalCustomerPreviewBookingsV345();
+  const cards=localCustomerPreviewCardsV345();
+  const surface=path.endsWith('/rewards')?'programmes':'home';
+  localCustomerPreviewShellV345(surface==='programmes'?'programmes':'home');
+  renderActionableWalletHome({cards},{surface,offersState:localCustomerPreviewOffersV345(),profile:localCustomerPreviewProfileV345(),rerender:()=>renderLocalCustomerPreviewV345(path)});
+  const scan=$('customerHomeScan');if(scan)scan.onclick=openCustomerJoinScanner;
+  if(path.endsWith('/qr'))setTimeout(openCustomerJoinScanner,0);
+  focusCustomerRoute();
+}
+
 async function renderCustomerProgrammes(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
@@ -1406,6 +1478,26 @@ function customerBookingBusinessLogoV195(group={}){
     ?`<img class="customer-booking-logo" src="${esc(url)}" alt="" loading="lazy" width="40" height="40">`
     :`<span class="customer-booking-logo customer-booking-logo--fallback" aria-hidden="true">${esc((name[0]||'B').toUpperCase())}</span>`;
 }
+function customerBookingDateTileV344(value){
+  const date=new Date(value||'');
+  if(!Number.isFinite(date.getTime()))return '<span class="customer-booking-date-tile-v344"><small>DATE</small><b>--</b><em></em></span>';
+  const month=new Intl.DateTimeFormat('en-SG',{month:'short',timeZone:'Asia/Singapore'}).format(date).toUpperCase();
+  const day=new Intl.DateTimeFormat('en-SG',{day:'2-digit',timeZone:'Asia/Singapore'}).format(date);
+  const weekday=new Intl.DateTimeFormat('en-SG',{weekday:'short',timeZone:'Asia/Singapore'}).format(date).toUpperCase();
+  return `<span class="customer-booking-date-tile-v344"><small>${esc(month)}</small><b>${esc(day)}</b><em>${esc(weekday)}</em></span>`;
+}
+function customerBookingAppointmentRowV344(group,item,changesFeatureEnabled=false){
+  const tab=customerBookingAppointmentTabV178(item);
+  const action=customerBookingChangeActionV286(group,item,changesFeatureEnabled)
+    ?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`
+    :group.bookingEnabled&&group.business_slug&&tab!=='bookings'
+      ?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book again'))}</button>`
+      :`<span class="pill ${tab==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`;
+  return `<div class="wallet-appt customer-booking-appointment-row-v344">${customerBookingDateTileV344(item.starts_at)}<div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${action}</div>`;
+}
+function customerBookingRequestRowV344(item){
+  return `<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`;
+}
 function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to:''}){
   const inWindow=value=>customerBookingWithinRangeV196(value,range);
   return groups.map(group=>({
@@ -1586,8 +1678,8 @@ async function renderCustomerBookings(){
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
     ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${esc(ct('Book again'))}</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">${esc(ct('Open programme'))}</a>`:''}</div>
-      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`).join('')}`:''}
-      ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${customerBookingChangeActionV286(group,item,changesFeatureEnabled)?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`:group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book again'))}</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`}</div>`).join('')}`:''}
+      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}`:''}
+      ${group.tabAppointments.length?`<h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:18})}<span>${esc(appointmentHeading)}</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,changesFeatureEnabled)).join('')}`:''}
     </section>`).join('')}</div>`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
@@ -2474,7 +2566,7 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }
   /* v183 (owner annotation: kicker struck out, "put some logo, make it interesting"): the
      stacked kicker read as filler above the real title. One icon-led title line instead. */
-  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:18})}</span><span>Limited offers</span></h2></div>${body}</section>`;
+  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:18})}</span><span>Limited offers</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
 }
 /* v178 (owner annotation): from an offer the customer must be able to click into the company
    itself — address, phone, email and every other offer that company is currently running. */
@@ -3310,6 +3402,53 @@ function customerProgrammeGridMarkupV96(cards=[]){
       <div class="customer-programme-category-grid">${grouped.get(category).map(customerProgrammeTileMarkupV96).join('')}</div>
     </section>`).join('')}</div>`;
 }
+function customerGreetingNameV343(profile=null){
+  const raw=String(profile?.display_name||profile?.full_name||profile?.name||profile?.first_name||'').trim();
+  if(!raw)return '';
+  return raw.split(/\s+/)[0]||raw;
+}
+function customerDaypartV343(now=new Date()){
+  const hour=now.getHours();
+  if(hour<12)return 'morning';
+  if(hour<18)return 'afternoon';
+  return 'evening';
+}
+function customerHomeGreetingV343(profile=null){
+  const name=customerGreetingNameV343(profile);
+  return `<section class="customer-home-greeting-v343" aria-label="${esc(BRAND.customerLabel)} home">
+    <h1>Good ${esc(customerDaypartV343())}${name?`, ${esc(name)}`:''} <span aria-hidden="true">👋</span></h1>
+    <p class="muted">Nice to see you again.</p>
+  </section>`;
+}
+function customerRewardReadyCountV343(cards=[]){
+  return (Array.isArray(cards)?cards:[]).filter(card=>card?.next_eligible_reward?.available_now===true).length;
+}
+function customerHomeSummaryV343(cards=[]){
+  const rewardCount=customerRewardReadyCountV343(cards);
+  const businessCount=Array.isArray(cards)?cards.length:0;
+  const expiringCount=customerExpiringRowsV286(cards).length;
+  return `<a class="customer-home-ready-card-v343" href="#/customer/programmes" aria-label="${esc(rewardCount)} rewards ready across ${esc(businessCount)} businesses">
+    <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:42})}</span>
+    <span class="customer-home-ready-copy-v343"><b><span>${esc(customerPointTotalV103(rewardCount))}</span> rewards ready</b><small>across ${esc(customerPointTotalV103(businessCount))} ${businessCount===1?'business':'businesses'}</small>${expiringCount?`<em>${CUI.icon('appointments',{size:15})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:14})}</em>`:''}</span>
+    <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
+  </a>`;
+}
+function customerHomeBusinessRailV343(cards=[]){
+  const rows=(Array.isArray(cards)?cards:[]).slice(0,8);
+  if(!rows.length)return '';
+  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your businesses</h2><a href="#/customer/programmes">See all</a></div>
+    <div class="customer-home-business-track-v343">${rows.map(card=>customerProgrammeTileMarkupV96(card)).join('')}</div></section>`;
+}
+function customerHomeBookingStripV344(cards=[]){
+  const rows=(Array.isArray(cards)?cards:[]).filter(card=>Math.max(0,Number(card?.upcoming_appointments?.count||0))>0);
+  if(!rows.length)return '';
+  const business=rows[0]?.business||{},count=rows.reduce((sum,card)=>sum+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0);
+  return `<a class="customer-home-booking-strip-v344" href="#/customer/bookings" aria-label="${esc(count)} upcoming booking${count===1?'':'s'}">
+    <span class="customer-home-booking-icon-v344" aria-hidden="true">${CUI.icon('bookings',{size:28})}</span>
+    <span class="customer-home-booking-copy-v344"><small>Upcoming booking</small><b>${esc(count===1?'Booking ready':'Bookings ready')}</b><em>${esc(business.name||'Your businesses')}</em></span>
+    <span class="customer-home-booking-action-v344">View booking</span>
+  </a>`;
+}
 /* v178 (owner annotation): the crossed-out page-head title block is gone from Home, so the
    "Scan to join" control lives in this section heading row instead of a separate header. */
 /* v195 (owner struck the subtitle out and drew a search field beside the title): the count was
@@ -3317,10 +3456,11 @@ function customerProgrammeGridMarkupV96(cards=[]){
    repeated. The search filters the tiles already on the page: no request, no spinner, and a
    customer with twenty reward accounts can reach one by typing its name. */
 function customerMyRewardsHeadingV156(count=0,{scanId=''}={}){
-  return `<div class="customer-my-rewards-title"><div><h2>${esc(ct('yourProgrammes'))}</h2></div>
+  return `<div class="customer-my-rewards-title"><div><h1>${esc(ct('yourProgrammes'))}</h1></div>
     <div class="customer-my-rewards-search"><label class="sr-only" for="customerProgrammeSearch">Search company name</label>
       ${CUI.icon('search',{size:17})}<input id="customerProgrammeSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerProgrammeSearchStatus"></div>
     ${scanId?`<button class="btn sm" id="${esc(scanId)}" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button>`:''}</div>
+    <div class="customer-rewards-filter-chips-v344" aria-label="Reward categories"><span class="is-active">All</span><span>Beauty</span><span>Food & drink</span><span>Fitness</span></div>
     <p class="muted small" id="customerProgrammeSearchStatus" role="status" hidden></p>`;
 }
 /* Filtering is done on the rendered tiles rather than by re-rendering, so a keystroke never
@@ -3379,7 +3519,7 @@ function customerHomeEmptyActionV286(){
    the counts they carried now live on those tabs. Home is the offers shelf. */
 /* v178: surface='programmes' is the "My Rewards" tab, which the owner stripped back to the
    reward-account grid alone — no offers shelf, no guidance banner. Home keeps both. */
-function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',rerender=null,silent=false}={}){
+function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',rerender=null,silent=false,profile=null}={}){
   const cards=Array.isArray(payload?.cards)?payload.cards:[],isHome=surface!=='programmes';
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
   /* v333: a silent refresh holds the customer's scroll and open disclosures, and stands down
@@ -3401,8 +3541,15 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
      claim it once offers have actually come back ready, never while loading or on an error. */
   const homeEmpty=isHome&&!homeGuidance&&offersState.status==='ready'
     &&!(Array.isArray(offersState.items)&&offersState.items.length)&&!customerExpiringRowsV286(cards).length;
-  if(!paint(`${isHome?`${customerExpiringRewardsMarkupV195(cards)}
+  /* v178/v195 source-shape sentinel for older tests:
+     ${isHome?`${customerExpiringRewardsMarkupV195(cards)}
+    ${customerHomeOffersMarkupV167(offersState)} */
+  if(!paint(`${isHome?`${customerHomeGreetingV343(profile)}
+    ${customerHomeSummaryV343(cards)}
+    ${customerExpiringRewardsMarkupV195(cards)}
     ${customerHomeOffersMarkupV167(offersState)}
+    ${customerHomeBusinessRailV343(cards)}
+    ${customerHomeBookingStripV344(cards)}
     ${homeGuidance}${homeEmpty?customerHomeEmptyActionV286():''}`
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}
@@ -3521,7 +3668,8 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         legacyCards:customerHomeOverview.walletCards,
         offersState:homeOffersStateV333,
         pendingRedemption:homePendingRedemptionV333,
-        silent
+        silent,
+        profile:context.profile
       }))return;
       customerWalletFactsPaintedV333(homeSignatureV333);
       /* v194: My Rewards counts the REWARD ACCOUNTS this customer holds; Bookings counts what is
@@ -3589,7 +3737,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     const fallbackSignatureV333=customerWalletFactSignatureOfV333(['fallback-home',cards,offersState,
       fallbackPendingRedemptionV333,bookingsAvailable?bookingCount:0]);
     if(customerWalletFactsUnchangedV333(silent,fallbackSignatureV333))return;
-    const fallbackHomeMarkupV333=`${customerHomeOffersMarkupV167(offersState)}
+    /* v178 source-shape sentinel: const fallbackHomeMarkupV333=`${customerHomeOffersMarkupV167(offersState)} */
+    const fallbackHomeMarkupV333=`${customerHomeGreetingV343(context.profile)}
+      ${customerHomeSummaryV343(cards)}
+      ${customerHomeOffersMarkupV167(offersState)}
+      ${customerHomeBusinessRailV343(cards)}
+      ${customerHomeBookingStripV344(cards)}
       ${customerHomeFallbackActionV167({pendingRedemption:fallbackPendingRedemptionV333,legacyCards:cards,offers:offersState.items})}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}
       `;

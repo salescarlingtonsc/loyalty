@@ -60,7 +60,8 @@ export const CUSTOMER_ENTRIES = [
   'renderCustomerProgrammes', 'renderCustomerBookings', 'renderCustomerMessages',
   'renderCustomerProfile', 'renderCustomerWallet', 'renderCustomerWalletUnavailable',
   'renderCustomerCapabilityRetry', 'renderCustomerRecoveryPasswordSetup',
-  'renderCustomerFirstProgrammeQuest', 'renderCustomerCommunicationsV263'
+  'renderCustomerFirstProgrammeQuest', 'renderCustomerCommunicationsV263',
+  'renderLocalCustomerPreviewV345'
 ];
 /* v200: the way IN to the workspace — sign in / sign up, pick a persona, accept a staff invite,
    activate an approved business, and the two "you cannot go further" cards. A signed-out merchant

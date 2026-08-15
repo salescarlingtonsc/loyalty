@@ -1085,7 +1085,7 @@ function loadAppChunkV185(name){
    route and downloaded the customer chunk instead of the workspace one. '#/customer/' plus the
    matcher's own exact-equality branch covers '#/customer', '#/customer?…' and '#/customer/…'
    exactly as before, and nothing else. The inline preloader in index.html mirrors this list. */
-const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join','#/offer/'];
+const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer/','#/wallet','#/claim','#/join','#/offer/','#/local/customer-preview'];
 function appSurfaceForRouteV185(hash,{signedIn=false}={}){
   const route=String(hash||'').split('?')[0];
   if(route.startsWith('#/platform'))return null;
@@ -1229,6 +1229,7 @@ async function route(){
     const appSurfaceV185=appSurfaceForRouteV185(h,{signedIn:!!S.user});
     if(appSurfaceV185)await loadAppChunkV185(appSurfaceV185);
     if(!isRouteCurrent())return;
+    if(localCustomerPreviewEnabledV345()&&h.startsWith('#/local/customer-preview'))return globalThis.renderLocalCustomerPreviewV345?.(h);
     globalThis.NestlyCustomerPush?.setAuthenticatedUser?.(S.user?.id||'');
     const recoveryDisposition=customerRecoveryDisposition(customerRecoveryVerified(),S.user?.id||'');
     if(recoveryDisposition==='clear')rememberCustomerRecoveryVerified('');
@@ -2533,7 +2534,7 @@ function openCustomerJoinScanner(){
   overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
   overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker" id="customerScanSheetKicker">${esc(ct('My Peekaa QR'))}</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">${esc(ct('My Peekaa QR'))}</h2><p class="muted small" id="customerScanSheetSubtitle" style="margin-top:5px">${esc(ct('Show this at any Peekaa business to be recognised as you.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:18})}</button></div>
     <div id="customerMyQrPanelV329" aria-busy="true">
-      <div id="customerMyQrSlotV329" style="display:grid;place-items:center;min-height:200px;margin:16px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;max-width:240px"><p class="muted small">${esc(ct('Loading your code…'))}</p></div>
+      <div class="customer-my-qr-stage-v344"><span class="customer-qr-sparkle-v344 s1" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s2" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s3" aria-hidden="true">✦</span><div id="customerMyQrSlotV329" style="display:grid;place-items:center;min-height:200px;margin:16px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;max-width:240px"><p class="muted small">${esc(ct('Loading your code…'))}</p></div><span class="customer-qr-heart-v344" aria-hidden="true"><span>•ᴗ•</span></span></div>
       <p id="customerMyQrStatusV329" class="muted small" role="status" aria-live="polite"></p>
       <button class="btn ghost sm" id="customerMyQrSwitchToScan" type="button" style="width:100%;margin-top:6px">${CUI.icon('scan',{size:17})}<span>${esc(ct('Scan a business QR instead'))}</span></button>
     </div>
@@ -2837,6 +2838,9 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true,{silent=false}={}){
   return {features,profile,profileError:profileResult.error||null,registeredCustomer,staff,customer,staffWorkspaces:staff};
 }
 
+function localCustomerPreviewEnabledV345(){
+  return ['localhost','127.0.0.1','::1'].includes(String(location.hostname||''));
+}
 /* v244 (owner, nav revamp): Explore — "search for nearby peekaa businessess (can type example
    food near me, chicken rice, dessert shop etc) - then will pop up relevant business based on
    search - like google search)". The matching runs on the SERVER, because "chicken rice" should
