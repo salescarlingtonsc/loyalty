@@ -31,7 +31,15 @@ test('a reward short of points shows computed progress with an accessible text e
   assert.match(rewards,/gap=Math\.max\(0,cost-rewardBalance\)/);
   assert.match(rewards,/progress=cost>0\?Math\.min\(100,Math\.max\(0,Math\.round\(\(rewardBalance\/cost\)\*100\)\)\):100/);
   assert.match(rewards,/<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:\$\{progress\}%">/);
-  assert.match(rewards,/\$\{esc\(customerPointTotalV103\(gap\)\)\} more \$\{esc\(rewardUnit\)\}/);
+  /* v340 (gap 5): photo 1's in-progress card reads "{collected}/{cost} pts", with the gap kept
+     beside it rather than replacing it — both numbers come from data already on the card. */
+  assert.match(rewards,/\$\{esc\(customerPointTotalV103\(Math\.min\(rewardBalance,cost\)\)\)\}\/\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}/);
+  assert.match(rewards,/\$\{esc\(customerPointTotalV103\(gap\)\)\} more to go/);
+  assert.match(rewards,/const inProgressV340=!ready&&cost>0&&rewardBalance<cost/,
+    'the third card type is computed from catalogue data already present on every reward');
+  /* A bar filling toward a reward that has ENDED, hit its claim limit, has not started, or is
+     gated behind a tier would be a lie, so those keep the plain resting card. */
+  assert.match(rewards,/!\['tier_locked','ended','limit_reached','not_started','disabled'\]\.includes\(r\.availability\)/);
   assert.match(rewards,/<span class="sr-only">\$\{esc\(customerPointTotalV103\(rewardBalance\)\)\} of \$\{esc\(customerPointTotalV103\(cost\)\)\}/);
   // V176 put the tier-lock line first ("Reach Gold to unlock"), with the availability label
   // remaining as the fallback — which is exactly the secondary-text role this asserts.
@@ -42,7 +50,10 @@ test('a reward short of points shows computed progress with an accessible text e
 
 test('a redeemable reward is chipped Ready and keeps the QR redemption contract',()=>{
   assert.match(rewards,/ready=!!\(r\.action_key&&customerRewardCanRedeem\(r,redemptionEnabled\)\)/);
-  assert.match(rewards,/\$\{ready\?'<span class="pill ok">Ready<\/span>':''\}/);
+  /* v339 restyled the RESTING card (photo 1): the badge moved to the head of the card and reads
+     "Ready to claim". It is still driven by the same `ready` expression asserted above, and the
+     redemption contract below is untouched. */
+  assert.match(rewards,/\$\{ready\?'<span class="pill ok">Ready to claim<\/span>':''\}/);
   assert.match(rewards,/data-customer-redeem="\$\{esc\(r\.action_key\)\}"><span>Show QR at counter<\/span>|data-customer-redeem="\$\{esc\(r\.action_key\)\}">\$\{CUI\.icon\('scan',\{size:17\}\)\}<span>Show QR at counter<\/span>/);
   assert.match(rewards,/button\.querySelector\('span'\)\.textContent='Show QR at counter'/);
   assert.match(rewards,/customer_create_redemption_intent_v89/);

@@ -331,7 +331,9 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v330_pending_slot_block_and_confirmation_template', 'db/tests/v330_pending_slot_block_and_confirmation_template.sql'],
   ['nestly_v329_membership_plan_lifecycle', 'db/tests/v329_membership_plan_lifecycle.sql'],
   ['nestly_v331_tier_lifecycle', 'db/tests/v331_tier_lifecycle.sql'],
-  ['nestly_v332_retention_program_lifecycle', 'db/tests/v332_retention_program_lifecycle.sql']
+  ['nestly_v332_retention_program_lifecycle', 'db/tests/v332_retention_program_lifecycle.sql'],
+  // v340 is WRITTEN, NOT APPLIED — this suite is the rehearsal it must pass first.
+  ['nestly_v340_reward_purchase_requirement', 'db/tests/v340_reward_purchase_requirement.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -835,7 +837,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 281); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision) + v331 tier lifecycle + v332 retention program lifecycle
+  assert.equal(pending.length, 282); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision) + v331 tier lifecycle + v332 retention program lifecycle + v340 reward purchase requirement (NOT applied)
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

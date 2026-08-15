@@ -993,6 +993,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .service-media-cell{display:flex;align-items:center;gap:10px;min-width:0}
 .service-photo-uploader-v158{position:relative;overflow:hidden}
 .service-photo-uploader-v158 input{position:absolute;inset:0;opacity:0;cursor:pointer}
+/* v340 (gap 4): the reward editor's photo control — same hidden-input-inside-a-button shape as
+   the catalogue uploader above, plus a preview of what customers will actually see. */
+.reward-photo-preview-v340{display:grid;place-items:center;width:100%;max-width:240px;aspect-ratio:16/10;border:1px solid var(--hair);border-radius:12px;overflow:hidden;background:var(--tint);text-align:center;padding:8px}
+.reward-photo-preview-v340 img{display:block;width:100%;height:100%;object-fit:cover;padding:0}
 .till-cart-lines{list-style:none;padding:0;margin:12px 0 0}
 .till-cart-line{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .till-cart-line .till-cart-line-label{flex:1;min-width:0;font-weight:600}
@@ -2111,6 +2115,57 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-rewards.customer-rewards-carousel-v337{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;padding-bottom:6px;margin-top:8px}
 .wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex:0 0 78%;max-width:280px;scroll-snap-align:start}
 @media(min-width:640px){.wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex-basis:260px}}
+/* v339 (owner mockup "photo 1") — collapsed profile header, the reward/offers swipe region, the
+   restyled tier card and reward cards, the earn-more list, and the compact rewards explainer. */
+.wallet-head-compact-v339{gap:8px;min-height:44px}
+.customer-programme-compact-head-v339{justify-content:center;text-align:center;position:relative}
+.customer-programme-compact-head-v339 .customer-programme-identity{flex:1 1 auto;justify-content:center;text-align:center}
+.customer-programme-compact-head-v339 .customer-programme-head-icons-v337{position:absolute;top:0;right:0;display:flex;gap:10px;color:var(--muted)}
+.customer-programme-compact-head-v339 .customer-programme-tier-jump-v327{flex:0 0 100%;justify-content:center;margin:0 auto}
+/* v340 (gap 2): the back chevron moved out of the app-shell bar and into this header, inline
+   with the business name. Absolutely positioned at the left edge so the centred name and logo
+   keep the exact placement v339 gave them, with a 44px target for the tap. */
+.customer-programme-back-v340{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border-radius:12px;color:var(--ink);text-decoration:none}
+.customer-programme-compact-head-v339 .customer-programme-back-v340{position:absolute;left:0;top:0;margin:-10px 0 0 -6px}
+.customer-programme-back-v340:hover,.customer-programme-back-v340:focus-visible{background:var(--tint)}
+.customer-reward-offer-swipe-v339{margin:0 0 14px}
+.customer-reward-offer-track-v339{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.customer-reward-offer-page-v339{flex:0 0 min(88%,340px);min-width:0;scroll-snap-align:start;display:flex}
+.customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0}
+@media(min-width:640px){.customer-reward-offer-page-v339{flex-basis:360px}}
+.customer-claimable-banner-validity-v339{margin-top:6px;font-size:.8rem;font-weight:650;color:#7a5c10}
+.customer-tier-card-head-v339{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.customer-tier-card-head-v339 .customer-programme-card-head-v310{margin:0}
+.customer-tier-avatar-v339{flex:0 0 auto;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-tier-standing-v339{margin-top:8px}
+.customer-tier-perks-v339{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;padding:0;list-style:none}
+.customer-tier-perk-v339{display:inline-flex;align-items:center;gap:6px;max-width:100%}
+.customer-tier-perk-v339 span{min-width:0;overflow-wrap:anywhere}
+.customer-reward-card-v339 .customer-reward-card-head-v339{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
+.customer-reward-card-v339 .customer-reward-card-head-v339:empty{display:none}
+.customer-reward-locked-v339{background:#efe7fb;color:#5b3fa6}
+.customer-reward-name-v339{display:block;font-size:1.02rem;line-height:1.3;overflow-wrap:anywhere}
+.customer-reward-cost-v339{margin-top:4px;font-weight:700;color:var(--merchant-accent,var(--coral))}
+/* v340 (gaps 4 and 5): the reward photo frame and the third, "in progress" card type. The frame
+   keeps a fixed aspect so a card with a photo and a card without it stay the same height in the
+   swipe row; the empty state is the gift glyph, never a broken image. */
+.customer-reward-photo-v340{display:block;width:100%;aspect-ratio:16/10;margin-bottom:10px;border-radius:11px;overflow:hidden;background:var(--tint)}
+.customer-reward-photo-v340 img{display:block;width:100%;height:100%;object-fit:cover}
+.customer-reward-photo-empty-v340{display:grid;place-items:center;color:var(--muted)}
+.customer-reward-progress-pill-v340{background:#fdf0d8;color:#8a5f10}
+.customer-reward-card-progress-v340{background:var(--tint)}
+.customer-reward-progress-read-v340{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline}
+.customer-earn-more-v339{margin-top:14px}
+.customer-earn-more-head-v339 h2{font-size:1.1rem;margin:0 0 10px}
+.customer-earn-more-list-v339{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.customer-earn-more-row-v339{display:flex;align-items:center;gap:11px;min-height:44px}
+.customer-earn-more-icon-v339{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-earn-more-copy-v339{display:flex;flex-direction:column;min-width:0;flex:1}
+.customer-earn-more-points-v339{flex:0 0 auto;white-space:nowrap}
+.customer-points-explainer-v339{display:flex;align-items:center;gap:11px;width:100%;text-align:left;min-height:56px;cursor:pointer;color:inherit}
+.customer-points-explainer-icon-v339{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-points-explainer-copy-v339{display:flex;flex-direction:column;min-width:0;flex:1}
+.customer-points-explainer-chevron-v339{flex:0 0 auto;color:var(--muted)}
 .customer-offer-detail{min-width:0;text-align:left}
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 .customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
@@ -2329,7 +2384,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=71f404368ea0","business":"/app-business.js?b=c5f6787ca486","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=8c826b909455","business":"/app-business.js?b=879a47034282","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -2353,6 +2408,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=b1f0567412f5" defer></script>
+<script src="/app-core.js?b=0e236fa6fb60" defer></script>
 </body>
 </html>

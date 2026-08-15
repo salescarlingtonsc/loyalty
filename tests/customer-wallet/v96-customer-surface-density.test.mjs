@@ -77,9 +77,12 @@ test('merchant feature groups and birthday participation render only from actual
   assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
   // v173 raised the customer offer shelf from 2 to 6.
   assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,6\)/);
-  // v167 moved the offers shelf into the shared customerProgrammeOffersMarkupV167 renderer
-  // (one section, one empty state) instead of an inline conditional per surface.
-  assert.match(merchant,/customerProgrammeOffersMarkupV167\(\{items:offers,status:offersStatus/);
+  // v167 moved the offers shelf into a shared renderer (one section, one empty state) instead of
+  // an inline conditional per surface. v339 moved that shelf again — the offer cards are now the
+  // pages after the reward banner in the swipe region — but the property this line guards is the
+  // same: ONE renderer is handed the same `offers`/`offersStatus` pair, so the surface still has
+  // exactly one offers empty/error state rather than a per-surface conditional.
+  assert.match(merchant,/customerRewardOfferSwipeMarkupV339\(\{reward,items:offers,status:offersStatus/);
   assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
   assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?[\s\S]*customerFeatureCardMarkupV156[\s\S]*Featured services and products will appear here after this business publishes them\./);
   assert.match(wallet,/customerFeatures\.customer_birthday_benefits&&actionableCard\?\.birthday_benefit&&actionableCard\.birthday_benefit\.status!=='unavailable'/);

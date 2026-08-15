@@ -68,7 +68,9 @@ test('My Rewards has a back button and no offers shelf or guidance banner',()=>{
 
   const shell=section('function renderCustomerShell','function focusCustomerRoute');
   assert.match(shell,/backHref=businessSlug\?'#\/customer\/programmes':\(backTo\|\|''\)/);
-  assert.match(shell,/backHref\?`<button class="btn ghost sm" id="walletBack" aria-label="\$\{esc\(backLabel\)\}"[^`]*min-width:44px/);
+  // v340 (gap 2): unchanged for My Rewards; only the single-business profile (which now draws
+  // its own inline chevron beside the business name) suppresses this one.
+  assert.match(shell,/shellBackHrefV340\?`<button class="btn ghost sm" id="walletBack" aria-label="\$\{esc\(backLabel\)\}"[^`]*min-width:44px/);
   assert.match(shell,/\$\('walletBack'\)\.onclick=\(\)=>nav\(backHref\)/);
 
   const render=section('function renderActionableWalletHome','async function renderCustomerWallet');

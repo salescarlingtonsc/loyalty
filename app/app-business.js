@@ -8787,10 +8787,64 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      focus segment stripped, so the full catalogue renders with the saved reward in the list. */
   const spendRewardIntentV293=()=>nav(draftVersionId?`#/loyalty/${draftVersionId}`:'#/loyalty');
   let editorReward=null;
+  /* v340 (gap 4): undefined = the owner did not touch the photo in this editing session, so the
+     stored image_ref is carried through untouched; a string = a photo they just uploaded; null =
+     they explicitly removed it. Three states, because "unchanged" and "cleared" are different
+     instructions and collapsing them would silently drop every existing reward photo on save. */
+  let rewardImageRefDraftV340=undefined;
+  /* v340 (gap 1): the "No purchase required" clause in the owner's mockup had no field behind
+     it, so v339 refused to print it. db/migrations/20260815_nestly_v340_reward_purchase_
+     requirement.sql adds the real one — requires_purchase on the reward, owner-controlled,
+     defaulting to false because false is what every redemption path in this product actually
+     does today. That migration is NOT applied yet, and public.save_loyalty_reward_draft raises
+     22023 on any key its allow-list does not know, so sending the field early would break the
+     reward editor for every owner. This flag is therefore FEATURE-DETECTED off the draft the
+     server just returned: the control appears, and the key is sent, only once the server is
+     actually returning the column. Nothing to remove on the day the migration lands. */
+  let rewardPurchaseFieldAvailableV340=false;
+  /* v340 (gap 4): reward photos. `image_ref` has been a real, published column on
+     loyalty_reward_versions since v27, customer_get_reward_catalog has always returned it, and
+     the customer card has always tried to draw it — the ONLY missing piece was any way for an
+     owner to put a value in it, so every reward in production has image_ref null and the
+     mockup's product photos had nothing to render. That is now a control on this editor.
+
+     It writes to the SAME place the logo and cover photo do — the `business-public` bucket,
+     under `<business_id>/reward/<uuid>.<ext>` — because app.v95_storage_path_owned already
+     names 'reward' as an owned prefix an authenticated owner may write, and
+     app.v95_public_media_url already builds this exact URL shape for every other asset kind.
+     So there is no migration here and no new server surface: the storage policy, the bucket,
+     the path grammar, the image_ref check constraint and customerMediaUrlV95's reader all
+     already accepted this and were simply never used for a reward.
+
+     It deliberately does NOT go through business_publish_media_asset_v95 the way service and
+     product photos do. That RPC is built around optimistic concurrency (p_expected_asset_version)
+     and there is no reader anywhere that can tell this page the current version of a REWARD
+     asset — business_get_catalogue_media_versions_v158 filters to service and product. Guessing
+     a version would make the second upload of a reward photo fail with a 40001 the owner cannot
+     act on. image_ref on the versioned reward row is itself the record of which photo is live,
+     and it is already carried by the draft/publish kernel, so a second row saying the same thing
+     would only be a second thing to disagree. The storage path is keyed on the BUSINESS, not on
+     the reward, so a brand-new reward can carry a photo through its first save too. */
+  const REWARD_PHOTO_TYPES_V340=Object.freeze({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'});
+  const REWARD_PHOTO_MAX_BYTES_V340=10*1024*1024;
+  async function uploadRewardPhotoV340(file){
+    if(!S.biz?.id)throw new Error('Business context is required.');
+    if(!file)throw new Error('Choose a photo first.');
+    const ext=REWARD_PHOTO_TYPES_V340[file.type];
+    if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
+    if(file.size>REWARD_PHOTO_MAX_BYTES_V340)throw new Error('Use an image under 10 MB.');
+    const objectPath=`${S.biz.id}/reward/${crypto.randomUUID()}.${ext}`;
+    const {error}=await sb.storage.from('business-public')
+      .upload(objectPath,file,{contentType:file.type,upsert:false});
+    if(error)throw new Error(error.message||'The photo could not be uploaded.');
+    return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
+  }
   function openRewardEditor(reward){
     editorReward=reward;
     const r=reward||{};
     const stableRewardId=rewardId(r);
+    rewardPurchaseFieldAvailableV340=('requires_purchase' in r)
+      ||rewards.some(item=>item&&typeof item==='object'&&'requires_purchase' in item);
     const selected={
       branch:new Set(eligibility.branch[stableRewardId]||[]),
       service:new Set(eligibility.service[stableRewardId]||[]),
@@ -8819,12 +8873,20 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <div class="full" style="margin-top:6px"><b>Limits and timing</b></div>
           <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
           <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+          ${rewardPurchaseFieldAvailableV340?`<div class="full"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwRequiresPurchaseV340" type="checkbox" style="width:auto;margin-top:2px" ${r.requires_purchase===true?'checked':''}> Customer must also make a purchase to claim this</label><p class="muted small help">Leave this off and customers are told <b>“No purchase required”</b>. Your counter enforces the condition either way — the app never blocks a redemption on it, so only tick this if your team really will ask for a purchase.</p></div>`:''}
           ${tiers.length?`<div><label for="rwMinTier">Who can redeem this</label><select id="rwMinTier">
             <option value="">Everyone</option>
             ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${esc(t.name)} and above (from ${t.threshold})</option>`).join('')}
           </select><p class="muted small help">Members below the tier still see this reward, locked, with the tier they need. That is what makes climbing worth it.</p></div>`:''}
           <div><label>Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
           <div><label>Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
+          <div class="full" style="margin-top:6px"><b>Reward photo</b></div>
+          <div class="full">
+            <div id="rwPhotoPreviewV340" class="reward-photo-preview-v340">${customerMediaUrlV95(r.image_ref)?`<img src="${esc(customerMediaUrlV95(r.image_ref))}" alt="Current photo for ${esc(r.customer_name||r.name||'this reward')}">`:'<span class="muted small">No photo yet — customers see a gift icon.</span>'}</div>
+            <label class="btn ghost sm service-photo-uploader-v158" style="margin-top:8px">Upload photo<input id="rwPhotoV340" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload reward photo"></label>
+            <button class="btn ghost sm" type="button" id="rwPhotoRemoveV340" style="margin-top:8px"${r.image_ref?'':' hidden'}>Remove photo</button>
+            <p class="muted small help" id="rwPhotoStateV340">PNG, JPG or WebP, under 10 MB. It appears on the reward card in the customer app. Saved with the reward, so it reaches customers when you publish.</p>
+          </div>
           <div class="full" style="margin-top:6px"><b>Team and visibility</b></div>
           <div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
         </div>
@@ -8887,6 +8949,32 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       };
       syncPointsFromBudget();
     }
+    /* v340 (gap 4): the chosen photo is held in this draft variable and written by saveReward,
+       so the reward row and its picture land in ONE save — the owner never ends up with a
+       published reward pointing at a photo they then abandoned, or vice versa. */
+    rewardImageRefDraftV340=undefined;
+    const rwPhotoV340=$('rwPhotoV340'),rwPhotoStateV340=$('rwPhotoStateV340'),
+      rwPhotoPreviewV340=$('rwPhotoPreviewV340'),rwPhotoRemoveV340=$('rwPhotoRemoveV340');
+    if(rwPhotoV340)rwPhotoV340.onchange=async()=>{
+      const file=rwPhotoV340.files?.[0];if(!file)return;
+      rwPhotoV340.disabled=true;rwPhotoStateV340.textContent='Uploading photo…';
+      try{
+        const url=await uploadRewardPhotoV340(file);
+        rewardImageRefDraftV340=url;
+        rwPhotoPreviewV340.innerHTML=`<img src="${esc(customerMediaUrlV95(url))}" alt="New photo for this reward">`;
+        if(rwPhotoRemoveV340)rwPhotoRemoveV340.hidden=false;
+        rwPhotoStateV340.textContent='Photo uploaded — Save the reward to keep it.';
+      }catch(error){
+        rwPhotoStateV340.textContent=error?.message||'The photo could not be uploaded.';
+      }
+      rwPhotoV340.disabled=false;rwPhotoV340.value='';
+    };
+    if(rwPhotoRemoveV340)rwPhotoRemoveV340.onclick=()=>{
+      rewardImageRefDraftV340=null;
+      rwPhotoPreviewV340.innerHTML='<span class="muted small">No photo yet — customers see a gift icon.</span>';
+      rwPhotoRemoveV340.hidden=true;
+      rwPhotoStateV340.textContent='Photo removed — Save the reward to apply it.';
+    };
     $('rwSave').onclick=()=>saveReward(false);
     /* V288 (audit A2, MEDIUM 11): Archive took a customer-facing reward away with one tap and
        no confirmation at all, while far smaller actions on this same page ask first. It now uses
@@ -8979,8 +9067,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       min_tier_id:minTierId,min_tier_threshold:minTier?Number(minTier.threshold):null,
       claim_available_from:boundaryInstant($('rwFrom').value),
       claim_available_until:boundaryInstant($('rwUntil').value),
-      image_ref:editorReward?.image_ref??null,fulfillment_kind:kind,
+      image_ref:rewardImageRefDraftV340===undefined?(editorReward?.image_ref??null):rewardImageRefDraftV340,
+      fulfillment_kind:kind,
       active:archive?false:$('rwActive').checked};
+    /* v340 (gap 1): sent only once the server is returning the column — see
+       rewardPurchaseFieldAvailableV340. Until then the key is absent and the allow-list in
+       save_loyalty_reward_draft never sees a name it would reject. */
+    if(rewardPurchaseFieldAvailableV340)payload.requires_purchase=!!$('rwRequiresPurchaseV340')?.checked;
     const btn=archive?$('rwArchive'):$('rwSave');btn.disabled=true;btn.textContent=archive?'Archiving…':'Saving…';
     let versionId=draftVersionId;
     if(!versionId){

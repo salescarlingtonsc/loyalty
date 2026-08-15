@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="4c7b06be15a8f2a4340f019c389d386f97048e850d4fabc914a60f35cd1082b4"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="50caf294e71e53d505813d2f031330c974a335d6c8f8dd4c73711c8357b56b99"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -962,6 +962,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .service-media-cell{display:flex;align-items:center;gap:10px;min-width:0}
 .service-photo-uploader-v158{position:relative;overflow:hidden}
 .service-photo-uploader-v158 input{position:absolute;inset:0;opacity:0;cursor:pointer}
+/* v340 (gap 4): the reward editor's photo control — same hidden-input-inside-a-button shape as
+   the catalogue uploader above, plus a preview of what customers will actually see. */
+.reward-photo-preview-v340{display:grid;place-items:center;width:100%;max-width:240px;aspect-ratio:16/10;border:1px solid var(--hair);border-radius:12px;overflow:hidden;background:var(--tint);text-align:center;padding:8px}
+.reward-photo-preview-v340 img{display:block;width:100%;height:100%;object-fit:cover;padding:0}
 .till-cart-lines{list-style:none;padding:0;margin:12px 0 0}
 .till-cart-line{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .till-cart-line .till-cart-line-label{flex:1;min-width:0;font-weight:600}
@@ -2080,6 +2084,57 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-rewards.customer-rewards-carousel-v337{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;padding-bottom:6px;margin-top:8px}
 .wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex:0 0 78%;max-width:280px;scroll-snap-align:start}
 @media(min-width:640px){.wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex-basis:260px}}
+/* v339 (owner mockup "photo 1") — collapsed profile header, the reward/offers swipe region, the
+   restyled tier card and reward cards, the earn-more list, and the compact rewards explainer. */
+.wallet-head-compact-v339{gap:8px;min-height:44px}
+.customer-programme-compact-head-v339{justify-content:center;text-align:center;position:relative}
+.customer-programme-compact-head-v339 .customer-programme-identity{flex:1 1 auto;justify-content:center;text-align:center}
+.customer-programme-compact-head-v339 .customer-programme-head-icons-v337{position:absolute;top:0;right:0;display:flex;gap:10px;color:var(--muted)}
+.customer-programme-compact-head-v339 .customer-programme-tier-jump-v327{flex:0 0 100%;justify-content:center;margin:0 auto}
+/* v340 (gap 2): the back chevron moved out of the app-shell bar and into this header, inline
+   with the business name. Absolutely positioned at the left edge so the centred name and logo
+   keep the exact placement v339 gave them, with a 44px target for the tap. */
+.customer-programme-back-v340{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border-radius:12px;color:var(--ink);text-decoration:none}
+.customer-programme-compact-head-v339 .customer-programme-back-v340{position:absolute;left:0;top:0;margin:-10px 0 0 -6px}
+.customer-programme-back-v340:hover,.customer-programme-back-v340:focus-visible{background:var(--tint)}
+.customer-reward-offer-swipe-v339{margin:0 0 14px}
+.customer-reward-offer-track-v339{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.customer-reward-offer-page-v339{flex:0 0 min(88%,340px);min-width:0;scroll-snap-align:start;display:flex}
+.customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0}
+@media(min-width:640px){.customer-reward-offer-page-v339{flex-basis:360px}}
+.customer-claimable-banner-validity-v339{margin-top:6px;font-size:.8rem;font-weight:650;color:#7a5c10}
+.customer-tier-card-head-v339{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.customer-tier-card-head-v339 .customer-programme-card-head-v310{margin:0}
+.customer-tier-avatar-v339{flex:0 0 auto;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-tier-standing-v339{margin-top:8px}
+.customer-tier-perks-v339{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;padding:0;list-style:none}
+.customer-tier-perk-v339{display:inline-flex;align-items:center;gap:6px;max-width:100%}
+.customer-tier-perk-v339 span{min-width:0;overflow-wrap:anywhere}
+.customer-reward-card-v339 .customer-reward-card-head-v339{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
+.customer-reward-card-v339 .customer-reward-card-head-v339:empty{display:none}
+.customer-reward-locked-v339{background:#efe7fb;color:#5b3fa6}
+.customer-reward-name-v339{display:block;font-size:1.02rem;line-height:1.3;overflow-wrap:anywhere}
+.customer-reward-cost-v339{margin-top:4px;font-weight:700;color:var(--merchant-accent,var(--coral))}
+/* v340 (gaps 4 and 5): the reward photo frame and the third, "in progress" card type. The frame
+   keeps a fixed aspect so a card with a photo and a card without it stay the same height in the
+   swipe row; the empty state is the gift glyph, never a broken image. */
+.customer-reward-photo-v340{display:block;width:100%;aspect-ratio:16/10;margin-bottom:10px;border-radius:11px;overflow:hidden;background:var(--tint)}
+.customer-reward-photo-v340 img{display:block;width:100%;height:100%;object-fit:cover}
+.customer-reward-photo-empty-v340{display:grid;place-items:center;color:var(--muted)}
+.customer-reward-progress-pill-v340{background:#fdf0d8;color:#8a5f10}
+.customer-reward-card-progress-v340{background:var(--tint)}
+.customer-reward-progress-read-v340{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline}
+.customer-earn-more-v339{margin-top:14px}
+.customer-earn-more-head-v339 h2{font-size:1.1rem;margin:0 0 10px}
+.customer-earn-more-list-v339{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.customer-earn-more-row-v339{display:flex;align-items:center;gap:11px;min-height:44px}
+.customer-earn-more-icon-v339{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-earn-more-copy-v339{display:flex;flex-direction:column;min-width:0;flex:1}
+.customer-earn-more-points-v339{flex:0 0 auto;white-space:nowrap}
+.customer-points-explainer-v339{display:flex;align-items:center;gap:11px;width:100%;text-align:left;min-height:56px;cursor:pointer;color:inherit}
+.customer-points-explainer-icon-v339{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-points-explainer-copy-v339{display:flex;flex-direction:column;min-width:0;flex:1}
+.customer-points-explainer-chevron-v339{flex:0 0 auto;color:var(--muted)}
 .customer-offer-detail{min-width:0;text-align:left}
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 .customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
@@ -2254,7 +2309,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 4c7b06be15a8f2a4340f019c389d386f97048e850d4fabc914a60f35cd1082b4</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 50caf294e71e53d505813d2f031330c974a335d6c8f8dd4c73711c8357b56b99</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -8304,10 +8359,64 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      focus segment stripped, so the full catalogue renders with the saved reward in the list. */
   const spendRewardIntentV293=()=>nav(draftVersionId?`#/loyalty/${draftVersionId}`:'#/loyalty');
   let editorReward=null;
+  /* v340 (gap 4): undefined = the owner did not touch the photo in this editing session, so the
+     stored image_ref is carried through untouched; a string = a photo they just uploaded; null =
+     they explicitly removed it. Three states, because "unchanged" and "cleared" are different
+     instructions and collapsing them would silently drop every existing reward photo on save. */
+  let rewardImageRefDraftV340=undefined;
+  /* v340 (gap 1): the "No purchase required" clause in the owner's mockup had no field behind
+     it, so v339 refused to print it. db/migrations/20260815_nestly_v340_reward_purchase_
+     requirement.sql adds the real one — requires_purchase on the reward, owner-controlled,
+     defaulting to false because false is what every redemption path in this product actually
+     does today. That migration is NOT applied yet, and public.save_loyalty_reward_draft raises
+     22023 on any key its allow-list does not know, so sending the field early would break the
+     reward editor for every owner. This flag is therefore FEATURE-DETECTED off the draft the
+     server just returned: the control appears, and the key is sent, only once the server is
+     actually returning the column. Nothing to remove on the day the migration lands. */
+  let rewardPurchaseFieldAvailableV340=false;
+  /* v340 (gap 4): reward photos. `image_ref` has been a real, published column on
+     loyalty_reward_versions since v27, customer_get_reward_catalog has always returned it, and
+     the customer card has always tried to draw it — the ONLY missing piece was any way for an
+     owner to put a value in it, so every reward in production has image_ref null and the
+     mockup's product photos had nothing to render. That is now a control on this editor.
+
+     It writes to the SAME place the logo and cover photo do — the `business-public` bucket,
+     under `<business_id>/reward/<uuid>.<ext>` — because app.v95_storage_path_owned already
+     names 'reward' as an owned prefix an authenticated owner may write, and
+     app.v95_public_media_url already builds this exact URL shape for every other asset kind.
+     So there is no migration here and no new server surface: the storage policy, the bucket,
+     the path grammar, the image_ref check constraint and customerMediaUrlV95's reader all
+     already accepted this and were simply never used for a reward.
+
+     It deliberately does NOT go through business_publish_media_asset_v95 the way service and
+     product photos do. That RPC is built around optimistic concurrency (p_expected_asset_version)
+     and there is no reader anywhere that can tell this page the current version of a REWARD
+     asset — business_get_catalogue_media_versions_v158 filters to service and product. Guessing
+     a version would make the second upload of a reward photo fail with a 40001 the owner cannot
+     act on. image_ref on the versioned reward row is itself the record of which photo is live,
+     and it is already carried by the draft/publish kernel, so a second row saying the same thing
+     would only be a second thing to disagree. The storage path is keyed on the BUSINESS, not on
+     the reward, so a brand-new reward can carry a photo through its first save too. */
+  const REWARD_PHOTO_TYPES_V340=Object.freeze({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'});
+  const REWARD_PHOTO_MAX_BYTES_V340=10*1024*1024;
+  async function uploadRewardPhotoV340(file){
+    if(!S.biz?.id)throw new Error('Business context is required.');
+    if(!file)throw new Error('Choose a photo first.');
+    const ext=REWARD_PHOTO_TYPES_V340[file.type];
+    if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
+    if(file.size>REWARD_PHOTO_MAX_BYTES_V340)throw new Error('Use an image under 10 MB.');
+    const objectPath=`${S.biz.id}/reward/${crypto.randomUUID()}.${ext}`;
+    const {error}=await sb.storage.from('business-public')
+      .upload(objectPath,file,{contentType:file.type,upsert:false});
+    if(error)throw new Error(error.message||'The photo could not be uploaded.');
+    return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
+  }
   function openRewardEditor(reward){
     editorReward=reward;
     const r=reward||{};
     const stableRewardId=rewardId(r);
+    rewardPurchaseFieldAvailableV340=('requires_purchase' in r)
+      ||rewards.some(item=>item&&typeof item==='object'&&'requires_purchase' in item);
     const selected={
       branch:new Set(eligibility.branch[stableRewardId]||[]),
       service:new Set(eligibility.service[stableRewardId]||[]),
@@ -8336,12 +8445,20 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <div class="full" style="margin-top:6px"><b>Limits and timing</b></div>
           <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
           <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+          ${rewardPurchaseFieldAvailableV340?`<div class="full"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwRequiresPurchaseV340" type="checkbox" style="width:auto;margin-top:2px" ${r.requires_purchase===true?'checked':''}> Customer must also make a purchase to claim this</label><p class="muted small help">Leave this off and customers are told <b>“No purchase required”</b>. Your counter enforces the condition either way — the app never blocks a redemption on it, so only tick this if your team really will ask for a purchase.</p></div>`:''}
           ${tiers.length?`<div><label for="rwMinTier">Who can redeem this</label><select id="rwMinTier">
             <option value="">Everyone</option>
             ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${esc(t.name)} and above (from ${t.threshold})</option>`).join('')}
           </select><p class="muted small help">Members below the tier still see this reward, locked, with the tier they need. That is what makes climbing worth it.</p></div>`:''}
           <div><label>Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
           <div><label>Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
+          <div class="full" style="margin-top:6px"><b>Reward photo</b></div>
+          <div class="full">
+            <div id="rwPhotoPreviewV340" class="reward-photo-preview-v340">${customerMediaUrlV95(r.image_ref)?`<img src="${esc(customerMediaUrlV95(r.image_ref))}" alt="Current photo for ${esc(r.customer_name||r.name||'this reward')}">`:'<span class="muted small">No photo yet — customers see a gift icon.</span>'}</div>
+            <label class="btn ghost sm service-photo-uploader-v158" style="margin-top:8px">Upload photo<input id="rwPhotoV340" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload reward photo"></label>
+            <button class="btn ghost sm" type="button" id="rwPhotoRemoveV340" style="margin-top:8px"${r.image_ref?'':' hidden'}>Remove photo</button>
+            <p class="muted small help" id="rwPhotoStateV340">PNG, JPG or WebP, under 10 MB. It appears on the reward card in the customer app. Saved with the reward, so it reaches customers when you publish.</p>
+          </div>
           <div class="full" style="margin-top:6px"><b>Team and visibility</b></div>
           <div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
         </div>
@@ -8404,6 +8521,32 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       };
       syncPointsFromBudget();
     }
+    /* v340 (gap 4): the chosen photo is held in this draft variable and written by saveReward,
+       so the reward row and its picture land in ONE save — the owner never ends up with a
+       published reward pointing at a photo they then abandoned, or vice versa. */
+    rewardImageRefDraftV340=undefined;
+    const rwPhotoV340=$('rwPhotoV340'),rwPhotoStateV340=$('rwPhotoStateV340'),
+      rwPhotoPreviewV340=$('rwPhotoPreviewV340'),rwPhotoRemoveV340=$('rwPhotoRemoveV340');
+    if(rwPhotoV340)rwPhotoV340.onchange=async()=>{
+      const file=rwPhotoV340.files?.[0];if(!file)return;
+      rwPhotoV340.disabled=true;rwPhotoStateV340.textContent='Uploading photo…';
+      try{
+        const url=await uploadRewardPhotoV340(file);
+        rewardImageRefDraftV340=url;
+        rwPhotoPreviewV340.innerHTML=`<img src="${esc(customerMediaUrlV95(url))}" alt="New photo for this reward">`;
+        if(rwPhotoRemoveV340)rwPhotoRemoveV340.hidden=false;
+        rwPhotoStateV340.textContent='Photo uploaded — Save the reward to keep it.';
+      }catch(error){
+        rwPhotoStateV340.textContent=error?.message||'The photo could not be uploaded.';
+      }
+      rwPhotoV340.disabled=false;rwPhotoV340.value='';
+    };
+    if(rwPhotoRemoveV340)rwPhotoRemoveV340.onclick=()=>{
+      rewardImageRefDraftV340=null;
+      rwPhotoPreviewV340.innerHTML='<span class="muted small">No photo yet — customers see a gift icon.</span>';
+      rwPhotoRemoveV340.hidden=true;
+      rwPhotoStateV340.textContent='Photo removed — Save the reward to apply it.';
+    };
     $('rwSave').onclick=()=>saveReward(false);
     /* V288 (audit A2, MEDIUM 11): Archive took a customer-facing reward away with one tap and
        no confirmation at all, while far smaller actions on this same page ask first. It now uses
@@ -8496,8 +8639,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       min_tier_id:minTierId,min_tier_threshold:minTier?Number(minTier.threshold):null,
       claim_available_from:boundaryInstant($('rwFrom').value),
       claim_available_until:boundaryInstant($('rwUntil').value),
-      image_ref:editorReward?.image_ref??null,fulfillment_kind:kind,
+      image_ref:rewardImageRefDraftV340===undefined?(editorReward?.image_ref??null):rewardImageRefDraftV340,
+      fulfillment_kind:kind,
       active:archive?false:$('rwActive').checked};
+    /* v340 (gap 1): sent only once the server is returning the column — see
+       rewardPurchaseFieldAvailableV340. Until then the key is absent and the allow-list in
+       save_loyalty_reward_draft never sees a name it would reject. */
+    if(rewardPurchaseFieldAvailableV340)payload.requires_purchase=!!$('rwRequiresPurchaseV340')?.checked;
     const btn=archive?$('rwArchive'):$('rwSave');btn.disabled=true;btn.textContent=archive?'Archiving…':'Saving…';
     let versionId=draftVersionId;
     if(!versionId){
@@ -19521,6 +19669,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'4c7b06be15a8f2a4340f019c389d386f97048e850d4fabc914a60f35cd1082b4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'50caf294e71e53d505813d2f031330c974a335d6c8f8dd4c73711c8357b56b99',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

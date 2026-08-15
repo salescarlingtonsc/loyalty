@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761">
+<meta name="v104-production-source-sha256" content="06045c18ad60ffb182c0ef3883a950764cf2234304c8bfa5ef8099c4f762e2ec">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -969,6 +969,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .service-media-cell{display:flex;align-items:center;gap:10px;min-width:0}
 .service-photo-uploader-v158{position:relative;overflow:hidden}
 .service-photo-uploader-v158 input{position:absolute;inset:0;opacity:0;cursor:pointer}
+/* v340 (gap 4): the reward editor's photo control — same hidden-input-inside-a-button shape as
+   the catalogue uploader above, plus a preview of what customers will actually see. */
+.reward-photo-preview-v340{display:grid;place-items:center;width:100%;max-width:240px;aspect-ratio:16/10;border:1px solid var(--hair);border-radius:12px;overflow:hidden;background:var(--tint);text-align:center;padding:8px}
+.reward-photo-preview-v340 img{display:block;width:100%;height:100%;object-fit:cover;padding:0}
 .till-cart-lines{list-style:none;padding:0;margin:12px 0 0}
 .till-cart-line{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .till-cart-line .till-cart-line-label{flex:1;min-width:0;font-weight:600}
@@ -2087,6 +2091,57 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-rewards.customer-rewards-carousel-v337{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;padding-bottom:6px;margin-top:8px}
 .wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex:0 0 78%;max-width:280px;scroll-snap-align:start}
 @media(min-width:640px){.wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex-basis:260px}}
+/* v339 (owner mockup "photo 1") — collapsed profile header, the reward/offers swipe region, the
+   restyled tier card and reward cards, the earn-more list, and the compact rewards explainer. */
+.wallet-head-compact-v339{gap:8px;min-height:44px}
+.customer-programme-compact-head-v339{justify-content:center;text-align:center;position:relative}
+.customer-programme-compact-head-v339 .customer-programme-identity{flex:1 1 auto;justify-content:center;text-align:center}
+.customer-programme-compact-head-v339 .customer-programme-head-icons-v337{position:absolute;top:0;right:0;display:flex;gap:10px;color:var(--muted)}
+.customer-programme-compact-head-v339 .customer-programme-tier-jump-v327{flex:0 0 100%;justify-content:center;margin:0 auto}
+/* v340 (gap 2): the back chevron moved out of the app-shell bar and into this header, inline
+   with the business name. Absolutely positioned at the left edge so the centred name and logo
+   keep the exact placement v339 gave them, with a 44px target for the tap. */
+.customer-programme-back-v340{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border-radius:12px;color:var(--ink);text-decoration:none}
+.customer-programme-compact-head-v339 .customer-programme-back-v340{position:absolute;left:0;top:0;margin:-10px 0 0 -6px}
+.customer-programme-back-v340:hover,.customer-programme-back-v340:focus-visible{background:var(--tint)}
+.customer-reward-offer-swipe-v339{margin:0 0 14px}
+.customer-reward-offer-track-v339{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.customer-reward-offer-page-v339{flex:0 0 min(88%,340px);min-width:0;scroll-snap-align:start;display:flex}
+.customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0}
+@media(min-width:640px){.customer-reward-offer-page-v339{flex-basis:360px}}
+.customer-claimable-banner-validity-v339{margin-top:6px;font-size:.8rem;font-weight:650;color:#7a5c10}
+.customer-tier-card-head-v339{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.customer-tier-card-head-v339 .customer-programme-card-head-v310{margin:0}
+.customer-tier-avatar-v339{flex:0 0 auto;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-tier-standing-v339{margin-top:8px}
+.customer-tier-perks-v339{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;padding:0;list-style:none}
+.customer-tier-perk-v339{display:inline-flex;align-items:center;gap:6px;max-width:100%}
+.customer-tier-perk-v339 span{min-width:0;overflow-wrap:anywhere}
+.customer-reward-card-v339 .customer-reward-card-head-v339{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
+.customer-reward-card-v339 .customer-reward-card-head-v339:empty{display:none}
+.customer-reward-locked-v339{background:#efe7fb;color:#5b3fa6}
+.customer-reward-name-v339{display:block;font-size:1.02rem;line-height:1.3;overflow-wrap:anywhere}
+.customer-reward-cost-v339{margin-top:4px;font-weight:700;color:var(--merchant-accent,var(--coral))}
+/* v340 (gaps 4 and 5): the reward photo frame and the third, "in progress" card type. The frame
+   keeps a fixed aspect so a card with a photo and a card without it stay the same height in the
+   swipe row; the empty state is the gift glyph, never a broken image. */
+.customer-reward-photo-v340{display:block;width:100%;aspect-ratio:16/10;margin-bottom:10px;border-radius:11px;overflow:hidden;background:var(--tint)}
+.customer-reward-photo-v340 img{display:block;width:100%;height:100%;object-fit:cover}
+.customer-reward-photo-empty-v340{display:grid;place-items:center;color:var(--muted)}
+.customer-reward-progress-pill-v340{background:#fdf0d8;color:#8a5f10}
+.customer-reward-card-progress-v340{background:var(--tint)}
+.customer-reward-progress-read-v340{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline}
+.customer-earn-more-v339{margin-top:14px}
+.customer-earn-more-head-v339 h2{font-size:1.1rem;margin:0 0 10px}
+.customer-earn-more-list-v339{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.customer-earn-more-row-v339{display:flex;align-items:center;gap:11px;min-height:44px}
+.customer-earn-more-icon-v339{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-earn-more-copy-v339{display:flex;flex-direction:column;min-width:0;flex:1}
+.customer-earn-more-points-v339{flex:0 0 auto;white-space:nowrap}
+.customer-points-explainer-v339{display:flex;align-items:center;gap:11px;width:100%;text-align:left;min-height:56px;cursor:pointer;color:inherit}
+.customer-points-explainer-icon-v339{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--merchant-accent,var(--coral))}
+.customer-points-explainer-copy-v339{display:flex;flex-direction:column;min-width:0;flex:1}
+.customer-points-explainer-chevron-v339{flex:0 0 auto;color:var(--muted)}
 .customer-offer-detail{min-width:0;text-align:left}
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 .customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
@@ -2265,7 +2320,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761</p>
+  <p class="v104-provenance">Local production-render harness · source 06045c18ad60ffb182c0ef3883a950764cf2234304c8bfa5ef8099c4f762e2ec</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2277,7 +2332,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761";
+const PRODUCTION_SOURCE_SHA256="06045c18ad60ffb182c0ef3883a950764cf2234304c8bfa5ef8099c4f762e2ec";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -2698,10 +2753,42 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
   });
   return true;
 }
+/* v339 (owner mockup "photo 1"): the explainer moves to the FOOT of the business profile and
+   collapses to one tappable row — info glyph, "How rewards work", a one-line summary, chevron.
+   The dismissal is unchanged in every respect that matters: the same
+   `peekaa.customer.points-explainer.v1.<business>` localStorage key, the same 'dismissed' value,
+   and the same "already dismissed renders nothing" early return. Only the "Got it" control moved
+   — out of the resting row (which photo 1 shows with no button on it) and into the sheet the row
+   opens, so the customer still confirms it themselves and the write still happens on their tap.
+   The summary line is the existing copy shortened, not new claims about how earning works. */
 function customerPointsExplainerMarkupV167(business={}){
   const key=`peekaa.customer.points-explainer.v1.${String(business.id||business.slug||'programme')}`;
   try{if(localStorage.getItem(key)==='dismissed')return ''}catch{}
-  return `<aside class="card customer-points-explainer" data-points-explainer data-points-explainer-key="${esc(key)}" role="note"><p><b>How rewards work at ${esc(business.name||'this business')}</b><br><span class="muted small">Collect points here and use them for available rewards.</span></p><button class="btn ghost sm" type="button" data-points-explainer-dismiss aria-label="Dismiss points explanation">Got it</button></aside>`;
+  return `<button class="card customer-points-explainer customer-points-explainer-v339" type="button" data-points-explainer data-points-explainer-key="${esc(key)}" data-points-explainer-open-v339 aria-label="How rewards work at ${esc(business.name||'this business')}">
+    <span class="customer-points-explainer-icon-v339" aria-hidden="true">${CUI.icon('info',{size:19})}</span>
+    <span class="customer-points-explainer-copy-v339"><b>How rewards work</b><span class="muted small">Collect points here and use them for available rewards.</span></span>
+    <span class="customer-points-explainer-chevron-v339" aria-hidden="true">${CUI.icon('forward',{size:17})}</span>
+  </button>`;
+}
+/* The sheet behind the compact row. It carries the FULL explainer sentence the row abbreviates
+   and the "Got it" button that performs the same localStorage write the inline button used to. */
+function openCustomerPointsExplainerV339(trigger){
+  const key=String(trigger?.dataset?.pointsExplainerKey||'');
+  const business=String(trigger?.getAttribute('aria-label')||'').replace(/^How rewards work at /,'');
+  $('customerPointsExplainerModalV339')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerPointsExplainerModalV339" role="dialog" aria-modal="true" aria-labelledby="customerPointsExplainerTitleV339" tabindex="-1"><div class="modal-card" style="max-width:460px">
+    <div class="row"><h2 id="customerPointsExplainerTitleV339">How rewards work at ${esc(business||'this business')}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerPointsExplainerCloseV339" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
+    <p class="muted" style="margin-top:14px">Collect points here and use them for available rewards.</p>
+    <button type="button" class="btn" id="customerPointsExplainerGotItV339" style="margin-top:18px">Got it</button>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('customerPointsExplainerModalV339')?.remove()};
+  deactivate=CUI.activateDialog($('customerPointsExplainerModalV339'),{onClose:close,initialFocus:'#customerPointsExplainerGotItV339'});
+  $('customerPointsExplainerCloseV339').onclick=close;
+  $('customerPointsExplainerGotItV339').onclick=()=>{
+    if(key){try{localStorage.setItem(key,'dismissed')}catch{}}
+    trigger?.remove();close();
+  };
 }
 function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},bookingEnabled=false}={}){
   let body='';
@@ -2709,6 +2796,71 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
   else if(items.length)body=`<div class="customer-promotions-grid">${items.map(item=>customerPromotionCardV104(item,business,bookingEnabled)).join('')}</div>`;
   else body='<div class="card customer-home-offers-state"><p class="muted small">No offers right now. New offers from this business appear here first.</p></div>';
   return `<section class="customer-promotions-section" aria-labelledby="latestOffersTitle"><div class="customer-promotions-head"><div><p class="customer-quest-kicker">From ${esc(business.name||ct('localBusiness'))}</p><h2 id="latestOffersTitle">Latest offers</h2></div></div>${body}</section>`;
+}
+/* v339 (owner mockup "photo 1", 2026-08-15): the "reward ready" banner and the business's own
+   promotions are ONE swipeable region near the top of the profile, not a banner up here and a
+   full-bleed "Latest offers" list at the very bottom. Page 1 is the v337 banner when a reward is
+   actually claimable; every page after it is an EXISTING customerPromotionCardV104 built from the
+   same `presentation.offers` objects the old section rendered — same Book now / Share / Terms
+   controls, same [data-promotion-id] hooks the detail modal and the share sheet already bind to,
+   so nothing about those click paths changed. No reward and no offers renders the same empty/error
+   state card (with its same [data-programme-offers-retry] button) the old section did, so the
+   offers read can still fail out loud. The track is CSS scroll-snap and nothing else — the
+   identical mechanism .customer-promotions-grid and the v337 rewards strip already use on this
+   surface. It advances ONLY when the customer swipes it: there is no timer, no auto-advance and
+   no script driving the track at all, which is the v104 ruling this region inherits. */
+function customerRewardOfferSwipeMarkupV339({reward=null,items=[],status='ready',business={},bookingEnabled=false}={}){
+  const banner=customerClaimableRewardBannerMarkupV337({reward});
+  const pages=[
+    banner?`<div class="customer-reward-offer-page-v339">${banner}</div>`:'',
+    ...items.map(item=>`<div class="customer-reward-offer-page-v339">${customerPromotionCardV104(item,business,bookingEnabled)}</div>`)
+  ].filter(Boolean);
+  if(!pages.length){
+    const state=status==='error'
+      ?'<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>'
+      :'<div class="card customer-home-offers-state"><p class="muted small">No offers right now. New offers from this business appear here first.</p></div>';
+    return `<section class="customer-reward-offer-swipe-v339" aria-label="Rewards and offers">${state}</section>`;
+  }
+  return `<section class="customer-reward-offer-swipe-v339" aria-label="Rewards and offers">
+    <div class="customer-reward-offer-track-v339"${pages.length>1?' tabindex="0"':''}>${pages.join('')}</div>
+    ${status==='error'?'<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>':''}
+  </section>`;
+}
+/* v339: the honest "earn more" list. There is no admin-configurable per-action earn table in this
+   product — earning is the sale-completion trigger plus the single referral payout — so this
+   section prints only what a real field can back. The referral row is INJECTED later by
+   loadReferralCardV300 from customer_get_referral_card_v300's own reward_points (the number the
+   engine actually pays), never a guess; until that read answers there is no referral row at all.
+   The visit row carries NO "+N pts": the customer surface is never told this firm's
+   earn_points_per_dollar (customer_get_wallet returns enabled/model/unit/balance and nothing
+   else), so a number here would be invented. It is therefore phrased without one, and it renders
+   only where spendable points are actually running — the same customerPointsHeroVisibleV337 check
+   the hero uses. There is no review mechanism anywhere in this codebase, so there is no review row.
+   No "See all" link either: no route lists earn actions, and a link to a page that does not exist
+   is worse than no link. */
+function customerEarnMorePointsMarkupV339({loyalty={},presentation={},programmeCapabilities={}}={}){
+  if(!customerPointsHeroVisibleV337({loyalty,programmeCapabilities}))return '';
+  const unitLabel=ct(presentation.unit);
+  return `<section class="card customer-earn-more-v339" id="customerEarnMoreV339" aria-labelledby="customerEarnMoreTitleV339">
+    <div class="customer-earn-more-head-v339"><h2 id="customerEarnMoreTitleV339">Earn more ${esc(unitLabel)}</h2></div>
+    <ul class="customer-earn-more-list-v339">
+      <li class="customer-earn-more-row-v339">
+        <span class="customer-earn-more-icon-v339" aria-hidden="true">${CUI.icon('bookings',{size:18})}</span>
+        <span class="customer-earn-more-copy-v339"><b>Visit and spend here</b><span class="muted small">Every qualifying purchase adds ${esc(unitLabel)} to your balance.</span></span>
+      </li>
+      <li class="customer-earn-more-referral-slot-v339" id="customerEarnMoreReferralV339" hidden></li>
+    </ul>
+  </section>`;
+}
+/* Built from the SAME payload the referral card below it renders, so the two can never disagree
+   about the payout. Rendered only when the server says the programme is enabled AND names a
+   positive reward_points — an unset or zero payout gets no row rather than a "+0 pts" promise. */
+function customerEarnMoreReferralRowMarkupV339(card){
+  const points=Math.max(0,Math.round(Number(card?.reward_points)||0));
+  if(!points)return '';
+  return `<span class="customer-earn-more-icon-v339" aria-hidden="true">${CUI.icon('referrals',{size:18})}</span>
+    <span class="customer-earn-more-copy-v339"><b>Refer a friend</b><span class="muted small">Paid after their qualifying first visit.</span></span>
+    <span class="pill ok customer-earn-more-points-v339">+${esc(customerPointTotalV103(points))} pts</span>`;
 }
 /* V174 customer tier card. One compact card, CHAGEE-style: where I am, how close the next
    tier is (exact remaining in the business's own basis — visits, spend or points), what the
@@ -3238,9 +3390,45 @@ function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null
 function customerProgrammeTierCardV310({tier={},entry=null,pointsCardPresent=false}){
   const paused=entry?.active===false;
   const tierForStack={...tier,points_mode:pointsCardPresent?'both':''};
-  return `<section class="card customer-programme-card-v310" data-programme-card="tiers" aria-label="${esc(ct('tierCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:17})}<span>${esc(ct('tierCardTitle'))}</span></h2>
-    ${paused?customerProgrammePausedMarkupV310(entry):customerTierPanelMarkupV194(tierForStack,{localizeV310:true})}
+  /* v339 (owner mockup "photo 1"): the card gains a circular tier avatar, the customer's real
+     standing figure, and their real perks. Three deliberate constraints:
+     · the AVATAR glyph is positional, exactly like customerTierRungIconV195 — a gem at the top
+       rung, a star at the first, a crown between — so it never asserts a tier name the business
+       did not choose.
+     · the FIGURE is tier.metric, the server's own tier magnitude, printed in the business's own
+       basis (visits / spend / lifetime points earned). It is never the SPENDABLE balance: v256
+       proved the two diverge the moment anyone redeems, and this card is not given that balance
+       at all. A payload without a metric prints no line rather than a zero.
+     · the PERK CHIPS are tier.current.benefits verbatim — the owner-editable perk_note strings
+       from the tier editor in the business console — as many chips as the business wrote.
+       Nothing is padded to fill photo 1's three slots; an empty benefits list renders no chips.
+     The tier NAME is not repeated up here: customerTierPanelMarkupV194 already says "You're now
+     at <tier>" as its first line, and printing it twice is the duplication v338 was spent
+     removing. */
+  const rungsV339=customerTierRungsV333(tier);
+  const currentIndexV339=(()=>{
+    const named=rungsV339.findIndex(rung=>rung.current===true);
+    return named>=0?named:rungsV339.filter(rung=>rung.achieved===true).length-1;
+  })();
+  const avatarIconV339=rungsV339.length&&currentIndexV339>=0
+    ?customerTierRungIconV195(currentIndexV339,rungsV339.length):'star';
+  const basisV339=String(tier.basis||'visits');
+  const metricV339=Number(tier.metric||0);
+  const standingV339=metricV339>0
+    ?(basisV339==='spend'?`You've spent ${customerTierDistanceCountV310(metricV339,'spend')} here`
+      :basisV339==='points_earned'?`You've earned ${customerPointTotalV103(metricV339)} lifetime points`
+        :`You've made ${customerPointTotalV103(metricV339)} visit${Math.round(metricV339)===1?'':'s'} here`)
+    :'';
+  const perksV339=(Array.isArray(tier.current?.benefits)?tier.current.benefits:[])
+    .map(value=>String(value||'').trim()).filter(Boolean);
+  return `<section class="card customer-programme-card-v310 customer-tier-card-v339" data-programme-card="tiers" aria-label="${esc(ct('tierCardTitle'))}">
+    <div class="customer-tier-card-head-v339">
+      <span class="customer-tier-avatar-v339" aria-hidden="true">${CUI.icon(avatarIconV339,{size:22})}</span>
+      <h2 class="customer-programme-card-head-v310"><span>${esc(ct('tierCardTitle'))}</span></h2>
+    </div>
+    ${paused?customerProgrammePausedMarkupV310(entry):`${customerTierPanelMarkupV194(tierForStack,{localizeV310:true})}
+    ${standingV339?`<p class="muted small customer-tier-standing-v339">${esc(standingV339)}</p>`:''}
+    ${perksV339.length?`<ul class="customer-tier-perks-v339">${perksV339.map(perk=>`<li class="pill customer-tier-perk-v339">${CUI.icon('giftcard',{size:14})}<span>${esc(perk)}</span></li>`).join('')}</ul>`:''}`}
   </section>`;
 }
 /* The claimable-now strip. It fires NO new read: it is built only from facts the page already
@@ -3273,7 +3461,7 @@ function customerClaimableStripMarkupV310(facts){
 function customerMemberCodeSlotMarkupV310(){
   return '<div id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden></div>';
 }
-function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false}={}){
+function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false,deferReferralSlotV339=false}={}){
   const entries=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
     .map(kind=>[kind,programmeStackEntryV310(programmes,kind)]));
   const show=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
@@ -3306,7 +3494,10 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        gating the slot on programmes['referral'] too would give referral presentation two truths
        that can disagree, and the one that would lose is the card. The spine's referral row exists
        for the read path, not for this decision. */
-    '<div id="walletReferralSlot" hidden></div>'
+    /* v339: the slot is EMITTED EXACTLY ONCE either way — deferred here means the profile page
+       renders the identical node further down, after "Earn more points", per photo 1. Two slots
+       with one id would give loadReferralCardV300 an ambiguous target. */
+    deferReferralSlotV339?'':'<div id="walletReferralSlot" hidden></div>'
   ].filter(Boolean).join('');
   /* v338: the reward half of this strip's facts duplicates the v337 "reward ready" banner
      one-for-one (both read reward.available_now/name) whenever that banner is already showing —
@@ -3387,10 +3578,28 @@ function customerClaimableRewardBannerMarkupV337({reward=null}={}){
       <p class="customer-claimable-banner-kicker-v337">You have a reward ready!</p>
       <b class="customer-claimable-banner-name-v337">${name}</b>
       <p class="muted small customer-claimable-banner-line-v337">Show this at the counter to claim it.</p>
+      <!-- v339 (owner mockup "photo 1" shows a validity pill under the reward): this stays EMPTY
+           and hidden at paint time on purpose. The wallet payload's next_eligible_reward carries
+           only name/cost_units/remaining_units/available_now (frenly_v44:292-297) — there is no
+           expiry on it — so the honest date can only come from the reward CATALOGUE, which
+           loadRewards fetches moments later. It fills this node from the matching catalogue row's
+           own claim_available_until / entitlement_expiry_days, the same two fields the business's
+           reward editor writes and the reward tiles already print. No match, or a reward with
+           neither field set, leaves the node hidden rather than inventing a date. The mockup's
+           second clause ("No purchase required") is deliberately NOT rendered: no such flag
+           exists anywhere in the reward model, and printing it would be a promise to the
+           customer that nothing in this system backs. -->
+      <p class="customer-claimable-banner-validity-v339" data-claim-validity-v339 hidden></p>
     </div>
     <button type="button" class="btn sm customer-claimable-banner-cta-v337" data-claim-reward-scroll-v337>Claim reward ›</button>
   </section>`;
 }
+/* v340 (gap 2): `backHrefV340` carries the profile's real "go back" destination INTO this markup
+   so the chevron can sit inline with the business name, where photo 1 draws it. It is a
+   parameter and not a constant because this same function is rendered standalone by the
+   workspace's Live preview harness (customerInterfaceLivePreviewMarkupV326), which has no
+   history and nowhere to go back to — that caller passes nothing and gets no chevron, which is
+   why the v339 pass left the control stranded in the shell bar instead of moving it. */
 const business={name:'Glow Atelier',slug:'glow-atelier'};
 $('promotionCards').innerHTML=FIXTURE_OFFERS.map(offer=>customerPromotionCardV104(offer,business,true)).join('');
 document.querySelectorAll('[data-promotion-details]').forEach(button=>button.addEventListener('click',()=>{

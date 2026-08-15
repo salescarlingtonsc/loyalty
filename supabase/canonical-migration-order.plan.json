@@ -1960,6 +1960,12 @@
       "version": "20260815090300",
       "name": "nestly_v332_retention_program_lifecycle",
       "sourcePath": "db/migrations/20260815_nestly_v332_retention_program_lifecycle.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090400",
+      "name": "nestly_v340_reward_purchase_requirement",
+      "sourcePath": "db/migrations/20260815_nestly_v340_reward_purchase_requirement.sql"
     }
   ]
 }

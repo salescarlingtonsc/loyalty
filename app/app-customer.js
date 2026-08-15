@@ -2980,6 +2980,36 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
   });
   return true;
 }
+/* The sheet behind the compact row. It carries the FULL explainer sentence the row abbreviates
+   and the "Got it" button that performs the same localStorage write the inline button used to. */
+function openCustomerPointsExplainerV339(trigger){
+  const key=String(trigger?.dataset?.pointsExplainerKey||'');
+  const business=String(trigger?.getAttribute('aria-label')||'').replace(/^How rewards work at /,'');
+  $('customerPointsExplainerModalV339')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerPointsExplainerModalV339" role="dialog" aria-modal="true" aria-labelledby="customerPointsExplainerTitleV339" tabindex="-1"><div class="modal-card" style="max-width:460px">
+    <div class="row"><h2 id="customerPointsExplainerTitleV339">How rewards work at ${esc(business||'this business')}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerPointsExplainerCloseV339" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
+    <p class="muted" style="margin-top:14px">Collect points here and use them for available rewards.</p>
+    <button type="button" class="btn" id="customerPointsExplainerGotItV339" style="margin-top:18px">Got it</button>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('customerPointsExplainerModalV339')?.remove()};
+  deactivate=CUI.activateDialog($('customerPointsExplainerModalV339'),{onClose:close,initialFocus:'#customerPointsExplainerGotItV339'});
+  $('customerPointsExplainerCloseV339').onclick=close;
+  $('customerPointsExplainerGotItV339').onclick=()=>{
+    if(key){try{localStorage.setItem(key,'dismissed')}catch{}}
+    trigger?.remove();close();
+  };
+}
+/* Built from the SAME payload the referral card below it renders, so the two can never disagree
+   about the payout. Rendered only when the server says the programme is enabled AND names a
+   positive reward_points — an unset or zero payout gets no row rather than a "+0 pts" promise. */
+function customerEarnMoreReferralRowMarkupV339(card){
+  const points=Math.max(0,Math.round(Number(card?.reward_points)||0));
+  if(!points)return '';
+  return `<span class="customer-earn-more-icon-v339" aria-hidden="true">${CUI.icon('referrals',{size:18})}</span>
+    <span class="customer-earn-more-copy-v339"><b>Refer a friend</b><span class="muted small">Paid after their qualifying first visit.</span></span>
+    <span class="pill ok customer-earn-more-points-v339">+${esc(customerPointTotalV103(points))} pts</span>`;
+}
 function wireCustomerProgrammeTabsV194(host=document){
   const tabs=[...host.querySelectorAll('[data-programme-tab]')];
   if(!tabs.length)return;
@@ -3445,7 +3475,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   if(silent&&!$('walletBody')?.isConnected)return;
   const context=await loadCustomerSurfaceContext(isWalletCurrent,{silent});if(!context)return;
   const customerFeatures=context.features;
-  if(!silent)renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
+  if(!silent)renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,compactBusinessHeadV339:!!businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
     body:`<div class="card"><p class="muted">Loading ${esc(BRAND.customerLabel)}…</p></div>`});
   let actionableCard=null,programmeCards=[];
   if(customerFeatures.customer_actionable_wallet===true){
@@ -3684,7 +3714,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const programmeSignatureV333=customerWalletFactSignatureOfV333(['programme',businessSlug,summary,
     capabilities,actionableCard,programmeCards,presentation,businessActions]);
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
-  const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities})}
+  const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes'})}
     ${showSecondaryMetrics?`<div class="wallet-metrics">
       ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
       ${showMembershipMetric?`<div class="wallet-metric"><span class="muted small">Membership</span><b>Active</b></div>`:''}
@@ -3824,6 +3854,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     if(offer)shareCustomerOfferV264(offer,{...b,id:businessId||b.id,slug:businessSlug});
   });
   document.querySelector('[data-programme-offers-retry]')?.addEventListener('click',()=>renderCustomerWallet(businessSlug));
+  /* v339: the explainer's resting row no longer carries its own dismiss button — it opens the
+     sheet, and the sheet's "Got it" performs the identical localStorage write. The old
+     [data-points-explainer-dismiss] handler is kept below so a client still running the previous
+     four-hour-cached bundle's markup is not left with an inert button. */
+  document.querySelector('[data-points-explainer-open-v339]')?.addEventListener('click',event=>
+    openCustomerPointsExplainerV339(event.currentTarget));
   document.querySelector('[data-points-explainer-dismiss]')?.addEventListener('click',event=>{
     const explainer=event.currentTarget.closest('[data-points-explainer]');
     try{localStorage.setItem(explainer.dataset.pointsExplainerKey,'dismissed')}catch{}
@@ -3922,6 +3958,15 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     const {data,error}=await customerRpc('customer_get_referral_card_v300',{p_business_slug:businessSlug});
     if(!isWalletCurrent()||!slot.isConnected)return;
     if(error||data?.enabled!==true){slot.remove();return}
+    /* v339: the "Earn more points" referral row is filled from THIS payload — the same
+       reward_points the card below it prints — so the two can never advertise different payouts.
+       An answer without a positive payout leaves the row hidden and empty. */
+    const earnReferralRowV339=$('customerEarnMoreReferralV339');
+    if(earnReferralRowV339){
+      const rowMarkup=customerEarnMoreReferralRowMarkupV339(data);
+      if(rowMarkup){earnReferralRowV339.innerHTML=rowMarkup;earnReferralRowV339.hidden=false;
+        earnReferralRowV339.classList.add('customer-earn-more-row-v339');}
+    }
     slot.outerHTML=customerReferralCardMarkupV300(data,{...b,id:businessId||b.id,slug:businessSlug});
     const copyButton=$('customerReferralCopy');
     if(copyButton)copyButton.onclick=()=>copyTextToClipboard(String(data.code||''),{button:copyButton,
@@ -4079,6 +4124,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     if(redemptionUncheckedV286)availability.available_at_counter='Redemption can’t be checked right now';
     host.setAttribute('aria-busy','false');
     const rewardUnit=loyalty.unit||'points',rewardBalance=Math.max(0,Number(loyalty.balance)||0);
+    /* v339 (owner mockup "photo 1" leads the carousel with the claimable card): a reward the
+       customer can take RIGHT NOW is the only card with an action on it, so it goes first. This
+       is a stable sort of the existing list — no reward is added, removed or re-priced, and every
+       card keeps the action_key its redeem button is bound to. */
+    rewards.sort((a,bReward)=>Number(!!(bReward.action_key&&customerRewardCanRedeem(bReward,redemptionEnabled)))
+      -Number(!!(a.action_key&&customerRewardCanRedeem(a,redemptionEnabled))));
     /* v195: this now renders inside the Reward points tab, which already prints the balance in
        full. The repeated balance and the three-step "how rewards work" strip went with the card
        the owner crossed out; one line of instruction survives, on the control it describes. */
@@ -4090,9 +4141,42 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         cost=Math.max(0,Number(r.cost_points)||0),gap=Math.max(0,cost-rewardBalance),
         progress=cost>0?Math.min(100,Math.max(0,Math.round((rewardBalance/cost)*100))):100,
         short=r.availability==='insufficient_balance';
-      return `<article class="wallet-reward">
-      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.customer_name||'Reward')}</span></b><span class="spacer"></span>${ready?'<span class="pill ok">Ready</span>':''}${r.availability==='tier_locked'?'<span class="pill">🔒 Locked</span>':''}</div>
-      ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}${short?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap"><b>${esc(customerPointTotalV103(gap))} more ${esc(rewardUnit)}</b></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(rewardLockLineV176(r)||availability[r.availability]||'Ask at counter')}</p>
+      /* v340 (gap 5): photo 1 draws THREE card types, and until now only two were distinct —
+         ready-to-claim and tier-locked. The third is "you are on your way to this one": not
+         claimable yet, not gated out by tier, and priced in points the customer is short of.
+         This is a RENDERING distinction over data the catalogue already returns per item
+         (cost_points) measured against the balance the wallet already holds (loyalty.balance) —
+         customer_get_reward_catalog needed no new field and no migration, and progress is
+         therefore computable for EVERY card in the list, not just next_eligible_reward.
+         `short` (availability==='insufficient_balance') stays the server's own verdict and still
+         drives the bar; inProgressV340 is what gives the card its own class and the
+         "{collected}/{cost}" reading photo 1 puts under the bar. Rewards held back for another
+         honest reason — not_started, ended, limit_reached — are deliberately NOT dressed as
+         progress: a bar filling toward a reward that has ended would be a lie. */
+      const inProgressV340=!ready&&cost>0&&rewardBalance<cost
+        &&!['tier_locked','ended','limit_reached','not_started','disabled'].includes(r.availability);
+      /* v340 (gap 4): the reward's own photo. image_ref has existed on
+         loyalty_reward_versions since v27 and customer_get_reward_catalog has always returned
+         it — what was missing was any way for an owner to SET it (added to the reward editor in
+         this same pass) and, here, a card that shows it as a picture. v339 rendered a stored
+         https ref as a text link ("View reward image"), which is not what the mockup shows and
+         is not what an owner uploading a product photo expects. It now resolves through the same
+         customerMediaUrlV95 guard every other customer image uses, so only a real
+         business-public storage object is ever loaded; anything else, or a load failure, falls
+         back to the gift glyph rather than a broken image. */
+      const imageUrlV340=customerMediaUrlV95(r.image_ref);
+      /* v339: RESTING STATE ONLY. The status badge moves to the top of the card, the reward's own
+         name becomes the card's heading and the cost sits under it as its own line — photo 1's
+         shape. Every interactive part is untouched: the same "Show QR at counter" button with the
+         same data-customer-redeem action_key, wired by the same handler below, opening the same
+         customer_create_redemption_intent_v89 flow. */
+      return `<article class="wallet-reward customer-reward-card-v339${inProgressV340?' customer-reward-card-progress-v340':''}">
+      <div class="customer-reward-photo-v340${imageUrlV340?'':' customer-reward-photo-empty-v340'}">${imageUrlV340
+        ?`<img src="${esc(imageUrlV340)}" alt="" loading="lazy" data-reward-photo-v340>`
+        :CUI.icon('loyalty',{size:26})}</div><div class="customer-reward-card-head-v339">${ready?'<span class="pill ok">Ready to claim</span>':''}${inProgressV340?'<span class="pill customer-reward-progress-pill-v340">In progress</span>':''}${r.availability==='tier_locked'?`<span class="pill customer-reward-locked-v339">${esc(r.tier_requirement?.tier_label?`${r.tier_requirement.tier_label} only`:'Locked')}</span>`:''}</div>
+      <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
+      <p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</p>
+      ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}${short||inProgressV340?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap customer-reward-progress-read-v340"><b>${esc(customerPointTotalV103(Math.min(rewardBalance,cost)))}/${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</b><span class="muted"> · ${esc(customerPointTotalV103(gap))} more to go</span></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(rewardLockLineV176(r)||availability[r.availability]||'Ask at counter')}</p>
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
@@ -4101,6 +4185,40 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:17})}<span>Show QR at counter</span></button>`
         :''}</div></article>`}).join('')}</div>`;
     if($('walletRewardsRedemptionRetry'))$('walletRewardsRedemptionRetry').onclick=loadRewards;
+    /* v340 (gap 4): never a broken image. A stored object that has since been deleted, or a
+       storage read that fails, swaps the <img> for the same gift glyph an image-less reward
+       already shows — wired here rather than as an inline onerror because the app runs under a
+       CSP with no inline handlers. */
+    host.querySelectorAll('[data-reward-photo-v340]').forEach(image=>{image.onerror=()=>{
+      const frame=image.closest('.customer-reward-photo-v340');if(!frame)return;
+      frame.classList.add('customer-reward-photo-empty-v340');
+      frame.innerHTML=CUI.icon('loyalty',{size:26});
+    }});
+    /* v339 (task A): the "reward ready" banner's validity line. The wallet payload that painted
+       the banner has no expiry field on next_eligible_reward, but THIS catalogue read does — the
+       same claim_available_until / entitlement_expiry_days the business's reward editor writes.
+       Matched by the banner's own printed name against the catalogue's customer_name/name, and
+       filled only on an exact match with one of those two fields actually set. Anything else
+       (no match, both fields null, banner absent) leaves the node hidden.
+       v340 (gap 1): the mockup's "No purchase required" clause now HAS a field behind it —
+       requires_purchase, added by db/migrations/20260815_nestly_v340_reward_purchase_
+       requirement.sql. It is appended only when the catalogue explicitly says false. Three
+       states, three behaviours: false prints the clause, true prints nothing (the app enforces
+       no purchase condition, so promising the customer one would be worse than silence), and
+       undefined — the server before that migration is applied — also prints nothing, because a
+       missing field is not a "no". */
+    const claimValidityNodeV339=$('walletBody')?.querySelector('[data-claim-validity-v339]');
+    const bannerNameV339=$('walletBody')?.querySelector('.customer-claimable-banner-name-v337')?.textContent?.trim()||'';
+    if(claimValidityNodeV339&&bannerNameV339){
+      const matchV339=rewards.find(item=>String(item.customer_name||item.name||'').trim()===bannerNameV339);
+      const untilV339=matchV339?.claim_available_until?walletDate(matchV339.claim_available_until):'';
+      const daysV339=Math.max(0,Math.round(Number(matchV339?.entitlement_expiry_days)||0));
+      const baseLineV339=untilV339?`Valid until ${untilV339}`
+        :(daysV339?`Use within ${daysV339} day${daysV339===1?'':'s'} of claiming`:'');
+      const noPurchaseV340=matchV339?.requires_purchase===false?'No purchase required':'';
+      const lineV339=[baseLineV339,noPurchaseV340].filter(Boolean).join(' · ');
+      if(lineV339){claimValidityNodeV339.textContent=lineV339;claimValidityNodeV339.hidden=false}
+    }
     let redemptionAttempt=null;
     host.querySelectorAll('[data-customer-redeem]').forEach(button=>button.onclick=async()=>{
       const reward=rewards.find(item=>item.action_key===button.dataset.customerRedeem);

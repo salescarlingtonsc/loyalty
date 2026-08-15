@@ -81,7 +81,10 @@ test('reward progress is formatted, bounded, accessible, and safe for zero-cost 
   assert.match(app,/customerPointTotalV103\(reward\.remaining_units\|\|0\)/);
   /* v183: the reward row now states the exchange — "150 points → Free facial add-on" — so the
      formatted cost is rendered from the same clamped `cost` the progress bar uses. */
-  assert.match(app,/<span class="wallet-reward-cost">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/span>/);
+  /* v339 gave the cost its own line under the reward name (photo 1) instead of leading a single
+     trade sentence. The figure and its source are unchanged — still the same clamped `cost` the
+     progress bar uses, still through customerPointTotalV103. */
+  assert.match(app,/class="wallet-reward-cost customer-reward-cost-v339">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/p>/);
   assert.match(app,/customerPointTotalV103\(Math\.abs\(delta\)\)/);
   assert.match(app,/customerPointTotalV103\(earned\)/);
   assert.match(app,/is ready to redeem/);
@@ -105,6 +108,10 @@ test('points explanation is neutral, business-specific, dismissible, and version
   assert.match(app,/peekaa\.customer\.points-explainer\.v1\./);
   assert.match(app,/How rewards work at \$\{esc\(business\.name\|\|'this business'\)\}/);
   assert.match(app,/Collect points here and use them for available rewards\./);
-  assert.match(app,/aria-label="Dismiss points explanation"/);
+  /* v339 moved the confirmation out of the resting row and into the sheet the row opens (photo 1
+     shows no button on the collapsed card). The dismissal itself is what this test guards, and it
+     is unchanged: the same key, the same 'dismissed' value, still written on a customer tap. */
+  assert.match(app,/data-points-explainer-open-v339/);
+  assert.match(app,/customerPointsExplainerGotItV339[\s\S]{0,200}localStorage\.setItem\(key,'dismissed'\)/);
   assert.doesNotMatch(app,/points-explainer[\s\S]{0,600}every visit earns/i);
 });

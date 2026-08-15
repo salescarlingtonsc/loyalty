@@ -49,7 +49,11 @@ test('the customer card locks the reward instead of hiding it, and names the tie
   assert.ok(app.includes('const rewardLockLineV176='), 'no lock-line helper');
   assert.ok(/return label\?`Reach \$\{label\} to unlock this reward`/.test(app),
     'the locked line must name the tier — that is what makes climbing worth it');
-  assert.ok(app.includes("r.availability==='tier_locked'?'<span class=\"pill\">🔒 Locked</span>':''"),
+  /* v339 restyled the badge (photo 1 shows a tier-gated card badged with the tier's own name) and
+     moved it to the head of the card. It still renders on exactly the same tier_locked condition,
+     and it now NAMES the required tier when the server resolved one — the same
+     tier_requirement.tier_label the lock line below uses — falling back to "Locked". */
+  assert.ok(app.includes("r.availability==='tier_locked'?`<span class=\"pill customer-reward-locked-v339\">${esc(r.tier_requirement?.tier_label?`${r.tier_requirement.tier_label} only`:'Locked')}</span>`:''"),
     'no locked pill on the customer card');
   assert.ok(app.includes('esc(rewardLockLineV176(r)||availability[r.availability]'),
     'the status line must prefer the tier-specific copy');

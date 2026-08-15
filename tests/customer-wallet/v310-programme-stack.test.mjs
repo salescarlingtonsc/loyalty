@@ -255,10 +255,20 @@ test('the stack gives referral a slot, and only the server fills it',()=>{
   assert.match(appJs,/slot\.outerHTML=customerReferralCardMarkupV300\(data,/);
 });
 
-test('the fallback path keeps the referral slot where it has always been',()=>{
+/* v339 moved the offers block: it is no longer a section of its own at the foot of the page but
+   the tail of the reward/offer swipe region near the top, so "below the offers block" is no
+   longer a place the referral slot can be pinned to. The invariant that actually matters is
+   unchanged and is what is asserted now — the fallback path (no v310 stack) still emits the slot,
+   the page emits it EXACTLY ONCE however it is composed (two nodes sharing one id would give
+   loadReferralCardV300 an ambiguous target), and it sits after the programme stack/tabs. */
+test('the fallback path keeps the referral slot, exactly one of it, below the programme block',()=>{
   const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
-  assert.match(merchant,/customerProgrammeOffersMarkupV167[\s\S]{0,220}walletReferralSlot/,
-    'below the offers block, exactly as before, when the stack is not rendering');
+  assert.equal(merchant.match(/id="walletReferralSlot"/g)?.length,1,
+    'one slot node in the markup, whichever branch renders it');
+  assert.match(merchant,/customerProgrammeSummaryTabsV194[\s\S]{0,900}walletReferralSlot/,
+    'still below the programme block when the stack is not rendering');
+  assert.match(merchant,/!programmeStackV310\(programmeCapabilities\)\?'<div id="walletReferralSlot"/,
+    'the fallback path is the branch that emits it');
 });
 
 /* --------------------------------------------------------- 8 · never a made-up ring count */

@@ -723,7 +723,14 @@ test('launch billing copy stays template-assisted and preserves the prospective 
     'V145 must not overwrite V144 with an unconditional money-back promise');
 });
 
-test('Grow hides the unfinished reward image storage control while preserving saved images', () => {
+/* v340 (gap 4): the launch freeze hid the RAW image-storage workflow — a text box asking an
+   owner to type a storage path or URL, against a storage contract the UI could not complete.
+   That control is still gone and this test still proves it. What replaced it is a real photo
+   upload to the same business-public bucket the logo and cover photo use, so the assertion that
+   the stored ref is preserved has moved from "the editor cannot change it" to "the editor only
+   changes it when the owner acts": undefined carries the stored value through untouched, a
+   string is a photo just uploaded, null is an explicit removal. */
+test('Grow offers a real reward photo upload and never the raw image-storage workflow', () => {
   const loyalty = section('async function loyaltyPage(', 'async function promotionsPage(');
   const editorStart=loyalty.indexOf('function openRewardEditor(reward)');
   const editorEnd=loyalty.indexOf('\n  async function saveReward',editorStart);
@@ -733,8 +740,14 @@ test('Grow hides the unfinished reward image storage control while preserving sa
   const editor=loyalty.slice(editorStart,saveEnd);
   assert.doesNotMatch(editor, /Image reference|Storage path or image URL|v27 storage contract|id="rwImage"/,
     'launch UI must not expose the incomplete low-level image storage workflow');
-  assert.match(editor, /image_ref:editorReward\?\.image_ref\?\?null/,
-    'saving an existing reward must preserve its stored image reference');
+  assert.match(editor, /rewardImageRefDraftV340===undefined\?\(editorReward\?\.image_ref\?\?null\)/,
+    'saving a reward the owner did not re-photograph must preserve its stored image reference');
+  assert.match(editor, /id="rwPhotoV340" type="file" accept="image\/png,image\/jpeg,image\/webp"/,
+    'the reward editor must offer a real photo upload, not a path field');
+  assert.match(loyalty, /sb\.storage\.from\('business-public'\)\s*\n?\s*\.upload\(objectPath/,
+    'reward photos must go to the same owned public bucket as the logo and cover photo');
+  assert.match(loyalty, /\$\{S\.biz\.id\}\/reward\/\$\{crypto\.randomUUID\(\)\}/,
+    'the object path must match the reward prefix app.v95_storage_path_owned already permits');
   const customerCatalog = section('async function renderCustomerWallet(', 'async function renderCustomerInAppInbox(');
   assert.match(customerCatalog, /r\.image_ref/,
     'already-published reward images must continue to render customer-side');

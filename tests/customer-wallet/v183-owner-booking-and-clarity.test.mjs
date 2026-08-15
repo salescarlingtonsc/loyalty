@@ -49,10 +49,15 @@ test('the offers shelf title is one icon-led line',()=>{
 
 /* ------------------------------------------------------------------ My Rewards */
 
-test('a reward states the exchange — cost first, then what it buys',()=>{
+/* v339 (owner mockup "photo 1") inverted the reward card's resting line: the reward NAME is now
+   the card's heading and the cost sits directly beneath it, replacing the single
+   "150 points → Free facial add-on" sentence. Both halves of the exchange are still stated on the
+   card, from the same two sources, which is what this test exists to protect — a card that named
+   a reward without pricing it, or priced one without naming it, still fails. */
+test('a reward states the exchange — what it is, and what it costs',()=>{
   const rewards=section(app,'const loadRewards=async','const loadTransactions=');
-  assert.match(rewards,/<b class="wallet-reward-trade"><span class="wallet-reward-cost">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/span>/);
-  assert.match(rewards,/<span class="wallet-reward-arrow" aria-hidden="true">→<\/span><span>\$\{esc\(r\.customer_name\|\|'Reward'\)\}<\/span>/);
+  assert.match(rewards,/class="wallet-reward-trade customer-reward-name-v339">\$\{esc\(r\.customer_name\|\|'Reward'\)\}<\/b>/);
+  assert.match(rewards,/class="wallet-reward-cost customer-reward-cost-v339">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/p>/);
   assert.doesNotMatch(rewards,/<span class="pill">\$\{esc\(customerPointTotalV103\(r\.cost_points\|\|0\)\)\}/,
     'the duplicate cost pill is gone now that the cost leads the line');
 });

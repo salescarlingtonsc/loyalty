@@ -157,7 +157,12 @@ test('customer shell, deep links, and profile transitions are predictable and ac
   // Rewards itself passes backTo:'#/wallet' (the owner: "There is no back button").
   assert.match(shell,/backHref=businessSlug\?'#\/customer\/programmes':\(backTo\|\|''\)/);
   assert.match(shell,/walletBack'\)\.onclick=\(\)=>nav\(backHref\)/);
-  assert.match(shell,/backHref\?`<button class="btn ghost sm" id="walletBack"/);
+  /* v340 (gap 2): on the collapsed business profile the chevron moved into the business
+     header itself (customerMerchantExperienceMarkupV95), so the shell suppresses its own copy
+     there and nowhere else — shellBackHrefV340 is the only thing between backHref and the
+     button, and every non-profile surface still draws it exactly as before. */
+  assert.match(shell,/const shellBackHrefV340=compactBusinessHeadV339\?'':backHref;/);
+  assert.match(shell,/shellBackHrefV340\?`<button class="btn ghost sm" id="walletBack"/);
   assert.doesNotMatch(shell,/history\.back/);
   assert.match(app,/function focusCustomerRoute\(\)\{[\s\S]*CUI\.focusRoute\(main,\{enhanceContent:true\}\)/);
 

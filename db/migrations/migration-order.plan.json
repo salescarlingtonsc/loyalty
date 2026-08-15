@@ -1965,6 +1965,12 @@
       "path": "db/migrations/20260815_nestly_v332_retention_program_lifecycle.sql",
       "semanticVersion": "v332",
       "proposedDeployVersion": "20260815090300"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v340_reward_purchase_requirement.sql",
+      "semanticVersion": "v340",
+      "proposedDeployVersion": "20260815090400"
     }
   ]
 }
