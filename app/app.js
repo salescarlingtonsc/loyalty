@@ -35638,9 +35638,10 @@ async function renderPortal(slug){
     const branchStep=`<section class="pf-step" data-step="branch" hidden>
       <h2 tabindex="-1">Which branch?</h2>
       <p class="pf-hint">Choose where you'd like to visit.</p>
-      <div class="pf-choice" role="group" aria-label="Choose a branch">
-        ${bookableBranches.map(b=>`<button class="svc${selBranch===b.id?' sel':''}" type="button" aria-pressed="${selBranch===b.id}" data-branch="${esc(b.id)}"><span><b>${esc(b.name)}</b></span></button>`).join('')}
-      </div>
+      <label for="branchSelect">Branch</label>
+      <select id="branchSelect" aria-label="Choose a branch">
+        ${bookableBranches.map(b=>`<option value="${esc(b.id)}"${selBranch===b.id?' selected':''}>${esc(b.name)}</option>`).join('')}
+      </select>
       <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="next-branch" type="button">Continue</button></div>
     </section>`;
     const tableStep=`<section class="pf-step" data-step="table" hidden>
@@ -35807,11 +35808,11 @@ async function renderPortal(slug){
       const e=$('err-service');if(e)e.textContent='';
     });
     root.querySelectorAll('[data-tbl]').forEach(el=>el.onclick=()=>{selTable=el.dataset.tbl||null;setChoice('[data-tbl]',el);});
-    root.querySelectorAll('[data-branch]').forEach(el=>el.onclick=()=>{
-      selBranch=el.dataset.branch||null;setChoice('[data-branch]',el);
+    if($('branchSelect'))$('branchSelect').onchange=()=>{
+      selBranch=$('branchSelect').value||null;
       if(staffChoice&&!staffForService().some(member=>member.id===selStaff))selStaff=null;
       selectedSlot='';renderTeamOptions();
-    });
+    };
     const wireTeamChoice=()=>root.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{
       selStaff=el.dataset.team||null;setChoice('[data-team]',el);selectedSlot='';
     });
