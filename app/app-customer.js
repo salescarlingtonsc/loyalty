@@ -3223,6 +3223,25 @@ function customerStampQuestBodyV323(quest){
     ${quest.carried>0?`<p class="muted small" data-stamp-quest-line-v323="carried">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
     ${ladder}`;
 }
+function customerBusinessSecondaryMarkupV346(presentation={}){
+  const products=Array.isArray(presentation.products)?presentation.products:[],
+    services=Array.isArray(presentation.services)?presentation.services:[],
+    benefits=Array.isArray(presentation.benefits)?presentation.benefits:[],
+    cardImage=item=>customerMediaUrlV95(item?.image_url);
+  const featured=[...products.map(item=>({...item,entity_type:item.entity_type||'product'})),
+    ...services.map(item=>({...item,entity_type:item.entity_type||'service'}))];
+  const featuredMarkup=featured.length
+    ?`<div class="customer-rewards-grid customer-secondary-grid-v346">${featured.slice(0,4).map(customerFeatureCardMarkupV156).join('')}</div>`
+    :'<p class="muted small">Featured services will appear here when this business publishes them.</p>';
+  const benefitMarkup=benefits.length
+    ?`<div class="customer-perks-grid customer-secondary-grid-v346">${benefits.slice(0,4).map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline?`<p class="muted small" style="margin-top:5px">${esc(item.tagline)}</p>`:''}</article>`).join('')}</div>`
+    :'';
+  return `<section class="customer-business-group-v346 customer-business-secondary-v346" aria-labelledby="customerBusinessSecondaryTitle">
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessSecondaryTitle">Secondary</h2><p class="muted small">Menu, perks and visit feedback.</p></div>
+    ${featuredMarkup}
+    ${benefitMarkup}
+  </section>`;
+}
 /* W4c lives HERE, not beside the slot it fills, and that placement is deliberate rather than
    tidy: tests/browser/generate-v104-promotions-visual.mjs extracts production source from
    `openCustomerPromotionDetailsV104` to `customerMerchantExperienceMarkupV95` and pins the result
@@ -3378,12 +3397,49 @@ function customerProgrammeHoldingsMarkupV183(card){
   if(creditCents>0)chips.push(`<span class="customer-programme-holding"><b>${esc(currency)} ${(creditCents/100).toFixed(2)}</b> credit</span>`);
   return chips.length?`<div class="customer-programme-holdings">${chips.join('')}</div>`:'';
 }
+function customerProgrammeDirectoryTypeV346(business={}){
+  const raw=String(business.industry||'').trim();
+  if(!raw)return 'Member';
+  if(/facial|spa|beauty|aesthetic/i.test(raw))return 'FACIAL';
+  if(/hair|salon/i.test(raw))return 'SALON';
+  if(/restaurant|food|f&b|fnb|cafe|café|coffee|bakery/i.test(raw))return 'FNB';
+  if(/bar|bottle|club/i.test(raw))return 'BAR';
+  if(/fitness|gym|yoga|pilates|sport/i.test(raw))return 'FITNESS';
+  return raw.toUpperCase().slice(0,18);
+}
+function customerProgrammeDirectoryMetricV346(card){
+  const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
+    packages=card?.packages||{},membership=card?.membership||{};
+  const unit=String(loyalty.unit||'points').toLowerCase();
+  const balance=Math.max(0,Number(loyalty.balance)||0);
+  if(unit==='stamps'&&reward){
+    const target=Math.max(balance,Number(reward.cost_units||0),Number(reward.target_units||0));
+    if(target>0)return `${customerPointTotalV103(balance)} of ${customerPointTotalV103(target)} stamps`;
+    return `${customerPointTotalV103(balance)} stamps`;
+  }
+  if(membership.active===true)return 'Member';
+  if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} sessions`;
+  return unit==='stamps'?`${customerPointTotalV103(balance)} stamps`:`${customerPointTotalV103(balance)} pts`;
+}
+function customerProgrammeDirectoryStatusV346(card){
+  const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
+    packages=card?.packages||{},membership=card?.membership||{},
+    remaining=Math.max(0,Number(reward?.remaining_units||0));
+  if(reward?.available_now===true)return '1 reward ready';
+  if(String(loyalty.unit||'').toLowerCase()==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamps to reward`;
+  if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points')} to reward`;
+  if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} session${Number(packages.sessions_remaining)===1?'':'s'} left`;
+  if(membership.active===true)return '1 active perk';
+  return 'No reward yet';
+}
 function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
   const accent=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f');
-  const unit=ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points');
   const holdings=customerProgrammeHoldingsMarkupV183(card);
-  return `<a class="card customer-programme-card customer-programme-card-v95" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b><span>${esc(unit)}</span></div>${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}${reward?`<div style="grid-column:1/-1">${customerRewardProgressMarkupV167(card)}</div>`:''}</div></a>`;
+  const tier=String(loyalty.tier_name||'').trim(),
+    metric=customerProgrammeDirectoryMetricV346(card),
+    status=customerProgrammeDirectoryStatusV346(card);
+  return `<a class="card customer-programme-card customer-programme-card-v95" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy"><p class="customer-quest-kicker">${esc(customerProgrammeDirectoryTypeV346(business))}</p><h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346">${esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -3909,26 +3965,32 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const programmeSignatureV333=customerWalletFactSignatureOfV333(['programme',businessSlug,summary,
     capabilities,actionableCard,programmeCards,presentation,businessActions]);
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
-  const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes'})}
-    ${showSecondaryMetrics?`<div class="wallet-metrics">
-      ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
-      ${showMembershipMetric?`<div class="wallet-metric"><span class="muted small">Membership</span><b>Active</b></div>`:''}
-    </div>`:''}
+  const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
     <div class="wallet-sections" id="walletSections">
-      ${window.NestlyGrowthOffers?window.NestlyGrowthOffers.renderCustomerOffers({state:'loading'}):''}
-      <details class="card wallet-history-disclosure" id="walletHistoryDisclosure">
-        <summary><span>History</span><span class="muted small">Transactions and loyalty activity</span></summary>
-        <div class="wallet-history-disclosure-body">
-          ${walletSectionShell('walletTransactions','Transactions & points','Every purchase, reversal, correction, and points event kept in time order.')}
-          ${capabilities.activity?walletSectionShell('walletActivity','Loyalty activity','Your loyalty history with this business.'):''}
-        </div>
-      </details>
-      ${walletSectionShell('walletGiftCards','Gift cards','Money left on your gift cards from this business.')}
-      ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
-      ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
-      ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
-      ${walletReviewUrlV183(b)?`<section class="card wallet-section" id="walletFeedback"></section>`:''}
-      ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
+      <section class="customer-business-group-v346" aria-labelledby="customerBusinessPackagesTitle">
+        <div class="customer-business-group-head-v346"><h2 id="customerBusinessPackagesTitle">Packages</h2><p class="muted small">Active plans, sessions and stored value.</p></div>
+        ${walletSectionShell('walletGiftCards','Gift cards','Money left on your gift cards from this business.')}
+        ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
+        ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
+        ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
+      </section>
+      <section class="customer-business-group-v346" aria-labelledby="customerBusinessActivityTitle">
+        <div class="customer-business-group-head-v346"><h2 id="customerBusinessActivityTitle">Activity</h2><p class="muted small">Appointments, visits and loyalty history.</p></div>
+        ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
+        <details class="card wallet-history-disclosure" id="walletHistoryDisclosure">
+          <summary><span>History</span><span class="muted small">Transactions and loyalty activity</span></summary>
+          <div class="wallet-history-disclosure-body">
+            ${walletSectionShell('walletTransactions','Transactions & points','Every purchase, reversal, correction, and points event kept in time order.')}
+            ${capabilities.activity?walletSectionShell('walletActivity','Loyalty activity','Your loyalty history with this business.'):''}
+          </div>
+        </details>
+      </section>
+      <section class="customer-business-group-v346" aria-labelledby="customerBusinessOffersTitle">
+        <div class="customer-business-group-head-v346"><h2 id="customerBusinessOffersTitle">Overview</h2><p class="muted small">Current offers and visit feedback.</p></div>
+        ${window.NestlyGrowthOffers?window.NestlyGrowthOffers.renderCustomerOffers({state:'loading'}):''}
+        ${walletReviewUrlV183(b)?`<section class="card wallet-section" id="walletFeedback"></section>`:''}
+      </section>
+      ${customerBusinessSecondaryMarkupV346(presentation)}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
   if(silent){if(!customerWalletSilentPaintV333(programmeBodyMarkupV333))return}

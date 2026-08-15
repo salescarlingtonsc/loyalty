@@ -3964,13 +3964,38 @@ function customerClaimableRewardBannerMarkupV337({reward=null}={}){
     <button type="button" class="btn sm customer-claimable-banner-cta-v337" data-claim-reward-scroll-v337>Claim reward ›</button>
   </section>`;
 }
+function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={}}={}){
+  const unitLabel=ct(presentation.unit||loyalty.unit||'points');
+  const balance=Math.max(0,Number(loyalty.balance)||0);
+  const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
+  const unit=String(loyalty.unit||presentation.unit||'points').toLowerCase();
+  const rewardReady=reward?.available_now===true;
+  const remaining=Math.max(0,Number(reward?.remaining_units||0));
+  const primary=unit==='stamps'&&reward
+    ?`${customerPointTotalV103(balance)} / ${customerPointTotalV103(Math.max(balance,Number(reward.cost_units||0)))} stamps`
+    :tierLabel||`${customerPointTotalV103(balance)} ${unitLabel}`;
+  const subline=rewardReady?'1 reward ready'
+    :remaining>0?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to reward`
+    :membership.active===true?'Member'
+    :'No reward yet';
+  const extras=[
+    tierLabel&&primary!==tierLabel?`<span class="pill">${esc(tierLabel)}</span>`:'',
+    Number(packages.sessions_remaining||0)>0?`<span class="pill">${Number(packages.sessions_remaining)} sessions left</span>`:'',
+    membership.active===true?'<span class="pill on">Membership active</span>':''
+  ].filter(Boolean).join('');
+  return `<section class="card customer-business-summary-v346" aria-label="Membership summary">
+    <div><p class="customer-business-kicker-v346">Membership summary</p><b>${esc(primary)}</b><p class="muted small">${esc(subline)}</p></div>
+    <span class="customer-business-summary-icon-v346" aria-hidden="true">${CUI.icon(rewardReady?'giftcard':'diamond',{size:24})}</span>
+    ${extras?`<div class="customer-business-summary-chips-v346">${extras}</div>`:''}
+  </section>`;
+}
 /* v340 (gap 2): `backHrefV340` carries the profile's real "go back" destination INTO this markup
    so the chevron can sit inline with the business name, where photo 1 draws it. It is a
    parameter and not a constant because this same function is rendered standalone by the
    workspace's Live preview harness (customerInterfaceLivePreviewMarkupV326), which has no
    history and nowhere to go back to — that caller passes nothing and gets no chevron, which is
    why the v339 pass left the control stranded in the shell bar instead of moving it. */
-function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready',rewardsHost=false,programmeCapabilities={},collapsedHeaderV339=false,backHrefV340=''}){
+function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready',rewardsHost=false,programmeCapabilities={},collapsedHeaderV339=false,backHrefV340='',packages={},membership={}}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
   const hasTier=customerTierHasProgressV103(tier);
@@ -4026,7 +4051,33 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
      other caller (the workspace Live preview below passes nothing and keeps today's markup); this
      is an opt-in flag set only by the profile entry point, alongside the shell's own
      compactBusinessHeadV339 which drops the wordmark and bell in the bar above. */
-  return `${collapsedHeaderV339?'':customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
+  if(collapsedHeaderV339)return `<div class="customer-business-profile-v346">
+    <header class="customer-business-header-v346" style="--merchant-accent:${accentV326}">
+      ${backHrefV340?`<a class="customer-programme-back-v340 customer-business-back-v346" href="${esc(backHrefV340)}" aria-label="${esc(ct('backProgrammes'))}">${CUI.icon('back',{size:18})}</a>`:''}
+      <button class="customer-business-identity-v346" type="button" data-company-detail aria-label="Company details for ${headV327}">
+        <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
+        <span><b>${headV327}</b><small>${esc(business.industry||'Location details')}</small></span>
+      </button>
+      <div class="customer-programme-contact-v326 customer-business-actions-v346" data-company-contact-inline-v326>
+        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:18})}<span>Directions</span></button>
+        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>
+      </div>
+      ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337 customer-business-book-v346" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:18})}<span>${esc(ct('bookNow'))}</span></a>`:''}
+    </header>
+    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership})}
+    ${customerProgrammePointsHeroMarkupV337({loyalty,reward,tier,presentation,programmeCapabilities})}
+    ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled})}
+    <section class="customer-business-group-v346 customer-business-rewards-v346" aria-labelledby="customerBusinessRewardsTitle">
+      <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
+      ${programmeStackV310(programmeCapabilities)
+        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:pointsHeroVisibleV338,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
+        :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
+      ${customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities})}
+      <div id="walletReferralSlot" hidden></div>
+      ${customerPointsExplainerMarkupV167(business)}
+    </section>
+  </div>`;
+  return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <header class="customer-programme-compact-head customer-programme-compact-head-v337${collapsedHeaderV339?' customer-programme-compact-head-v339':''}" style="--merchant-accent:${accentV326}">
       ${backHrefV340?`<a class="customer-programme-back-v340" href="${esc(backHrefV340)}" aria-label="${esc(ct('backProgrammes'))}">${CUI.icon('back',{size:18})}</a>`:''}
       <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${headV327}">
