@@ -317,6 +317,7 @@ const sqlTestByMigrationName = new Map([
      v47a/v47b sharing v47's. Bound by full name for the same collision reason as v323 above. */
   ['nestly_v326_points_gift_lifecycle', 'db/tests/v326_points_gift_lifecycle.sql'],
   ['nestly_v326a_gift_rpc_anon_revoke', 'db/tests/v326_points_gift_lifecycle.sql'],
+  ['nestly_v327_customer_branch_choice', 'db/tests/v327_customer_branch_choice.sql'],
   ['nestly_v327_global_customer_qr', 'db/tests/v327_global_customer_qr.sql']
 ]);
 
@@ -821,7 +822,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 273); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle + v327 global customer QR
+  assert.equal(pending.length, 274); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision)
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

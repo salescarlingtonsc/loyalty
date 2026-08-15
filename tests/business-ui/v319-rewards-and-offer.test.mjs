@@ -305,7 +305,7 @@ test('V319 #/grow/offers resolves as a view, lights one rail row, and renders on
   assert.match(appJs,/const programmeView=\['overview','history','offers',/);
   assert.match(appJs,/const hashParamIsProgrammeView=\['overview','history','offers',/,
     'without this the hash is handed to the deep editor instead of the view');
-  assert.match(appJs,/const growCategoryViewV271=!\['overview','history','setup','offers'\]/,
+  assert.match(appJs,/const growCategoryViewV271=!\['overview','history','setup','offers','points'\]/,
     'without this the offers view falls through to "render every category"');
   /* Rail active-state: 'offers' belongs to its own child, not to the Rewards Programme list. */
   const navActive=section('const navViewActiveV296=','const childRowsV294=');

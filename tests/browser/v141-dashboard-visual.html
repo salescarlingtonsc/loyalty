@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="00a4ccd44f86cac8cda5318eb7c24061433d7c1ebff8b438dd979c17087160ae"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="b9a6a18a225734198be98d633841abed1331397646b81a03364ef38745188b01"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1759,15 +1759,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head.customer-programme-compact-head-v326{display:block;padding:0;gap:0;overflow:hidden}
 .customer-programme-cover-v326{position:relative;min-height:104px;padding:14px 16px;display:flex;align-items:flex-end;background:var(--merchant-cover,none) center/cover no-repeat,linear-gradient(135deg,var(--merchant-accent,#28212f),color-mix(in srgb,var(--merchant-accent,#28212f) 55%,#17161a))}
 .customer-programme-cover-v326::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,.05),rgba(15,13,18,.58));pointer-events:none}
-.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;width:100%}
-.customer-programme-head-row-top-v327{display:flex;align-items:center;gap:12px;width:100%}
+.customer-programme-head-row-v326{position:relative;z-index:1;display:flex;align-items:center;gap:12px;width:100%}
 .customer-programme-head-row-v326 .customer-programme-identity{flex:1;min-width:0}
 .customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
 .customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
 .customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
-/* v327 (owner: "clicked tier > auto scroll to tier below"): a real button now, not text nested
-   inside the identity control — underline signals it does something on its own. */
-.customer-programme-tier-jump-v327{align-self:flex-start;margin:0 0 0 66px;padding:0;border:0;background:none;font:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
 .customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
 .customer-programme-contact-line-v326 a{color:inherit}
@@ -3230,6 +3226,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'00a4ccd44f86cac8cda5318eb7c24061433d7c1ebff8b438dd979c17087160ae',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'b9a6a18a225734198be98d633841abed1331397646b81a03364ef38745188b01',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

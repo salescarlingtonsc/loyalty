@@ -1,0 +1,277 @@
+/* V326 — the owner's 5-photo Points System flow, Photo 3: a new dedicated #/grow/points page
+ * replacing the wizard as the Points System tile's destination entirely. Published | History
+ * (no Draft — every gift change here is immediate-write: business_set_reward_paused_v326,
+ * business_delete_reward_v326, business_create_reward_v326; see the v326 migration and
+ * docs/qa/evidence/V326-POINTS-GIFT-LIFECYCLE-ACCEPTANCE.md for the database side).
+ *
+ * Owner ruling confirmed via AskUserQuestion, 2026-08-15: "Photo 3 always, with an empty state"
+ * — the tile opens this page unconditionally, live or not, configured or not; an unconfigured
+ * business sees a "not set up yet" prompt instead of the wizard.
+ *
+ * Two real misses earlier in this session (wrong screen, then wrong step) were both caught only
+ * by actually clicking through the app, not by unit-testing rendered HTML in isolation — so every
+ * assertion here EXECUTES real code sliced verbatim from app.js (via `new Function`), the same
+ * discipline used to verify the fix before this file existed.
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
+
+function slice(startMarker, endMarker) {
+  const start = app.indexOf(startMarker);
+  assert.ok(start >= 0, `missing start marker: ${startMarker}`);
+  const end = app.indexOf(endMarker, start + startMarker.length);
+  assert.ok(end >= 0, `missing end marker: ${endMarker}`);
+  return app.slice(start, end + endMarker.length);
+}
+function statementTo(startMarker, endChar = ';') {
+  const start = app.indexOf(startMarker);
+  assert.ok(start >= 0, `missing start marker: ${startMarker}`);
+  const end = app.indexOf(endChar, start);
+  return app.slice(start, end + 1);
+}
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const CUI = {
+  icon: (name) => `<svg data-icon="${esc(name)}"></svg>`,
+  emptyState: ({ iconName, title, body, actionHtml }) =>
+    `<div class="empty" data-empty-state><span class="big">${CUI.icon(iconName)}</span><b>${esc(title)}</b><p>${esc(body)}</p>${actionHtml || ''}</div>`,
+};
+
+// ---------------------------------------------------------------------------------------------
+// ROUTING: the two classes of bug that bit this session (wrong screen, wrong step).
+// ---------------------------------------------------------------------------------------------
+
+test('V326 the points tile always navigates to #/grow/points, before growSetupEntryV301 is consulted', () => {
+  const stripComments = source => source.replace(/\/\*[\s\S]*?\*\//g, '');
+  const code = stripComments(app);
+  const handler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-topic-v229]')"),
+    code.indexOf('growTopicV229=tile.dataset.growTopicV229;'));
+  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\)return nav\('#\/grow\/points'\);/);
+  const pointsCheckIndex = handler.indexOf("tile.dataset.growTopicV229==='points'");
+  const entryCheckIndex = handler.indexOf('growSetupEntryV301(tile.dataset.growTopicV229)');
+  assert.ok(pointsCheckIndex >= 0 && entryCheckIndex > pointsCheckIndex);
+  // Tiers/stamps must be untouched — still route through growSetupEntryV301 to the wizard.
+  assert.match(handler, /pendingGrowSetupModelV303=\{kind:growSetupKindForTileW6I2\(tile\.dataset\.growTopicV229\),/);
+  assert.match(handler, /return nav\('#\/grow\/setup'\);/);
+});
+
+test('V326 hashParam="points" resolves programmeView correctly and is recognised as a view, not a deep link', () => {
+  const programmeViewSrc = statementTo('const programmeView=');
+  const hashParamIsViewSrc = statementTo('const hashParamIsProgrammeView=');
+  const evalProgrammeView = hashParam => new Function('hashParam', programmeViewSrc + ' return programmeView;')(hashParam);
+  const evalHashParamIsView = hashParam => new Function('hashParam', hashParamIsViewSrc + ' return hashParamIsProgrammeView;')(hashParam);
+  assert.equal(evalProgrammeView('points'), 'points');
+  assert.equal(evalProgrammeView('bogus'), 'list');
+  assert.equal(evalHashParamIsView('points'), true, 'or mountGrowSurface would wrongly try to open an editor for it');
+});
+
+test('V326 programmeView="points" is excluded from the drilled-category branch', () => {
+  const src = statementTo('const growCategoryViewV271=');
+  const evalCategoryView = programmeView => new Function('programmeView', src + ' return growCategoryViewV271;')(programmeView);
+  assert.equal(evalCategoryView('points'), false);
+  assert.equal(evalCategoryView('list'), true);
+});
+
+test('V326 the render dispatch mounts growPointsManageV326 when programmeView is "points"', () => {
+  assert.match(app, /\$\{programmeView==='points'\?growPointsManageV326:''\}/);
+});
+
+test('V326 the "edit" link lands the wizard on the Earning step, guarded on that step existing', () => {
+  const railSrc = slice('const GROW_SETUP_RAIL_W6I2=[', '];');
+  const railBlock = slice('const railW6I2=()=>{', 'const stepNumberForW6I2=kind=>stepNumberOrNullW6I2(kind)??railCountW6I2();');
+  const handoffSrc = slice('const rewardHandoffV303=pendingGrowSetupRewardV303;', '  }\n  for(let number=1;number<=state.step;number++)')
+    .replace('for(let number=1;number<=state.step;number++)', '// (visited-set loop omitted from this harness)');
+
+  function landingStep(switches, mode) {
+    const src = `${railSrc}\n${railBlock}\n` +
+      `let pendingGrowSetupRewardV303=${JSON.stringify({ mode })};\n` +
+      `const state={step:1,switches:${JSON.stringify(switches)}};\n` +
+      `${handoffSrc}\n` +
+      `return {step:state.step,rail:railW6I2().map(s=>s.kind)};`;
+    return new Function(src)();
+  }
+
+  const pointsOnly = { points: true, tiers: false, stamps: false, referral: false };
+  assert.deepEqual(landingStep(pointsOnly, 'earning'), { step: 2, rail: ['choose', 'earn', 'reward', 'expiry', 'live'] },
+    'mode:earning must land on Earning (step 2 of a points-only 5-step rail), not Gifts');
+  // The old reward hand-off (view/edit/add) must be completely unaffected.
+  assert.equal(landingStep(pointsOnly, 'view').step, 3, "mode:'view' still lands on Gifts, unchanged");
+  // A rail with no Earning step (stamps-only) must not move the step at all.
+  const stampsOnly = { points: false, tiers: false, stamps: true, referral: false };
+  assert.equal(landingStep(stampsOnly, 'earning').step, 1, 'no Earning step on the rail — step must stay 1, not crash or misland');
+});
+
+test('V326 the edit link sets the earning hand-off and the same model kind the tile used to', () => {
+  assert.match(app, /pendingGrowSetupModelV303=\{kind:'points',from:'points'\};\s*\r?\n?\s*pendingGrowSetupRewardV303=\{mode:'earning'\};\s*\r?\n?\s*nav\('#\/grow\/setup'\);/);
+});
+
+// ---------------------------------------------------------------------------------------------
+// PAGE CONTENT: execute the real growPointsManageV326 block with synthetic data.
+// ---------------------------------------------------------------------------------------------
+
+function harness() {
+  const PROGRAMME_SWITCHES_V314_src = slice('const PROGRAMME_SWITCHES_V314={', '};');
+  const PROGRAMME_KINDS_W6I2_src = statementTo("const PROGRAMME_KINDS_W6I2=['points'");
+  const programmeSwitchSetV314_src = slice('function programmeSwitchSetV314(', '\n}');
+  const programmeSpineRowsV314_src = slice('function programmeSpineRowsV314(', '\n}');
+  const programmeSpineOnV314_src = slice('function programmeSpineOnV314(', '\n}');
+  const PROGRAMME_ACCRUAL_EXCLUSIVE_V322_src = statementTo('const PROGRAMME_ACCRUAL_EXCLUSIVE_V322=');
+  const programmeExclusionsV322_src = slice('function programmeExclusionsV322(', '\n}');
+  const promotionDateShortV324_src = slice('function promotionDateShortV324(', '\n}');
+  const pageBlockSrc = slice(
+    "  /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3",
+    '      </ul>`;'
+  );
+
+  return function render(opts) {
+    const {
+      canRewards = true, canSetupGrow = true, snapshotRewards = [], liveLoyaltyModelKeysV240 = ['redeem'],
+      earningOverviewCopy = 'Current setting: Earn 1 points per SGD 1 spent',
+      S = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'points', active: true }] },
+      growSwitchPendingV322 = '', growSwitchErrorV322 = '', growPointsManageTabV326 = 'published',
+      growPointsDeletePendingV326 = '', growPointsAddOpenV326 = '', growPointsAddDraftV326 = { name: '', points: '' },
+      growPointsErrorV326 = '', growPointsBusyV326 = false,
+    } = opts;
+    const src = [
+      PROGRAMME_SWITCHES_V314_src, PROGRAMME_KINDS_W6I2_src, programmeSwitchSetV314_src, programmeSpineRowsV314_src,
+      programmeSpineOnV314_src, PROGRAMME_ACCRUAL_EXCLUSIVE_V322_src, programmeExclusionsV322_src,
+      promotionDateShortV324_src, pageBlockSrc,
+      'return {growPointsManageV326,growPointsPublishedV326,growPointsHistoryV326,growPointsConfiguredV326,growPointsOnV326};',
+    ].join('\n');
+    const fn = new Function(
+      'esc', 'CUI', 'S', 'canRewards', 'canSetupGrow', 'snapshot', 'liveLoyaltyModelKeysV240',
+      'earningOverviewCopy', 'growProgrammeSwitchKindsV322', 'growSwitchPendingV322', 'growSwitchErrorV322',
+      'growPointsManageTabV326', 'growPointsDeletePendingV326', 'growPointsAddOpenV326', 'growPointsAddDraftV326',
+      'growPointsErrorV326', 'growPointsBusyV326', src
+    );
+    const growProgrammeSwitchKindsV322 = [['points', 'Points & gifts'], ['tiers', 'Tier membership'], ['stamps', 'Stamp card'], ['referral', 'Referral']];
+    return fn(esc, CUI, S, canRewards, canSetupGrow, { rewards: snapshotRewards }, liveLoyaltyModelKeysV240,
+      earningOverviewCopy, growProgrammeSwitchKindsV322, growSwitchPendingV322, growSwitchErrorV322,
+      growPointsManageTabV326, growPointsDeletePendingV326, growPointsAddOpenV326, growPointsAddDraftV326,
+      growPointsErrorV326, growPointsBusyV326);
+  };
+}
+
+test('V326 an unconfigured business sees the empty state, not the wizard and not the summary row', () => {
+  const render = harness();
+  const r = render({ liveLoyaltyModelKeysV240: ['tiers'], S: { biz: { id: 'b' }, programmesBusinessId: 'b', programmes: null } });
+  assert.match(r.growPointsManageV326, /data-empty-state/);
+  assert.match(r.growPointsManageV326, /id="growPointsSetupV326"/);
+  assert.doesNotMatch(r.growPointsManageV326, /data-grow-points-giftlist-v326/);
+});
+
+test('V326 loyalty not included in the workspace shows its own empty state, no setup CTA', () => {
+  const render = harness();
+  const r = render({ canRewards: false });
+  assert.match(r.growPointsManageV326, /data-empty-state/);
+  assert.doesNotMatch(r.growPointsManageV326, /id="growPointsSetupV326"/);
+});
+
+test('V326 a configured programme shows the Point system row, earn rate, and on/off state', () => {
+  const render = harness();
+  const r = render({});
+  assert.equal(r.growPointsConfiguredV326, true);
+  assert.equal(r.growPointsOnV326, true);
+  assert.match(r.growPointsManageV326, /<b>Point system<\/b>/);
+  assert.match(r.growPointsManageV326, /Earn 1 points per SGD 1 spent/);
+  assert.match(r.growPointsManageV326, /ON for customers/);
+  assert.match(r.growPointsManageV326, /data-grow-switchtoggle-v322="points"/);
+  assert.match(r.growPointsManageV326, /data-grow-points-edit-v326="1"/);
+  assert.match(r.growPointsManageV326, /data-grow-points-add-v326="1"/);
+});
+
+test('V326 Published tab shows live and paused gifts with correct per-row state, excludes History', () => {
+  const render = harness();
+  const rewards = [
+    { id: 'r1', customer_name: 'Free Coffee', cost_points: 20, active: true, paused: false, sort: 1, created_at: '2026-08-01T12:00:00Z' },
+    { id: 'r2', customer_name: 'Free Muffin', cost_points: 15, active: true, paused: true, sort: 2, created_at: '2026-08-02T12:00:00Z' },
+    { id: 'r3', customer_name: 'Retired Reward', cost_points: 30, active: false, paused: false, sort: 3, created_at: '2026-07-01T12:00:00Z' },
+  ];
+  const r = render({ snapshotRewards: rewards, growPointsManageTabV326: 'published' });
+  assert.equal(r.growPointsPublishedV326.length, 2);
+  assert.equal(r.growPointsHistoryV326.length, 1);
+  const html = r.growPointsManageV326;
+  assert.doesNotMatch(html, /Retired Reward/, 'inactive rewards must not appear on the Published tab');
+  const coffeeIdx = html.indexOf('Free Coffee');
+  const muffinIdx = html.indexOf('Free Muffin');
+  assert.ok(coffeeIdx >= 0 && muffinIdx >= 0);
+  assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /ON for customers[\s\S]*Turn off/, 'a live gift shows ON + a Turn off control');
+  assert.match(html.slice(muffinIdx, muffinIdx + 700), / · Off[\s\S]*Turn on/, 'a paused gift shows Off + a Turn on control');
+  assert.match(html, /data-grow-points-gift-delete-v326="r1"/);
+  assert.match(html, /data-grow-points-gift-delete-v326="r2"/);
+});
+
+test('V326 History tab shows only deleted gifts, read-only, no toggle or delete controls', () => {
+  const render = harness();
+  const rewards = [
+    { id: 'r1', customer_name: 'Free Coffee', cost_points: 20, active: true, paused: false, sort: 1, created_at: '2026-08-01T12:00:00Z' },
+    { id: 'r3', customer_name: 'Retired Reward', cost_points: 30, active: false, paused: false, sort: 3, created_at: '2026-07-01T12:00:00Z' },
+  ];
+  const r = render({ snapshotRewards: rewards, growPointsManageTabV326: 'history' });
+  const html = r.growPointsManageV326;
+  assert.match(html, /Retired Reward/);
+  assert.match(html, /In history/);
+  assert.doesNotMatch(html, /Free Coffee/, 'the Published-only gift must not leak onto the History tab');
+  assert.doesNotMatch(html, /data-grow-points-gift-delete-v326="r3"/, 'a history row has no delete control — it is already deleted');
+  assert.doesNotMatch(html, /data-grow-points-gift-toggle-v326="r3"/);
+});
+
+test('V326 delete confirmation opens for exactly the pending gift and stays hidden for others', () => {
+  const render = harness();
+  const rewards = [
+    { id: 'r1', customer_name: 'Free Coffee', cost_points: 20, active: true, paused: false, sort: 1, created_at: '2026-08-01T12:00:00Z' },
+  ];
+  const r = render({ snapshotRewards: rewards, growPointsDeletePendingV326: 'r1' });
+  const match = r.growPointsManageV326.match(/<li class="imp-note" data-grow-points-gift-deleteconfirm-v326="r1"[^>]*>/);
+  assert.ok(match && !match[0].includes('hidden'), 'the pending gift\'s confirm block must be visible');
+});
+
+test('V326 the add-gift form preserves in-progress values, and the post-save prompt offers add-another/done', () => {
+  const render = harness();
+  const formRender = render({ growPointsAddOpenV326: 'form', growPointsAddDraftV326: { name: 'Lotion', points: '10' } });
+  assert.match(formRender.growPointsManageV326, /value="Lotion"/);
+  assert.match(formRender.growPointsManageV326, /value="10"/);
+  assert.match(formRender.growPointsManageV326, /data-grow-points-add-save-v326="1"/);
+
+  const promptRender = render({ growPointsAddOpenV326: 'prompt' });
+  assert.match(promptRender.growPointsManageV326, /data-grow-points-add-again-v326="1"/);
+  assert.match(promptRender.growPointsManageV326, /data-grow-points-add-done-v326="1"/);
+});
+
+test('V326 read-only staff (canSetupGrow=false) sees state but no interactive controls', () => {
+  const render = harness();
+  const rewards = [{ id: 'r1', customer_name: 'Free Coffee', cost_points: 20, active: true, paused: false, sort: 1, created_at: '2026-08-01T12:00:00Z' }];
+  const r = render({ canSetupGrow: false, snapshotRewards: rewards });
+  const html = r.growPointsManageV326;
+  assert.match(html, /Free Coffee/);
+  assert.match(html, /ON for customers/);
+  for (const selector of ['data-grow-points-edit-v326', 'data-grow-points-add-v326',
+    'data-grow-switchtoggle-v322="points"', 'data-grow-points-gift-toggle-v326', 'data-grow-points-gift-delete-v326']) {
+    assert.doesNotMatch(html, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+});
+
+// ---------------------------------------------------------------------------------------------
+// CLICK WIRING: the three new immediate-write RPCs are called with the exact parameter shapes
+// the v326 migration's RPCs declare.
+// ---------------------------------------------------------------------------------------------
+
+test('V326 the three new RPCs are called with the exact parameter names the migration declares', () => {
+  assert.match(app, /sb\.rpc\('business_set_reward_paused_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:id,p_paused:!want\}\);/);
+  assert.match(app, /sb\.rpc\('business_delete_reward_v326',\{p_business:S\.biz\.id,p_reward:id\}\);/);
+  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0\}\);/);
+});
+
+test('V326 pausing/deleting/creating a gift never touches the network on open — only on confirm', () => {
+  const stripComments = source => source.replace(/\/\*[\s\S]*?\*\//g, '');
+  const code = stripComments(app);
+  const tabHandler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-points-manage-tab-v326]')"),
+    code.indexOf("outerMain.querySelectorAll('[data-grow-points-manage-tab-v326]')") + 300);
+  assert.doesNotMatch(tabHandler, /sb\.rpc|sb\.from/, 'switching Published/History must never touch the network');
+  const deleteOpenHandler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]')"),
+    code.indexOf("outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]')") + 200);
+  assert.doesNotMatch(deleteOpenHandler, /sb\.rpc/, 'opening the delete confirm must not itself call the delete RPC');
+});

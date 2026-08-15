@@ -1909,7 +1909,13 @@
     },
     {
       "kind": "pending",
-      "version": "20260815000000",
+      "version": "20260815090000",
+      "name": "nestly_v327_customer_branch_choice",
+      "sourcePath": "db/migrations/20260815_nestly_v327_customer_branch_choice.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090001",
       "name": "nestly_v327_global_customer_qr",
       "sourcePath": "db/migrations/20260815_nestly_v327_global_customer_qr.sql"
     }

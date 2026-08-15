@@ -437,6 +437,21 @@ let growOffersTabV324='published';
    underneath. This only changes which one is showing; none of the three lists themselves moved,
    so their card markup, click routing and the growTemplatesOpen flow are untouched. */
 let growPointsRewardTabV324='published';
+/* V326 (owner 5-photo Points System flow, photo 3): the new dedicated #/grow/points page.
+   Published/History only — no Draft, since every gift change here is immediate-write
+   (business_set_reward_paused_v326/business_delete_reward_v326/business_create_reward_v326),
+   never a draft. growPointsDeletePendingV326 holds the id of a gift with its delete confirm
+   open (mirrors growSwitchPendingV322's one-open-at-a-time pattern). growPointsAddOpenV326 is
+   ''|'form'|'prompt' — closed, the name+points add-gift form open, or the post-save "add
+   another?" prompt; growPointsAddDraftV326 holds the in-progress form values across re-renders.
+   growPointsBusyV326 guards against double-submit while an RPC is in flight. All cleared by the
+   router alongside the other grow session state. */
+let growPointsManageTabV326='published';
+let growPointsDeletePendingV326='';
+let growPointsAddOpenV326='';
+let growPointsAddDraftV326={name:'',points:''};
+let growPointsErrorV326='';
+let growPointsBusyV326=false;
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -768,7 +783,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';growPointsBusyV326=false;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';

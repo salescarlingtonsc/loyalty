@@ -43,6 +43,8 @@ export function canonicalBookingRequest(input: Record<string, unknown>) {
   // so every pre-v183 payload still hashes to exactly its original fingerprint and an
   // in-flight retry across the deploy boundary is still recognised as a replay.
   if (input.staff) request.staff = String(input.staff);
+  // v327: same reasoning, for a requested branch.
+  if (input.branch) request.branch = String(input.branch);
   return request;
 }
 
