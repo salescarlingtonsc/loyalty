@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761">
+<meta name="v104-production-source-sha256" content="c605be69ecc19f969f30557ef11974467d15d2d240f99c361ba2a61b066a22e1">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1052,8 +1052,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
-/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious. */
-.grow-topic-group-v244{margin-top:20px}
+/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious.
+   V339 (owner markup: "separate into two boxes") — each group is now its own card, not two
+   sections sharing the page's outer card. */
+.grow-topic-group-v244{margin-top:20px;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
 .grow-topic-group-head-v244 h3{font-size:1.02rem;font-weight:750}
 .grow-topic-group-head-v244 p{margin-top:3px}
 .grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
@@ -2265,7 +2267,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761</p>
+  <p class="v104-provenance">Local production-render harness · source c605be69ecc19f969f30557ef11974467d15d2d240f99c361ba2a61b066a22e1</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2277,7 +2279,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761";
+const PRODUCTION_SOURCE_SHA256="c605be69ecc19f969f30557ef11974467d15d2d240f99c361ba2a61b066a22e1";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

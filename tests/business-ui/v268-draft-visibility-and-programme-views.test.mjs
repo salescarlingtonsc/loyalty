@@ -121,7 +121,11 @@ test('V268 (b) drilling into a category shows where you are, for every category'
      naming a level above it. What this test protects is the DRILLED-IN half — a breadcrumb
      whenever there is an active topic — and that is unchanged, so it is asserted here directly
      instead of through the ternary's other arm. */
-  assert.match(app, /\$\{growActiveTopicV229\?growBreadcrumbV268\(growActiveTopicV229\):''\}/);
+  /* V339 (owner markup, photo 4: "please add fixed back button in every available page"): the
+     not-drilled-in branch is no longer always '' — the standalone Points System/Tiers/Limited
+     Offer/History pages now render the same back button too. The drilled-in half this test
+     protects is unchanged: growActiveTopicV229 truthy still always renders growBreadcrumbV268. */
+  assert.match(app, /\$\{growActiveTopicV229\?growBreadcrumbV268\(growActiveTopicV229\):\(\['points','tiers','offers','history'\]\.includes\(programmeView\)/);
   assert.doesNotMatch(app, /<p class="customer-quest-kicker">Rewards &amp; Offer<\/p>/);
   // One back control, not two: the trail keeps the existing id and handler.
   assert.equal(app.split('id="growTopicBackV229"').length - 1, 1);
