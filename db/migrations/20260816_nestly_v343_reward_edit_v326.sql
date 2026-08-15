@@ -29,8 +29,8 @@
 -- deep editor already uses for the identical reason (an unset param must never silently blank an
 -- existing photo).
 --
--- NOT APPLIED. This file is written, not run. Apply it the way this repo applies every kernel
--- change: replay it inside a rolled-back transaction against production first, then apply.
+-- APPLIED 2026-08-16 to gadpooereceldfpfxsod (rolled-back dry run re-verified immediately before
+-- the real apply; both functions confirmed live afterward with the new argument lists below).
 
 create or replace function public.business_update_reward_v326(
   p_business uuid, p_reward uuid, p_name text, p_points integer,
