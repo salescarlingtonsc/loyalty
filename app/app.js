@@ -22942,19 +22942,31 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            does not touch V319/V245's "heading follows the rail" rule for every other view — only
            the standalone Points System/Stamp card edit entry gets its own title.
            V340 (owner: "change rewards & offer to rewards programme" — every other page's H1,
-           still reading the old module name): the default arm renamed to match. -->
-      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):'Rewards Programme'}</h1></div>
+           still reading the old module name): the default arm renamed to match.
+           V341 (owner markup: "move the point system up to the header" — struck the H1 saying
+           "Rewards Programme" while the card below it already says "Points System"): a drilled
+           standalone page's H1 now IS that page's own name, not the module's, so it stops saying
+           its name twice — the h2 below drops the now-duplicate title text for these same views
+           (see the h2 change further down), keeping only the back button and any blurb. */''}
+      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1></div>
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
       <!-- V334 (owner markup, photo 4: "show this as header of gifts, it's the parent of this page,
            bring here his logo") — the same star icon the Rewards & Offer section uses leads
-           Points System's own heading, since the gift list below belongs to it. -->
+           Points System's own heading, since the gift list below belongs to it.
+           V341: the icon now leads the H1 above instead (title moved there), so this h2 carries
+           it only when growActiveTopicV229 supplies a DIFFERENT title (a drilled tile). -->
       <!-- V339 (owner markup, photo 4: "please add fixed back button in every available page").
            The breadcrumb back button already exists for drilled tiles (growBreadcrumbV268); the
            dedicated standalone pages — Points System, Tiers, Limited Offer, History — had no way
            back except the sidebar. Same button, same destination, on those pages too. -->
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):(['points','tiers','offers','history'].includes(programmeView)?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm" href="#/grow">${CUI.icon('back',{size:16})}<span>All programmes</span></a></nav>`:'')}<h2 id="rewardJourneyTitle">${programmeView==='points'?`${CUI.icon('star',{size:18})} `:''}${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      ${(()=>{
+        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','offers','history'].includes(programmeView);
+        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
+        const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:18})} `:'';
+        return `<div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):(dedicatedViewV341?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm" href="#/grow">${CUI.icon('back',{size:16})}<span>All programmes</span></a></nav>`:'')}<h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
+      })()}
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growProgrammeSwitchPanelV322():''}

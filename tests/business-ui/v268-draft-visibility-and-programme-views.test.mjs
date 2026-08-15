@@ -125,7 +125,10 @@ test('V268 (b) drilling into a category shows where you are, for every category'
      not-drilled-in branch is no longer always '' — the standalone Points System/Tiers/Limited
      Offer/History pages now render the same back button too. The drilled-in half this test
      protects is unchanged: growActiveTopicV229 truthy still always renders growBreadcrumbV268. */
-  assert.match(app, /\$\{growActiveTopicV229\?growBreadcrumbV268\(growActiveTopicV229\):\(\['points','tiers','offers','history'\]\.includes\(programmeView\)/);
+  /* V341 (owner markup: "move the point system up to the header") moved this ternary inside an
+     IIFE so the section-heading block could share dedicatedViewV341/h2TextV341/h2IconV341
+     between the H1 and this h2 — the shape changed, the property this test protects did not. */
+  assert.match(app, /growActiveTopicV229\?growBreadcrumbV268\(growActiveTopicV229\):\(dedicatedViewV341\?/);
   assert.doesNotMatch(app, /<p class="customer-quest-kicker">Rewards &amp; Offer<\/p>/);
   // One back control, not two: the trail keeps the existing id and handler.
   assert.equal(app.split('id="growTopicBackV229"').length - 1, 1);
@@ -133,9 +136,12 @@ test('V268 (b) drilling into a category shows where you are, for every category'
 });
 
 test('V268 (b) the category heading and its blurb stay with the item list', () => {
-  /* V334: the Points System heading now leads with a star icon (owner markup photo 4) — the
-     rest of the heading/blurb pairing this test protects is unchanged. */
-  assert.match(app, /<h2 id="rewardJourneyTitle">\$\{programmeView==='points'\?`\$\{CUI\.icon\('star',\{size:18\}\)\} `:''\}\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\)/);
+  /* V334: the Points System heading led with a star icon (owner markup photo 4). V341 (owner
+     markup: "move the point system up to the header") moved that icon+title up to the page H1
+     for the four dedicated views; this h2 keeps computing the same text (now h2TextV341) for
+     aria-labelledby, and still carries the icon for a DRILLED topic's points view. */
+  assert.match(app, /const h2TextV341=growActiveTopicV229\?esc\(growActiveTopicV229\.title\)/);
+  assert.match(app, /const h2IconV341=programmeView==='points'&&!growActiveTopicV229\?`\$\{CUI\.icon\('star',\{size:18\}\)\} `:''/);
   assert.match(app, /\$\{growActiveTopicV229\?`<p class="muted small">\$\{esc\(growActiveTopicV229\.blurb\)\}<\/p>`:''\}/);
 });
 
