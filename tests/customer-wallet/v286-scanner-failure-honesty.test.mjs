@@ -40,10 +40,15 @@ test('the scanner spotlight shadow is clipped to the video frame',()=>{
 
 /* v286 pinned the EN-only state and demanded ct() routing the day a second locale arrived.
    v293 added zh-CN + ms, so the sheet's user-facing strings now go through ct() and the
-   status assignments carry ct(...) — the pin flips to assert the multilingual contract. */
+   status assignments carry ct(...) — the pin flips to assert the multilingual contract.
+   v329: the sheet now opens on "My QR" by default (owner: pressing the Scan QR tab should show
+   the customer's own static code first) and only sets the "Scan the business QR" title when the
+   customer switches into the join-a-business camera flow, so the string moved from a static
+   template interpolation to a JS-assigned title.textContent — still ct()-routed, just no longer
+   inside a template literal. */
 test('the customer surface is multilingual and the scanner sheet is routed through ct()',()=>{
   assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/);
-  assert.match(js,/\$\{esc\(ct\('Scan the business QR'\)\)\}/);
+  assert.match(js,/title\.textContent=ct\('Scan the business QR'\)/);
   assert.match(js,/status\.textContent=ct\(DECODER_LOAD_FAILURE\)/);
   assert.match(js,/status\.textContent=ct\('Point the camera at the business QR\.'\)/);
 });

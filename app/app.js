@@ -4680,26 +4680,63 @@ function customerJoinTokenFromQr(value,currentUrl=location.href){
   }catch{return ''}
 }
 let activeCustomerJoinScannerCleanup=()=>{};
+/* v329 (owner, screenshot with the Scan QR tab circled): "pressing qrcode > needs to generate
+   the static qrcode (that different business able to scan and recognise this customer)". This
+   modal used to open straight into the business-join camera; a customer's OWN global member QR
+   (v327) had nowhere to be shown except buried in Profile. The sheet now opens on "My QR" — the
+   thing another business scans to recognise this same Peekaa customer — with the join-a-business
+   camera flow one tap away for the far rarer case of actually joining a new programme. */
 function openCustomerJoinScanner(){
   activeCustomerJoinScannerCleanup();
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
-  /* v281 (owner: "must show scan, currently need to choose to upload or scan, just show scan
-     first"): the camera starts the moment the sheet opens — tapping Scan IS the consent to scan,
-     so a second "Open camera" tap was pure friction. The upload/paste fallbacks still exist (a
-     desktop with no camera, a screenshot of a QR) but they wait hidden behind one small control,
-     and reveal themselves automatically the moment the camera cannot start. */
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">${esc(ct('addProgramme'))}</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">${esc(ct('Scan the business QR'))}</h2><p class="muted small" style="margin-top:5px">${esc(ct('Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:18})}</button></div>
-    <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="${esc(ct('Camera preview for business join QR'))}"></video></div>
-    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px" hidden>${CUI.icon('scan',{size:18})}<span>${esc(ct('Open camera'))}</span></button>
-    <p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p>
-    <button class="btn ghost sm" id="customerJoinScannerManual" type="button" style="width:100%;margin-top:12px">${esc(ct("Can't scan? Use a photo or link"))}</button>
-    <div class="scanner-fallback" id="customerJoinScannerFallback" hidden><label for="customerJoinScannerImage">${esc(ct('Or choose a QR image'))}</label><input id="customerJoinScannerImage" type="file" accept="image/*">
-      <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">${esc(ct('Camera unavailable?'))}</summary><label for="customerJoinScannerValue">${esc(ct('Paste the QR link'))}</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">${esc(ct('Continue'))}</button></details>
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker" id="customerScanSheetKicker">${esc(ct('My Peekaa QR'))}</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">${esc(ct('My Peekaa QR'))}</h2><p class="muted small" id="customerScanSheetSubtitle" style="margin-top:5px">${esc(ct('Show this at any Peekaa business to be recognised as you.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:18})}</button></div>
+    <div id="customerMyQrPanelV329" aria-busy="true">
+      <div id="customerMyQrSlotV329" style="display:grid;place-items:center;min-height:200px;margin:16px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;max-width:240px"><p class="muted small">${esc(ct('Loading your code…'))}</p></div>
+      <p id="customerMyQrStatusV329" class="muted small" role="status" aria-live="polite"></p>
+      <button class="btn ghost sm" id="customerMyQrSwitchToScan" type="button" style="width:100%;margin-top:6px">${CUI.icon('scan',{size:17})}<span>${esc(ct('Scan a business QR instead'))}</span></button>
+    </div>
+    <div id="customerJoinScanPanelV329" hidden>
+      <button class="btn ghost sm" id="customerMyQrSwitchToMine" type="button" style="width:100%;margin-bottom:12px">${CUI.icon('scan',{size:17})}<span>${esc(ct('Show my QR instead'))}</span></button>
+      <p class="muted small">${esc(ct('Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.'))}</p>
+      <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="${esc(ct('Camera preview for business join QR'))}"></video></div>
+      <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>${esc(ct('Open camera'))}</span></button>
+      <p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p>
+      <button class="btn ghost sm" id="customerJoinScannerManual" type="button" style="width:100%;margin-top:12px">${esc(ct("Can't scan? Use a photo or link"))}</button>
+      <div class="scanner-fallback" id="customerJoinScannerFallback" hidden><label for="customerJoinScannerImage">${esc(ct('Or choose a QR image'))}</label><input id="customerJoinScannerImage" type="file" accept="image/*">
+        <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">${esc(ct('Camera unavailable?'))}</summary><label for="customerJoinScannerValue">${esc(ct('Paste the QR link'))}</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">${esc(ct('Continue'))}</button></details>
+      </div>
     </div></section>`;
   document.body.appendChild(overlay);
+  /* This modal floats over whatever customer route is already rendered, so it must NOT share
+     customerWalletRenderEpoch — bumping that global counter here would invalidate the underlying
+     page's own in-flight loads. `closed` (declared below, captured by reference) is this modal's
+     own lifetime signal, set the moment the sheet is dismissed. */
+  void loadMemberQrIntoV327({
+    card:overlay.querySelector('#customerMyQrPanelV329'),
+    slot:overlay.querySelector('#customerMyQrSlotV329'),
+    status:overlay.querySelector('#customerMyQrStatusV329')
+  },()=>!closed);
+  const myQrPanel=overlay.querySelector('#customerMyQrPanelV329');
+  const scanPanel=overlay.querySelector('#customerJoinScanPanelV329');
+  const kicker=overlay.querySelector('#customerScanSheetKicker');
+  const subtitle=overlay.querySelector('#customerScanSheetSubtitle');
+  const title=overlay.querySelector('#customerJoinScannerTitle');
+  const showMyQr=()=>{
+    myQrPanel.hidden=false;scanPanel.hidden=true;
+    title.textContent=ct('My Peekaa QR');kicker.textContent=ct('My Peekaa QR');
+    subtitle.textContent=ct('Show this at any Peekaa business to be recognised as you.');
+  };
+  const showScan=()=>{
+    myQrPanel.hidden=true;scanPanel.hidden=false;
+    title.textContent=ct('Scan the business QR');kicker.textContent=ct('addProgramme');
+    subtitle.textContent=ct('Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.');
+    startCamera();
+  };
+  overlay.querySelector('#customerMyQrSwitchToScan').onclick=showScan;
+  overlay.querySelector('#customerMyQrSwitchToMine').onclick=showMyQr;
   const video=overlay.querySelector('#customerJoinScannerVideo');
   const frame=overlay.querySelector('#customerJoinScannerFrame');
   const status=overlay.querySelector('#customerJoinScannerStatus');
@@ -4790,7 +4827,6 @@ function openCustomerJoinScanner(){
   overlay.querySelector('#customerJoinScannerClose').onclick=close;
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerClose'});
-  startCamera();
 }
 function sortStaffWorkspaces(staff){
   return [...(Array.isArray(staff)?staff:[])].sort((a,b)=>{
@@ -5721,11 +5757,11 @@ async function renderCustomerMessages(){
 /* v327: the ONE global Peekaa member QR — one per identity, not one per business (see the
    supersession note on MEMBER_CODE_CONTRACT_W6I2 above renderCustomerQrJoin). Drawn client-side
    from the opaque token public.customer_get_member_qr_v327 returns; nothing here ever sees or
-   displays the customer's phone number or an enumerable client id. */
-async function loadCustomerMemberQrV327(isCurrent){
-  const card=$('customerMemberQrCardV327');
-  if(!card)return;
-  const slot=$('customerMemberQrSlotV327'),status=$('customerMemberQrStatusV327');
+   displays the customer's phone number or an enumerable client id.
+   Element-relative (no global ids inside) so both the Profile card and the Scan QR sheet's "My
+   QR" panel can mount it without colliding. */
+async function loadMemberQrIntoV327({card,slot,status},isCurrent){
+  if(!card||!slot||!status)return;
   let {data,error}=await sb.rpc('customer_get_member_qr_v327');
   if(!isCurrent()||!card.isConnected)return;
   if(error?.code==='42501'){
@@ -5738,20 +5774,25 @@ async function loadCustomerMemberQrV327(isCurrent){
   card.removeAttribute('aria-busy');
   if(error||!data?.member_qr){
     slot.innerHTML='';
-    status.innerHTML=`<span class="err">Your code could not be loaded.</span> <button class="btn ghost sm" id="customerMemberQrRetryV327" style="margin-left:6px">Try again</button>`;
-    const retry=$('customerMemberQrRetryV327');
-    if(retry)retry.onclick=()=>loadCustomerMemberQrV327(isCurrent);
+    status.innerHTML=`<span class="err">Your code could not be loaded.</span> <button class="btn ghost sm" type="button" data-member-qr-retry-v327 style="margin-left:6px">Try again</button>`;
+    const retry=status.querySelector('[data-member-qr-retry-v327]');
+    if(retry)retry.onclick=()=>loadMemberQrIntoV327({card,slot,status},isCurrent);
     return;
   }
-  slot.innerHTML='<div id="customerMemberQrCanvasV327"></div>';
+  slot.innerHTML='<div data-member-qr-canvas-v327></div>';
   status.textContent='';
   void loadQrLibrary().then(()=>{
     if(!isCurrent()||!slot.isConnected)return;
-    new QRCode($('customerMemberQrCanvasV327'),
+    new QRCode(slot.querySelector('[data-member-qr-canvas-v327]'),
       {text:data.member_qr,width:200,height:200,correctLevel:QRCode.CorrectLevel.M});
   }).catch(()=>{
     if(isCurrent()&&slot.isConnected)slot.innerHTML='<p class="muted small">Your QR could not be drawn on this device.</p>';
   });
+}
+async function loadCustomerMemberQrV327(isCurrent){
+  const card=$('customerMemberQrCardV327');
+  if(!card)return;
+  await loadMemberQrIntoV327({card,slot:$('customerMemberQrSlotV327'),status:$('customerMemberQrStatusV327')},isCurrent);
 }
 /* V282 consent history. Both consent stores — the v263 per-channel audit and the v92 platform and
    partner consent events — have been append-only since the day they were written, and neither was

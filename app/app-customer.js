@@ -1688,40 +1688,10 @@ async function renderCustomerMessages(){
   await renderCustomerInAppInbox(null,isCurrent);
 }
 
-/* v327: the ONE global Peekaa member QR — one per identity, not one per business (see the
-   supersession note on MEMBER_CODE_CONTRACT_W6I2 above renderCustomerQrJoin). Drawn client-side
-   from the opaque token public.customer_get_member_qr_v327 returns; nothing here ever sees or
-   displays the customer's phone number or an enumerable client id. */
 async function loadCustomerMemberQrV327(isCurrent){
   const card=$('customerMemberQrCardV327');
   if(!card)return;
-  const slot=$('customerMemberQrSlotV327'),status=$('customerMemberQrStatusV327');
-  let {data,error}=await sb.rpc('customer_get_member_qr_v327');
-  if(!isCurrent()||!card.isConnected)return;
-  if(error?.code==='42501'){
-    // No platform identity yet — create one (same call the claim flow makes) and retry once.
-    const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:crypto.randomUUID()});
-    if(!isCurrent()||!card.isConnected)return;
-    if(!identity.error)({data,error}=await sb.rpc('customer_get_member_qr_v327'));
-    if(!isCurrent()||!card.isConnected)return;
-  }
-  card.removeAttribute('aria-busy');
-  if(error||!data?.member_qr){
-    slot.innerHTML='';
-    status.innerHTML=`<span class="err">Your code could not be loaded.</span> <button class="btn ghost sm" id="customerMemberQrRetryV327" style="margin-left:6px">Try again</button>`;
-    const retry=$('customerMemberQrRetryV327');
-    if(retry)retry.onclick=()=>loadCustomerMemberQrV327(isCurrent);
-    return;
-  }
-  slot.innerHTML='<div id="customerMemberQrCanvasV327"></div>';
-  status.textContent='';
-  void loadQrLibrary().then(()=>{
-    if(!isCurrent()||!slot.isConnected)return;
-    new QRCode($('customerMemberQrCanvasV327'),
-      {text:data.member_qr,width:200,height:200,correctLevel:QRCode.CorrectLevel.M});
-  }).catch(()=>{
-    if(isCurrent()&&slot.isConnected)slot.innerHTML='<p class="muted small">Your QR could not be drawn on this device.</p>';
-  });
+  await loadMemberQrIntoV327({card,slot:$('customerMemberQrSlotV327'),status:$('customerMemberQrStatusV327')},isCurrent);
 }
 /* V282 consent history. Both consent stores — the v263 per-channel audit and the v92 platform and
    partner consent events — have been append-only since the day they were written, and neither was
