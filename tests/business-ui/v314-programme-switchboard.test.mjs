@@ -194,7 +194,7 @@ test('V314 the spine is cached once per business and refreshed from the server',
   // Same shape as S.myModules: fetched once in route(), invalidated when the business changes.
   assert.match(code, /programmes:null,programmesBusinessId:null\}/);
   assert.match(code, /if\(programmeSpineRowsV314\(\)===null&&S\.myModules&&S\.myModules\.includes\('loyalty'\)\)\{\s*\r?\n?\s*await refreshProgrammeSpineV314\(\);/);
-  assert.match(code, /sb\.from\('business_programmes'\)\.select\('kind,active'\)\.eq\('business_id',S\.biz\.id\)/);
+  assert.match(code, /sb\.from\('business_programmes'\)\.select\('id,kind,active'\)\.eq\('business_id',S\.biz\.id\)/);
   /* A cache belonging to another business must never answer for this one — the id is checked on
      every read, not only when it is written. */
   assert.match(code, /S\.programmesBusinessId===S\.biz\.id\s*\r?\n?\s*\?S\.programmes:null/);

@@ -350,6 +350,10 @@ test('V326 the add-gift RPC looks up the spine id for whichever kind is actually
   assert.doesNotMatch(app, /find\(row=>row\.kind==='points'\)\?\.id;\s*\r?\n\s*if\(!spineId\)/,
     'the add-gift handler must no longer hardcode a points-only spine lookup');
   assert.match(app, /const spineId=growPointsSpineIdV326;/);
+  assert.match(app, /S\.programmes=programmes\.map\(row=>\(\{id:row\?\.id\|\|null,kind:row\?\.kind\|\|null,active:row\?\.active===true\}\)\)/,
+    'the programme-spine cache must preserve the row id that business_create_reward_v326 needs');
+  assert.match(app, /sb\.from\('business_programmes'\)\.select\('id,kind,active'\)/,
+    'refreshing the spine must select the id as well as the display flags');
 });
 
 // ---------------------------------------------------------------------------------------------

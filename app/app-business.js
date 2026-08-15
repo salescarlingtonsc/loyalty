@@ -424,7 +424,7 @@ function programmeScopeSwitchesV322(scope,{paused=false}={}){
    state the server never reached. */
 function rememberProgrammeSpineV314(programmes){
   if(!Array.isArray(programmes))return false;
-  S.programmes=programmes.map(row=>({kind:row?.kind||null,active:row?.active===true}));
+  S.programmes=programmes.map(row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true}));
   S.programmesBusinessId=S.biz?.id||null;
   return true;
 }

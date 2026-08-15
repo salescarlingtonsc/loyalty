@@ -516,9 +516,9 @@ function programmeSpineRowsV314(){
 }
 async function refreshProgrammeSpineV314(){
   if(!S.biz?.id)return null;
-  const {data,error}=await sb.from('business_programmes').select('kind,active').eq('business_id',S.biz.id);
+  const {data,error}=await sb.from('business_programmes').select('id,kind,active').eq('business_id',S.biz.id);
   if(error)return null;
-  S.programmes=(data||[]).map(row=>({kind:row?.kind||null,active:row?.active===true}));
+  S.programmes=(data||[]).map(row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true}));
   S.programmesBusinessId=S.biz.id;
   return S.programmes;
 }
