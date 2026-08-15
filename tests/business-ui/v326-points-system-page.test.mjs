@@ -44,16 +44,16 @@ const CUI = {
 // ROUTING: the two classes of bug that bit this session (wrong screen, wrong step).
 // ---------------------------------------------------------------------------------------------
 
-test('V326 the points tile always navigates to #/grow/points, before growSetupEntryV301 is consulted', () => {
+test('V326 the points AND stamps tiles both navigate to #/grow/points, before growSetupEntryV301 is consulted', () => {
   const stripComments = source => source.replace(/\/\*[\s\S]*?\*\//g, '');
   const code = stripComments(app);
   const handler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-topic-v229]')"),
     code.indexOf('growTopicV229=tile.dataset.growTopicV229;'));
-  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\)return nav\('#\/grow\/points'\);/);
-  const pointsCheckIndex = handler.indexOf("tile.dataset.growTopicV229==='points'");
+  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\|\|tile\.dataset\.growTopicV229==='stamps'\)return nav\('#\/grow\/points'\);/);
+  const routeCheckIndex = handler.indexOf("tile.dataset.growTopicV229==='points'");
   const entryCheckIndex = handler.indexOf('growSetupEntryV301(tile.dataset.growTopicV229)');
-  assert.ok(pointsCheckIndex >= 0 && entryCheckIndex > pointsCheckIndex);
-  // Tiers/stamps must be untouched — still route through growSetupEntryV301 to the wizard.
+  assert.ok(routeCheckIndex >= 0 && entryCheckIndex > routeCheckIndex);
+  // Tiers must be untouched — still routes through growSetupEntryV301 to the wizard.
   assert.match(handler, /pendingGrowSetupModelV303=\{kind:growSetupKindForTileW6I2\(tile\.dataset\.growTopicV229\),/);
   assert.match(handler, /return nav\('#\/grow\/setup'\);/);
 });
@@ -85,9 +85,9 @@ test('V326 the "edit" link lands the wizard on the Earning step, guarded on that
   const handoffSrc = slice('const rewardHandoffV303=pendingGrowSetupRewardV303;', '  }\n  for(let number=1;number<=state.step;number++)')
     .replace('for(let number=1;number<=state.step;number++)', '// (visited-set loop omitted from this harness)');
 
-  function landingStep(switches, mode) {
+  function landingStep(switches, mode, kind) {
     const src = `${railSrc}\n${railBlock}\n` +
-      `let pendingGrowSetupRewardV303=${JSON.stringify({ mode })};\n` +
+      `let pendingGrowSetupRewardV303=${JSON.stringify({ mode, kind })};\n` +
       `const state={step:1,switches:${JSON.stringify(switches)}};\n` +
       `${handoffSrc}\n` +
       `return {step:state.step,rail:railW6I2().map(s=>s.kind)};`;
@@ -99,13 +99,22 @@ test('V326 the "edit" link lands the wizard on the Earning step, guarded on that
     'mode:earning must land on Earning (step 2 of a points-only 5-step rail), not Gifts');
   // The old reward hand-off (view/edit/add) must be completely unaffected.
   assert.equal(landingStep(pointsOnly, 'view').step, 3, "mode:'view' still lands on Gifts, unchanged");
-  // A rail with no Earning step (stamps-only) must not move the step at all.
+  // A rail with no Earning step (stamps-only), and no kind supplied (legacy shape), must not move
+  // the step at all — this is the exact bug the kind-aware fix below closes.
   const stampsOnly = { points: false, tiers: false, stamps: true, referral: false };
   assert.equal(landingStep(stampsOnly, 'earning').step, 1, 'no Earning step on the rail — step must stay 1, not crash or misland');
+  // V326 stamps-unification fix: the Stamp card page's Edit link now sends kind:'stamps' along
+  // with the hand-off, so it must land on 'stampEarn' (step 2 of the stamps rail), not silently
+  // stay on step 1 the way it would if it kept checking for a step literally named 'earn'.
+  assert.deepEqual(landingStep(stampsOnly, 'earning', 'stamps'),
+    { step: 2, rail: ['choose', 'stampEarn', 'stampGift', 'live'] },
+    "mode:'earning' with kind:'stamps' must land on stampEarn, the stamps family's earning-rate step");
+  // A points hand-off explicitly carrying kind:'points' must be unaffected by the new kind check.
+  assert.equal(landingStep(pointsOnly, 'earning', 'points').step, 2);
 });
 
-test('V326 the edit link sets the earning hand-off and the same model kind the tile used to', () => {
-  assert.match(app, /pendingGrowSetupModelV303=\{kind:'points',from:'points'\};\s*\r?\n?\s*pendingGrowSetupRewardV303=\{mode:'earning'\};\s*\r?\n?\s*nav\('#\/grow\/setup'\);/);
+test('V326 the edit link sets the earning hand-off, carrying the live model kind (points or stamps)', () => {
+  assert.match(app, /pendingGrowSetupModelV303=\{kind:growPointsSpineKindV326,from:growPointsSpineKindV326\};\s*\r?\n?\s*pendingGrowSetupRewardV303=\{mode:'earning',kind:growPointsSpineKindV326\};\s*\r?\n?\s*nav\('#\/grow\/setup'\);/);
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -129,8 +138,9 @@ function harness() {
   return function render(opts) {
     const {
       canRewards = true, canSetupGrow = true, snapshotRewards = [], liveLoyaltyModelKeysV240 = ['redeem'],
+      liveLoyaltyModelV235 = 'redeem',
       earningOverviewCopy = 'Current setting: Earn 1 points per SGD 1 spent',
-      S = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'points', active: true }] },
+      S = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'points', active: true, id: 'spine-points' }] },
       growSwitchPendingV322 = '', growSwitchErrorV322 = '', growPointsManageTabV326 = 'published',
       growPointsDeletePendingV326 = '', growPointsAddOpenV326 = '', growPointsAddDraftV326 = { name: '', points: '' },
       growPointsErrorV326 = '', growPointsBusyV326 = false,
@@ -139,16 +149,16 @@ function harness() {
       PROGRAMME_SWITCHES_V314_src, PROGRAMME_KINDS_W6I2_src, programmeSwitchSetV314_src, programmeSpineRowsV314_src,
       programmeSpineOnV314_src, PROGRAMME_ACCRUAL_EXCLUSIVE_V322_src, programmeExclusionsV322_src,
       promotionDateShortV324_src, pageBlockSrc,
-      'return {growPointsManageV326,growPointsPublishedV326,growPointsHistoryV326,growPointsConfiguredV326,growPointsOnV326};',
+      'return {growPointsManageV326,growPointsPublishedV326,growPointsHistoryV326,growPointsConfiguredV326,growPointsOnV326,growPointsIsStampsV326,growPointsSpineKindV326,growPointsPageTitleV326,growPointsRowLabelV326};',
     ].join('\n');
     const fn = new Function(
-      'esc', 'CUI', 'S', 'canRewards', 'canSetupGrow', 'snapshot', 'liveLoyaltyModelKeysV240',
+      'esc', 'CUI', 'S', 'canRewards', 'canSetupGrow', 'snapshot', 'liveLoyaltyModelKeysV240', 'liveLoyaltyModelV235',
       'earningOverviewCopy', 'growProgrammeSwitchKindsV322', 'growSwitchPendingV322', 'growSwitchErrorV322',
       'growPointsManageTabV326', 'growPointsDeletePendingV326', 'growPointsAddOpenV326', 'growPointsAddDraftV326',
       'growPointsErrorV326', 'growPointsBusyV326', src
     );
     const growProgrammeSwitchKindsV322 = [['points', 'Points & gifts'], ['tiers', 'Tier membership'], ['stamps', 'Stamp card'], ['referral', 'Referral']];
-    return fn(esc, CUI, S, canRewards, canSetupGrow, { rewards: snapshotRewards }, liveLoyaltyModelKeysV240,
+    return fn(esc, CUI, S, canRewards, canSetupGrow, { rewards: snapshotRewards }, liveLoyaltyModelKeysV240, liveLoyaltyModelV235,
       earningOverviewCopy, growProgrammeSwitchKindsV322, growSwitchPendingV322, growSwitchErrorV322,
       growPointsManageTabV326, growPointsDeletePendingV326, growPointsAddOpenV326, growPointsAddDraftV326,
       growPointsErrorV326, growPointsBusyV326);
@@ -252,6 +262,83 @@ test('V326 read-only staff (canSetupGrow=false) sees state but no interactive co
     'data-grow-switchtoggle-v322="points"', 'data-grow-points-gift-toggle-v326', 'data-grow-points-gift-delete-v326']) {
     assert.doesNotMatch(html, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
+});
+
+// ---------------------------------------------------------------------------------------------
+// STAMPS UNIFICATION (V326 "proceed all at once"): #/grow/points also serves as the Stamp card
+// destination. These pin the model-awareness — page title, unit wording, on/off spine kind, and
+// the programme_id scoping that keeps a switched-model business from seeing the OTHER model's
+// dormant gifts — rather than building a second, near-duplicate page against the same list.
+// ---------------------------------------------------------------------------------------------
+
+test('V326 stamps mode: growPointsIsStampsV326/growPointsSpineKindV326 derive from the live model, page title becomes Stamp card', () => {
+  const render = harness();
+  const stampsSpine = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'stamps', active: true, id: 'spine-stamps' }] };
+  const r = render({ liveLoyaltyModelV235: 'stamps', liveLoyaltyModelKeysV240: ['stamps'], S: stampsSpine });
+  assert.equal(r.growPointsIsStampsV326, true);
+  assert.equal(r.growPointsSpineKindV326, 'stamps');
+  assert.equal(r.growPointsPageTitleV326, 'Stamp card');
+  assert.equal(r.growPointsRowLabelV326, 'Stamp card');
+  assert.equal(r.growPointsConfiguredV326, true);
+  assert.equal(r.growPointsOnV326, true);
+  assert.match(r.growPointsManageV326, /<b>Stamp card<\/b>/);
+  assert.doesNotMatch(r.growPointsManageV326, /Points System/);
+  // The summary row's own on/off toggle must move the STAMPS spine, not points.
+  assert.match(r.growPointsManageV326, /data-grow-switchtoggle-v322="stamps"/);
+  assert.match(r.growPointsManageV326, /data-grow-switchconfirm-v322="stamps"/);
+});
+
+test('V326 stamps mode is "configured" from liveLoyaltyModelV235 alone, independent of liveLoyaltyModelKeysV240', () => {
+  const render = harness();
+  // A firm that has never run points has liveLoyaltyModelKeysV240===['stamps'], not ['redeem'] —
+  // the old `liveLoyaltyModelKeysV240.includes('redeem')` test alone would have wrongly shown the
+  // "not set up yet" empty state for every stamps-only business.
+  const r = render({ liveLoyaltyModelV235: 'stamps', liveLoyaltyModelKeysV240: ['stamps'],
+    S: { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'stamps', active: true, id: 'spine-stamps' }] } });
+  assert.equal(r.growPointsConfiguredV326, true);
+  assert.doesNotMatch(r.growPointsManageV326, /data-empty-state/);
+});
+
+test('V326 gift rows use "stamp"/"stamps" unit wording in stamps mode, "point"/"points" in points mode', () => {
+  const render = harness();
+  const rewards = [{ id: 'r1', customer_name: 'Free Coffee', cost_points: 1, active: true, paused: false, sort: 1, created_at: '2026-08-01T12:00:00Z', programme_id: 'spine-stamps' }];
+  const stampsSpine = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'stamps', active: true, id: 'spine-stamps' }] };
+  const stampsHtml = render({ liveLoyaltyModelV235: 'stamps', liveLoyaltyModelKeysV240: ['stamps'], S: stampsSpine, snapshotRewards: rewards }).growPointsManageV326;
+  assert.match(stampsHtml, /1 stamp</, 'singular stamp, not "1 stamps" or "1 point"');
+  const pointsHtml = render({ snapshotRewards: [{ ...rewards[0], programme_id: 'spine-points' }] }).growPointsManageV326;
+  assert.match(pointsHtml, /1 point</, 'points mode keeps "point"/"points" wording, unaffected by the stamps change');
+});
+
+test('V326 scopes the gift list to the live model\'s spine programme_id — dormant rows from a switched-away model never leak through', () => {
+  const render = harness();
+  const rewards = [
+    { id: 'r-stamps', customer_name: 'Stamp Gift', cost_points: 5, active: true, paused: false, sort: 1, created_at: '2026-08-01T12:00:00Z', programme_id: 'spine-stamps' },
+    { id: 'r-points', customer_name: 'Points Gift', cost_points: 20, active: true, paused: false, sort: 1, created_at: '2026-07-01T12:00:00Z', programme_id: 'spine-points' },
+  ];
+  // Business is currently live on STAMPS, but has a dormant points-mode gift left over from before
+  // it switched (R2 exclusivity means both spine rows can exist even though only one is active).
+  const S = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [
+    { kind: 'stamps', active: true, id: 'spine-stamps' }, { kind: 'points', active: false, id: 'spine-points' },
+  ] };
+  const r = render({ liveLoyaltyModelV235: 'stamps', liveLoyaltyModelKeysV240: ['stamps'], S, snapshotRewards: rewards });
+  assert.equal(r.growPointsPublishedV326.length, 1);
+  assert.equal(r.growPointsPublishedV326[0].id, 'r-stamps');
+  assert.match(r.growPointsManageV326, /Stamp Gift/);
+  assert.doesNotMatch(r.growPointsManageV326, /Points Gift/, 'a dormant points-mode gift must not appear on the live Stamp card page');
+});
+
+test('V326 a legacy row with no programme_id at all is shown regardless of live model (fail open, not hidden)', () => {
+  const render = harness();
+  const rewards = [{ id: 'r-legacy', customer_name: 'Legacy Gift', cost_points: 5, active: true, paused: false, sort: 1, created_at: '2026-01-01T12:00:00Z' }];
+  const r = render({ snapshotRewards: rewards });
+  assert.equal(r.growPointsPublishedV326.length, 1);
+  assert.match(r.growPointsManageV326, /Legacy Gift/);
+});
+
+test('V326 the add-gift RPC looks up the spine id for whichever kind is actually live, not a hardcoded points lookup', () => {
+  assert.doesNotMatch(app, /find\(row=>row\.kind==='points'\)\?\.id;\s*\r?\n\s*if\(!spineId\)/,
+    'the add-gift handler must no longer hardcode a points-only spine lookup');
+  assert.match(app, /const spineId=growPointsSpineIdV326;/);
 });
 
 // ---------------------------------------------------------------------------------------------

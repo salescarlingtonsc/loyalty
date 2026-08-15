@@ -152,17 +152,20 @@ test('V324 switching reward tabs in the wizard never touches the network', () =>
   assert.match(handler, /render\(\)/);
 });
 
-test('V326 the Points System tile no longer arms a wizard step hand-off — it opens its own page', () => {
+test('V326 the Points System AND Stamp card tiles no longer arm a wizard step hand-off — they open their own page', () => {
   /* SUPERSEDES the old "arms a step hand-off, not just a model one" fix (V324, commit c1fd58c):
      that fix landed the wizard on the Gifts step because the tile still opened the wizard. Owner
      ruling 2026-08-15 ("Photo 3 always, with an empty state") replaced the destination entirely —
-     the tile now opens #/grow/points unconditionally, live or not, first-time or not, and never
-     touches pendingGrowSetupModelV303/pendingGrowSetupRewardV303 at click time. Those hand-offs
-     still exist (the page's own "edit" link and the empty-state "Set up" CTA use them), just not
-     from this click. */
+     the points tile now opens #/grow/points unconditionally, live or not, first-time or not, and
+     never touches pendingGrowSetupModelV303/pendingGrowSetupRewardV303 at click time. Those
+     hand-offs still exist (the page's own "edit" link and the empty-state "Set up" CTA use them),
+     just not from this click.
+     V326 "proceed all at once" (same day): the Stamp card tile joins it, reusing the same
+     model-aware page rather than a second one — see v326-points-system-page.test.mjs for the
+     stamps-unification coverage (page title, unit wording, spine-kind scoping). */
   const handler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-topic-v229]')"),
     code.indexOf("growTopicV229=tile.dataset.growTopicV229;"));
-  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\)return nav\('#\/grow\/points'\);/);
+  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\|\|tile\.dataset\.growTopicV229==='stamps'\)return nav\('#\/grow\/points'\);/);
   // ...and that check runs BEFORE growSetupEntryV301 is ever consulted for the pressed tile.
   const pointsCheckIndex = handler.indexOf("tile.dataset.growTopicV229==='points'");
   const entryCheckIndex = handler.indexOf('growSetupEntryV301(tile.dataset.growTopicV229)');
