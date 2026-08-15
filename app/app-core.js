@@ -3973,20 +3973,26 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const remaining=Math.max(0,Number(reward?.remaining_units||0));
   const primary=unit==='stamps'&&reward
     ?`${customerPointTotalV103(balance)} / ${customerPointTotalV103(Math.max(balance,Number(reward.cost_units||0)))} stamps`
-    :tierLabel||`${customerPointTotalV103(balance)} ${unitLabel}`;
+    :`${customerPointTotalV103(balance)} ${unitLabel}`;
   const subline=rewardReady?'1 reward ready'
     :remaining>0?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to reward`
     :membership.active===true?'Member'
     :'No reward yet';
-  const extras=[
-    tierLabel&&primary!==tierLabel?`<span class="pill">${esc(tierLabel)}</span>`:'',
-    Number(packages.sessions_remaining||0)>0?`<span class="pill">${Number(packages.sessions_remaining)} sessions left</span>`:'',
-    membership.active===true?'<span class="pill on">Membership active</span>':''
-  ].filter(Boolean).join('');
+  const heroLabel=tierLabel?tierLabel.toUpperCase():membership.active===true?'MEMBER':unit==='stamps'?'STAMPS':'POINTS';
+  const rewardName=String(reward?.name||'').trim();
+  const sessions=Number(packages.sessions_remaining||0);
+  const claimLine=rewardReady
+    ?`${rewardName||'Reward'} ready to claim`
+    :sessions>0?`${sessions} session${sessions===1?'':'s'} left`
+    :subline;
   return `<section class="card customer-business-summary-v346" aria-label="Membership summary">
-    <div><p class="customer-business-kicker-v346">Membership summary</p><b>${esc(primary)}</b><p class="muted small">${esc(subline)}</p></div>
-    <span class="customer-business-summary-icon-v346" aria-hidden="true">${CUI.icon(rewardReady?'giftcard':'diamond',{size:24})}</span>
-    ${extras?`<div class="customer-business-summary-chips-v346">${extras}</div>`:''}
+    <div class="customer-business-summary-top-v347">
+      <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(heroLabel)}</span></span>
+      <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(subline)}</span></span>
+    </div>
+    <b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>
+    <p>${esc(claimLine)}</p>
+    ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
   </section>`;
 }
 /* v340 (gap 2): `backHrefV340` carries the profile's real "go back" destination INTO this markup
