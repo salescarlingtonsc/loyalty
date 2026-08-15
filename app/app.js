@@ -8308,6 +8308,24 @@ function customerBusinessSecondaryMarkupV346(presentation={}){
     ${benefitMarkup}
   </section>`;
 }
+function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},loyalty={},capabilities={}}={}){
+  const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
+  const unit=String(loyalty.unit||'points').toLowerCase();
+  const sessions=Math.max(0,Number(packages.sessions_remaining)||0);
+  const modules=[
+    {href:'#customerBusinessRewardsDetailV347',icon:'giftcard',title:unit==='stamps'?'Stamp rewards':'Rewards wallet',body:reward?.available_now===true?'1 reward ready':'View and manage your rewards'},
+    {href:'#customerBusinessOverviewDetailV347',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Explore member perks'},
+    {href:'#walletRewards',icon:'redeem',title:'Rewards wallet',body:'View and claim rewards'},
+    {href:'#customerBusinessPackagesDetailV347',icon:'packages',title:'Packages',body:sessions>0?`${sessions} session${sessions===1?'':'s'} left`:(capabilities.packages?'Session balances':'No active package')}
+  ];
+  return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
+    ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}">
+      <span class="customer-business-module-icon-v347" aria-hidden="true">${CUI.icon(item.icon,{size:22})}</span>
+      <span class="customer-business-module-copy-v347"><b>${esc(item.title)}</b><small>${esc(item.body)}</small></span>
+      <span class="customer-business-module-chevron-v347" aria-hidden="true">›</span>
+    </a>`).join('')}
+  </section>`;
+}
 /* v340 (gap 2): `backHrefV340` carries the profile's real "go back" destination INTO this markup
    so the chevron can sit inline with the business name, where photo 1 draws it. It is a
    parameter and not a constant because this same function is rendered standalone by the
@@ -8384,12 +8402,12 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337 customer-business-book-v346" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:18})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
     ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership})}
-    ${customerProgrammePointsHeroMarkupV337({loyalty,reward,tier,presentation,programmeCapabilities})}
+    ${customerBusinessDashboardModulesV347({reward,tier,packages,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled})}
-    <section class="customer-business-group-v346 customer-business-rewards-v346" aria-labelledby="customerBusinessRewardsTitle">
+    <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
       ${programmeStackV310(programmeCapabilities)
-        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:pointsHeroVisibleV338,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
+        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:true,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
       ${customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities})}
       <div id="walletReferralSlot" hidden></div>
@@ -9211,14 +9229,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
   const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
     <div class="wallet-sections" id="walletSections">
-      <section class="customer-business-group-v346" aria-labelledby="customerBusinessPackagesTitle">
+      <section class="customer-business-group-v346" id="customerBusinessPackagesDetailV347" aria-labelledby="customerBusinessPackagesTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessPackagesTitle">Packages</h2><p class="muted small">Active plans, sessions and stored value.</p></div>
         ${walletSectionShell('walletGiftCards','Gift cards','Money left on your gift cards from this business.')}
         ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
         ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
         ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       </section>
-      <section class="customer-business-group-v346" aria-labelledby="customerBusinessActivityTitle">
+      <section class="customer-business-group-v346" id="customerBusinessActivityDetailV347" aria-labelledby="customerBusinessActivityTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessActivityTitle">Activity</h2><p class="muted small">Appointments, visits and loyalty history.</p></div>
         ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
         <details class="card wallet-history-disclosure" id="walletHistoryDisclosure">
@@ -9229,7 +9247,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           </div>
         </details>
       </section>
-      <section class="customer-business-group-v346" aria-labelledby="customerBusinessOffersTitle">
+      <section class="customer-business-group-v346" id="customerBusinessOverviewDetailV347" aria-labelledby="customerBusinessOffersTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessOffersTitle">Overview</h2><p class="muted small">Current offers and visit feedback.</p></div>
         ${window.NestlyGrowthOffers?window.NestlyGrowthOffers.renderCustomerOffers({state:'loading'}):''}
         ${walletReviewUrlV183(b)?`<section class="card wallet-section" id="walletFeedback"></section>`:''}

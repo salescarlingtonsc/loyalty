@@ -3967,14 +3967,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
   const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
     <div class="wallet-sections" id="walletSections">
-      <section class="customer-business-group-v346" aria-labelledby="customerBusinessPackagesTitle">
+      <section class="customer-business-group-v346" id="customerBusinessPackagesDetailV347" aria-labelledby="customerBusinessPackagesTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessPackagesTitle">Packages</h2><p class="muted small">Active plans, sessions and stored value.</p></div>
         ${walletSectionShell('walletGiftCards','Gift cards','Money left on your gift cards from this business.')}
         ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
         ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
         ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       </section>
-      <section class="customer-business-group-v346" aria-labelledby="customerBusinessActivityTitle">
+      <section class="customer-business-group-v346" id="customerBusinessActivityDetailV347" aria-labelledby="customerBusinessActivityTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessActivityTitle">Activity</h2><p class="muted small">Appointments, visits and loyalty history.</p></div>
         ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
         <details class="card wallet-history-disclosure" id="walletHistoryDisclosure">
@@ -3985,7 +3985,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           </div>
         </details>
       </section>
-      <section class="customer-business-group-v346" aria-labelledby="customerBusinessOffersTitle">
+      <section class="customer-business-group-v346" id="customerBusinessOverviewDetailV347" aria-labelledby="customerBusinessOffersTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessOffersTitle">Overview</h2><p class="muted small">Current offers and visit feedback.</p></div>
         ${window.NestlyGrowthOffers?window.NestlyGrowthOffers.renderCustomerOffers({state:'loading'}):''}
         ${walletReviewUrlV183(b)?`<section class="card wallet-section" id="walletFeedback"></section>`:''}

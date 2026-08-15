@@ -3995,6 +3995,24 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
   </section>`;
 }
+function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},loyalty={},capabilities={}}={}){
+  const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
+  const unit=String(loyalty.unit||'points').toLowerCase();
+  const sessions=Math.max(0,Number(packages.sessions_remaining)||0);
+  const modules=[
+    {href:'#customerBusinessRewardsDetailV347',icon:'giftcard',title:unit==='stamps'?'Stamp rewards':'Rewards wallet',body:reward?.available_now===true?'1 reward ready':'View and manage your rewards'},
+    {href:'#customerBusinessOverviewDetailV347',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Explore member perks'},
+    {href:'#walletRewards',icon:'redeem',title:'Rewards wallet',body:'View and claim rewards'},
+    {href:'#customerBusinessPackagesDetailV347',icon:'packages',title:'Packages',body:sessions>0?`${sessions} session${sessions===1?'':'s'} left`:(capabilities.packages?'Session balances':'No active package')}
+  ];
+  return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
+    ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}">
+      <span class="customer-business-module-icon-v347" aria-hidden="true">${CUI.icon(item.icon,{size:22})}</span>
+      <span class="customer-business-module-copy-v347"><b>${esc(item.title)}</b><small>${esc(item.body)}</small></span>
+      <span class="customer-business-module-chevron-v347" aria-hidden="true">›</span>
+    </a>`).join('')}
+  </section>`;
+}
 /* v340 (gap 2): `backHrefV340` carries the profile's real "go back" destination INTO this markup
    so the chevron can sit inline with the business name, where photo 1 draws it. It is a
    parameter and not a constant because this same function is rendered standalone by the
@@ -4071,12 +4089,12 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337 customer-business-book-v346" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:18})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
     ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership})}
-    ${customerProgrammePointsHeroMarkupV337({loyalty,reward,tier,presentation,programmeCapabilities})}
+    ${customerBusinessDashboardModulesV347({reward,tier,packages,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled})}
-    <section class="customer-business-group-v346 customer-business-rewards-v346" aria-labelledby="customerBusinessRewardsTitle">
+    <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
       ${programmeStackV310(programmeCapabilities)
-        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:pointsHeroVisibleV338,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
+        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:true,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
       ${customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities})}
       <div id="walletReferralSlot" hidden></div>
