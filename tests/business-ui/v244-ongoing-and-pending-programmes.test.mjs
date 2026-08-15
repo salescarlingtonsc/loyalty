@@ -61,7 +61,10 @@ test('V244 a pending tile says which job it is, not a generic View', () => {
 
 test('V343 the programme landing renders the owner mockup status strip and five-card grid', () => {
   const tiles = app.slice(app.indexOf('const growTilesHtmlV229='));
+  const stripSetup = app.slice(app.indexOf('const growDisplayTopicsV343='), app.indexOf('const growTilesHtmlV229='));
   assert.match(app, /growDisplayTopicsV343=growTopicDefsV229\.filter\(topic=>topic\.key!=='recurring'\)/);
+  assert.match(app, /growDisplayHistoryCountV343=growTopicDefsV229\.filter\(topic=>String\(topic\.status\?\.\[0\]\|\|''\)==='History'\)\.length\+growTiersHistoryV331\.length/);
+  assert.doesNotMatch(stripSetup, /growHistoryRowsV271/);
   assert.match(tiles, /All \(\$\{growDisplayTopicsV343\.length\}\)/);
   assert.match(tiles, /Live \(\$\{growDisplayLiveV343\.length\}\)/);
   assert.match(tiles, /Not set up \(\$\{growDisplayPendingV343\.length\}\)/);

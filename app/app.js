@@ -22548,7 +22548,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growDisplayTopicsV343=growTopicDefsV229.filter(topic=>topic.key!=='recurring');
   const growDisplayLiveV343=growDisplayTopicsV343.filter(growTopicOngoingV244);
   const growDisplayPendingV343=growDisplayTopicsV343.filter(topic=>!growTopicOngoingV244(topic));
-  const growDisplayHistoryCountV343=growHistoryRowsV271.length+growTiersHistoryV331.length;
+  const growDisplayHistoryCountV343=growTopicDefsV229.filter(topic=>String(topic.status?.[0]||'')==='History').length+growTiersHistoryV331.length;
   const growTilesHtmlV229=`<div class="grow-programme-toolbar-v343">
       <div class="v150-segment grow-programme-tabs-v343" role="group" aria-label="Programme status">
         <button type="button" aria-pressed="true">All (${growDisplayTopicsV343.length})</button>
