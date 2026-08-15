@@ -3727,6 +3727,73 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
     ${customerMemberCodeSlotMarkupV310()}
     <div class="customer-programme-stack" data-programme-stack="v310">${cards}</div>`;
 }
+/* v337 (owner mockup "photo 1", 2026-08-15): the business-profile screen gets a plain white
+   identity row (no cover photo), a red-gradient points hero directly under it, an Address/
+   Call/Book now row of three tappable segments, and — only when a reward is actually
+   claimable — a "reward ready" banner above the programme stack/tabs. Every figure below is
+   read from the SAME actionableCard/loyalty/reward/tier data customerMerchantExperienceMarkupV95
+   already has in scope; nothing here issues a new read or a new RPC. */
+function customerPointsHeroVisibleV337({loyalty={},programmeCapabilities={}}={}){
+  if(loyalty.enabled===false)return false;
+  const stack=programmeStackV310(programmeCapabilities);
+  if(stack){
+    const entry=programmeStackEntryV310(stack,'points');
+    return programmeStackCardVisibleV310(entry)&&entry?.active!==false;
+  }
+  const mode=customerProgrammeModeV230(programmeCapabilities);
+  return mode==='redeem'||mode==='both';
+}
+/* The red "Your points" hero. Reuses customerPointTotalV103 for every figure and the same
+   reward object the claimable strip and the points card already read — cost_units,
+   remaining_units, available_now, name. When this firm is not running spendable points
+   (tiers-only, or the points programme is paused) it renders nothing and the page falls
+   back to the tier card / programme stack exactly as it did before v337. */
+function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},presentation={},programmeCapabilities={}}={}){
+  if(!customerPointsHeroVisibleV337({loyalty,programmeCapabilities}))return '';
+  const unitLabel=ct(presentation.unit);
+  const balance=Math.max(0,Number(loyalty.balance)||0);
+  const cost=reward?Math.max(0,Number(reward.cost_units)||0):0;
+  const progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):(reward?100:0);
+  const fraction=reward&&cost>0?`${esc(customerPointTotalV103(balance))}/${esc(customerPointTotalV103(cost))}`:'';
+  const remaining=reward?Math.max(0,Number(reward.remaining_units??Math.max(0,cost-balance))||0):0;
+  const rewardName=reward?String(reward.name||'').trim()||ct('rewardsTab'):'';
+  const nextLine=reward
+    ?(reward.available_now===true||remaining===0
+      ?`${esc(rewardName)} is ready to claim`
+      :`${esc(customerPointTotalV103(remaining))} more ${esc(unitLabel)} to ${esc(rewardName)}`)
+    :'';
+  const currentTierLabel=String(tier.current?.label||tier.current||tier.label||'').trim();
+  const tierPill=currentTierLabel?esc(tier.next?currentTierLabel:`${currentTierLabel} · Top tier`):'';
+  return `<section class="card customer-points-hero-v337" aria-label="Your ${esc(unitLabel)}">
+    <div class="customer-points-hero-copy-v337">
+      <p class="customer-points-hero-label-v337">Your ${esc(unitLabel)}</p>
+      <p class="customer-points-hero-figure-v337"><b>${esc(customerPointTotalV103(balance))}</b><span>${esc(unitLabel)}</span></p>
+      ${fraction?`<p class="customer-points-hero-fraction-v337">${fraction}</p>`:''}
+      ${nextLine?`<p class="customer-points-hero-next-v337">${nextLine}</p>`:''}
+      <div class="customer-points-hero-bar-v337" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width:${progress}%"></span></div>
+      ${tierPill?`<span class="pill customer-points-hero-pill-v337">${tierPill}</span>`:''}
+    </div>
+    <span class="customer-points-hero-icon-v337" aria-hidden="true">${CUI.icon('diamond',{size:34})}</span>
+  </section>`;
+}
+/* The "reward ready" banner. Renders only when the server's own next_eligible_reward is
+   already claimable (the SAME available_now===true check customerClaimableFactsV310 uses for
+   the claimable strip) — never a fabricated reward. The reward object this codebase carries
+   here has only name/cost_units/remaining_units/available_now, so the banner does not print a
+   description, image or validity window that is not actually in the payload. */
+function customerClaimableRewardBannerMarkupV337({reward=null}={}){
+  if(!reward||reward.available_now!==true)return '';
+  const name=esc(String(reward.name||'').trim()||ct('rewardsTab'));
+  return `<section class="card customer-claimable-banner-v337" data-claimable-banner-v337 role="status">
+    <span class="customer-claimable-banner-icon-v337" aria-hidden="true">${CUI.icon('giftcard',{size:26})}</span>
+    <div class="customer-claimable-banner-copy-v337">
+      <p class="customer-claimable-banner-kicker-v337">You have a reward ready!</p>
+      <b class="customer-claimable-banner-name-v337">${name}</b>
+      <p class="muted small customer-claimable-banner-line-v337">Show this at the counter to claim it.</p>
+    </div>
+    <button type="button" class="btn sm customer-claimable-banner-cta-v337" data-claim-reward-scroll-v337>Claim reward ›</button>
+  </section>`;
+}
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready',rewardsHost=false,programmeCapabilities={}}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
@@ -3749,7 +3816,6 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
      [data-company-detail] wiring — nothing about that click path changed. "Other branch" from
      the mockup is left out: this surface has no branch list loaded to link to. */
   const accentV326=esc(contrastSafeBrandColor(presentation.heroColor));
-  const coverUrlV326=presentation.heroImageUrl?String(presentation.heroImageUrl):'';
   /* v327 (owner: "photo 2 - add company name" / "Company Name (missing)"): the v326 markup put
      .customer-programme-cover-v326 and .customer-programme-head-row-v326 as SIBLINGS, both
      children of the <header>. The cover div was empty — pure decoration — so the row (with its
@@ -3767,26 +3833,29 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
      line of the header so it still reads directly under the name, wired below to jump to the
      Tier card. */
   const headV327=esc(business.name||presentation.name);
+  /* v337: photo 1 drops the cover-photo/gradient treatment from the identity row — it is now a
+     small, plain-white row (name + logo, phone/pin affordance top-right), matching the mockup.
+     The tier-jump chip and [data-company-detail] click target are unchanged. The red points
+     hero and the reward-ready banner sit directly under it, before the programme stack/tabs;
+     the Address/Call/Book now row moves below those, its own segment strip. */
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
-    <header class="customer-programme-compact-head customer-programme-compact-head-v326" style="--merchant-accent:${accentV326}${coverUrlV326?`;--merchant-cover:url('${esc(coverUrlV326)}')`:''}">
-      <div class="customer-programme-cover-v326">
-        <div class="customer-programme-head-row-v326">
-          <div class="customer-programme-head-row-top-v327">
-            <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${headV327}">
-              <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
-              <span class="customer-programme-compact-copy"><b>${headV327}</b></span>
-            </button>
-          </div>
-          ${hasTier&&currentTierLabel?`<button type="button" class="customer-programme-identity-hint customer-programme-tier-jump-v327" data-tier-scroll-v327>${esc(currentTierLabel)}</button>`:''}
-        </div>
-      </div>
-      <!-- V334 (owner markup, photo 10: "book now move here"): moved out of the header top row,
-           next to the logo/name, down beside the address/phone/offers line it now sits under. -->
-      <div class="customer-programme-contact-v326" data-company-contact-inline-v326>
-        <button type="button" class="customer-programme-contact-more-v326" data-company-detail>Address, phone and offers ›</button>
-        ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
-      </div>
+    <header class="customer-programme-compact-head customer-programme-compact-head-v337" style="--merchant-accent:${accentV326}">
+      <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${headV327}">
+        <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
+        <span class="customer-programme-compact-copy"><b>${headV327}</b></span>
+      </button>
+      <span class="customer-programme-head-icons-v337" aria-hidden="true">${CUI.icon('phone',{size:17})}${CUI.icon('branch',{size:17})}</span>
+      ${hasTier&&currentTierLabel?`<button type="button" class="customer-programme-identity-hint customer-programme-tier-jump-v327" data-tier-scroll-v327>${esc(currentTierLabel)}</button>`:''}
     </header>
+    ${customerProgrammePointsHeroMarkupV337({loyalty,reward,tier,presentation,programmeCapabilities})}
+    ${customerClaimableRewardBannerMarkupV337({reward})}
+    <div class="customer-programme-contact-row-v337">
+      <div class="customer-programme-contact-v326" data-company-contact-inline-v326>
+        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:18})}<span>Address</span></button>
+        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>
+      </div>
+      ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:18})}<span>${esc(ct('bookNow'))}</span></a>`:''}
+    </div>
     ${customerPointsExplainerMarkupV167(business)}
     ${programmeStackV310(programmeCapabilities)
       ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null})

@@ -31,8 +31,10 @@ test('a failed actions read is named, not silently swallowed', () => {
 test('the QR lede is suppressed when no QR can be issued', () => {
   assert.match(rewards, /\$\{redemptionUncheckedV286\s*\r?\n?\s*\?`<div class="wallet-section-head" data-rewards-redemption-unchecked/,
     'the failure banner replaces the lede rather than sitting beside it');
+  /* v337: a "Your rewards" title now precedes the lede (the section restyled into a horizontal
+     carousel), so the lede itself is matched without anchoring to the very start of the branch. */
   assert.match(rewards,
-    /:`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter/,
+    /:`<div class="customer-rewards-carousel-head-v337">[\s\S]*?<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter/,
     'the "show its QR at the counter" promise sits in the else branch — printed only when redemption was checked');
 });
 
@@ -90,6 +92,9 @@ test('the company-details affordance and tier survive at 390px', () => {
     'the tier hint is no longer nested inside the identity button');
   assert.doesNotMatch(merchant, /customer-programme-identity-hint-long|customer-programme-identity-hint-short/,
     'the width-swapped hint spans moved out of the identity button with the redesign');
-  assert.match(merchant, /Address, phone and offers ›/,
-    'the affordance text lives in the header contact area now, not squeezed behind the name');
+  /* v337 (owner mockup "photo 1"): the header contact area's "Address, phone and offers ›" link
+     became an Address/Call segment pair (plus a sibling Book now segment) — same click paths
+     (data-company-detail / tel: / the existing booking href), restyled into three segments. */
+  assert.match(merchant, /customer-programme-contact-row-v337/,
+    'the affordance lives in the header contact row now, not squeezed behind the name');
 });

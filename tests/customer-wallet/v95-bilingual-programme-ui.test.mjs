@@ -67,7 +67,10 @@ test('merchant home consumes the v95 presentation contract with truthful capabil
   assert.match(presentation,/customer-promotions-grid/);
   /* v194 (owner: "Booking option make it smaller and put upstair"): booking is a compact action in
      the identity header, not a full-width card below the offers. Still gated on bookingEnabled. */
-  assert.match(presentation,/\$\{bookingEnabled\?`<a class="btn sm customer-programme-book" href="#\/b\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}"/);
+  /* v337: Book now is now one of three contact-row segments (Address/Call/Book now), restyled
+     with extra v337 segment classes alongside the original btn/customer-programme-book classes —
+     same href, same data-repeat-booking/data-business-slug wiring, still gated on bookingEnabled. */
+  assert.match(presentation,/\$\{bookingEnabled\?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337" href="#\/b\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}"/);
   assert.doesNotMatch(presentation,/bookingEnabled\?`<section/);
   assert.doesNotMatch(presentation,/id="customerMerchantScan"/);
 });

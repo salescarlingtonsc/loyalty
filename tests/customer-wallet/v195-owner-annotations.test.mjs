@@ -171,9 +171,14 @@ test('the programme header no longer repeats the programme name', () => {
      own beneath): "Address, phone and offers ›" moved out of the identity button into its own
      contact area below, which loads real phone/address inline and falls back to this same link
      when they are not yet available. */
-  assert.doesNotMatch(identity, /Address, phone and offers ›/,
-    'the identity button itself is now just logo, name and tier — the contact line moved below it');
-  assert.match(merchant, /Address, phone and offers ›/);
+  assert.doesNotMatch(identity, /customer-programme-contact-item-v337/,
+    'the identity button itself is now just logo, name and tier — the contact row moved below it');
+  /* v337 (owner mockup "photo 1"): the single "Address, phone and offers ›" link and separate
+     Book now button became three tappable segments — Address, Call, Book now — still opening
+     the same company sheet / tel: link / booking href as before. */
+  assert.match(merchant, /customer-programme-contact-row-v337/);
+  assert.match(merchant, />Address<\/span>/);
+  assert.match(merchant, />Call<\/span>/);
 });
 
 /* ------------------------------------------- 5 · the standalone Rewards card, and where it went */

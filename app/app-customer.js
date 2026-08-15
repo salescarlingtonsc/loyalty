@@ -3714,26 +3714,39 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
-  /* v326: the header's phone/address lines load inline using the exact same read
-     showCustomerBusinessDetailV178 already makes on click — this just hydrates the header a
-     beat earlier. On error/empty it silently keeps the "Address, phone and offers ›" fallback
-     already in the markup and already wired above, so nothing about the click path breaks. */
+  /* v326: the header's phone/address segments load inline using the exact same read
+     showCustomerBusinessDetailV178 already makes on click. On error/empty they silently keep
+     the plain "Address"/"Call" segments already in the markup and already wired above (both
+     open the same company sheet), so nothing about the click path breaks.
+     v337: restyled from two stacked lines into the Address/Call segment pair — Address still
+     opens the company sheet, and Call becomes a real tel: link once the number is known
+     (falls back to the same sheet when there is no phone on file). Book now lives OUTSIDE this
+     host (a sibling in the v337 contact row) so this replacement never touches it. */
   const contactHostV326=$('walletBody').querySelector('[data-company-contact-inline-v326]');
   if(contactHostV326&&(businessId||b.id)){
     Promise.resolve(customerRpc('customer_get_offer_business_contact_v173',{p_business:businessId||b.id}))
       .then(({data,error})=>{
         if(error||!contactHostV326.isConnected)return;
         const branch=data?.branch||{};
-        const lines=[
-          branch.address?`<p class="muted small customer-programme-contact-line-v326">${CUI.icon('bookings',{size:14})}<span>${esc(branch.address)}</span></p>`:'',
-          branch.phone?`<p class="muted small customer-programme-contact-line-v326"><a href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${esc(branch.phone)}</a></p>`:''
-        ].filter(Boolean).join('');
-        if(!lines)return;
-        contactHostV326.innerHTML=`${lines}<button type="button" class="customer-programme-contact-more-v326" data-company-detail>More offers ›</button>`;
-        const moreButton=contactHostV326.querySelector('[data-company-detail]');
-        if(moreButton)moreButton.onclick=()=>showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug});
+        if(!branch.address&&!branch.phone)return;
+        const addressLabel=branch.address?esc(branch.address):'Address';
+        const openSheet=()=>showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug});
+        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:18})}<span>${addressLabel}</span></button>${
+          branch.phone
+            ?`<a class="customer-programme-contact-item-v337" href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${CUI.icon('phone',{size:18})}<span>Call</span></a>`
+            :`<button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>`
+        }`;
+        contactHostV326.querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=openSheet);
       }).catch(()=>{});
   }
+  /* v337: "Claim reward ›" on the reward-ready banner does not invent a new claim path — it
+     scrolls to the same #walletRewards list the claimable strip already points at, where the
+     matching reward's own "Show QR at counter" button (wired in loadRewards) does the redeem. */
+  const claimBannerCtaV337=$('walletBody').querySelector('[data-claim-reward-scroll-v337]');
+  if(claimBannerCtaV337)claimBannerCtaV337.onclick=()=>{
+    const rewardsHostEl=$('walletRewards');
+    (rewardsHostEl||claimBannerCtaV337).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  };
   /* v327 (owner: "clicked tier > auto scroll to tier below"): the header's tier badge jumps to
      the Tier card. Covers both the v310 stack (its own [data-programme-card="tiers"] section)
      and the v194 tabs fallback (switches to the tier tab first, since scrolling to a hidden
@@ -4071,8 +4084,8 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        the owner crossed out; one line of instruction survives, on the control it describes. */
     host.innerHTML=`${redemptionUncheckedV286
       ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>Redemption can’t be checked right now</h2><p class="muted small">These rewards are shown for reference only — we could not reach this business’s redemption settings, so no QR can be issued yet.</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">Retry</button></div>`
-      :`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>`}
-      <div class="wallet-rewards">${rewards.map(r=>{
+      :`<div class="customer-rewards-carousel-head-v337"><h2>Your rewards</h2></div><p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>`}
+      <div class="wallet-rewards customer-rewards-carousel-v337">${rewards.map(r=>{
       const ready=!!(r.action_key&&customerRewardCanRedeem(r,redemptionEnabled)),
         cost=Math.max(0,Number(r.cost_points)||0),gap=Math.max(0,cost-rewardBalance),
         progress=cost>0?Math.min(100,Math.max(0,Math.round((rewardBalance/cost)*100))):100,

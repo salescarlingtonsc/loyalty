@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="213650675f08c59391a5919383fef8e7cc73f1346903601daf1d51dc9cf3d025">
+<meta name="v104-production-source-sha256" content="05580ccb3d461db43df7b431741479d5eb1e10e96a2f724d8c3c0a217f775ada">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1893,6 +1893,42 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 @media(max-width:560px){.customer-programme-identity-hint-long{display:none}.customer-programme-identity-hint-short{display:inline}.customer-tier-milestone b{font-size:9.5px}}
 .customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
 .customer-programme-compact-copy{min-width:0;flex:1}.customer-programme-compact-copy h1{font-size:clamp(1.25rem,4vw,1.7rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-programme-compact-copy p{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v337 (owner mockup "photo 1"): plain white identity row — no cover photo — with a phone/pin
+   affordance top-right, replacing the v326 cover-photo treatment on this screen. */
+.customer-programme-compact-head.customer-programme-compact-head-v337{gap:10px;flex-wrap:wrap}
+.customer-programme-compact-head-v337 .customer-programme-identity{flex:1;min-width:0}
+.customer-programme-head-icons-v337{display:inline-flex;align-items:center;gap:10px;color:var(--muted);flex:0 0 auto}
+.customer-programme-compact-head-v337 .customer-programme-tier-jump-v327{flex:0 0 100%}
+/* The red-gradient points hero. Uses --merchant-accent when the firm has a brand colour and
+   falls back to the coral token otherwise, exactly like the rest of this screen's accents. */
+.customer-points-hero-v337{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;padding:20px 20px 22px;border:0;color:#fff;background:linear-gradient(135deg,var(--merchant-accent,var(--coral)),color-mix(in srgb,var(--merchant-accent,var(--coral)) 65%,#7a1230))}
+.customer-points-hero-copy-v337{min-width:0}
+.customer-points-hero-label-v337{font-size:.85rem;font-weight:650;opacity:.9;text-transform:uppercase;letter-spacing:.04em}
+.customer-points-hero-figure-v337{margin-top:6px;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1;letter-spacing:-.03em}
+.customer-points-hero-figure-v337 span{margin-left:6px;font-size:.9rem;font-weight:650;letter-spacing:0;opacity:.9}
+.customer-points-hero-fraction-v337{margin-top:4px;font-size:.85rem;font-variant-numeric:tabular-nums;opacity:.85}
+.customer-points-hero-next-v337{margin-top:8px;font-size:.85rem;opacity:.95}
+.customer-points-hero-bar-v337{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.28);overflow:hidden;max-width:260px}
+.customer-points-hero-bar-v337 span{display:block;height:100%;border-radius:inherit;background:#fff}
+.customer-points-hero-pill-v337{display:inline-block;margin-top:12px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.22);font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.customer-points-hero-icon-v337{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff}
+/* Address / Call / Book now, three tappable segments instead of one link plus a button. */
+.customer-programme-contact-row-v337{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.customer-programme-contact-row-v337 .customer-programme-contact-v326{display:contents}
+.customer-programme-contact-item-v337{display:flex;align-items:center;justify-content:center;gap:7px;flex:1 1 0;min-width:96px;min-height:44px;padding:9px 10px;border:1px solid var(--hair);border-radius:12px;background:#fff;color:inherit;font-weight:650;font-size:.85rem;text-decoration:none;text-align:center;cursor:pointer}
+.customer-programme-contact-item-v337 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-programme-contact-item-v337 svg{flex:none;color:var(--coral)}
+.customer-programme-contact-item-book-v337{border-color:var(--coral);background:var(--coral);color:#fff}
+.customer-programme-contact-item-book-v337 svg{color:#fff}
+/* The cream "reward ready" banner — only painted when a reward is actually claimable now. */
+.customer-claimable-banner-v337{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding:16px 18px;border:1px solid #f0dfa0;border-radius:16px;background:#fdf6df}
+.customer-claimable-banner-icon-v337{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:#f7e9b8;color:#8a6d1a}
+.customer-claimable-banner-copy-v337{flex:1;min-width:0}
+.customer-claimable-banner-kicker-v337{font-size:.78rem;font-weight:700;color:#8a6d1a;text-transform:uppercase;letter-spacing:.03em}
+.customer-claimable-banner-name-v337{display:block;margin-top:4px;font-size:1.1rem}
+.customer-claimable-banner-line-v337{margin-top:3px}
+.customer-claimable-banner-cta-v337{flex:0 0 auto;align-self:center}
+@media(max-width:480px){.customer-claimable-banner-v337{flex-wrap:wrap}.customer-claimable-banner-cta-v337{flex:1 1 100%}}
 
 .customer-promotions-section{margin-top:6px}.customer-promotions-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.customer-promotions-head h2{font-size:clamp(1.45rem,4vw,2rem)}.customer-promotions-head p{margin-top:4px}
 .customer-promotions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -2039,6 +2075,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}
 .wallet-reward-gap{margin-top:6px;color:var(--ink)}
+/* v337 (owner mockup "photo 1"): "Your rewards" restyled from a wrapping grid into a
+   horizontally-scrolling 3-up row — same .wallet-reward cards (ready/locked/progress markup
+   unchanged), just laid out side by side with a section title above them. */
+.customer-rewards-carousel-head-v337{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
+.customer-rewards-carousel-head-v337 h2{font-size:1.1rem;margin:0}
+.wallet-rewards.customer-rewards-carousel-v337{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;padding-bottom:6px;margin-top:8px}
+.wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex:0 0 78%;max-width:280px;scroll-snap-align:start}
+@media(min-width:640px){.wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex-basis:260px}}
 .customer-offer-detail{min-width:0;text-align:left}
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 .customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
@@ -2217,7 +2261,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 213650675f08c59391a5919383fef8e7cc73f1346903601daf1d51dc9cf3d025</p>
+  <p class="v104-provenance">Local production-render harness · source 05580ccb3d461db43df7b431741479d5eb1e10e96a2f724d8c3c0a217f775ada</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2229,7 +2273,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="213650675f08c59391a5919383fef8e7cc73f1346903601daf1d51dc9cf3d025";
+const PRODUCTION_SOURCE_SHA256="05580ccb3d461db43df7b431741479d5eb1e10e96a2f724d8c3c0a217f775ada";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -3250,6 +3294,73 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
   return `${customerClaimableStripMarkupV310(customerClaimableFactsV310({reward,birthday}))}
     ${customerMemberCodeSlotMarkupV310()}
     <div class="customer-programme-stack" data-programme-stack="v310">${cards}</div>`;
+}
+/* v337 (owner mockup "photo 1", 2026-08-15): the business-profile screen gets a plain white
+   identity row (no cover photo), a red-gradient points hero directly under it, an Address/
+   Call/Book now row of three tappable segments, and — only when a reward is actually
+   claimable — a "reward ready" banner above the programme stack/tabs. Every figure below is
+   read from the SAME actionableCard/loyalty/reward/tier data customerMerchantExperienceMarkupV95
+   already has in scope; nothing here issues a new read or a new RPC. */
+function customerPointsHeroVisibleV337({loyalty={},programmeCapabilities={}}={}){
+  if(loyalty.enabled===false)return false;
+  const stack=programmeStackV310(programmeCapabilities);
+  if(stack){
+    const entry=programmeStackEntryV310(stack,'points');
+    return programmeStackCardVisibleV310(entry)&&entry?.active!==false;
+  }
+  const mode=customerProgrammeModeV230(programmeCapabilities);
+  return mode==='redeem'||mode==='both';
+}
+/* The red "Your points" hero. Reuses customerPointTotalV103 for every figure and the same
+   reward object the claimable strip and the points card already read — cost_units,
+   remaining_units, available_now, name. When this firm is not running spendable points
+   (tiers-only, or the points programme is paused) it renders nothing and the page falls
+   back to the tier card / programme stack exactly as it did before v337. */
+function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},presentation={},programmeCapabilities={}}={}){
+  if(!customerPointsHeroVisibleV337({loyalty,programmeCapabilities}))return '';
+  const unitLabel=ct(presentation.unit);
+  const balance=Math.max(0,Number(loyalty.balance)||0);
+  const cost=reward?Math.max(0,Number(reward.cost_units)||0):0;
+  const progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):(reward?100:0);
+  const fraction=reward&&cost>0?`${esc(customerPointTotalV103(balance))}/${esc(customerPointTotalV103(cost))}`:'';
+  const remaining=reward?Math.max(0,Number(reward.remaining_units??Math.max(0,cost-balance))||0):0;
+  const rewardName=reward?String(reward.name||'').trim()||ct('rewardsTab'):'';
+  const nextLine=reward
+    ?(reward.available_now===true||remaining===0
+      ?`${esc(rewardName)} is ready to claim`
+      :`${esc(customerPointTotalV103(remaining))} more ${esc(unitLabel)} to ${esc(rewardName)}`)
+    :'';
+  const currentTierLabel=String(tier.current?.label||tier.current||tier.label||'').trim();
+  const tierPill=currentTierLabel?esc(tier.next?currentTierLabel:`${currentTierLabel} · Top tier`):'';
+  return `<section class="card customer-points-hero-v337" aria-label="Your ${esc(unitLabel)}">
+    <div class="customer-points-hero-copy-v337">
+      <p class="customer-points-hero-label-v337">Your ${esc(unitLabel)}</p>
+      <p class="customer-points-hero-figure-v337"><b>${esc(customerPointTotalV103(balance))}</b><span>${esc(unitLabel)}</span></p>
+      ${fraction?`<p class="customer-points-hero-fraction-v337">${fraction}</p>`:''}
+      ${nextLine?`<p class="customer-points-hero-next-v337">${nextLine}</p>`:''}
+      <div class="customer-points-hero-bar-v337" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width:${progress}%"></span></div>
+      ${tierPill?`<span class="pill customer-points-hero-pill-v337">${tierPill}</span>`:''}
+    </div>
+    <span class="customer-points-hero-icon-v337" aria-hidden="true">${CUI.icon('diamond',{size:34})}</span>
+  </section>`;
+}
+/* The "reward ready" banner. Renders only when the server's own next_eligible_reward is
+   already claimable (the SAME available_now===true check customerClaimableFactsV310 uses for
+   the claimable strip) — never a fabricated reward. The reward object this codebase carries
+   here has only name/cost_units/remaining_units/available_now, so the banner does not print a
+   description, image or validity window that is not actually in the payload. */
+function customerClaimableRewardBannerMarkupV337({reward=null}={}){
+  if(!reward||reward.available_now!==true)return '';
+  const name=esc(String(reward.name||'').trim()||ct('rewardsTab'));
+  return `<section class="card customer-claimable-banner-v337" data-claimable-banner-v337 role="status">
+    <span class="customer-claimable-banner-icon-v337" aria-hidden="true">${CUI.icon('giftcard',{size:26})}</span>
+    <div class="customer-claimable-banner-copy-v337">
+      <p class="customer-claimable-banner-kicker-v337">You have a reward ready!</p>
+      <b class="customer-claimable-banner-name-v337">${name}</b>
+      <p class="muted small customer-claimable-banner-line-v337">Show this at the counter to claim it.</p>
+    </div>
+    <button type="button" class="btn sm customer-claimable-banner-cta-v337" data-claim-reward-scroll-v337>Claim reward ›</button>
+  </section>`;
 }
 const business={name:'Glow Atelier',slug:'glow-atelier'};
 $('promotionCards').innerHTML=FIXTURE_OFFERS.map(offer=>customerPromotionCardV104(offer,business,true)).join('');
