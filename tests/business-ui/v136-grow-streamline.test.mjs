@@ -27,9 +27,12 @@ test('Grow starts with one task and one complete single-column programme overvie
      nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
   /* V271 put the owner's two new views (Overview, History) ahead of the older three in the same
      fallback chain; the tab-driven heading this line protects is unchanged in kind. */
-  /* V334 (owner markup, photo 4: "bring here his logo"): the Points System heading now leads
-     with the shared star icon; the fallback-chain shape this test protects is unchanged. */
-  assert.match(grow,/id="rewardJourneyTitle">\$\{programmeView==='points'\?`\$\{CUI\.icon\('star',\{size:18\}\)\} `:''\}\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\):\(programmeView==='overview'\?'Overview'/);
+  /* V334 (owner markup, photo 4: "bring here his logo"): the Points System heading led with the
+     shared star icon. V341 (owner markup: "move the point system up to the header") moved that
+     title (icon included) up to the page H1 for the four dedicated views — this h2 keeps the
+     same fallback-chain text for aria-labelledby, just visually hidden on those four now. */
+  assert.match(grow,/const h2TextV341=growActiveTopicV229\?esc\(growActiveTopicV229\.title\):\(programmeView==='overview'\?'Overview'/);
+  assert.match(grow,/id="growTitle">\$\{programmeView==='setup'&&pendingGrowSetupRewardV303\?\.mode==='earning'\?\(pendingGrowSetupRewardV303\.kind==='stamps'\?'Stamp Card':'Point System'\):programmeView==='points'\?growPointsPageTitleV326/);
   assert.match(grow,/programmeView==='ongoing'\?'Ongoing programmes'/);
   assert.match(grow,/class="grow-programme-list"/);
   assert.match(app,/\.grow-programme-list\{display:grid;grid-template-columns:1fr/);

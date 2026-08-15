@@ -119,7 +119,9 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
      System edit screen specifically): the H1 stays "Rewards & Offer" for every OTHER view,
      which this regex now expresses instead of a literal always-static string. */
   /* V340 (owner: "change rewards & offer to rewards programme"): the default arm renamed. */
-  assert.match(grow, /<h1 id="growTitle">\$\{programmeView==='setup'&&pendingGrowSetupRewardV303\?\.mode==='earning'\?\(pendingGrowSetupRewardV303\.kind==='stamps'\?'Stamp Card':'Point System'\):'Rewards Programme'\}<\/h1>/);
+  /* V341 (owner markup: "move the point system up to the header"): drilled standalone pages
+     (points/tiers/offers/history) now carry their OWN name in the H1, not the module's. */
+  assert.match(grow, /<h1 id="growTitle">\$\{programmeView==='setup'&&pendingGrowSetupRewardV303\?\.mode==='earning'\?\(pendingGrowSetupRewardV303\.kind==='stamps'\?'Stamp Card':'Point System'\):programmeView==='points'\?growPointsPageTitleV326:programmeView==='tiers'\?'Tiered membership':programmeView==='offers'\?'Limited Offer':programmeView==='history'\?'History':'Rewards Programme'\}<\/h1>/);
   /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two
      categories: Point system holds everything earned and spent in points, Other rewards
      holds the ones that do not use a balance. The behaviour this test protects — that the
