@@ -2131,10 +2131,32 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head-v339 .customer-programme-back-v340{position:absolute;left:0;top:0;margin:-10px 0 0 -6px}
 .customer-programme-back-v340:hover,.customer-programme-back-v340:focus-visible{background:var(--tint)}
 .customer-reward-offer-swipe-v339{margin:0 0 10px}
-.customer-reward-offer-track-v339{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.customer-reward-offer-track-v339{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 .customer-reward-offer-page-v339{flex:0 0 min(88%,340px);min-width:0;scroll-snap-align:start;display:flex}
 .customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0;align-self:flex-start}
 @media(min-width:640px){.customer-reward-offer-page-v339{flex-basis:360px}}
+/* v342 (owner: "the promotions are elongated - shrink to horizontal like Grab/Fave"): the
+   promo pages after the reward-ready page reused customerPromotionCardV104's full vertical
+   layout (up to 220px of artwork + copy) unchanged, which also forced the whole swipe TRACK's
+   height to that tall card even while it sat scrolled off-screen — the real cause of the empty
+   space under the short reward banner, since a flex row's height always matches its tallest
+   child regardless of align-items. This override only applies inside the swipe carousel; the
+   full-size card (all-offers grid, admin preview) is untouched. */
+.customer-reward-offer-page-v339 .customer-promotion-card{flex-direction:row;align-items:stretch;border-radius:14px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{flex:0 0 84px;width:84px;display:flex;align-items:center}
+.customer-reward-offer-page-v339 .customer-promotion-card-media img{height:auto;max-height:84px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback{aspect-ratio:auto;height:100%}
+.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback span{width:38px;height:38px;font-size:15px;border-radius:11px}
+.customer-reward-offer-page-v339 .customer-promotion-card-copy{padding:9px 11px;justify-content:center;gap:0}
+.customer-reward-offer-page-v339 .customer-promotion-card-copy .customer-quest-kicker{font-size:.62rem}
+.customer-reward-offer-page-v339 .customer-promotion-card-copy h3{font-size:.88rem;line-height:1.2;margin-top:2px}
+.customer-reward-offer-page-v339 .customer-promotion-card-copy .customer-promotion-card-facts,
+.customer-reward-offer-page-v339 .customer-promotion-card-copy>p:not(.customer-promotion-card-facts):not(.customer-promotion-validity),
+.customer-reward-offer-page-v339 .customer-promotion-validity,
+.customer-reward-offer-page-v339 .customer-promotion-card details{display:none}
+.customer-reward-offer-page-v339 .customer-promotion-card-actions{margin-top:6px;gap:6px}
+.customer-reward-offer-page-v339 .customer-promotion-card-actions .btn{padding:5px 12px;font-size:.76rem;min-height:30px}
+.customer-reward-offer-page-v339 .customer-promotion-card [data-promotion-status]{display:none}
 .customer-claimable-banner-validity-v339{margin-top:6px;font-size:.8rem;font-weight:650;color:#7a5c10}
 .customer-tier-card-head-v339{display:flex;align-items:center;gap:11px;margin-bottom:9px}
 .customer-tier-card-head-v339 .customer-programme-card-head-v310{margin:0}
@@ -2157,10 +2179,10 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-reward-progress-pill-v340{background:#fdf0d8;color:#8a5f10}
 .customer-reward-card-progress-v340{background:var(--tint)}
 .customer-reward-progress-read-v340{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline}
-.customer-earn-more-v339{margin-top:14px}
-.customer-earn-more-head-v339 h2{font-size:1.1rem;margin:0 0 10px}
-.customer-earn-more-list-v339{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
-.customer-earn-more-row-v339{display:flex;align-items:center;gap:11px;min-height:44px}
+.customer-earn-more-v339{margin-top:8px}
+.customer-earn-more-head-v339 h2{font-size:1rem;margin:0 0 7px}
+.customer-earn-more-list-v339{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.customer-earn-more-row-v339{display:flex;align-items:center;gap:10px;min-height:40px}
 .customer-earn-more-icon-v339{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--merchant-accent,var(--coral))}
 .customer-earn-more-copy-v339{display:flex;flex-direction:column;min-width:0;flex:1}
 .customer-earn-more-points-v339{flex:0 0 auto;white-space:nowrap}

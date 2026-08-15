@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="91a967fca9794e04aaed36577bb6d2af0afc3c5d7e56b2984e251888a5b2e5eb">
+<meta name="v104-production-source-sha256" content="492e9e9662dd7eaefc1c294b07bbb4405a6774840488459b2229b5c6cdcf9ab5">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -2107,10 +2107,32 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head-v339 .customer-programme-back-v340{position:absolute;left:0;top:0;margin:-10px 0 0 -6px}
 .customer-programme-back-v340:hover,.customer-programme-back-v340:focus-visible{background:var(--tint)}
 .customer-reward-offer-swipe-v339{margin:0 0 10px}
-.customer-reward-offer-track-v339{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.customer-reward-offer-track-v339{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 .customer-reward-offer-page-v339{flex:0 0 min(88%,340px);min-width:0;scroll-snap-align:start;display:flex}
 .customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0;align-self:flex-start}
 @media(min-width:640px){.customer-reward-offer-page-v339{flex-basis:360px}}
+/* v342 (owner: "the promotions are elongated - shrink to horizontal like Grab/Fave"): the
+   promo pages after the reward-ready page reused customerPromotionCardV104's full vertical
+   layout (up to 220px of artwork + copy) unchanged, which also forced the whole swipe TRACK's
+   height to that tall card even while it sat scrolled off-screen — the real cause of the empty
+   space under the short reward banner, since a flex row's height always matches its tallest
+   child regardless of align-items. This override only applies inside the swipe carousel; the
+   full-size card (all-offers grid, admin preview) is untouched. */
+.customer-reward-offer-page-v339 .customer-promotion-card{flex-direction:row;align-items:stretch;border-radius:14px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{flex:0 0 84px;width:84px;display:flex;align-items:center}
+.customer-reward-offer-page-v339 .customer-promotion-card-media img{height:auto;max-height:84px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback{aspect-ratio:auto;height:100%}
+.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback span{width:38px;height:38px;font-size:15px;border-radius:11px}
+.customer-reward-offer-page-v339 .customer-promotion-card-copy{padding:9px 11px;justify-content:center;gap:0}
+.customer-reward-offer-page-v339 .customer-promotion-card-copy .customer-quest-kicker{font-size:.62rem}
+.customer-reward-offer-page-v339 .customer-promotion-card-copy h3{font-size:.88rem;line-height:1.2;margin-top:2px}
+.customer-reward-offer-page-v339 .customer-promotion-card-copy .customer-promotion-card-facts,
+.customer-reward-offer-page-v339 .customer-promotion-card-copy>p:not(.customer-promotion-card-facts):not(.customer-promotion-validity),
+.customer-reward-offer-page-v339 .customer-promotion-validity,
+.customer-reward-offer-page-v339 .customer-promotion-card details{display:none}
+.customer-reward-offer-page-v339 .customer-promotion-card-actions{margin-top:6px;gap:6px}
+.customer-reward-offer-page-v339 .customer-promotion-card-actions .btn{padding:5px 12px;font-size:.76rem;min-height:30px}
+.customer-reward-offer-page-v339 .customer-promotion-card [data-promotion-status]{display:none}
 .customer-claimable-banner-validity-v339{margin-top:6px;font-size:.8rem;font-weight:650;color:#7a5c10}
 .customer-tier-card-head-v339{display:flex;align-items:center;gap:11px;margin-bottom:9px}
 .customer-tier-card-head-v339 .customer-programme-card-head-v310{margin:0}
@@ -2133,10 +2155,10 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-reward-progress-pill-v340{background:#fdf0d8;color:#8a5f10}
 .customer-reward-card-progress-v340{background:var(--tint)}
 .customer-reward-progress-read-v340{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline}
-.customer-earn-more-v339{margin-top:14px}
-.customer-earn-more-head-v339 h2{font-size:1.1rem;margin:0 0 10px}
-.customer-earn-more-list-v339{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
-.customer-earn-more-row-v339{display:flex;align-items:center;gap:11px;min-height:44px}
+.customer-earn-more-v339{margin-top:8px}
+.customer-earn-more-head-v339 h2{font-size:1rem;margin:0 0 7px}
+.customer-earn-more-list-v339{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.customer-earn-more-row-v339{display:flex;align-items:center;gap:10px;min-height:40px}
 .customer-earn-more-icon-v339{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--merchant-accent,var(--coral))}
 .customer-earn-more-copy-v339{display:flex;flex-direction:column;min-width:0;flex:1}
 .customer-earn-more-points-v339{flex:0 0 auto;white-space:nowrap}
@@ -2322,7 +2344,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 91a967fca9794e04aaed36577bb6d2af0afc3c5d7e56b2984e251888a5b2e5eb</p>
+  <p class="v104-provenance">Local production-render harness · source 492e9e9662dd7eaefc1c294b07bbb4405a6774840488459b2229b5c6cdcf9ab5</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2334,7 +2356,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="91a967fca9794e04aaed36577bb6d2af0afc3c5d7e56b2984e251888a5b2e5eb";
+const PRODUCTION_SOURCE_SHA256="492e9e9662dd7eaefc1c294b07bbb4405a6774840488459b2229b5c6cdcf9ab5";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
