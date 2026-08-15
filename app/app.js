@@ -5119,19 +5119,23 @@ function localCustomerPreviewProfileV345(){
   return {display_name:'Jamie Tan',full_name:'Jamie Tan'};
 }
 function localCustomerPreviewCardsV345(){
-  const mk=(name,slug,industry,balance,tier,accent,ready=false,appointments=0)=>({
+  const mk=(name,slug,industry,balance,tier,accent,ready=false,appointments=0,unit='points',extra={})=>({
     business:{id:slug,slug,name,industry,brand_color:accent,currency:'SGD'},
-    loyalty:{balance,unit:'points',tier_name:tier,tier_level:tier?.toLowerCase?.()||''},
+    loyalty:{balance,unit,tier_name:tier,tier_level:tier?.toLowerCase?.()||''},
     next_eligible_reward:ready?{
       available_now:true,name:name==='Cubbly'?'Free Facial cream':'Reward ready',
       progress_text:name==='Cubbly'?'Free Facial cream is ready to redeem.':'Ready to redeem.'
-    }:null,
-    upcoming_appointments:{count:appointments}
+    }:extra.next_eligible_reward||null,
+    upcoming_appointments:{count:appointments,...(extra.upcoming_appointments||{})}
   });
   return [
-    mk('Cubbly','cubbly','Facial / Spa',75877,'Diamond','#E34234',true,1),
+    mk('Cubbly','cubbly','Facial / Spa',75877,'Diamond','#E34234',true,1,'points',{
+      upcoming_appointments:{next:{service_name:'Facial',branch_name:'Orchard',starts_at:'2026-08-17T03:30:00.000Z'}}
+    }),
     mk('AhXiang','ahxiang','Facial / Spa',12450,'Gold','#D69B2D',false,0),
-    mk('Bistro 88','bistro-88','Restaurant',8230,'Silver','#0C554E',true,0),
+    mk('Bistro 88','bistro-88','Restaurant',8,'Silver','#0C554E',false,0,'stamps',{
+      next_eligible_reward:{available_now:false,remaining_units:2,name:'Reward'}
+    }),
     mk('Hair Play','hair-play','Salon',3210,'Bronze','#E7A091',true,0)
   ];
 }
@@ -8554,7 +8558,7 @@ function customerRewardReadyCountV343(cards=[]){
 }
 function customerHomeSummaryV343(cards=[]){
   const rewardCount=customerRewardReadyCountV343(cards);
-  const businessCount=Array.isArray(cards)?cards.length:0;
+  const businessCount=(Array.isArray(cards)?cards:[]).filter(card=>card?.next_eligible_reward?.available_now===true).length;
   const expiringCount=customerExpiringRowsV286(cards).length;
   return `<a class="customer-home-ready-card-v343" href="#/customer/programmes" aria-label="${esc(rewardCount)} rewards ready across ${esc(businessCount)} businesses">
     <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:42})}</span>
@@ -8562,19 +8566,57 @@ function customerHomeSummaryV343(cards=[]){
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
+function customerHomeBusinessStatusV345(card){
+  const reward=card?.next_eligible_reward||{},loyalty=card?.loyalty||{},
+    unit=String(loyalty.unit||'points').toLowerCase(),remaining=Math.max(0,Number(reward.remaining_units)||0);
+  if(reward.available_now===true)return '1 reward ready';
+  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamp${remaining===1?'':'s'} to go`;
+  if(unit==='stamps')return 'Stamp card';
+  const sessions=Math.max(0,Number(card?.packages?.sessions_remaining)||0);
+  if(sessions>0)return `${customerPointTotalV103(sessions)} session${sessions===1?'':'s'} left`;
+  if(card?.membership?.active===true)return 'Member';
+  return '';
+}
+function customerHomeBusinessBalanceV345(card){
+  const loyalty=card?.loyalty||{},unit=String(loyalty.unit||'points').toLowerCase(),
+    balance=Math.max(0,Number(loyalty.balance)||0),remaining=Math.max(0,Number(card?.next_eligible_reward?.remaining_units)||0);
+  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(balance)} / ${customerPointTotalV103(balance+remaining)} stamps`;
+  return `${customerPointTotalV103(balance)} ${unit==='stamps'?'stamps':unit==='points'?'pts':unit}`;
+}
+function customerHomeBusinessCardV345(card){
+  const business=card?.business||{},loyalty=card?.loyalty||{},name=business.name||ct('localBusiness'),
+    status=customerHomeBusinessStatusV345(card),tier=String(loyalty.tier_name||'').trim(),
+    accent=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f');
+  return `<a class="customer-home-business-card-v345" href="#/wallet/${encodeURIComponent(business.slug||'')}" style="--merchant-accent:${esc(accent)}" aria-label="${esc(ct('openProgramme',{business:name}))}">
+    <span class="customer-home-business-logo-v345">${customerProgrammeTileLogoV96(business)}</span>
+    <span class="customer-home-business-copy-v345"><b>${esc(name)}</b>${tier?`<em>${esc(tier)}</em>`:''}<strong>${esc(customerHomeBusinessBalanceV345(card))}</strong>${status?`<small>${esc(status)}</small>`:''}</span>
+    <span class="customer-home-business-arrow-v345" aria-hidden="true">›</span>
+  </a>`;
+}
 function customerHomeBusinessRailV343(cards=[]){
   const rows=(Array.isArray(cards)?cards:[]).slice(0,8);
   if(!rows.length)return '';
   return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your businesses</h2><a href="#/customer/programmes">See all</a></div>
-    <div class="customer-home-business-track-v343">${rows.map(card=>customerProgrammeTileMarkupV96(card)).join('')}</div></section>`;
+    <div class="customer-home-business-track-v343">${rows.map(customerHomeBusinessCardV345).join('')}</div></section>`;
+}
+function customerHomeBookingTimeV345(value){
+  const date=new Date(value||'');
+  if(!Number.isFinite(date.getTime()))return '';
+  const day=new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',timeZone:'Asia/Singapore'}).format(date);
+  const time=new Intl.DateTimeFormat('en-SG',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Singapore'}).format(date);
+  return `${day} · ${time}`;
 }
 function customerHomeBookingStripV344(cards=[]){
   const rows=(Array.isArray(cards)?cards:[]).filter(card=>Math.max(0,Number(card?.upcoming_appointments?.count||0))>0);
   if(!rows.length)return '';
   const business=rows[0]?.business||{},count=rows.reduce((sum,card)=>sum+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0);
+  const next=rows[0]?.upcoming_appointments?.next||rows[0]?.upcoming_appointments?.items?.[0]||null;
+  const service=String(next?.service_name||next?.service||next?.title||'Appointment').trim();
+  const branch=String(next?.branch_name||next?.branch||'').trim();
+  const when=customerHomeBookingTimeV345(next?.starts_at||next?.preferred_at);
   return `<a class="customer-home-booking-strip-v344" href="#/customer/bookings" aria-label="${esc(count)} upcoming booking${count===1?'':'s'}">
     <span class="customer-home-booking-icon-v344" aria-hidden="true">${CUI.icon('bookings',{size:28})}</span>
-    <span class="customer-home-booking-copy-v344"><small>Upcoming booking</small><b>${esc(count===1?'Booking ready':'Bookings ready')}</b><em>${esc(business.name||'Your businesses')}</em></span>
+    <span class="customer-home-booking-copy-v344"><small>Upcoming booking</small><b>${esc(service)}</b><em>${esc(`${business.name||'Your business'}${branch?` · ${branch}`:''}`)}</em>${when?`<i>${esc(when)}</i>`:''}</span>
     <span class="customer-home-booking-action-v344">View booking</span>
   </a>`;
 }
