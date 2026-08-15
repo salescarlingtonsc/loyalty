@@ -11910,7 +11910,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      (uploadRewardPhotoV326 below — same storage path grammar, same three-state photo contract). */
   const growPointsEditingRewardV343=growPointsEditingV326?growPointsScopedRewardsV326.find(r=>String(r.id)===String(growPointsEditingV326)):null;
   const growPointsCurrentPhotoUrlV343=!growPointsRemovePhotoV343&&growPointsEditingRewardV343?customerMediaUrlV95(growPointsEditingRewardV343.image_ref):'';
-  const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<li class="imp-note" data-grow-points-addform-v326>
+  const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<li class="grow-points-form-card-v343" data-grow-points-addform-v326>
     <b>${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growPointsAddNameV326">Name</label><br><input id="growPointsAddNameV326" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growPointsAddDraftV326.name)}" placeholder="e.g. Lotion"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddPointsV326">${growPointsIsStampsV326?'Stamps':'Points'}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"></p>
@@ -12002,13 +12002,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersRowV331=(tier,{history=false}={})=>{
     const threshold=Math.max(0,Number(tier.threshold||0));
     const multiplier=Number(tier.points_multiplier||1);
-    const meta=`<span><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content> · Reached at ${threshold}${multiplier!==1?` · ${multiplier}× points`:''}</span></span>`;
-    if(history)return `<li data-grow-tiers-row-v331="${esc(tier.id)}">${meta}<span class="pill off">In history</span></li>`;
+    const meta=`<span class="grow-tier-name-cell-v343"><span class="grow-tier-row-icon-v343" aria-hidden="true">${CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:18})}</span><b data-merchant-content>${esc(tier.name)}</b>${multiplier!==1?`<small class="muted" data-merchant-content>${multiplier}× points</small>`:''}</span>`;
+    if(history)return `<li class="grow-tier-table-row-v343" data-grow-tiers-row-v331="${esc(tier.id)}">${meta}<span data-merchant-content>${threshold} points</span><span class="pill off">In history</span><span></span></li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
-    return `<li data-grow-tiers-row-v331="${esc(tier.id)}">${meta}
-      <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="muted small" data-grow-tiers-state-v331="${paused?'off':'on'}"> · ${paused?'Off':'ON for customers'}</span>
+    return `<li class="grow-tier-table-row-v343" data-grow-tiers-row-v331="${esc(tier.id)}">${meta}
+      <span data-merchant-content>${threshold} points</span>
+      <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+      <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
         ${canSetupGrow?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${!paused}" data-grow-tiers-toggle-v331="${esc(tier.id)}">${paused?'Turn on':'Turn off'}</button>
         <button type="button" class="btn ghost sm" data-grow-tiers-delete-v331="${esc(tier.id)}">Delete</button>`:''}
       </span></li>
@@ -12058,12 +12059,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="grow-tier-basis-card-v343"><span><b>Tier level is earned by</b><p class="muted small">Points earned</p></span>${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-edit-v331="1">Change</button>`:''}</div>
       ${growTiersLadderV343}
       <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
-        <li data-grow-tiers-header-v331><span><b>Tier membership</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} set up</p></span>
+        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} set up</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-            <span class="muted small" data-grow-switchstate-v322="${growTiersOnV331?'on':'off'}"> · ${growTiersOnV331?'ON for customers':'off'}</span>
             ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-edit-v331="1">Edit</button>
-            <button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">Add tiers</button>
-            <button type="button" class="btn ghost sm" role="switch" aria-checked="${growTiersOnV331}" data-grow-switchtoggle-v322="tiers">${growTiersOnV331?'Turn off':'Turn on'}</button>`:''}
+            <button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">Add tier</button>
+            <button type="button" class="btn sm" role="switch" aria-checked="${growTiersOnV331}" data-grow-switchtoggle-v322="tiers">${growTiersOnV331?'Turn off':'Turn on'}</button>`:''}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="tiers" style="margin-top:8px"${growSwitchPendingV322==='tiers'?'':' hidden'}>
           <b>${growTiersOnV331?'Turn Tier membership off for customers?':'Turn Tier membership on for customers?'}</b>
@@ -12079,6 +12079,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growSwitchErrorV322&&growSwitchPendingV322==='tiers'?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
       ${growTiersTabStripV331}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-tiers-list-v331>
+        ${growTiersManageTabV331==='published'&&growTiersPublishedV331.length?'<li class="grow-tier-table-head-v343"><span>Tier name</span><span>Required points</span><span>Status</span><span>Actions</span></li>':''}
         ${growTiersManageTabV331==='published'
           ?(growTiersPublishedV331.length?growTiersPublishedV331.map(tier=>growTiersRowV331(tier)).join(''):'<li class="muted small" style="cursor:default">No tier yet — add one above.</li>')
           :(growTiersHistoryV331.length?growTiersHistoryV331.map(tier=>growTiersRowV331(tier,{history:true})).join(''):'<li class="muted small" style="cursor:default">Nothing has been deleted yet.</li>')}

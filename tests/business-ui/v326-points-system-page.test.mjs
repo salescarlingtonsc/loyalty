@@ -253,6 +253,7 @@ test('V326 the add-gift form preserves in-progress values, and the post-save pro
   assert.match(formRender.growPointsManageV326, /value="Lotion"/);
   assert.match(formRender.growPointsManageV326, /value="10"/);
   assert.match(formRender.growPointsManageV326, /data-grow-points-add-save-v326="1"/);
+  assert.match(formRender.growPointsManageV326, /class="grow-points-form-card-v343" data-grow-points-addform-v326/);
 
   const promptRender = render({ growPointsAddOpenV326: 'prompt' });
   assert.match(promptRender.growPointsManageV326, /data-grow-points-add-again-v326="1"/);

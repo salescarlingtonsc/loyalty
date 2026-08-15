@@ -46,7 +46,7 @@ test('V331 Published/History split is exactly deleted_at==null vs deleted_at!=nu
 });
 
 test('V331 History rows are read-only: no toggle/delete attributes, "In history" pill', () => {
-  const historyReturnLine = 'if(history)return `<li data-grow-tiers-row-v331="${esc(tier.id)}">${meta}<span class="pill off">In history</span></li>`;';
+  const historyReturnLine = 'if(history)return `<li class="grow-tier-table-row-v343" data-grow-tiers-row-v331="${esc(tier.id)}">${meta}<span data-merchant-content>${threshold} points</span><span class="pill off">In history</span><span></span></li>`;';
   assert.ok(app.includes(historyReturnLine), 'history branch must return exactly this early-exit line');
   assert.doesNotMatch(historyReturnLine, /data-grow-tiers-toggle-v331|data-grow-tiers-delete-v331/);
 });
@@ -55,6 +55,9 @@ test('V331 the live-row toggle and delete button are gated on canSetupGrow', () 
   const rowFn = slice('const growTiersRowV331=(tier,{history=false}={})=>{', '  };');
   assert.match(rowFn,
     /\$\{canSetupGrow\?`<button type="button" class="btn ghost sm" role="switch" aria-checked="\$\{!paused\}" data-grow-tiers-toggle-v331="\$\{esc\(tier\.id\)\}">\$\{paused\?'Turn on':'Turn off'\}<\/button>\s*\n\s*<button type="button" class="btn ghost sm" data-grow-tiers-delete-v331="\$\{esc\(tier\.id\)\}">Delete<\/button>`:''\}/);
+  assert.match(rowFn, /class="grow-tier-table-row-v343"/);
+  assert.match(app, /<b>Manage tiers<\/b>/);
+  assert.match(app, /class="grow-tier-table-head-v343"><span>Tier name<\/span><span>Required points<\/span><span>Status<\/span><span>Actions<\/span><\/li>/);
 });
 
 test('V331 the delete confirmation copy names the adjacent-rung consequence', () => {

@@ -142,6 +142,13 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grow-overview[data-programme-view="points"] .grow-points-gift-body-v343>b{font-size:1.06rem}
 .grow-overview[data-programme-view="points"] .grow-topic-group-head-v244{display:none}
 .grow-overview[data-programme-view="points"] .btn.ghost.sm[data-grow-points-gift-delete-v326]{color:var(--red);border-color:#F2D5D1}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{display:grid;grid-template-columns:minmax(150px,.55fr) minmax(220px,1fr) minmax(140px,.7fr) minmax(260px,1.1fr) minmax(240px,.9fr);gap:18px;align-items:end;padding:24px;border:1px solid #F2D5D1;border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(48,36,28,.08)}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>b{align-self:center;color:#9A4B30}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 .grow-setup-sentence-v301{margin:0}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 input,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 textarea{max-width:none!important;text-align:center;font-weight:700}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>[role="alert"],.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.notice{grid-column:1/-1;margin:0!important}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.row{grid-column:1/-1;justify-content:flex-end}
+@media(max-width:1180px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{grid-template-columns:1fr 1fr}.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>b,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.row{grid-column:1/-1}}@media(max-width:720px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{grid-template-columns:1fr}}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -1178,7 +1185,16 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]{gap:18px}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li,
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>li:not(.imp-note){min-height:78px;padding:20px 24px;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(48,36,28,.07)}
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]{border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(48,36,28,.08);padding:22px}
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li{box-shadow:none!important;border:0!important;padding:0!important}
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]{margin-top:-22px!important;border:1px solid var(--hair);border-top:0;border-radius:0 0 18px 18px;background:#fff;padding:0 22px 22px}
+.grow-tier-table-head-v343,.grow-tier-table-row-v343{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(140px,1fr) minmax(110px,.75fr) minmax(180px,1fr);gap:16px;align-items:center}
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-table-head-v343{min-height:42px;padding:0 24px!important;border:1px solid var(--line)!important;border-radius:12px 12px 0 0!important;box-shadow:none!important;background:#fff!important;color:var(--muted);font-size:12px;font-weight:700}
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-table-row-v343{border-radius:0!important;box-shadow:none!important;border-color:var(--line)!important;border-top:0!important}
+.grow-tier-name-cell-v343{display:flex;align-items:center;gap:14px;min-width:0}.grow-tier-name-cell-v343 b{font-size:1rem}.grow-tier-name-cell-v343 small{display:block}
+.grow-tier-row-icon-v343{width:40px;height:40px;border-radius:999px;background:#FFF0ED;color:var(--coral);display:grid;place-items:center;flex-shrink:0}
 @media(max-width:760px){.grow-tier-ladder-v343{overflow:auto;padding-bottom:70px}.grow-tier-ladder-line-v343{min-width:620px}.grow-tier-ladder-stop-v343{min-width:82px}.grow-tier-basis-card-v343{align-items:flex-start;flex-direction:column}}
+@media(max-width:860px){.grow-tier-table-head-v343{display:none}.grow-tier-table-row-v343{grid-template-columns:1fr}.grow-tier-table-row-v343>.row{justify-content:flex-start!important}}
 /* The one choice for what points are FOR — two selectable cards, then a compact chosen state. */
 .points-mode-chooser-v229{width:100%}
 .points-mode-lead-v229{margin:0 0 10px}
@@ -2569,7 +2585,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=8e3145f54c20","business":"/app-business.js?b=89efb969a65a","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=8e3145f54c20","business":"/app-business.js?b=eb973ac5f49f","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
