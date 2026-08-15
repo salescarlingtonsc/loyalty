@@ -101,7 +101,9 @@ test('V288 MAJOR: the Today schedule respects the selected branch on first paint
 /* ------------------------------------------------------------------ MAJOR 5 */
 
 test('V288 MAJOR: a category drill does not survive a fresh navigation to Programmes', () => {
-  assert.match(grow, /async function growPage\(routedSurface,hashParam,routedFocus=null,\{fromRouteV288=false\}=\{\}\)\{/);
+  /* V335: growPage gained a `quiet` opt (skip the loading-skeleton flash for in-page
+     toggle/delete re-renders) — the fromRouteV288 contract this line protects is unchanged. */
+  assert.match(grow, /async function growPage\(routedSurface,hashParam,routedFocus=null,\{fromRouteV288=false,quiet=false\}=\{\}\)\{/);
   assert.match(grow, /if\(fromRouteV288\)growTopicV229='';/);
   // Every ROUTE entry marks itself; in-page re-renders deliberately do not.
   for (const route of [

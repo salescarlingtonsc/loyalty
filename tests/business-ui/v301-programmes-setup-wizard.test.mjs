@@ -587,7 +587,10 @@ test('V301 (c) the change list reuses the publish gate’s own comparison helper
 
 test('V301 (c) success replaces the wizard body and offers exactly two ways on', () => {
   assert.match(wizard, /Published — customers can use this now/);
-  assert.match(wizard, /<a class="btn" href="#\/grow\/overview" id="growSetupDoneV301">Back to Programmes<\/a>/);
+  /* V335: the destination/label vary for the Points System page's own single-screen entry — see
+     the dedicated 'V335 simpleEditModeV335' tests below. This asserts the DEFAULT (multi-step
+     setup) path, unchanged. */
+  assert.match(wizard, /<a class="btn" href="\$\{state\.simpleEditModeV335\?'#\/grow\/points':'#\/grow\/overview'\}" id="growSetupDoneV301">\$\{state\.simpleEditModeV335\?'Back to Points System':'Back to Programmes'\}<\/a>/);
   assert.match(wizard, /id="growSetupAddAnotherV301">Add another reward<\/button>/);
   // The published version is no longer a draft, so a further edit starts a new one.
   assert.match(wizard, /state\.published=true;state\.versionId=null;state\.snapshotHash=null;state\.basedOn=null;/);

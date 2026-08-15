@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="514706e9e75ba59eac2b0fee6ec0c7b4b5d66cae25ebc8790b70d502441a1630"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="f4c5f9a728814c3938e1672150db46d006af44f1d31796309f4131295d74d497"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -80,6 +80,10 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .pill{display:inline-block;padding:3.5px 10px;border-radius:100px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
 .pill.on{background:#E7F6EE;color:var(--green)} .pill.off{background:#F1EEE9;color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:#E7F6EE;color:var(--green)} .pill.no{background:#FBEAE7;color:var(--red)}
+/* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
+.pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
+.pill-toggle-v334.on{background:#E7F6EE;color:var(--green)}
+.pill-toggle-v334.off{background:#FBEAE7;color:var(--red)}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -1047,11 +1051,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-topic-group-head-v244 p{margin-top:3px}
 .grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
 .grow-topic-tile-pending-v244{border-style:dashed}
-.grow-topic-tile-v229{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
+.grow-topic-tile-v229{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
 .grow-topic-tile-v229:hover{background:var(--tint);border-color:var(--coral)}
-.grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em}
+.grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em;padding-right:32px}
 .grow-topic-tile-icon-v229{width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--coral);display:grid;place-items:center}
-.grow-topic-tile-open-v229{margin-top:auto;color:var(--coral);font-weight:600;font-size:.85rem}
+/* V335 (owner markup, photo 1: "small arrow red button, applies to all") — the "Edit"/"View"/
+   "Set up" action moves from a bottom-left text link to a small round arrow in the tile's top
+   right corner, the same shape on every Ongoing/Pending-setup tile. The whole tile is already
+   one clickable <button>, so this is decorative (aria-hidden) and the tile's own aria-label
+   carries the action word for assistive tech. */
+.grow-topic-tile-corner-v335{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:var(--tint);color:var(--coral);display:grid;place-items:center;flex-shrink:0}
+.grow-topic-tile-v229:hover .grow-topic-tile-corner-v335{background:var(--coral);color:#fff}
 /* The one choice for what points are FOR — two selectable cards, then a compact chosen state. */
 .points-mode-chooser-v229{width:100%}
 .points-mode-lead-v229{margin:0 0 10px}
@@ -1785,7 +1795,8 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
 .customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
 .customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
-.customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
+.customer-programme-contact-v326{padding:12px 16px 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.customer-programme-contact-v326 .customer-programme-contact-more-v326{flex:1 1 auto;min-width:0}
 .customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
 .customer-programme-contact-line-v326 a{color:inherit}
 .customer-programme-contact-more-v326{border:0;background:none;padding:0;margin-top:2px;color:var(--coral);font-weight:600;font-size:.85rem;text-align:left;cursor:pointer}
@@ -2195,7 +2206,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 514706e9e75ba59eac2b0fee6ec0c7b4b5d66cae25ebc8790b70d502441a1630</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f4c5f9a728814c3938e1672150db46d006af44f1d31796309f4131295d74d497</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -4303,7 +4314,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'514706e9e75ba59eac2b0fee6ec0c7b4b5d66cae25ebc8790b70d502441a1630',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'f4c5f9a728814c3938e1672150db46d006af44f1d31796309f4131295d74d497',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

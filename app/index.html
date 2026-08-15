@@ -1082,11 +1082,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-topic-group-head-v244 p{margin-top:3px}
 .grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
 .grow-topic-tile-pending-v244{border-style:dashed}
-.grow-topic-tile-v229{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
+.grow-topic-tile-v229{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
 .grow-topic-tile-v229:hover{background:var(--tint);border-color:var(--coral)}
-.grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em}
+.grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em;padding-right:32px}
 .grow-topic-tile-icon-v229{width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--coral);display:grid;place-items:center}
-.grow-topic-tile-open-v229{margin-top:auto;color:var(--coral);font-weight:600;font-size:.85rem}
+/* V335 (owner markup, photo 1: "small arrow red button, applies to all") — the "Edit"/"View"/
+   "Set up" action moves from a bottom-left text link to a small round arrow in the tile's top
+   right corner, the same shape on every Ongoing/Pending-setup tile. The whole tile is already
+   one clickable <button>, so this is decorative (aria-hidden) and the tile's own aria-label
+   carries the action word for assistive tech. */
+.grow-topic-tile-corner-v335{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:var(--tint);color:var(--coral);display:grid;place-items:center;flex-shrink:0}
+.grow-topic-tile-v229:hover .grow-topic-tile-corner-v335{background:var(--coral);color:#fff}
 /* The one choice for what points are FOR — two selectable cards, then a compact chosen state. */
 .points-mode-chooser-v229{width:100%}
 .points-mode-lead-v229{margin:0 0 10px}
@@ -2275,7 +2281,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=c9956d418fc2","business":"/app-business.js?b=7425624f1e96","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=c9956d418fc2","business":"/app-business.js?b=d57cafa2bf35","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
