@@ -11426,7 +11426,7 @@ async function decideBookingRequestGlobalV329(id,decision,contactDetails){
 }
 async function openBookingRequestPopupV329ById(id){
   if($('bookingRequestPopupV329'))return; // one at a time — a second INSERT while one is open just refreshes the badge
-  const {data,error}=await sb.from('booking_requests').select('*, services(name), staff(full_name), branches(name)')
+  const {data,error}=await sb.from('booking_requests').select('*, services(name), staff(full_name), branches(name,address)')
     .eq('id',id).eq('business_id',S.biz.id).maybeSingle();
   if(error||!data||!STAFF_BOOKING_DECISION_STATUSES.has(data.status))return;
   openBookingRequestPopupV329(data);
@@ -11454,7 +11454,8 @@ function openBookingRequestPopupV329(row){
   deactivate=CUI.activateDialog($('bookingRequestPopupV329'),{onClose:close,initialFocus:'#bookingRequestPopupConfirmV329'});
   $('bookingRequestPopupCloseV329').onclick=close;
   $('bookingRequestPopupConfirmV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'confirm',{
-    customerName:row.name,phone:row.phone,serviceName:row.services?.name,staffName:row.staff?.full_name,startsAt:row.preferred_at
+    customerName:row.name,phone:row.phone,serviceName:row.services?.name,staffName:row.staff?.full_name,
+    startsAt:row.preferred_at,location:row.branches?.address
   });};
   $('bookingRequestPopupDeclineV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'decline');};
   $('bookingRequestPopupAvailV329').onclick=()=>{
@@ -28475,10 +28476,12 @@ function bookingRequestBigWhenV330(iso){
 /* V330 (owner: "after confirmation > able to click whatsapp icon > send confirmation message
    (pull date/time/customer name/services/assigned staff, with a template pre-set by the owner)").
    businesses.booking_confirmation_template holds the owner's own wording with {customer}/
-   {service}/{staff}/{date}/{time} tokens; DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330 is what a
-   business that never opened the settings page gets. */
-const DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330='Hi {customer}, your {service} with {staff} on {date} at {time} is confirmed. See you then!';
-function bookingConfirmationMessageV330({template,customerName,serviceName,staffName,startsAt}){
+   {service}/{staff}/{date}/{time}/{location} tokens; DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330
+   is what a business that never opened the settings page gets. {location} is an exact pull of
+   branches.address (owner: "need the template to include location — exact pull"), never a
+   reformatted or abbreviated version of it. */
+const DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330='Hi {customer}, your {service} with {staff} on {date} at {time} at {location} is confirmed. See you then!';
+function bookingConfirmationMessageV330({template,customerName,serviceName,staffName,startsAt,location}){
   const d=new Date(startsAt);
   const dateLabel=Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(d);
   const timeLabel=Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-SG',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Singapore'}).format(d);
@@ -28487,7 +28490,8 @@ function bookingConfirmationMessageV330({template,customerName,serviceName,staff
     .replaceAll('{service}',String(serviceName||'your appointment').trim())
     .replaceAll('{staff}',String(staffName||'our team').trim())
     .replaceAll('{date}',dateLabel)
-    .replaceAll('{time}',timeLabel);
+    .replaceAll('{time}',timeLabel)
+    .replaceAll('{location}',String(location||'').trim());
 }
 function bookingConfirmationWhatsAppUrlV330(phone,text){
   const digits=String(phone||'').replace(/\D/g,'');
@@ -28498,9 +28502,9 @@ function bookingConfirmationWhatsAppUrlV330(phone,text){
 /* One small dialog, shown right after a request is confirmed (from any of the three confirm
    surfaces — popup, banner, calendar tile), offering the owner's own templated WhatsApp message
    or a plain call. Not shown at all when the request carried no usable phone number. */
-function offerBookingConfirmationContactV330({customerName,phone,serviceName,staffName,startsAt}){
+function offerBookingConfirmationContactV330({customerName,phone,serviceName,staffName,startsAt,location}){
   const callNumber=normalizeSingaporeCustomerPhone(phone);
-  const text=bookingConfirmationMessageV330({template:S.biz?.booking_confirmation_template,customerName,serviceName,staffName,startsAt});
+  const text=bookingConfirmationMessageV330({template:S.biz?.booking_confirmation_template,customerName,serviceName,staffName,startsAt,location});
   const waUrl=bookingConfirmationWhatsAppUrlV330(phone,text);
   if(!callNumber&&!waUrl)return;
   if($('bookingConfirmedContactV330'))$('bookingConfirmedContactV330').remove();
@@ -28508,8 +28512,8 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     <h2 id="bookingConfirmedContactTitleV330">Booking confirmed</h2>
     <p class="muted small" style="margin-top:4px">Let ${esc(customerName||'the customer')} know.</p>
     <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
-      ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('bookings',{size:15})} Message on WhatsApp</a>`:''}
-      ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('till',{size:15})} Call customer</a>`:''}
+      ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
+      ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:15})} Call</a>`:''}
       <button class="btn ghost" id="bookingConfirmedContactCloseV330" type="button">Done</button>
     </div>
   </div></div>`);
@@ -28537,7 +28541,7 @@ async function appointmentsPage(){
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone,phone_norm,email',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,price_cents,duration_min,buffer_before_min,buffer_after_min',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('staff').select('id,full_name,user_id,calendar_color,phone,email',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('full_name').order('id')),
-    fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default,timezone',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
+    fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default,timezone,address',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('staff_branches').select('staff_id,branch_id',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('branch_id')),
     fetchAllRowsResult(()=>sb.from('service_branches').select('service_id,branch_id',{count:'exact'}).eq('business_id',S.biz.id).order('service_id').order('branch_id')),
     fetchAllRowsResult(()=>sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday')),
@@ -29197,19 +29201,26 @@ async function appointmentsPage(){
     const outcomeIsDue=appointmentOutcomeIsDue(item),duration=appointmentDuration(item),callNumber=safeCallNumber(item);
     const amendableBooked=item.status==='booked'&&canWrite;
     const local=sgInput(item.starts_at),service=item.services||{},client=item.clients||{};
-    const branchName=visibleBranches.find(branch=>branch.id===item.branch_id)?.name||'Branch';
-    const whatsAppUrl=appointmentWhatsAppUrlV129({
-      phone:client.phone_norm||client.phone,businessName:S.biz.name,branchName,
-      customerName:client.full_name,serviceName:service.name,startsAt:item.starts_at,
-      staffName:staffName[item.staff_id],status:item.status
+    const itemBranch=visibleBranches.find(branch=>branch.id===item.branch_id);
+    const branchName=itemBranch?.name||'Branch';
+    /* V330 (owner: verified the confirmed-appointment "Message on WhatsApp" button was still
+       sending the old hardcoded appointmentWhatsAppUrlV129 copy instead of the template set on
+       Appointment Setting — "did not sync my template over"). Confirmed appointments now build
+       their WhatsApp text the same way the post-confirm offer dialog does, including the branch's
+       exact address for {location}. */
+    const whatsAppText=bookingConfirmationMessageV330({
+      template:S.biz.booking_confirmation_template,customerName:client.full_name,
+      serviceName:service.name,staffName:staffName[item.staff_id],startsAt:item.starts_at,
+      location:itemBranch?.address||branchName
     });
+    const whatsAppUrl=bookingConfirmationWhatsAppUrlV330(client.phone_norm||client.phone,whatsAppText);
     const bookedPriceCents=resolveBookedPriceCents(item.total_cents,service.price_cents);
     const dialog=document.createElement('div');dialog.className='modal appointment-detail-modal';dialog.id='appointmentDetailDialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','appointmentDetailTitle');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card"><div class="row appointment-detail-head"><div><h2 id="appointmentDetailTitle" data-merchant-content>${esc(client.full_name||'Appointment')}</h2><p class="muted small" style="margin-top:4px">${esc(sgt(item.starts_at)?.slice(0,10)||'')} · ${esc(appointmentTimeRange(item))} · ${duration} min</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentDialogClose" aria-label="Close appointment details">Close</button></div>
       <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd data-merchant-content>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd data-merchant-content>${esc(item.note||'None')}</dd></div></dl></section>
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd data-merchant-content>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd data-merchant-content>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd data-merchant-content>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd data-merchant-content>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p data-merchant-content>${esc(client.notes||'None')}</p></div></section></div>
       <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
-      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">Call customer</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">Message on WhatsApp</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Amend appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:15})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Change appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
       <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
       ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
@@ -29554,8 +29565,8 @@ async function appointmentsPage(){
             <div class="pending-request-core-v330">${esc(r.services?.name||'General visit')} · ${esc(r.staff_id?(staffName[r.staff_id]||'Team member'):'Anyone available')} · ${esc(bookingRequestBigWhenV330(r.preferred_at))}</div>
             <div class="small" style="margin-top:4px">
               <b>${esc(r.name||'Customer')}</b>${r.phone?` · ${esc(r.phone)}`:''}
-              ${callNumber?` <a class="btn ghost sm" href="tel:${esc(callNumber)}">${CUI.icon('till',{size:13})} Call</a>`:''}
-              ${waUrl?` <a class="btn ghost sm" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:''}
+              ${callNumber?` <a class="btn ghost sm" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:13})} Call</a>`:''}
+              ${waUrl?` <a class="btn ghost sm" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:13,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
             </div>
             <div class="small muted" style="margin-top:2px">${overdue?`<span style="color:var(--red);font-weight:700">preferred time has passed</span> · `:''}${r.party_size?`Party of ${r.party_size}`:''}</div>
             ${r.notes?`<div class="small muted" style="margin-top:2px">${esc(r.notes)}</div>`:''}
@@ -29580,7 +29591,8 @@ async function appointmentsPage(){
     const r=pendingRequests.find(row=>row.id===id);
     if(!r)return null;
     return {customerName:r.name,phone:r.phone,serviceName:r.services?.name,
-      staffName:r.staff_id?staffName[r.staff_id]:null,startsAt:r.preferred_at};
+      staffName:r.staff_id?staffName[r.staff_id]:null,startsAt:r.preferred_at,
+      location:visibleBranches.find(b=>b.id===branchId)?.address};
   }
   function wirePendingRequestActionsV329(){
     routeMain.querySelectorAll('[data-pending-confirm]').forEach(button=>button.onclick=async()=>{
@@ -29655,7 +29667,8 @@ async function appointmentsPage(){
     deactivate=CUI.activateDialog($('pendingTileModalV330'),{onClose:close,initialFocus:'#pendingTileConfirmV330'});
     $('pendingTileModalCloseV330').onclick=close;
     const contact={customerName:row.name,phone:row.phone,serviceName:row.services?.name,
-      staffName:row.staff_id?staffName[row.staff_id]:null,startsAt:row.preferred_at};
+      staffName:row.staff_id?staffName[row.staff_id]:null,startsAt:row.preferred_at,
+      location:visibleBranches.find(b=>b.id===branchId)?.address};
     $('pendingTileConfirmV330').onclick=async()=>{
       close();
       await decideBookingRequestGlobalV329(row.id,'confirm',contact);
@@ -35676,14 +35689,16 @@ function bookingRulesCardHtmlV325(){
    pre-set by the owner"). One plain textarea + a live preview, on the same Appointment Setting
    step as the rest of the booking rules — no new settings page, matching how buffer times and
    branches got a pointer card here instead of their own step. {customer}/{service}/{staff}/
-   {date}/{time} are the only tokens the send path understands (bookingConfirmationMessageV330). */
+   {date}/{time}/{location} are the only tokens the send path understands
+   (bookingConfirmationMessageV330) — {location} is an exact pull of the branch's Address field
+   from Branches, never a shortened or reformatted version of it. */
 function bookingConfirmationTemplateCardHtmlV330(){
   const template=S.biz.booking_confirmation_template||DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330;
   return `<div class="card" style="margin-top:16px">
     <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">WhatsApp confirmation message</b>
-    <p class="muted small" style="margin-top:2px">Sent when you tap "Message on WhatsApp" after confirming a booking request. Use {customer}, {service}, {staff}, {date}, {time} — they get filled in for each booking.</p>
+    <p class="muted small" style="margin-top:2px">Sent when you tap WhatsApp after confirming a booking request. Use {customer}, {service}, {staff}, {date}, {time}, {location} — they get filled in for each booking. {location} is the branch's Address, exactly as set in Branches.</p>
     <textarea id="setConfirmationTemplate" rows="4" style="margin-top:10px">${esc(template)}</textarea>
-    <p class="muted small" id="setConfirmationTemplatePreview" style="margin-top:8px">${esc(bookingConfirmationMessageV330({template,customerName:'Mei',serviceName:'Facial',staffName:'Devi',startsAt:new Date(Date.now()+86400000).toISOString()}))}</p>
+    <p class="muted small" id="setConfirmationTemplatePreview" style="margin-top:8px">${esc(bookingConfirmationMessageV330({template,customerName:'Mei',serviceName:'Facial',staffName:'Devi',startsAt:new Date(Date.now()+86400000).toISOString(),location:'313 Orchard Road, Singapore 238895'}))}</p>
     <div style="margin-top:10px"><button class="btn sm" id="setConfirmationTemplateSave">Save message</button></div>
     <div id="setConfirmationTemplateErr"></div>
   </div>`;
@@ -35722,7 +35737,8 @@ function wireBookingRulesV325(isCurrent=()=>true){
     const updatePreview=()=>{
       const preview=$('setConfirmationTemplatePreview');if(!preview)return;
       preview.textContent=bookingConfirmationMessageV330({template:$('setConfirmationTemplate').value,
-        customerName:'Mei',serviceName:'Facial',staffName:'Devi',startsAt:new Date(Date.now()+86400000).toISOString()});
+        customerName:'Mei',serviceName:'Facial',staffName:'Devi',startsAt:new Date(Date.now()+86400000).toISOString(),
+        location:'313 Orchard Road, Singapore 238895'});
     };
     $('setConfirmationTemplate').oninput=updatePreview;
     if($('setConfirmationTemplateSave'))$('setConfirmationTemplateSave').onclick=async()=>{

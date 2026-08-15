@@ -57,7 +57,12 @@
     eye:'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6ZM12 15.25A3.25 3.25 0 1 0 12 8.75a3.25 3.25 0 0 0 0 6.5Z',
     eyeOff:'M3 3l18 18M10.6 6.12A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17.4 17.4 0 0 1-2.1 2.7M6.2 6.2C3.77 7.9 2.5 12 2.5 12s3.5 6 9.5 6a9.9 9.9 0 0 0 3.2-.52M9.7 9.7a3.25 3.25 0 0 0 4.6 4.6',
     faceId:'M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M9 9h.01M15 9h.01M12 9v4h-1M8.5 16c1 .8 2.17 1.2 3.5 1.2s2.5-.4 3.5-1.2',
-    edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4'
+    edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4',
+    /* v330: a real handset glyph for "Call" buttons — 'till' (a cash register) was being reused
+       for phone actions before this, which read wrong once the label shrank to an icon-only
+       button. A generic speech-bubble ('chat', tinted green in CSS) stands in for WhatsApp
+       rather than reproducing WhatsApp's own trademarked glyph. */
+    phone:'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z'
   };
 
   function icon(name,{size=20,label='',className=''}={}){

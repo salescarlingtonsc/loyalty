@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2d7a66eb018a19369ee9df8d04f1d24da6d9564153486e12990afc0af95d9046"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="b2bf11998a275c974de556b477e0a3aede9427f0b8464bc803e42eda98a240fd"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -156,6 +156,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .day-timeline-pending-v330 span,.day-timeline-pending-v330 b,.day-timeline-pending-v330 small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .day-timeline-pending-v330 span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--red)}
 .day-timeline-pending-v330 small{margin-top:1px;color:var(--red);font-weight:700}
+/* v330: a generic speech bubble tinted WhatsApp's brand green stands in for a "WhatsApp" action
+   without reproducing WhatsApp's own trademarked logo glyph. */
+.icon-whatsapp-v330{color:#25D366}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -1885,8 +1888,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 /* V243 customer-app preview — restored after a rebase conflict resolution dropped it */
 .customer-preview-phone-v243{width:390px;max-width:100%;margin:14px auto 0;border:10px solid var(--ink);border-radius:34px;background:var(--ink);box-shadow:0 12px 30px rgba(23,22,26,.18)}
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
-.ci-live-preview-inner-v326{height:100%;min-height:0;overflow-y:auto;box-sizing:border-box}
-.ci-live-preview-sample-badge-v326{background:#fff8e6;color:#8a6d1a;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-weight:600}
+.customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 /* v244 · Explore — the ecosystem search behind its own tab */
 /* v264 · sharing a promotion */
@@ -2187,7 +2189,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 2d7a66eb018a19369ee9df8d04f1d24da6d9564153486e12990afc0af95d9046</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · b2bf11998a275c974de556b477e0a3aede9427f0b8464bc803e42eda98a240fd</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -2249,7 +2251,12 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     eye:'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6ZM12 15.25A3.25 3.25 0 1 0 12 8.75a3.25 3.25 0 0 0 0 6.5Z',
     eyeOff:'M3 3l18 18M10.6 6.12A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17.4 17.4 0 0 1-2.1 2.7M6.2 6.2C3.77 7.9 2.5 12 2.5 12s3.5 6 9.5 6a9.9 9.9 0 0 0 3.2-.52M9.7 9.7a3.25 3.25 0 0 0 4.6 4.6',
     faceId:'M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M9 9h.01M15 9h.01M12 9v4h-1M8.5 16c1 .8 2.17 1.2 3.5 1.2s2.5-.4 3.5-1.2',
-    edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4'
+    edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4',
+    /* v330: a real handset glyph for "Call" buttons — 'till' (a cash register) was being reused
+       for phone actions before this, which read wrong once the label shrank to an icon-only
+       button. A generic speech-bubble ('chat', tinted green in CSS) stands in for WhatsApp
+       rather than reproducing WhatsApp's own trademarked glyph. */
+    phone:'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z'
   };
 
   function icon(name,{size=20,label='',className=''}={}){
@@ -18918,10 +18925,12 @@ function bookingRequestBigWhenV330(iso){
 /* V330 (owner: "after confirmation > able to click whatsapp icon > send confirmation message
    (pull date/time/customer name/services/assigned staff, with a template pre-set by the owner)").
    businesses.booking_confirmation_template holds the owner's own wording with {customer}/
-   {service}/{staff}/{date}/{time} tokens; DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330 is what a
-   business that never opened the settings page gets. */
-const DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330='Hi {customer}, your {service} with {staff} on {date} at {time} is confirmed. See you then!';
-function bookingConfirmationMessageV330({template,customerName,serviceName,staffName,startsAt}){
+   {service}/{staff}/{date}/{time}/{location} tokens; DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330
+   is what a business that never opened the settings page gets. {location} is an exact pull of
+   branches.address (owner: "need the template to include location — exact pull"), never a
+   reformatted or abbreviated version of it. */
+const DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330='Hi {customer}, your {service} with {staff} on {date} at {time} at {location} is confirmed. See you then!';
+function bookingConfirmationMessageV330({template,customerName,serviceName,staffName,startsAt,location}){
   const d=new Date(startsAt);
   const dateLabel=Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(d);
   const timeLabel=Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-SG',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Singapore'}).format(d);
@@ -18930,7 +18939,8 @@ function bookingConfirmationMessageV330({template,customerName,serviceName,staff
     .replaceAll('{service}',String(serviceName||'your appointment').trim())
     .replaceAll('{staff}',String(staffName||'our team').trim())
     .replaceAll('{date}',dateLabel)
-    .replaceAll('{time}',timeLabel);
+    .replaceAll('{time}',timeLabel)
+    .replaceAll('{location}',String(location||'').trim());
 }
 function bookingConfirmationWhatsAppUrlV330(phone,text){
   const digits=String(phone||'').replace(/\D/g,'');
@@ -18941,9 +18951,9 @@ function bookingConfirmationWhatsAppUrlV330(phone,text){
 /* One small dialog, shown right after a request is confirmed (from any of the three confirm
    surfaces — popup, banner, calendar tile), offering the owner's own templated WhatsApp message
    or a plain call. Not shown at all when the request carried no usable phone number. */
-function offerBookingConfirmationContactV330({customerName,phone,serviceName,staffName,startsAt}){
+function offerBookingConfirmationContactV330({customerName,phone,serviceName,staffName,startsAt,location}){
   const callNumber=normalizeSingaporeCustomerPhone(phone);
-  const text=bookingConfirmationMessageV330({template:S.biz?.booking_confirmation_template,customerName,serviceName,staffName,startsAt});
+  const text=bookingConfirmationMessageV330({template:S.biz?.booking_confirmation_template,customerName,serviceName,staffName,startsAt,location});
   const waUrl=bookingConfirmationWhatsAppUrlV330(phone,text);
   if(!callNumber&&!waUrl)return;
   if($('bookingConfirmedContactV330'))$('bookingConfirmedContactV330').remove();
@@ -18951,8 +18961,8 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     <h2 id="bookingConfirmedContactTitleV330">Booking confirmed</h2>
     <p class="muted small" style="margin-top:4px">Let ${esc(customerName||'the customer')} know.</p>
     <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
-      ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('bookings',{size:15})} Message on WhatsApp</a>`:''}
-      ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('till',{size:15})} Call customer</a>`:''}
+      ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
+      ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:15})} Call</a>`:''}
       <button class="btn ghost" id="bookingConfirmedContactCloseV330" type="button">Done</button>
     </div>
   </div></div>`);
@@ -18982,19 +18992,26 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     const outcomeIsDue=appointmentOutcomeIsDue(item),duration=appointmentDuration(item),callNumber=safeCallNumber(item);
     const amendableBooked=item.status==='booked'&&canWrite;
     const local=sgInput(item.starts_at),service=item.services||{},client=item.clients||{};
-    const branchName=visibleBranches.find(branch=>branch.id===item.branch_id)?.name||'Branch';
-    const whatsAppUrl=appointmentWhatsAppUrlV129({
-      phone:client.phone_norm||client.phone,businessName:S.biz.name,branchName,
-      customerName:client.full_name,serviceName:service.name,startsAt:item.starts_at,
-      staffName:staffName[item.staff_id],status:item.status
+    const itemBranch=visibleBranches.find(branch=>branch.id===item.branch_id);
+    const branchName=itemBranch?.name||'Branch';
+    /* V330 (owner: verified the confirmed-appointment "Message on WhatsApp" button was still
+       sending the old hardcoded appointmentWhatsAppUrlV129 copy instead of the template set on
+       Appointment Setting — "did not sync my template over"). Confirmed appointments now build
+       their WhatsApp text the same way the post-confirm offer dialog does, including the branch's
+       exact address for {location}. */
+    const whatsAppText=bookingConfirmationMessageV330({
+      template:S.biz.booking_confirmation_template,customerName:client.full_name,
+      serviceName:service.name,staffName:staffName[item.staff_id],startsAt:item.starts_at,
+      location:itemBranch?.address||branchName
     });
+    const whatsAppUrl=bookingConfirmationWhatsAppUrlV330(client.phone_norm||client.phone,whatsAppText);
     const bookedPriceCents=resolveBookedPriceCents(item.total_cents,service.price_cents);
     const dialog=document.createElement('div');dialog.className='modal appointment-detail-modal';dialog.id='appointmentDetailDialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','appointmentDetailTitle');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card"><div class="row appointment-detail-head"><div><h2 id="appointmentDetailTitle" data-merchant-content>${esc(client.full_name||'Appointment')}</h2><p class="muted small" style="margin-top:4px">${esc(sgt(item.starts_at)?.slice(0,10)||'')} · ${esc(appointmentTimeRange(item))} · ${duration} min</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentDialogClose" aria-label="Close appointment details">Close</button></div>
       <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd data-merchant-content>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd data-merchant-content>${esc(item.note||'None')}</dd></div></dl></section>
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd data-merchant-content>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd data-merchant-content>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd data-merchant-content>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd data-merchant-content>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p data-merchant-content>${esc(client.notes||'None')}</p></div></section></div>
       <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
-      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">Call customer</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">Message on WhatsApp</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Amend appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:15})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Change appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
       <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
       ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
@@ -19060,6 +19077,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'2d7a66eb018a19369ee9df8d04f1d24da6d9564153486e12990afc0af95d9046',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'b2bf11998a275c974de556b477e0a3aede9427f0b8464bc803e42eda98a240fd',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

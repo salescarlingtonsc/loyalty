@@ -86,7 +86,7 @@ test('appointment detail sheet exposes authorized particulars and safe call/edit
   assert.match(calendar,/Customer notes/);
   assert.match(calendar,/normalizeSingaporeCustomerPhone\(item\?\.clients\?\.phone\)/);
   assert.match(calendar,/href="tel:\$\{callNumber\}"/);
-  assert.match(calendar,/Amend appointment/);
+  assert.match(calendar,/Change appointment/); // v330: owner renamed the "Amend appointment" button
   assert.match(calendar,/Confirm amendment/);
   assert.match(calendar,/reschedule_appointment_v48/);
   assert.match(calendar,/does not send SMS or WhatsApp/);
