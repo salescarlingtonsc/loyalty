@@ -328,7 +328,8 @@ const sqlTestByMigrationName = new Map([
      the same collision reason as v323/v326 above. */
   ['nestly_v328_staff_choice_manual_confirm', 'db/tests/v328_staff_choice_manual_confirm.sql'],
   ['nestly_v329_owner_reschedule_booking_request', 'db/tests/v329_owner_reschedule_booking_request.sql'],
-  ['nestly_v330_pending_slot_block_and_confirmation_template', 'db/tests/v330_pending_slot_block_and_confirmation_template.sql']
+  ['nestly_v330_pending_slot_block_and_confirmation_template', 'db/tests/v330_pending_slot_block_and_confirmation_template.sql'],
+  ['nestly_v329_membership_plan_lifecycle', 'db/tests/v329_membership_plan_lifecycle.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -832,7 +833,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 278); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template
+  assert.equal(pending.length, 279); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision)
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

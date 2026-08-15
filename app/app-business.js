@@ -17685,11 +17685,61 @@ async function membershipsPage(){
     clearWriteAttempt(enrollSlot);
     toast(isReplayResult(data)?'Already enrolled — no duplicate created':'Enrolled — first charge booked, credits dropped 🎉');membershipsPage();
   };
-  $('plist').innerHTML=(plans&&plans.length)?plans.map(p=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">
-    <div><b data-merchant-content>${esc(p.name)}</b><div class="muted small">${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'} → ${money(p.credit_cents)} credit each period</div></div>
-    <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'off'}</span>
-    ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Disable':'Enable'}</button>`:''}</div>`).join('')
-    :'<p class="muted small" style="margin-top:10px">No plans yet.</p>';
+  /* ============ V329 — MEMBERSHIPS GETS A REAL DELETE -> HISTORY STATE =======================
+     save_membership_plan's own active/off flag (the pre-existing Enable/Disable button) is
+     completely unchanged — this only adds a second, separate axis: a plan can now also be
+     deleted, which moves it here to a read-only History tab. Deleting sets active=false too (the
+     same mechanism Disable already uses to stop new enrollment and let existing members lapse at
+     their next renewal — see the v329 migration header), so no other function needed to change. */
+  let plansTabV329='published';
+  let plansDeletePendingV329='';
+  const renderPlansV329=()=>{
+    const publishedPlans=(plans||[]).filter(p=>p.deleted_at==null);
+    const historyPlans=(plans||[]).filter(p=>p.deleted_at!=null);
+    const rows=plansTabV329==='published'?publishedPlans:historyPlans;
+    const rowHtml=p=>{
+      const meta=`<div><b data-merchant-content>${esc(p.name)}</b><div class="muted small">${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'} → ${money(p.credit_cents)} credit each period</div></div>`;
+      if(plansTabV329==='history')return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
+      const confirmOpen=plansDeletePendingV329===String(p.id);
+      return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
+        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'off'}</span>
+        ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Disable':'Enable'}</button>
+        <button type="button" class="btn ghost sm" data-plan-delete-v329="${esc(p.id)}">Delete</button>`:''}
+        </div>
+        <div class="imp-note" data-plan-deleteconfirm-v329="${esc(p.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
+          <b>Delete ${esc(p.name)}?</b>
+          <p class="muted small" style="margin-top:6px">It moves to History. No new customer can join, and any current member is not renewed at their next period. Past payments and credits are not affected.</p>
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-plan-delete-yes-v329="${esc(p.id)}">Delete</button><button type="button" class="btn ghost sm" data-plan-delete-no-v329="1">Cancel</button></div>
+        </div>`;
+    };
+    $('plist').innerHTML=`<div class="v150-segment" role="group" aria-label="Plan status" style="margin-bottom:10px">
+        <button type="button" aria-pressed="${plansTabV329==='published'}" data-plans-tab-v329="published">Published${publishedPlans.length?` (${publishedPlans.length})`:''}</button>
+        <button type="button" aria-pressed="${plansTabV329==='history'}" data-plans-tab-v329="history">History${historyPlans.length?` (${historyPlans.length})`:''}</button>
+      </div>
+      ${rows.length?rows.map(rowHtml).join(''):plansTabV329==='published'?'<p class="muted small" style="margin-top:10px">No plans yet.</p>':'<p class="muted small" style="margin-top:10px">Nothing has been deleted yet.</p>'}`;
+    document.querySelectorAll('[data-plans-tab-v329]').forEach(btn=>btn.onclick=()=>{
+      const tab=btn.dataset.plansTabV329;
+      if(!['published','history'].includes(tab))return;
+      plansTabV329=tab;plansDeletePendingV329='';renderPlansV329();
+    });
+    if(!canWrite)return;
+    document.querySelectorAll('[data-plan-delete-v329]').forEach(btn=>btn.onclick=()=>{
+      plansDeletePendingV329=btn.dataset.planDeleteV329;renderPlansV329();
+    });
+    document.querySelectorAll('[data-plan-delete-no-v329]').forEach(btn=>btn.onclick=()=>{
+      plansDeletePendingV329='';renderPlansV329();
+    });
+    document.querySelectorAll('[data-plan-delete-yes-v329]').forEach(btn=>btn.onclick=async()=>{
+      const id=btn.dataset.planDeleteYesV329;
+      btn.disabled=true;
+      const {error}=await sb.rpc('business_delete_membership_plan_v329',{p_business:S.biz.id,p_plan:id});
+      if(!isMembershipsCurrent())return;
+      if(error){btn.disabled=false;return fail(error)}
+      toast('Plan deleted — moved to History');
+      membershipsPage();
+    });
+  };
+  renderPlansV329();
   if(canWrite)window.togglePlan=async(id,to)=>{const p=(plans||[]).find(x=>x.id===id);if(!p)return toast('Plan not found');
     const {error}=await sb.rpc('save_membership_plan',{p_business:S.biz.id,p_plan:id,p_name:p.name,
       p_price_cents:p.price_cents,p_cadence:p.cadence,p_credit_cents:p.credit_cents,

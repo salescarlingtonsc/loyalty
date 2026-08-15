@@ -1942,6 +1942,12 @@
       "version": "20260815090004",
       "name": "nestly_v330_pending_slot_block_and_confirmation_template",
       "sourcePath": "db/migrations/20260815_nestly_v330_pending_slot_block_and_confirmation_template.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090100",
+      "name": "nestly_v329_membership_plan_lifecycle",
+      "sourcePath": "db/migrations/20260815_nestly_v329_membership_plan_lifecycle.sql"
     }
   ]
 }

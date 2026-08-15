@@ -412,6 +412,13 @@
       "call_site_finding": "none — validates non-empty name and positive points server-side; audit_log'd"
     },
     {
+      "id": "browser.rpc:app/app.js:business_delete_membership_plan_v329",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_delete_membership_plan_v329",
+      "resolves_to": "business_delete_membership_plan_v329/2 (memberships-module-write-gated via app.can_module_write; soft-delete, sets membership_plans.active=false AND deleted_at=now(), moves the plan to History)",
+      "call_site_finding": "none — mirrors business_delete_reward_v326's shape; membership_plans.active already gates both new enrollment (public.enroll_membership) and existing-member renewal continuation (app.run_membership_renewals), so this delete needed no changes to either — see the v329 migration header for the full audit"
+    },
+    {
       "id": "browser.rpc:app/app.js:record_sv_topup_sale",
       "surface": "browser_rpc_binding",
       "rpc": "record_sv_topup_sale",
