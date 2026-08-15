@@ -3957,6 +3957,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const showPackageMetric=capabilities.packages===true&&Number(packages.sessions_remaining||0)>0;
   const showMembershipMetric=capabilities.membership===true&&membership.active===true;
   const showSecondaryMetrics=!actionableCard&&(showPackageMetric||showMembershipMetric);
+  const showGiftCardSectionV347=capabilities.gift_cards===true||capabilities.giftcards===true;
+  const showPackageGroupV347=showGiftCardSectionV347||capabilities.packages===true||capabilities.membership===true
+    ||(customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable');
   const hasWalletSection=true;
   /* v333: the whole programme page is drawn from these eight answers. If none of them moved, the
      repaint would be pixel-for-pixel identical — and it would still cost the customer their
@@ -3967,13 +3970,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
   const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
     <div class="wallet-sections" id="walletSections">
+      ${showPackageGroupV347?`
       <section class="customer-business-group-v346" id="customerBusinessPackagesDetailV347" aria-labelledby="customerBusinessPackagesTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessPackagesTitle">Packages</h2><p class="muted small">Active plans, sessions and stored value.</p></div>
-        ${walletSectionShell('walletGiftCards','Gift cards','Money left on your gift cards from this business.')}
+        ${showGiftCardSectionV347?walletSectionShell('walletGiftCards','Gift cards','Money left on your gift cards from this business.'):''}
         ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
         ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
         ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
-      </section>
+      </section>`:''}
       <section class="customer-business-group-v346" id="customerBusinessActivityDetailV347" aria-labelledby="customerBusinessActivityTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessActivityTitle">Activity</h2><p class="muted small">Appointments, visits and loyalty history.</p></div>
         ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}

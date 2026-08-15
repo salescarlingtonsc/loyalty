@@ -77,3 +77,19 @@ test('the reward card sheds the legacy 7px corner radius',()=>{
   assert.match(indexHtml,/\.wallet-reward\{border:1px solid var\(--hair\);border-radius:14px/);
   assert.doesNotMatch(indexHtml,/\.wallet-reward\{[^}]*border-radius:7px/);
 });
+
+test('business profile shortcuts are relationship-specific, not static decoration',()=>{
+  const helperStart=app.indexOf('function customerBusinessDashboardModulesV347');
+  const helper=app.slice(helperStart,app.indexOf('/* v340',helperStart));
+  assert.match(helper,/const hasPoints=visibleEntry\('points'\)/);
+  assert.match(helper,/const hasStamps=visibleEntry\('stamps'\)/);
+  assert.match(helper,/const hasTiers=visibleEntry\('tiers'\)/);
+  assert.match(helper,/if\(hasTiers\)modules\.push\(\{href:'#customerBusinessOverviewDetailV347'/);
+  assert.match(helper,/if\(sessions>0\)modules\.push\(\{href:'#customerBusinessPackagesDetailV347'/);
+  assert.match(helper,/if\(membership\.active===true\)modules\.push/);
+  assert.match(helper,/if\(!modules\.length\)return ''/);
+  assert.doesNotMatch(helper,/No active package/);
+  const wallet=app.slice(app.indexOf('async function renderCustomerWallet'),app.indexOf('async function renderCustomerInAppInbox'));
+  assert.match(wallet,/const showPackageGroupV347=showGiftCardSectionV347\|\|capabilities\.packages===true\|\|capabilities\.membership===true/);
+  assert.match(wallet,/\$\{showPackageGroupV347\?`[\s\S]*id="customerBusinessPackagesDetailV347"/);
+});

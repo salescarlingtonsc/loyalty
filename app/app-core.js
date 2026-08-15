@@ -3996,16 +3996,26 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
   </section>`;
 }
-function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},loyalty={},capabilities={}}={}){
+function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},membership={},loyalty={},capabilities={}}={}){
   const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
-  const unit=String(loyalty.unit||'points').toLowerCase();
   const sessions=Math.max(0,Number(packages.sessions_remaining)||0);
-  const modules=[
-    {href:'#customerBusinessRewardsDetailV347',icon:'giftcard',title:unit==='stamps'?'Stamp rewards':'Rewards wallet',body:reward?.available_now===true?'1 reward ready':'View and manage your rewards'},
-    {href:'#customerBusinessOverviewDetailV347',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Explore member perks'},
-    {href:'#walletRewards',icon:'redeem',title:'Rewards wallet',body:'View and claim rewards'},
-    {href:'#customerBusinessPackagesDetailV347',icon:'packages',title:'Packages',body:sessions>0?`${sessions} session${sessions===1?'':'s'} left`:(capabilities.packages?'Session balances':'No active package')}
-  ];
+  const stack=programmeStackV310(capabilities)||[];
+  const visibleEntry=kind=>{
+    const entry=programmeStackEntryV310(stack,kind);
+    return programmeStackCardVisibleV310(entry)&&entry?.active!==false;
+  };
+  const hasPoints=visibleEntry('points');
+  const hasStamps=visibleEntry('stamps');
+  const hasTiers=visibleEntry('tiers')&&(tierLabel||tier.unavailable!=='not_running');
+  const hasReferral=visibleEntry('referral');
+  const modules=[];
+  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
+  if(hasPoints)modules.push({href:'#walletRewards',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
+  if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
+  if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',icon:'memberships',title:'Membership',body:'Active membership'});
+  if(hasReferral)modules.push({href:'#walletReferralSlot',icon:'referrals',title:'Refer a friend',body:'Share this business'});
+  if(!modules.length)return '';
   return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
     ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}">
       <span class="customer-business-module-icon-v347" aria-hidden="true">${CUI.icon(item.icon,{size:22})}</span>
@@ -4090,7 +4100,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337 customer-business-book-v346" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:18})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
     ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership})}
-    ${customerBusinessDashboardModulesV347({reward,tier,packages,loyalty,capabilities:programmeCapabilities})}
+    ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled})}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
