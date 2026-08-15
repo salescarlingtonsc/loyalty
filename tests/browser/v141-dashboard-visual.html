@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b9a6a18a225734198be98d633841abed1331397646b81a03364ef38745188b01"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="0d7635074a76679db4352a11fd21713044e5b89819c1e083cd6a40f02548d35a"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1869,6 +1869,21 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
+/* V325 — Customer Interface numbered stepper + persistent preview panel (2026-08-14 cosmetics
+   brief). The two-column layout reuses .split above, which this business console already
+   collapses to one column at <=900px (see the @media(max-width:900px) block) — no new
+   breakpoint. The stepper itself scrolls horizontally at narrow widths rather than wrapping,
+   so the numbered order stays a single readable line down to 390px. */
+.ci-stepper-v325{display:flex;align-items:center;gap:0;margin:0 0 18px;overflow-x:auto;padding-bottom:2px}
+.ci-step-v325{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;min-width:84px;padding:2px 6px;color:var(--muted);text-decoration:none;text-align:center}
+.ci-step-dot-v325{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:13px;color:var(--muted)}
+.ci-step-label-v325{font-size:11.5px;font-weight:600;white-space:nowrap}
+.ci-step-v325.active .ci-step-dot-v325{border-color:var(--coral);background:var(--coral);color:#fff}
+.ci-step-v325.active .ci-step-label-v325{color:var(--ink)}
+.ci-step-line-v325{flex:1 1 24px;min-width:16px;height:2px;background:var(--line);margin:0 2px 20px}
+.ci-step-layout-v325{align-items:start}
+.customer-preview-side-v325{position:sticky;top:16px}
+@media(max-width:900px){.customer-preview-side-v325{position:static}}
 /* v244 · Explore — the ecosystem search behind its own tab */
 /* v264 · sharing a promotion */
 .customer-share-button{flex:none}
@@ -3226,6 +3241,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'b9a6a18a225734198be98d633841abed1331397646b81a03364ef38745188b01',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'0d7635074a76679db4352a11fd21713044e5b89819c1e083cd6a40f02548d35a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

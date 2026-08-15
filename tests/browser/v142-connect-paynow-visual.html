@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="95b1c8df10ba3e21b23d6aa1e8335fb2b69ae47e2852207dfd2749bc0c20164b"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="029b589312c2763c0215e4831957038df6997bc18499e24f8adcf8310d694111"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1868,6 +1868,21 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
+/* V325 — Customer Interface numbered stepper + persistent preview panel (2026-08-14 cosmetics
+   brief). The two-column layout reuses .split above, which this business console already
+   collapses to one column at <=900px (see the @media(max-width:900px) block) — no new
+   breakpoint. The stepper itself scrolls horizontally at narrow widths rather than wrapping,
+   so the numbered order stays a single readable line down to 390px. */
+.ci-stepper-v325{display:flex;align-items:center;gap:0;margin:0 0 18px;overflow-x:auto;padding-bottom:2px}
+.ci-step-v325{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;min-width:84px;padding:2px 6px;color:var(--muted);text-decoration:none;text-align:center}
+.ci-step-dot-v325{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:13px;color:var(--muted)}
+.ci-step-label-v325{font-size:11.5px;font-weight:600;white-space:nowrap}
+.ci-step-v325.active .ci-step-dot-v325{border-color:var(--coral);background:var(--coral);color:#fff}
+.ci-step-v325.active .ci-step-label-v325{color:var(--ink)}
+.ci-step-line-v325{flex:1 1 24px;min-width:16px;height:2px;background:var(--line);margin:0 2px 20px}
+.ci-step-layout-v325{align-items:start}
+.customer-preview-side-v325{position:sticky;top:16px}
+@media(max-width:900px){.customer-preview-side-v325{position:static}}
 /* v244 · Explore — the ecosystem search behind its own tab */
 /* v264 · sharing a promotion */
 .customer-share-button{flex:none}
@@ -2167,7 +2182,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 95b1c8df10ba3e21b23d6aa1e8335fb2b69ae47e2852207dfd2749bc0c20164b</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 029b589312c2763c0215e4831957038df6997bc18499e24f8adcf8310d694111</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -4270,7 +4285,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'95b1c8df10ba3e21b23d6aa1e8335fb2b69ae47e2852207dfd2749bc0c20164b',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'029b589312c2763c0215e4831957038df6997bc18499e24f8adcf8310d694111',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),
