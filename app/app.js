@@ -22936,14 +22936,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            reading "REWARDS & OFFER" directly above the H2. The H1 stays (V319's rule above is
            still right: the heading follows the rail) and the two restatements go, which leaves
            exactly what the owner wrote in the margin — the module, then the view. */''}
-      <div class="cui-page-title"><h1 id="growTitle">Rewards &amp; Offer</h1></div>
+      <!-- V339 (owner markup: "Rewards & Offer" crossed out, "Point System" written, on the
+           Points System edit/setup screen specifically): read BEFORE growSetupWizardV301 mounts
+           and consumes pendingGrowSetupRewardV303 below, so the check is still valid here. This
+           does not touch V319/V245's "heading follows the rail" rule for every other view — only
+           the standalone Points System/Stamp card edit entry gets its own title.
+           V340 (owner: "change rewards & offer to rewards programme" — every other page's H1,
+           still reading the old module name): the default arm renamed to match. -->
+      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):'Rewards Programme'}</h1></div>
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
       <!-- V334 (owner markup, photo 4: "show this as header of gifts, it's the parent of this page,
            bring here his logo") — the same star icon the Rewards & Offer section uses leads
            Points System's own heading, since the gift list below belongs to it. -->
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${programmeView==='points'?`${CUI.icon('star',{size:18})} `:''}${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      <!-- V339 (owner markup, photo 4: "please add fixed back button in every available page").
+           The breadcrumb back button already exists for drilled tiles (growBreadcrumbV268); the
+           dedicated standalone pages — Points System, Tiers, Limited Offer, History — had no way
+           back except the sidebar. Same button, same destination, on those pages too. -->
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):(['points','tiers','offers','history'].includes(programmeView)?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm" href="#/grow">${CUI.icon('back',{size:16})}<span>All programmes</span></a></nav>`:'')}<h2 id="rewardJourneyTitle">${programmeView==='points'?`${CUI.icon('star',{size:18})} `:''}${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growProgrammeSwitchPanelV322():''}
@@ -26699,7 +26710,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
            cards now open this wizard instead of a drill — so the model chosen on step 1 is what
            tells the editor which engine the owner is here for, and a points choice still lands in
            an editor with no tiers block. -->
-      <span class="grow-setup-head-links-v301"><a class="grow-setup-leave-v301" href="#/loyalty${state.versionId?`/${encodeURIComponent(state.versionId)}`:''}/${editorContextV303()}" id="growSetupFullEditorV302">More reward settings</a>
+      <!-- V339 (owner markup, photo 3: "delete this page" on the deep editor — owner confirmed
+           "just remove the link to it", not the page/route itself): the standalone Points System
+           edit entry no longer offers this link; the multi-programme setup flow still does. -->
+      <span class="grow-setup-head-links-v301">${state.simpleEditModeV335?'':`<a class="grow-setup-leave-v301" href="#/loyalty${state.versionId?`/${encodeURIComponent(state.versionId)}`:''}/${editorContextV303()}" id="growSetupFullEditorV302">More reward settings</a>`}
       <a class="grow-setup-leave-v301" href="${state.simpleEditModeV335?growPointsPageHref:'#/grow'}">Leave set up</a></span></div>
       ${state.simpleEditModeV335?'':stepperHtml()}
       <div class="grow-setup-body-v301" id="growSetupBodyV301">${bodyHtml()}</div>
@@ -27363,8 +27377,18 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       /* V335 (owner markup, photo 3: "delete unwanted fields" — Gifts/Climbing/Tiers/Referral
          struck out): this entry has nothing to do on those screens, so Save jumps straight to
          Go-live — the SAME publish confirmation the wizard has always used, not a new path —
-         rather than stepping through screens this entry never asked to touch. */
-      goto(state.simpleEditModeV335?railCountW6I2():state.step+1);
+         rather than stepping through screens this entry never asked to touch.
+         V339 (owner markup, photo 4: "review & publish feature delete!" — confirmed: skip the
+         screen, keep publishing automatically): jumping there is no longer the end of it — Save
+         now runs the SAME publish sequence immediately, so the owner never sees that screen at
+         all unless the server reports an advanced rule that needs an explicit ack, in which case
+         doPublishV339 renders it exactly as the manual Go-live step always has. */
+      if(state.simpleEditModeV335){
+        goto(railCountW6I2());
+        await doPublishV339();
+        return;
+      }
+      goto(state.step+1);
     });
     /* The Climbing screen saves the basis the owner just answered — plus the earn rate on a
        tiers-only firm, where under a points basis it IS the climbing speed — through the SAME
@@ -27492,46 +27516,55 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       }
       goto(state.step+1);
     });
-    return withBusy(async()=>{
-      /* THE GATE, RE-CHECKED IN THE FLOW. Until now publishBlockedW6I2 existed only as a rendered
-         `disabled` attribute, and a disabled attribute is a hint: the error block's Retry button
-         calls advance() straight back into this chain without consulting it, so a D3 tick un-ticked
-         after a failed publish published anyway. The advanced-rule ack has always been re-checked
-         inside this branch (below); this makes the other three reasons symmetric with it. */
-      if(publishBlockedW6I2()){state.error=publishBlockedReasonW6I2();return render()}
-      const activeResult=await saveDraft({active:!state.keepPaused});
-      if(!isCurrent())return;
-      if(!activeResult.ok)return failStep(activeResult.error,'Nothing was published.');
-      const {data:impact,error:impactError}=await sb.rpc('preview_publish_impact',{p_config_version_id:state.versionId});
-      if(!isCurrent())return;
-      if(impactError){
-        state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} Nothing was published.`;
-        return render();
-      }
-      const rules=Array.isArray(impact?.rules)?impact.rules:[];
-      /* The acknowledgement is the gate, not the ceremony: it appears INLINE, on this page,
-         only when the server says this draft turns on an advanced rule — and the button stays
-         disabled until it is ticked. */
-      if((impact?.requires_confirmation===true||rules.length>0)&&!state.ack){
-        state.needAck=true;state.impactRules=rules;return render();
-      }
-      const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:state.versionId});
-      if(!isCurrent())return;
-      if(publishError){
-        state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} Nothing was published.`;
-        return render();
-      }
-      /* The version just published is no longer a draft, so a further edit has to start a new
-         one — based on whatever is active now, which is exactly what a null p_based_on resolves. */
-      state.published=true;state.versionId=null;state.snapshotHash=null;state.basedOn=null;
-      state.publishedSummary={earn:earnOrClimbLineV305(),reward:rewardOrLadderLineV305()};
-      toast('Grow changes published');
-      render();
-      /* V303/V314: and only now the switches. AFTER publish, never before — see
-         applyProgrammeSwitchesV314. It renders its own inline failure, so publishing is never
-         reported as failed because of it. */
-      await applyProgrammeSwitchesV314(false);
-    });
+    return withBusy(doPublishV339);
+  }
+  /* V339 (owner markup, photo 4: "review & publish feature delete!" — owner confirmed: skip the
+     screen, keep publishing automatically). Factored out of the Go-live step's own Next/Publish
+     handler so the Points System single-page Save can call the SAME publish sequence without
+     re-entering withBusy — state.busy is already true from the caller that saved the draft, and
+     withBusy no-ops when already busy, which would have silently skipped this entirely. Nothing
+     about the sequence itself changed: same gate, same two RPCs, same ack requirement when the
+     server reports an advanced rule (that case still renders the ack screen rather than publishing
+     blind — auto-publish only ever skips the screen when there is nothing to ack). */
+  async function doPublishV339(){
+    /* THE GATE, RE-CHECKED IN THE FLOW. Until now publishBlockedW6I2 existed only as a rendered
+       `disabled` attribute, and a disabled attribute is a hint: the error block's Retry button
+       calls advance() straight back into this chain without consulting it, so a D3 tick un-ticked
+       after a failed publish published anyway. The advanced-rule ack has always been re-checked
+       inside this branch (below); this makes the other three reasons symmetric with it. */
+    if(publishBlockedW6I2()){state.error=publishBlockedReasonW6I2();return render()}
+    const activeResult=await saveDraft({active:!state.keepPaused});
+    if(!isCurrent())return;
+    if(!activeResult.ok)return failStep(activeResult.error,'Nothing was published.');
+    const {data:impact,error:impactError}=await sb.rpc('preview_publish_impact',{p_config_version_id:state.versionId});
+    if(!isCurrent())return;
+    if(impactError){
+      state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} Nothing was published.`;
+      return render();
+    }
+    const rules=Array.isArray(impact?.rules)?impact.rules:[];
+    /* The acknowledgement is the gate, not the ceremony: it appears INLINE, on this page,
+       only when the server says this draft turns on an advanced rule — and the button stays
+       disabled until it is ticked. */
+    if((impact?.requires_confirmation===true||rules.length>0)&&!state.ack){
+      state.needAck=true;state.impactRules=rules;return render();
+    }
+    const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:state.versionId});
+    if(!isCurrent())return;
+    if(publishError){
+      state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} Nothing was published.`;
+      return render();
+    }
+    /* The version just published is no longer a draft, so a further edit has to start a new
+       one — based on whatever is active now, which is exactly what a null p_based_on resolves. */
+    state.published=true;state.versionId=null;state.snapshotHash=null;state.basedOn=null;
+    state.publishedSummary={earn:earnOrClimbLineV305(),reward:rewardOrLadderLineV305()};
+    toast('Grow changes published');
+    render();
+    /* V303/V314: and only now the switches. AFTER publish, never before — see
+       applyProgrammeSwitchesV314. It renders its own inline failure, so publishing is never
+       reported as failed because of it. */
+    await applyProgrammeSwitchesV314(false);
   }
   if(stepKindW6I2()==='tiers')prefillTiersW6I2();
   render();

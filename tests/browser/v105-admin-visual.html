@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="9c66e44182f0a365fc18a2e8a6983802088a4982f2661a68e054a56ec8e9e71e">
+<meta name="v105-production-component-sha256" content="21e6aea9cd125a2d4994365fac3bff230979ae1ad5b437791402307c9b1ac17a">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1055,8 +1055,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
-/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious. */
-.grow-topic-group-v244{margin-top:20px}
+/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious.
+   V339 (owner markup: "separate into two boxes") — each group is now its own card, not two
+   sections sharing the page's outer card. */
+.grow-topic-group-v244{margin-top:20px;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
 .grow-topic-group-head-v244 h3{font-size:1.02rem;font-weight:750}
 .grow-topic-group-head-v244 p{margin-top:3px}
 .grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
@@ -3123,7 +3125,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 9c66e44182f0</span>
+<span class="v105-provenance">v105 production-component harness · 21e6aea9cd12</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3248,7 +3250,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'9c66e44182f0a365fc18a2e8a6983802088a4982f2661a68e054a56ec8e9e71e',
+  sourceHash:'21e6aea9cd125a2d4994365fac3bff230979ae1ad5b437791402307c9b1ac17a',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

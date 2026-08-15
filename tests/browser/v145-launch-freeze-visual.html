@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5378ac203ad4b59b826ad48366e0d8d55da394a615c0f6f895669afdb6c6ab4c"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="9d0833e416c66576cdcfba3d59730f6255f9cd8fd3ee94a5895d3b39dddcd7ee"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1049,8 +1049,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
    grid of topic tiles; each drills into its own detail list. */
 .grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
-/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious. */
-.grow-topic-group-v244{margin-top:20px}
+/* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious.
+   V339 (owner markup: "separate into two boxes") — each group is now its own card, not two
+   sections sharing the page's outer card. */
+.grow-topic-group-v244{margin-top:20px;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
 .grow-topic-group-head-v244 h3{font-size:1.02rem;font-weight:750}
 .grow-topic-group-head-v244 p{margin-top:3px}
 .grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
@@ -2309,7 +2311,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5378ac203ad4b59b826ad48366e0d8d55da394a615c0f6f895669afdb6c6ab4c</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 9d0833e416c66576cdcfba3d59730f6255f9cd8fd3ee94a5895d3b39dddcd7ee</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5638,7 +5640,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'5378ac203ad4b59b826ad48366e0d8d55da394a615c0f6f895669afdb6c6ab4c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'9d0833e416c66576cdcfba3d59730f6255f9cd8fd3ee94a5895d3b39dddcd7ee',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
