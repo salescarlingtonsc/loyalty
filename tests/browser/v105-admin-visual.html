@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="21e6aea9cd125a2d4994365fac3bff230979ae1ad5b437791402307c9b1ac17a">
+<meta name="v105-production-component-sha256" content="837e90910b3be696136b7165d98230aecfc8def3676192d1b1717e53dd36e891">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1841,8 +1841,8 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 /* V310 (W4b) — the programme stack. One card per programme the firm runs, fixed order, identical
    three slots per card. The tab rules above are NOT retired: they are what the pre-v310 fallback
    path renders for the whole Cloudflare window and on rollback. */
-.customer-programme-stack{display:grid;gap:12px;margin-bottom:14px}
-.customer-programme-card-v310{padding:16px 18px 18px;margin:0}
+.customer-programme-stack{display:grid;gap:9px;margin-bottom:10px}
+.customer-programme-card-v310{padding:13px 16px 15px;margin:0}
 .customer-programme-card-head-v310{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:1.05rem}
 .customer-programme-card-head-v310 svg{flex:none;color:var(--coral)}
 .customer-programme-card-line-v310{margin-top:8px}
@@ -1909,20 +1909,20 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 /* v338 depth pass (owner: hero read "flat solid red", not enticing): a diagonal highlight sheen
    plus a tinted shadow so the card lifts off the page instead of sitting as a flat colour block —
    CSS-only (gradient/shadow), no new decorative assets. */
-.customer-points-hero-v337{position:relative;overflow:hidden;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;padding:20px 20px 22px;border:0;color:#fff;background:linear-gradient(135deg,var(--merchant-accent,var(--coral)),color-mix(in srgb,var(--merchant-accent,var(--coral)) 62%,#5c0d22));box-shadow:0 16px 32px -14px color-mix(in srgb,var(--merchant-accent,var(--coral)) 65%,transparent),var(--shadow)}
+.customer-points-hero-v337{position:relative;overflow:hidden;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;padding:14px 16px 15px;border:0;color:#fff;background:linear-gradient(135deg,var(--merchant-accent,var(--coral)),color-mix(in srgb,var(--merchant-accent,var(--coral)) 62%,#5c0d22));box-shadow:0 16px 32px -14px color-mix(in srgb,var(--merchant-accent,var(--coral)) 65%,transparent),var(--shadow)}
 .customer-points-hero-v337::before{content:'';position:absolute;inset:0;background:radial-gradient(130% 150% at 100% -10%,rgba(255,255,255,.28),transparent 55%);pointer-events:none}
 .customer-points-hero-copy-v337{position:relative;z-index:1;min-width:0}
-.customer-points-hero-label-v337{font-size:.85rem;font-weight:650;opacity:.9;text-transform:uppercase;letter-spacing:.04em}
-.customer-points-hero-figure-v337{margin-top:6px;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1;letter-spacing:-.03em}
-.customer-points-hero-figure-v337 span{margin-left:6px;font-size:.9rem;font-weight:650;letter-spacing:0;opacity:.9}
-.customer-points-hero-fraction-v337{margin-top:4px;font-size:.85rem;font-variant-numeric:tabular-nums;opacity:.85}
-.customer-points-hero-next-v337{margin-top:8px;font-size:.85rem;opacity:.95}
-.customer-points-hero-bar-v337{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.28);overflow:hidden;max-width:260px}
+.customer-points-hero-label-v337{font-size:.72rem;font-weight:650;opacity:.9;text-transform:uppercase;letter-spacing:.04em}
+.customer-points-hero-figure-v337{margin-top:2px;font-size:clamp(1.55rem,6.5vw,2.1rem);line-height:1;letter-spacing:-.03em}
+.customer-points-hero-figure-v337 span{margin-left:5px;font-size:.78rem;font-weight:650;letter-spacing:0;opacity:.9}
+.customer-points-hero-fraction-v337{margin-top:3px;font-size:.76rem;font-variant-numeric:tabular-nums;opacity:.85}
+.customer-points-hero-next-v337{margin-top:4px;font-size:.76rem;opacity:.95}
+.customer-points-hero-bar-v337{margin-top:6px;height:6px;border-radius:999px;background:rgba(255,255,255,.28);overflow:hidden;max-width:260px}
 .customer-points-hero-bar-v337 span{display:block;height:100%;border-radius:inherit;background:#fff}
-.customer-points-hero-pill-v337{display:inline-block;margin-top:12px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.22);font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-.customer-points-hero-icon-v337{position:relative;z-index:1;flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff}
+.customer-points-hero-pill-v337{display:inline-block;margin-top:7px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.22);font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.customer-points-hero-icon-v337{position:relative;z-index:1;flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.16);color:#fff}
 /* Address / Call / Book now, three tappable segments instead of one link plus a button. */
-.customer-programme-contact-row-v337{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.customer-programme-contact-row-v337{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
 .customer-programme-contact-row-v337 .customer-programme-contact-v326{display:contents}
 .customer-programme-contact-item-v337{display:flex;align-items:center;justify-content:center;gap:7px;flex:1 1 0;min-width:96px;min-height:44px;padding:9px 10px;border:1px solid var(--hair);border-radius:12px;background:#fff;color:inherit;font-weight:650;font-size:.85rem;text-decoration:none;text-align:center;cursor:pointer}
 .customer-programme-contact-item-v337 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1930,12 +1930,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-contact-item-book-v337{border-color:var(--coral);background:var(--coral);color:#fff}
 .customer-programme-contact-item-book-v337 svg{color:#fff}
 /* The cream "reward ready" banner — only painted when a reward is actually claimable now. */
-.customer-claimable-banner-v337{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding:16px 18px;border:1px solid #f0dfa0;border-radius:16px;background:#fdf6df;box-shadow:0 10px 22px -16px rgba(138,109,26,.55),var(--shadow)}
-.customer-claimable-banner-icon-v337{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:#f7e9b8;color:#8a6d1a}
+.customer-claimable-banner-v337{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;padding:12px 14px;border:1px solid #f0dfa0;border-radius:16px;background:#fdf6df;box-shadow:0 10px 22px -16px rgba(138,109,26,.55),var(--shadow)}
+.customer-claimable-banner-icon-v337{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:#f7e9b8;color:#8a6d1a}
 .customer-claimable-banner-copy-v337{flex:1;min-width:0}
-.customer-claimable-banner-kicker-v337{font-size:.78rem;font-weight:700;color:#8a6d1a;text-transform:uppercase;letter-spacing:.03em}
-.customer-claimable-banner-name-v337{display:block;margin-top:4px;font-size:1.1rem}
-.customer-claimable-banner-line-v337{margin-top:3px}
+.customer-claimable-banner-kicker-v337{font-size:.72rem;font-weight:700;color:#8a6d1a;text-transform:uppercase;letter-spacing:.03em}
+.customer-claimable-banner-name-v337{display:block;margin-top:2px;font-size:.98rem}
+.customer-claimable-banner-line-v337{margin-top:2px;font-size:.85rem}
 .customer-claimable-banner-cta-v337{flex:0 0 auto;align-self:center}
 @media(max-width:480px){.customer-claimable-banner-v337{flex-wrap:wrap}.customer-claimable-banner-cta-v337{flex:1 1 100%}}
 
@@ -2105,10 +2105,10 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-back-v340{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border-radius:12px;color:var(--ink);text-decoration:none}
 .customer-programme-compact-head-v339 .customer-programme-back-v340{position:absolute;left:0;top:0;margin:-10px 0 0 -6px}
 .customer-programme-back-v340:hover,.customer-programme-back-v340:focus-visible{background:var(--tint)}
-.customer-reward-offer-swipe-v339{margin:0 0 14px}
-.customer-reward-offer-track-v339{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.customer-reward-offer-swipe-v339{margin:0 0 10px}
+.customer-reward-offer-track-v339{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 .customer-reward-offer-page-v339{flex:0 0 min(88%,340px);min-width:0;scroll-snap-align:start;display:flex}
-.customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0}
+.customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0;align-self:flex-start}
 @media(min-width:640px){.customer-reward-offer-page-v339{flex-basis:360px}}
 .customer-claimable-banner-validity-v339{margin-top:6px;font-size:.8rem;font-weight:650;color:#7a5c10}
 .customer-tier-card-head-v339{display:flex;align-items:center;gap:11px;margin-bottom:9px}
@@ -3125,7 +3125,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 21e6aea9cd12</span>
+<span class="v105-provenance">v105 production-component harness · 837e90910b3b</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3250,7 +3250,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'21e6aea9cd125a2d4994365fac3bff230979ae1ad5b437791402307c9b1ac17a',
+  sourceHash:'837e90910b3be696136b7165d98230aecfc8def3676192d1b1717e53dd36e891',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

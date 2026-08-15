@@ -3917,7 +3917,7 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
       <div class="customer-points-hero-bar-v337" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width:${progress}%"></span></div>
       ${tierPill?`<span class="pill customer-points-hero-pill-v337">${tierPill}</span>`:''}
     </div>
-    <span class="customer-points-hero-icon-v337" aria-hidden="true">${CUI.icon('diamond',{size:34})}</span>
+    <span class="customer-points-hero-icon-v337" aria-hidden="true">${CUI.icon('diamond',{size:22})}</span>
   </section>`;
 }
 /* The "reward ready" banner. Renders only when the server's own next_eligible_reward is
