@@ -2,7 +2,7 @@
 
 Date: 2026-08-15
 Branch: `codex/v324-rewards-offer-cosmetics`
-Production-component source hash: `771a587adb644a707eda0b8b71d4ac69222eadf4bc92cf7f337f2028b55f1049`
+Production-component source hash: `db7d2245bbef0af67708d5e0b15ac580af5d3c271013fa8715614c82e854dd60`
 
 Owner instruction: "proceed all at once" — build all four remaining queued Growth lifecycle
 pages (Tiered membership, Stamp card, Memberships, Lifestyle bring-back rules) in one continuous

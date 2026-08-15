@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="771a587adb644a707eda0b8b71d4ac69222eadf4bc92cf7f337f2028b55f1049"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="db7d2245bbef0af67708d5e0b15ac580af5d3c271013fa8715614c82e854dd60"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -137,6 +137,28 @@ tr[aria-selected="true"] td{background:var(--tint)}
    motion by simply not animating; the tint still lands. */
 .is-notified-v206>td{background:var(--tint)!important;transition:background .5s var(--ease)}
 @media(prefers-reduced-motion:reduce){.is-notified-v206>td{transition:none}}
+/* V329: persistent "N awaiting confirmation" pill (top right, next to the bell) and the
+   urgent banner of unconfirmed requests on the Day calendar. */
+.booking-requests-badge-v329{border-color:var(--red)!important;color:var(--red)!important;font-weight:700}
+.pending-request-banner{border:2px solid var(--red);margin-bottom:14px}
+.pending-request-card{padding:10px 0;border-top:1px solid var(--hair)}
+.pending-request-card:first-of-type{border-top:none}
+@keyframes pendingRequestPulseV329{0%,50%{box-shadow:0 0 0 4px rgba(157,53,44,.22);background:var(--tint)}100%{box-shadow:none;background:transparent}}
+.pending-request-highlight-v329{animation:pendingRequestPulseV329 1.3s ease-out 2;border-radius:10px}
+@media(prefers-reduced-motion:reduce){.pending-request-highlight-v329{animation:none;background:var(--tint);border-radius:10px}}
+.pending-request-core-v330{font-size:14.5px;font-weight:750;color:var(--ink)}
+/* V330: a still-pending request drawn on the calendar grid itself, deliberately styled to read
+   as "not real yet" — dashed red border + diagonal stripe, same visual language as a blocked
+   window, at a lower z-index than a confirmed .day-timeline-event so a genuine appointment
+   always wins the eye if the two ever overlap. */
+.day-timeline-pending-v330{position:absolute;left:5px;right:5px;z-index:5;min-height:44px;overflow:hidden;padding:5px 8px;border:2px dashed var(--red);border-radius:7px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 10%,#fff) 0 6px,color-mix(in srgb,var(--red) 18%,#fff) 6px 12px);color:var(--ink);text-align:left;line-height:1.15;cursor:pointer}
+.day-timeline-pending-v330:hover,.day-timeline-pending-v330:focus-visible{z-index:9;box-shadow:var(--shadow)}
+.day-timeline-pending-v330 span,.day-timeline-pending-v330 b,.day-timeline-pending-v330 small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-timeline-pending-v330 span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--red)}
+.day-timeline-pending-v330 small{margin-top:1px;color:var(--red);font-weight:700}
+/* v330: a generic speech bubble tinted WhatsApp's brand green stands in for a "WhatsApp" action
+   without reproducing WhatsApp's own trademarked logo glyph. */
+.icon-whatsapp-v330{color:#25D366}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -1866,7 +1888,8 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 /* V243 customer-app preview — restored after a rebase conflict resolution dropped it */
 .customer-preview-phone-v243{width:390px;max-width:100%;margin:14px auto 0;border:10px solid var(--ink);border-radius:34px;background:var(--ink);box-shadow:0 12px 30px rgba(23,22,26,.18)}
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
-.customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
+.ci-live-preview-inner-v326{height:100%;min-height:0;overflow-y:auto;box-sizing:border-box}
+.ci-live-preview-sample-badge-v326{background:#fff8e6;color:#8a6d1a;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-weight:600}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 /* v244 · Explore — the ecosystem search behind its own tab */
 /* v264 · sharing a promotion */
@@ -2166,7 +2189,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 771a587adb644a707eda0b8b71d4ac69222eadf4bc92cf7f337f2028b55f1049</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · db7d2245bbef0af67708d5e0b15ac580af5d3c271013fa8715614c82e854dd60</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -7694,7 +7717,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'771a587adb644a707eda0b8b71d4ac69222eadf4bc92cf7f337f2028b55f1049',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'db7d2245bbef0af67708d5e0b15ac580af5d3c271013fa8715614c82e854dd60',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
