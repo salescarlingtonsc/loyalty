@@ -34,15 +34,16 @@ const bookingRules = section(app, 'function bookingRulesCardHtmlV325(', 'functio
 /* --------------------------------------------------------------------- (a) the stepper itself */
 
 test('V325 the stepper renders all six steps with their hashes, in order', () => {
-  /* V334 (owner markup, photo 9: "Customer Sign-up & fields" relabel): only the 'interface' entry's
-     label text changed, hashes and step order are untouched. */
+  /* V334 (owner markup, photo 9: "Customer Sign-up & fields" relabel), then V336 (owner markup,
+     photo 2: "remove & fields"): only the 'interface' entry's label text changed twice, hashes
+     and step order are untouched. */
   const expected = [
     ['brand', 'Business Profile', '#/customer-interface/brand'],
     ['appointment', 'Appointment Setting', '#/customer-interface/appointment'],
     ['preview', 'Preview', '#/customer-interface'],
     ['done', 'Done', '#/customer-interface/done'],
     ['programme', 'Customer programme', '#/customer-interface/programme'],
-    ['interface', 'Customer Sign-up & fields', '#/customer-interface/interface'],
+    ['interface', 'Customer Sign-up', '#/customer-interface/interface'],
   ];
   const viewsSource = section(app, 'const CUSTOMER_INTERFACE_VIEWS_V296=[', '];');
   let cursor = -1;

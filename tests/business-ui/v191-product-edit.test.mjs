@@ -45,13 +45,17 @@ test('a brand colour that cannot be used says so instead of silently changing', 
   // Owner: "changed colour but nothing shows". The colour saved (#F5EC00 is in production) but
   // the customer hero paints white text on it, so contrastSafeBrandColor substituted the
   // fallback with no explanation anywhere.
+  // V336 (owner: "some colours are not being recognised — every company have their unique
+  // colour"): the fixed universal fallback is gone — the colour is now darkened toward the
+  // owner's own choice instead of replaced, so the message says "darken", not "pick a darker
+  // shade" (there is no longer a rejected colour to steer the owner away from).
   assert.match(app, /id="programmeColourWarning"/);
   assert.match(app, /const paintProgrammeColourWarning=/);
   const i = app.indexOf('const paintProgrammeColourWarning=');
   const src = app.slice(i, i + 900);
   assert.match(src, /contrastSafeBrandColor\(chosen\)/);
   assert.match(src, /too light for the white title text/);
-  assert.match(src, /Pick a darker shade/);
+  assert.match(src, /Peekaa will darken it slightly/);
   // it must warn while choosing, not only after saving
   assert.match(app, /\$\('programmeHeroColor'\)\.oninput=paintProgrammeColourWarning/);
 });

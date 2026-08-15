@@ -567,7 +567,8 @@ const CUSTOMER_INTERFACE_VIEWS_V296=[
      surface, so the sub-tab goes with the section it named. Nothing customer-side changes: a
      customer still sees their outstanding gift-card balance in the wallet, and no DB object —
      businesses.gift_card_sales_enabled included — is touched by this. */
-  ['interface','Customer Sign-up & fields','#/customer-interface/interface','customers',6]
+  /* V336 (owner markup, photo 2: "remove & fields"). */
+  ['interface','Customer Sign-up','#/customer-interface/interface','customers',6]
 ];
 /* V334 (owner markup, photo 9: cross out "Preview"/"Done"/"Customer programme"). Menu-only —
    the owner's answer was "just hide from nav, don't delete routes/code", so the full array above
@@ -34838,11 +34839,15 @@ async function loadWorkspaceLogoEditorV96(){
         ?`<img src="${esc(heroCurrentUrl)}" alt="${esc(heroExisting?.alt_en||`${S.biz.name} cover photo`)}" width="184" height="184">`
         :CUI.icon('business',{size:28});
       heroStatus.textContent='Maximum 10 MB. Nothing changes until you publish.';
+      /* V336 (owner markup, photo 3: "cover photo added > will replace portion A") — the live
+         preview reads this same <img>, matching the logo control above. */
+      refreshCustomerInterfaceLivePreviewV326();
       return;
     }
     heroPreviewUrl=URL.createObjectURL(file);
     heroPreview.innerHTML=`<img src="${esc(heroPreviewUrl)}" alt="New cover photo preview" width="184" height="184">`;
     heroStatus.textContent='Preview only — publish when this looks right.';
+    refreshCustomerInterfaceLivePreviewV326();
   };
   if(heroPublish)heroPublish.onclick=async()=>{
     const file=heroFileInput.files?.[0];
@@ -34997,10 +35002,13 @@ async function loadCustomerProgrammePresentationEditorV95(){
   };
   /* V191 (owner: "changed colour but nothing shows"). The colour DOES save — Hougang ABC stored
      #F5EC00 — but the customer hero paints white text on it, so contrastSafeBrandColor silently
-     substitutes the brand fallback for anything under 4.5:1. The owner picked yellow, saw it
+     substituted a fixed fallback for anything under 4.5:1. The owner picked yellow, saw it
      accepted, and their customers kept seeing coral with no explanation anywhere.
-     The substitution stays (unreadable copy is worse than a rejected colour) but it is no longer
-     silent: the editor says what customers will actually see, before and after saving. */
+     V336 (owner: "some colours are not being recognised — every company have their unique
+     colour"): the fixed fallback is gone — contrastSafeBrandColor now darkens the OWNER'S OWN
+     colour until it is legible, so every under-contrast pick still reads as that company's own
+     hue rather than collapsing onto the same shared coral. This message still says so, before and
+     after saving, because the shown value is not byte-identical to what was picked. */
   const paintProgrammeColourWarning=()=>{
     const warning=$('programmeColourWarning'),picker=$('programmeHeroColor');
     if(!warning||!picker)return;
@@ -35010,7 +35018,7 @@ async function loadCustomerProgrammePresentationEditorV95(){
       warning.textContent='Customers will see this colour behind the programme title.';
       warning.style.color='';
     }else{
-      warning.innerHTML=`This colour is too light for the white title text on it, so customers would not be able to read the words. Peekaa will show <b>${esc(effective)}</b> instead. Pick a darker shade to use your own colour.`;
+      warning.innerHTML=`This colour is too light for the white title text on it, so customers would not be able to read the words. Peekaa will darken it slightly to <b>${esc(effective)}</b> so it stays legible.`;
       warning.style.color='var(--amber)';
     }
   };
@@ -36565,10 +36573,15 @@ function customerInterfaceSampleRewardRowsV326(rewardUnit){
 function customerInterfaceLivePreviewMarkupV326(){
   const logoImg=document.querySelector('#workspaceLogoPreviewV96 img');
   const logoUrl=logoImg?.getAttribute('src')||'';
+  /* V336 (owner markup, photo 3: "cover photo added > will replace portion A"). Read the same
+     <img> the cover-photo control itself just updated, exactly like logoUrl above — this is the
+     first time this preview reflects a chosen cover photo at all. */
+  const heroImg=document.querySelector('#workspaceHeroPreviewV334 img');
+  const heroImageUrl=heroImg?.getAttribute('src')||'';
   const name=($('bn')?.value||S.biz.name||'').trim()||'Your business';
   const brandColor=$('bc')?.value||S.biz.brand_color||'#FF6B5E';
   const presentation={
-    locale:normalizeCustomerLocale(customerLocale),logoUrl,heroImageUrl:'',
+    locale:normalizeCustomerLocale(customerLocale),logoUrl,heroImageUrl,
     heroColor:contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(brandColor)?brandColor:'#28212f'),
     name,tagline:'',description:'',balance:77877,unit:'points',
     tier:{current:{label:'Diamond'},basis:'points_earned',metric:77877,tiers:[]},
@@ -36908,13 +36921,59 @@ async function platformPage(){
 }
 
 /* ---------- public customer portal ---------- */
+function relativeLuminanceHexV336(hex){
+  const channels=[1,3,5].map(offset=>parseInt(hex.slice(offset,offset+2),16)/255)
+    .map(channel=>channel<=.04045?channel/12.92:((channel+.055)/1.055)**2.4);
+  return .2126*channels[0]+.7152*channels[1]+.0722*channels[2];
+}
+function hexToHslV336(hex){
+  const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  let h=0,s=0;const l=(max+min)/2;
+  if(max!==min){
+    const d=max-min;
+    s=l>0.5?d/(2-max-min):d/(max+min);
+    if(max===r)h=(g-b)/d+(g<b?6:0);
+    else if(max===g)h=(b-r)/d+2;
+    else h=(r-g)/d+4;
+    h/=6;
+  }
+  return [h,s,l];
+}
+function hslToHexV336(h,s,l){
+  const hue2rgb=(p,q,t)=>{
+    if(t<0)t+=1;if(t>1)t-=1;
+    if(t<1/6)return p+(q-p)*6*t;
+    if(t<1/2)return q;
+    if(t<2/3)return p+(q-p)*(2/3-t)*6;
+    return p;
+  };
+  let r,g,b;
+  if(s===0){r=g=b=l}
+  else{
+    const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;
+    r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);
+  }
+  const toHex=v=>Math.round(Math.max(0,Math.min(1,v))*255).toString(16).padStart(2,'0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
+/* V336 (owner: "brand colour some colours are not being recognised — every company have their
+   unique colour"). Before this, any chosen colour under 4.5:1 white-text contrast was silently
+   swapped for the SAME fixed coral fallback — every under-contrast colour collapsed onto one
+   identical header, which is the opposite of "unique colour per company" the owner wants.
+   Darkening the OWNER'S OWN hue/saturation until it clears 4.5:1 keeps every company's colour
+   choice visually distinct while still being legible under the white title text. */
 function contrastSafeBrandColor(value){
   const fallback='#C24135';
   if(!/^#[0-9A-Fa-f]{6}$/.test(value||''))return fallback;
-  const channels=[1,3,5].map(offset=>parseInt(value.slice(offset,offset+2),16)/255)
-    .map(channel=>channel<=.04045?channel/12.92:((channel+.055)/1.055)**2.4);
-  const luminance=.2126*channels[0]+.7152*channels[1]+.0722*channels[2];
-  return 1.05/(luminance+.05)>=4.5?value.toUpperCase():fallback;
+  const hex=value.toUpperCase();
+  if(1.05/(relativeLuminanceHexV336(hex)+.05)>=4.5)return hex;
+  const [h,s,l]=hexToHslV336(hex);
+  for(let step=1;step<=40;step++){
+    const candidate=hslToHexV336(h,s,Math.max(0,l-(l*step)/40));
+    if(1.05/(relativeLuminanceHexV336(candidate)+.05)>=4.5)return candidate;
+  }
+  return fallback;
 }
 function prefillEmptyPortalDetails({profile=null,user=null}={}){
   const name=$('pn'),phone=$('pp'),email=$('pe'),country=$('ppcc');

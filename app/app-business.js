@@ -122,7 +122,8 @@ const CUSTOMER_INTERFACE_VIEWS_V296=[
      surface, so the sub-tab goes with the section it named. Nothing customer-side changes: a
      customer still sees their outstanding gift-card balance in the wallet, and no DB object —
      businesses.gift_card_sales_enabled included — is touched by this. */
-  ['interface','Customer Sign-up & fields','#/customer-interface/interface','customers',6]
+  /* V336 (owner markup, photo 2: "remove & fields"). */
+  ['interface','Customer Sign-up','#/customer-interface/interface','customers',6]
 ];
 /* V334 (owner markup, photo 9: cross out "Preview"/"Done"/"Customer programme"). Menu-only —
    the owner's answer was "just hide from nav, don't delete routes/code", so the full array above
@@ -24072,11 +24073,15 @@ async function loadWorkspaceLogoEditorV96(){
         ?`<img src="${esc(heroCurrentUrl)}" alt="${esc(heroExisting?.alt_en||`${S.biz.name} cover photo`)}" width="184" height="184">`
         :CUI.icon('business',{size:28});
       heroStatus.textContent='Maximum 10 MB. Nothing changes until you publish.';
+      /* V336 (owner markup, photo 3: "cover photo added > will replace portion A") — the live
+         preview reads this same <img>, matching the logo control above. */
+      refreshCustomerInterfaceLivePreviewV326();
       return;
     }
     heroPreviewUrl=URL.createObjectURL(file);
     heroPreview.innerHTML=`<img src="${esc(heroPreviewUrl)}" alt="New cover photo preview" width="184" height="184">`;
     heroStatus.textContent='Preview only — publish when this looks right.';
+    refreshCustomerInterfaceLivePreviewV326();
   };
   if(heroPublish)heroPublish.onclick=async()=>{
     const file=heroFileInput.files?.[0];
@@ -24231,10 +24236,13 @@ async function loadCustomerProgrammePresentationEditorV95(){
   };
   /* V191 (owner: "changed colour but nothing shows"). The colour DOES save — Hougang ABC stored
      #F5EC00 — but the customer hero paints white text on it, so contrastSafeBrandColor silently
-     substitutes the brand fallback for anything under 4.5:1. The owner picked yellow, saw it
+     substituted a fixed fallback for anything under 4.5:1. The owner picked yellow, saw it
      accepted, and their customers kept seeing coral with no explanation anywhere.
-     The substitution stays (unreadable copy is worse than a rejected colour) but it is no longer
-     silent: the editor says what customers will actually see, before and after saving. */
+     V336 (owner: "some colours are not being recognised — every company have their unique
+     colour"): the fixed fallback is gone — contrastSafeBrandColor now darkens the OWNER'S OWN
+     colour until it is legible, so every under-contrast pick still reads as that company's own
+     hue rather than collapsing onto the same shared coral. This message still says so, before and
+     after saving, because the shown value is not byte-identical to what was picked. */
   const paintProgrammeColourWarning=()=>{
     const warning=$('programmeColourWarning'),picker=$('programmeHeroColor');
     if(!warning||!picker)return;
@@ -24244,7 +24252,7 @@ async function loadCustomerProgrammePresentationEditorV95(){
       warning.textContent='Customers will see this colour behind the programme title.';
       warning.style.color='';
     }else{
-      warning.innerHTML=`This colour is too light for the white title text on it, so customers would not be able to read the words. Peekaa will show <b>${esc(effective)}</b> instead. Pick a darker shade to use your own colour.`;
+      warning.innerHTML=`This colour is too light for the white title text on it, so customers would not be able to read the words. Peekaa will darken it slightly to <b>${esc(effective)}</b> so it stays legible.`;
       warning.style.color='var(--amber)';
     }
   };
@@ -25755,10 +25763,15 @@ function customerInterfaceSampleRewardRowsV326(rewardUnit){
 function customerInterfaceLivePreviewMarkupV326(){
   const logoImg=document.querySelector('#workspaceLogoPreviewV96 img');
   const logoUrl=logoImg?.getAttribute('src')||'';
+  /* V336 (owner markup, photo 3: "cover photo added > will replace portion A"). Read the same
+     <img> the cover-photo control itself just updated, exactly like logoUrl above — this is the
+     first time this preview reflects a chosen cover photo at all. */
+  const heroImg=document.querySelector('#workspaceHeroPreviewV334 img');
+  const heroImageUrl=heroImg?.getAttribute('src')||'';
   const name=($('bn')?.value||S.biz.name||'').trim()||'Your business';
   const brandColor=$('bc')?.value||S.biz.brand_color||'#FF6B5E';
   const presentation={
-    locale:normalizeCustomerLocale(customerLocale),logoUrl,heroImageUrl:'',
+    locale:normalizeCustomerLocale(customerLocale),logoUrl,heroImageUrl,
     heroColor:contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(brandColor)?brandColor:'#28212f'),
     name,tagline:'',description:'',balance:77877,unit:'points',
     tier:{current:{label:'Diamond'},basis:'points_earned',metric:77877,tiers:[]},
