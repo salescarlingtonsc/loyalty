@@ -731,9 +731,19 @@ let growPointsRewardTabV324='published';
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
-let growPointsAddDraftV326={name:'',points:''};
+let growPointsAddDraftV326={name:'',points:'',description:''};
 let growPointsErrorV326='';
 let growPointsBusyV326=false;
+/* V343 (owner mockup, photo 4): which gift's Edit form is open, null when it is the "Add a new
+   gift" form instead — the two share one form/state shape, this is the only thing that differs. */
+let growPointsEditingV326=null;
+/* V343: the photo the owner just picked in the (add/edit) form, before Save uploads it. A File
+   object = a new photo chosen this session; null = none chosen (edit keeps whatever the reward
+   already had; add starts with no photo). Distinct from "remove the existing photo", which is
+   growPointsRemovePhotoV343 below — three states, same reasoning the deep editor's reward photo
+   control already uses (see rewardImageRefDraftV340's own comment). */
+let growPointsPhotoFileV343=null;
+let growPointsRemovePhotoV343=false;
 /* V331 — the same shape as the V326 points-page state above, for the new #/grow/tiers page. */
 let growTiersManageTabV331='published';
 let growTiersDeletePendingV331='';
@@ -1307,7 +1317,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';growPointsBusyV326=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';growTiersBusyV331=false;
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';growTiersBusyV331=false;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -21144,6 +21154,26 @@ function promotionPreviewMarkupV104(item,imageUrl='',business=null){
 function promotionPageCurrentV104(pageRoot,host){
   return Boolean(pageRoot?.isConnected&&host?.contains?.(pageRoot));
 }
+/* V343: the Points System page's own reward-photo upload, same storage path grammar the deep
+   editor's uploadRewardPhotoV340 already uses (business-public bucket, <business_id>/reward/
+   <uuid>.<ext> — a path app.v95_storage_path_owned already names as owner-writable) — kept as a
+   separate top-level function only because uploadRewardPhotoV340 is declared inside a different
+   page's closure and this page cannot reach it. Declared here, above promotionsPage, rather
+   than between promotionsPage and growPage — tests/grow/v104-promotion-retry-safety.test.mjs
+   asserts that whole gap never references S.biz.* directly (it must always go through the one
+   frozen businessId/businessName/businessSlug snapshot promotionsPage itself takes). */
+async function uploadRewardPhotoV326(file){
+  if(!S.biz?.id)throw new Error('Business context is required.');
+  if(!file)throw new Error('Choose a photo first.');
+  const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type];
+  if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
+  if(file.size>10*1024*1024)throw new Error('Use an image under 10 MB.');
+  const objectPath=`${S.biz.id}/reward/${crypto.randomUUID()}.${ext}`;
+  const {error}=await sb.storage.from('business-public')
+    .upload(objectPath,file,{contentType:file.type,upsert:false});
+  if(error)throw new Error(error.message||'The photo could not be uploaded.');
+  return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
+}
 async function promotionsPage(selectedPromotionId=null){
   const host=M();
   const businessId=S.biz.id,businessName=S.biz.name,businessSlug=S.biz.slug,
@@ -22228,7 +22258,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      text is gone from every tile, and the action moves from a bottom "Edit →" link to a small
      round arrow button in the top-right corner (aria-hidden, since the whole tile is one <button>
      already — the action word lives in the tile's own aria-label for assistive tech instead). */
-  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}"><span class="grow-topic-tile-corner-v335" aria-hidden="true">${CUI.icon('forward',{size:16})}</span><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b></button>`;
+  /* V343 (owner markup: "photo 1 change to become photo 2") — the square tile grid becomes a
+     compact row list: icon, name, status pill inline, chevron trailing. Same button, same
+     data-grow-topic-v229/aria-label wiring, only the layout class and markup shape changed. */
+  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-row-v343${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:20})}</span><span class="grow-topic-row-name-v343"><b>${esc(topic.title)}</b></span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><span class="grow-topic-tile-corner-v335" aria-hidden="true">${CUI.icon('forward',{size:16})}</span></button>`;
   /* ============ V322 — OWNER RULING R6: THE SEPARATE ON/OFF CONTROL ==========================
      "if i unselect the program does not mean i want to turn off (i need a seperate button) — it
      just means i do not want to edit the rewards at this point in time"
@@ -22658,17 +22691,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     .sort((a,b)=>Number(b.sort||0)-Number(a.sort||0));
   const growPointsOnV326=programmeSpineOnV314(growPointsSpineKindV326)===true;
   const growPointsLosingV326=growPointsOnV326?[]:programmeExclusionsV322(growPointsSpineKindV326).filter(other=>programmeSpineOnV314(other)===true);
+  /* V343 (owner mockup, photo 4): each gift is now a card — photo, name, "Gift · N points ·
+     Added <date>" meta, description, then the ON/OFF pill + Edit + Delete on the right. Edit and
+     Delete stay two plain buttons rather than a single "..." overflow menu — same two actions,
+     no new menu-open/close/outside-click component to get wrong for this pass. */
   const growPointsGiftRowV326=(reward,{history=false}={})=>{
     const name=reward.customer_name||reward.name||'Gift';
     const points=Math.max(0,Number(reward.cost_points||0));
     const dateText=promotionDateShortV324(reward.created_at);
-    const meta=`<span><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content> · ${points} ${growPointsUnitV326}${points===1?'':'s'}</span>${dateText?`<span class="muted small"> · Added ${esc(dateText)}</span>`:''}</span>`;
-    if(history)return `<li data-grow-points-giftrow-v326="${esc(reward.id)}">${meta}<span class="pill off">In history</span></li>`;
+    const photoUrl=customerMediaUrlV95(reward.image_ref);
+    const thumb=`<span class="grow-points-gift-thumb-v343"${photoUrl?'':' data-empty="1"'}>${photoUrl?`<img src="${esc(photoUrl)}" alt="" loading="lazy">`:CUI.icon('redeem',{size:22})}</span>`;
+    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('redeem',{size:12})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
+    if(history)return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}<span class="pill off">In history</span></li>`;
     const paused=reward.paused===true;
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);
-    return `<li data-grow-points-giftrow-v326="${esc(reward.id)}">${meta}
+    return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
+        <button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
         <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`
         :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${paused?'OFF':'ON'}</span>`}
       </span></li>
@@ -22678,15 +22718,37 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-gift-delete-yes-v326="${esc(reward.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-points-gift-delete-no-v326="1">Cancel</button></div>
       </li>`;
   };
+  /* V343: the same form now serves BOTH Add and Edit (growPointsEditingV326 null = add), with a
+     description field and a photo control matching the deep editor's own reward-photo pattern
+     (uploadRewardPhotoV326 below — same storage path grammar, same three-state photo contract). */
+  const growPointsEditingRewardV343=growPointsEditingV326?growPointsScopedRewardsV326.find(r=>String(r.id)===String(growPointsEditingV326)):null;
+  const growPointsCurrentPhotoUrlV343=!growPointsRemovePhotoV343&&growPointsEditingRewardV343?customerMediaUrlV95(growPointsEditingRewardV343.image_ref):'';
   const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<li class="imp-note" data-grow-points-addform-v326>
-    <b>Add a gift</b>
+    <b>${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growPointsAddNameV326">Name</label><br><input id="growPointsAddNameV326" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growPointsAddDraftV326.name)}" placeholder="e.g. Lotion"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddPointsV326">${growPointsIsStampsV326?'Stamps':'Points'}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" style="width:100%;max-width:420px" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
+    <p class="grow-setup-sentence-v301">
+      <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
+      ${growPointsPhotoFileV343?`<span class="muted small">New photo selected — saved when you press Save.</span>`
+        :growPointsCurrentPhotoUrlV343?`<img src="${esc(growPointsCurrentPhotoUrlV343)}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px">`
+        :'<span class="muted small">No photo yet — customers see a gift icon.</span>'}
+      <br><label class="btn ghost sm service-photo-uploader-v158" style="margin-top:6px">Choose photo<input id="growPointsPhotoInputV343" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload gift photo"></label>
+      ${growPointsCurrentPhotoUrlV343||growPointsPhotoFileV343?` <button type="button" class="btn ghost sm" id="growPointsPhotoRemoveV343" style="margin-top:6px">Remove photo</button>`:''}
+    </p>
     ${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>Save gift</button><button type="button" class="btn ghost sm" data-grow-points-add-cancel-v326="1">Cancel</button></div>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button><button type="button" class="btn ghost sm" data-grow-points-add-cancel-v326="1">Cancel</button></div>
   </li>`:growPointsAddOpenV326==='prompt'?`<li class="imp-note" data-grow-points-addprompt-v326>
     <b>Gift saved and live for customers.</b>
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-again-v326="1">Add another gift</button><button type="button" class="btn ghost sm" data-grow-points-add-done-v326="1">Done</button></div>
+  </li>`:'';
+  /* V343 (owner mockup, photo 4): a dashed placeholder card at the foot of the gift list, the
+     same "Add a new gift" affordance the mockup shows — opens the SAME form/handler the header's
+     own "Add gifts" button already does. */
+  const growPointsAddCardV343=canSetupGrow&&growPointsManageTabV326==='published'&&growPointsAddOpenV326===''?`<li class="grow-points-add-card-v343" data-grow-points-add-v326="1" role="button" tabindex="0">
+    <span class="grow-points-add-card-icon-v343" aria-hidden="true">${CUI.icon('add',{size:20})}</span>
+    <b>Add a new gift</b>
+    <span class="muted small">Create new gifts for your customers to redeem with ${growPointsUnitV326}s.</span>
   </li>`:'';
   const growPointsTabStripV326=`<div class="v150-segment" role="group" aria-label="Gift status" data-grow-points-tabstrip-v326>
     <button type="button" aria-pressed="${growPointsManageTabV326==='published'}" data-grow-points-manage-tab-v326="published">Published${growPointsPublishedV326.length?` (${growPointsPublishedV326.length})`:''}</button>
@@ -22705,12 +22767,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ?`<button type="button" class="btn sm" id="growPointsSetupV326">Set up ${growPointsPageTitleV326}</button>`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<ul class="grow-setup-rewardlist-v301" data-grow-points-summary-v326>
+        <!-- V343 (owner mockup, photo 4): the summary row, Edit/Add gifts/ON-OFF and the
+             Published/History tab strip now sit in ONE header row, "Edit" reads "Edit settings"
+             to distinguish it from the per-gift Edit buttons below. -->
         <li data-grow-points-header-v326><span><b>${esc(growPointsRowLabelV326)}</b><p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit</button>
+            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
             <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">Add gifts</button>
             <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
             :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
+            <span class="spacer"></span>
+            ${growPointsTabStripV326}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
           <b>${growPointsOnV326?`Turn ${esc(growPointsRowLabelV326)} off for customers?`:`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
@@ -22724,11 +22791,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growPointsAddFormV326}
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
-      ${growPointsTabStripV326}
+      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">These gifts are available for your customers to redeem with their ${growPointsUnitV326}s.</p></div>`:''}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-points-giftlist-v326>
         ${growPointsManageTabV326==='published'
-          ?(growPointsPublishedV326.length?growPointsPublishedV326.map(reward=>growPointsGiftRowV326(reward)).join(''):'<li class="muted small" style="cursor:default">No gift yet — add one above.</li>')
+          ?(growPointsPublishedV326.length?growPointsPublishedV326.map(reward=>growPointsGiftRowV326(reward)).join(''):'<li class="muted small" style="cursor:default">No gift yet — add one below.</li>')
           :(growPointsHistoryV326.length?growPointsHistoryV326.map(reward=>growPointsGiftRowV326(reward,{history:true})).join(''):'<li class="muted small" style="cursor:default">Nothing has been deleted yet.</li>')}
+        ${growPointsAddCardV343}
       </ul>`;
   /* ============ V331 — TIERED MEMBERSHIP: A FULL PARALLEL IMMEDIATE-WRITE PAGE ================
      Owner ruling ("proceed all at once", 2026-08-15): NOT a read-only view over the existing
@@ -22948,7 +23016,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            standalone page's H1 now IS that page's own name, not the module's, so it stops saying
            its name twice — the h2 below drops the now-duplicate title text for these same views
            (see the h2 change further down), keeping only the back button and any blurb. */''}
-      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1></div>
+      <!-- V343 (owner markup, photo 2): the Rewards Programme list page gains a one-line
+           subtitle under the H1, matching the mockup. Only that one view — the others already
+           carry their own subtitle/blurb further down (blurb for a drilled tile, "Current
+           setting: ..." for Points System, etc.), so a second one here would repeat it. -->
+      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Manage and customise your rewards, tiers and member benefits.</p>':''}</div>
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
@@ -23657,19 +23729,40 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     pendingGrowSetupRewardV303={mode:'earning',kind:growPointsSpineKindV326};
     nav('#/grow/setup');
   };
-  const growPointsAddOpen=outerMain.querySelector('[data-grow-points-add-v326]');
-  if(growPointsAddOpen)growPointsAddOpen.onclick=()=>{
-    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';
+  /* V343: two elements can now carry data-grow-points-add-v326 — the header's own "Add gifts"
+     button and the dashed "Add a new gift" card at the foot of the list — so this wires ALL of
+     them (querySelectorAll, not the single-match querySelector it used to be). */
+  outerMain.querySelectorAll('[data-grow-points-add-v326]').forEach(el=>{
+    const openAddForm=()=>{
+      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
+      growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
+      growRerenderV322({quiet:true});
+    };
+    el.onclick=openAddForm;
+    if(el.tagName!=='BUTTON')el.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openAddForm()}};
+  });
+  /* V343 (owner mockup, photo 4): each gift row's own Edit button opens the SAME form,
+     pre-filled, targeting business_update_reward_v326 instead of the create RPC on Save. */
+  outerMain.querySelectorAll('[data-grow-points-gift-edit-v343]').forEach(button=>button.onclick=()=>{
+    const id=button.dataset.growPointsGiftEditV343;
+    const reward=growPointsScopedRewardsV326.find(r=>String(r.id)===String(id));
+    if(!reward)return;
+    growPointsEditingV326=id;
+    growPointsAddOpenV326='form';
+    growPointsAddDraftV326={name:reward.customer_name||reward.name||'',points:String(reward.cost_points||''),description:reward.description||''};
+    growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
-  };
+  });
   const growPointsAddCancel=outerMain.querySelector('[data-grow-points-add-cancel-v326]');
   if(growPointsAddCancel)growPointsAddCancel.onclick=()=>{
-    growPointsAddOpenV326='';growPointsErrorV326='';
+    growPointsAddOpenV326='';growPointsErrorV326='';growPointsEditingV326=null;
+    growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
     growRerenderV322({quiet:true});
   };
   const growPointsAddAgain=outerMain.querySelector('[data-grow-points-add-again-v326]');
   if(growPointsAddAgain)growPointsAddAgain.onclick=()=>{
-    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';
+    growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
+    growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   };
   const growPointsAddDone=outerMain.querySelector('[data-grow-points-add-done-v326]');
@@ -23677,25 +23770,64 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsAddOpenV326='';
     growRerenderV322({quiet:true});
   };
+  const growPointsPhotoInput=outerMain.querySelector('[data-grow-points-addform-v326] #growPointsPhotoInputV343');
+  if(growPointsPhotoInput)growPointsPhotoInput.onchange=()=>{
+    const file=growPointsPhotoInput.files?.[0];
+    if(!file)return;
+    growPointsPhotoFileV343=file;growPointsRemovePhotoV343=false;
+    growRerenderV322({quiet:true});
+  };
+  const growPointsPhotoRemove=outerMain.querySelector('[data-grow-points-addform-v326] #growPointsPhotoRemoveV343');
+  if(growPointsPhotoRemove)growPointsPhotoRemove.onclick=()=>{
+    growPointsPhotoFileV343=null;growPointsRemovePhotoV343=true;
+    growRerenderV322({quiet:true});
+  };
   const growPointsAddSave=outerMain.querySelector('[data-grow-points-add-save-v326]');
   if(growPointsAddSave)growPointsAddSave.onclick=async()=>{
     if(growPointsBusyV326)return;
-    const nameField=$('growPointsAddNameV326'),pointsField=$('growPointsAddPointsV326');
+    const nameField=$('growPointsAddNameV326'),pointsField=$('growPointsAddPointsV326'),descField=$('growPointsAddDescV343');
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
-    growPointsAddDraftV326={name,points:pointsField?.value||''};
+    const description=String(descField?.value||'').trim();
+    growPointsAddDraftV326={name,points:pointsField?.value||'',description};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
-    const spineId=growPointsSpineIdV326;
-    if(!spineId){growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
-    const {error}=await sb.rpc('business_create_reward_v326',{
-      p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0});
+    /* V343: upload a newly-chosen photo before the RPC call, same storage path grammar the deep
+       editor's own reward-photo control already uses (uploadRewardPhotoV326 below). */
+    let imageRef;
+    if(growPointsPhotoFileV343){
+      try{imageRef=await uploadRewardPhotoV326(growPointsPhotoFileV343)}
+      catch(uploadError){
+        growPointsBusyV326=false;growPointsErrorV326=uploadError?.message||'The photo could not be uploaded.';
+        return growRerenderV322({quiet:true});
+      }
+      if(!isGrowCurrent())return;
+    }
+    let error;
+    if(growPointsEditingV326){
+      ({error}=await sb.rpc('business_update_reward_v326',{
+        p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
+        p_description:description||null,p_credit_cents:0,
+        p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef}));
+    }else{
+      const spineId=growPointsSpineIdV326;
+      if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
+      ({error}=await sb.rpc('business_create_reward_v326',{
+        p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
+        p_description:description||null,p_image_ref:imageRef||null}));
+    }
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
-    toast('Gift added and live for customers');
-    growPointsAddOpenV326='prompt';
+    growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
+    if(growPointsEditingV326){
+      growPointsEditingV326=null;growPointsAddOpenV326='';
+      toast('Gift updated');
+    }else{
+      toast('Gift added and live for customers');
+      growPointsAddOpenV326='prompt';
+    }
     growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-points-gift-toggle-v326]').forEach(button=>button.onclick=async()=>{

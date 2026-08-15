@@ -28,7 +28,9 @@ test('V334 the overview is five topic tiles, and drilling in is the only way to 
      thing this line actually protects — is unchanged. */
   assert.match(app, /\$\{growTilesModeV229\?growTilesHtmlV229:''\}/);
   assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
-  assert.match(shell, /\.grow-topic-tiles-v229\{display:grid/);
+  /* V343 (owner markup: "photo 1 change to become photo 2"): the square-tile grid became a
+     compact row list, one row per programme, inside its group's card border. */
+  assert.match(shell, /\.grow-topic-tiles-v229\{display:flex;flex-direction:column/);
   // Tiles only exist on the default list view; Ongoing / To set up stay flat lists.
   assert.match(app, /const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;/);
   assert.match(app, /if\(programmeView!=='list'\)growTopicV229='';/);

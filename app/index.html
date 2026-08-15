@@ -115,6 +115,17 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:#E7F6EE;color:var(--green)}
 .pill-toggle-v334.off{background:#FBEAE7;color:var(--red)}
+/* V343 (owner mockup, photo 4): each gift on the Points System page is now a card — photo,
+   name/meta/description, then its own controls — instead of a single text line. */
+.grow-points-gift-card-v343{display:flex;align-items:center;gap:14px;padding:12px 0}
+.grow-points-gift-thumb-v343{flex-shrink:0;width:56px;height:56px;border-radius:14px;background:var(--tint);color:var(--coral);display:grid;place-items:center;overflow:hidden}
+.grow-points-gift-thumb-v343 img{width:100%;height:100%;object-fit:cover}
+.grow-points-gift-body-v343{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.grow-points-gift-body-v343>b{font-size:.98rem}
+.grow-points-gift-desc-v343{margin-top:2px}
+.grow-points-add-card-v343{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;border:1.5px dashed var(--line);border-radius:var(--r-sm);padding:20px 16px;cursor:pointer;color:inherit;background:transparent}
+.grow-points-add-card-v343:hover{background:var(--tint);border-color:var(--coral)}
+.grow-points-add-card-icon-v343{width:34px;height:34px;border-radius:50%;background:var(--tint);color:var(--coral);display:grid;place-items:center}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -1077,9 +1088,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    width — identical to the header's — regardless of how many badges or buttons a given
    teammate has, and removes the possibility of the two ever touching. */
 .staff-row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px}
-/* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
-   grid of topic tiles; each drills into its own detail list. */
-.grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
+/* V229 (owner: "square boxes for each topics then press in"). The Programmes overview was a
+   grid of topic tiles; each still drills into its own detail list.
+   V343 (owner markup: "photo 1 change to become photo 2") — the grid became a compact row
+   list, one row per programme, hairline-separated inside its group card. */
+.grow-topic-tiles-v229{display:flex;flex-direction:column;margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.grow-topic-row-v343{position:relative;display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:none;border-bottom:1px solid var(--line);padding:14px 16px;cursor:pointer;color:inherit}
+.grow-topic-row-v343:last-child{border-bottom:none}
+.grow-topic-row-v343:hover{background:var(--tint)}
+.grow-topic-row-v343.grow-topic-tile-pending-v244{background:#fff}
+.grow-topic-row-name-v343{flex:1 1 auto;min-width:0}
+.grow-topic-row-name-v343 b{font-size:1rem;letter-spacing:-.01em}
+.grow-topic-row-v343 .grow-topic-tile-corner-v335{position:static;flex-shrink:0}
 /* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious.
    V339 (owner markup: "separate into two boxes") — each group is now its own card, not two
    sections sharing the page's outer card. */
@@ -2386,7 +2406,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=8c826b909455","business":"/app-business.js?b=b529c84ca1d3","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=8c826b909455","business":"/app-business.js?b=333207817c9a","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -2410,6 +2430,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=5c9ccdf0b18a" defer></script>
+<script src="/app-core.js?b=6a1f39a75c94" defer></script>
 </body>
 </html>

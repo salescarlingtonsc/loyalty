@@ -449,9 +449,19 @@ let growPointsRewardTabV324='published';
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
-let growPointsAddDraftV326={name:'',points:''};
+let growPointsAddDraftV326={name:'',points:'',description:''};
 let growPointsErrorV326='';
 let growPointsBusyV326=false;
+/* V343 (owner mockup, photo 4): which gift's Edit form is open, null when it is the "Add a new
+   gift" form instead — the two share one form/state shape, this is the only thing that differs. */
+let growPointsEditingV326=null;
+/* V343: the photo the owner just picked in the (add/edit) form, before Save uploads it. A File
+   object = a new photo chosen this session; null = none chosen (edit keeps whatever the reward
+   already had; add starts with no photo). Distinct from "remove the existing photo", which is
+   growPointsRemovePhotoV343 below — three states, same reasoning the deep editor's reward photo
+   control already uses (see rewardImageRefDraftV340's own comment). */
+let growPointsPhotoFileV343=null;
+let growPointsRemovePhotoV343=false;
 /* V331 — the same shape as the V326 points-page state above, for the new #/grow/tiers page. */
 let growTiersManageTabV331='published';
 let growTiersDeletePendingV331='';
@@ -790,7 +800,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';growPointsBusyV326=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';growTiersBusyV331=false;
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';growTiersBusyV331=false;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';

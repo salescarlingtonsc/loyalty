@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="91a967fca9794e04aaed36577bb6d2af0afc3c5d7e56b2984e251888a5b2e5eb">
+<meta name="v104-production-source-sha256" content="7bd0876e784c6bc6ba8b1af2e974c6df18b564fa7badd5b26ccc1bca4f57d2ec">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -91,6 +91,17 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:#E7F6EE;color:var(--green)}
 .pill-toggle-v334.off{background:#FBEAE7;color:var(--red)}
+/* V343 (owner mockup, photo 4): each gift on the Points System page is now a card — photo,
+   name/meta/description, then its own controls — instead of a single text line. */
+.grow-points-gift-card-v343{display:flex;align-items:center;gap:14px;padding:12px 0}
+.grow-points-gift-thumb-v343{flex-shrink:0;width:56px;height:56px;border-radius:14px;background:var(--tint);color:var(--coral);display:grid;place-items:center;overflow:hidden}
+.grow-points-gift-thumb-v343 img{width:100%;height:100%;object-fit:cover}
+.grow-points-gift-body-v343{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.grow-points-gift-body-v343>b{font-size:.98rem}
+.grow-points-gift-desc-v343{margin-top:2px}
+.grow-points-add-card-v343{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;border:1.5px dashed var(--line);border-radius:var(--r-sm);padding:20px 16px;cursor:pointer;color:inherit;background:transparent}
+.grow-points-add-card-v343:hover{background:var(--tint);border-color:var(--coral)}
+.grow-points-add-card-icon-v343{width:34px;height:34px;border-radius:50%;background:var(--tint);color:var(--coral);display:grid;place-items:center}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -1053,9 +1064,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    width — identical to the header's — regardless of how many badges or buttons a given
    teammate has, and removes the possibility of the two ever touching. */
 .staff-row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px}
-/* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
-   grid of topic tiles; each drills into its own detail list. */
-.grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
+/* V229 (owner: "square boxes for each topics then press in"). The Programmes overview was a
+   grid of topic tiles; each still drills into its own detail list.
+   V343 (owner markup: "photo 1 change to become photo 2") — the grid became a compact row
+   list, one row per programme, hairline-separated inside its group card. */
+.grow-topic-tiles-v229{display:flex;flex-direction:column;margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.grow-topic-row-v343{position:relative;display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:none;border-bottom:1px solid var(--line);padding:14px 16px;cursor:pointer;color:inherit}
+.grow-topic-row-v343:last-child{border-bottom:none}
+.grow-topic-row-v343:hover{background:var(--tint)}
+.grow-topic-row-v343.grow-topic-tile-pending-v244{background:#fff}
+.grow-topic-row-name-v343{flex:1 1 auto;min-width:0}
+.grow-topic-row-name-v343 b{font-size:1rem;letter-spacing:-.01em}
+.grow-topic-row-v343 .grow-topic-tile-corner-v335{position:static;flex-shrink:0}
 /* V244: ongoing vs pending groups. Same tile, grouped so outstanding setup is obvious.
    V339 (owner markup: "separate into two boxes") — each group is now its own card, not two
    sections sharing the page's outer card. */
@@ -2322,7 +2342,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 91a967fca9794e04aaed36577bb6d2af0afc3c5d7e56b2984e251888a5b2e5eb</p>
+  <p class="v104-provenance">Local production-render harness · source 7bd0876e784c6bc6ba8b1af2e974c6df18b564fa7badd5b26ccc1bca4f57d2ec</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2334,7 +2354,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="91a967fca9794e04aaed36577bb6d2af0afc3c5d7e56b2984e251888a5b2e5eb";
+const PRODUCTION_SOURCE_SHA256="7bd0876e784c6bc6ba8b1af2e974c6df18b564fa7badd5b26ccc1bca4f57d2ec";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

@@ -143,8 +143,11 @@ function harness() {
       earningOverviewCopy = 'Current setting: Earn 1 points per SGD 1 spent',
       S = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'points', active: true, id: 'spine-points' }] },
       growSwitchPendingV322 = '', growSwitchErrorV322 = '', growPointsManageTabV326 = 'published',
-      growPointsDeletePendingV326 = '', growPointsAddOpenV326 = '', growPointsAddDraftV326 = { name: '', points: '' },
+      growPointsDeletePendingV326 = '', growPointsAddOpenV326 = '', growPointsAddDraftV326 = { name: '', points: '', description: '' },
       growPointsErrorV326 = '', growPointsBusyV326 = false,
+      // V343: the form now serves edit too, and a gift can carry a photo.
+      growPointsEditingV326 = null, growPointsPhotoFileV343 = null, growPointsRemovePhotoV343 = false,
+      customerMediaUrlV95 = () => '',
     } = opts;
     const src = [
       PROGRAMME_SWITCHES_V314_src, PROGRAMME_KINDS_W6I2_src, programmeSwitchSetV314_src, programmeSpineRowsV314_src,
@@ -156,13 +159,15 @@ function harness() {
       'esc', 'CUI', 'S', 'canRewards', 'canSetupGrow', 'snapshot', 'liveLoyaltyModelKeysV240', 'liveLoyaltyModelV235',
       'earningOverviewCopy', 'growProgrammeSwitchKindsV322', 'growSwitchPendingV322', 'growSwitchErrorV322',
       'growPointsManageTabV326', 'growPointsDeletePendingV326', 'growPointsAddOpenV326', 'growPointsAddDraftV326',
-      'growPointsErrorV326', 'growPointsBusyV326', src
+      'growPointsErrorV326', 'growPointsBusyV326', 'growPointsEditingV326', 'growPointsPhotoFileV343',
+      'growPointsRemovePhotoV343', 'customerMediaUrlV95', src
     );
     const growProgrammeSwitchKindsV322 = [['points', 'Points & gifts'], ['tiers', 'Tier membership'], ['stamps', 'Stamp card'], ['referral', 'Referral']];
     return fn(esc, CUI, S, canRewards, canSetupGrow, { rewards: snapshotRewards }, liveLoyaltyModelKeysV240, liveLoyaltyModelV235,
       earningOverviewCopy, growProgrammeSwitchKindsV322, growSwitchPendingV322, growSwitchErrorV322,
       growPointsManageTabV326, growPointsDeletePendingV326, growPointsAddOpenV326, growPointsAddDraftV326,
-      growPointsErrorV326, growPointsBusyV326);
+      growPointsErrorV326, growPointsBusyV326, growPointsEditingV326, growPointsPhotoFileV343,
+      growPointsRemovePhotoV343, customerMediaUrlV95);
   };
 }
 
@@ -308,9 +313,11 @@ test('V326 gift rows use "stamp"/"stamps" unit wording in stamps mode, "point"/"
   const rewards = [{ id: 'r1', customer_name: 'Free Coffee', cost_points: 1, active: true, paused: false, sort: 1, created_at: '2026-08-01T12:00:00Z', programme_id: 'spine-stamps' }];
   const stampsSpine = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'stamps', active: true, id: 'spine-stamps' }] };
   const stampsHtml = render({ liveLoyaltyModelV235: 'stamps', liveLoyaltyModelKeysV240: ['stamps'], S: stampsSpine, snapshotRewards: rewards }).growPointsManageV326;
-  assert.match(stampsHtml, /1 stamp</, 'singular stamp, not "1 stamps" or "1 point"');
+  /* V343: the gift row became a card, description/date now share one meta line rather than
+     each getting their own trailing </span>, so "1 stamp" is followed by " · Added", not "<". */
+  assert.match(stampsHtml, /Gift · 1 stamp ·/, 'singular stamp, not "1 stamps" or "1 point"');
   const pointsHtml = render({ snapshotRewards: [{ ...rewards[0], programme_id: 'spine-points' }] }).growPointsManageV326;
-  assert.match(pointsHtml, /1 point</, 'points mode keeps "point"/"points" wording, unaffected by the stamps change');
+  assert.match(pointsHtml, /Gift · 1 point ·/, 'points mode keeps "point"/"points" wording, unaffected by the stamps change');
 });
 
 test('V326 scopes the gift list to the live model\'s spine programme_id — dormant rows from a switched-away model never leak through', () => {
@@ -353,7 +360,10 @@ test('V326 the add-gift RPC looks up the spine id for whichever kind is actually
 test('V326 the three new RPCs are called with the exact parameter names the migration declares', () => {
   assert.match(app, /sb\.rpc\('business_set_reward_paused_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:id,p_paused:!want\}\);/);
   assert.match(app, /sb\.rpc\('business_delete_reward_v326',\{p_business:S\.biz\.id,p_reward:id\}\);/);
-  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0\}\);/);
+  /* V343: business_create_reward_v326 gained p_description/p_image_ref (photo 4 — description
+     and photo on the add form); business_update_reward_v326 is the same page's new Edit RPC. */
+  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null\}\)\);/);
+  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef\}\)\);/);
 });
 
 test('V326 pausing/deleting/creating a gift never touches the network on open — only on confirm', () => {
