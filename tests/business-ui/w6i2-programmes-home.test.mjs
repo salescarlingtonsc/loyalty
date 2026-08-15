@@ -195,8 +195,14 @@ test('W6I2 A5 points and stamps can run together, and one version row carries bo
 });
 
 test('W6I2 A6 a tile hands over a programme to turn ON, never a model to switch TO', () => {
-  assert.match(grow, /const growSetupKindForTileW6I2=key=>key==='stamps'\?'stamps':key==='tiers'\?'tiers':'points';/);
-  assert.match(grow, /pendingGrowSetupModelV303=\{kind:growSetupKindForTileW6I2\(tile\.dataset\.growTopicV229\),/);
+  /* V331: the TILE click no longer builds this hand-off at all — points/stamps/tiers each route
+     straight to their own dedicated page (#/grow/points, #/grow/tiers), never through the wizard's
+     growSetupEntryV301 fallback. growSetupKindForTileW6I2 stays defined (its definition is pinned
+     elsewhere, e.g. v301-programmes-setup-wizard.test.mjs) but is no longer called from here; the
+     ON-only, ever-growing kind:from shape it used to produce is now built directly by each page's
+     own Setup/Edit controls instead — asserted by name, not through the retired helper. */
+  assert.match(grow, /pendingGrowSetupModelV303=\{kind:growPointsSpineKindV326,from:growPointsSpineKindV326\};/);
+  assert.match(grow, /pendingGrowSetupModelV303=\{kind:'tiers',from:'tiers'\};/);
   assert.match(wizard, /if\(handoffKindW6I2\)set\[handoffKindW6I2\]=true;/);
   /* ON only. The deleted helper answered "which of four exclusive models is this card", so opening
      the Stamp card tile at a points firm proposed the live points programme off. */

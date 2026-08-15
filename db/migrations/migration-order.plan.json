@@ -1953,6 +1953,18 @@
       "path": "db/migrations/20260815_nestly_v329_membership_plan_lifecycle.sql",
       "semanticVersion": "v329",
       "proposedDeployVersion": "20260815090100"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v331_tier_lifecycle.sql",
+      "semanticVersion": "v331",
+      "proposedDeployVersion": "20260815090200"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v332_retention_program_lifecycle.sql",
+      "semanticVersion": "v332",
+      "proposedDeployVersion": "20260815090300"
     }
   ]
 }

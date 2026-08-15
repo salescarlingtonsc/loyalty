@@ -121,10 +121,10 @@ test('V271 (b) all three views exist, resolve from the hash, and keep the old on
      joins the list; V271's own three views and the two legacy hashes still resolve exactly as
      they did, which is what the assertions below check. */
   assert.match(app,
-    /const programmeView=\['overview','history','offers','points','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
+    /const programmeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
   // A view hash must never be mistaken for an engine deep link (that crashed on the surface map).
   assert.match(app,
-    /const hashParamIsProgrammeView=\['overview','history','offers','points','ongoing','available','settings','setup'\]\.includes/);
+    /const hashParamIsProgrammeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes/);
   // Each view names itself in the heading.
   assert.match(app, /programmeView==='overview'\?'Overview':programmeView==='history'\?'History'/);
 });
@@ -149,7 +149,7 @@ test('V271 (b) the three views are reachable, each with its own linkable hash', 
 test('V271 (b) Overview and History replace the category list rather than stacking on it', () => {
   /* V301: the setup wizard replaces the category list for the same reason Overview and History
      do — showing both would put the same programme on the page twice, under two shapes. */
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers'\]\.includes\(programmeView\);/);
   assert.match(app, /const topicOnV229=key=>!growCategoryViewV271\?false:\(growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229\);/);
   assert.match(grow, /\$\{programmeView==='overview'\?growOverviewTableV271:''\}/);
   assert.match(grow, /\$\{programmeView==='history'\?growHistoryTableV271:''\}/);

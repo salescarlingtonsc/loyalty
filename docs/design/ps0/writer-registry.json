@@ -419,6 +419,34 @@
       "call_site_finding": "none — mirrors business_delete_reward_v326's shape; membership_plans.active already gates both new enrollment (public.enroll_membership) and existing-member renewal continuation (app.run_membership_renewals), so this delete needed no changes to either — see the v329 migration header for the full audit"
     },
     {
+      "id": "browser.rpc:app/app.js:business_set_tier_paused_v331",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_set_tier_paused_v331",
+      "resolves_to": "business_set_tier_paused_v331/3 (owner-only via app.c45_owner_loyalty_write; naturally idempotent — a repeat set to the same paused value is a no-op, checked with IS DISTINCT FROM before the write; a paused tier is excluded from every customer-facing/reward-gating read that resolves live tiers — app.loyalty_tier_for, customer_get_effective_tier_v143, the v176 reward gate, customer_get_business_presentation_v95, customer_portal_capabilities, bar_get_bottle_setup_v278 — same as a deleted one, verified per function)",
+      "call_site_finding": "none — the Tiers page's per-rung on/off; immediate-write on loyalty_tiers.paused, no draft, audit_log'd"
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_delete_tier_v331",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_delete_tier_v331",
+      "resolves_to": "business_delete_tier_v331/2 (owner-only via app.c45_owner_loyalty_write; soft-delete, sets loyalty_tiers.deleted_at=now(), moves the rung to History — never touches customer tier assignment history, only which rung a customer registers as going forward)",
+      "call_site_finding": "none — mirrors business_delete_reward_v326's shape; publish_loyalty_config's delete+reinsert tier mechanism is patched to capture/restore paused/deleted_at across every future publish (not just the one pre-existing draft), so a delete here survives any later publish of any draft; audit_log'd"
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_create_tier_v331",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_create_tier_v331",
+      "resolves_to": "business_create_tier_v331/4 (owner-only via app.c45_owner_loyalty_write; writes both loyalty_tiers AND a matching loyalty_tier_versions row at the business's currently PUBLISHED config version AND any currently-open draft's version — create_loyalty_config_draft clones tiers from the last published loyalty_tier_versions snapshot, not the live table, so a new rung needs both mirrors to survive a later publish of a pre-existing draft)",
+      "call_site_finding": "none — validates non-empty name and non-negative threshold server-side; audit_log'd"
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_delete_retention_program_v332",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_delete_retention_program_v332",
+      "resolves_to": "business_delete_retention_program_v332/2 (owner-only via app.is_salon_owner, the same gate save_retention_program_draft already uses; soft-delete, sets retention_programs.active=false AND deleted_at=now(), moves the Bring-back rule to History; ALSO immediate-write flips active=false on any currently-open draft's own retention_program_versions row, though that write is UI-consistency plumbing, not the enforcement mechanism — see below)",
+      "call_site_finding": "none — the harder landmine this migration closes is that a PUBLISHED retention_program_versions row is immutable (trg_guard_retention_program_version blocks INSERT/UPDATE/DELETE the moment its config_version_id is not a draft), so this delete alone cannot stop app.on_sale_recorded / public.issue_campaign_offer from continuing to grant against the frozen snapshot; both were separately patched to also require the live retention_programs.deleted_at is null, and public.publish_loyalty_config was patched so a later publish of any draft (including one opened before the delete) can never resurrect the `active` flag — see the v332 migration header for the full audit; audit_log'd"
+    },
+    {
       "id": "browser.rpc:app/app.js:record_sv_topup_sale",
       "surface": "browser_rpc_binding",
       "rpc": "record_sv_topup_sale",
@@ -514,7 +542,7 @@
     {
       "id": "db.fn:app.on_sale_recorded/0",
       "surface": "db_trigger_function",
-      "latest_file": "20260813001400_nestly_v311_programme_money_kernel.sql",
+      "latest_file": "20260815090300_nestly_v332_retention_program_lifecycle.sql",
       "rows_written": "credit_ledger:INSERT, points_batches:INSERT, points_ledger:INSERT, reward_grants:INSERT",
       "detected_signals": "idem-signal, config-version, sale-policy, effective-branch-module",
       "loyalty_boundary": "V121 permits a new points/stamps earn only when app.effective_platform_module_mode_v94(sale.business_id,sale.branch_id,'loyalty') resolves exactly rw. Disabled or read-only Loyalty preserves the sale, visit/retention processing and existing balances but creates no new points_ledger or points_batches earn.",
@@ -786,12 +814,12 @@
     {
       "id": "db.fn:public.issue_campaign_offer/6",
       "surface": "db_function",
-      "latest_file": "20260729130000_nestly_v99_campaign_truth.sql",
+      "latest_file": "20260815090300_nestly_v332_retention_program_lifecycle.sql",
       "rows_written": "reward_grants:INSERT, retention_campaign_grants:INSERT/UPDATE, audit_log:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "issue_campaign_offer(...)",
       "callers": "browser issue_campaign_offer",
-      "reads": "retention_campaigns, retention_campaign_members, retention_program_versions, firm_config_versions, businesses",
+      "reads": "retention_campaigns, retention_campaign_members, retention_program_versions, retention_programs, firm_config_versions, businesses",
       "idempotency": "business key advisory lock + immutable request hash + campaign/member uniqueness",
       "locking": "business/key advisory + campaign FOR UPDATE",
       "loyalty": "atomically creates the exact active-published treatment reward_grant and links it to retention_campaign_grants; no points/credit ledger write",

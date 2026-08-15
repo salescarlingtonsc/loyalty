@@ -152,25 +152,32 @@ test('V324 switching reward tabs in the wizard never touches the network', () =>
   assert.match(handler, /render\(\)/);
 });
 
-test('V326 the Points System AND Stamp card tiles no longer arm a wizard step hand-off — they open their own page', () => {
+test('V326/V331 the Points, Stamp card AND Tiered membership tiles no longer arm a wizard step hand-off — they open their own pages', () => {
   /* SUPERSEDES the old "arms a step hand-off, not just a model one" fix (V324, commit c1fd58c):
      that fix landed the wizard on the Gifts step because the tile still opened the wizard. Owner
      ruling 2026-08-15 ("Photo 3 always, with an empty state") replaced the destination entirely —
      the points tile now opens #/grow/points unconditionally, live or not, first-time or not, and
      never touches pendingGrowSetupModelV303/pendingGrowSetupRewardV303 at click time. Those
-     hand-offs still exist (the page's own "edit" link and the empty-state "Set up" CTA use them),
+     hand-offs still exist (each page's own "edit" link and empty-state "Set up" CTA use them),
      just not from this click.
      V326 "proceed all at once" (same day): the Stamp card tile joins it, reusing the same
      model-aware page rather than a second one — see v326-points-system-page.test.mjs for the
-     stamps-unification coverage (page title, unit wording, spine-kind scoping). */
+     stamps-unification coverage (page title, unit wording, spine-kind scoping).
+     V331 (same "proceed all at once" pass, later the same day): Tiered membership gets its OWN
+     dedicated page (#/grow/tiers) rather than joining the points page — a tier ladder is an
+     ordered list of rungs, a genuinely different shape from independent gifts — see
+     v331-tier-lifecycle.test.mjs. growSetupEntryV301's ['points','stamps','tiers'] list now has no
+     card left that reaches the old wizard-entry branch, so that branch (and the
+     growSetupKindForTileW6I2 hand-off it built) is gone from this handler entirely — verified below
+     by its absence, not by an ordering check against a still-present fallback. */
   const handler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-topic-v229]')"),
     code.indexOf("growTopicV229=tile.dataset.growTopicV229;"));
   assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\|\|tile\.dataset\.growTopicV229==='stamps'\)return nav\('#\/grow\/points'\);/);
-  // ...and that check runs BEFORE growSetupEntryV301 is ever consulted for the pressed tile.
-  const pointsCheckIndex = handler.indexOf("tile.dataset.growTopicV229==='points'");
-  const entryCheckIndex = handler.indexOf('growSetupEntryV301(tile.dataset.growTopicV229)');
-  assert.ok(pointsCheckIndex >= 0 && entryCheckIndex > pointsCheckIndex,
-    'points must be handled before falling through to the wizard-entry branch');
+  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='tiers'\)return nav\('#\/grow\/tiers'\);/);
+  // growSetupEntryV301 (the wizard-entry gate) is no longer consulted anywhere in this handler —
+  // every key it would ever return true for (points/stamps/tiers) is handled explicitly above it.
+  assert.doesNotMatch(handler, /growSetupEntryV301\(tile\.dataset\.growTopicV229\)/,
+    'the wizard-entry branch this handler used to fall through to must stay removed');
   assert.doesNotMatch(handler, /growTopicOngoingV244\(topicPressedV324\)&&growSetupKindForTileW6I2/,
     'the old ongoing+points step hand-off no longer belongs at the tile click site');
 });

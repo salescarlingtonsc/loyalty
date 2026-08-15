@@ -727,6 +727,13 @@ let growPointsAddOpenV326='';
 let growPointsAddDraftV326={name:'',points:''};
 let growPointsErrorV326='';
 let growPointsBusyV326=false;
+/* V331 — the same shape as the V326 points-page state above, for the new #/grow/tiers page. */
+let growTiersManageTabV331='published';
+let growTiersDeletePendingV331='';
+let growTiersAddOpenV331='';
+let growTiersAddDraftV331={name:'',threshold:''};
+let growTiersErrorV331='';
+let growTiersBusyV331=false;
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -1293,7 +1300,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';growPointsBusyV326=false;
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';growPointsBusyV326=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';growTiersBusyV331=false;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -19625,9 +19632,18 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     }
     programs=draft?.programs||[];taxonomy=draft?.taxonomy||[];snapshotHash=draft?.snapshot_hash||null;
   }else{
+    /* V332: a deleted program is deliberately never carried forward by clone_retention_program_
+       versions_on_draft, so publish_loyalty_config's correlated UPDATE finds no matching row for
+       it at the NEXT publish and leaves current_config_version_id stale (pointing at whichever
+       version it was last actually part of). The plain current_config_version_id=currentVersion
+       filter below predates that and would silently drop a deleted rule out of History the moment
+       any later, unrelated draft publishes -- so a deleted row is also matched on deleted_at alone,
+       regardless of how stale its current_config_version_id has become. */
     const livePrograms=currentVersion
       ?sb.from('retention_programs').select('*, firm_reward_taxonomy(label,fulfillment_kind,active,sort)')
-        .eq('business_id',S.biz.id).eq('current_config_version_id',currentVersion).order('created_at',{ascending:false})
+        .eq('business_id',S.biz.id)
+        .or(`current_config_version_id.eq.${currentVersion},deleted_at.not.is.null`)
+        .order('created_at',{ascending:false})
       :Promise.resolve({data:[],error:null});
     const [{data:live,error:liveError},{data:types,error:typeError}]=await Promise.all([
       livePrograms,
@@ -19698,14 +19714,12 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       :`<p class="muted small" style="margin-top:8px">${isOwner?'Create an editing draft to add or change rules.':'Only the owner can change retention rules.'}</p>`}
     </div>
     <div class="card"><b>${draftVersionId?'Programs in this draft':'Published programs'}</b><div id="rlist" style="margin-top:8px">
-      ${programs.length?programs.map(r=>`<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">
+      ${draftVersionId?(programs.length?programs.map(r=>`<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">
         <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>
-        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?(draftVersionId?'will be live':'live'):'paused'}</span>
-        ${draftVersionId&&isOwner&&!exactProgramMissing?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
-          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}
-        ${!draftVersionId&&isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
-          <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
-        :CUI.emptyState({iconName:'retention',title:'No retention programs',body:`There are no programs in this ${draftVersionId?'draft':'configuration'}.`})}</div></div></div>
+        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'will be live':'paused'}</span>
+        ${isOwner&&!exactProgramMissing?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
+          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
+        :CUI.emptyState({iconName:'retention',title:'No retention programs',body:'There are no programs in this draft.'})):''}</div></div></div>
     ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
       <div style="margin-top:8px">${taxonomy.map(t=>`<div class="retention-taxonomy-row"><div class="retention-taxonomy-copy"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span></div><div class="retention-taxonomy-actions"><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
         <button class="btn ghost sm taxonomyRename" data-id="${t.id}" data-label="${esc(t.label)}">Rename</button><button class="btn ghost sm taxonomySort" data-id="${t.id}" data-sort="${t.sort||0}">Sort</button>${t.active?`<button class="btn ghost sm taxonomyRetire" data-id="${t.id}">Retire</button>`:''}</div></div>`).join('')}</div>
@@ -19719,9 +19733,17 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
      same create_loyalty_config_draft RPC the manual button calls, resume an existing draft when
      there is one rather than opening a second, and land the owner in the draft editor with the
      rule already open. Nothing publishes; the review gate is still the only way live.
-     There is deliberately still NO delete: a published rule with grant history cannot be
-     unmade without rewriting what customers were given, so pausing is the honest ending. */
-  if(isOwner&&!draftVersionId){
+     V332 override (owner ruling, "proceed all at once"): the V291 line above this — "there is
+     deliberately still NO delete" — is superseded. A published rule with grant history still
+     cannot be unmade (reward_grants/credit_ledger rows are never touched), but the RULE ITSELF
+     can now be retired to a read-only History tab via business_delete_retention_program_v332,
+     matching the delete-to-History shape already shipped for gifts (v326), memberships (v329) and
+     tiers (v331). See the v332 migration header for why this needed more than a deleted_at column:
+     the published retention_program_versions snapshot is immutable, so on_sale_recorded and
+     issue_campaign_offer were patched to check the live table's deleted_at directly. */
+  let retentionTabV332='published';
+  let retentionDeletePendingV332='';
+  const wireLiveRetentionActionsV332=()=>{
     const ensureRetentionDraftV291=async()=>{
       if(resumableDraft?.id)return resumableDraft.id;
       const {data,error}=await sb.rpc('create_loyalty_config_draft',
@@ -19761,9 +19783,69 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
         :'Saved in your draft — the rule pauses when you publish');
       refreshRetentionPanel(draft,null,'Bring-back rule status saved in the draft.');
     });
+  };
+  /* Renders the Published/History split for the live (non-draft) view only — a draft row is a
+     retention_program_versions snapshot with no deleted_at of its own, so the draft-side list
+     above stays exactly as it was and never calls this. Re-renders #rlist locally (tab switch,
+     opening/cancelling a delete confirm) without a network round-trip, matching the Points/Tiers/
+     Memberships pages; only the delete itself refetches, via the same refreshRetentionPanel/
+     retentionPage() re-invocation every other write on this page already goes through. */
+  const renderRetentionListV332=()=>{
+    if(draftVersionId)return;
+    const list=$('rlist');
+    if(!list)return;
+    const publishedPrograms=programs.filter(r=>r.deleted_at==null);
+    const historyPrograms=programs.filter(r=>r.deleted_at!=null);
+    const rows=retentionTabV332==='published'?publishedPrograms:historyPrograms;
+    const rowHtml=r=>{
+      const meta=`<div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>`;
+      if(retentionTabV332==='history')return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
+      const confirmOpen=retentionDeletePendingV332===String(r.program_id||r.id);
+      return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
+        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'paused'}</span>
+        ${isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
+          <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>
+          <button type="button" class="btn ghost sm" data-retention-delete-v332="${esc(r.program_id||r.id)}">Delete</button>`:''}
+        </div>
+        <div class="imp-note" data-retention-deleteconfirm-v332="${esc(r.program_id||r.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
+          <b>Delete ${esc(r.name)}?</b>
+          <p class="muted small" style="margin-top:6px">It moves to History. No new visit can qualify for this rule from now on. Rewards and credit already granted are not affected.</p>
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-retention-delete-yes-v332="${esc(r.program_id||r.id)}">Delete</button><button type="button" class="btn ghost sm" data-retention-delete-no-v332="1">Cancel</button></div>
+        </div>`;
+    };
+    list.innerHTML=`<div class="v150-segment" role="group" aria-label="Bring-back rule status" style="margin-bottom:10px">
+        <button type="button" aria-pressed="${retentionTabV332==='published'}" data-retention-tab-v332="published">Published${publishedPrograms.length?` (${publishedPrograms.length})`:''}</button>
+        <button type="button" aria-pressed="${retentionTabV332==='history'}" data-retention-tab-v332="history">History${historyPrograms.length?` (${historyPrograms.length})`:''}</button>
+      </div>
+      ${rows.length?rows.map(rowHtml).join(''):retentionTabV332==='published'?CUI.emptyState({iconName:'retention',title:'No retention programs',body:'There are no published bring-back rules.'}):'<p class="muted small" style="margin-top:10px">Nothing has been deleted yet.</p>'}`;
+    document.querySelectorAll('[data-retention-tab-v332]').forEach(button=>button.onclick=()=>{
+      const tab=button.dataset.retentionTabV332;
+      if(!['published','history'].includes(tab))return;
+      retentionTabV332=tab;retentionDeletePendingV332='';renderRetentionListV332();
+    });
+    if(!isOwner)return;
+    wireLiveRetentionActionsV332();
+    document.querySelectorAll('[data-retention-delete-v332]').forEach(button=>button.onclick=()=>{
+      retentionDeletePendingV332=button.dataset.retentionDeleteV332;renderRetentionListV332();
+    });
+    document.querySelectorAll('[data-retention-delete-no-v332]').forEach(button=>button.onclick=()=>{
+      retentionDeletePendingV332='';renderRetentionListV332();
+    });
+    document.querySelectorAll('[data-retention-delete-yes-v332]').forEach(button=>button.onclick=async()=>{
+      const id=button.dataset.retentionDeleteYesV332;
+      button.disabled=true;
+      const {error}=await sb.rpc('business_delete_retention_program_v332',{p_business:S.biz.id,p_program:id});
+      if(!isRetentionCurrent())return;
+      if(error){button.disabled=false;return fail(error)}
+      toast('Bring-back rule deleted — moved to History');
+      refreshRetentionPanel(null,null,'Bring-back rule deleted — moved to History.',false);
+    });
+  };
+  if(isOwner&&!draftVersionId){
     if($('beginRetentionDraft'))$('beginRetentionDraft').onclick=async()=>{const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});if(!isRetentionCurrent())return;if(error)return fail(error);nav(`#/retention/${data.version_id}`)};
     if($('createRetentionRollback'))$('createRetentionRollback').onclick=async()=>{const base=$('retentionRollback').value;if(!base)return toast('Choose a prior version');const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:base,p_source:'retention_rollback'});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Rollback draft created — review before publishing');nav(`#/retention/${data.version_id}`)};
   }
+  renderRetentionListV332();
   if(isOwner&&draftVersionId&&exactProgramMissing){
     $('discardRetentionDraft').onclick=()=>nav('#/retention');
     $('publishRetention').onclick=()=>openProtectedGrowPublishReview(draftVersionId);
@@ -21082,13 +21164,31 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      passes every column on both its save and its pause paths — so a two-field edit that did not
      carry the rest would blank a multiplier or a benefit list the owner set in the advanced
      editor. Reading them here is what lets the wizard hand them straight back untouched. */
+  /* V331: this select named a column ('active') that has never existed on loyalty_tiers -- the
+     table only ever had id/name/threshold/points_multiplier/perk_note/sort/effective_from/
+     expires_at until this migration added paused/deleted_at. Naming a nonexistent column makes
+     PostgREST return an error, not throw, so `r.error?null:...` silently resolved to null on
+     EVERY read -- the "Tiered membership" tile has been showing "Tier details could not be
+     loaded" for every tenant with a live tier programme, and the drilled Overview row below fell
+     back the same way. Fixed in passing while wiring the new Tiers page onto this same read:
+     paused/deleted_at replace the never-real active column, and the Published/History split for
+     the new page reads them directly off this same snapshot. */
   const loyaltyTiersV229=canRewards
     ?await sb.from('loyalty_tiers')
-      .select('id,name,threshold,points_multiplier,perk_note,sort,active,effective_from,expires_at')
+      .select('id,name,threshold,points_multiplier,perk_note,sort,paused,deleted_at,effective_from,expires_at')
       .eq('business_id',S.biz.id).order('threshold')
       .then(r=>r.error?null:(r.data||[])).catch(()=>null)
     :[];
   if(!isGrowCurrent())return;
+  /* V331: Published/History split for the new #/grow/tiers page and every existing tile/summary
+     reader that used to (wrongly) rely on a nonexistent `active` column. Sorted by threshold —
+     a tier ladder's order is always implicit rank, never insertion order (matches every existing
+     tier read path, both server-side `order by threshold` and the wizard's own client-side sort). */
+  const growTiersRawV331=Array.isArray(loyaltyTiersV229)?loyaltyTiersV229:[];
+  const growTiersPublishedV331=growTiersRawV331.filter(tier=>tier?.deleted_at==null)
+    .sort((a,b)=>Number(a.threshold||0)-Number(b.threshold||0)||Number(a.sort||0)-Number(b.sort||0));
+  const growTiersHistoryV331=growTiersRawV331.filter(tier=>tier?.deleted_at!=null)
+    .sort((a,b)=>Number(b.threshold||0)-Number(a.threshold||0));
   /* V271: the two reads the Overview and History tables need and nothing else can supply.
      business_programme_usage_v271 is the only honest source for "how many customers used this" —
      a DISTINCT-customer count cannot be expressed through PostgREST, and paging the whole
@@ -21281,7 +21381,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      click handler below), whether or not a points programme has ever been configured — an
      unconfigured business sees this same page with an empty/set-up-prompt state instead of the
      wizard, per owner ruling (AskUserQuestion, 2026-08-15: "Photo 3 always, with an empty state"). */
-  const programmeView=['overview','history','offers','points','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
+  const programmeView=['overview','history','offers','points','tiers','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
   /* V303: 'review' is now a NAME, not the number 4. A tier model runs a five-step wizard, so a
      hardcoded 4 would have opened the Reward step and called it the publish gate. The wizard
      resolves the name against its own active step list. */
@@ -21370,8 +21470,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       status:loyaltyModelTileStatusV235('tiers'),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?''
         :loyaltyTiersV229===null?'Tier details could not be loaded'
-        :(loyaltyTiersV229.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
-        :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
+        :(growTiersPublishedV331.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
+        :growTiersPublishedV331.length?`${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'}: ${growTiersPublishedV331.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Create the ladder customers climb'},
     {key:'stamps',icon:'check',title:'Stamp card',blurb:'Customers earn stamps and redeem!',
       status:loyaltyModelTileStatusV235('stamps'),
@@ -21417,7 +21517,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      "no tiles, no drilled topic" branch, which answers TRUE for every key — the Limited Offer
      page would have rendered every category on the module. V326: 'points' joins for the same
      reason — its own page, not a topic drill. */
-  const growCategoryViewV271=!['overview','history','setup','offers','points'].includes(programmeView);
+  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -21976,6 +22076,93 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ?(growPointsPublishedV326.length?growPointsPublishedV326.map(reward=>growPointsGiftRowV326(reward)).join(''):'<li class="muted small" style="cursor:default">No gift yet — add one above.</li>')
           :(growPointsHistoryV326.length?growPointsHistoryV326.map(reward=>growPointsGiftRowV326(reward,{history:true})).join(''):'<li class="muted small" style="cursor:default">Nothing has been deleted yet.</li>')}
       </ul>`;
+  /* ============ V331 — TIERED MEMBERSHIP: A FULL PARALLEL IMMEDIATE-WRITE PAGE ================
+     Owner ruling ("proceed all at once", 2026-08-15): NOT a read-only view over the existing
+     draft/publish tier editor — a genuine second immediate-write surface, mirroring the Points
+     System page's shape (summary on/off row reusing the R6 switchboard, a Published/History tab
+     strip, per-row on/off + delete-with-confirm, an inline add form) with one structural
+     difference the audit called out: a tier LADDER's rows are not independent siblings the way
+     gifts/plans are — order is always implicit rank (sorted by threshold, never insertion order,
+     matching every existing tier read path), and removing/pausing a rung changes what the NEXT
+     rung down effectively requires, so the delete confirm names that consequence instead of the
+     gift/plan pages' plain "nothing else changes" copy. The wizard's Climbing step (tier basis:
+     visits/spend/points) stays the one thing this page does not expose — "Edit" jumps there. */
+  const growTiersConfiguredV331=liveLoyaltyModelKeysV240.includes('tiers');
+  const growTiersOnV331=programmeSpineOnV314('tiers')===true;
+  const growTiersLosingV331=growTiersOnV331?[]:programmeExclusionsV322('tiers').filter(other=>programmeSpineOnV314(other)===true);
+  const growTiersRowV331=(tier,{history=false}={})=>{
+    const threshold=Math.max(0,Number(tier.threshold||0));
+    const multiplier=Number(tier.points_multiplier||1);
+    const meta=`<span><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content> · Reached at ${threshold}${multiplier!==1?` · ${multiplier}× points`:''}</span></span>`;
+    if(history)return `<li data-grow-tiers-row-v331="${esc(tier.id)}">${meta}<span class="pill off">In history</span></li>`;
+    const paused=tier.paused===true;
+    const confirmOpen=growTiersDeletePendingV331===String(tier.id);
+    return `<li data-grow-tiers-row-v331="${esc(tier.id)}">${meta}
+      <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="muted small" data-grow-tiers-state-v331="${paused?'off':'on'}"> · ${paused?'Off':'ON for customers'}</span>
+        ${canSetupGrow?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${!paused}" data-grow-tiers-toggle-v331="${esc(tier.id)}">${paused?'Turn on':'Turn off'}</button>
+        <button type="button" class="btn ghost sm" data-grow-tiers-delete-v331="${esc(tier.id)}">Delete</button>`:''}
+      </span></li>
+      <li class="imp-note" data-grow-tiers-deleteconfirm-v331="${esc(tier.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
+        <b>Delete ${esc(tier.name)}?</b>
+        <p class="muted small" style="margin-top:6px">It moves to History. Customers currently between this rung and the next will register at whichever tier is left — nothing about their points or history changes, only which rung they show as.</p>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-delete-yes-v331="${esc(tier.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-tiers-delete-no-v331="1">Cancel</button></div>
+      </li>`;
+  };
+  const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note" data-grow-tiers-addform-v331>
+    <b>Add a tier</b>
+    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Reached at</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
+    ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>Save tier</button><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button></div>
+  </li>`:growTiersAddOpenV331==='prompt'?`<li class="imp-note" data-grow-tiers-addprompt-v331>
+    <b>Tier saved and live for customers.</b>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-add-again-v331="1">Add another tier</button><button type="button" class="btn ghost sm" data-grow-tiers-add-done-v331="1">Done</button></div>
+  </li>`:'';
+  const growTiersTabStripV331=`<div class="v150-segment" role="group" aria-label="Tier status" data-grow-tiers-tabstrip-v331>
+    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published">Published${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
+    <button type="button" aria-pressed="${growTiersManageTabV331==='history'}" data-grow-tiers-manage-tab-v331="history">History${growTiersHistoryV331.length?` (${growTiersHistoryV331.length})`:''}</button>
+  </div>`;
+  const growTiersManageV331=!canRewards
+    ?CUI.emptyState({iconName:'star',title:'Loyalty is not included',
+        body:'This workspace does not include the loyalty module, so there is no Tiered membership to manage.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
+    :loyaltyTiersV229===null
+    ?CUI.emptyState({iconName:'star',title:'Tier details could not be loaded',
+        body:'Reload the page and try again.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow/tiers">Retry</a>'})
+    :!growTiersConfiguredV331
+    ?CUI.emptyState({iconName:'star',title:'Tiered membership is not set up yet',
+        body:'Choose tiers, set how tiers are earned, and add a first rung customers can climb to.',
+        actionHtml:canSetupGrow
+          ?'<button type="button" class="btn sm" id="growTiersSetupV331">Set up Tiered membership</button>'
+          :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
+    :`<ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
+        <li data-grow-tiers-header-v331><span><b>Tier membership</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} set up</p></span>
+          <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="muted small" data-grow-switchstate-v322="${growTiersOnV331?'on':'off'}"> · ${growTiersOnV331?'ON for customers':'off'}</span>
+            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-edit-v331="1">Edit</button>
+            <button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">Add tiers</button>
+            <button type="button" class="btn ghost sm" role="switch" aria-checked="${growTiersOnV331}" data-grow-switchtoggle-v322="tiers">${growTiersOnV331?'Turn off':'Turn on'}</button>`:''}
+          </span></li>
+        <li class="imp-note" data-grow-switchconfirm-v322="tiers" style="margin-top:8px"${growSwitchPendingV322==='tiers'?'':' hidden'}>
+          <b>${growTiersOnV331?'Turn Tier membership off for customers?':'Turn Tier membership on for customers?'}</b>
+          <p class="muted small" style="margin-top:6px">${growTiersOnV331
+            ?'Customers stop climbing and stop getting tier perks straight away. Everything you have set up stays saved and comes back when you turn it on again.'
+            :growTiersLosingV331.length
+              ?`${esc(growTiersLosingV331.map(other=>(growProgrammeSwitchKindsV322.find(row=>row[0]===other)||[,other])[1]).join(' and '))} ${growTiersLosingV331.length===1?'runs':'run'} separately, so turning this on switches ${growTiersLosingV331.length===1?'it':'them'} off. Their setup stays saved.`
+              :'Customers can start climbing straight away.'}</p>
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="tiers">${growTiersOnV331?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div>
+        </li>
+        ${growTiersAddFormV331}
+      </ul>
+      ${growSwitchErrorV322&&growSwitchPendingV322==='tiers'?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
+      ${growTiersTabStripV331}
+      <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-tiers-list-v331>
+        ${growTiersManageTabV331==='published'
+          ?(growTiersPublishedV331.length?growTiersPublishedV331.map(tier=>growTiersRowV331(tier)).join(''):'<li class="muted small" style="cursor:default">No tier yet — add one above.</li>')
+          :(growTiersHistoryV331.length?growTiersHistoryV331.map(tier=>growTiersRowV331(tier,{history:true})).join(''):'<li class="muted small" style="cursor:default">Nothing has been deleted yet.</li>')}
+      </ul>`;
   /* One strip, three destinations, each with its own hash so it is linkable and back-button-safe.
      It reuses the house sub-module strip rather than reviving the V173-era one, which V173/V180
      removed because it duplicated the sidebar's own sub-rows. These three are not sidebar rows —
@@ -22096,7 +22283,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growProgrammeSwitchPanelV322():''}
@@ -22110,6 +22297,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${programmeView==='overview'?growOverviewTableV271:''}
       ${programmeView==='history'?growHistoryTableV271:''}
       ${programmeView==='points'?growPointsManageV326:''}
+      ${programmeView==='tiers'?growTiersManageV331:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
            rewards, Add another reward and Start from a template onto the Point system row).
@@ -22133,9 +22321,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>`:''}
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
-          :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
+          :(growTiersPublishedV331.length?growTiersPublishedV331.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'&&!tier.paused?'on':'off'}">${pointsModeV229==='tiers'&&!tier.paused?'Live':tier.paused?'Off':'Saved'}</span></span></div>`).join('')
           :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
-        ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
+        ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',growTiersPublishedV331.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}
       ${topicOnV229('lifestyle')?`
       <div class="programme-category" data-programme-category-v268="lifestyle"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
@@ -22228,7 +22416,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     /* V303: the live tier ladder is handed in rather than re-read — growPage has already loaded it
        for the Tiered membership card, and a second read would be a second answer. */
     growSetupWizardV301({host:$('growSetupHostV301'),snapshot,isCurrent:isGrowCurrent,startStep:growSetupStepV301,
-      liveTiers:loyaltyTiersV229}).catch(fail);
+      liveTiers:loyaltyTiersV229===null?null:growTiersPublishedV331}).catch(fail);
   }
   if(['ongoing','available'].includes(programmeView)){
     let visibleCategories=0;
@@ -22732,23 +22920,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        V326 "proceed all at once": the Stamp card tile joins it here rather than getting a second,
        near-identical page — #/grow/points is entirely model-aware (growPointsIsStampsV326) and
        reads its own scoped slice of loyalty_rewards, so one page correctly serves whichever of the
-       two mutually-exclusive models (R2) is actually live. Tiers is UNCHANGED — see V303 below —
-       until its own equivalent page is built. */
+       two mutually-exclusive models (R2) is actually live.
+       V331 (same "proceed all at once" pass): Tiered membership gets its OWN dedicated page
+       instead (#/grow/tiers, not #/grow/points) — a tier ladder is a genuinely different shape
+       (an ordered list of rungs, not independent gifts), not a third model sharing the points
+       page. Owner ruling: a full parallel immediate-write page, not a read-only view over the
+       wizard's tier editor. */
     if(tile.dataset.growTopicV229==='points'||tile.dataset.growTopicV229==='stamps')return nav('#/grow/points');
-    /* V301: a point-engine card that is not live yet opens the one-page wizard rather than the
-       drill — the drill is where an owner MANAGES a running programme, and the owner's report is
-       that it is not where anyone can START one. */
-    /* V303: the remaining point-engine card (tiers), live or not. The card that was pressed
-       decides which model the wizard opens on, handed over as a one-shot so a later plain visit to
-       #/grow/setup still derives the choice from what is actually live. */
-    if(growSetupEntryV301(tile.dataset.growTopicV229)){
-      /* The card key rides along with the model because the two answer different questions: the
-         model is what the wizard edits, the card is which programme the owner came here ABOUT —
-         and that is what V294's editor entry context means ("this in tier programme, not here!"). */
-      pendingGrowSetupModelV303={kind:growSetupKindForTileW6I2(tile.dataset.growTopicV229),
-        from:String(tile.dataset.growTopicV229||'')};
-      return nav('#/grow/setup');
-    }
+    if(tile.dataset.growTopicV229==='tiers')return nav('#/grow/tiers');
+    /* V331: growSetupEntryV301's ['points','stamps','tiers'] list has no card left that reaches
+       this line — all three now return above, straight to their own dedicated page. The wizard
+       entry it used to send them to is still reachable from each page's own "Set up"/"Edit"
+       controls (see growPointsSetupV326/growPointsEditV326 and growTiersSetupV331/
+       growTiersEditV331's click handlers below), just never from this tile click any more. */
     growTopicV229=tile.dataset.growTopicV229;
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
@@ -22855,6 +23039,102 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;growPointsDeletePendingV326='';
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    toast('Moved to History');
+    growRerenderV322();
+  });
+  /* ============ V331 — TIERS PAGE WIRING ====================================================
+     Same shape as the V326 points wiring above: the summary row's own on/off toggle reuses
+     data-grow-switchtoggle-v322/data-grow-switchconfirm-yes-v322/-no-v322 verbatim (kind="tiers"),
+     already wired over the whole of outerMain. Everything below is genuinely new. */
+  const growTiersSetupCta=$('growTiersSetupV331');
+  if(growTiersSetupCta)growTiersSetupCta.onclick=()=>{
+    pendingGrowSetupModelV303={kind:'tiers',from:'tiers'};
+    nav('#/grow/setup');
+  };
+  outerMain.querySelectorAll('[data-grow-tiers-manage-tab-v331]').forEach(button=>button.onclick=()=>{
+    const tab=button.dataset.growTiersManageTabV331;
+    if(!['published','history'].includes(tab))return;
+    growTiersManageTabV331=tab;
+    growRerenderV322();
+  });
+  const growTiersEditLink=outerMain.querySelector('[data-grow-tiers-edit-v331]');
+  if(growTiersEditLink)growTiersEditLink.onclick=()=>{
+    /* Lands the wizard on the Climbing step (tier basis: visits/spend/points) -- the one tier
+       setting this page does not expose. Gift/rung management is this page's own job now. */
+    pendingGrowSetupModelV303={kind:'tiers',from:'tiers'};
+    pendingGrowSetupRewardV303={mode:'climbing'};
+    nav('#/grow/setup');
+  };
+  const growTiersAddOpen=outerMain.querySelector('[data-grow-tiers-add-v331]');
+  if(growTiersAddOpen)growTiersAddOpen.onclick=()=>{
+    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';
+    growRerenderV322();
+  };
+  const growTiersAddCancel=outerMain.querySelector('[data-grow-tiers-add-cancel-v331]');
+  if(growTiersAddCancel)growTiersAddCancel.onclick=()=>{
+    growTiersAddOpenV331='';growTiersErrorV331='';
+    growRerenderV322();
+  };
+  const growTiersAddAgain=outerMain.querySelector('[data-grow-tiers-add-again-v331]');
+  if(growTiersAddAgain)growTiersAddAgain.onclick=()=>{
+    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';
+    growRerenderV322();
+  };
+  const growTiersAddDone=outerMain.querySelector('[data-grow-tiers-add-done-v331]');
+  if(growTiersAddDone)growTiersAddDone.onclick=()=>{
+    growTiersAddOpenV331='';
+    growRerenderV322();
+  };
+  const growTiersAddSave=outerMain.querySelector('[data-grow-tiers-add-save-v331]');
+  if(growTiersAddSave)growTiersAddSave.onclick=async()=>{
+    if(growTiersBusyV331)return;
+    const nameField=$('growTiersAddNameV331'),thresholdField=$('growTiersAddThresholdV331');
+    const name=String(nameField?.value||'').trim();
+    const threshold=Math.round(Number(thresholdField?.value||''));
+    growTiersAddDraftV331={name,threshold:thresholdField?.value||''};
+    if(!name){growTiersErrorV331='Name the tier customers will see.';return growRerenderV322();}
+    if(!Number.isFinite(threshold)||threshold<0){growTiersErrorV331='Reached-at must be zero or a positive number.';return growRerenderV322();}
+    growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    const {error}=await sb.rpc('business_create_tier_v331',{
+      p_business:S.biz.id,p_name:name,p_threshold:threshold});
+    if(!isGrowCurrent())return;
+    growTiersBusyV331=false;
+    if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
+    toast('Tier added and live for customers');
+    growTiersAddOpenV331='prompt';
+    growRerenderV322();
+  };
+  outerMain.querySelectorAll('[data-grow-tiers-toggle-v331]').forEach(button=>button.onclick=async()=>{
+    if(growTiersBusyV331)return;
+    const id=button.dataset.growTiersToggleV331;
+    const want=button.getAttribute('aria-checked')!=='true';
+    growTiersBusyV331=true;growTiersErrorV331='';
+    button.disabled=true;
+    const {error}=await sb.rpc('business_set_tier_paused_v331',{
+      p_business:S.biz.id,p_tier:id,p_paused:!want});
+    if(!isGrowCurrent())return;
+    growTiersBusyV331=false;
+    if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
+    toast(want?'Turned on for customers':'Turned off for customers');
+    growRerenderV322();
+  });
+  outerMain.querySelectorAll('[data-grow-tiers-delete-v331]').forEach(button=>button.onclick=()=>{
+    growTiersDeletePendingV331=button.dataset.growTiersDeleteV331;
+    growRerenderV322();
+  });
+  outerMain.querySelectorAll('[data-grow-tiers-delete-no-v331]').forEach(button=>button.onclick=()=>{
+    growTiersDeletePendingV331='';
+    growRerenderV322();
+  });
+  outerMain.querySelectorAll('[data-grow-tiers-delete-yes-v331]').forEach(button=>button.onclick=async()=>{
+    if(growTiersBusyV331)return;
+    const id=button.dataset.growTiersDeleteYesV331;
+    growTiersBusyV331=true;growTiersErrorV331='';
+    button.disabled=true;
+    const {error}=await sb.rpc('business_delete_tier_v331',{p_business:S.biz.id,p_tier:id});
+    if(!isGrowCurrent())return;
+    growTiersBusyV331=false;growTiersDeletePendingV331='';
+    if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
     toast('Moved to History');
     growRerenderV322();
   });
@@ -23049,7 +23329,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      would be handed to the deep-editor mount below and open a surface the owner did not ask for.
      V326: 'points' joins for the same reason — it is the new Points System page, not a deep link
      into mountGrowSurface. */
-  const hashParamIsProgrammeView=['overview','history','offers','points','ongoing','available','settings','setup'].includes(String(hashParam||''));
+  const hashParamIsProgrammeView=['overview','history','offers','points','tiers','ongoing','available','settings','setup'].includes(String(hashParam||''));
   if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
@@ -24805,6 +25085,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   if(rewardHandoffV303?.mode==='earning'){
     const earnStepKindV326=rewardHandoffV303.kind==='stamps'?'stampEarn':'earn';
     if(stepNumberOrNullW6I2(earnStepKindV326)!==null)state.step=stepNumberForW6I2(earnStepKindV326);
+  }else if(rewardHandoffV303?.mode==='climbing'){
+    /* V331: the Tiers page's own "edit" link -- lands on the tier-basis step (visits/spend/points),
+       the one tier setting that page does not expose. Rung management is that page's own job. */
+    if(stepNumberOrNullW6I2('climb')!==null)state.step=stepNumberForW6I2('climb');
   }else if(rewardHandoffV303&&stepNumberOrNullW6I2('reward')!==null){
     state.step=stepNumberForW6I2('reward');
     const wanted=rewardHandoffV303.mode==='edit'

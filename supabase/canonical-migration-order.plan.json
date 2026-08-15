@@ -1948,6 +1948,18 @@
       "version": "20260815090100",
       "name": "nestly_v329_membership_plan_lifecycle",
       "sourcePath": "db/migrations/20260815_nestly_v329_membership_plan_lifecycle.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090200",
+      "name": "nestly_v331_tier_lifecycle",
+      "sourcePath": "db/migrations/20260815_nestly_v331_tier_lifecycle.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090300",
+      "name": "nestly_v332_retention_program_lifecycle",
+      "sourcePath": "db/migrations/20260815_nestly_v332_retention_program_lifecycle.sql"
     }
   ]
 }

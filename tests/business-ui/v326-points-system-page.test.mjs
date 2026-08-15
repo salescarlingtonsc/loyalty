@@ -44,18 +44,18 @@ const CUI = {
 // ROUTING: the two classes of bug that bit this session (wrong screen, wrong step).
 // ---------------------------------------------------------------------------------------------
 
-test('V326 the points AND stamps tiles both navigate to #/grow/points, before growSetupEntryV301 is consulted', () => {
+test('V326/V331 the points, stamps AND tiers tiles each navigate straight to their own page, never through growSetupEntryV301', () => {
   const stripComments = source => source.replace(/\/\*[\s\S]*?\*\//g, '');
   const code = stripComments(app);
   const handler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-topic-v229]')"),
     code.indexOf('growTopicV229=tile.dataset.growTopicV229;'));
   assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\|\|tile\.dataset\.growTopicV229==='stamps'\)return nav\('#\/grow\/points'\);/);
-  const routeCheckIndex = handler.indexOf("tile.dataset.growTopicV229==='points'");
-  const entryCheckIndex = handler.indexOf('growSetupEntryV301(tile.dataset.growTopicV229)');
-  assert.ok(routeCheckIndex >= 0 && entryCheckIndex > routeCheckIndex);
-  // Tiers must be untouched — still routes through growSetupEntryV301 to the wizard.
-  assert.match(handler, /pendingGrowSetupModelV303=\{kind:growSetupKindForTileW6I2\(tile\.dataset\.growTopicV229\),/);
-  assert.match(handler, /return nav\('#\/grow\/setup'\);/);
+  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='tiers'\)return nav\('#\/grow\/tiers'\);/);
+  // V331: tiers joined points/stamps in getting its own page, so growSetupEntryV301's whole
+  // ['points','stamps','tiers'] list now returns explicitly above — the wizard-entry fallback this
+  // handler used to reach for tiers is gone, not merely reordered after these checks.
+  assert.doesNotMatch(handler, /growSetupEntryV301\(tile\.dataset\.growTopicV229\)/);
+  assert.doesNotMatch(handler, /return nav\('#\/grow\/setup'\);/);
 });
 
 test('V326 hashParam="points" resolves programmeView correctly and is recognised as a view, not a deep link', () => {

@@ -52,21 +52,26 @@ test('V301 (a) the wizard is a real function, mounted from growPage', () => {
   /* V303: the live tier ladder is handed in rather than re-read — growPage already loaded it for
      the Tiered membership card, and a second read would be a second answer. */
   assert.match(app, /async function growSetupWizardV301\(\{host,snapshot,isCurrent,startStep=1,liveTiers=null\}\)\{/);
-  assert.match(grow, /growSetupWizardV301\(\{host:\$\('growSetupHostV301'\),snapshot,isCurrent:isGrowCurrent,startStep:growSetupStepV301,\s*\r?\n?\s*liveTiers:loyaltyTiersV229\}\)/);
+  /* V331: liveTiers is now the Published-only projection (loyaltyTiersV229===null preserved for a
+     read failure) rather than the raw table read, since the raw read may carry History rows the
+     wizard's own Tiers step must never show or resurrect. */
+  assert.match(grow, /growSetupWizardV301\(\{host:\$\('growSetupHostV301'\),snapshot,isCurrent:isGrowCurrent,startStep:growSetupStepV301,\s*\r?\n?\s*liveTiers:loyaltyTiersV229===null\?null:growTiersPublishedV331\}\)/);
   // It reuses the snapshot growPage already read — no second load of the programme.
   assert.doesNotMatch(wizard, /growOverviewSnapshot\(/);
 });
 
 test('V301 (a) "setup" resolves as a Programmes view, and is not mistaken for a deep link', () => {
+  /* V331: 'tiers' joined this allow-list when Tiered membership got its own dedicated page,
+     matching the exact 3-site pattern already established for 'points' (v326). */
   assert.match(app,
-    /const programmeView=\['overview','history','offers','points','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
+    /const programmeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
   // A view hash must never mount an engine surface — that crashed on the surface dictionary.
   assert.match(app,
-    /const hashParamIsProgrammeView=\['overview','history','offers','points','ongoing','available','settings','setup'\]\.includes/);
+    /const hashParamIsProgrammeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes/);
   // The three V271/V294 rail children keep resolving exactly as before.
   assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
   // The view replaces the category list rather than stacking on it.
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers'\]\.includes\(programmeView\);/);
   assert.match(grow, /programmeView==='setup'\?'Set up rewards'/);
 });
 
@@ -302,7 +307,12 @@ test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier
      `active` is now the row's own, because the SAME writer performs Remove (active:false) and Undo
      (active:true) — hardcoding true would have made removal unwritable through it. */
   assert.match(wizard, /points_multiplier:tier\.multiplier,perk_note:tier\.perkNote,sort:tier\.sort,\s*\r?\n?\s*active:tier\.active!==false,/);
-  assert.match(app, /\.select\('id,name,threshold,points_multiplier,perk_note,sort,active,effective_from,expires_at'\)/);
+  /* V331: this query named a column, 'active', that never existed on loyalty_tiers -- PostgREST's
+     error-not-throw behaviour on an unknown column meant EVERY read silently resolved to null (see
+     the migration header and growTiersManageV331's own comment for the full production-bug audit).
+     Fixed in passing: paused/deleted_at replace it, and the wizard now receives the Published-only
+     projection (growTiersPublishedV331) rather than the raw table read. */
+  assert.match(app, /\.select\('id,name,threshold,points_multiplier,perk_note,sort,paused,deleted_at,effective_from,expires_at'\)/);
   // The threshold is labelled in its own unit rather than left as a bare number.
   assert.match(wizard, /const tierUnitLabelV303=\(\)=>tierBasisV303\(\)==='visits'\?'Visits to reach it':'Points to reach it';/);
   // One tap fills three rows and writes nothing until Next.
@@ -639,8 +649,16 @@ test('V301 (e) the pending point-engine cards and the bare Point system row open
   /* W6 increment 2: the tile hands over a PROGRAMME KIND, and it can only ever turn that switch
      ON. growSetupModelForTileV303 answered "which of four exclusive models is this card", which
      meant opening the Stamp card tile proposed a live points programme OFF. Every other switch now
-     keeps whatever the spine says. */
-  assert.match(grow, /pendingGrowSetupModelV303=\{kind:growSetupKindForTileW6I2\(tile\.dataset\.growTopicV229\),\s*\r?\n?\s*from:String\(tile\.dataset\.growTopicV229\|\|''\)\};/);
+     keeps whatever the spine says.
+     V331: the TILE itself no longer builds this hand-off at all (points/stamps/tiers each go
+     straight to their own dedicated page, never through growSetupEntryV301). What still holds is
+     the ON-only, from-carrying SHAPE of the hand-off — now built by each page's own Setup/Edit
+     controls (growPointsSetupCta/growPointsEditCta/growTiersSetupCta/growTiersEditLink) instead of
+     the tile click. growSetupKindForTileW6I2 is consequently unused in app.js — its definition is
+     left in place rather than deleted, since deleting it would touch nothing this session actually
+     changed about its own behaviour. */
+  assert.match(grow, /pendingGrowSetupModelV303=\{kind:growPointsSpineKindV326,from:growPointsSpineKindV326\};/);
+  assert.match(grow, /pendingGrowSetupModelV303=\{kind:'tiers',from:'tiers'\};/);
   assert.match(wizard, /const editorContextV303=\(\)=>handoffV303\?\.from/);
   assert.match(wizard, /\?\(handoffV303\.from==='tiers'\?'ctx-tiers':'ctx-points'\)/);
   assert.match(grow, /const growSetupKindForTileW6I2=key=>key==='stamps'\?'stamps':key==='tiers'\?'tiers':'points';/);

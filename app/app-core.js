@@ -452,6 +452,13 @@ let growPointsAddOpenV326='';
 let growPointsAddDraftV326={name:'',points:''};
 let growPointsErrorV326='';
 let growPointsBusyV326=false;
+/* V331 — the same shape as the V326 points-page state above, for the new #/grow/tiers page. */
+let growTiersManageTabV331='published';
+let growTiersDeletePendingV331='';
+let growTiersAddOpenV331='';
+let growTiersAddDraftV331={name:'',threshold:''};
+let growTiersErrorV331='';
+let growTiersBusyV331=false;
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -783,7 +790,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';growPointsBusyV326=false;
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';growPointsBusyV326=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';growTiersBusyV331=false;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';

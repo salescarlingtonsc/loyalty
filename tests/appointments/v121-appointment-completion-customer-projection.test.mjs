@@ -129,12 +129,15 @@ test('writer registry and both migration plans bind v121',()=>{
   );
   assert.ok(saleWriter);
   // V311 (W5a) re-stated app.on_sale_recorded from the v37b + v121 lineage to land the
-  // per-programme earn loop, so it is now the defining migration. The v121 boundary itself
-  // is unchanged and still asserted — the re-state kept the predicate verbatim, and the
-  // migration re-runs v121's own postcondition battery.
+  // per-programme earn loop; V332 re-stated it again, adding a join on the live
+  // retention_programs row (deleted_at is null) to the retention grant loop so a deleted
+  // Bring-back rule stops granting immediately even though its published retention_program_
+  // versions snapshot is immutable. Either restate is why it is now the defining migration.
+  // The v121 boundary itself is unchanged and still asserted — every restate has kept the
+  // predicate verbatim, and each migration re-runs v121's own postcondition battery.
   assert.equal(
     saleWriter.latest_file,
-    '20260813001400_nestly_v311_programme_money_kernel.sql'
+    '20260815090300_nestly_v332_retention_program_lifecycle.sql'
   );
   assert.match(saleWriter.loyalty_boundary,/resolves exactly rw/);
   assert.match(saleWriter.programme_scope,/ON CONFLICT arbiter NAMES/);

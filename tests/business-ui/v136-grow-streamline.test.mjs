@@ -118,7 +118,12 @@ test('earning, birthday, bring-back and stable reward routes retain exact edit i
   assert.match(retention,/retentionExactProgramMissing/);
   assert.match(retention,/draftVersionId&&isOwner&&!exactProgramMissing/);
   assert.match(retention,/draftVersionId&&isOwner&&!exactProgramMissing\?`<div class="card"[^`]*Quick templates/);
-  assert.match(retention,/draftVersionId&&isOwner&&!exactProgramMissing\?`<button class="btn ghost sm retentionEdit"/);
+  /* V332: the draft-row list moved inside a `${draftVersionId?(...):''}` wrapper (so the live,
+     non-draft view could get its own Published/History renderer instead) — the per-row Edit
+     button's gate is now isOwner&&!exactProgramMissing, with draftVersionId already implied by
+     the wrapper it sits inside, rather than repeated on every row. */
+  assert.match(retention,/\$\{draftVersionId\?\(programs\.length\?programs\.map\(r=>`<div class="row"/);
+  assert.match(retention,/isOwner&&!exactProgramMissing\?`<button class="btn ghost sm retentionEdit"/);
 });
 
 test('read-only and unavailable rows expose status but no dead writer',()=>{
