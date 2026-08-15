@@ -168,6 +168,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
    motion by simply not animating; the tint still lands. */
 .is-notified-v206>td{background:var(--tint)!important;transition:background .5s var(--ease)}
 @media(prefers-reduced-motion:reduce){.is-notified-v206>td{transition:none}}
+/* V329: persistent "N awaiting confirmation" pill (top right, next to the bell) and the
+   urgent banner of unconfirmed requests on the Day calendar. */
+.booking-requests-badge-v329{border-color:var(--red)!important;color:var(--red)!important;font-weight:700}
+.pending-request-banner{border:2px solid var(--red);margin-bottom:14px}
+.pending-request-card{padding:10px 0;border-top:1px solid var(--hair)}
+.pending-request-card:first-of-type{border-top:none}
+@keyframes pendingRequestPulseV329{0%,50%{box-shadow:0 0 0 4px rgba(157,53,44,.22);background:var(--tint)}100%{box-shadow:none;background:transparent}}
+.pending-request-highlight-v329{animation:pendingRequestPulseV329 1.3s ease-out 2;border-radius:10px}
+@media(prefers-reduced-motion:reduce){.pending-request-highlight-v329{animation:none;background:var(--tint);border-radius:10px}}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
