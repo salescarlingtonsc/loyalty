@@ -3776,13 +3776,15 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
               <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
               <span class="customer-programme-compact-copy"><b>${headV327}</b></span>
             </button>
-            ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
           </div>
           ${hasTier&&currentTierLabel?`<button type="button" class="customer-programme-identity-hint customer-programme-tier-jump-v327" data-tier-scroll-v327>${esc(currentTierLabel)}</button>`:''}
         </div>
       </div>
+      <!-- V334 (owner markup, photo 10: "book now move here"): moved out of the header top row,
+           next to the logo/name, down beside the address/phone/offers line it now sits under. -->
       <div class="customer-programme-contact-v326" data-company-contact-inline-v326>
         <button type="button" class="customer-programme-contact-more-v326" data-company-detail>Address, phone and offers ›</button>
+        ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
       </div>
     </header>
     ${customerPointsExplainerMarkupV167(business)}

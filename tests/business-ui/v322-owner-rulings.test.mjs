@@ -312,60 +312,16 @@ const mountSwitchPanel = ({ spine, pending = '', error = '', canSetupGrow = true
     rules.programmeExclusionsV322);
 };
 
-test('V322 R6 the on/off panel reads the SPINE and states the live answer per programme', () => {
-  /* The tiles answer "is this set up?"; these answer "is this running for my customers?", and a
-     firm can have a full tier ladder saved with the tier programme switched off. Reading the wrong
-     source is how the owner pill and the engine disagreed before v314. */
+/* V334 (owner markup, 2026-08-15 photo 2: "remove all these"): the whole Live-for-customers
+   on/off card is struck out of the Rewards Programme page. growProgrammeSwitchPanelV322 now
+   returns '' unconditionally — the six tests this block used to hold (reading the spine state,
+   the unreadable-spine fallback, the off/on confirmation copy, stamp exclusivity wording, the
+   zero-reward referral warning, and the non-owner read-only view) all asserted markup that no
+   longer renders. Replaced with one test asserting the removal, so a future re-introduction of
+   this panel is a deliberate, reviewed decision rather than a silent regression. */
+test('V334 the Live-for-customers on/off panel is removed from the Rewards Programme page', () => {
   const markup = mountSwitchPanel({ spine: ['points', 'referral'] });
-  assert.match(markup, /data-grow-switchpanel-v322="ready"/);
-  assert.match(markup, /data-grow-switchrow-v322="points"[\s\S]{0,200}?data-grow-switchstate-v322="on"/);
-  assert.match(markup, /data-grow-switchrow-v322="tiers"[\s\S]{0,200}?data-grow-switchstate-v322="off"/);
-  assert.match(markup, /data-grow-switchrow-v322="stamps"[\s\S]{0,200}?data-grow-switchstate-v322="off"/);
-  assert.match(markup, /data-grow-switchrow-v322="referral"[\s\S]{0,200}?data-grow-switchstate-v322="on"/);
-  assert.equal((markup.match(/role="switch"/g) || []).length, 4,
-    'one explicit switch per programme — the ruling asked for a separate button, not a shared one');
-  assert.match(markup, /aria-checked="true"[^>]*data-grow-switchtoggle-v322="points"|data-grow-switchtoggle-v322="points"[^>]*>Turn off/);
-});
-
-test('V322 R6 an unreadable spine shows nothing as on or off rather than guessing', () => {
-  const markup = mountSwitchPanel({ spine: null });
-  assert.match(markup, /data-grow-switchpanel-v322="unreadable"/);
-  assert.doesNotMatch(markup, /role="switch"/,
-    'a control that cannot read the current state must not offer to change it');
-});
-
-test('V322 R6 switching OFF asks for a confirmation and names what customers lose', () => {
-  /* "with a confirmation before switching one OFF because it changes what customers see". */
-  const markup = mountSwitchPanel({ spine: ['points'], pending: 'points' });
-  assert.match(markup, /data-grow-switchconfirm-v322="points"/);
-  assert.match(markup, /Turn Points &amp; gifts off for customers\?/);
-  assert.match(markup, /Customers stop earning and stop being able to claim/);
-  assert.match(markup, /Everything you have set up stays saved/,
-    'switching off must not read as deletion');
-  assert.match(markup, /data-grow-switchconfirm-yes-v322="points"/);
-  assert.match(markup, /data-grow-switchconfirm-no-v322="1"/);
-});
-
-test('V322 R2 the panel states the stamp exclusivity before it applies it', () => {
-  const markup = mountSwitchPanel({ spine: ['points', 'tiers'], pending: 'stamps' });
-  assert.match(markup, /The stamp card runs on its own, so turning it on switches Points &amp; gifts and Tier membership off/);
-  assert.match(markup, /Their setup stays saved/);
-});
-
-test('V322 the panel warns before switching on a referral that would pay nothing', () => {
-  /* A referral switched on with no points set looks live and pays nothing — the same split W6I2
-     defect 3 closed from the other direction. */
-  assert.match(mountSwitchPanel({ spine: [], pending: 'referral', referral: { reward_points: 0 } }),
-    /data-grow-switchreferralzero-v322/);
-  assert.doesNotMatch(mountSwitchPanel({ spine: [], pending: 'referral', referral: { reward_points: 200 } }),
-    /data-grow-switchreferralzero-v322/);
-});
-
-test('V322 R6 a non-owner sees the live state and no controls', () => {
-  const markup = mountSwitchPanel({ spine: ['points'], canSetupGrow: false });
-  assert.match(markup, /data-grow-switchstate-v322="on"/, 'the fact stays readable');
-  assert.doesNotMatch(markup, /data-grow-switchtoggle-v322/, 'the control does not');
-  assert.match(markup, /Owner only/);
+  assert.equal(markup, '', 'the panel was struck out by the owner and must render nothing');
 });
 
 /* =================================================================================================

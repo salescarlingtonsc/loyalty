@@ -95,8 +95,9 @@ test('V326 the "edit" link lands the wizard on the Earning step, guarded on that
   }
 
   const pointsOnly = { points: true, tiers: false, stamps: false, referral: false };
-  assert.deepEqual(landingStep(pointsOnly, 'earning'), { step: 2, rail: ['choose', 'earn', 'reward', 'expiry', 'live'] },
-    'mode:earning must land on Earning (step 2 of a points-only 5-step rail), not Gifts');
+  /* V334: Earning + Expiry merged into one 'earnExpiry' rail step (owner markup photo 6). */
+  assert.deepEqual(landingStep(pointsOnly, 'earning'), { step: 2, rail: ['choose', 'earnExpiry', 'reward', 'live'] },
+    'mode:earning must land on Earning & expiry (step 2 of a points-only 4-step rail), not Gifts');
   // The old reward hand-off (view/edit/add) must be completely unaffected.
   assert.equal(landingStep(pointsOnly, 'view').step, 3, "mode:'view' still lands on Gifts, unchanged");
   // A rail with no Earning step (stamps-only), and no kind supplied (legacy shape), must not move
@@ -187,7 +188,8 @@ test('V326 a configured programme shows the Point system row, earn rate, and on/
   assert.equal(r.growPointsOnV326, true);
   assert.match(r.growPointsManageV326, /<b>Point system<\/b>/);
   assert.match(r.growPointsManageV326, /Earn 1 points per SGD 1 spent/);
-  assert.match(r.growPointsManageV326, /ON for customers/);
+  /* V334: "ON for customers" text replaced by a compact ON/OFF toggle pill (owner markup photo 4). */
+  assert.match(r.growPointsManageV326, /pill-toggle-v334 on"[^>]*data-grow-switchtoggle-v322="points"[^>]*>ON</);
   assert.match(r.growPointsManageV326, /data-grow-switchtoggle-v322="points"/);
   assert.match(r.growPointsManageV326, /data-grow-points-edit-v326="1"/);
   assert.match(r.growPointsManageV326, /data-grow-points-add-v326="1"/);
@@ -208,8 +210,9 @@ test('V326 Published tab shows live and paused gifts with correct per-row state,
   const coffeeIdx = html.indexOf('Free Coffee');
   const muffinIdx = html.indexOf('Free Muffin');
   assert.ok(coffeeIdx >= 0 && muffinIdx >= 0);
-  assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /ON for customers[\s\S]*Turn off/, 'a live gift shows ON + a Turn off control');
-  assert.match(html.slice(muffinIdx, muffinIdx + 700), / · Off[\s\S]*Turn on/, 'a paused gift shows Off + a Turn on control');
+  /* V334: "ON for customers"/"Turn off" text replaced by a compact ON/OFF toggle pill. */
+  assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /pill-toggle-v334 on[\s\S]*?>ON</, 'a live gift shows an ON pill');
+  assert.match(html.slice(muffinIdx, muffinIdx + 700), /pill-toggle-v334 off[\s\S]*?>OFF</, 'a paused gift shows an OFF pill');
   assert.match(html, /data-grow-points-gift-delete-v326="r1"/);
   assert.match(html, /data-grow-points-gift-delete-v326="r2"/);
 });
@@ -257,7 +260,8 @@ test('V326 read-only staff (canSetupGrow=false) sees state but no interactive co
   const r = render({ canSetupGrow: false, snapshotRewards: rewards });
   const html = r.growPointsManageV326;
   assert.match(html, /Free Coffee/);
-  assert.match(html, /ON for customers/);
+  /* V334: read-only state still shows the ON/OFF pill, just as a non-interactive <span>. */
+  assert.match(html, /pill-toggle-v334 on">ON</);
   for (const selector of ['data-grow-points-edit-v326', 'data-grow-points-add-v326',
     'data-grow-switchtoggle-v322="points"', 'data-grow-points-gift-toggle-v326', 'data-grow-points-gift-delete-v326']) {
     assert.doesNotMatch(html, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));

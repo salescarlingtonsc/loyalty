@@ -567,8 +567,14 @@ const CUSTOMER_INTERFACE_VIEWS_V296=[
      surface, so the sub-tab goes with the section it named. Nothing customer-side changes: a
      customer still sees their outstanding gift-card balance in the wallet, and no DB object —
      businesses.gift_card_sales_enabled included — is touched by this. */
-  ['interface','Sign-up & fields','#/customer-interface/interface','customers',6]
+  ['interface','Customer Sign-up & fields','#/customer-interface/interface','customers',6]
 ];
+/* V334 (owner markup, photo 9: cross out "Preview"/"Done"/"Customer programme"). Menu-only —
+   the owner's answer was "just hide from nav, don't delete routes/code", so the full array above
+   (routes, stepper aria-labels, hash matching) stays untouched; only the two render sites below
+   read this filtered view. */
+const CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334=CUSTOMER_INTERFACE_VIEWS_V296
+  .filter(([key])=>!['preview','done','programme'].includes(key));
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
@@ -623,7 +629,7 @@ const NAVGROUPS=[
      surface, `items` still gates the group. Every child hash resolves in customerInterfacePageV243,
      and the bare '#/customer-interface' keeps landing on the preview exactly as before. */
   {key:'customerui',icon:'customers',label:'Customer Interface',items:['customer-interface'],
-    views:CUSTOMER_INTERFACE_VIEWS_V296.map(view=>[view[1],view[2],view[3]])},
+    views:CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334.map(view=>[view[1],view[2],view[3]])},
   /* V206 (owner: "allow firms to reverse the transactions if needed to easily at ease").
      Reversing already worked — every row of this list carries Reverse and Correct amount — so
      the gap was that "Sales" does not say so. Renamed rather than moved: I did move it next to
@@ -7936,13 +7942,15 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
               <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
               <span class="customer-programme-compact-copy"><b>${headV327}</b></span>
             </button>
-            ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
           </div>
           ${hasTier&&currentTierLabel?`<button type="button" class="customer-programme-identity-hint customer-programme-tier-jump-v327" data-tier-scroll-v327>${esc(currentTierLabel)}</button>`:''}
         </div>
       </div>
+      <!-- V334 (owner markup, photo 10: "book now move here"): moved out of the header top row,
+           next to the logo/name, down beside the address/phone/offers line it now sits under. -->
       <div class="customer-programme-contact-v326" data-company-contact-inline-v326>
         <button type="button" class="customer-programme-contact-more-v326" data-company-detail>Address, phone and offers ›</button>
+        ${bookingEnabled?`<a class="btn sm customer-programme-book" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`:''}
       </div>
     </header>
     ${customerPointsExplainerMarkupV167(business)}
@@ -20776,11 +20784,14 @@ async function promotionsPage(selectedPromotionId=null){
     const id=button.dataset.promotionDelete;
     const published=!!button.dataset.promotionPublished;
     const name=button.dataset.promotionName||'this offer';
+    /* V334 (owner markup, photo 7): matches the Rewards & Offer page's own "End" wording so the
+       two delete paths do not disagree (tests/business-ui/v324-limited-offer-buckets.test.mjs
+       pins this wording to be identical across both). */
     const question=published
-      ? `Retire "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
+      ? `End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       : `Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
     if(!confirm(question))return;
-    CUI.setButtonBusy(button,{busy:true,label:published?'Retiring…':'Deleting…'});
+    CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:businessId,p_promotion_id:id,p_expected_version:null});
     if(error){
@@ -21610,7 +21621,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      answers a real question elsewhere (Tiers, Referral and the wizard's own edits still go
      through a draft), so it stays on Overview/History/the drilled categories — this excludes only
      'list', the one screen the owner marked, not the concept everywhere it is still true. */
+  /* V334 (owner markup, photo 1 + 4: "please remove this, don't need review & publish"):
+     struck out again on Overview and on the Points System detail page specifically. */
   const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'&&programmeView!=='list'
+    &&programmeView!=='overview'&&programmeView!=='points'
     ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
@@ -21641,11 +21655,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
       status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
       summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
-    {key:'promotions',icon:'loyalty',title:'Promotions',blurb:'Offers customers see in their programme.',
-      status:publishedPromotions?['Live','on']:promotionDrafts?['Draft','new']:['Not set up','off'],
-      /* V294 (owner markup 2026-08-12): the ongoing card says "N LIVE", not "N published promotions". */
-      summary:publishedPromotions?`${publishedPromotions} LIVE`
-        :promotionDrafts?`${promotionDrafts} saved draft${promotionDrafts===1?'':'s'}`:'Create an offer customers can see'},
+    /* V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out of the
+       Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
+       publishedPromotions/promotionDrafts computations stay in scope above for that page. */
     {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Refer friends and get rewards!',
       status:!modules.includes('referrals')?['Not included','off']:referralLive?['Live','on']:referralConfigured?['Paused','off']:['Not set up','off'],
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
@@ -21764,6 +21776,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growProgrammeSwitchKindsV322=[['points','Points & gifts'],['tiers','Tier membership'],
     ['stamps','Stamp card'],['referral','Referral']];
   const growProgrammeSwitchPanelV322=()=>{
+    /* V334 (owner markup, photo 2: "remove all these"): the Live-for-customers on/off card is
+       struck out entirely on the Rewards Programme page. */
+    return '';
     if(!canRewards)return '';
     const rows=programmeSpineRowsV314();
     if(!rows)return `<div class="imp-note" data-grow-switchpanel-v322="unreadable" style="margin-top:14px" role="status">
@@ -22174,9 +22189,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);
     return `<li data-grow-points-giftrow-v326="${esc(reward.id)}">${meta}
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="muted small" data-grow-points-giftstate-v326="${paused?'off':'on'}"> · ${paused?'Off':'ON for customers'}</span>
-        ${canSetupGrow?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'Turn on':'Turn off'}</button>
-        <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`:''}
+        ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
+        <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`
+        :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${paused?'OFF':'ON'}</span>`}
       </span></li>
       <li class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(reward.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
         <b>Delete ${esc(name)}?</b>
@@ -22213,10 +22228,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<ul class="grow-setup-rewardlist-v301" data-grow-points-summary-v326>
         <li data-grow-points-header-v326><span><b>${esc(growPointsRowLabelV326)}</b><p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-            <span class="muted small" data-grow-switchstate-v322="${growPointsOnV326?'on':'off'}"> · ${growPointsOnV326?'ON for customers':'off'}</span>
             ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit</button>
             <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">Add gifts</button>
-            <button type="button" class="btn ghost sm" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'Turn off':'Turn on'}</button>`:''}
+            <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
+            :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
           <b>${growPointsOnV326?`Turn ${esc(growPointsRowLabelV326)} off for customers?`:`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
@@ -22404,14 +22419,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const label=bucket==='draft'?'Draft'
       :bucket==='history'?(item.ends_at?`Ended ${promotionDateTextV104(item.ends_at)}`:'Ended')
       :life.label;
-    const deleteLabel=bucket==='published'?'Retire':'Delete';
+    /* V334 (owner markup, photo 7: "all 'retire' change to 'end', i want red colour"): the
+       Published-bucket button reads "End" now, styled red — Draft's "Delete" is unchanged. */
+    const deleteLabel=bucket==='published'?'End':'Delete';
+    const deleteBtnClass=bucket==='published'?'btn sm danger':'btn ghost sm';
     return `<div class="promotion-item-row" data-merchant-content>
       ${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}
       <div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b>
       <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p></div>
       <div class="row" style="gap:6px;flex-wrap:wrap">
         ${growOffersCanWriteV324?`<a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a>`:''}
-        ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="btn ghost sm" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
+        ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="${deleteBtnClass}" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
       </div></div>`;
   };
   const growOffersEmptyV324={published:'No promotion is published right now.',
@@ -22443,7 +22461,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      <!-- V334 (owner markup, photo 4: "show this as header of gifts, it's the parent of this page,
+           bring here his logo") — the same star icon the Rewards & Offer section uses leads
+           Points System's own heading, since the gift list below belongs to it. -->
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${programmeView==='points'?`${CUI.icon('star',{size:18})} `:''}${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growProgrammeSwitchPanelV322():''}
@@ -23002,11 +23023,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const id=button.dataset.growOfferDeleteV324;
     const published=!!button.dataset.growOfferPublishedV324;
     const name=button.dataset.growOfferNameV324||'this offer';
+    /* V334 (owner markup, photo 7): the confirm copy follows the button's own "End" wording. */
     const question=published
-      ?`Retire "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
+      ?`End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       :`Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
     if(!confirm(question))return;
-    CUI.setButtonBusy(button,{busy:true,label:published?'Retiring…':'Deleting…'});
+    CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:S.biz.id,p_promotion_id:id,p_expected_version:null});
     if(!isGrowCurrent())return;
@@ -24756,7 +24778,10 @@ const GROW_SETUP_RAIL_W6I2=[
      stamp = xx rewards … but if bosses want to extend to 12 stamp = xx rewards and more = able to
      do it customisable" — so the screen is a repeatable list and its label says so. */
   ['stamps',[['stampEarn','Stamps'],['stampGift','Milestones']]],
-  ['points',[['earn','Earning'],['reward','Gifts'],['expiry','Expiry']]],
+  /* V334 (owner markup, photo 6: "when i add/edit point system, this the setting page — i can
+     edit earnings and expiry on one page"): Earning and Expiry merge into a single step here,
+     rather than being two rail entries an owner has to click Next between. */
+  ['points',[['earnExpiry','Earning & expiry'],['reward','Gifts']]],
   ['tiers',[['climb','Climbing'],['tiers','Tiers']]],
   ['referral',[['referral','Referral']]]
 ];
@@ -25243,7 +25268,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      on step 1. Guarded on that step existing on the rail rather than 'reward'/'stampGift', since
      this hand-off never touches the gift/milestone screen. */
   if(rewardHandoffV303?.mode==='earning'){
-    const earnStepKindV326=rewardHandoffV303.kind==='stamps'?'stampEarn':'earn';
+    /* V334: points' earn step merged into 'earnExpiry' (see GROW_SETUP_RAIL_W6I2) — stamps still
+       has its own standalone 'stampEarn' step, unaffected by the merge. */
+    const earnStepKindV326=rewardHandoffV303.kind==='stamps'?'stampEarn':'earnExpiry';
     if(stepNumberOrNullW6I2(earnStepKindV326)!==null)state.step=stepNumberForW6I2(earnStepKindV326);
   }else if(rewardHandoffV303?.mode==='climbing'){
     /* V331: the Tiers page's own "edit" link -- lands on the tier-basis step (visits/spend/points),
@@ -26145,6 +26172,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        rails can BOTH be on the rail at once without either one re-labelling the other. */
     return kind==='choose'?stepOneHtml()
       :kind==='earn'||kind==='stampEarn'?stepTwoHtml()
+      /* V334: Earning + Expiry render together as one page for the points family. */
+      :kind==='earnExpiry'?`${stepTwoHtml()}<hr class="grow-setup-divider-v334" style="margin:18px 0;border:none;border-top:1px solid var(--line)">${expiryStepHtmlW6I2()}`
       :kind==='climb'?climbStepHtmlV305()
       :kind==='tiers'?tiersStepHtml()
       /* V322 (R5): the stamps rail's second screen is the milestone ladder now, not a single gift
@@ -26238,8 +26267,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        the Points & gifts rail is on by construction and asks for the rate on its own screen, and
        under visits there is no rate to ask for at all. */
     if(kind==='stampEarn')state.stampSpend=parseFloat($('growSetupStampV301')?.value||'')||state.stampSpend;
-    if(kind==='earn')state.earn=parseFloat($('growSetupEarnV301')?.value||'')||state.earn;
-    if(kind==='expiry'){
+    if(kind==='earn'||kind==='earnExpiry')state.earn=parseFloat($('growSetupEarnV301')?.value||'')||state.earn;
+    if(kind==='expiry'||kind==='earnExpiry'){
       const mode=String($('growSetupExpiryModeW6I2')?.value||state.expiryMode);
       state.expiryMode=['none','fixed','inactivity'].includes(mode)?mode:'none';
       const days=parseInt($('growSetupExpiryDaysW6I2')?.value||'',10);
@@ -26810,6 +26839,23 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         return render();
       }
       /* V305: the row build moved to programRowV305 so every screen writes the same one. */
+      const result=await saveDraft(programRowV305(model));
+      if(!isCurrent())return;
+      if(!result.ok)return failStep(result.error,'Nothing was saved.');
+      goto(state.step+1);
+    });
+    /* V334: Earning + Expiry save together — programRowV305 already carries both fields off
+       state, so this is the same single write the two separate steps used to each make, just
+       with both fields' validation checked before either save happens. */
+    if(kind==='earnExpiry')return withBusy(async()=>{
+      const model=state.model||modelForSwitchesW6I2();
+      if(!(state.earn>0)){
+        state.error='Enter how many points a customer earns.';
+        return render();
+      }
+      if(expiryModeRequiresDays(state.expiryMode)&&!(Number(state.expiryDays)>0)){
+        state.error='Enter how many days before points expire.';return render();
+      }
       const result=await saveDraft(programRowV305(model));
       if(!isCurrent())return;
       if(!result.ok)return failStep(result.error,'Nothing was saved.');
@@ -34613,10 +34659,10 @@ function bindCataloguePhotoUploadsV158({onSaved}={}){
   });
 }
 function workspaceLogoPublishArgsV96({
-  businessId,objectPath,fileType,width,height,altEn,brand,existing
+  businessId,objectPath,fileType,width,height,altEn,brand,existing,assetKind='logo'
 }={}){
   return {
-    p_business:businessId,p_asset_kind:'logo',p_entity_id:null,p_branch:null,
+    p_business:businessId,p_asset_kind:assetKind,p_entity_id:null,p_branch:null,
     p_object_path:objectPath,p_mime_type:fileType,p_width_px:width,
     p_height_px:height,p_alt_en:altEn,p_alt_zh_cn:null,
     p_hero_color:brand?.hero_color||'#C43D32',
@@ -34645,6 +34691,12 @@ async function loadWorkspaceLogoEditorV96(){
   const brand=data.brand||{},existing=brand.logo_asset||null;
   const currentUrl=customerMediaUrlV95(existing?.url||'');
   const initial=String(S.biz.name||'N').trim().charAt(0).toUpperCase()||'N';
+  /* V334 (owner markup, photo 10: "no need this" on Image description). The field is struck out
+     of the UI, but app.business_publish_media_asset_v95 still requires a non-empty p_alt_en
+     (1-240 chars) server-side — dropping it from the payload would 22023 every upload. So the
+     value is generated the same way the removed input used to default to, just never shown. */
+  const heroExisting=brand.hero_asset||null;
+  const heroCurrentUrl=customerMediaUrlV95(heroExisting?.url||'');
   host.innerHTML=`<div class="workspace-logo-editor">
     <div class="workspace-logo-preview" id="workspaceLogoPreviewV96" aria-label="Business logo preview">
       ${currentUrl?`<img src="${esc(currentUrl)}" alt="${esc(existing?.alt_en||`${S.biz.name} logo`)}" width="184" height="184">`:esc(initial)}
@@ -34654,11 +34706,24 @@ async function loadWorkspaceLogoEditorV96(){
       <p class="muted small" style="margin:5px 0 10px">Shown in your customer programme and merchant profile. A square PNG, JPG, WebP or GIF works best.</p>
       <label for="workspaceLogoFileV96">${existing?'Choose a replacement':'Choose a logo'}</label>
       <input id="workspaceLogoFileV96" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-describedby="workspaceLogoHelpV96">
-      <label for="workspaceLogoAltV96">Image description</label>
-      <input id="workspaceLogoAltV96" maxlength="240" value="${esc(existing?.alt_en||`${S.biz.name} logo`)}">
       <div class="settings-save-row">
         <button type="button" class="btn sm" id="workspaceLogoPublishV96" disabled>${existing?'Replace logo':'Upload logo'}</button>
         <span class="settings-scope" id="workspaceLogoHelpV96" role="status">Maximum 10 MB. Nothing changes until you publish.</span>
+      </div>
+    </div>
+  </div>
+  <div class="workspace-logo-editor" style="margin-top:16px">
+    <div class="workspace-logo-preview" id="workspaceHeroPreviewV334" aria-label="Cover photo preview">
+      ${heroCurrentUrl?`<img src="${esc(heroCurrentUrl)}" alt="${esc(heroExisting?.alt_en||`${S.biz.name} cover photo`)}" width="184" height="184">`:CUI.icon('business',{size:28})}
+    </div>
+    <div class="workspace-logo-fields">
+      <b>Cover photo</b>
+      <p class="muted small" style="margin:5px 0 10px">Shown behind your business name on your customer programme. A wide PNG, JPG, WebP or GIF works best.</p>
+      <label for="workspaceHeroFileV334">${heroExisting?'Choose a replacement':'Choose a cover photo'}</label>
+      <input id="workspaceHeroFileV334" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-describedby="workspaceHeroHelpV334">
+      <div class="settings-save-row">
+        <button type="button" class="btn sm" id="workspaceHeroPublishV334" disabled>${heroExisting?'Replace cover photo':'Upload cover photo'}</button>
+        <span class="settings-scope" id="workspaceHeroHelpV334" role="status">Maximum 10 MB. Nothing changes until you publish.</span>
       </div>
     </div>
   </div>`;
@@ -34684,11 +34749,13 @@ async function loadWorkspaceLogoEditorV96(){
     refreshCustomerInterfaceLivePreviewV326();
   };
   publish.onclick=async()=>{
-    const file=fileInput.files?.[0],altEn=$('workspaceLogoAltV96').value.trim();
+    const file=fileInput.files?.[0];
+    /* V334: image description no longer a visible field — generated the same way it used to
+       default to, since the server requires a non-empty description regardless. */
+    const altEn=(existing?.alt_en||`${S.biz.name} logo`).trim().slice(0,240)||'Business logo';
     if(!file||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760){
       return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
     }
-    if(!altEn)return toast('Add a short image description.');
     const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type];
     const objectPath=`${S.biz.id}/logo/${crypto.randomUUID()}.${extension}`;
     publish.disabled=true;status.textContent='Uploading and publishing logo…';
@@ -34723,6 +34790,64 @@ async function loadWorkspaceLogoEditorV96(){
         ?'Logo published. Previous file cleanup needs support.'
         :'Logo published to the customer programme.';
     toast(existing?'Business logo replaced':'Business logo published');
+    loadWorkspaceLogoEditorV96();
+  };
+  /* V334: cover photo, same upload/publish mechanics as the logo above, asset_kind='hero' —
+     already a fully supported kind in business_publish_media_asset_v95 (see hero_asset_id on
+     business_presentation_brand_v95), just never had a UI writer before. */
+  const heroFileInput=$('workspaceHeroFileV334'),heroPreview=$('workspaceHeroPreviewV334');
+  const heroPublish=$('workspaceHeroPublishV334'),heroStatus=$('workspaceHeroHelpV334');
+  let heroPreviewUrl='';
+  if(heroFileInput)heroFileInput.onchange=()=>{
+    if(heroPreviewUrl)URL.revokeObjectURL(heroPreviewUrl);
+    const file=heroFileInput.files?.[0];
+    heroPublish.disabled=!file;
+    if(!file){
+      heroPreview.innerHTML=heroCurrentUrl
+        ?`<img src="${esc(heroCurrentUrl)}" alt="${esc(heroExisting?.alt_en||`${S.biz.name} cover photo`)}" width="184" height="184">`
+        :CUI.icon('business',{size:28});
+      heroStatus.textContent='Maximum 10 MB. Nothing changes until you publish.';
+      return;
+    }
+    heroPreviewUrl=URL.createObjectURL(file);
+    heroPreview.innerHTML=`<img src="${esc(heroPreviewUrl)}" alt="New cover photo preview" width="184" height="184">`;
+    heroStatus.textContent='Preview only — publish when this looks right.';
+  };
+  if(heroPublish)heroPublish.onclick=async()=>{
+    const file=heroFileInput.files?.[0];
+    const altEn=(heroExisting?.alt_en||`${S.biz.name} cover photo`).trim().slice(0,240)||'Business cover photo';
+    if(!file||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760){
+      return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
+    }
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type];
+    const objectPath=`${S.biz.id}/hero/${crypto.randomUUID()}.${extension}`;
+    heroPublish.disabled=true;heroStatus.textContent='Uploading and publishing cover photo…';
+    let dimensions;
+    try{dimensions=await imageDimensionsV95(file)}
+    catch(dimensionError){
+      heroPublish.disabled=false;heroStatus.textContent='Cover photo dimensions could not be read.';
+      return fail(dimensionError);
+    }
+    const result=await NestlyMediaSyncV95.publish({
+      storage:sb.storage,client:sb,businessId:S.biz.id,objectPath,file,
+      publishArgs:workspaceLogoPublishArgsV96({
+        businessId:S.biz.id,objectPath,fileType:file.type,
+        width:dimensions.width,height:dimensions.height,altEn,
+        brand,existing:heroExisting,assetKind:'hero'
+      })
+    });
+    if(!host.isConnected)return;
+    if(!result.ok){
+      heroPublish.disabled=false;
+      heroStatus.textContent=result.cleanup.status==='pending_cleanup'
+        ?'Cover photo was not published. Uploaded file cleanup is pending and will retry.'
+        :result.cleanup.status==='cleanup_untracked'
+          ?'Cover photo was not published, and file cleanup needs support.'
+          :'Cover photo was not published.';
+      return fail(result.error);
+    }
+    if(heroPreviewUrl){URL.revokeObjectURL(heroPreviewUrl);heroPreviewUrl=''}
+    toast(heroExisting?'Cover photo replaced':'Cover photo published');
     loadWorkspaceLogoEditorV96();
   };
 }
@@ -36110,7 +36235,7 @@ function wireWorkspaceBrandV259(){
    hash, exactly like the rail children it sits alongside; nothing here bypasses the router. */
 function customerInterfaceStepperHtmlV325(activeKey){
   return `<div class="ci-stepper-v325" role="tablist" aria-label="Customer Interface setup steps">
-    ${CUSTOMER_INTERFACE_VIEWS_V296.map(([key,label,href,,step])=>{
+    ${CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334.map(([key,label,href,,step])=>{
       const active=key===activeKey;
       return `<a class="ci-step-v325${active?' active':''}" role="tab" aria-selected="${active}" href="${esc(href)}">
         <span class="ci-step-dot-v325">${step}</span><span class="ci-step-label-v325">${esc(label)}</span></a>`;
@@ -36429,9 +36554,17 @@ function customerInterfaceLivePreviewMarkupV326(){
       programmes_contract:'v310',rewards:true,activity:true,appointments:true,booking_request:true
     }
   });
+  /* V334 (owner markup, photo 10: "why this not reflected?" — the booking policy text typed on
+     this page never showed in Live preview). customerMerchantExperienceMarkupV95's presentation
+     object has no booking-policy field — it is already shown to real customers elsewhere
+     (booking confirmation, appointment details rows, see line ~37089/37121) — so this reads the
+     LIVE textarea value the same way name/brandColor above do, and renders it as its own note
+     rather than widening that shared function's signature for one caller. */
+  const bookingPolicy=($('bp')?.value||S.biz.booking_policy||'').trim();
   return `<div class="wallet-shell customer-shell customer-surface ci-live-preview-inner-v326"><div class="wallet-inner">
     <p class="muted small ci-live-preview-sample-badge-v326" role="note">Sample customer — points, tier and rewards are for scale, not live data.</p>
     <div id="walletBody">${merchantExperience}
+      ${bookingPolicy?`<section class="card" aria-label="Booking policy" data-ci-live-preview-bookingpolicy-v334><p class="muted small" style="margin:0">${esc(bookingPolicy)}</p></section>`:''}
       <section class="card customer-programme-card-v310" aria-label="Sample rewards">
         <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>Rewards</span></h2>
         ${customerInterfaceSampleRewardRowsV326('points')}

@@ -31,8 +31,10 @@ test('promotions can be removed, with published offers retired rather than erase
   const i = app.indexOf('[data-promotion-delete]');
   const src = app.slice(i, i + 1400);
   assert.ok(src.includes('confirm('), 'deletion must be confirmed');
-  assert.ok(/Retire/.test(app) && /Delete the draft/.test(src),
-    'the control must say which of retire/delete will happen');
+  /* V334 (owner markup, photo 7: "all 'retire' change to 'end'"): the wording changed, the
+     underlying behaviour (kept record vs hard delete) did not. */
+  assert.ok(/End/.test(app) && /Delete the draft/.test(src),
+    'the control must say which of end/delete will happen');
 });
 
 test('a just-picked promotion photo shows in the preview before publishing', () => {

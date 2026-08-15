@@ -129,7 +129,9 @@ test('V268 (b) drilling into a category shows where you are, for every category'
 });
 
 test('V268 (b) the category heading and its blurb stay with the item list', () => {
-  assert.match(app, /<h2 id="rewardJourneyTitle">\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\)/);
+  /* V334: the Points System heading now leads with a star icon (owner markup photo 4) — the
+     rest of the heading/blurb pairing this test protects is unchanged. */
+  assert.match(app, /<h2 id="rewardJourneyTitle">\$\{programmeView==='points'\?`\$\{CUI\.icon\('star',\{size:18\}\)\} `:''\}\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\)/);
   assert.match(app, /\$\{growActiveTopicV229\?`<p class="muted small">\$\{esc\(growActiveTopicV229\.blurb\)\}<\/p>`:''\}/);
 });
 
@@ -146,10 +148,14 @@ test('V268 (b) Tiered membership is a category like the others, not a drill-only
 test('V268 (b) every programme category carries its topic key, so the pattern is one shape', () => {
   const keys = [...app.matchAll(/data-programme-category-v268="([a-z]+)"/g)].map(match => match[1]);
   assert.deepEqual(keys.sort(), ['lifestyle', 'points', 'promotions', 'recurring', 'referrals', 'tiers']);
+  /* V334 (owner markup, photo 3: "delete this tab"): the Promotions TILE is gone from the
+     Ongoing programmes grid, but its category div (growLimitedOfferCategoryHtmlV319, reached
+     from the Limited Offer page) is untouched — hence 'promotions' still appears in `keys`
+     above but not in the tile list below. */
   // Every drillable tile resolves to one of those categories — no tile is a dead end.
   const tiles = section('const growTopicDefsV229=[', 'const growActiveTopicV229=');
   const tileKeys = [...tiles.matchAll(/\{key:'([a-z]+)',icon:/g)].map(match => match[1]);
-  assert.deepEqual(tileKeys.sort(), ['lifestyle', 'points', 'promotions', 'recurring', 'referrals', 'stamps', 'tiers']);
+  assert.deepEqual(tileKeys.sort(), ['lifestyle', 'points', 'recurring', 'referrals', 'stamps', 'tiers']);
   // 'stamps' is a third VIEW of the point engine (V235), which is why it has no category of its own.
   assert.match(app, /const growTopicSectionV235=growActiveTopicV229\?\.key==='stamps'\?'points'/);
 });

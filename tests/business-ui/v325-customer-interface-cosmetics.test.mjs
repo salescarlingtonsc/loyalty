@@ -34,13 +34,15 @@ const bookingRules = section(app, 'function bookingRulesCardHtmlV325(', 'functio
 /* --------------------------------------------------------------------- (a) the stepper itself */
 
 test('V325 the stepper renders all six steps with their hashes, in order', () => {
+  /* V334 (owner markup, photo 9: "Customer Sign-up & fields" relabel): only the 'interface' entry's
+     label text changed, hashes and step order are untouched. */
   const expected = [
     ['brand', 'Business Profile', '#/customer-interface/brand'],
     ['appointment', 'Appointment Setting', '#/customer-interface/appointment'],
     ['preview', 'Preview', '#/customer-interface'],
     ['done', 'Done', '#/customer-interface/done'],
     ['programme', 'Customer programme', '#/customer-interface/programme'],
-    ['interface', 'Sign-up & fields', '#/customer-interface/interface'],
+    ['interface', 'Customer Sign-up & fields', '#/customer-interface/interface'],
   ];
   const viewsSource = section(app, 'const CUSTOMER_INTERFACE_VIEWS_V296=[', '];');
   let cursor = -1;
@@ -54,8 +56,10 @@ test('V325 the stepper renders all six steps with their hashes, in order', () =>
   for (const href of ['#/customer-interface', '#/customer-interface/brand', '#/customer-interface/programme', '#/customer-interface/interface']) {
     assert.match(app, new RegExp(`'${href.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}'`));
   }
-  // The stepper is built from the same array — a new step only ever needs adding there.
-  assert.match(stepper, /CUSTOMER_INTERFACE_VIEWS_V296\.map\(\(\[key,label,href,,step\]\)=>\{/);
+  /* V334 (owner markup, photo 9: hide Preview/Done/Customer programme from nav/stepper): the
+     stepper now renders the filtered VISIBLE list — those three routes still resolve (asserted
+     above), they just no longer have a stepper circle or sidebar row. */
+  assert.match(stepper, /CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334\.map\(\(\[key,label,href,,step\]\)=>\{/);
   assert.match(stepper, /class="ci-stepper-v325"/);
   assert.match(page, /\$\{customerInterfaceStepperHtmlV325\(customerInterfaceViewV296\)\}/);
 });

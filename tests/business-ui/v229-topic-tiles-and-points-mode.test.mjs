@@ -15,12 +15,14 @@ const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const shell = readFileSync(join(root, 'app', 'index.html'), 'utf8');
 const migration = readFileSync(join(root, 'db', 'migrations', '20260808_nestly_v229_points_mode_choice.sql'), 'utf8');
 
-test('V229 the overview is six topic tiles, and drilling in is the only way to the rows', () => {
+test('V334 the overview is five topic tiles, and drilling in is the only way to the rows', () => {
   const defs = app.slice(app.indexOf('const growTopicDefsV229=['), app.indexOf('const growActiveTopicV229='));
   const keys = [...defs.matchAll(/\{key:'([a-z]+)'/g)].map((m) => m[1]);
   /* V235: a Stamp card tile joins the two points tiles, so all THREE loyalty models are
-     represented on the overview and exactly one of them can read Active. */
-  assert.deepEqual(keys, ['points', 'tiers', 'stamps', 'lifestyle', 'promotions', 'referrals', 'recurring']);
+     represented on the overview and exactly one of them can read Active.
+     V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out — Limited
+     Offer already covers this surface from its own nav entry. */
+  assert.deepEqual(keys, ['points', 'tiers', 'stamps', 'lifestyle', 'referrals', 'recurring']);
   /* V244: the grid moved inside each of the two groups (Ongoing / Pending setup), so the
      render site emits the grouped markup rather than one bare grid. The tiles-mode gate — the
      thing this line actually protects — is unchanged. */

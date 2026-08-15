@@ -27,7 +27,9 @@ test('Grow starts with one task and one complete single-column programme overvie
      nav row and the V244 tile group word-for-word. Same views, one vocabulary. */
   /* V271 put the owner's two new views (Overview, History) ahead of the older three in the same
      fallback chain; the tab-driven heading this line protects is unchanged in kind. */
-  assert.match(grow,/id="rewardJourneyTitle">\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\):\(programmeView==='overview'\?'Overview'/);
+  /* V334 (owner markup, photo 4: "bring here his logo"): the Points System heading now leads
+     with the shared star icon; the fallback-chain shape this test protects is unchanged. */
+  assert.match(grow,/id="rewardJourneyTitle">\$\{programmeView==='points'\?`\$\{CUI\.icon\('star',\{size:18\}\)\} `:''\}\$\{growActiveTopicV229\?esc\(growActiveTopicV229\.title\):\(programmeView==='overview'\?'Overview'/);
   assert.match(grow,/programmeView==='ongoing'\?'Ongoing programmes'/);
   assert.match(grow,/class="grow-programme-list"/);
   assert.match(app,/\.grow-programme-list\{display:grid;grid-template-columns:1fr/);

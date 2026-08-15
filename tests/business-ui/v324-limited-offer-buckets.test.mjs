@@ -120,13 +120,15 @@ test('V324 an empty bucket says so instead of rendering nothing', () => {
   assert.match(list, /No promotion is published right now\./);
 });
 
-test('V324 Delete says Retire on Published (record survives) and Delete on Draft (it does not)', () => {
+test('V334 Delete says End on Published (record survives) and Delete on Draft (it does not)', () => {
+  /* V334 (owner markup, photo 7: "all 'retire' change to 'end', i want red colour"). */
   const published = call([PUBLISHED_LIVE], {tab: 'published'}).list;
   const drafted = call([DRAFT_NEW], {tab: 'draft'}).list;
-  assert.match(published, />Retire</);
+  assert.match(published, />End</);
+  assert.match(published, /class="btn sm danger"/);
   assert.doesNotMatch(published, />Delete</);
   assert.match(drafted, />Delete</);
-  assert.doesNotMatch(drafted, />Retire</);
+  assert.doesNotMatch(drafted, />End</);
 });
 
 test('V324 a retired item in History says Ended, never Draft', () => {
@@ -168,7 +170,8 @@ test('V324 deleting reuses business_delete_promotion_v183 — the same RPC, same
   const handler = app.slice(app.indexOf("outerMain.querySelectorAll('[data-grow-offer-delete-v324]')"),
     app.indexOf('/* V324: show/hide the inline confirm block in place'));
   assert.match(handler, /business_delete_promotion_v183/);
-  assert.match(handler, /Retire "\$\{name\}"\? Customers stop seeing it immediately\. The record is kept so your reports stay accurate\./);
+  /* V334 (owner markup, photo 7: "all 'retire' change to 'end'"). */
+  assert.match(handler, /End "\$\{name\}"\? Customers stop seeing it immediately\. The record is kept so your reports stay accurate\./);
   assert.match(handler, /Delete the draft "\$\{name\}"\? This cannot be undone\. No customer has seen it\./);
   assert.match(handler, /growRerenderV322\(\)/, 'a real write still repaints from the server reply');
   // Same RPC the deep editor (promotionsPage) already calls — a second write path with different
