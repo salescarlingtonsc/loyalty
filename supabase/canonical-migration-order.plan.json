@@ -1918,6 +1918,12 @@
       "version": "20260815090001",
       "name": "nestly_v327_global_customer_qr",
       "sourcePath": "db/migrations/20260815_nestly_v327_global_customer_qr.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090002",
+      "name": "nestly_v328_staff_choice_manual_confirm",
+      "sourcePath": "db/migrations/20260815_nestly_v328_staff_choice_manual_confirm.sql"
     }
   ]
 }
