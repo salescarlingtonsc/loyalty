@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ab3b6ec2ec8bec28c84bca6fdebd08610d8a5d7805f7ac52ff16c15658c10343"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="9b050c117932ea574eb73efb62e77c30f627cb545399303069897ed12b5840e2"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -136,6 +136,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
    motion by simply not animating; the tint still lands. */
 .is-notified-v206>td{background:var(--tint)!important;transition:background .5s var(--ease)}
 @media(prefers-reduced-motion:reduce){.is-notified-v206>td{transition:none}}
+/* V329: persistent "N awaiting confirmation" pill (top right, next to the bell) and the
+   urgent banner of unconfirmed requests on the Day calendar. */
+.booking-requests-badge-v329{border-color:var(--red)!important;color:var(--red)!important;font-weight:700}
+.pending-request-banner{border:2px solid var(--red);margin-bottom:14px}
+.pending-request-card{padding:10px 0;border-top:1px solid var(--hair)}
+.pending-request-card:first-of-type{border-top:none}
+@keyframes pendingRequestPulseV329{0%,50%{box-shadow:0 0 0 4px rgba(157,53,44,.22);background:var(--tint)}100%{box-shadow:none;background:transparent}}
+.pending-request-highlight-v329{animation:pendingRequestPulseV329 1.3s ease-out 2;border-radius:10px}
+@media(prefers-reduced-motion:reduce){.pending-request-highlight-v329{animation:none;background:var(--tint);border-radius:10px}}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -1867,21 +1876,6 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
-/* V325 — Customer Interface numbered stepper + persistent preview panel (2026-08-14 cosmetics
-   brief). The two-column layout reuses .split above, which this business console already
-   collapses to one column at <=900px (see the @media(max-width:900px) block) — no new
-   breakpoint. The stepper itself scrolls horizontally at narrow widths rather than wrapping,
-   so the numbered order stays a single readable line down to 390px. */
-.ci-stepper-v325{display:flex;align-items:center;gap:0;margin:0 0 18px;overflow-x:auto;padding-bottom:2px}
-.ci-step-v325{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;min-width:84px;padding:2px 6px;color:var(--muted);text-decoration:none;text-align:center}
-.ci-step-dot-v325{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:13px;color:var(--muted)}
-.ci-step-label-v325{font-size:11.5px;font-weight:600;white-space:nowrap}
-.ci-step-v325.active .ci-step-dot-v325{border-color:var(--coral);background:var(--coral);color:#fff}
-.ci-step-v325.active .ci-step-label-v325{color:var(--ink)}
-.ci-step-line-v325{flex:1 1 24px;min-width:16px;height:2px;background:var(--line);margin:0 2px 20px}
-.ci-step-layout-v325{align-items:start}
-.customer-preview-side-v325{position:sticky;top:16px}
-@media(max-width:900px){.customer-preview-side-v325{position:static}}
 /* v244 · Explore — the ecosystem search behind its own tab */
 /* v264 · sharing a promotion */
 .customer-share-button{flex:none}

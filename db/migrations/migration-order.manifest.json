@@ -473,13 +473,14 @@
     },
     {
       "sourceDeployVersion": "20260815",
-      "count": 5,
+      "count": 6,
       "paths": [
         "db/migrations/20260815_nestly_v326_points_gift_lifecycle.sql",
         "db/migrations/20260815_nestly_v326a_gift_rpc_anon_revoke.sql",
         "db/migrations/20260815_nestly_v327_customer_branch_choice.sql",
         "db/migrations/20260815_nestly_v327_global_customer_qr.sql",
-        "db/migrations/20260815_nestly_v328_staff_choice_manual_confirm.sql"
+        "db/migrations/20260815_nestly_v328_staff_choice_manual_confirm.sql",
+        "db/migrations/20260815_nestly_v329_owner_reschedule_booking_request.sql"
       ]
     }
   ],
@@ -3043,6 +3044,14 @@
       "semanticVersion": "v328",
       "proposedDeployVersion": "20260815090002",
       "sha256": "68827ed3ed9ffbd78aacd7afe6c6581831ebf936f389f17ad0c9044d1e05bf3c"
+    },
+    {
+      "order": 320,
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v329_owner_reschedule_booking_request.sql",
+      "semanticVersion": "v329",
+      "proposedDeployVersion": "20260815090003",
+      "sha256": "1d77fd240a97229bfa376bb19b1676ea38b9f9ed5fe02d10ce5fa5951c0e9c3d"
     }
   ]
 }

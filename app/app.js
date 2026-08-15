@@ -11390,7 +11390,9 @@ function killChannels(){
 let pendingBookingRequestCountV329=0;
 function bookingRequestsBadgeWrapHtml(){
   const n=pendingBookingRequestCountV329;
-  return `<span id="bookingRequestsBadgeWrapV329">${n>0?`<button type="button" class="btn ghost sm booking-requests-badge-v329" id="bookingRequestsBadgeV329" aria-label="${n} booking request${n===1?'':'s'} awaiting confirmation">${CUI.icon('bookings',{size:15})} ${n} awaiting confirmation</button>`:''}</span>`;
+  /* No separate aria-label: the visible text ("N awaiting confirmation") already is the
+     button's accessible name, so there is no second, unreviewed dynamic string to translate. */
+  return `<span id="bookingRequestsBadgeWrapV329">${n>0?`<button type="button" class="btn ghost sm booking-requests-badge-v329" id="bookingRequestsBadgeV329">${CUI.icon('bookings',{size:15})} ${n} awaiting confirmation</button>`:''}</span>`;
 }
 function wireBookingRequestsBadgeV329(){
   const button=$('bookingRequestsBadgeV329');
@@ -11412,7 +11414,7 @@ async function decideBookingRequestGlobalV329(id,decision){
   const authorized=decision==='confirm'?canWriteModule('bookings'):decision==='decline'?canWriteModule('bookings'):false;
   if(!authorized){toast('Booking write access is required');return}
   const {data,error}=await sb.rpc('staff_decide_booking_request_v73',{p_business:S.biz.id,p_request:id,p_decision:decision,p_branch:null});
-  if(error){toast(`${decision==='confirm'?'Confirm':'Decline'} failed. ${error.message||'Try again.'}`);return}
+  if(error){const failText=`${decision==='confirm'?'Confirm':'Decline'} failed. ${error.message||'Try again.'}`;toast(failText);return}
   toast(bookingDecisionNotice(data,decision).text);
   autoRefreshIfRelevant();
   refreshPendingBookingRequestCountV329();
@@ -29517,7 +29519,7 @@ async function appointmentsPage(){
     });
     routeMain.querySelectorAll('[data-pending-reschedule-submit]').forEach(button=>button.onclick=async()=>{
       const id=button.dataset.pendingRescheduleSubmit;
-      const timeInput=$(`pendingRescheduleTimeV329-${id}`),staffSelect=$(`pendingRescheduleStaffV329-${id}`);
+      const timeInput=$('pendingRescheduleTimeV329-'+id),staffSelect=$('pendingRescheduleStaffV329-'+id);
       if(!timeInput?.value)return toast('Pick a new date and time first');
       const preferred=sgIso(timeInput.value);
       button.disabled=true;
@@ -29525,7 +29527,7 @@ async function appointmentsPage(){
         p_business:S.biz.id,p_request:id,p_preferred:preferred,p_staff:staffSelect?.value||null
       });
       if(!isCurrent())return;
-      if(error){toast(`Could not move this request. ${error.message||'Try again.'}`);button.disabled=false;return}
+      if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
       toast(bookingDecisionNotice(data,'confirm').text);
       reschedulingRequestIdV329='';
       refreshPendingBookingRequestCountV329();
@@ -29646,7 +29648,7 @@ async function appointmentsPage(){
        not keep re-pulsing on every subsequent reload of this same page instance (a decline/
        confirm elsewhere, the realtime refresh, etc). */
     if(highlightRequestId&&!highlightRequestConsumedV329){
-      const card=$(`pendingRequestCardV329-${highlightRequestId}`);
+      const card=$('pendingRequestCardV329-'+highlightRequestId);
       if(card){
         highlightRequestConsumedV329=true;
         requestAnimationFrame(()=>card.scrollIntoView({behavior:'smooth',block:'center'}));

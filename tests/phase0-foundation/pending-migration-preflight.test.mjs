@@ -326,7 +326,8 @@ const sqlTestByMigrationName = new Map([
      book_appointment_smart_v47 on the manual (non-auto-confirm) booking-confirm path, ignoring
      the customer's own staff choice (v183, booking_requests.staff_id). Bound by full name for
      the same collision reason as v323/v326 above. */
-  ['nestly_v328_staff_choice_manual_confirm', 'db/tests/v328_staff_choice_manual_confirm.sql']
+  ['nestly_v328_staff_choice_manual_confirm', 'db/tests/v328_staff_choice_manual_confirm.sql'],
+  ['nestly_v329_owner_reschedule_booking_request', 'db/tests/v329_owner_reschedule_booking_request.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -830,7 +831,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 276); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm
+  assert.equal(pending.length, 277); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

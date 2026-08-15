@@ -1935,6 +1935,12 @@
       "path": "db/migrations/20260815_nestly_v328_staff_choice_manual_confirm.sql",
       "semanticVersion": "v328",
       "proposedDeployVersion": "20260815090002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v329_owner_reschedule_booking_request.sql",
+      "semanticVersion": "v329",
+      "proposedDeployVersion": "20260815090003"
     }
   ]
 }

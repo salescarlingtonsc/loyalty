@@ -2246,6 +2246,10 @@
       "reason": "browser RPC 'staff_decide_booking_request_v73' atomically decides a booking lifecycle request and may create its appointment; it changes booking/appointment workflow state but does not write loyalty, stored value, payment, or other customer value"
     },
     {
+      "id": "browser.rpc:app/app.js:staff_reschedule_and_confirm_booking_request_v329",
+      "reason": "browser RPC 'staff_reschedule_and_confirm_booking_request_v329' updates a pending booking_request's preferred time/staff then calls staff_decide_booking_request_v73 to confirm it in the same transaction; same booking/appointment workflow-state shape as that RPC, no loyalty, stored value, payment, or other customer value write"
+    },
+    {
       "id": "browser.rpc:app/app.js:create_client_field_definition",
       "reason": "browser RPC 'create_client_field_definition' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },

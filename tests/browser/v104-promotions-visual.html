@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="f8491c1be9348d226f2a96e34b4d19544c353efa9411601081c012e3b745f946">
+<meta name="v104-production-source-sha256" content="87b4747fe02505bffd737288c2923878941a1f85e2f31a79f0d6f341ab21d902">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -144,6 +144,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
    motion by simply not animating; the tint still lands. */
 .is-notified-v206>td{background:var(--tint)!important;transition:background .5s var(--ease)}
 @media(prefers-reduced-motion:reduce){.is-notified-v206>td{transition:none}}
+/* V329: persistent "N awaiting confirmation" pill (top right, next to the bell) and the
+   urgent banner of unconfirmed requests on the Day calendar. */
+.booking-requests-badge-v329{border-color:var(--red)!important;color:var(--red)!important;font-weight:700}
+.pending-request-banner{border:2px solid var(--red);margin-bottom:14px}
+.pending-request-card{padding:10px 0;border-top:1px solid var(--hair)}
+.pending-request-card:first-of-type{border-top:none}
+@keyframes pendingRequestPulseV329{0%,50%{box-shadow:0 0 0 4px rgba(157,53,44,.22);background:var(--tint)}100%{box-shadow:none;background:transparent}}
+.pending-request-highlight-v329{animation:pendingRequestPulseV329 1.3s ease-out 2;border-radius:10px}
+@media(prefers-reduced-motion:reduce){.pending-request-highlight-v329{animation:none;background:var(--tint);border-radius:10px}}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -1875,21 +1884,6 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
-/* V325 — Customer Interface numbered stepper + persistent preview panel (2026-08-14 cosmetics
-   brief). The two-column layout reuses .split above, which this business console already
-   collapses to one column at <=900px (see the @media(max-width:900px) block) — no new
-   breakpoint. The stepper itself scrolls horizontally at narrow widths rather than wrapping,
-   so the numbered order stays a single readable line down to 390px. */
-.ci-stepper-v325{display:flex;align-items:center;gap:0;margin:0 0 18px;overflow-x:auto;padding-bottom:2px}
-.ci-step-v325{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;min-width:84px;padding:2px 6px;color:var(--muted);text-decoration:none;text-align:center}
-.ci-step-dot-v325{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:13px;color:var(--muted)}
-.ci-step-label-v325{font-size:11.5px;font-weight:600;white-space:nowrap}
-.ci-step-v325.active .ci-step-dot-v325{border-color:var(--coral);background:var(--coral);color:#fff}
-.ci-step-v325.active .ci-step-label-v325{color:var(--ink)}
-.ci-step-line-v325{flex:1 1 24px;min-width:16px;height:2px;background:var(--line);margin:0 2px 20px}
-.ci-step-layout-v325{align-items:start}
-.customer-preview-side-v325{position:sticky;top:16px}
-@media(max-width:900px){.customer-preview-side-v325{position:static}}
 /* v244 · Explore — the ecosystem search behind its own tab */
 /* v264 · sharing a promotion */
 .customer-share-button{flex:none}
@@ -2193,7 +2187,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source f8491c1be9348d226f2a96e34b4d19544c353efa9411601081c012e3b745f946</p>
+  <p class="v104-provenance">Local production-render harness · source 87b4747fe02505bffd737288c2923878941a1f85e2f31a79f0d6f341ab21d902</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2205,7 +2199,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="f8491c1be9348d226f2a96e34b4d19544c353efa9411601081c012e3b745f946";
+const PRODUCTION_SOURCE_SHA256="87b4747fe02505bffd737288c2923878941a1f85e2f31a79f0d6f341ab21d902";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

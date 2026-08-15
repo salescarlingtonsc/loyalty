@@ -1809,10 +1809,109 @@ function ensureRealtimeChannel(){
       autoRefreshIfRelevant();
       if(S.biz.notify_new_bookings&&!muteAlerts) toast('🔔 '+(payload.new?.title||'New notification'));
     })
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},()=>autoRefreshIfRelevant())
+    /* V329 (owner: a booking made with a specific team member selected should pop up in the
+       business app asking to confirm or check availability, and a persistent reminder should
+       stay visible while anything is unconfirmed). The INSERT handler already refreshed the
+       open page; it now also refreshes the persistent badge (independent of which page is
+       open) and, when pop-up alerts are on for this business and this session isn't muted,
+       opens the request as a real dialog with the requested team member named — not just a
+       toast, which disappears before an owner mid-service can read it. */
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},payload=>{
+      autoRefreshIfRelevant();
+      refreshPendingBookingRequestCountV329();
+      if(S.biz.notify_new_bookings&&!muteAlerts&&STAFF_BOOKING_DECISION_STATUSES.has(payload.new?.status)&&canWriteModule('bookings')){
+        openBookingRequestPopupV329ById(payload.new.id);
+      }
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},()=>{
+      autoRefreshIfRelevant();refreshPendingBookingRequestCountV329();
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},()=>{
+      autoRefreshIfRelevant();refreshPendingBookingRequestCountV329();
+    })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'appointments',filter:'business_id=eq.'+S.biz.id},()=>autoRefreshIfRelevant())
     .subscribe();
   rtChannelBizId=S.biz.id;
+}
+/* ---------- V329: booking-request pop-up, persistent reminder badge ----------
+   Owner (2026-08-15): a booking made with a specific team member selected should pop up in
+   the business app asking to confirm or check availability; a persistent reminder should stay
+   visible while anything is unconfirmed, at top right. Confirm/decline both go through the
+   same existing single decision path (staff_decide_booking_request_v73) the Bookings page
+   already used — this never becomes a second RPC, only a second place to reach it from, so
+   confirm/decline logic cannot drift between the two surfaces. */
+let pendingBookingRequestCountV329=0;
+function bookingRequestsBadgeWrapHtml(){
+  const n=pendingBookingRequestCountV329;
+  /* No separate aria-label: the visible text ("N awaiting confirmation") already is the
+     button's accessible name, so there is no second, unreviewed dynamic string to translate. */
+  return `<span id="bookingRequestsBadgeWrapV329">${n>0?`<button type="button" class="btn ghost sm booking-requests-badge-v329" id="bookingRequestsBadgeV329">${CUI.icon('bookings',{size:15})} ${n} awaiting confirmation</button>`:''}</span>`;
+}
+function wireBookingRequestsBadgeV329(){
+  const button=$('bookingRequestsBadgeV329');
+  if(button)button.onclick=()=>nav('#/bookings');
+}
+async function refreshPendingBookingRequestCountV329(){
+  if(!S.biz?.id||!canReadModule('bookings'))return;
+  const {count,error}=await sb.from('booking_requests').select('id',{count:'exact',head:true})
+    .eq('business_id',S.biz.id).in('status',[...STAFF_BOOKING_DECISION_STATUSES]);
+  if(error)return; // a stale/missing badge is not worth surfacing an error for
+  pendingBookingRequestCountV329=count||0;
+  const wrap=$('bookingRequestsBadgeWrapV329');
+  if(wrap){wrap.outerHTML=bookingRequestsBadgeWrapHtml();wireBookingRequestsBadgeV329();}
+}
+/* The single decision path, callable from any page — the popup can fire while the owner is on
+   Dashboard, Customers, anywhere. window.decideBookingRequestV73 (bookingsPage) is bound to
+   that page's own isCurrent() guard and silently no-ops off-page; this one is page-independent. */
+async function decideBookingRequestGlobalV329(id,decision){
+  const authorized=decision==='confirm'?canWriteModule('bookings'):decision==='decline'?canWriteModule('bookings'):false;
+  if(!authorized){toast('Booking write access is required');return}
+  const {data,error}=await sb.rpc('staff_decide_booking_request_v73',{p_business:S.biz.id,p_request:id,p_decision:decision,p_branch:null});
+  if(error){const failText=`${decision==='confirm'?'Confirm':'Decline'} failed. ${error.message||'Try again.'}`;toast(failText);return}
+  toast(bookingDecisionNotice(data,decision).text);
+  autoRefreshIfRelevant();
+  refreshPendingBookingRequestCountV329();
+}
+async function openBookingRequestPopupV329ById(id){
+  if($('bookingRequestPopupV329'))return; // one at a time — a second INSERT while one is open just refreshes the badge
+  const {data,error}=await sb.from('booking_requests').select('*, services(name), staff(full_name), branches(name)')
+    .eq('id',id).eq('business_id',S.biz.id).maybeSingle();
+  if(error||!data||!STAFF_BOOKING_DECISION_STATUSES.has(data.status))return;
+  openBookingRequestPopupV329(data);
+}
+function openBookingRequestPopupV329(row){
+  if($('bookingRequestPopupV329'))return;
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="bookingRequestPopupV329" role="dialog" aria-modal="true" aria-labelledby="bookingRequestPopupTitleV329" tabindex="-1"><div class="modal-card" style="max-width:480px">
+    <div class="row"><div><h2 id="bookingRequestPopupTitleV329">New booking request</h2><p class="muted small" style="margin-top:4px">${esc(row.name||'A customer')} wants to book.</p></div><span class="spacer"></span><button class="btn ghost sm" id="bookingRequestPopupCloseV329" type="button">Close</button></div>
+    <div class="imp-note" style="margin-top:12px">
+      <div><b>Service</b> ${esc(row.services?.name||'General visit')}</div>
+      <div><b>Preferred time</b> ${esc(sgt(row.preferred_at)||'—')}</div>
+      <div><b>Team member</b> ${esc(row.staff?.full_name||'Anyone available')}</div>
+      ${row.branches?.name?`<div><b>Branch</b> ${esc(row.branches.name)}</div>`:''}
+      ${row.party_size?`<div><b>Party</b> ${row.party_size}</div>`:''}
+      ${row.notes?`<div><b>Notes</b> ${esc(row.notes)}</div>`:''}
+    </div>
+    <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="bookingRequestPopupConfirmV329" type="button">Confirm booking</button>
+      <button class="btn ghost" id="bookingRequestPopupAvailV329" type="button">Check availability</button>
+      <button class="btn ghost danger" id="bookingRequestPopupDeclineV329" type="button">Decline</button>
+    </div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('bookingRequestPopupV329')?.remove();};
+  deactivate=CUI.activateDialog($('bookingRequestPopupV329'),{onClose:close,initialFocus:'#bookingRequestPopupConfirmV329'});
+  $('bookingRequestPopupCloseV329').onclick=close;
+  $('bookingRequestPopupConfirmV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'confirm');};
+  $('bookingRequestPopupDeclineV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'decline');};
+  $('bookingRequestPopupAvailV329').onclick=()=>{
+    close();
+    const params=new URLSearchParams();
+    const date=String(row.preferred_at||'').slice(0,10);
+    if(date)params.set('date',date);
+    if(row.staff_id)params.set('staff',row.staff_id);
+    params.set('highlight',row.id);
+    nav('#/appointments?'+params.toString());
+  };
 }
 async function initNotifications(){
   if(!S.biz) return;
@@ -1980,6 +2079,7 @@ function renderShell(page){
         <div class="topbar-branch-scope-v210" id="profileBranchScopeV158" aria-live="polite"></div>
 
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
+        ${canReadModule('bookings')?bookingRequestsBadgeWrapHtml():''}
         ${bellHtml()}
         ${profileHtml()}
       </header>
@@ -2009,6 +2109,8 @@ function renderShell(page){
   wireStaffMobileActions();
   wireWorkspaceLanguageV97();
   wireBell(page);
+  wireBookingRequestsBadgeV329();
+  if(canReadModule('bookings'))refreshPendingBookingRequestCountV329();
   wireProfile(page);
   localizeWorkspaceSubtreeV97();
   observeWorkspaceLocalizationV97();
@@ -17877,7 +17979,8 @@ async function appointmentsPage(){
   let calendarServiceId='';
   let view='day',dayOffset=0,wkOff=0,listPage=0,calendarItems=[],calendarBlocks=[],bookingAttempt=null,
     rescheduleAttempt=null,blockCreateAttempt=null,closeAppointmentDialog=null,closeBlockDialog=null,
-    dayAutoScrolled=false,calendarMinuteTimer=null;
+    dayAutoScrolled=false,calendarMinuteTimer=null,pendingRequests=[],highlightRequestId='',
+    highlightRequestConsumedV329=false,reschedulingRequestIdV329='';
   const blockDeleteAttempts=new Map();
   const availabilityGate=createLatestRequestGate(isCurrent);
   const bookingGate=createLatestRequestGate(isCurrent);
@@ -17886,6 +17989,17 @@ async function appointmentsPage(){
   const rescheduleGate=createLatestRequestGate(isCurrent);
   const detailGate=createLatestRequestGate(isCurrent);
   const todaySg=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
+  /* V329 ("check availability" from the booking-request pop-up lands here already on that
+     date and team member, with the request highlighted): #/appointments?date=YYYY-MM-
+     DD&staff=<id>&highlight=<request id>. Unknown/invalid values fall through to the normal
+     "today, everyone" Day view rather than erroring. */
+  const requestedDateV329=routeParamV288('date');
+  if(/^\d{4}-\d{2}-\d{2}$/.test(requestedDateV329)){
+    dayOffset=Math.round((new Date(requestedDateV329+'T00:00:00Z')-new Date(todaySg+'T00:00:00Z'))/86400000);
+  }
+  const requestedStaffV329=routeParamV288('staff');
+  if(requestedStaffV329&&staff.some(s=>s.id===requestedStaffV329))staffFilter=requestedStaffV329;
+  highlightRequestId=routeParamV288('highlight');
   const branchStaff=id=>staff.filter(s=>(staffBranches||[]).some(x=>x.branch_id===id&&x.staff_id===s.id));
   const branchServices=id=>(sv||[]).filter(service=>{
     const configured=(serviceBranches||[]).some(x=>x.service_id===service.id);
@@ -18603,11 +18717,23 @@ async function appointmentsPage(){
     const stillCurrent=calendarGate.begin();
     const start=view==='day'?addDays(todaySg,dayOffset):weekStart(wkOff);
     const end=view==='day'?addDays(start,1):addDays(start,7);
-    const [appointmentResult,blockResult]=await Promise.all([
+    /* V329: pending booking_requests for the visible window, so the Day view can show them as
+       an urgent banner instead of the owner only learning about them on the Bookings page.
+       Day view only — Week's agenda has no natural slot-level place for these yet. A single-
+       branch business always has branch_id=null on its requests (the customer wizard only
+       records a branch when there is a real multi-branch choice to make, per v327), so the
+       filter is "this branch OR no branch on file" rather than an exact match. */
+    const [appointmentResult,blockResult,pendingResult]=await Promise.all([
       fetchAllRowsResult(()=>staffQ(sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)',{count:'exact'})
         .eq('business_id',S.biz.id).eq('branch_id',branchId).gte('starts_at',sgDateBoundary(start)).lt('starts_at',sgDateBoundary(end)).order('starts_at').order('id'))),
       fetchAllRowsResult(()=>sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:branchId,
-        p_from:sgDateBoundary(start),p_to:sgDateBoundary(end)}).order('starts_at').order('staff_id'))
+        p_from:sgDateBoundary(start),p_to:sgDateBoundary(end)}).order('starts_at').order('staff_id')),
+      view==='day'&&canReadModule('bookings')
+        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name)',{count:'exact'})
+            .eq('business_id',S.biz.id).or(`branch_id.is.null,branch_id.eq.${branchId}`)
+            .in('status',[...STAFF_BOOKING_DECISION_STATUSES])
+            .gte('preferred_at',sgDateBoundary(start)).lt('preferred_at',sgDateBoundary(end)).order('preferred_at'))
+        :Promise.resolve({data:[],error:null})
     ]);
     if(!stillCurrent())return;
     const error=appointmentResult.error||blockResult.error;
@@ -18616,6 +18742,7 @@ async function appointmentsPage(){
     }
     calendarItems=appointmentResult.data||[];
     calendarBlocks=(blockResult.data||[]).filter(block=>staffFilter==='all'||block.staff_id===staffFilter);
+    pendingRequests=pendingResult.error?[]:(pendingResult.data||[]);
     if(view==='day')renderDay(start);else renderWeek(start);
   }
   async function loadList(){
@@ -18775,6 +18902,75 @@ async function appointmentsPage(){
       .filter(row=>Number.isFinite(row.start)&&Number.isFinite(row.end)&&row.end>row.start);
     return {state:'working',start,end,label:`${minuteClock(start)}–${minuteClock(end)}`,breaks};
   }
+  /* V329 (owner: "photo 1 will then show an appointment yet to confirm at the selected time
+     and date... shows urgency... confirm or reject/shift the schedule"). Rendered as a banner
+     above the timeline rather than as a block positioned inside it: the timeline's pixel layout
+     (layoutCalendarDay, hourHeight, lane math) is tuned exactly for CONFIRMED appointments, and
+     a request has no lane/collision semantics yet since two people can both be asked for the
+     same slot. The banner still lives on the exact date the request is for, sorted by time,
+     with the same urgency and the same three actions the ask calls for. */
+  function pendingRequestsBannerHtml(){
+    if(!pendingRequests.length)return '';
+    const nowMs=Date.now();
+    const cards=pendingRequests.map(r=>{
+      const overdue=new Date(r.preferred_at).getTime()<nowMs;
+      const rescheduling=reschedulingRequestIdV329===r.id;
+      return `<div class="pending-request-card${r.id===highlightRequestId?' pending-request-highlight-v329':''}" id="pendingRequestCardV329-${esc(r.id)}" data-pending-request-card="${esc(r.id)}">
+        <div class="row" style="align-items:flex-start;gap:10px">
+          <div style="flex:1;min-width:0">
+            <b>${esc(r.name||'Customer')}</b> · ${esc(r.services?.name||'General visit')}
+            <div class="small muted" style="margin-top:2px">${esc(sgt(r.preferred_at)||'—')}${overdue?` · <span style="color:var(--red);font-weight:700">preferred time has passed</span>`:''} · ${esc(r.staff_id?(staffName[r.staff_id]||'Team member'):'Anyone available')}${r.party_size?` · Party of ${r.party_size}`:''}</div>
+            ${r.notes?`<div class="small muted" style="margin-top:2px">${esc(r.notes)}</div>`:''}
+          </div>
+          <span class="pill new">Awaiting confirmation</span>
+        </div>
+        <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap">
+          ${canWrite?`<button type="button" class="btn sm" data-pending-confirm="${esc(r.id)}">Confirm</button>`:''}
+          ${canWrite?`<button type="button" class="btn ghost sm" data-pending-reschedule-toggle="${esc(r.id)}">${rescheduling?'Cancel':'Change time'}</button>`:''}
+          ${canWrite?`<button type="button" class="btn ghost sm danger" data-pending-decline="${esc(r.id)}">Decline</button>`:''}
+        </div>
+        ${rescheduling?`<div class="row pending-reschedule-form-v329" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div><label for="pendingRescheduleTimeV329-${esc(r.id)}" class="small">New date & time</label><input id="pendingRescheduleTimeV329-${esc(r.id)}" type="datetime-local" value="${esc((r.preferred_at||'').slice(0,16))}"></div>
+          <div><label for="pendingRescheduleStaffV329-${esc(r.id)}" class="small">Team member</label><select id="pendingRescheduleStaffV329-${esc(r.id)}">${staff.map(s=>`<option value="${s.id}" ${r.staff_id===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('')}</select></div>
+          <button type="button" class="btn sm" data-pending-reschedule-submit="${esc(r.id)}">Move & confirm</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="card pending-request-banner"><b>${pendingRequests.length} booking request${pendingRequests.length===1?'':'s'} awaiting confirmation today</b>${cards}</div>`;
+  }
+  function wirePendingRequestActionsV329(){
+    routeMain.querySelectorAll('[data-pending-confirm]').forEach(button=>button.onclick=async()=>{
+      button.disabled=true;
+      await decideBookingRequestGlobalV329(button.dataset.pendingConfirm,'confirm');
+      if(isCurrent())loadAppointmentsGuardedV288();
+    });
+    routeMain.querySelectorAll('[data-pending-decline]').forEach(button=>button.onclick=async()=>{
+      button.disabled=true;
+      await decideBookingRequestGlobalV329(button.dataset.pendingDecline,'decline');
+      if(isCurrent())loadAppointmentsGuardedV288();
+    });
+    routeMain.querySelectorAll('[data-pending-reschedule-toggle]').forEach(button=>button.onclick=()=>{
+      const id=button.dataset.pendingRescheduleToggle;
+      reschedulingRequestIdV329=reschedulingRequestIdV329===id?'':id;
+      loadCalendar();
+    });
+    routeMain.querySelectorAll('[data-pending-reschedule-submit]').forEach(button=>button.onclick=async()=>{
+      const id=button.dataset.pendingRescheduleSubmit;
+      const timeInput=$('pendingRescheduleTimeV329-'+id),staffSelect=$('pendingRescheduleStaffV329-'+id);
+      if(!timeInput?.value)return toast('Pick a new date and time first');
+      const preferred=sgIso(timeInput.value);
+      button.disabled=true;
+      const {data,error}=await sb.rpc('staff_reschedule_and_confirm_booking_request_v329',{
+        p_business:S.biz.id,p_request:id,p_preferred:preferred,p_staff:staffSelect?.value||null
+      });
+      if(!isCurrent())return;
+      if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
+      toast(bookingDecisionNotice(data,'confirm').text);
+      reschedulingRequestIdV329='';
+      refreshPendingBookingRequestCountV329();
+      loadAppointmentsGuardedV288();
+    });
+  }
   function renderDay(day){
     const selectedTiming=selectedCalendarServiceTiming();
     const people=branchStaff(branchId);
@@ -18827,7 +19023,7 @@ async function appointmentsPage(){
     const dayAgendaV291=dayAgendaRowsV291.length
       ?dayAgendaRowsV291.map(row=>row.html).join('')
       :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>Nothing scheduled</h2><p>No appointments or blocked time on this day.</p></div>`;
-    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small day-timeline-slot-hint-v291">${hasBookableV217
+    $('alist').innerHTML=`${pendingRequestsBannerHtml()}<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small day-timeline-slot-hint-v291">${hasBookableV217
       ?`Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.`
       :day<todaySg
         ?'This day has already passed — appointments can only be booked for a time still to come.'
@@ -18883,6 +19079,18 @@ async function appointmentsPage(){
     }));
     wireBlockedTimeActions();
     wireAppointmentActions();
+    wirePendingRequestActionsV329();
+    /* V329: "Check availability" from the pop-up lands here with ?highlight=<request id> — scroll
+       the matching card into view and pulse it once. Consumed after the first render so it does
+       not keep re-pulsing on every subsequent reload of this same page instance (a decline/
+       confirm elsewhere, the realtime refresh, etc). */
+    if(highlightRequestId&&!highlightRequestConsumedV329){
+      const card=$('pendingRequestCardV329-'+highlightRequestId);
+      if(card){
+        highlightRequestConsumedV329=true;
+        requestAnimationFrame(()=>card.scrollIntoView({behavior:'smooth',block:'center'}));
+      }
+    }
   }
   function renderWeek(start){
     const days=[...Array(7)].map((_,i)=>addDays(start,i));

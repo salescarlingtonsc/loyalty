@@ -1930,6 +1930,12 @@
       "version": "20260815090002",
       "name": "nestly_v328_staff_choice_manual_confirm",
       "sourcePath": "db/migrations/20260815_nestly_v328_staff_choice_manual_confirm.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090003",
+      "name": "nestly_v329_owner_reschedule_booking_request",
+      "sourcePath": "db/migrations/20260815_nestly_v329_owner_reschedule_booking_request.sql"
     }
   ]
 }

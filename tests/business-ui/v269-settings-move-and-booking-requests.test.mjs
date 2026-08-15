@@ -12,8 +12,17 @@
    when customer book for appointment, need some place to accept / decline". The accept and
    decline actions already existed on Bookings, backed by the one lifecycle RPC
    staff_decide_booking_request_v73 (confirm/decline, idempotent by row lock, audited). The gap
-   was discoverability from the calendar. So the contract here is a counted signpost that hands
-   off to that one surface — NOT a second decision path. */
+   was discoverability from the calendar. V269's original contract was a counted signpost that
+   handed off to that one surface — NOT a second decision path.
+
+   V329 (owner, 2026-08-15) explicitly reversed that: a booking made with a specific team member
+   selected should pop up in the business app with Confirm / Check-availability / Decline, and
+   "check availability" should land on the Day calendar with the pending request confirmable,
+   reschedulable or declinable right there — a real second (and third) decision SURFACE. The
+   invariant this file still protects is narrower but just as real: every one of those surfaces
+   still resolves through the exact same lifecycle RPC, staff_decide_booking_request_v73 — never
+   a parallel confirm/decline implementation. What changed is how many places call it (below),
+   not what "confirm" or "decline" means. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -207,12 +216,23 @@ test('V269 the button hands off to the one page that owns the decision', () => {
 
 /* --------------------------------- (B2) accept/decline: one path each, idempotent, gated */
 
-test('V269 Appointments does not grow a second accept or decline path', () => {
+test('V269/V329 the Appointments render section itself never calls the decision RPC directly', () => {
+  // Confirm/decline buttons drawn inside appointmentsPage() still go through the shared
+  // decideBookingRequestGlobalV329() helper (defined elsewhere, near the realtime channel) —
+  // never a copy of the RPC call pasted inline into the calendar renderer.
   assert.doesNotMatch(appointments, /sb\.rpc\('staff_decide_booking_request_v73'/);
   assert.doesNotMatch(appointments, /convert_booking_request/);
-  // the decision RPC is called from exactly the two surfaces that owned it before V269
-  assert.equal((app.match(/sb\.rpc\('staff_decide_booking_request_v73'/g) || []).length, 2,
-    'Bookings and Waitlist only');
+});
+
+test('V329 every confirm/decline surface funnels through the one lifecycle RPC, never a parallel one', () => {
+  // Bookings, Waitlist, and decideBookingRequestGlobalV329 (the pop-up, the Day-view banner and
+  // the persistent badge all call that one shared helper, not the RPC directly) — three call
+  // sites, one RPC. A fourth call site or a second RPC name would mean confirm/decline logic had
+  // started to drift between surfaces, which is the thing this test exists to catch.
+  assert.equal((app.match(/sb\.rpc\('staff_decide_booking_request_v73'/g) || []).length, 3,
+    'Bookings, Waitlist, and decideBookingRequestGlobalV329 only');
+  assert.doesNotMatch(app, /sb\.rpc\('staff_decide_booking_request_v73_v94_base'/,
+    'the base function is revoked from every role and must never be called directly from the browser');
 });
 
 test('V269 accept reuses the existing conversion RPC and decline is a recorded decision', () => {

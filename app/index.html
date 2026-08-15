@@ -1908,21 +1908,6 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
 .customer-preview-screen-v243 iframe{display:block;width:100%;height:100%;border:0}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
-/* V325 — Customer Interface numbered stepper + persistent preview panel (2026-08-14 cosmetics
-   brief). The two-column layout reuses .split above, which this business console already
-   collapses to one column at <=900px (see the @media(max-width:900px) block) — no new
-   breakpoint. The stepper itself scrolls horizontally at narrow widths rather than wrapping,
-   so the numbered order stays a single readable line down to 390px. */
-.ci-stepper-v325{display:flex;align-items:center;gap:0;margin:0 0 18px;overflow-x:auto;padding-bottom:2px}
-.ci-step-v325{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;min-width:84px;padding:2px 6px;color:var(--muted);text-decoration:none;text-align:center}
-.ci-step-dot-v325{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:13px;color:var(--muted)}
-.ci-step-label-v325{font-size:11.5px;font-weight:600;white-space:nowrap}
-.ci-step-v325.active .ci-step-dot-v325{border-color:var(--coral);background:var(--coral);color:#fff}
-.ci-step-v325.active .ci-step-label-v325{color:var(--ink)}
-.ci-step-line-v325{flex:1 1 24px;min-width:16px;height:2px;background:var(--line);margin:0 2px 20px}
-.ci-step-layout-v325{align-items:start}
-.customer-preview-side-v325{position:sticky;top:16px}
-@media(max-width:900px){.customer-preview-side-v325{position:static}}
 /* v244 · Explore — the ecosystem search behind its own tab */
 /* v264 · sharing a promotion */
 .customer-share-button{flex:none}
@@ -2266,7 +2251,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=9617a8ba8676","business":"/app-business.js?b=8b58bb6f18a9","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=0a8d9ead9660","business":"/app-business.js?b=55a7751d8380","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -2290,6 +2275,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=ce1215684df0" defer></script>
+<script src="/app-core.js?b=7619977ade9e" defer></script>
 </body>
 </html>
