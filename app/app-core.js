@@ -5482,13 +5482,59 @@ async function loadMerchantPaymentsV142(){
   };
 }
 /* ---------- public customer portal ---------- */
+function relativeLuminanceHexV336(hex){
+  const channels=[1,3,5].map(offset=>parseInt(hex.slice(offset,offset+2),16)/255)
+    .map(channel=>channel<=.04045?channel/12.92:((channel+.055)/1.055)**2.4);
+  return .2126*channels[0]+.7152*channels[1]+.0722*channels[2];
+}
+function hexToHslV336(hex){
+  const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  let h=0,s=0;const l=(max+min)/2;
+  if(max!==min){
+    const d=max-min;
+    s=l>0.5?d/(2-max-min):d/(max+min);
+    if(max===r)h=(g-b)/d+(g<b?6:0);
+    else if(max===g)h=(b-r)/d+2;
+    else h=(r-g)/d+4;
+    h/=6;
+  }
+  return [h,s,l];
+}
+function hslToHexV336(h,s,l){
+  const hue2rgb=(p,q,t)=>{
+    if(t<0)t+=1;if(t>1)t-=1;
+    if(t<1/6)return p+(q-p)*6*t;
+    if(t<1/2)return q;
+    if(t<2/3)return p+(q-p)*(2/3-t)*6;
+    return p;
+  };
+  let r,g,b;
+  if(s===0){r=g=b=l}
+  else{
+    const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;
+    r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);
+  }
+  const toHex=v=>Math.round(Math.max(0,Math.min(1,v))*255).toString(16).padStart(2,'0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
+/* V336 (owner: "brand colour some colours are not being recognised — every company have their
+   unique colour"). Before this, any chosen colour under 4.5:1 white-text contrast was silently
+   swapped for the SAME fixed coral fallback — every under-contrast colour collapsed onto one
+   identical header, which is the opposite of "unique colour per company" the owner wants.
+   Darkening the OWNER'S OWN hue/saturation until it clears 4.5:1 keeps every company's colour
+   choice visually distinct while still being legible under the white title text. */
 function contrastSafeBrandColor(value){
   const fallback='#C24135';
   if(!/^#[0-9A-Fa-f]{6}$/.test(value||''))return fallback;
-  const channels=[1,3,5].map(offset=>parseInt(value.slice(offset,offset+2),16)/255)
-    .map(channel=>channel<=.04045?channel/12.92:((channel+.055)/1.055)**2.4);
-  const luminance=.2126*channels[0]+.7152*channels[1]+.0722*channels[2];
-  return 1.05/(luminance+.05)>=4.5?value.toUpperCase():fallback;
+  const hex=value.toUpperCase();
+  if(1.05/(relativeLuminanceHexV336(hex)+.05)>=4.5)return hex;
+  const [h,s,l]=hexToHslV336(hex);
+  for(let step=1;step<=40;step++){
+    const candidate=hslToHexV336(h,s,Math.max(0,l-(l*step)/40));
+    if(1.05/(relativeLuminanceHexV336(candidate)+.05)>=4.5)return candidate;
+  }
+  return fallback;
 }
 async function boot(){
   try{await consumeBusinessOAuthRedirect()}catch{}

@@ -46,10 +46,17 @@ test('appointment change is a labelled keyboard-complete modal', () => {
 });
 
 test('public booking uses semantic choices, safe contrast and the exact result host', () => {
-  const source = app.match(/function contrastSafeBrandColor[\s\S]*?(?=async function renderPortal)/)?.[0] || '';
+  /* V336 (owner: "some colours are not being recognised — every company have their unique
+     colour"): an under-contrast colour is now darkened toward the OWNER'S OWN hue rather than
+     replaced with one shared fallback, so #FFB86B no longer collapses to #C24135 — it darkens to
+     its own legible shade. Only a genuinely invalid value still falls back. */
+  const source = app.match(/function relativeLuminanceHexV336[\s\S]*?(?=async function renderPortal)/)?.[0] || '';
   const safeColor = new Function(`${source}\nreturn contrastSafeBrandColor`)();
   assert.equal(safeColor('#000000'), '#000000');
-  assert.equal(safeColor('#FFB86B'), '#C24135');
+  const darkened = safeColor('#FFB86B');
+  assert.notEqual(darkened, '#FFB86B', 'an under-contrast colour must not pass through unchanged');
+  assert.notEqual(darkened, '#C24135', 'it darkens toward its OWN hue, not the shared fallback');
+  assert.match(darkened, /^#[0-9A-F]{6}$/);
   assert.equal(safeColor('not-a-color'), '#C24135');
 
   const portal = app.match(/async function renderPortal[\s\S]*?(?=async function boot)/)?.[0] || '';
