@@ -38,7 +38,9 @@ test('V243 Customer Interface is a top-level rail entry beside Programmes', () =
   /* V296 retarget (owner: "please make sub-tab under 'Customer Interface'"): the entry is still
      a top-level rail entry directly after Programmes, but it is now a GROUP with routable
      children instead of a flat link — the same shape V294 gave Programmes. */
-  assert.match(groups, /\{key:'customerui',icon:'customers',label:'Customer Interface',items:\['customer-interface'\],\s*views:CUSTOMER_INTERFACE_VIEWS_V296\.map\(view=>\[view\[1\],view\[2\],view\[3\]\]\)\}/);
+  /* V334 (owner markup, photo 9: hide Preview/Done/Customer programme from nav): the sidebar now
+     maps the filtered VISIBLE list, not the full array — routes/hashes stay intact elsewhere. */
+  assert.match(groups, /\{key:'customerui',icon:'customers',label:'Customer Interface',items:\['customer-interface'\],\s*views:CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334\.map\(view=>\[view\[1\],view\[2\],view\[3\]\]\)\}/);
   const order = [...groups.matchAll(/\{key:'([a-z]+)'/g)].map((m) => m[1]);
   assert.equal(order[order.indexOf('grow') + 1], 'customerui', 'it sits directly after Programmes');
 });
@@ -155,17 +157,21 @@ test('V326 the live preview reflects the CURRENT form values, not last-saved sta
 });
 
 /* V327 (owner, screenshot of the real wallet — tier, points, rewards, bottom nav — "must tally
-   100%"). Bio and booking policy are still listened for (harmless — they just re-trigger an
-   identical render) but no longer READ here: the wallet a customer reaches after joining never
-   shows either field (confirmed against renderCustomerWallet/customerMerchantExperienceMarkupV95
-   — neither field is referenced anywhere in that render path). Only the pre-join public portal
-   shows them, which this preview no longer represents. */
+   100%"). Bio is still listened for (harmless — it just re-triggers an identical render) but not
+   READ here: the wallet a customer reaches after joining never shows it (confirmed against
+   renderCustomerWallet/customerMerchantExperienceMarkupV95 — bio is not referenced anywhere in
+   that render path). Only the pre-join public portal shows it, which this preview no longer
+   represents.
+   V334 (owner markup, photo 10: "why this not reflected?"): booking policy is the one exception —
+   it IS shown to real customers elsewhere (booking confirmation, appointment detail rows), so the
+   owner's ask to see it preview here is honoured by reading it directly, as its own note beneath
+   the wallet render rather than by widening customerMerchantExperienceMarkupV95's signature. */
 test('V327 the preview calls the REAL wallet render function, not a hand-rolled lookalike', () => {
   const markup = section(app, 'function customerInterfaceLivePreviewMarkupV326(', 'function customerInterfacePreviewSideCardHtmlV325(');
   assert.match(markup, /customerMerchantExperienceMarkupV95\(\{/);
   assert.match(markup, /customerPrimaryNavigation\('programmes',\{\}\)/);
   assert.doesNotMatch(markup, /\$\('bbio'\)/, 'bio never renders in the wallet — reading it here would show a field production never displays');
-  assert.doesNotMatch(markup, /\$\('bp'\)/, 'booking policy never renders in the wallet either');
+  assert.match(markup, /\$\('bp'\)\?\.value\|\|S\.biz\.booking_policy/, 'booking policy IS previewed now, read live like name/brandColor above');
   // The sample numbers are clearly labelled, not presented as if they were a real customer's.
   assert.match(markup, /Sample customer — points, tier and rewards are for scale, not live data\./);
 });

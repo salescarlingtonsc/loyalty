@@ -104,7 +104,9 @@ test('W6I2 (b) the stepper renders one mini-rail per switched-on programme, in c
      customer-facing order STAMPS → POINTS → TIER → REFERRAL, with honest per-programme screen
      counts — is unchanged; only the second stamps screen's name moved. Matched against appCode
      because the ruling put its rationale in a comment INSIDE the array literal. */
-  assert.match(appCode, /const GROW_SETUP_RAIL_W6I2=\[\s*\r?\n?\s*\['stamps',\[\['stampEarn','Stamps'\],\['stampGift','Milestones'\]\]\],\s*\r?\n?\s*\['points',\[\['earn','Earning'\],\['reward','Gifts'\],\['expiry','Expiry'\]\]\],\s*\r?\n?\s*\['tiers',\[\['climb','Climbing'\],\['tiers','Tiers'\]\]\],\s*\r?\n?\s*\['referral',\[\['referral','Referral'\]\]\]\s*\r?\n?\s*\];/);
+  /* V334: Earning + Expiry merged into one 'earnExpiry' rail step for points (owner markup
+     2026-08-15 photo 6) — the rest of the composed-rail claim this test protects is unchanged. */
+  assert.match(appCode, /const GROW_SETUP_RAIL_W6I2=\[\s*\r?\n?\s*\['stamps',\[\['stampEarn','Stamps'\],\['stampGift','Milestones'\]\]\],\s*\r?\n?\s*\['points',\[\['earnExpiry','Earning & expiry'\],\['reward','Gifts'\]\]\],\s*\r?\n?\s*\['tiers',\[\['climb','Climbing'\],\['tiers','Tiers'\]\]\],\s*\r?\n?\s*\['referral',\[\['referral','Referral'\]\]\]\s*\r?\n?\s*\];/);
   // Screen 0 first, Go-live last, and every switched-on programme's screens in between.
   assert.match(wizard, /const steps=\[\{kind:'choose',label:'Programmes',programme:null\}\];/);
   assert.match(wizard, /if\(state\.switches\[programme\]!==true\)return;/);
@@ -807,7 +809,8 @@ test('W6I2 (g) every expiry knob is reachable — owner amendment 2026-08-14', (
      expiry_days=365, inactivity)". Before this wave the wizard had NO expiry control: the row it
      wrote carried whatever was already stored, so an owner who only used the wizard could never
      reach the knob. Surviving has to mean reachable. */
-  assert.match(app, /\['points',\[\['earn','Earning'\],\['reward','Gifts'\],\['expiry','Expiry'\]\]\]/);
+  /* V334: Earning + Expiry merged into one rail step (owner markup 2026-08-15 photo 6). */
+  assert.match(app, /\['points',\[\['earnExpiry','Earning & expiry'\],\['reward','Gifts'\]\]\]/);
   assert.match(wizard, /const expiryStepHtmlW6I2=\(\)=>\{/);
   // The DB's own three modes, in the deep editor's own words.
   assert.match(wizard, /<option value="none"\$\{state\.expiryMode==='none'\?' selected':''\}>Never expire<\/option>/);

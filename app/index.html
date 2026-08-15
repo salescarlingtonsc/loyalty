@@ -111,6 +111,10 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .pill{display:inline-block;padding:3.5px 10px;border-radius:100px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
 .pill.on{background:#E7F6EE;color:var(--green)} .pill.off{background:#F1EEE9;color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:#E7F6EE;color:var(--green)} .pill.no{background:#FBEAE7;color:var(--red)}
+/* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
+.pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
+.pill-toggle-v334.on{background:#E7F6EE;color:var(--green)}
+.pill-toggle-v334.off{background:#FBEAE7;color:var(--red)}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -1816,7 +1820,8 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
 .customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
 .customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
-.customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
+.customer-programme-contact-v326{padding:12px 16px 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.customer-programme-contact-v326 .customer-programme-contact-more-v326{flex:1 1 auto;min-width:0}
 .customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
 .customer-programme-contact-line-v326 a{color:inherit}
 .customer-programme-contact-more-v326{border:0;background:none;padding:0;margin-top:2px;color:var(--coral);font-weight:600;font-size:.85rem;text-align:left;cursor:pointer}
@@ -2270,7 +2275,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=c9956d418fc2","business":"/app-business.js?b=1778fe0ca3a7","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=c9956d418fc2","business":"/app-business.js?b=7425624f1e96","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -2294,6 +2299,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=7dab154201d9" defer></script>
+<script src="/app-core.js?b=d9df80f76c39" defer></script>
 </body>
 </html>

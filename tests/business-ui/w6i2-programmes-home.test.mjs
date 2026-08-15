@@ -275,7 +275,9 @@ test('W6I2 B3 every points expiry knob is reachable from the wizard', () => {
      expiry_days=365, inactivity)". Before this wave programRowV305 carried whatever was already
      stored straight through, so an owner who only used the wizard could not reach the knob at all.
      Surviving has to mean reachable. */
-  assert.match(code, /\['points',\[\['earn','Earning'\],\['reward','Gifts'\],\['expiry','Expiry'\]\]\]/);
+  /* V334: Earning + Expiry merged into one rail step — both fields are still reachable, just on
+     the same page rather than two separate Next-throughs (owner markup 2026-08-15 photo 6). */
+  assert.match(code, /\['points',\[\['earnExpiry','Earning & expiry'\],\['reward','Gifts'\]\]\]/);
   assert.match(wizard, /const expiryStepHtmlW6I2=\(\)=>\{/);
   for (const mode of ['none', 'fixed', 'inactivity'])
     assert.match(wizard, new RegExp(`<option value="${mode}"\\$\\{state\\.expiryMode==='${mode}'`),
@@ -664,12 +666,14 @@ test('W6I2 E1 a firm on a stored VISITS ladder opens on Visits and publishes Vis
      this test fails the moment tier_basis is dropped from it again. */
   assert.ok(overviewColumns.includes('tier_basis'),
     'growOverviewSnapshot must select tier_basis — the wizard cannot read a column it never asked for');
+  /* V334: points' rail shrank from 3 steps to 2 (Earning+Expiry merged), so Climbing is now
+     step 4 of this points+tiers rail, not step 5. */
   const w = mountWizard({ spine: spineRows(['points', 'tiers']),
     snapshot: { loyalty: rowAsSelected(overviewColumns) },
     liveTiers: [{ id: 't1', name: 'Silver', threshold: 0, active: true },
-      { id: 't2', name: 'Gold', threshold: 5, active: true }], startStep: 5 });
+      { id: 't2', name: 'Gold', threshold: 5, active: true }], startStep: 4 });
   await w.open();
-  assert.equal(w.title(), 'Step 5 of 7 · Climbing');
+  assert.equal(w.title(), 'Step 4 of 6 · Climbing');
   assert.match(w.dom.markup, /data-grow-setup-basis-v305="visits" [^>]*aria-checked="true"|aria-checked="true" data-grow-setup-basis-v305="visits"/,
     'the stored basis is the selected one');
   assert.doesNotMatch(w.dom.markup, /Suggested/,
@@ -973,7 +977,8 @@ test('W6I2 E5 one tap turns Points & gifts on and keeps the owner on Climbing (d
   await w.open();
   await w.press('growSetupTurnOnPointsW6I2');
   assert.match(w.title(), /Climbing/, 'the owner stays on the screen they were reading');
-  assert.deepEqual(w.rail(), ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Climbing', 'Tiers', 'Go live']);
+  /* V334: Earning + Expiry merged into one rail step. */
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Climbing', 'Tiers', 'Go live']);
   assert.doesNotMatch(w.dom.markup, /data-grow-setup-climbneedspoints-w6i2/);
   await w.press('growSetupNextV301');
   assert.deepEqual(w.configWrites().map(config => config.tier_basis), ['points_earned'],
@@ -1013,7 +1018,8 @@ test('W6I2 E6 the four switches actually toggle, and only the one that was press
   const w = mountWizard({ spine: spineRows(['points']), industry: 'retail',
     snapshot: { loyalty: rowAsSelected(overviewColumns) } });
   await w.open();
-  assert.deepEqual(w.rail(), ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Go live']);
+  /* V334: Earning + Expiry merged into one rail step. */
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Go live']);
   /* "Only the one that was pressed" is demonstrated on a NON-EXCLUDING toggle, because that is the
      only kind for which it is unconditionally true. V322 (OWNER RULING R2/R3 — "stamps is not
      supposed to be able to be live with points and tier - it is seperate rewards by itself") makes
@@ -1022,17 +1028,17 @@ test('W6I2 E6 the four switches actually toggle, and only the one that was press
      this half of the test presses. */
   await w.click('[data-grow-setup-switch-w6i2="referral"]');
   assert.deepEqual(w.rail(),
-    ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Referral', 'Go live'],
+    ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Referral', 'Go live'],
     'referral joined and points stayed exactly as it was');
   await w.click('[data-grow-setup-switch-w6i2="referral"]');
-  assert.deepEqual(w.rail(), ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Go live'],
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Go live'],
     'and unticking one takes its screens with it, leaving the other alone');
   /* The excluding toggle, which is the other half of the same wiring fact: a press whose kind
      excludes something already ticked FLIPS NOTHING and renders a named confirmation — the ruling
      is that the consequence is stated BEFORE it happens, not discovered afterwards. Pressing the
      confirm is what performs the flip, and the clearing is then the owner's own act. */
   await w.click('[data-grow-setup-switch-w6i2="stamps"]');
-  assert.deepEqual(w.rail(), ['Programmes', 'Earning', 'Gifts', 'Expiry', 'Go live'],
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Go live'],
     'the first press on an excluding switch changes nothing at all');
   assert.match(w.dom.markup, /data-grow-setup-exclusive-w6i2="stamps"/,
     'it arms a confirmation instead');
@@ -1044,10 +1050,11 @@ test('W6I2 E6 the four switches actually toggle, and only the one that was press
 });
 
 test('W6I2 E6 the one-tap expiry chips actually set the mode', async () => {
+  /* V334: Expiry lives on the same step as Earning now (step 2, not a standalone step 4). */
   const w = mountWizard({ spine: spineRows(['points']), industry: 'retail',
-    snapshot: { loyalty: rowAsSelected(overviewColumns) }, startStep: 4 });
+    snapshot: { loyalty: rowAsSelected(overviewColumns) }, startStep: 2 });
   await w.open();
-  assert.match(w.title(), /Expiry/);
+  assert.match(w.title(), /Earning &amp; expiry/);
   await w.click('[data-grow-setup-expiry-w6i2="year"]');
   await w.press('growSetupNextV301');
   const [written] = w.configWrites();
