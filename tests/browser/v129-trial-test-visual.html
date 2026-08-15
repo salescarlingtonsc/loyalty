@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="a0473d0eb802b8700b85ab321cb2004c2701eb6a177be147696be908dc57cb36"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="269ace511ea303cf563cb8ceb1a4766d341c109244d2352127c8301a025da509"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -146,6 +146,16 @@ tr[aria-selected="true"] td{background:var(--tint)}
 @keyframes pendingRequestPulseV329{0%,50%{box-shadow:0 0 0 4px rgba(157,53,44,.22);background:var(--tint)}100%{box-shadow:none;background:transparent}}
 .pending-request-highlight-v329{animation:pendingRequestPulseV329 1.3s ease-out 2;border-radius:10px}
 @media(prefers-reduced-motion:reduce){.pending-request-highlight-v329{animation:none;background:var(--tint);border-radius:10px}}
+.pending-request-core-v330{font-size:14.5px;font-weight:750;color:var(--ink)}
+/* V330: a still-pending request drawn on the calendar grid itself, deliberately styled to read
+   as "not real yet" — dashed red border + diagonal stripe, same visual language as a blocked
+   window, at a lower z-index than a confirmed .day-timeline-event so a genuine appointment
+   always wins the eye if the two ever overlap. */
+.day-timeline-pending-v330{position:absolute;left:5px;right:5px;z-index:5;min-height:44px;overflow:hidden;padding:5px 8px;border:2px dashed var(--red);border-radius:7px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 10%,#fff) 0 6px,color-mix(in srgb,var(--red) 18%,#fff) 6px 12px);color:var(--ink);text-align:left;line-height:1.15;cursor:pointer}
+.day-timeline-pending-v330:hover,.day-timeline-pending-v330:focus-visible{z-index:9;box-shadow:var(--shadow)}
+.day-timeline-pending-v330 span,.day-timeline-pending-v330 b,.day-timeline-pending-v330 small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-timeline-pending-v330 span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--red)}
+.day-timeline-pending-v330 small{margin-top:1px;color:var(--red);font-weight:700}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -2176,7 +2186,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · a0473d0eb802b8700b85ab321cb2004c2701eb6a177be147696be908dc57cb36</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 269ace511ea303cf563cb8ceb1a4766d341c109244d2352127c8301a025da509</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -18896,6 +18906,60 @@ async function svRunTopupFlow({branches,state,testOnly}){
   ].filter(Boolean);
   return `https://wa.me/${mobile}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
+/* V330 (owner: "before confirmation... shows urgency" + banner big-font ask). A short, glanceable
+   date+time for the pending-request banner/tile — appointmentWhatsAppUrlV129's `when` is the same
+   idea but private to that function, so this is its own small formatter rather than a refactor. */
+function bookingRequestBigWhenV330(iso){
+  const d=new Date(iso);
+  if(Number.isNaN(d.getTime()))return '—';
+  return new Intl.DateTimeFormat('en-SG',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Singapore'}).format(d);
+}
+/* V330 (owner: "after confirmation > able to click whatsapp icon > send confirmation message
+   (pull date/time/customer name/services/assigned staff, with a template pre-set by the owner)").
+   businesses.booking_confirmation_template holds the owner's own wording with {customer}/
+   {service}/{staff}/{date}/{time} tokens; DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330 is what a
+   business that never opened the settings page gets. */
+const DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330='Hi {customer}, your {service} with {staff} on {date} at {time} is confirmed. See you then!';
+function bookingConfirmationMessageV330({template,customerName,serviceName,staffName,startsAt}){
+  const d=new Date(startsAt);
+  const dateLabel=Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(d);
+  const timeLabel=Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-SG',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Singapore'}).format(d);
+  return String(template||DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330)
+    .replaceAll('{customer}',String(customerName||'there').trim())
+    .replaceAll('{service}',String(serviceName||'your appointment').trim())
+    .replaceAll('{staff}',String(staffName||'our team').trim())
+    .replaceAll('{date}',dateLabel)
+    .replaceAll('{time}',timeLabel);
+}
+function bookingConfirmationWhatsAppUrlV330(phone,text){
+  const digits=String(phone||'').replace(/\D/g,'');
+  const mobile=/^[89]\d{7}$/.test(digits)?`65${digits}`:/^65[89]\d{7}$/.test(digits)?digits:null;
+  if(!mobile)return null;
+  return `https://wa.me/${mobile}?text=${encodeURIComponent(text)}`;
+}
+/* One small dialog, shown right after a request is confirmed (from any of the three confirm
+   surfaces — popup, banner, calendar tile), offering the owner's own templated WhatsApp message
+   or a plain call. Not shown at all when the request carried no usable phone number. */
+function offerBookingConfirmationContactV330({customerName,phone,serviceName,staffName,startsAt}){
+  const callNumber=normalizeSingaporeCustomerPhone(phone);
+  const text=bookingConfirmationMessageV330({template:S.biz?.booking_confirmation_template,customerName,serviceName,staffName,startsAt});
+  const waUrl=bookingConfirmationWhatsAppUrlV330(phone,text);
+  if(!callNumber&&!waUrl)return;
+  if($('bookingConfirmedContactV330'))$('bookingConfirmedContactV330').remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="bookingConfirmedContactV330" role="dialog" aria-modal="true" aria-labelledby="bookingConfirmedContactTitleV330" tabindex="-1"><div class="modal-card" style="max-width:420px">
+    <h2 id="bookingConfirmedContactTitleV330">Booking confirmed</h2>
+    <p class="muted small" style="margin-top:4px">Let ${esc(customerName||'the customer')} know.</p>
+    <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
+      ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('bookings',{size:15})} Message on WhatsApp</a>`:''}
+      ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('till',{size:15})} Call customer</a>`:''}
+      <button class="btn ghost" id="bookingConfirmedContactCloseV330" type="button">Done</button>
+    </div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('bookingConfirmedContactV330')?.remove();};
+  deactivate=CUI.activateDialog($('bookingConfirmedContactV330'),{onClose:close,initialFocus:waUrl?'#bookingConfirmedWhatsAppV330':'#bookingConfirmedContactCloseV330'});
+  $('bookingConfirmedContactCloseV330').onclick=close;
+}
   let closeAppointmentDialog=null;
   const statusGate=createLatestRequestGate(()=>true);
   const canWrite=true,canComplete=true;
@@ -18995,6 +19059,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'a0473d0eb802b8700b85ab321cb2004c2701eb6a177be147696be908dc57cb36',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'269ace511ea303cf563cb8ceb1a4766d341c109244d2352127c8301a025da509',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

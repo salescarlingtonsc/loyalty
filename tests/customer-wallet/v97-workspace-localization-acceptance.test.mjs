@@ -300,7 +300,11 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
   /* 130 -> 131: V295 adds scheduleHeadingDay — the Dashboard schedule card now names the day it
      is showing ("Schedule · 13 Aug 2026"), which is interpolated workspace copy and so joins the
      reviewed inventory with all three locales and matching placeholders. */
-  assert.equal(keys.length,131,'mixed-interface interpolation inventory changed without review');
+  /* 131 -> 132: V330 adds calendarPendingRequest — the Day-view calendar tile for a not-yet-
+     confirmed booking request (owner: "click into it > pop up approve/reject or change timing/
+     staff", "colour differentiation from actual confirmed appointment") carries its own dynamic
+     aria-label, reviewed with all three locales and matching placeholders like calendarAppointment. */
+  assert.equal(keys.length,132,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -376,7 +380,7 @@ test('v97 exhaustively classifies signed-in workspace interpolated accessibility
     'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
     'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
     'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
-    'calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt',
+    'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt',
     'viewDashboardMetricDetails',
   ];
   assert.deepEqual([...interpolatedAttributeInventory].sort(),expected.sort());

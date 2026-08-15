@@ -4356,6 +4356,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   amendAppointment:Object.freeze({en:'Amend appointment for {customer}','zh-CN':'修改 {customer} 的预约',ms:'Pinda janji temu untuk {customer}'}),
   viewAppointmentAgenda:Object.freeze({en:'View {service} for {customer}, {day}, {time}, {duration} minutes','zh-CN':'查看 {customer} 的 {service}：{day}，{time}，{duration} 分钟',ms:'Lihat {service} untuk {customer}, {day}, {time}, {duration} minit'}),
   calendarAppointment:Object.freeze({en:'{service} for {customer}, {time}, {duration} minutes, {staff}','zh-CN':'{customer} 的 {service}，{time}，{duration} 分钟，{staff}',ms:'{service} untuk {customer}, {time}, {duration} minit, {staff}'}),
+  calendarPendingRequest:Object.freeze({en:'Awaiting confirmation: {service} for {customer}, {time}, {staff}','zh-CN':'待确认：{customer} 的 {service}，{time}，{staff}',ms:'Menunggu pengesahan: {service} untuk {customer}, {time}, {staff}'}),
   bookAppointmentSlot:Object.freeze({en:'Book {service} with {staff} at {time}','zh-CN':'预约 {service}：{staff}，{time}',ms:'Tempah {service} dengan {staff} pada {time}'}),
   callBookingCustomer:Object.freeze({en:'Call {customer} on {phone}','zh-CN':'致电 {customer}：{phone}',ms:'Hubungi {customer} di {phone}'}),
   removeFromWaitlist:Object.freeze({en:'Remove {customer} from waitlist','zh-CN':'将 {customer} 从候补名单中移除',ms:'Alih keluar {customer} daripada senarai menunggu'}),
@@ -4410,7 +4411,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
   'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
-  'viewAppointmentAgenda','calendarAppointment','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
+  'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails',
   'growPublishedReward','growPublishedRewards','growPublishedBringBackRule',
   'growPublishedBringBackRules','growDraftReady','publishImpactAction',
@@ -4423,7 +4424,7 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
   'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
-  'calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails'
+  'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails'
 ]);
 const workspaceTemplateTextV97=(key,values={},locale=workspaceLocale)=>{
   const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';

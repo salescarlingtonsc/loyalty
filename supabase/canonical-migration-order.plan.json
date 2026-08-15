@@ -1936,6 +1936,12 @@
       "version": "20260815090003",
       "name": "nestly_v329_owner_reschedule_booking_request",
       "sourcePath": "db/migrations/20260815_nestly_v329_owner_reschedule_booking_request.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260815090004",
+      "name": "nestly_v330_pending_slot_block_and_confirmation_template",
+      "sourcePath": "db/migrations/20260815_nestly_v330_pending_slot_block_and_confirmation_template.sql"
     }
   ]
 }

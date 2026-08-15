@@ -1863,7 +1863,11 @@ async function refreshPendingBookingRequestCountV329(){
 /* The single decision path, callable from any page — the popup can fire while the owner is on
    Dashboard, Customers, anywhere. window.decideBookingRequestV73 (bookingsPage) is bound to
    that page's own isCurrent() guard and silently no-ops off-page; this one is page-independent. */
-async function decideBookingRequestGlobalV329(id,decision){
+/* contactDetails (optional): {customerName,phone,serviceName,staffName,startsAt}, already
+   resolved by the caller — this function is page-independent (see the comment above) and cannot
+   assume any page's local staff-name lookup is in scope, so it never resolves this itself. Used
+   purely to offer the owner's WhatsApp template after a successful confirm. */
+async function decideBookingRequestGlobalV329(id,decision,contactDetails){
   const authorized=decision==='confirm'?canWriteModule('bookings'):decision==='decline'?canWriteModule('bookings'):false;
   if(!authorized){toast('Booking write access is required');return}
   const {data,error}=await sb.rpc('staff_decide_booking_request_v73',{p_business:S.biz.id,p_request:id,p_decision:decision,p_branch:null});
@@ -1871,6 +1875,7 @@ async function decideBookingRequestGlobalV329(id,decision){
   toast(bookingDecisionNotice(data,decision).text);
   autoRefreshIfRelevant();
   refreshPendingBookingRequestCountV329();
+  if(decision==='confirm'&&contactDetails)offerBookingConfirmationContactV330(contactDetails);
 }
 async function openBookingRequestPopupV329ById(id){
   if($('bookingRequestPopupV329'))return; // one at a time — a second INSERT while one is open just refreshes the badge
@@ -1901,7 +1906,9 @@ function openBookingRequestPopupV329(row){
   const close=()=>{if(deactivate)deactivate();else $('bookingRequestPopupV329')?.remove();};
   deactivate=CUI.activateDialog($('bookingRequestPopupV329'),{onClose:close,initialFocus:'#bookingRequestPopupConfirmV329'});
   $('bookingRequestPopupCloseV329').onclick=close;
-  $('bookingRequestPopupConfirmV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'confirm');};
+  $('bookingRequestPopupConfirmV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'confirm',{
+    customerName:row.name,phone:row.phone,serviceName:row.services?.name,staffName:row.staff?.full_name,startsAt:row.preferred_at
+  });};
   $('bookingRequestPopupDeclineV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'decline');};
   $('bookingRequestPopupAvailV329').onclick=()=>{
     close();
@@ -17893,6 +17900,60 @@ function appointmentWhatsAppUrlV129(options){
   ].filter(Boolean);
   return `https://wa.me/${mobile}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
+/* V330 (owner: "before confirmation... shows urgency" + banner big-font ask). A short, glanceable
+   date+time for the pending-request banner/tile — appointmentWhatsAppUrlV129's `when` is the same
+   idea but private to that function, so this is its own small formatter rather than a refactor. */
+function bookingRequestBigWhenV330(iso){
+  const d=new Date(iso);
+  if(Number.isNaN(d.getTime()))return '—';
+  return new Intl.DateTimeFormat('en-SG',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Singapore'}).format(d);
+}
+/* V330 (owner: "after confirmation > able to click whatsapp icon > send confirmation message
+   (pull date/time/customer name/services/assigned staff, with a template pre-set by the owner)").
+   businesses.booking_confirmation_template holds the owner's own wording with {customer}/
+   {service}/{staff}/{date}/{time} tokens; DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330 is what a
+   business that never opened the settings page gets. */
+const DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330='Hi {customer}, your {service} with {staff} on {date} at {time} is confirmed. See you then!';
+function bookingConfirmationMessageV330({template,customerName,serviceName,staffName,startsAt}){
+  const d=new Date(startsAt);
+  const dateLabel=Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(d);
+  const timeLabel=Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-SG',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Singapore'}).format(d);
+  return String(template||DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330)
+    .replaceAll('{customer}',String(customerName||'there').trim())
+    .replaceAll('{service}',String(serviceName||'your appointment').trim())
+    .replaceAll('{staff}',String(staffName||'our team').trim())
+    .replaceAll('{date}',dateLabel)
+    .replaceAll('{time}',timeLabel);
+}
+function bookingConfirmationWhatsAppUrlV330(phone,text){
+  const digits=String(phone||'').replace(/\D/g,'');
+  const mobile=/^[89]\d{7}$/.test(digits)?`65${digits}`:/^65[89]\d{7}$/.test(digits)?digits:null;
+  if(!mobile)return null;
+  return `https://wa.me/${mobile}?text=${encodeURIComponent(text)}`;
+}
+/* One small dialog, shown right after a request is confirmed (from any of the three confirm
+   surfaces — popup, banner, calendar tile), offering the owner's own templated WhatsApp message
+   or a plain call. Not shown at all when the request carried no usable phone number. */
+function offerBookingConfirmationContactV330({customerName,phone,serviceName,staffName,startsAt}){
+  const callNumber=normalizeSingaporeCustomerPhone(phone);
+  const text=bookingConfirmationMessageV330({template:S.biz?.booking_confirmation_template,customerName,serviceName,staffName,startsAt});
+  const waUrl=bookingConfirmationWhatsAppUrlV330(phone,text);
+  if(!callNumber&&!waUrl)return;
+  if($('bookingConfirmedContactV330'))$('bookingConfirmedContactV330').remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="bookingConfirmedContactV330" role="dialog" aria-modal="true" aria-labelledby="bookingConfirmedContactTitleV330" tabindex="-1"><div class="modal-card" style="max-width:420px">
+    <h2 id="bookingConfirmedContactTitleV330">Booking confirmed</h2>
+    <p class="muted small" style="margin-top:4px">Let ${esc(customerName||'the customer')} know.</p>
+    <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
+      ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('bookings',{size:15})} Message on WhatsApp</a>`:''}
+      ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('till',{size:15})} Call customer</a>`:''}
+      <button class="btn ghost" id="bookingConfirmedContactCloseV330" type="button">Done</button>
+    </div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('bookingConfirmedContactV330')?.remove();};
+  deactivate=CUI.activateDialog($('bookingConfirmedContactV330'),{onClose:close,initialFocus:waUrl?'#bookingConfirmedWhatsAppV330':'#bookingConfirmedContactCloseV330'});
+  $('bookingConfirmedContactCloseV330').onclick=close;
+}
 async function appointmentsPage(){
   disposeCurrentRoute();
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -18729,7 +18790,7 @@ async function appointmentsPage(){
       fetchAllRowsResult(()=>sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:branchId,
         p_from:sgDateBoundary(start),p_to:sgDateBoundary(end)}).order('starts_at').order('staff_id')),
       view==='day'&&canReadModule('bookings')
-        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name)',{count:'exact'})
+        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name,duration_min)',{count:'exact'})
             .eq('business_id',S.biz.id).or(`branch_id.is.null,branch_id.eq.${branchId}`)
             .in('status',[...STAFF_BOOKING_DECISION_STATUSES])
             .gte('preferred_at',sgDateBoundary(start)).lt('preferred_at',sgDateBoundary(end)).order('preferred_at'))
@@ -18915,11 +18976,24 @@ async function appointmentsPage(){
     const cards=pendingRequests.map(r=>{
       const overdue=new Date(r.preferred_at).getTime()<nowMs;
       const rescheduling=reschedulingRequestIdV329===r.id;
+      const callNumber=normalizeSingaporeCustomerPhone(r.phone);
+      const waUrl=appointmentWhatsAppUrlV129({phone:r.phone,businessName:S.biz.name,customerName:r.name,
+        serviceName:r.services?.name,startsAt:r.preferred_at,staffName:r.staff_id?staffName[r.staff_id]:null,
+        status:'awaiting your confirmation'});
+      /* V330 (owner: "boss only cares about service/staff/date+time — these 3 should be bigger
+         font"). The three decision-critical facts lead in a bigger line; the customer's own
+         name+contact sit on their own row underneath with tel:/wa.me buttons so the owner can
+         reach them without leaving the calendar. */
       return `<div class="pending-request-card${r.id===highlightRequestId?' pending-request-highlight-v329':''}" id="pendingRequestCardV329-${esc(r.id)}" data-pending-request-card="${esc(r.id)}">
         <div class="row" style="align-items:flex-start;gap:10px">
           <div style="flex:1;min-width:0">
-            <b>${esc(r.name||'Customer')}</b> · ${esc(r.services?.name||'General visit')}
-            <div class="small muted" style="margin-top:2px">${esc(sgt(r.preferred_at)||'—')}${overdue?` · <span style="color:var(--red);font-weight:700">preferred time has passed</span>`:''} · ${esc(r.staff_id?(staffName[r.staff_id]||'Team member'):'Anyone available')}${r.party_size?` · Party of ${r.party_size}`:''}</div>
+            <div class="pending-request-core-v330">${esc(r.services?.name||'General visit')} · ${esc(r.staff_id?(staffName[r.staff_id]||'Team member'):'Anyone available')} · ${esc(bookingRequestBigWhenV330(r.preferred_at))}</div>
+            <div class="small" style="margin-top:4px">
+              <b>${esc(r.name||'Customer')}</b>${r.phone?` · ${esc(r.phone)}`:''}
+              ${callNumber?` <a class="btn ghost sm" href="tel:${esc(callNumber)}">${CUI.icon('till',{size:13})} Call</a>`:''}
+              ${waUrl?` <a class="btn ghost sm" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:''}
+            </div>
+            <div class="small muted" style="margin-top:2px">${overdue?`<span style="color:var(--red);font-weight:700">preferred time has passed</span> · `:''}${r.party_size?`Party of ${r.party_size}`:''}</div>
             ${r.notes?`<div class="small muted" style="margin-top:2px">${esc(r.notes)}</div>`:''}
           </div>
           <span class="pill new">Awaiting confirmation</span>
@@ -18938,10 +19012,17 @@ async function appointmentsPage(){
     }).join('');
     return `<div class="card pending-request-banner"><b>${pendingRequests.length} booking request${pendingRequests.length===1?'':'s'} awaiting confirmation today</b>${cards}</div>`;
   }
+  function pendingRequestContactDetailsV330(id){
+    const r=pendingRequests.find(row=>row.id===id);
+    if(!r)return null;
+    return {customerName:r.name,phone:r.phone,serviceName:r.services?.name,
+      staffName:r.staff_id?staffName[r.staff_id]:null,startsAt:r.preferred_at};
+  }
   function wirePendingRequestActionsV329(){
     routeMain.querySelectorAll('[data-pending-confirm]').forEach(button=>button.onclick=async()=>{
       button.disabled=true;
-      await decideBookingRequestGlobalV329(button.dataset.pendingConfirm,'confirm');
+      const id=button.dataset.pendingConfirm;
+      await decideBookingRequestGlobalV329(id,'confirm',pendingRequestContactDetailsV330(id));
       if(isCurrent())loadAppointmentsGuardedV288();
     });
     routeMain.querySelectorAll('[data-pending-decline]').forEach(button=>button.onclick=async()=>{
@@ -18959,6 +19040,8 @@ async function appointmentsPage(){
       const timeInput=$('pendingRescheduleTimeV329-'+id),staffSelect=$('pendingRescheduleStaffV329-'+id);
       if(!timeInput?.value)return toast('Pick a new date and time first');
       const preferred=sgIso(timeInput.value);
+      const contact=pendingRequestContactDetailsV330(id);
+      const movedStaffName=staffSelect?.value?staffName[staffSelect.value]:contact?.staffName;
       button.disabled=true;
       const {data,error}=await sb.rpc('staff_reschedule_and_confirm_booking_request_v329',{
         p_business:S.biz.id,p_request:id,p_preferred:preferred,p_staff:staffSelect?.value||null
@@ -18969,6 +19052,81 @@ async function appointmentsPage(){
       reschedulingRequestIdV329='';
       refreshPendingBookingRequestCountV329();
       loadAppointmentsGuardedV288();
+      if(contact)offerBookingConfirmationContactV330({...contact,staffName:movedStaffName,startsAt:preferred});
+    });
+  }
+  /* V330 (owner: "click into it > pop up approve/reject or change timing/staff (drop down)").
+     The calendar-tile equivalent of the banner card — same three actions, same confirm/decline
+     RPC and same reschedule RPC, just reached by clicking the tile instead of scrolling to the
+     banner. Kept as its own small dialog rather than re-using openBookingRequestPopupV329:
+     that popup is the realtime "a request just arrived" interrupt (with a Check-availability
+     hand-off), this is a from-the-calendar lookup that already knows exactly which slot it is
+     and needs the inline reschedule form instead. */
+  function openPendingRequestTileModalV330(row){
+    if($('pendingTileModalV330'))return;
+    const staffOptions=staff.map(s=>`<option value="${s.id}" ${row.staff_id===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('');
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pendingTileModalV330" role="dialog" aria-modal="true" aria-labelledby="pendingTileModalTitleV330" tabindex="-1"><div class="modal-card" style="max-width:460px">
+      <div class="row"><div><h2 id="pendingTileModalTitleV330">Booking request</h2><p class="muted small" style="margin-top:4px">Not yet confirmed — still holds this slot.</p></div><span class="spacer"></span><button class="btn ghost sm" id="pendingTileModalCloseV330" type="button">Close</button></div>
+      <div class="imp-note" style="margin-top:12px">
+        <div><b>Service</b> ${esc(row.services?.name||'General visit')}</div>
+        <div><b>Team member</b> ${esc(row.staff_id?(staffName[row.staff_id]||'Team member'):'Anyone available')}</div>
+        <div><b>Time</b> ${esc(bookingRequestBigWhenV330(row.preferred_at))}</div>
+        <div><b>Customer</b> ${esc(row.name||'Customer')}${row.phone?` · ${esc(row.phone)}`:''}</div>
+        ${row.party_size?`<div><b>Party</b> ${row.party_size}</div>`:''}
+        ${row.notes?`<div><b>Notes</b> ${esc(row.notes)}</div>`:''}
+      </div>
+      <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="pendingTileConfirmV330" type="button">Confirm</button>
+        <button class="btn ghost" id="pendingTileRescheduleToggleV330" type="button">Change time / staff</button>
+        <button class="btn ghost danger" id="pendingTileDeclineV330" type="button">Decline</button>
+      </div>
+      <div class="row" id="pendingTileRescheduleFormV330" style="display:none;margin-top:14px;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div><label for="pendingTileTimeV330" class="small">New date & time</label><input id="pendingTileTimeV330" type="datetime-local" value="${esc((row.preferred_at||'').slice(0,16))}"></div>
+        <div><label for="pendingTileStaffV330" class="small">Team member</label><select id="pendingTileStaffV330">${staffOptions}</select></div>
+        <button type="button" class="btn sm" id="pendingTileRescheduleSubmitV330">Move & confirm</button>
+      </div>
+    </div></div>`);
+    let deactivate;
+    const close=()=>{if(deactivate)deactivate();else $('pendingTileModalV330')?.remove();};
+    deactivate=CUI.activateDialog($('pendingTileModalV330'),{onClose:close,initialFocus:'#pendingTileConfirmV330'});
+    $('pendingTileModalCloseV330').onclick=close;
+    const contact={customerName:row.name,phone:row.phone,serviceName:row.services?.name,
+      staffName:row.staff_id?staffName[row.staff_id]:null,startsAt:row.preferred_at};
+    $('pendingTileConfirmV330').onclick=async()=>{
+      close();
+      await decideBookingRequestGlobalV329(row.id,'confirm',contact);
+      if(isCurrent())loadAppointmentsGuardedV288();
+    };
+    $('pendingTileDeclineV330').onclick=async()=>{
+      close();
+      await decideBookingRequestGlobalV329(row.id,'decline');
+      if(isCurrent())loadAppointmentsGuardedV288();
+    };
+    $('pendingTileRescheduleToggleV330').onclick=()=>{
+      const form=$('pendingTileRescheduleFormV330');
+      if(form)form.style.display=form.style.display==='none'?'flex':'none';
+    };
+    $('pendingTileRescheduleSubmitV330').onclick=async()=>{
+      const timeInput=$('pendingTileTimeV330'),staffSelect=$('pendingTileStaffV330'),button=$('pendingTileRescheduleSubmitV330');
+      if(!timeInput?.value)return toast('Pick a new date and time first');
+      const preferred=sgIso(timeInput.value);
+      button.disabled=true;
+      const {data,error}=await sb.rpc('staff_reschedule_and_confirm_booking_request_v329',{
+        p_business:S.biz.id,p_request:row.id,p_preferred:preferred,p_staff:staffSelect?.value||null
+      });
+      if(!isCurrent())return;
+      if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
+      close();
+      toast(bookingDecisionNotice(data,'confirm').text);
+      refreshPendingBookingRequestCountV329();
+      loadAppointmentsGuardedV288();
+      offerBookingConfirmationContactV330({...contact,staffName:staffSelect?.value?(staffName[staffSelect.value]||contact.staffName):contact.staffName,startsAt:preferred});
+    };
+  }
+  function wirePendingTileActionsV330(){
+    routeMain.querySelectorAll('[data-pending-tile]').forEach(button=>button.onclick=()=>{
+      const row=pendingRequests.find(r=>r.id===button.dataset.pendingTile);
+      if(row)openPendingRequestTileModalV330(row);
     });
   }
   function renderDay(day){
@@ -18982,6 +19140,7 @@ async function appointmentsPage(){
       color:staffColor[person.id]||'#C63B31',
       items:calendarItems.filter(item=>item.staff_id===person.id),
       blocks:calendarBlocks.filter(item=>item.staff_id===person.id),
+      pending:pendingRequests.filter(item=>item.staff_id===person.id),
       schedule:recordedSchedule(person.id,day)
     }));
     if(staffFilter==='all'){
@@ -18996,8 +19155,12 @@ async function appointmentsPage(){
     const eventMinutes=columns.flatMap(column=>column.items.flatMap(item=>[eventParts(item.starts_at).minutes,eventParts(item.ends_at).minutes]));
     const scheduleMinutes=columns.filter(column=>column.schedule.state==='working').flatMap(column=>[column.schedule.start,column.schedule.end]);
     const blockMinutes=columns.flatMap(column=>column.blocks.flatMap(block=>[eventParts(block.starts_at).minutes,eventParts(block.ends_at).minutes]));
+    const pendingMinutes=columns.flatMap(column=>column.pending.flatMap(item=>{
+      const from=eventParts(item.preferred_at).minutes;
+      return [from,from+(item.services?.duration_min||60)];
+    }));
     const todayMinutes=day===todaySg?clockMinutes(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(new Date())):null;
-    const allMinutes=[...eventMinutes,...scheduleMinutes,...blockMinutes,...(Number.isFinite(todayMinutes)?[todayMinutes]:[])];
+    const allMinutes=[...eventMinutes,...scheduleMinutes,...blockMinutes,...pendingMinutes,...(Number.isFinite(todayMinutes)?[todayMinutes]:[])];
     const rangeStart=Math.max(0,Math.floor((allMinutes.length?Math.min(...allMinutes):8*60)/60)*60);
     const rangeEnd=Math.min(1440,Math.max(rangeStart+6*60,Math.ceil((allMinutes.length?Math.max(...allMinutes):20*60)/60)*60));
     const hourHeight=176,bodyHeight=(rangeEnd-rangeStart)/60*hourHeight;
@@ -19058,7 +19221,23 @@ async function appointmentsPage(){
             return `<button type="button" class="day-slot-button" data-day="${day}" data-staff="${column.id}" data-time="${minuteClock(start)}" data-service="${esc(calendarServiceId)}" style="top:${(start-rangeStart)/60*hourHeight}px;height:44px" ${workspaceTemplateAttributeV97('aria-label','bookAppointmentSlot',{service:selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit',staff:column.label,time:minuteClock(start)})}><span>${minuteClock(start)}</span><b>Book</b></button>`;
           }).join(''):'';
           const now=Number.isFinite(todayMinutes)&&todayMinutes>=rangeStart&&todayMinutes<=rangeEnd?`<div class="day-now-line" style="top:${(todayMinutes-rangeStart)/60*hourHeight}px"><span>${minuteClock(todayMinutes)}</span></div>`:'';
-          return `<div class="day-team-track" style="height:${bodyHeight}px">${working}${slots}${breaks}${blocks}${now}${state}${events}</div>`;
+          /* V330 (owner: "before confirmation of booking - it should already reflect this in the
+             calendar > click into it > pop up approve/reject or change timing/staff... colour
+             differentiation from actual confirmed appointment"). Positioned with the same top/
+             height math as a confirmed event, but drawn with its own diagonal-stripe class
+             (matching the existing blocked-time/inactive-appointment convention) at a lower
+             z-index, and wired through data-pending-tile — a different attribute from
+             data-appointment — so wireAppointmentActions' delegated handler never mistakes one
+             for a confirmed booking. Deliberately NOT run through layoutCalendarDay's lane math:
+             two customers can be asked for the same slot at once, which that algorithm has no
+             concept of, so a pending tile always takes the full column width and may legitimately
+             overlap a sibling. */
+          const pendingTiles=column.pending.map(r=>{
+            const from=eventParts(r.preferred_at).minutes,to=from+(r.services?.duration_min||60);
+            const top=(from-rangeStart)/60*hourHeight,height=Math.max(44,(to-from)/60*hourHeight);
+            return `<button type="button" class="day-timeline-pending-v330" data-pending-tile="${esc(r.id)}" style="top:${top}px;height:${height}px" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:r.services?.name||'—',customer:r.name||'—',time:bookingRequestBigWhenV330(r.preferred_at),staff:column.label})}><span>${esc(bookingRequestBigWhenV330(r.preferred_at))}</span><b>${esc(r.name||'Customer')}</b><small>${esc(r.services?.name||'General visit')} · Awaiting confirmation</small></button>`;
+          }).join('');
+          return `<div class="day-team-track" style="height:${bodyHeight}px">${working}${slots}${breaks}${blocks}${now}${state}${events}${pendingTiles}</div>`;
         }).join('')}
       </div></div>
       <div class="calendar-agenda">${dayAgendaV291}</div>`;
@@ -19080,6 +19259,7 @@ async function appointmentsPage(){
     wireBlockedTimeActions();
     wireAppointmentActions();
     wirePendingRequestActionsV329();
+    wirePendingTileActionsV330();
     /* V329: "Check availability" from the pop-up lands here with ?highlight=<request id> — scroll
        the matching card into view and pulse it once. Consumed after the first render so it does
        not keep re-pulsing on every subsequent reload of this same page instance (a decline/
@@ -24845,7 +25025,24 @@ function bookingRulesCardHtmlV325(){
       <div id="setAvailabilityBody" aria-busy="true" style="margin-top:14px"><p class="muted small">Loading opening hours…</p></div>
       <div style="margin-top:14px"><button class="btn sm" id="setAvailabilitySave">Save availability</button></div>
       <div id="setAvailabilityErr" role="status"></div>
-    </div>`;
+    </div>
+    ${bookingConfirmationTemplateCardHtmlV330()}`;
+}
+/* V330 (owner: "able to click whatsapp icon > send confirmation message... with a template
+   pre-set by the owner"). One plain textarea + a live preview, on the same Appointment Setting
+   step as the rest of the booking rules — no new settings page, matching how buffer times and
+   branches got a pointer card here instead of their own step. {customer}/{service}/{staff}/
+   {date}/{time} are the only tokens the send path understands (bookingConfirmationMessageV330). */
+function bookingConfirmationTemplateCardHtmlV330(){
+  const template=S.biz.booking_confirmation_template||DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330;
+  return `<div class="card" style="margin-top:16px">
+    <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">WhatsApp confirmation message</b>
+    <p class="muted small" style="margin-top:2px">Sent when you tap "Message on WhatsApp" after confirming a booking request. Use {customer}, {service}, {staff}, {date}, {time} — they get filled in for each booking.</p>
+    <textarea id="setConfirmationTemplate" rows="4" style="margin-top:10px">${esc(template)}</textarea>
+    <p class="muted small" id="setConfirmationTemplatePreview" style="margin-top:8px">${esc(bookingConfirmationMessageV330({template,customerName:'Mei',serviceName:'Facial',staffName:'Devi',startsAt:new Date(Date.now()+86400000).toISOString()}))}</p>
+    <div style="margin-top:10px"><button class="btn sm" id="setConfirmationTemplateSave">Save message</button></div>
+    <div id="setConfirmationTemplateErr"></div>
+  </div>`;
 }
 function wireBookingRulesV325(isCurrent=()=>true){
   const isOwner=S.myRole==='owner';
@@ -24877,6 +25074,25 @@ function wireBookingRulesV325(isCurrent=()=>true){
     if(autoConfirm!==null)S.biz.booking_auto_confirm=autoConfirm;
     toast('Booking rules saved');
   };
+  if($('setConfirmationTemplate')){
+    const updatePreview=()=>{
+      const preview=$('setConfirmationTemplatePreview');if(!preview)return;
+      preview.textContent=bookingConfirmationMessageV330({template:$('setConfirmationTemplate').value,
+        customerName:'Mei',serviceName:'Facial',staffName:'Devi',startsAt:new Date(Date.now()+86400000).toISOString()});
+    };
+    $('setConfirmationTemplate').oninput=updatePreview;
+    if($('setConfirmationTemplateSave'))$('setConfirmationTemplateSave').onclick=async()=>{
+      const value=$('setConfirmationTemplate').value.trim()||null;
+      const button=$('setConfirmationTemplateSave'),err=$('setConfirmationTemplateErr');
+      button.disabled=true;err.innerHTML='';
+      const {error}=await sb.from('businesses').update({booking_confirmation_template:value}).eq('id',S.biz.id);
+      if(!isCurrent())return;
+      button.disabled=false;
+      if(error){err.innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      S.biz.booking_confirmation_template=value;
+      toast('WhatsApp confirmation message saved');
+    };
+  }
   const loadBookingAvailability=async()=>{
     const host=$('setAvailabilityBody');if(!host)return;
     const [branchResult,hoursResult]=await Promise.all([

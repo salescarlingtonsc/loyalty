@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="21ead13bddc885401e9b4595a69061b0181fb8ae10557f68cce26e26c7169ad0"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="e4b2832f74e0307ece317f8767dc4573e061858d69a88578f7efcb590e1f61af"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -146,6 +146,16 @@ tr[aria-selected="true"] td{background:var(--tint)}
 @keyframes pendingRequestPulseV329{0%,50%{box-shadow:0 0 0 4px rgba(157,53,44,.22);background:var(--tint)}100%{box-shadow:none;background:transparent}}
 .pending-request-highlight-v329{animation:pendingRequestPulseV329 1.3s ease-out 2;border-radius:10px}
 @media(prefers-reduced-motion:reduce){.pending-request-highlight-v329{animation:none;background:var(--tint);border-radius:10px}}
+.pending-request-core-v330{font-size:14.5px;font-weight:750;color:var(--ink)}
+/* V330: a still-pending request drawn on the calendar grid itself, deliberately styled to read
+   as "not real yet" — dashed red border + diagonal stripe, same visual language as a blocked
+   window, at a lower z-index than a confirmed .day-timeline-event so a genuine appointment
+   always wins the eye if the two ever overlap. */
+.day-timeline-pending-v330{position:absolute;left:5px;right:5px;z-index:5;min-height:44px;overflow:hidden;padding:5px 8px;border:2px dashed var(--red);border-radius:7px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 10%,#fff) 0 6px,color-mix(in srgb,var(--red) 18%,#fff) 6px 12px);color:var(--ink);text-align:left;line-height:1.15;cursor:pointer}
+.day-timeline-pending-v330:hover,.day-timeline-pending-v330:focus-visible{z-index:9;box-shadow:var(--shadow)}
+.day-timeline-pending-v330 span,.day-timeline-pending-v330 b,.day-timeline-pending-v330 small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-timeline-pending-v330 span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--red)}
+.day-timeline-pending-v330 small{margin-top:1px;color:var(--red);font-weight:700}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -2176,7 +2186,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 21ead13bddc885401e9b4595a69061b0181fb8ae10557f68cce26e26c7169ad0</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e4b2832f74e0307ece317f8767dc4573e061858d69a88578f7efcb590e1f61af</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5505,7 +5515,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'21ead13bddc885401e9b4595a69061b0181fb8ae10557f68cce26e26c7169ad0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'e4b2832f74e0307ece317f8767dc4573e061858d69a88578f7efcb590e1f61af',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

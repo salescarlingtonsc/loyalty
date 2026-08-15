@@ -1941,6 +1941,12 @@
       "path": "db/migrations/20260815_nestly_v329_owner_reschedule_booking_request.sql",
       "semanticVersion": "v329",
       "proposedDeployVersion": "20260815090003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260815_nestly_v330_pending_slot_block_and_confirmation_template.sql",
+      "semanticVersion": "v330",
+      "proposedDeployVersion": "20260815090004"
     }
   ]
 }

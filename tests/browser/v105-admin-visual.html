@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="31c0426a7ed7ce97ed4f4c79ec264b87d185f6ba3d07415bafe31c88b6fdc9e6">
+<meta name="v105-production-component-sha256" content="1ab401e6a14d1318ce40161dc714ce7716206375cbf469caa6151d044e19c5ea">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -152,6 +152,16 @@ tr[aria-selected="true"] td{background:var(--tint)}
 @keyframes pendingRequestPulseV329{0%,50%{box-shadow:0 0 0 4px rgba(157,53,44,.22);background:var(--tint)}100%{box-shadow:none;background:transparent}}
 .pending-request-highlight-v329{animation:pendingRequestPulseV329 1.3s ease-out 2;border-radius:10px}
 @media(prefers-reduced-motion:reduce){.pending-request-highlight-v329{animation:none;background:var(--tint);border-radius:10px}}
+.pending-request-core-v330{font-size:14.5px;font-weight:750;color:var(--ink)}
+/* V330: a still-pending request drawn on the calendar grid itself, deliberately styled to read
+   as "not real yet" — dashed red border + diagonal stripe, same visual language as a blocked
+   window, at a lower z-index than a confirmed .day-timeline-event so a genuine appointment
+   always wins the eye if the two ever overlap. */
+.day-timeline-pending-v330{position:absolute;left:5px;right:5px;z-index:5;min-height:44px;overflow:hidden;padding:5px 8px;border:2px dashed var(--red);border-radius:7px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 10%,#fff) 0 6px,color-mix(in srgb,var(--red) 18%,#fff) 6px 12px);color:var(--ink);text-align:left;line-height:1.15;cursor:pointer}
+.day-timeline-pending-v330:hover,.day-timeline-pending-v330:focus-visible{z-index:9;box-shadow:var(--shadow)}
+.day-timeline-pending-v330 span,.day-timeline-pending-v330 b,.day-timeline-pending-v330 small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-timeline-pending-v330 span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--red)}
+.day-timeline-pending-v330 small{margin-top:1px;color:var(--red);font-weight:700}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -2990,7 +3000,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 31c0426a7ed7</span>
+<span class="v105-provenance">v105 production-component harness · 1ab401e6a14d</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3115,7 +3125,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'31c0426a7ed7ce97ed4f4c79ec264b87d185f6ba3d07415bafe31c88b6fdc9e6',
+  sourceHash:'1ab401e6a14d1318ce40161dc714ce7716206375cbf469caa6151d044e19c5ea',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

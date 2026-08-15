@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="91041a7c81af182985a27f98a7b48e5885b82965852e016581e66a2d3bc83702"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="5e8dbd48a412bdaa763e731664805c1a10755ee4b6274285f749e28a88e0eb9a"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -146,6 +146,16 @@ tr[aria-selected="true"] td{background:var(--tint)}
 @keyframes pendingRequestPulseV329{0%,50%{box-shadow:0 0 0 4px rgba(157,53,44,.22);background:var(--tint)}100%{box-shadow:none;background:transparent}}
 .pending-request-highlight-v329{animation:pendingRequestPulseV329 1.3s ease-out 2;border-radius:10px}
 @media(prefers-reduced-motion:reduce){.pending-request-highlight-v329{animation:none;background:var(--tint);border-radius:10px}}
+.pending-request-core-v330{font-size:14.5px;font-weight:750;color:var(--ink)}
+/* V330: a still-pending request drawn on the calendar grid itself, deliberately styled to read
+   as "not real yet" — dashed red border + diagonal stripe, same visual language as a blocked
+   window, at a lower z-index than a confirmed .day-timeline-event so a genuine appointment
+   always wins the eye if the two ever overlap. */
+.day-timeline-pending-v330{position:absolute;left:5px;right:5px;z-index:5;min-height:44px;overflow:hidden;padding:5px 8px;border:2px dashed var(--red);border-radius:7px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 10%,#fff) 0 6px,color-mix(in srgb,var(--red) 18%,#fff) 6px 12px);color:var(--ink);text-align:left;line-height:1.15;cursor:pointer}
+.day-timeline-pending-v330:hover,.day-timeline-pending-v330:focus-visible{z-index:9;box-shadow:var(--shadow)}
+.day-timeline-pending-v330 span,.day-timeline-pending-v330 b,.day-timeline-pending-v330 small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-timeline-pending-v330 span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--red)}
+.day-timeline-pending-v330 small{margin-top:1px;color:var(--red);font-weight:700}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -2176,7 +2186,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 91041a7c81af182985a27f98a7b48e5885b82965852e016581e66a2d3bc83702</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 5e8dbd48a412bdaa763e731664805c1a10755ee4b6274285f749e28a88e0eb9a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -4279,7 +4289,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'91041a7c81af182985a27f98a7b48e5885b82965852e016581e66a2d3bc83702',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'5e8dbd48a412bdaa763e731664805c1a10755ee4b6274285f749e28a88e0eb9a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),
