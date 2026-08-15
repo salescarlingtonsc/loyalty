@@ -17,7 +17,9 @@ const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readF
    remaining in the business's own basis, escaping — is unchanged and still asserted here. */
 const start = app.indexOf('function customerTierPanelMarkupV194');
 assert.ok(start > 0, 'tier panel markup fn must exist');
-const src = app.slice(app.indexOf('function customerTierMilestonesMarkupV194'),
+/* v333: the slice starts at the rail constants, which the bar now calls into for both its fill
+   and its label budget (customerTierRailProgressV333 / customerTierRailCompactV333). */
+const src = app.slice(app.indexOf('const TIER_RAIL_LABEL_LIMIT_V333'),
   app.indexOf('function customerProgrammeSummaryTabsV194', start));
 const ladder = app.slice(app.indexOf('function customerTierLadderMarkupV186'),
   app.indexOf('\nfunction customerTierRequirementTextV189'));
@@ -26,7 +28,10 @@ const requirement = app.slice(app.indexOf('function customerTierRequirementTextV
 const remaining = app.slice(app.indexOf('function customerTierRemainingTextV186'),
   app.indexOf('function customerProgrammeSummaryTabsV194'));
 const escFn = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const card = new Function('esc', `${src}\n${ladder}\n${requirement}\n${remaining}; return customerTierPanelMarkupV194;`)(escFn);
+const rungIconSrc = app.slice(app.indexOf('function customerTierRungIconV195'),
+  app.indexOf('const TIER_RAIL_LABEL_LIMIT_V333'));
+const cuiStub = {icon:name=>`<svg data-icon="${name}"></svg>`};
+const card = new Function('esc', 'CUI', `${rungIconSrc}\n${src}\n${ladder}\n${requirement}\n${remaining}; return customerTierPanelMarkupV194;`)(escFn, cuiStub);
 
 test('remaining-to-next speaks the business basis, not percentages', () => {
   const visits = card({current:{label:'Explorer',threshold:10,benefits:[]},next:{label:'Pioneer',threshold:40,benefits:[]},progress_percent:90,basis:'visits',metric:37});
@@ -43,6 +48,54 @@ test('top tier gets its badge and no progress bar; empty tiers render nothing', 
   assert.doesNotMatch(top, /more visits to reach/);
   assert.match(card({}), /has not set up tiers yet/,
     'v194: the panel is inside a tab that always exists, so it says why it is empty');
+});
+
+/* v333 (owner, 2026-08-15: "the UI UX is being squeezed" — nine tiers, four icons stacked on the
+   left of the track with their labels printed over one another, and a fill that agreed with none
+   of them). The rail speaks one language now: the rung index. */
+/* The rung icons are the only thing these three need beyond `esc`, and this suite is about
+   POSITION, not iconography — v195 pins the star/crown/gem choice itself. */
+const rail = new Function('esc', 'CUI', `${rungIconSrc}\n${src}\n${ladder}\n${requirement}\n${remaining}
+  ; return {progress:customerTierRailProgressV333,compact:customerTierRailCompactV333,
+    milestones:customerTierMilestonesMarkupV194};`)(escFn, cuiStub);
+const ladderOf = (count, currentIndex) => ({tiers:Array.from({length:count},(unused,index)=>({
+  label:`T${index+1}`,threshold:(index+1)*10,
+  achieved:index<=currentIndex,current:index===currentIndex}))});
+const round2 = value => Math.round(value * 100) / 100;   // the rail's own precision
+
+test('the fill and the markers are on one scale — the rung index, not the threshold', () => {
+  const nine = ladderOf(9, 3);                       // on rung 4 of 9
+  /* progress_percent is progress THROUGH the current segment, so half way from rung 4 to rung 5
+     is half of one ninth past the rung-4 marker — never 50% of the whole track. */
+  assert.equal(rail.progress(nine, 0), round2((4 / 9) * 100));
+  assert.equal(rail.progress(nine, 50), round2((4.5 / 9) * 100));
+  assert.equal(rail.progress(nine, 100), round2((5 / 9) * 100));
+  const marks = [...rail.milestones(nine).matchAll(/left:([\d.]+)%/g)].map(m => Number(m[1]));
+  assert.equal(marks.length, 9);
+  assert.equal(marks[3], Number(((4 / 9) * 100).toFixed(2)), 'the fill at 0% lands ON the rung-4 marker');
+  assert.equal(marks[8], 100, 'the top rung is the end of the track');
+  const gaps = marks.slice(1).map((at, index) => at - marks[index]);
+  assert.ok(Math.max(...gaps) - Math.min(...gaps) < 0.05,
+    'every rung gets the same room, whatever thresholds the firm set');
+});
+
+test('a customer below the first rung is in the opening runway, not standing on rung one', () => {
+  const none = {tiers:ladderOf(4, -1).tiers};
+  assert.equal(rail.progress(none, 0), 0);
+  assert.equal(rail.progress(none, 50), Math.round(((0.5 / 4) * 100) * 100) / 100);
+  assert.ok(rail.progress(none, 99) < 25, 'still short of the first marker at 25%');
+});
+
+test('past four rungs the rail drops its labels rather than stacking them', () => {
+  assert.equal(rail.compact(ladderOf(4, 0)), false);
+  assert.equal(rail.compact(ladderOf(5, 0)), true);
+  assert.match(rail.milestones(ladderOf(4, 0)), /<b>T1<\/b>/, 'four names still fit at 390px');
+  assert.doesNotMatch(rail.milestones(ladderOf(9, 0)), /<b>/,
+    'nine do not — the names are in the sentences above and below, and in the ladder');
+  const nine = card({...ladderOf(9, 3), current:{label:'T4',threshold:40,benefits:[]},
+    next:{label:'T5',threshold:50,benefits:[]}, progress_percent:60, basis:'visits', metric:46});
+  assert.match(nine, /class="customer-tier-bar is-compact"/,
+    'and the card reclaims the 40px that row of labels used to reserve');
 });
 
 test('tier labels and benefits are escaped', () => {

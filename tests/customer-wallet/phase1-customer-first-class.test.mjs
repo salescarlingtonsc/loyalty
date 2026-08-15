@@ -165,7 +165,7 @@ test('customer shell, deep links, and profile transitions are predictable and ac
   assert.match(context,/customerSurfaceQualifies\(profile,customer\)/);
   assert.match(context,/renderNoCustomerDestination\(staff\)/);
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
-  assert.match(wallet,/loadCustomerSurfaceContext\(isWalletCurrent\)/);
+  assert.match(wallet,/loadCustomerSurfaceContext\(isWalletCurrent,\{silent\}\)/);
 });
 
 test('customer home and destinations reuse existing customer contracts with honest unavailable states',()=>{
@@ -219,7 +219,7 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.doesNotMatch(home,/href="#\/claim"/);
 
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
-  assert.match(wallet,/const context=await loadCustomerSurfaceContext\(isWalletCurrent\)/);
+  assert.match(wallet,/const context=await loadCustomerSurfaceContext\(isWalletCurrent,\{silent\}\)/);
   /* v286: the ordering invariant is unchanged (sync, then count); the calls moved onto customerRpc
      so they inherit the v177 abort deadline instead of hanging Home forever. */
   const syncAt=wallet.indexOf("customerRpc('customer_sync_in_app_inbox_global'");

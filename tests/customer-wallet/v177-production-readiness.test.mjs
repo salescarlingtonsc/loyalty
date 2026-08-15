@@ -72,7 +72,7 @@ test('every hangable customer read path is routed through the timeout helper',()
   const join=section(app,'async function renderCustomerQrJoin(','async function renderCustomerClaim(');
   assert.match(join,/customerRpc\('customer_join_business_from_qr_v89'/);
 
-  const wallet=section(app,'async function renderCustomerWallet(businessSlug=null){','const loadGrowthOffers=');
+  const wallet=section(app,'async function renderCustomerWallet(businessSlug=null,{silent=false}={}){','const loadGrowthOffers=');
   for(const name of ['customer_get_wallet','customer_get_actionable_wallet','customer_get_home_offers_v167',
     'customer_get_booking_requests','customer_get_programme_selector_media_v96',
     'customer_get_business_summary','customer_portal_capabilities']){

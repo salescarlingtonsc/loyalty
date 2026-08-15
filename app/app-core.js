@@ -2776,26 +2776,31 @@ function wireCustomerRelationshipCheck(renderer){
 /* v178: the header bell is a first-class shell control, so every customer shell — including the
    QR-join screens that render before a route context exists — reads the same resolved flag. */
 let customerInboxEnabledV178=false;
-async function loadCustomerSurfaceContext(isCurrent=()=>true){
+/* v333: `silent` is a background re-read of a surface that is ALREADY on screen and correct.
+   Every failure branch below repaints the whole page with a retry card, which is the right
+   answer for a first load and the wrong one for a poll — one flaky 20-second read would replace
+   the customer's working wallet with an error. Silent callers get a null and the page they
+   already had. */
+async function loadCustomerSurfaceContext(isCurrent=()=>true,{silent=false}={}){
   const features=await loadCustomerFeatureCapabilities();
   customerInboxEnabledV178=features?.customer_in_app_inbox===true;
   if(!isCurrent())return null;
-  if(features._load_error){renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
-  if(!features.customer_wallet){renderCustomerWalletUnavailable();return null}
+  if(features._load_error){if(!silent)renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
+  if(!features.customer_wallet){if(!silent)renderCustomerWalletUnavailable();return null}
   const [profileResult,personaResult]=await Promise.all([
     features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
     customerRpc('get_my_personas')
   ]);
   if(!isCurrent())return null;
   let {data:personas,error:personasError}=personaResult;
-  if(personasError){renderCustomerCapabilityRetry('We could not load your customer destinations. Please try again.');return null}
+  if(personasError){if(!silent)renderCustomerCapabilityRetry('We could not load your customer destinations. Please try again.');return null}
   let staff=sortStaffWorkspaces(personas?.staff||[]),customer=personas?.customer||[];
   if(profileResult.error&&!customer.length){
-    renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');return null;
+    if(!silent)renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');return null;
   }
   const profile=profileResult.error?null:(profileResult.data?.profile??null);
   const registeredCustomer=profile!==null;
-  if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
+  if(!customerSurfaceQualifies(profile,customer)){if(!silent)renderNoCustomerDestination(staff);return null}
   S.hasCustomerPersona=true;S.customerProfile=profile;
   /* v293/v294: the wallet renders in the member's stored language — all four
      of English, 中文, Bahasa Melayu and தமிழ் ('zh' folds to zh-CN). Sign-out
@@ -3267,14 +3272,53 @@ function customerTierRungIconV195(index,total){
   if(index<=0)return 'star';
   return index>=total-1?'diamond':'crown';
 }
+/* v333 (owner, 2026-08-15: "the UI UX is being squeezed"). Two defects, one rail.
+   (1) SCALE. The markers were placed at threshold/topThreshold while the fill was drawn at
+   tier.progress_percent — and progress_percent is NOT a position on that scale. The server
+   computes it as (metric - current.threshold) / (next.threshold - current.threshold), i.e.
+   progress THROUGH THE CURRENT SEGMENT, 0-100 every time a rung is reached. So the bar's filled
+   end agreed with no marker on it: a Gold customer 57% of the way to Diamond drew a fill at 57%
+   while the Gold marker sat at 34%. Both now speak one language — the RUNG INDEX.
+   (2) CROWDING. Thresholds on a real ladder are near-exponential, so on the threshold scale the
+   lower rungs pile onto the left of the track: at nine tiers the owner's screenshot shows four
+   icons overlapping and their labels printed on top of one another. Even spacing gives every
+   rung the same room whatever the business set its numbers to, and the label budget below keeps
+   the text from colliding at any tier count.
+   The scale is (index+1)/count, not index/(count-1): 0% is "no tier yet", which is a real state
+   (metric below the first threshold — v_current is null and the server measures progress from 0),
+   and it needs somewhere on the track to live. The top rung still lands exactly on 100%. */
+const TIER_RAIL_LABEL_LIMIT_V333=4;
+function customerTierRungsV333(tier={}){
+  return (Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+}
+/* Past four rungs the names cannot fit side by side at 390px, so the rail carries icons alone.
+   Nothing is lost: the current rung is named in the sentence above the bar, the next rung in the
+   sentence below it, and every rung with its benefits in the ladder disclosure underneath. */
+function customerTierRailCompactV333(tier={}){
+  return customerTierRungsV333(tier).length>TIER_RAIL_LABEL_LIMIT_V333;
+}
+function customerTierRailProgressV333(tier={},progressPercent=0){
+  /* `segmentShare`, not `within`: scripts/quality/app-surface-graph.mjs decides regex-vs-division
+     from the preceding character and treats a trailing `n` as the end of `return`, so
+     `within/100` reads as the start of a regex literal and the splitter loses paren depth for
+     the rest of the file. */
+  const segmentShare=Math.max(0,Math.min(100,Number(progressPercent)||0));
+  const rungs=customerTierRungsV333(tier);
+  if(rungs.length<2)return segmentShare;
+  /* The server names the rung the customer is ON; `achieved` is the fallback for a payload that
+     did not, and "no rung achieved yet" is the honest -1 that puts the fill in the opening
+     runway rather than pretending the first tier was reached. */
+  const named=rungs.findIndex(rung=>rung.current===true);
+  const index=named>=0?named:rungs.filter(rung=>rung.achieved===true).length-1;
+  return Math.round(Math.max(0,Math.min(100,((index+1+segmentShare/100)/rungs.length)*100))*100)/100;
+}
 function customerTierMilestonesMarkupV194(tier={}){
-  const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+  const rungs=customerTierRungsV333(tier);
   if(rungs.length<2)return '';
-  const top=Math.max(...rungs.map(rung=>Math.max(0,Number(rung.threshold)||0)));
-  if(!(top>0))return '';
+  const withLabels=!customerTierRailCompactV333(tier);
   return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map((rung,index)=>{
-    const at=Math.max(0,Math.min(100,(Math.max(0,Number(rung.threshold)||0)/top)*100));
-    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i><b>${esc(rung.label)}</b></span>`;
+    const at=((index+1)/rungs.length)*100;
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i>${withLabels?`<b>${esc(rung.label)}</b>`:''}</span>`;
   }).join('')}</div>`;
 }
 /* v310 (W4b): the two sentences this panel writes in English — the distance to the next rung and
@@ -3329,7 +3373,7 @@ function customerTierPanelMarkupV194(tier={},{localizeV310=false}={}){
   const bothNoteV258=String(tier.points_mode||'')==='both'
     ?`<p class="muted small" style="margin-top:6px">${basis==='points_earned'?'Points you earn move you up — spending them never lowers your tier.':basis==='spend'?'What you spend moves you up. Points stay yours to spend.':'Visits move you up. Points stay yours to spend.'}</p>`:'';
   return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV258}
-    ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
+    ${next?`<div class="customer-tier-bar${customerTierRailCompactV333(tier)?' is-compact':''}"><div class="customer-tier-bar-track"><span style="width:${customerTierRailProgressV333(tier,progress)}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
     <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
       :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · ${esc(localizeV310?ct('tierTop'):'you are at the highest tier.')}</p>`
         :localizeV310?`<p class="muted small customer-tier-remaining">${esc(ct('tierTop'))}</p>`:''}
@@ -3496,9 +3540,14 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
 const programmeStackV310=caps=>
   Array.isArray(caps?.programmes)&&caps.programmes.length>0&&caps?.programmes_contract==='v310'
     ?caps.programmes:null;
-/* Fixed, regardless of which are on. Stamps and points are the figure the customer came for, tier
-   is where they are going, referral is what they can give away. */
-const PROGRAMME_STACK_ORDER_V310=Object.freeze(['stamps','points','tiers','referral']);
+/* Fixed, regardless of which are on. v333 (owner, 2026-08-15: "shift the tier up — to the top
+   of the screen, instead of points & gift"): tier leads. It is the standing that names the
+   customer at this business and the one fact that does not change when they spend, so it is
+   what the page should open with; stamps and points are the balance underneath it, referral is
+   what they can give away. The tab fallback (customerProgrammeSummaryTabsV194) already opened
+   on Tier, so this is the stack catching up to the surface it replaced rather than a second
+   opinion. */
+const PROGRAMME_STACK_ORDER_V310=Object.freeze(['tiers','stamps','points','referral']);
 const programmeStackEntryV310=(programmes,kind)=>
   (Array.isArray(programmes)?programmes:[]).find(entry=>entry&&entry.kind===kind)||null;
 /* The server answers presentation with customer_visible, and the client OBEYS it rather than
@@ -3661,9 +3710,11 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
      only Tier was annotated. */
   const tierPausedV326=entries.tiers?.active===false;
   const cards=[
+    /* v333: the paint order IS PROGRAMME_STACK_ORDER_V310 — tier first. The gifts host below is
+       unaffected: it is decided by which accruing card is present, never by which is on top. */
+    show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
     show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
     show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost}):'',
-    show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
@@ -3777,16 +3828,23 @@ function watchCustomerWalletV295(isCurrent,refresh){
   const arm=()=>{
     if(timer)clearTimeout(timer);
     if(!alive()||ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295||document.visibilityState!=='visible')return;
-    timer=setTimeout(()=>{
+    timer=setTimeout(async()=>{
       timer=0;
       if(!alive()||document.visibilityState!=='visible')return;
-      ticks+=1;refresh();
+      ticks+=1;
+      /* v333: the watcher re-arms ITSELF. Before, the only thing that armed the next tick was
+         the full re-render the tick triggered — which is precisely the rebuild v333 removed, so
+         a silent refresh would have polled once and then gone quiet. */
+      try{await refresh()}catch{}
+      arm();
     },CUSTOMER_WALLET_POLL_MS_V295);
   };
-  function onVisibility(){
+  async function onVisibility(){
     if(!alive())return stop();
     if(document.visibilityState!=='visible'){if(timer)clearTimeout(timer);timer=0;return}
-    ticks=0;refresh();          // back in the customer's hand: read now, and re-arm the window
+    ticks=0;                    // back in the customer's hand: read now, and re-arm the window
+    try{await refresh()}catch{}
+    arm();
   }
   document.addEventListener('visibilitychange',onVisibility);
   activeCustomerWalletLiveCleanupV295=stop;

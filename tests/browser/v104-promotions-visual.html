@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="05a641522e49a5d9d6a0094e14b4baa9202802a56ff95de61e5e1e8d71d4e70a">
+<meta name="v104-production-source-sha256" content="ae8a3a98ed647a943b5f74045a94bac354cd68aeac0b373f71aa7afc4a92afe8">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1855,6 +1855,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-member-code-slot{margin:0 0 12px}
 .customer-tier-now{font-size:1.02rem}
 .customer-tier-bar{position:relative;margin:14px 0 40px}
+/* v333: past four rungs the rail carries icons alone (customerTierRailCompactV333), so the 40px
+   reserved for a row of labels under the track is dead space the owner reads as a squeezed card. */
+.customer-tier-bar.is-compact{margin-bottom:24px}
 .customer-tier-bar-track{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
 .customer-tier-bar-track span{display:block;height:100%;border-radius:inherit;background:var(--grad)}
 .customer-tier-milestones{position:absolute;inset:0;pointer-events:none}
@@ -1862,7 +1865,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-tier-milestone i{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:var(--card);border:2px solid var(--line);color:var(--muted)}
 .customer-tier-milestone i svg{width:13px;height:13px}
 .customer-tier-milestone.is-achieved i,.customer-tier-milestone.is-current i{border-color:var(--coral);color:var(--coral)}
-.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap}
+.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap;max-width:82px;overflow:hidden;text-overflow:ellipsis}
+/* v333: the top rung sits ON 100%, so a label centred under it hangs half outside the card. Shift the TEXT only — by half its own width, which lands its right edge on the end of the track — and leave the marker itself exactly where the scale puts it. */
+.customer-tier-milestone:last-child b{transform:translateX(-50%)}
 .customer-tier-milestone.is-achieved i{background:var(--coral);border-color:var(--coral);color:#fff}
 .customer-tier-milestone.is-current i{background:var(--coral);border-color:var(--coral);color:#fff;box-shadow:0 0 0 3px var(--tint)}
 .customer-tier-milestone.is-current b{color:var(--coral)}
@@ -2201,7 +2206,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 05a641522e49a5d9d6a0094e14b4baa9202802a56ff95de61e5e1e8d71d4e70a</p>
+  <p class="v104-provenance">Local production-render harness · source ae8a3a98ed647a943b5f74045a94bac354cd68aeac0b373f71aa7afc4a92afe8</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2213,7 +2218,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="05a641522e49a5d9d6a0094e14b4baa9202802a56ff95de61e5e1e8d71d4e70a";
+const PRODUCTION_SOURCE_SHA256="ae8a3a98ed647a943b5f74045a94bac354cd68aeac0b373f71aa7afc4a92afe8";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -2663,14 +2668,53 @@ function customerTierRungIconV195(index,total){
   if(index<=0)return 'star';
   return index>=total-1?'diamond':'crown';
 }
+/* v333 (owner, 2026-08-15: "the UI UX is being squeezed"). Two defects, one rail.
+   (1) SCALE. The markers were placed at threshold/topThreshold while the fill was drawn at
+   tier.progress_percent — and progress_percent is NOT a position on that scale. The server
+   computes it as (metric - current.threshold) / (next.threshold - current.threshold), i.e.
+   progress THROUGH THE CURRENT SEGMENT, 0-100 every time a rung is reached. So the bar's filled
+   end agreed with no marker on it: a Gold customer 57% of the way to Diamond drew a fill at 57%
+   while the Gold marker sat at 34%. Both now speak one language — the RUNG INDEX.
+   (2) CROWDING. Thresholds on a real ladder are near-exponential, so on the threshold scale the
+   lower rungs pile onto the left of the track: at nine tiers the owner's screenshot shows four
+   icons overlapping and their labels printed on top of one another. Even spacing gives every
+   rung the same room whatever the business set its numbers to, and the label budget below keeps
+   the text from colliding at any tier count.
+   The scale is (index+1)/count, not index/(count-1): 0% is "no tier yet", which is a real state
+   (metric below the first threshold — v_current is null and the server measures progress from 0),
+   and it needs somewhere on the track to live. The top rung still lands exactly on 100%. */
+const TIER_RAIL_LABEL_LIMIT_V333=4;
+function customerTierRungsV333(tier={}){
+  return (Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+}
+/* Past four rungs the names cannot fit side by side at 390px, so the rail carries icons alone.
+   Nothing is lost: the current rung is named in the sentence above the bar, the next rung in the
+   sentence below it, and every rung with its benefits in the ladder disclosure underneath. */
+function customerTierRailCompactV333(tier={}){
+  return customerTierRungsV333(tier).length>TIER_RAIL_LABEL_LIMIT_V333;
+}
+function customerTierRailProgressV333(tier={},progressPercent=0){
+  /* `segmentShare`, not `within`: scripts/quality/app-surface-graph.mjs decides regex-vs-division
+     from the preceding character and treats a trailing `n` as the end of `return`, so
+     `within/100` reads as the start of a regex literal and the splitter loses paren depth for
+     the rest of the file. */
+  const segmentShare=Math.max(0,Math.min(100,Number(progressPercent)||0));
+  const rungs=customerTierRungsV333(tier);
+  if(rungs.length<2)return segmentShare;
+  /* The server names the rung the customer is ON; `achieved` is the fallback for a payload that
+     did not, and "no rung achieved yet" is the honest -1 that puts the fill in the opening
+     runway rather than pretending the first tier was reached. */
+  const named=rungs.findIndex(rung=>rung.current===true);
+  const index=named>=0?named:rungs.filter(rung=>rung.achieved===true).length-1;
+  return Math.round(Math.max(0,Math.min(100,((index+1+segmentShare/100)/rungs.length)*100))*100)/100;
+}
 function customerTierMilestonesMarkupV194(tier={}){
-  const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+  const rungs=customerTierRungsV333(tier);
   if(rungs.length<2)return '';
-  const top=Math.max(...rungs.map(rung=>Math.max(0,Number(rung.threshold)||0)));
-  if(!(top>0))return '';
+  const withLabels=!customerTierRailCompactV333(tier);
   return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map((rung,index)=>{
-    const at=Math.max(0,Math.min(100,(Math.max(0,Number(rung.threshold)||0)/top)*100));
-    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i><b>${esc(rung.label)}</b></span>`;
+    const at=((index+1)/rungs.length)*100;
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i>${withLabels?`<b>${esc(rung.label)}</b>`:''}</span>`;
   }).join('')}</div>`;
 }
 /* v310 (W4b): the two sentences this panel writes in English — the distance to the next rung and
@@ -2725,7 +2769,7 @@ function customerTierPanelMarkupV194(tier={},{localizeV310=false}={}){
   const bothNoteV258=String(tier.points_mode||'')==='both'
     ?`<p class="muted small" style="margin-top:6px">${basis==='points_earned'?'Points you earn move you up — spending them never lowers your tier.':basis==='spend'?'What you spend moves you up. Points stay yours to spend.':'Visits move you up. Points stay yours to spend.'}</p>`:'';
   return `<p class="customer-tier-now">You're now at <b>${esc(current?.label||'Getting started')}</b>${next?'':current?' <span class="pill ok">Top tier</span>':''}</p>${bothNoteV258}
-    ${next?`<div class="customer-tier-bar"><div class="customer-tier-bar-track"><span style="width:${progress}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
+    ${next?`<div class="customer-tier-bar${customerTierRailCompactV333(tier)?' is-compact':''}"><div class="customer-tier-bar-track"><span style="width:${customerTierRailProgressV333(tier,progress)}%"></span></div>${customerTierMilestonesMarkupV194(tier)}</div>
     <p class="muted small customer-tier-remaining">${esc(remainingText)}</p>`
       :currentRequirement?`<p class="muted small customer-tier-remaining">${esc(currentRequirement)} · ${esc(localizeV310?ct('tierTop'):'you are at the highest tier.')}</p>`
         :localizeV310?`<p class="muted small customer-tier-remaining">${esc(ct('tierTop'))}</p>`:''}
@@ -2919,9 +2963,14 @@ function wireCustomerProgrammeTabsV194(host=document){
 const programmeStackV310=caps=>
   Array.isArray(caps?.programmes)&&caps.programmes.length>0&&caps?.programmes_contract==='v310'
     ?caps.programmes:null;
-/* Fixed, regardless of which are on. Stamps and points are the figure the customer came for, tier
-   is where they are going, referral is what they can give away. */
-const PROGRAMME_STACK_ORDER_V310=Object.freeze(['stamps','points','tiers','referral']);
+/* Fixed, regardless of which are on. v333 (owner, 2026-08-15: "shift the tier up — to the top
+   of the screen, instead of points & gift"): tier leads. It is the standing that names the
+   customer at this business and the one fact that does not change when they spend, so it is
+   what the page should open with; stamps and points are the balance underneath it, referral is
+   what they can give away. The tab fallback (customerProgrammeSummaryTabsV194) already opened
+   on Tier, so this is the stack catching up to the surface it replaced rather than a second
+   opinion. */
+const PROGRAMME_STACK_ORDER_V310=Object.freeze(['tiers','stamps','points','referral']);
 const programmeStackEntryV310=(programmes,kind)=>
   (Array.isArray(programmes)?programmes:[]).find(entry=>entry&&entry.kind===kind)||null;
 /* The server answers presentation with customer_visible, and the client OBEYS it rather than
@@ -3174,9 +3223,11 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
      only Tier was annotated. */
   const tierPausedV326=entries.tiers?.active===false;
   const cards=[
+    /* v333: the paint order IS PROGRAMME_STACK_ORDER_V310 — tier first. The gifts host below is
+       unaffected: it is decided by which accruing card is present, never by which is on top. */
+    show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
     show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
     show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost}):'',
-    show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:

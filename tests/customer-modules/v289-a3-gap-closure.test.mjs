@@ -74,9 +74,12 @@ test('G1: the post-registration destinations that froze all go through nav()', (
 
 test('G2: 42501 on a wallet deep link renders the not-joined state, never Retry', () => {
   const wallet = block('async function renderCustomerWallet(', 'async function renderCustomerInAppInbox');
-  assert.match(wallet, /if\(walletRpcDenied\(error\)\)return renderCustomerNotJoinedV289\(businessSlug\)/);
-  assert.match(wallet, /if\(walletRpcDenied\(summaryError\)\|\|walletRpcDenied\(capabilitiesError\)\)return renderCustomerNotJoinedV289\(businessSlug\)/);
-  assert.match(wallet, /if\(!actionableCard\)return renderCustomerNotJoinedV289\(businessSlug\)/);
+  /* v333: `silent?undefined:` — a background poll keeps the page the customer is reading. A
+     denial on a poll is not new information about a wallet that is already on screen, and the
+     not-joined card is still the only answer a real render gives. */
+  assert.match(wallet, /if\(walletRpcDenied\(error\)\)return silent\?undefined:renderCustomerNotJoinedV289\(businessSlug\)/);
+  assert.match(wallet, /if\(walletRpcDenied\(summaryError\)\|\|walletRpcDenied\(capabilitiesError\)\)return silent\?undefined:renderCustomerNotJoinedV289\(businessSlug\)/);
+  assert.match(wallet, /if\(!actionableCard\)return silent\?undefined:renderCustomerNotJoinedV289\(businessSlug\)/);
   assert.match(app, /function walletRpcDenied\(error\)\{return error\?\.code==='42501'\}/,
     'the denial code this rests on must stay 42501');
 });

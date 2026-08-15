@@ -21,7 +21,9 @@ test('Home drops the crossed-out page-head title block and keeps Scan to join in
   assert.match(app,/function customerMyRewardsHeadingV156\(count=0,\{scanId=''\}=\{\}\)/);
   assert.match(app,/scanId\?`<button class="btn sm" id="\$\{esc\(scanId\)\}" type="button">[\s\S]{0,160}ct\('addProgramme'\)/);
 
-  const legacyHome=section("$('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}",'wireCustomerHomeOffersV167(()=>renderCustomerWallet())');
+  /* v333: the markup moved into a named const so a silent refresh can compare it before painting;
+     the string itself, which is what this suite reads, is unchanged. */
+  const legacyHome=section('const fallbackHomeMarkupV333=`${customerHomeOffersMarkupV167(offersState)}','wireCustomerHomeOffersV167(()=>renderCustomerWallet())');
   assert.doesNotMatch(legacyHome,/Each business keeps its own rewards and balances/,
     'the legacy Home page-head title block was crossed out too');
   /* v183: the owner then struck the My Rewards block off Home entirely — heading and grid live

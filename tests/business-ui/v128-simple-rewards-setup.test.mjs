@@ -63,6 +63,10 @@ const v326PointsPageEvidence=readFileSync(new URL('../../docs/qa/evidence/V326-P
    growPage/retentionPage and the shared stylesheet, so the extracted component's source hash
    moved again. Same rule, new release's evidence — batched into one file for the whole arc. */
 const v332GrowthLifecycleEvidence=readFileSync(new URL('../../docs/qa/evidence/V332-GROWTH-LIFECYCLE-COMPLETION-ACCEPTANCE.md',import.meta.url),'utf8');
+/* v333 regenerated this fixture again: the customer tier rail gained two CSS rules
+   (.customer-tier-bar.is-compact, the last-marker label shift), and this fixture inlines
+   app/index.html's stylesheet under the same pin. */
+const v333Evidence=readFileSync(new URL('../../docs/qa/evidence/V333-CUSTOMER-TIER-FIRST-AND-SEAMLESS-REFRESH-ACCEPTANCE.md',import.meta.url),'utf8');
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -158,5 +162,5 @@ test('server recommendation uses governed sectors and serializes stale tabs onto
 test('checked-in browser evidence identifies the exact extracted production component',()=>{
   const sourceHash=browserFixture.match(/name="production-source-sha256" content="([a-f0-9]{64})"/)?.[1];
   assert.ok(sourceHash,'generated browser fixture must carry its production source hash');
-  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}\n${v295FixesEvidence}\n${v296Evidence}\n${v299Evidence}\n${v300Evidence}\n${v301Evidence}\n${v306Evidence}\n${v310bEvidence}\n${w6i2Evidence}\n${v319Evidence}\n${v322Evidence}\n${v324Evidence}\n${v323Evidence}\n${v324OffersEvidence}\n${v324PointsEvidence}\n${v324WizardGiftsEvidence}\n${v324BannerEvidence}\n${v326PointsPageEvidence}\n${v332GrowthLifecycleEvidence}`,new RegExp(sourceHash));
+  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}\n${v295FixesEvidence}\n${v296Evidence}\n${v299Evidence}\n${v300Evidence}\n${v301Evidence}\n${v306Evidence}\n${v310bEvidence}\n${w6i2Evidence}\n${v319Evidence}\n${v322Evidence}\n${v324Evidence}\n${v323Evidence}\n${v324OffersEvidence}\n${v324PointsEvidence}\n${v324WizardGiftsEvidence}\n${v324BannerEvidence}\n${v326PointsPageEvidence}\n${v332GrowthLifecycleEvidence}\n${v333Evidence}`,new RegExp(sourceHash));
 });

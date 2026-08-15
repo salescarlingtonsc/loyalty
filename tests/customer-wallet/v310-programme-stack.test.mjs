@@ -71,6 +71,17 @@ const render=(programmes,extra={})=>harness.customerProgrammeStackV310({
   programmes,tier:TIER,loyalty:LOYALTY,presentation:{unit:'points',balance:180},
   reward:REWARD,rewardsHost:true,...extra});
 const cardOrder=html=>[...html.matchAll(/data-programme-card="([a-z]+)"/g)].map(match=>match[1]);
+/* v333: one card's markup, whatever position the stack puts it in. The slices below used to
+   name the card that happened to come next ('points' … up to 'tiers'), which made every per-card
+   assertion silently depend on the order — so moving the tier card to the top broke tests that
+   have nothing to say about order. The order is pinned once, in its own test, above. */
+const card=(kind,html)=>{
+  const from=html.indexOf(`data-programme-card="${kind}"`);
+  assert.ok(from>=0,`missing card data-programme-card="${kind}"`);
+  const rest=html.slice(from+1);
+  const nextCard=rest.search(/data-programme-card="|id="walletReferralSlot"/);
+  return nextCard<0?html.slice(from):html.slice(from,from+1+nextCard);
+};
 
 /* ------------------------------------------------------------------ 1 · the gate is the window */
 
@@ -116,16 +127,18 @@ test('every legacy renderer the fallback path needs is still declared',()=>{
 
 /* --------------------------------------------------------------------- 2 · the order is fixed */
 
-test('the order is stamps → points → tier → referral however the firm turned them on',()=>{
-  assert.deepEqual([...harness.PROGRAMME_STACK_ORDER_V310],['stamps','points','tiers','referral']);
+/* v333 (owner, 2026-08-15: "shift the tier up — to the top of the screen, instead of points &
+   gift"). Tier leads the stack; the two accruing cards follow; referral is still last. */
+test('the order is tier → stamps → points → referral however the firm turned them on',()=>{
+  assert.deepEqual([...harness.PROGRAMME_STACK_ORDER_V310],['tiers','stamps','points','referral']);
   const all=render(spine({stamps:running(),points:running(),tiers:running(),referral:running()}));
-  assert.deepEqual(cardOrder(all),['stamps','points','tiers']);
-  assert.ok(all.indexOf('walletReferralSlot')>all.indexOf('data-programme-card="tiers"'),
-    'referral is position 4, after the tier card');
+  assert.deepEqual(cardOrder(all),['tiers','stamps','points']);
+  assert.ok(all.indexOf('walletReferralSlot')>all.indexOf('data-programme-card="points"'),
+    'referral is position 4, after the accruing cards');
   /* The payload is spine `sort` order, but the stack must not inherit it: a server that reorders
      its rows must not reorder the customer's cards. */
   const shuffled=render([...spine({stamps:running(),points:running(),tiers:running()})].reverse());
-  assert.deepEqual(cardOrder(shuffled),['stamps','points','tiers']);
+  assert.deepEqual(cardOrder(shuffled),['tiers','stamps','points']);
 });
 
 /* ------------------------------------------------------ 3 · no filler cards, ever */
@@ -154,16 +167,15 @@ test('a programme the firm never ran renders nothing at all',()=>{
 
 test('a paused programme keeps its card, says so, and never blanks the others',()=>{
   const html=render(spine({points:paused('2026-07-01T00:00:00Z'),tiers:running(),stamps:running()}));
-  assert.deepEqual(cardOrder(html),['stamps','points','tiers'],
+  assert.deepEqual(cardOrder(html),['tiers','stamps','points'],
     'pausing points removes neither the stamps card nor the tier card');
-  const points=section('data-programme-card="points"','data-programme-card="tiers"',html);
+  const points=card('points',html);
   assert.match(points,/Programme paused/);
   assert.match(points,/Anything you already earned is kept/);
   assert.match(points,/1 Jul 2026/,'the card says since when, from the server’s own breadcrumb');
   assert.doesNotMatch(points,/customer-programme-balance/,
     'a paused programme discloses no balance — the server zeroes it, and a bare 0 is a lie');
-  const tiers=html.slice(html.indexOf('data-programme-card="tiers"'));
-  assert.match(tiers,/Explorer/,'the tier card is untouched by the points pause');
+  assert.match(card('tiers',html),/Explorer/,'the tier card is untouched by the points pause');
 });
 
 /* v326 (owner: "if programme is paused/not live, remove from customer app" — annotated on the
@@ -185,10 +197,8 @@ test('exactly one .customer-programme-balance in a four-programme stack',()=>{
   const html=render(spine({stamps:running(),points:running(),tiers:running(),referral:running()}));
   assert.equal((html.match(/class="customer-programme-balance"/g)||[]).length,1,
     'one number, one owner: the Points card');
-  const points=section('data-programme-card="points"','data-programme-card="tiers"',html);
-  assert.match(points,/class="customer-programme-balance"/);
-  const stamps=section('data-programme-card="stamps"','data-programme-card="points"',html);
-  assert.doesNotMatch(stamps,/class="customer-programme-balance"/,
+  assert.match(card('points',html),/class="customer-programme-balance"/);
+  assert.doesNotMatch(card('stamps',html),/class="customer-programme-balance"/,
     'the stamps figure is the ring row, not a second hero number');
 });
 

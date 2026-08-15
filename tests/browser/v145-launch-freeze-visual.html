@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="684960670062fc1c941cd8241db4de9b6f4e98166926e44bbba694338f165112"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="dfe9fe1414f70a6f53c163a88fad8ce18b213df427ea373c8fe945ce7e635767"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1848,6 +1848,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-member-code-slot{margin:0 0 12px}
 .customer-tier-now{font-size:1.02rem}
 .customer-tier-bar{position:relative;margin:14px 0 40px}
+/* v333: past four rungs the rail carries icons alone (customerTierRailCompactV333), so the 40px
+   reserved for a row of labels under the track is dead space the owner reads as a squeezed card. */
+.customer-tier-bar.is-compact{margin-bottom:24px}
 .customer-tier-bar-track{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
 .customer-tier-bar-track span{display:block;height:100%;border-radius:inherit;background:var(--grad)}
 .customer-tier-milestones{position:absolute;inset:0;pointer-events:none}
@@ -1855,7 +1858,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-tier-milestone i{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:var(--card);border:2px solid var(--line);color:var(--muted)}
 .customer-tier-milestone i svg{width:13px;height:13px}
 .customer-tier-milestone.is-achieved i,.customer-tier-milestone.is-current i{border-color:var(--coral);color:var(--coral)}
-.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap}
+.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap;max-width:82px;overflow:hidden;text-overflow:ellipsis}
+/* v333: the top rung sits ON 100%, so a label centred under it hangs half outside the card. Shift the TEXT only — by half its own width, which lands its right edge on the end of the track — and leave the marker itself exactly where the scale puts it. */
+.customer-tier-milestone:last-child b{transform:translateX(-50%)}
 .customer-tier-milestone.is-achieved i{background:var(--coral);border-color:var(--coral);color:#fff}
 .customer-tier-milestone.is-current i{background:var(--coral);border-color:var(--coral);color:#fff;box-shadow:0 0 0 3px var(--tint)}
 .customer-tier-milestone.is-current b{color:var(--coral)}
@@ -2190,7 +2195,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 684960670062fc1c941cd8241db4de9b6f4e98166926e44bbba694338f165112</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · dfe9fe1414f70a6f53c163a88fad8ce18b213df427ea373c8fe945ce7e635767</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5519,7 +5524,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'684960670062fc1c941cd8241db4de9b6f4e98166926e44bbba694338f165112',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'dfe9fe1414f70a6f53c163a88fad8ce18b213df427ea373c8fe945ce7e635767',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

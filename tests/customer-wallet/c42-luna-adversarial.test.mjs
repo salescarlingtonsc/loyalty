@@ -151,7 +151,7 @@ test('Luna C42 blocker: wallet access must require completed registration, not m
     'C42 must resolve a completed profile or a legacy persona before wallet readers');
   assert.match(context, /customerSurfaceQualifies\(profile,customer\)[\s\S]*renderNoCustomerDestination\(staff\)/i,
     'an account with neither registration nor a legacy customer persona must get a truthful no-customer destination');
-  assert.match(wallet,/loadCustomerSurfaceContext\(isWalletCurrent\)/);
+  assert.match(wallet,/loadCustomerSurfaceContext\(isWalletCurrent,\{silent\}\)/);
 });
 
 test('Luna C42 blocker: WhatsApp must have a server capability/configuration gate, not only a mutable browser flag', () => {

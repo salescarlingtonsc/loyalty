@@ -3349,14 +3349,20 @@ function customerHomeEmptyActionV286(){
    the counts they carried now live on those tabs. Home is the offers shelf. */
 /* v178: surface='programmes' is the "My Rewards" tab, which the owner stripped back to the
    reward-account grid alone — no offers shelf, no guidance banner. Home keeps both. */
-function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',rerender=null}={}){
+function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',rerender=null,silent=false}={}){
   const cards=Array.isArray(payload?.cards)?payload.cards:[],isHome=surface!=='programmes';
   const repaint=typeof rerender==='function'?rerender:()=>renderCustomerWallet();
+  /* v333: a silent refresh holds the customer's scroll and open disclosures, and stands down
+     entirely while they are interacting; the caller has already established that a fact moved. */
+  const paint=html=>{
+    if(silent)return customerWalletSilentPaintV333(html);
+    $('walletBody').innerHTML=html;return true;
+  };
   if(!cards.length){
-    $('walletBody').innerHTML=`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
+    if(!paint(`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`))return;
     $('customerFirstScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(repaint);
-    return;
+    return true;
   }
   /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
      grid is the My Rewards tab's job. Home is now offers first, then a two-way jump-off. */
@@ -3365,22 +3371,81 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
      claim it once offers have actually come back ready, never while loading or on an error. */
   const homeEmpty=isHome&&!homeGuidance&&offersState.status==='ready'
     &&!(Array.isArray(offersState.items)&&offersState.items.length)&&!customerExpiringRowsV286(cards).length;
-  $('walletBody').innerHTML=`${isHome?`${customerExpiringRewardsMarkupV195(cards)}
+  if(!paint(`${isHome?`${customerExpiringRewardsMarkupV195(cards)}
     ${customerHomeOffersMarkupV167(offersState)}
     ${homeGuidance}${homeEmpty?customerHomeEmptyActionV286():''}`
     :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}
-    ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
+    ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`))return;
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
   if(!isHome)wireCustomerProgrammeSearchV195($('walletBody'));
   wireCustomerHomeOffersV167(repaint);
+  return true;
 }
-async function renderCustomerWallet(businessSlug=null){
-  const walletRenderEpoch=++customerWalletRenderEpoch;
+/* v333 (owner, 2026-08-15: "keep refreshing by itself — i need it to load seamlessly, must be
+   immediate"). v295's watcher was right about the fact — a balance earned at the counter while
+   the customer holds the phone must appear — and wrong about the method: its refresh was this
+   function, which starts by rebuilding root.innerHTML down to a "Loading Peekaa…" card. So every
+   20 seconds, and on every return to the foreground, the whole page tore down and grew back: the
+   scroll jumped to the top, open disclosures closed, focus was thrown to <main>, and the
+   surface_viewed / account_open analytics fired again for a customer who had not gone anywhere.
+
+   A silent refresh does the reads and then does NOTHING unless an answer changed:
+     · no shell rebuild — the page on screen is the page that stays
+     · a FACT SIGNATURE over the payloads the cards are drawn from; identical signature, identical
+       pixels, so the DOM is never touched and there is nothing to see
+     · a changed signature repaints in place, holding the scroll position (this is the moment the
+       feature exists for — the points the customer just earned)
+     · no focus move, no popup, no re-counted analytics, and no error card: a poll that fails
+       leaves the working page alone (the reads are guarded below and in
+       loadCustomerSurfaceContext)
+   `immediate` is the other half: the foreground listener still reads the instant the app comes
+   back, it just no longer announces itself by blanking the screen first. */
+let customerWalletFactSignatureV333='';
+/* The signature is taken over the SERVER PAYLOADS the visible cards are drawn from, never over
+   the rendered HTML: on the business page the markup carries loading shells that the section
+   loaders fill in afterwards, so the DOM never equals a freshly built string and an HTML diff
+   would report "changed" on every single tick. Every non-silent render records its own
+   signature, so the first poll after a real render compares against exactly what is on screen. */
+function customerWalletFactSignatureOfV333(facts){
+  try{return JSON.stringify(facts)}catch{return ''}
+}
+function customerWalletFactsUnchangedV333(silent,signature){
+  return silent&&!!signature&&signature===customerWalletFactSignatureV333;
+}
+/* Committed only once a paint has actually landed. A silent paint that stood down (the customer
+   is mid-interaction) must leave the old signature in place, or the next tick would read the new
+   facts as "already shown" and the customer would never see them. */
+function customerWalletFactsPaintedV333(signature){customerWalletFactSignatureV333=signature}
+function customerWalletSilentPaintV333(html){
+  const host=$('walletBody');
+  if(!host)return false;
+  /* Never yank the DOM out from under a customer who is mid-interaction: a focused control
+     inside the body, or an open sheet, means this repaint can wait for the next tick. */
+  if(document.querySelector('.modal'))return false;
+  const focused=document.activeElement;
+  if(focused&&focused!==document.body&&host.contains(focused))return false;
+  const scroller=document.scrollingElement||document.documentElement;
+  const scrollTop=scroller?scroller.scrollTop:0;
+  const openDisclosures=[...host.querySelectorAll('details')].map(node=>node.open);
+  host.innerHTML=html;
+  [...host.querySelectorAll('details')].forEach((node,index)=>{
+    if(openDisclosures[index]===true)node.open=true;
+  });
+  if(scroller)scroller.scrollTop=scrollTop;
+  return true;
+}
+async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
+  /* A silent pass rides the CURRENT epoch instead of opening a new one. Bumping it would make
+     the watcher that scheduled this very refresh look stale to itself and stop. The guard still
+     works: any real navigation renders non-silently, bumps the epoch, and every await below sees
+     it. */
+  const walletRenderEpoch=silent?customerWalletRenderEpoch:++customerWalletRenderEpoch;
   const isWalletCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
-  const context=await loadCustomerSurfaceContext(isWalletCurrent);if(!context)return;
+  if(silent&&!$('walletBody')?.isConnected)return;
+  const context=await loadCustomerSurfaceContext(isWalletCurrent,{silent});if(!context)return;
   const customerFeatures=context.features;
-  renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
+  if(!silent)renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
     body:`<div class="card"><p class="muted">Loading ${esc(BRAND.customerLabel)}…</p></div>`});
   let actionableCard=null,programmeCards=[];
   if(customerFeatures.customer_actionable_wallet===true){
@@ -3416,11 +3481,19 @@ async function renderCustomerWallet(businessSlug=null){
         messagesAvailable:customerFeatures.customer_in_app_inbox===true,
         claimsAvailable:false
       };
-      renderActionableWalletHome(data,{
+      const homeOffersStateV333=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
+      const homePendingRedemptionV333=offersResult.error?null:offersResult.data?.pending_redemption||null;
+      /* v333: nothing the customer can see has moved — leave the page exactly as it is. */
+      const homeSignatureV333=customerWalletFactSignatureOfV333(['home',data,customerHomeOverview.walletCards,
+        homeOffersStateV333,homePendingRedemptionV333,customerHomeOverview.activeRequestCount]);
+      if(customerWalletFactsUnchangedV333(silent,homeSignatureV333))return;
+      if(!renderActionableWalletHome(data,{
         legacyCards:customerHomeOverview.walletCards,
-        offersState:offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]},
-        pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null
-      });
+        offersState:homeOffersStateV333,
+        pendingRedemption:homePendingRedemptionV333,
+        silent
+      }))return;
+      customerWalletFactsPaintedV333(homeSignatureV333);
       /* v194: My Rewards counts the REWARD ACCOUNTS this customer holds; Bookings counts what is
          still live — a request awaiting the business plus an upcoming appointment. Both come from
          data already fetched above, so neither badge costs a round trip. */
@@ -3443,7 +3516,7 @@ async function renderCustomerWallet(businessSlug=null){
         customerHomeOverview.messageCount=messageResult?.error?null:Math.max(0,Number(messageResult?.data?.unread_count||0));
         paintCustomerInboxBellV286(customerHomeOverview.messageCount);
       });
-      focusCustomerRoute();
+      if(!silent)focusCustomerRoute();
       return;
       }
     }
@@ -3453,12 +3526,16 @@ async function renderCustomerWallet(businessSlug=null){
         customerRpc('customer_get_actionable_wallet')
       ]);
       if(!isWalletCurrent())return;
-      /* V289: 42501 is "you hold no link to this business", not a load failure. */
-      if(walletRpcDenied(error))return renderCustomerNotJoinedV289(businessSlug);
-      if(error)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
+      /* V289: 42501 is "you hold no link to this business", not a load failure.
+         v333: on a silent poll every one of these three answers keeps the working page instead
+         of replacing it — a customer reading their wallet must not lose it to one failed
+         background read, and "not joined" is not a state a poll can newly discover for a page
+         that is already rendered. */
+      if(walletRpcDenied(error))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
+      if(error)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
       actionableCard=data?.card||null;
       programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
-      if(!actionableCard)return renderCustomerNotJoinedV289(businessSlug);
+      if(!actionableCard)return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
     }
   }
   if(!businessSlug){
@@ -3469,7 +3546,7 @@ async function renderCustomerWallet(businessSlug=null){
       customerRpc('customer_get_home_offers_v167',{p_locale:merchantCopyLocale()})
     ]);
     if(!isWalletCurrent())return;
-    if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null,undefined,error);
+    if(error)return silent?undefined:renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null,undefined,error);
     const cards=mergeCustomerProgrammeSelectorMediaV96(
       Array.isArray(data)?data:[],selectorMediaResult.error?null:selectorMediaResult.data
     );
@@ -3478,19 +3555,27 @@ async function renderCustomerWallet(businessSlug=null){
     const bookingCount=appointmentCount+activeRequestCount;
     const bookingsAvailable=!bookingRequestResult.error||cards.length>0;
     const offersState=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
-    $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
-      ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
+    const fallbackPendingRedemptionV333=offersResult.error?null:offersResult.data?.pending_redemption||null;
+    const fallbackSignatureV333=customerWalletFactSignatureOfV333(['fallback-home',cards,offersState,
+      fallbackPendingRedemptionV333,bookingsAvailable?bookingCount:0]);
+    if(customerWalletFactsUnchangedV333(silent,fallbackSignatureV333))return;
+    const fallbackHomeMarkupV333=`${customerHomeOffersMarkupV167(offersState)}
+      ${customerHomeFallbackActionV167({pendingRedemption:fallbackPendingRedemptionV333,legacyCards:cards,offers:offersState.items})}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}
       `;
+    if(silent){if(!customerWalletSilentPaintV333(fallbackHomeMarkupV333))return}
+    else $('walletBody').innerHTML=fallbackHomeMarkupV333;
+    customerWalletFactsPaintedV333(fallbackSignatureV333);
     /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
        lands here through the legacy read must not see empty tabs where the other path shows
        counts. A booking read that failed contributes 0, never a guess. */
     applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
-    focusCustomerRoute();
-    /* v295: Home carries balances too — same watcher, same bounds. */
-    watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet());
+    if(!silent)focusCustomerRoute();
+    /* v295: Home carries balances too — same watcher, same bounds.
+       v333: the watcher now re-arms itself, so a silent pass must not build a second one. */
+    if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(null,{silent:true}));
     return;
   }
   const args={p_business_slug:businessSlug};
@@ -3502,8 +3587,8 @@ async function renderCustomerWallet(businessSlug=null){
   if(!isWalletCurrent())return;
   /* V289: same denial, same honest answer — the summary and capability reads refuse an unlinked
      business with 42501 before they refuse anything else. */
-  if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return renderCustomerNotJoinedV289(businessSlug);
-  if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
+  if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
+  if(summaryError||capabilitiesError)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
   /* v286 (audit: a wasted round trip that also cost a control). This customer_get_wallet read was
      fetched and then never referenced, so with customer_actionable_wallet off programmeCards
      stayed empty: the multi-business switcher above the header vanished (it bails under two
@@ -3518,10 +3603,13 @@ async function renderCustomerWallet(businessSlug=null){
   const businessId=customerBusinessIdV103({
     summaryBusiness:b,actionableCard,programmeCards,businessSlug
   });
-  if(businessId)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.programme_viewed',businessId,{
+  /* v333: a background re-read is not a view. The customer has not opened, navigated to or
+     looked again at anything — counting it would inflate programme_viewed, surface_viewed and
+     the DAU write by one every 20 seconds for a phone lying face-up on a counter. */
+  if(businessId&&!silent)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.programme_viewed',businessId,{
       context:{entry_point:'customer_wallet',locale:customerLocale,surface_version:'v100'}
     });
-  if(businessId){
+  if(businessId&&!silent){
     customerWalletBusinessIdV256=businessId;
     recordCustomerSessionStartV256(businessId,customerLocale);
     typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.surface_viewed',businessId,{
@@ -3569,7 +3657,7 @@ async function renderCustomerWallet(businessSlug=null){
   /* v255 (audit finding: promotion views were class C — nothing recorded between "we published
      it" and "someone redeemed"). Deduped per browser session so a wallet the customer reopens
      five times is one view, not five. */
-  if(businessId)for(const offerV256 of presentation.offers){
+  if(businessId&&!silent)for(const offerV256 of presentation.offers){
     const promotionIdV256=String(offerV256?.id||offerV256?.promotion_id||'');
     if(!isUuidV100(promotionIdV256)||customerPromotionsSeenV256.has(promotionIdV256))continue;
     customerPromotionsSeenV256.add(promotionIdV256);
@@ -3589,7 +3677,14 @@ async function renderCustomerWallet(businessSlug=null){
   const showMembershipMetric=capabilities.membership===true&&membership.active===true;
   const showSecondaryMetrics=!actionableCard&&(showPackageMetric||showMembershipMetric);
   const hasWalletSection=true;
-  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities})}
+  /* v333: the whole programme page is drawn from these eight answers. If none of them moved, the
+     repaint would be pixel-for-pixel identical — and it would still cost the customer their
+     scroll position, their open History disclosure and every already-hydrated wallet section,
+     which is exactly what the owner was seeing every twenty seconds. */
+  const programmeSignatureV333=customerWalletFactSignatureOfV333(['programme',businessSlug,summary,
+    capabilities,actionableCard,programmeCards,presentation,businessActions]);
+  if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
+  const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities})}
     ${showSecondaryMetrics?`<div class="wallet-metrics">
       ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
       ${showMembershipMetric?`<div class="wallet-metric"><span class="muted small">Membership</span><b>Active</b></div>`:''}
@@ -3611,6 +3706,9 @@ async function renderCustomerWallet(businessSlug=null){
       ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
+  if(silent){if(!customerWalletSilentPaintV333(programmeBodyMarkupV333))return}
+  else $('walletBody').innerHTML=programmeBodyMarkupV333;
+  customerWalletFactsPaintedV333(programmeSignatureV333);
   wireCustomerRepeatBookingV167($('walletBody'));
   wireCustomerProgrammeTabsV194($('walletBody'));
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
@@ -3726,13 +3824,17 @@ async function renderCustomerWallet(businessSlug=null){
       card?.querySelector('button,a')?.focus();
     });
   }
-  showCustomerPromotionPopupV122({
+  /* v333: a promotion popup is an interruption, and an interruption the customer did not ask
+     for twenty seconds after the last one is the thing the owner is complaining about. It
+     belongs to arriving on the page, so a background re-read never raises it. */
+  if(!silent)showCustomerPromotionPopupV122({
     business:b,businessSlug,items:presentation.offers,
     prompt:promotionPromptResult.error?null:promotionPromptResult.data
   });
-  focusCustomerRoute();
-  /* v295: keep the balance honest while the customer is looking at it. */
-  watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug));
+  if(!silent)focusCustomerRoute();
+  /* v295: keep the balance honest while the customer is looking at it.
+     v333: silently — and the watcher re-arms itself now, so only a real render builds one. */
+  if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}));
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
      rating; a high rating only adds an extra prominent share card. review_url rides the existing

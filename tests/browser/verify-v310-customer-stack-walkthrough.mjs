@@ -73,8 +73,13 @@ const probe=async origin=>{
   try{
     const response=await fetch(`${origin}/index.html`);
     if(!response.ok)return false;
-    /* Serving SOMETHING is not serving THIS app. */
-    return (await (await fetch(`${origin}/app-customer.js`)).text()).includes('customerProgrammeSummaryTabsV194');
+    /* Serving SOMETHING is not serving THIS app. v333: customerProgrammeSummaryTabsV194 moved
+       into app-core.js somewhere across v320-v332 (it is now reachable from more than the
+       customer surface), so the marker moved with it. renderCustomerWallet's own declaration is
+       customer-only by construction (it is the router entry the customer surface exists to
+       reach) and confirmed present in app-customer.js on both this tree and the pre-change
+       baseline. */
+    return (await (await fetch(`${origin}/app-customer.js`)).text()).includes('function renderCustomerWallet');
   }catch{return false}
 };
 const serverReady=async(dir,port,origin)=>{
@@ -269,7 +274,8 @@ try{
     const {context,page}=await openWallet('four');
     await page.waitForSelector('[data-programme-stack="v310"]',{timeout:20000});
     const order=await cardOrder(page);
-    assertTrue(JSON.stringify(order)===JSON.stringify(['stamps','points','tiers']),
+    /* v333 (owner: "shift the tier up — to the top of the screen, instead of points & gift"). */
+    assertTrue(JSON.stringify(order)===JSON.stringify(['tiers','stamps','points']),
       `the three programme cards render in the fixed order (${order.join(' → ')})`);
     await page.waitForSelector('#walletReferral',{timeout:20000});
     const positions=await page.evaluate(()=>{
@@ -346,13 +352,30 @@ try{
     const before=await programmeRegionHtml(baseline.page);
     await baseline.context.close();
 
-    if(after!==before){
-      const at=[...after].findIndex((ch,i)=>ch!==before[i]);
+    /* v333 (owner: "the UI UX is being squeezed") re-based the tier rail on the RUNG INDEX — the
+       fill and the markers were previously on two different scales, so the bar's filled end
+       agreed with no marker on it. That fix is deliberately on BOTH paths, the stack and this
+       v194 fallback, so the two bundles' geometry numbers are now expected to differ and pinning
+       them byte-for-byte would be pinning the bug.
+       Everything else must still match exactly, which is what makes this the rollback proof: the
+       comparison blanks ONLY the geometry (the bar's width and each marker's left offset) and
+       asserts byte identity over all the remaining markup — every element, class, attribute,
+       sentence and rung label. The geometry itself is asserted on its own terms in
+       tests/customer-modules/v174-customer-tier-card.test.mjs. */
+    const withoutRailGeometryV333=html=>html
+      .replace(/(<span style="width:)[\d.]+(%">)/g,'$1RAIL$2')
+      .replace(/(style="left:)[\d.]+(%")/g,'$1RAIL$2');
+    const afterShape=withoutRailGeometryV333(after),beforeShape=withoutRailGeometryV333(before);
+    if(afterShape!==beforeShape){
+      const at=[...afterShape].findIndex((ch,i)=>ch!==beforeShape[i]);
       throw new Error(`step d: the fallback DOM is NOT byte-identical to the pre-change bundle.\n`
-        +`  first difference at byte ${at}\n  before: ${JSON.stringify(before.slice(Math.max(0,at-90),at+90))}\n`
-        +`  after:  ${JSON.stringify(after.slice(Math.max(0,at-90),at+90))}`);
+        +`  first difference at byte ${at}\n  before: ${JSON.stringify(beforeShape.slice(Math.max(0,at-90),at+90))}\n`
+        +`  after:  ${JSON.stringify(afterShape.slice(Math.max(0,at-90),at+90))}`);
     }
-    assertTrue(true,`the programme region is byte-identical to the pre-change bundle (${after.length} bytes)`);
+    assertTrue(afterShape.includes('width:RAIL%')&&afterShape!==after,
+      'the geometry really was blanked — a comparison that normalised nothing would prove nothing');
+    assertTrue(true,`the programme region is byte-identical to the pre-change bundle outside the `
+      +`v333 rail geometry (${after.length} bytes)`);
     assertTrue(before.includes('customer-programme-tablist'),
       'and it really is the v194 tab markup that was compared, not two empty strings');
   }

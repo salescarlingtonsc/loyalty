@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="5a614ef089a4c54bb922b4bef6714051225272507ba39ba054ef0c5f6470efd5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="dce136190eb18755d15637e450c2873a9f505a334de5829260fe9bb09d8d8cd7"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1847,6 +1847,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-member-code-slot{margin:0 0 12px}
 .customer-tier-now{font-size:1.02rem}
 .customer-tier-bar{position:relative;margin:14px 0 40px}
+/* v333: past four rungs the rail carries icons alone (customerTierRailCompactV333), so the 40px
+   reserved for a row of labels under the track is dead space the owner reads as a squeezed card. */
+.customer-tier-bar.is-compact{margin-bottom:24px}
 .customer-tier-bar-track{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
 .customer-tier-bar-track span{display:block;height:100%;border-radius:inherit;background:var(--grad)}
 .customer-tier-milestones{position:absolute;inset:0;pointer-events:none}
@@ -1854,7 +1857,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-tier-milestone i{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:var(--card);border:2px solid var(--line);color:var(--muted)}
 .customer-tier-milestone i svg{width:13px;height:13px}
 .customer-tier-milestone.is-achieved i,.customer-tier-milestone.is-current i{border-color:var(--coral);color:var(--coral)}
-.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap}
+.customer-tier-milestone b{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap;max-width:82px;overflow:hidden;text-overflow:ellipsis}
+/* v333: the top rung sits ON 100%, so a label centred under it hangs half outside the card. Shift the TEXT only — by half its own width, which lands its right edge on the end of the track — and leave the marker itself exactly where the scale puts it. */
+.customer-tier-milestone:last-child b{transform:translateX(-50%)}
 .customer-tier-milestone.is-achieved i{background:var(--coral);border-color:var(--coral);color:#fff}
 .customer-tier-milestone.is-current i{background:var(--coral);border-color:var(--coral);color:#fff;box-shadow:0 0 0 3px var(--tint)}
 .customer-tier-milestone.is-current b{color:var(--coral)}
