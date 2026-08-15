@@ -23166,6 +23166,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      visits/spend/points) stays the one thing this page does not expose — "Edit" jumps there. */
   const growTiersConfiguredV331=liveLoyaltyModelKeysV240.includes('tiers');
   const growTiersOnV331=programmeSpineOnV314('tiers')===true;
+  /* V347: the real stored basis, read off the live loyalty_programs row — this used to be a
+     hardcoded "Points earned" label regardless of what was actually saved. */
+  const growTiersBasisV347=snapshot.loyalty?.tier_basis||'visits';
+  const growTiersBasisLabelV347=({points_earned:'Points earned',spend:'Lifetime spend',visits:'Visits'})[growTiersBasisV347]||'Visits';
   const growTiersLosingV331=growTiersOnV331?[]:programmeExclusionsV322('tiers').filter(other=>programmeSpineOnV314(other)===true);
   const growTiersRowV331=(tier,{history=false}={})=>{
     const threshold=Math.max(0,Number(tier.threshold||0));
@@ -23222,18 +23226,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         actionHtml:'<a class="btn ghost sm" href="#/grow/tiers">Retry</a>'})
     :!growTiersConfiguredV331
     ?CUI.emptyState({iconName:'star',title:'Tier membership is not set up yet',
-        body:'Choose tiers, set how tiers are earned, and add a first rung customers can climb to.',
+        body:'Starts customers on Points earned (recommended) — change how tiers are earned any time from this page, then add your first rung below.',
         actionHtml:canSetupGrow
-          ?'<button type="button" class="btn sm" id="growTiersSetupV331">Set up Tier membership</button>'
+          ?`<button type="button" class="btn sm" id="growTiersSetupV331"${growTiersBusyV331?' disabled':''}>Set up Tier membership</button>${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<div class="grow-tiers-page-v343">
-      <div class="grow-tier-basis-card-v343"><span><b>Tier level is earned by</b><p class="muted small">Points earned</p></span>${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-edit-v331="1">Change</button>`:''}</div>
+      <div class="grow-tier-basis-card-v343"><span><b>Tier level is earned by</b><p class="muted small">${esc(growTiersBasisLabelV347)}</p></span>${canSetupGrow?`<label class="btn ghost sm" style="cursor:pointer;position:relative"><span>Change</span><select data-grow-tiers-basis-select-v347 aria-label="Tier level is earned by" style="position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer"${growTiersBusyV331?' disabled':''}>
+        <option value="points_earned"${growTiersBasisV347==='points_earned'?' selected':''}>Points earned</option>
+        <option value="visits"${growTiersBasisV347==='visits'?' selected':''}>Visits</option>
+        <option value="spend"${growTiersBasisV347==='spend'?' selected':''}>Lifetime spend</option>
+      </select></label>`:''}</div>
+      ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
       ${growTiersLadderV343}
       <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
         <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} set up</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-edit-v331="1">Edit</button>
-            <button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">Add tier</button>
+            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">Add tier</button>
             <button type="button" class="btn sm" role="switch" aria-checked="${growTiersOnV331}" data-grow-switchtoggle-v322="tiers">${growTiersOnV331?'Turn off':'Turn on'}</button>`:''}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="tiers" style="margin-top:8px"${growSwitchPendingV322==='tiers'?'':' hidden'}>
@@ -24242,10 +24250,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      Same shape as the V326 points wiring above: the summary row's own on/off toggle reuses
      data-grow-switchtoggle-v322/data-grow-switchconfirm-yes-v322/-no-v322 verbatim (kind="tiers"),
      already wired over the whole of outerMain. Everything below is genuinely new. */
+  /* V347 (owner: "why does Set up tier still bring me to that page"): first-time tier setup now
+     happens entirely on THIS page — no more bounce into the multi-step wizard. Defaults to Points
+     earned (the same basis this page always displayed, even back when the label was hardcoded),
+     turns the tiers spine on (self-healing, immediate-write, no draft — set_programmes_v314), and
+     opens the Add-tier form so the owner adds their first rung right here. */
   const growTiersSetupCta=$('growTiersSetupV331');
-  if(growTiersSetupCta)growTiersSetupCta.onclick=()=>{
-    pendingGrowSetupModelV303={kind:'tiers',from:'tiers'};
-    nav('#/grow/setup');
+  if(growTiersSetupCta)growTiersSetupCta.onclick=async()=>{
+    if(growTiersBusyV331)return;
+    growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    const {error:basisError}=await sb.rpc('business_set_tier_basis_v347',{p_business:S.biz.id,p_basis:'points_earned'});
+    if(!isGrowCurrent())return;
+    if(basisError){growTiersBusyV331=false;growTiersErrorV331=ownerErrorText(basisError);return growRerenderV322();}
+    if(snapshot.loyalty)snapshot.loyalty.tier_basis='points_earned';else snapshot.loyalty={tier_basis:'points_earned'};
+    const set={tiers:true};
+    programmeExclusionsV322('tiers').forEach(other=>{set[other]=false});
+    const {ok,error:switchError}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
+    if(!isGrowCurrent())return;
+    growTiersBusyV331=false;
+    if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} Nothing was changed.`;return growRerenderV322();}
+    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};
+    growRerenderV322();
   };
   outerMain.querySelectorAll('[data-grow-tiers-manage-tab-v331]').forEach(button=>button.onclick=()=>{
     const tab=button.dataset.growTiersManageTabV331;
@@ -24253,13 +24278,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersManageTabV331=tab;
     growRerenderV322();
   });
-  const growTiersEditLink=outerMain.querySelector('[data-grow-tiers-edit-v331]');
-  if(growTiersEditLink)growTiersEditLink.onclick=()=>{
-    /* Lands the wizard on the Climbing step (tier basis: visits/spend/points) -- the one tier
-       setting this page does not expose. Gift/rung management is this page's own job now. */
-    pendingGrowSetupModelV303={kind:'tiers',from:'tiers'};
-    pendingGrowSetupRewardV303={mode:'climbing'};
-    nav('#/grow/setup');
+  /* V347: the "Change" pill's real control is an invisible <select> stacked on top of it (see
+     render, ~23216) — this avoids building a whole popover for a 3-option choice, same trick the
+     photo-upload "Choose photo" label+file-input control already uses elsewhere on this page. */
+  const growTiersBasisSelect=outerMain.querySelector('[data-grow-tiers-basis-select-v347]');
+  if(growTiersBasisSelect)growTiersBasisSelect.onchange=async()=>{
+    if(growTiersBusyV331)return;
+    const basis=growTiersBasisSelect.value;
+    if(!['visits','spend','points_earned'].includes(basis))return;
+    growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    const {error}=await sb.rpc('business_set_tier_basis_v347',{p_business:S.biz.id,p_basis:basis});
+    if(!isGrowCurrent())return;
+    growTiersBusyV331=false;
+    if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
+    if(snapshot.loyalty)snapshot.loyalty.tier_basis=basis;else snapshot.loyalty={tier_basis:basis};
+    toast('Tier basis updated');
+    growRerenderV322();
   };
   const growTiersAddOpen=outerMain.querySelector('[data-grow-tiers-add-v331]');
   if(growTiersAddOpen)growTiersAddOpen.onclick=()=>{
