@@ -1,10 +1,6 @@
 {
   "desktop1440": {
-<<<<<<< HEAD
-    "sourceHash": "00ddb77b8760ed16ed2c1e569eb4b5da232357c3dd07df4e9aab01246565f1e8",
-=======
-    "sourceHash": "1b9b14f743119b1f4066ecf7d386c185f30e2b98c550ebfef516d7e37ff045e9",
->>>>>>> 8001b82 (fix(customer-interface): v327 — live preview shows the real wallet, not a lookalike)
+    "sourceHash": "4f48bcaf9468dd9886fe9d08c71b60a43c1d9ca73a0c21de972272ae2127dea0",
     "viewport": {
       "clientWidth": 1440,
       "scrollWidth": 1440
@@ -174,11 +170,7 @@
     "modal": null
   },
   "mobile390": {
-<<<<<<< HEAD
-    "sourceHash": "00ddb77b8760ed16ed2c1e569eb4b5da232357c3dd07df4e9aab01246565f1e8",
-=======
-    "sourceHash": "1b9b14f743119b1f4066ecf7d386c185f30e2b98c550ebfef516d7e37ff045e9",
->>>>>>> 8001b82 (fix(customer-interface): v327 — live preview shows the real wallet, not a lookalike)
+    "sourceHash": "4f48bcaf9468dd9886fe9d08c71b60a43c1d9ca73a0c21de972272ae2127dea0",
     "viewport": {
       "clientWidth": 390,
       "scrollWidth": 390
@@ -348,11 +340,7 @@
     "modal": null
   },
   "mobile412": {
-<<<<<<< HEAD
-    "sourceHash": "00ddb77b8760ed16ed2c1e569eb4b5da232357c3dd07df4e9aab01246565f1e8",
-=======
-    "sourceHash": "1b9b14f743119b1f4066ecf7d386c185f30e2b98c550ebfef516d7e37ff045e9",
->>>>>>> 8001b82 (fix(customer-interface): v327 — live preview shows the real wallet, not a lookalike)
+    "sourceHash": "4f48bcaf9468dd9886fe9d08c71b60a43c1d9ca73a0c21de972272ae2127dea0",
     "viewport": {
       "clientWidth": 412,
       "scrollWidth": 412
