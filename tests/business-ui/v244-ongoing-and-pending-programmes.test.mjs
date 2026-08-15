@@ -70,17 +70,25 @@ test('V244 both groups render, ongoing first, with counts and empty states', () 
   assert.match(section, /:`<p class="muted small grow-topic-group-empty-v244">\$\{esc\(empty\)\}<\/p>`/);
 });
 
-test('V244 the tile itself is unchanged — same classes, icon, pill and topic hook', () => {
+test('V335 the tile keeps its classes, icon, pill and topic hook — summary line gone, action moved to a corner button', () => {
+  /* V335 (owner markup, photo 1: "remove the explanation below '3 redeemable rewards'" +
+     "shift the edit button to the top right corner — applies to all"). The status-line summary
+     text and the bottom "Edit →" text link are gone; the action is now a small round arrow in
+     the tile's top-right corner (decorative — the action word moved to the tile's own
+     aria-label instead, so assistive tech still gets it). */
   const tile = app.slice(app.indexOf('const growTileHtmlV244='), app.indexOf('const growOngoingTopicsV244='));
   assert.match(tile, /class="grow-topic-tile-v229/);
   assert.match(tile, /data-grow-topic-v229="\$\{topic\.key\}"/, 'the existing click contract survives');
+  assert.match(tile, /aria-label="\$\{esc\(topic\.title\)\} — \$\{esc\(growTopicActionV244\(topic\)\)\}"/);
+  assert.match(tile, /<span class="grow-topic-tile-corner-v335" aria-hidden="true">\$\{CUI\.icon\('forward',\{size:16\}\)\}<\/span>/);
   assert.match(tile, /<span class="grow-topic-tile-icon-v229">\$\{CUI\.icon\(topic\.icon,\{size:22\}\)\}<\/span>/);
   assert.match(tile, /<span class="pill \$\{topic\.status\[1\]\}">\$\{esc\(topic\.status\[0\]\)\}<\/span>/);
-  assert.match(tile, /<span class="grow-topic-tile-open-v229">\$\{esc\(growTopicActionV244\(topic\)\)\}<\/span>/);
+  assert.doesNotMatch(tile, /class="muted small">\$\{esc\(/, 'the summary/blurb text line is gone from every tile');
   // Pending tiles are marked for styling without changing the tile's structure.
   assert.match(tile, /\$\{growTopicOngoingV244\(topic\)\?'':' grow-topic-tile-pending-v244'\}/);
   assert.match(shell, /\.grow-topic-tile-pending-v244\{border-style:dashed\}/);
   assert.match(shell, /\.grow-topic-group-v244\{/);
+  assert.match(shell, /\.grow-topic-tile-corner-v335\{/);
 });
 
 test('V244 the grid is not double-wrapped at the render site', () => {

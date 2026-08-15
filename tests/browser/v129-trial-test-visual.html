@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="7265b601faec71214526369f8142e1bc568480e198263e5e5f346a5ceda93b24"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d2b14c6ba270cf568cc58f45f340b240f002a6cf7900f478fbeef7de6c8d79ec"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -80,6 +80,10 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .pill{display:inline-block;padding:3.5px 10px;border-radius:100px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
 .pill.on{background:#E7F6EE;color:var(--green)} .pill.off{background:#F1EEE9;color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:#E7F6EE;color:var(--green)} .pill.no{background:#FBEAE7;color:var(--red)}
+/* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
+.pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
+.pill-toggle-v334.on{background:#E7F6EE;color:var(--green)}
+.pill-toggle-v334.off{background:#FBEAE7;color:var(--red)}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -1047,11 +1051,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-topic-group-head-v244 p{margin-top:3px}
 .grow-topic-group-empty-v244{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}
 .grow-topic-tile-pending-v244{border-style:dashed}
-.grow-topic-tile-v229{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
+.grow-topic-tile-v229{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
 .grow-topic-tile-v229:hover{background:var(--tint);border-color:var(--coral)}
-.grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em}
+.grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em;padding-right:32px}
 .grow-topic-tile-icon-v229{width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--coral);display:grid;place-items:center}
-.grow-topic-tile-open-v229{margin-top:auto;color:var(--coral);font-weight:600;font-size:.85rem}
+/* V335 (owner markup, photo 1: "small arrow red button, applies to all") — the "Edit"/"View"/
+   "Set up" action moves from a bottom-left text link to a small round arrow in the tile's top
+   right corner, the same shape on every Ongoing/Pending-setup tile. The whole tile is already
+   one clickable <button>, so this is decorative (aria-hidden) and the tile's own aria-label
+   carries the action word for assistive tech. */
+.grow-topic-tile-corner-v335{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:var(--tint);color:var(--coral);display:grid;place-items:center;flex-shrink:0}
+.grow-topic-tile-v229:hover .grow-topic-tile-corner-v335{background:var(--coral);color:#fff}
 /* The one choice for what points are FOR — two selectable cards, then a compact chosen state. */
 .points-mode-chooser-v229{width:100%}
 .points-mode-lead-v229{margin:0 0 10px}
@@ -1785,7 +1795,8 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-head-row-v326 .customer-programme-identity b,.customer-programme-head-row-v326 .customer-programme-identity-hint{color:#fff}
 .customer-programme-head-row-v326 .customer-programme-logo{background:rgba(255,255,255,.94);box-shadow:var(--shadow)}
 .customer-programme-head-row-v326 .customer-programme-book{background:#fff;color:var(--ink);box-shadow:none}
-.customer-programme-contact-v326{padding:12px 16px 14px;display:grid;gap:5px}
+.customer-programme-contact-v326{padding:12px 16px 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.customer-programme-contact-v326 .customer-programme-contact-more-v326{flex:1 1 auto;min-width:0}
 .customer-programme-contact-line-v326{display:flex;align-items:center;gap:6px;min-width:0}
 .customer-programme-contact-line-v326 a{color:inherit}
 .customer-programme-contact-more-v326{border:0;background:none;padding:0;margin-top:2px;color:var(--coral);font-weight:600;font-size:.85rem;text-align:left;cursor:pointer}
@@ -2195,7 +2206,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 7265b601faec71214526369f8142e1bc568480e198263e5e5f346a5ceda93b24</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d2b14c6ba270cf568cc58f45f340b240f002a6cf7900f478fbeef7de6c8d79ec</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -9810,11 +9821,14 @@ async function promotionsPage(selectedPromotionId=null){
     const id=button.dataset.promotionDelete;
     const published=!!button.dataset.promotionPublished;
     const name=button.dataset.promotionName||'this offer';
+    /* V334 (owner markup, photo 7): matches the Rewards & Offer page's own "End" wording so the
+       two delete paths do not disagree (tests/business-ui/v324-limited-offer-buckets.test.mjs
+       pins this wording to be identical across both). */
     const question=published
-      ? `Retire "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
+      ? `End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       : `Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
     if(!confirm(question))return;
-    CUI.setButtonBusy(button,{busy:true,label:published?'Retiring…':'Deleting…'});
+    CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:businessId,p_promotion_id:id,p_expected_version:null});
     if(error){
@@ -10312,7 +10326,7 @@ async function promotionsPage(selectedPromotionId=null){
   }
   routeDispose=()=>{if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl)};
 }
-async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false}={}){
+async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false,quiet=false}={}){
   /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
      pushing no hash — so the topic outlived the page. An owner who drilled into Points, went to
      the Dashboard and pressed Programmes in the rail landed back inside Points, with the rail
@@ -10334,7 +10348,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
-  outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
+  if(!quiet)outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
   const snapshot=await growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules,isCurrent:isGrowCurrent});
   if(!snapshot||!isGrowCurrent())return;
   let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
@@ -10644,7 +10658,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      answers a real question elsewhere (Tiers, Referral and the wizard's own edits still go
      through a draft), so it stays on Overview/History/the drilled categories — this excludes only
      'list', the one screen the owner marked, not the concept everywhere it is still true. */
+  /* V334 (owner markup, photo 1 + 4: "please remove this, don't need review & publish"):
+     struck out again on Overview and on the Points System detail page specifically. */
   const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'&&programmeView!=='list'
+    &&programmeView!=='overview'&&programmeView!=='points'
     ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
@@ -10675,11 +10692,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
       status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
       summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
-    {key:'promotions',icon:'loyalty',title:'Promotions',blurb:'Offers customers see in their programme.',
-      status:publishedPromotions?['Live','on']:promotionDrafts?['Draft','new']:['Not set up','off'],
-      /* V294 (owner markup 2026-08-12): the ongoing card says "N LIVE", not "N published promotions". */
-      summary:publishedPromotions?`${publishedPromotions} LIVE`
-        :promotionDrafts?`${promotionDrafts} saved draft${promotionDrafts===1?'':'s'}`:'Create an offer customers can see'},
+    /* V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out of the
+       Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
+       publishedPromotions/promotionDrafts computations stay in scope above for that page. */
     {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Refer friends and get rewards!',
       status:!modules.includes('referrals')?['Not included','off']:referralLive?['Live','on']:referralConfigured?['Paused','off']:['Not set up','off'],
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
@@ -10771,7 +10786,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V294: a pending-setup card leads with the owner's benefit line (item 7c of the 2026-08-12
      markup) and keeps its stateful summary underneath when that summary says something the
      benefit line does not — an error or the next action must never be hidden by marketing copy. */
-  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(growTopicOngoingV244(topic)?topic.summary:topic.blurb)}</span>${!growTopicOngoingV244(topic)&&topic.summary&&topic.summary!==topic.blurb?`<span class="muted small">${esc(topic.summary)}</span>`:''}<span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
+  /* V335 (owner markup, photo 1: "remove the explanation below '3 redeemable rewards'" — same
+     for all programmes; "shift the edit button to the top right corner"). The status-line summary
+     text is gone from every tile, and the action moves from a bottom "Edit →" link to a small
+     round arrow button in the top-right corner (aria-hidden, since the whole tile is one <button>
+     already — the action word lives in the tile's own aria-label for assistive tech instead). */
+  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}"><span class="grow-topic-tile-corner-v335" aria-hidden="true">${CUI.icon('forward',{size:16})}</span><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b></button>`;
   /* ============ V322 — OWNER RULING R6: THE SEPARATE ON/OFF CONTROL ==========================
      "if i unselect the program does not mean i want to turn off (i need a seperate button) — it
      just means i do not want to edit the rewards at this point in time"
@@ -10798,6 +10818,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growProgrammeSwitchKindsV322=[['points','Points & gifts'],['tiers','Tier membership'],
     ['stamps','Stamp card'],['referral','Referral']];
   const growProgrammeSwitchPanelV322=()=>{
+    /* V334 (owner markup, photo 2: "remove all these"): the Live-for-customers on/off card is
+       struck out entirely on the Rewards Programme page. */
+    return '';
     if(!canRewards)return '';
     const rows=programmeSpineRowsV314();
     if(!rows)return `<div class="imp-note" data-grow-switchpanel-v322="unreadable" style="margin-top:14px" role="status">
@@ -11208,9 +11231,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);
     return `<li data-grow-points-giftrow-v326="${esc(reward.id)}">${meta}
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="muted small" data-grow-points-giftstate-v326="${paused?'off':'on'}"> · ${paused?'Off':'ON for customers'}</span>
-        ${canSetupGrow?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'Turn on':'Turn off'}</button>
-        <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`:''}
+        ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
+        <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`
+        :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${paused?'OFF':'ON'}</span>`}
       </span></li>
       <li class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(reward.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
         <b>Delete ${esc(name)}?</b>
@@ -11247,10 +11270,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<ul class="grow-setup-rewardlist-v301" data-grow-points-summary-v326>
         <li data-grow-points-header-v326><span><b>${esc(growPointsRowLabelV326)}</b><p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-            <span class="muted small" data-grow-switchstate-v322="${growPointsOnV326?'on':'off'}"> · ${growPointsOnV326?'ON for customers':'off'}</span>
             ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit</button>
             <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">Add gifts</button>
-            <button type="button" class="btn ghost sm" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'Turn off':'Turn on'}</button>`:''}
+            <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
+            :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
           <b>${growPointsOnV326?`Turn ${esc(growPointsRowLabelV326)} off for customers?`:`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
@@ -11438,14 +11461,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const label=bucket==='draft'?'Draft'
       :bucket==='history'?(item.ends_at?`Ended ${promotionDateTextV104(item.ends_at)}`:'Ended')
       :life.label;
-    const deleteLabel=bucket==='published'?'Retire':'Delete';
+    /* V334 (owner markup, photo 7: "all 'retire' change to 'end', i want red colour"): the
+       Published-bucket button reads "End" now, styled red — Draft's "Delete" is unchanged. */
+    const deleteLabel=bucket==='published'?'End':'Delete';
+    const deleteBtnClass=bucket==='published'?'btn sm danger':'btn ghost sm';
     return `<div class="promotion-item-row" data-merchant-content>
       ${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}
       <div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b>
       <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p></div>
       <div class="row" style="gap:6px;flex-wrap:wrap">
         ${growOffersCanWriteV324?`<a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a>`:''}
-        ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="btn ghost sm" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
+        ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="${deleteBtnClass}" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
       </div></div>`;
   };
   const growOffersEmptyV324={published:'No promotion is published right now.',
@@ -11477,7 +11503,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
+      <!-- V334 (owner markup, photo 4: "show this as header of gifts, it's the parent of this page,
+           bring here his logo") — the same star icon the Rewards & Offer section uses leads
+           Points System's own heading, since the gift list below belongs to it. -->
+      <div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):''}<h2 id="rewardJourneyTitle">${programmeView==='points'?`${CUI.icon('star',{size:18})} `:''}${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growProgrammeSwitchPanelV322():''}
@@ -12007,7 +12036,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      confirmation performs ONE set_programmes_v314 call carrying the whole set, including the R2
      exclusions when the stamp card is going on. The page is re-rendered from the server's own
      reply (writeProgrammeSwitchesV314 refreshes S.programmes from it), never optimistically. */
-  const growRerenderV322=()=>growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  /* V335 (owner markup, photo 2: "pressing on/off & delete should not refresh my entire website").
+     growPage always opens with outerMain.innerHTML=CUI.loadingState(...), wiping the whole page to
+     a skeleton before its several awaited reads return — correct for a real navigation, but a
+     one-row toggle/delete on the Points System page doesn't need the page to visibly vanish and
+     reappear. `quiet:true` skips only that opening flash; the same fresh data is still fetched and
+     swapped in, so the result is identical, just without the blank-then-rebuild jolt. */
+  const growRerenderV322=(opts={})=>growPage(routedSurface,hashParam,routedFocus,opts).catch(fail);
   /* V324: switching Published/Draft/History tabs is a pure client-side filter over data already
      on the page — no field on any offer changed, so this re-renders the same way the switch panel
      above deliberately does NOT: nothing here is worth a `hidden`-only optimisation, because the
@@ -12036,11 +12071,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const id=button.dataset.growOfferDeleteV324;
     const published=!!button.dataset.growOfferPublishedV324;
     const name=button.dataset.growOfferNameV324||'this offer';
+    /* V334 (owner markup, photo 7): the confirm copy follows the button's own "End" wording. */
     const question=published
-      ?`Retire "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
+      ?`End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       :`Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
     if(!confirm(question))return;
-    CUI.setButtonBusy(button,{busy:true,label:published?'Retiring…':'Deleting…'});
+    CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:S.biz.id,p_promotion_id:id,p_expected_version:null});
     if(!isGrowCurrent())return;
@@ -12085,7 +12121,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!isGrowCurrent())return;
     if(!ok){
       growSwitchErrorV322=`${ownerErrorText(error)} Nothing was changed.`;
-      growSwitchPendingV322='';return growRerenderV322();
+      growSwitchPendingV322='';return growRerenderV322({quiet:true});
     }
     /* SA-4 is still open: app.on_sale_recorded gates the referral payout on
        referral_programs.enabled, not on the spine. A switch that moved only the spine row would
@@ -12101,7 +12137,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     }
     growSwitchPendingV322='';
     if(!growSwitchErrorV322)toast(want?'Turned on for customers':'Turned off for customers');
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
   outerMain.querySelectorAll('[data-grow-topic-v229]').forEach(tile=>tile.onclick=()=>{
@@ -12150,7 +12186,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const tab=button.dataset.growPointsManageTabV326;
     if(!['published','history'].includes(tab))return;
     growPointsManageTabV326=tab;
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   const growPointsEditLink=outerMain.querySelector('[data-grow-points-edit-v326]');
   if(growPointsEditLink)growPointsEditLink.onclick=()=>{
@@ -12164,22 +12200,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growPointsAddOpen=outerMain.querySelector('[data-grow-points-add-v326]');
   if(growPointsAddOpen)growPointsAddOpen.onclick=()=>{
     growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   const growPointsAddCancel=outerMain.querySelector('[data-grow-points-add-cancel-v326]');
   if(growPointsAddCancel)growPointsAddCancel.onclick=()=>{
     growPointsAddOpenV326='';growPointsErrorV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   const growPointsAddAgain=outerMain.querySelector('[data-grow-points-add-again-v326]');
   if(growPointsAddAgain)growPointsAddAgain.onclick=()=>{
     growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   const growPointsAddDone=outerMain.querySelector('[data-grow-points-add-done-v326]');
   if(growPointsAddDone)growPointsAddDone.onclick=()=>{
     growPointsAddOpenV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   const growPointsAddSave=outerMain.querySelector('[data-grow-points-add-save-v326]');
   if(growPointsAddSave)growPointsAddSave.onclick=async()=>{
@@ -12188,19 +12224,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     growPointsAddDraftV326={name,points:pointsField?.value||''};
-    if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322();}
-    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322();}
+    if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
+    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
     const spineId=growPointsSpineIdV326;
-    if(!spineId){growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322();}
-    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322();
+    if(!spineId){growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
     const {error}=await sb.rpc('business_create_reward_v326',{
       p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
-    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast('Gift added and live for customers');
     growPointsAddOpenV326='prompt';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-points-gift-toggle-v326]').forEach(button=>button.onclick=async()=>{
     if(growPointsBusyV326)return;
@@ -12212,17 +12248,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_business:S.biz.id,p_reward:id,p_paused:!want});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
-    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast(want?'Turned on for customers':'Turned off for customers');
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]').forEach(button=>button.onclick=()=>{
     growPointsDeletePendingV326=button.dataset.growPointsGiftDeleteV326;
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-no-v326]').forEach(button=>button.onclick=()=>{
     growPointsDeletePendingV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-yes-v326]').forEach(button=>button.onclick=async()=>{
     if(growPointsBusyV326)return;
@@ -12232,9 +12268,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const {error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;growPointsDeletePendingV326='';
-    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast('Moved to History');
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   /* ============ V331 — TIERS PAGE WIRING ====================================================
      Same shape as the V326 points wiring above: the summary row's own on/off toggle reuses
@@ -13790,7 +13826,10 @@ const GROW_SETUP_RAIL_W6I2=[
      stamp = xx rewards … but if bosses want to extend to 12 stamp = xx rewards and more = able to
      do it customisable" — so the screen is a repeatable list and its label says so. */
   ['stamps',[['stampEarn','Stamps'],['stampGift','Milestones']]],
-  ['points',[['earn','Earning'],['reward','Gifts'],['expiry','Expiry']]],
+  /* V334 (owner markup, photo 6: "when i add/edit point system, this the setting page — i can
+     edit earnings and expiry on one page"): Earning and Expiry merge into a single step here,
+     rather than being two rail entries an owner has to click Next between. */
+  ['points',[['earnExpiry','Earning & expiry'],['reward','Gifts']]],
   ['tiers',[['climb','Climbing'],['tiers','Tiers']]],
   ['referral',[['referral','Referral']]]
 ];
@@ -14199,7 +14238,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* V303: publish succeeded but the points_mode switch that the chosen model implies did not.
        It is its own state because the honest message is not "publishing failed" — publishing
        happened — and the retry must repeat only the part that did not. */
-    modeError:''
+    modeError:'',
+    /* V335 (owner markup, photo 3: "delete unwanted fields" + "when i press back it must go back
+       to my main page"). Set only when the Points System / Stamp card page's own "Edit" link
+       landed here — this is now a standalone save-and-exit screen, not one stop on the longer
+       multi-programme setup journey, so the step chrome (kicker/title/%/tab strip) and the
+       Back/Next destinations change for this entry only. */
+    simpleEditModeV335:false
   };
   /* W6 increment 2 — THE RAIL. Three fixed step lists (one per exclusive model) become ONE list
      COMPOSED from whichever programmes are switched on: screen 0, then each switched-on
@@ -14277,8 +14322,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      on step 1. Guarded on that step existing on the rail rather than 'reward'/'stampGift', since
      this hand-off never touches the gift/milestone screen. */
   if(rewardHandoffV303?.mode==='earning'){
-    const earnStepKindV326=rewardHandoffV303.kind==='stamps'?'stampEarn':'earn';
-    if(stepNumberOrNullW6I2(earnStepKindV326)!==null)state.step=stepNumberForW6I2(earnStepKindV326);
+    /* V334: points' earn step merged into 'earnExpiry' (see GROW_SETUP_RAIL_W6I2) — stamps still
+       has its own standalone 'stampEarn' step, unaffected by the merge. */
+    const earnStepKindV326=rewardHandoffV303.kind==='stamps'?'stampEarn':'earnExpiry';
+    if(stepNumberOrNullW6I2(earnStepKindV326)!==null){
+      state.step=stepNumberForW6I2(earnStepKindV326);
+      state.simpleEditModeV335=true;
+    }
   }else if(rewardHandoffV303?.mode==='climbing'){
     /* V331: the Tiers page's own "edit" link -- lands on the tier-basis step (visits/spend/points),
        the one tier setting that page does not expose. Rung management is that page's own job. */
@@ -15122,7 +15172,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <p class="grow-setup-sentence-v301">${esc(state.publishedSummary?.earn||'')}</p>
       <p class="grow-setup-sentence-v301" data-merchant-content>${esc(state.publishedSummary?.reward||'')}</p>
       ${modeErrorBlockV303()}
-      <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap"><a class="btn" href="#/grow/overview" id="growSetupDoneV301">Back to Programmes</a>
+      <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap"><a class="btn" href="${state.simpleEditModeV335?'#/grow/points':'#/grow/overview'}" id="growSetupDoneV301">${state.simpleEditModeV335?'Back to Points System':'Back to Programmes'}</a>
       <!-- V305: no "Add another reward" on a tiers-only programme. That list has no Reward step to
            go back to, and the reward it would add is one this mode refuses to let customers
            claim — the button would be an invitation into the exact confusion the owner reported. -->
@@ -15179,6 +15229,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        rails can BOTH be on the rail at once without either one re-labelling the other. */
     return kind==='choose'?stepOneHtml()
       :kind==='earn'||kind==='stampEarn'?stepTwoHtml()
+      /* V334: Earning + Expiry render together as one page for the points family. */
+      :kind==='earnExpiry'?`${stepTwoHtml()}<hr class="grow-setup-divider-v334" style="margin:18px 0;border:none;border-top:1px solid var(--line)">${expiryStepHtmlW6I2()}`
       :kind==='climb'?climbStepHtmlV305()
       :kind==='tiers'?tiersStepHtml()
       /* V322 (R5): the stamps rail's second screen is the milestone ladder now, not a single gift
@@ -15190,10 +15242,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :stepFourHtml();
   };
   function render(){
+    /* V335 (owner markup, photo 3: "delete unwanted fields"): entered from the Points System /
+       Stamp card page's own "Edit" link, this is a standalone save-and-exit screen — the
+       multi-step chrome (kicker, "Step X of Y", % done, the tab strip) describes a journey this
+       entry never takes, so it is hidden rather than shown and disabled. */
+    const growPointsPageHref='#/grow/points';
     host.innerHTML=`<section class="grow-setup-v301" id="growSetupWizardPanelV301" aria-label="Set up rewards" data-grow-setup-step-v301="${state.step}">
-      <div class="grow-setup-head-v301"><div><p class="customer-quest-kicker">Set up rewards</p>
+      <div class="grow-setup-head-v301"><div>${state.simpleEditModeV335?'':`<p class="customer-quest-kicker">Set up rewards</p>
       <h3 class="grow-setup-title-v301">Step ${state.step} of ${railCountW6I2()} · ${esc(railStepW6I2().label)}</h3>
-      <p class="muted small" data-grow-setup-percent-w6i2="${railPercentW6I2()}" role="status">${railPercentW6I2()}% done</p></div>
+      <p class="muted small" data-grow-setup-percent-w6i2="${railPercentW6I2()}" role="status">${railPercentW6I2()}% done</p>`}</div>
       <!-- V302: the wizard is now the door for every unfinished programme, including a PAUSED one
            that already carries a catalogue, tiers and reward history. That owner must never lose
            the surface that holds them, so the full editor keeps a permanent link here — the same
@@ -15206,11 +15263,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
            tells the editor which engine the owner is here for, and a points choice still lands in
            an editor with no tiers block. -->
       <span class="grow-setup-head-links-v301"><a class="grow-setup-leave-v301" href="#/loyalty${state.versionId?`/${encodeURIComponent(state.versionId)}`:''}/${editorContextV303()}" id="growSetupFullEditorV302">More reward settings</a>
-      <a class="grow-setup-leave-v301" href="#/grow">Leave set up</a></span></div>
-      ${stepperHtml()}
+      <a class="grow-setup-leave-v301" href="${state.simpleEditModeV335?growPointsPageHref:'#/grow'}">Leave set up</a></span></div>
+      ${state.simpleEditModeV335?'':stepperHtml()}
       <div class="grow-setup-body-v301" id="growSetupBodyV301">${bodyHtml()}</div>
       ${errBlock()}
-      ${state.published?'':`<div class="grow-setup-foot-v301">${state.step>1?'<button type="button" class="btn ghost" id="growSetupBackV301">Back</button>':''}<span class="spacer"></span><button type="button" class="btn grow-setup-next-v301" id="growSetupNextV301"${publishBlockedW6I2()?' disabled':''}>${stepKindW6I2()==='live'?'Publish now':'Next →'}</button>${stepKindW6I2()==='live'&&!anySwitchOnW6I2()?'<p class="muted small" style="width:100%;margin-top:8px" data-grow-setup-nopublish-w6i2>Nothing is turned on, so there is nothing to publish. Go back to Programmes and turn one on.</p>':''}${stepKindW6I2()==='live'&&anySwitchOnW6I2()&&pointsLadderStalledW6I2()?`<p class="muted small" style="width:100%;margin-top:8px" data-grow-setup-ladderstalled-w6i2>${esc(POINTS_LADDER_REFUSAL_W6I2)}</p>`:''}</div>`}
+      ${state.published?'':`<div class="grow-setup-foot-v301">${state.step>1?'<button type="button" class="btn ghost" id="growSetupBackV301">Back</button>':''}<span class="spacer"></span><button type="button" class="btn grow-setup-next-v301" id="growSetupNextV301"${publishBlockedW6I2()?' disabled':''}>${stepKindW6I2()==='live'?'Publish now':state.simpleEditModeV335?'Save':'Next →'}</button>${stepKindW6I2()==='live'&&!anySwitchOnW6I2()?'<p class="muted small" style="width:100%;margin-top:8px" data-grow-setup-nopublish-w6i2>Nothing is turned on, so there is nothing to publish. Go back to Programmes and turn one on.</p>':''}${stepKindW6I2()==='live'&&anySwitchOnW6I2()&&pointsLadderStalledW6I2()?`<p class="muted small" style="width:100%;margin-top:8px" data-grow-setup-ladderstalled-w6i2>${esc(POINTS_LADDER_REFUSAL_W6I2)}</p>`:''}</div>`}
     </section>`;
     localizeWorkspaceSubtreeV97(host);
     bind();
@@ -15272,8 +15329,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        the Points & gifts rail is on by construction and asks for the rate on its own screen, and
        under visits there is no rate to ask for at all. */
     if(kind==='stampEarn')state.stampSpend=parseFloat($('growSetupStampV301')?.value||'')||state.stampSpend;
-    if(kind==='earn')state.earn=parseFloat($('growSetupEarnV301')?.value||'')||state.earn;
-    if(kind==='expiry'){
+    if(kind==='earn'||kind==='earnExpiry')state.earn=parseFloat($('growSetupEarnV301')?.value||'')||state.earn;
+    if(kind==='expiry'||kind==='earnExpiry'){
       const mode=String($('growSetupExpiryModeW6I2')?.value||state.expiryMode);
       state.expiryMode=['none','fixed','inactivity'].includes(mode)?mode:'none';
       const days=parseInt($('growSetupExpiryDaysW6I2')?.value||'',10);
@@ -15658,7 +15715,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const retry=$('growSetupRetryV301');
     if(retry)retry.onclick=()=>{state.error='';render();advance()};
     const back=$('growSetupBackV301');
-    if(back)back.onclick=()=>{readStepFields();goto(state.step-1)};
+    /* V335 (owner markup, photo 3: "when i press back it must go back to my main page"): this
+       entry has no earlier step to return to — Back leaves the wizard for the page that opened it. */
+    if(back)back.onclick=state.simpleEditModeV335?()=>nav('#/grow/points'):()=>{readStepFields();goto(state.step-1)};
     const next=$('growSetupNextV301');
     if(next)next.onclick=()=>advance();
     const addAnother=$('growSetupAddAnotherV301');
@@ -15848,6 +15907,27 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       if(!isCurrent())return;
       if(!result.ok)return failStep(result.error,'Nothing was saved.');
       goto(state.step+1);
+    });
+    /* V334: Earning + Expiry save together — programRowV305 already carries both fields off
+       state, so this is the same single write the two separate steps used to each make, just
+       with both fields' validation checked before either save happens. */
+    if(kind==='earnExpiry')return withBusy(async()=>{
+      const model=state.model||modelForSwitchesW6I2();
+      if(!(state.earn>0)){
+        state.error='Enter how many points a customer earns.';
+        return render();
+      }
+      if(expiryModeRequiresDays(state.expiryMode)&&!(Number(state.expiryDays)>0)){
+        state.error='Enter how many days before points expire.';return render();
+      }
+      const result=await saveDraft(programRowV305(model));
+      if(!isCurrent())return;
+      if(!result.ok)return failStep(result.error,'Nothing was saved.');
+      /* V335 (owner markup, photo 3: "delete unwanted fields" — Gifts/Climbing/Tiers/Referral
+         struck out): this entry has nothing to do on those screens, so Save jumps straight to
+         Go-live — the SAME publish confirmation the wizard has always used, not a new path —
+         rather than stepping through screens this entry never asked to touch. */
+      goto(state.simpleEditModeV335?railCountW6I2():state.step+1);
     });
     /* The Climbing screen saves the basis the owner just answered — plus the earn rate on a
        tiers-only firm, where under a points basis it IS the climbing speed — through the SAME
@@ -19393,6 +19473,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'7265b601faec71214526369f8142e1bc568480e198263e5e5f346a5ceda93b24',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'d2b14c6ba270cf568cc58f45f340b240f002a6cf7900f478fbeef7de6c8d79ec',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

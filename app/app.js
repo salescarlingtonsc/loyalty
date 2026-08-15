@@ -21289,7 +21289,7 @@ async function promotionsPage(selectedPromotionId=null){
   }
   routeDispose=()=>{if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl)};
 }
-async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false}={}){
+async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false,quiet=false}={}){
   /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
      pushing no hash — so the topic outlived the page. An owner who drilled into Points, went to
      the Dashboard and pressed Programmes in the rail landed back inside Points, with the rail
@@ -21311,7 +21311,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
-  outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
+  if(!quiet)outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
   const snapshot=await growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules,isCurrent:isGrowCurrent});
   if(!snapshot||!isGrowCurrent())return;
   let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
@@ -21749,7 +21749,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V294: a pending-setup card leads with the owner's benefit line (item 7c of the 2026-08-12
      markup) and keeps its stateful summary underneath when that summary says something the
      benefit line does not — an error or the next action must never be hidden by marketing copy. */
-  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(growTopicOngoingV244(topic)?topic.summary:topic.blurb)}</span>${!growTopicOngoingV244(topic)&&topic.summary&&topic.summary!==topic.blurb?`<span class="muted small">${esc(topic.summary)}</span>`:''}<span class="grow-topic-tile-open-v229">${esc(growTopicActionV244(topic))}</span></button>`;
+  /* V335 (owner markup, photo 1: "remove the explanation below '3 redeemable rewards'" — same
+     for all programmes; "shift the edit button to the top right corner"). The status-line summary
+     text is gone from every tile, and the action moves from a bottom "Edit →" link to a small
+     round arrow button in the top-right corner (aria-hidden, since the whole tile is one <button>
+     already — the action word lives in the tile's own aria-label for assistive tech instead). */
+  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-tile-v229${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}"><span class="grow-topic-tile-corner-v335" aria-hidden="true">${CUI.icon('forward',{size:16})}</span><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b></button>`;
   /* ============ V322 — OWNER RULING R6: THE SEPARATE ON/OFF CONTROL ==========================
      "if i unselect the program does not mean i want to turn off (i need a seperate button) — it
      just means i do not want to edit the rewards at this point in time"
@@ -22994,7 +22999,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      confirmation performs ONE set_programmes_v314 call carrying the whole set, including the R2
      exclusions when the stamp card is going on. The page is re-rendered from the server's own
      reply (writeProgrammeSwitchesV314 refreshes S.programmes from it), never optimistically. */
-  const growRerenderV322=()=>growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  /* V335 (owner markup, photo 2: "pressing on/off & delete should not refresh my entire website").
+     growPage always opens with outerMain.innerHTML=CUI.loadingState(...), wiping the whole page to
+     a skeleton before its several awaited reads return — correct for a real navigation, but a
+     one-row toggle/delete on the Points System page doesn't need the page to visibly vanish and
+     reappear. `quiet:true` skips only that opening flash; the same fresh data is still fetched and
+     swapped in, so the result is identical, just without the blank-then-rebuild jolt. */
+  const growRerenderV322=(opts={})=>growPage(routedSurface,hashParam,routedFocus,opts).catch(fail);
   /* V324: switching Published/Draft/History tabs is a pure client-side filter over data already
      on the page — no field on any offer changed, so this re-renders the same way the switch panel
      above deliberately does NOT: nothing here is worth a `hidden`-only optimisation, because the
@@ -23073,7 +23084,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!isGrowCurrent())return;
     if(!ok){
       growSwitchErrorV322=`${ownerErrorText(error)} Nothing was changed.`;
-      growSwitchPendingV322='';return growRerenderV322();
+      growSwitchPendingV322='';return growRerenderV322({quiet:true});
     }
     /* SA-4 is still open: app.on_sale_recorded gates the referral payout on
        referral_programs.enabled, not on the spine. A switch that moved only the spine row would
@@ -23089,7 +23100,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     }
     growSwitchPendingV322='';
     if(!growSwitchErrorV322)toast(want?'Turned on for customers':'Turned off for customers');
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
   outerMain.querySelectorAll('[data-grow-topic-v229]').forEach(tile=>tile.onclick=()=>{
@@ -23138,7 +23149,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const tab=button.dataset.growPointsManageTabV326;
     if(!['published','history'].includes(tab))return;
     growPointsManageTabV326=tab;
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   const growPointsEditLink=outerMain.querySelector('[data-grow-points-edit-v326]');
   if(growPointsEditLink)growPointsEditLink.onclick=()=>{
@@ -23152,22 +23163,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growPointsAddOpen=outerMain.querySelector('[data-grow-points-add-v326]');
   if(growPointsAddOpen)growPointsAddOpen.onclick=()=>{
     growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   const growPointsAddCancel=outerMain.querySelector('[data-grow-points-add-cancel-v326]');
   if(growPointsAddCancel)growPointsAddCancel.onclick=()=>{
     growPointsAddOpenV326='';growPointsErrorV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   const growPointsAddAgain=outerMain.querySelector('[data-grow-points-add-again-v326]');
   if(growPointsAddAgain)growPointsAddAgain.onclick=()=>{
     growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:''};growPointsErrorV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   const growPointsAddDone=outerMain.querySelector('[data-grow-points-add-done-v326]');
   if(growPointsAddDone)growPointsAddDone.onclick=()=>{
     growPointsAddOpenV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   const growPointsAddSave=outerMain.querySelector('[data-grow-points-add-save-v326]');
   if(growPointsAddSave)growPointsAddSave.onclick=async()=>{
@@ -23176,19 +23187,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     growPointsAddDraftV326={name,points:pointsField?.value||''};
-    if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322();}
-    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322();}
+    if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
+    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
     const spineId=growPointsSpineIdV326;
-    if(!spineId){growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322();}
-    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322();
+    if(!spineId){growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
     const {error}=await sb.rpc('business_create_reward_v326',{
       p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
-    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast('Gift added and live for customers');
     growPointsAddOpenV326='prompt';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-points-gift-toggle-v326]').forEach(button=>button.onclick=async()=>{
     if(growPointsBusyV326)return;
@@ -23200,17 +23211,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_business:S.biz.id,p_reward:id,p_paused:!want});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
-    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast(want?'Turned on for customers':'Turned off for customers');
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]').forEach(button=>button.onclick=()=>{
     growPointsDeletePendingV326=button.dataset.growPointsGiftDeleteV326;
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-no-v326]').forEach(button=>button.onclick=()=>{
     growPointsDeletePendingV326='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-yes-v326]').forEach(button=>button.onclick=async()=>{
     if(growPointsBusyV326)return;
@@ -23220,9 +23231,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const {error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;growPointsDeletePendingV326='';
-    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322();}
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast('Moved to History');
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   /* ============ V331 — TIERS PAGE WIRING ====================================================
      Same shape as the V326 points wiring above: the summary row's own on/off toggle reuses
@@ -25190,7 +25201,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* V303: publish succeeded but the points_mode switch that the chosen model implies did not.
        It is its own state because the honest message is not "publishing failed" — publishing
        happened — and the retry must repeat only the part that did not. */
-    modeError:''
+    modeError:'',
+    /* V335 (owner markup, photo 3: "delete unwanted fields" + "when i press back it must go back
+       to my main page"). Set only when the Points System / Stamp card page's own "Edit" link
+       landed here — this is now a standalone save-and-exit screen, not one stop on the longer
+       multi-programme setup journey, so the step chrome (kicker/title/%/tab strip) and the
+       Back/Next destinations change for this entry only. */
+    simpleEditModeV335:false
   };
   /* W6 increment 2 — THE RAIL. Three fixed step lists (one per exclusive model) become ONE list
      COMPOSED from whichever programmes are switched on: screen 0, then each switched-on
@@ -25271,7 +25288,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* V334: points' earn step merged into 'earnExpiry' (see GROW_SETUP_RAIL_W6I2) — stamps still
        has its own standalone 'stampEarn' step, unaffected by the merge. */
     const earnStepKindV326=rewardHandoffV303.kind==='stamps'?'stampEarn':'earnExpiry';
-    if(stepNumberOrNullW6I2(earnStepKindV326)!==null)state.step=stepNumberForW6I2(earnStepKindV326);
+    if(stepNumberOrNullW6I2(earnStepKindV326)!==null){
+      state.step=stepNumberForW6I2(earnStepKindV326);
+      state.simpleEditModeV335=true;
+    }
   }else if(rewardHandoffV303?.mode==='climbing'){
     /* V331: the Tiers page's own "edit" link -- lands on the tier-basis step (visits/spend/points),
        the one tier setting that page does not expose. Rung management is that page's own job. */
@@ -26115,7 +26135,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <p class="grow-setup-sentence-v301">${esc(state.publishedSummary?.earn||'')}</p>
       <p class="grow-setup-sentence-v301" data-merchant-content>${esc(state.publishedSummary?.reward||'')}</p>
       ${modeErrorBlockV303()}
-      <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap"><a class="btn" href="#/grow/overview" id="growSetupDoneV301">Back to Programmes</a>
+      <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap"><a class="btn" href="${state.simpleEditModeV335?'#/grow/points':'#/grow/overview'}" id="growSetupDoneV301">${state.simpleEditModeV335?'Back to Points System':'Back to Programmes'}</a>
       <!-- V305: no "Add another reward" on a tiers-only programme. That list has no Reward step to
            go back to, and the reward it would add is one this mode refuses to let customers
            claim — the button would be an invitation into the exact confusion the owner reported. -->
@@ -26185,10 +26205,15 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :stepFourHtml();
   };
   function render(){
+    /* V335 (owner markup, photo 3: "delete unwanted fields"): entered from the Points System /
+       Stamp card page's own "Edit" link, this is a standalone save-and-exit screen — the
+       multi-step chrome (kicker, "Step X of Y", % done, the tab strip) describes a journey this
+       entry never takes, so it is hidden rather than shown and disabled. */
+    const growPointsPageHref='#/grow/points';
     host.innerHTML=`<section class="grow-setup-v301" id="growSetupWizardPanelV301" aria-label="Set up rewards" data-grow-setup-step-v301="${state.step}">
-      <div class="grow-setup-head-v301"><div><p class="customer-quest-kicker">Set up rewards</p>
+      <div class="grow-setup-head-v301"><div>${state.simpleEditModeV335?'':`<p class="customer-quest-kicker">Set up rewards</p>
       <h3 class="grow-setup-title-v301">Step ${state.step} of ${railCountW6I2()} · ${esc(railStepW6I2().label)}</h3>
-      <p class="muted small" data-grow-setup-percent-w6i2="${railPercentW6I2()}" role="status">${railPercentW6I2()}% done</p></div>
+      <p class="muted small" data-grow-setup-percent-w6i2="${railPercentW6I2()}" role="status">${railPercentW6I2()}% done</p>`}</div>
       <!-- V302: the wizard is now the door for every unfinished programme, including a PAUSED one
            that already carries a catalogue, tiers and reward history. That owner must never lose
            the surface that holds them, so the full editor keeps a permanent link here — the same
@@ -26201,11 +26226,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
            tells the editor which engine the owner is here for, and a points choice still lands in
            an editor with no tiers block. -->
       <span class="grow-setup-head-links-v301"><a class="grow-setup-leave-v301" href="#/loyalty${state.versionId?`/${encodeURIComponent(state.versionId)}`:''}/${editorContextV303()}" id="growSetupFullEditorV302">More reward settings</a>
-      <a class="grow-setup-leave-v301" href="#/grow">Leave set up</a></span></div>
-      ${stepperHtml()}
+      <a class="grow-setup-leave-v301" href="${state.simpleEditModeV335?growPointsPageHref:'#/grow'}">Leave set up</a></span></div>
+      ${state.simpleEditModeV335?'':stepperHtml()}
       <div class="grow-setup-body-v301" id="growSetupBodyV301">${bodyHtml()}</div>
       ${errBlock()}
-      ${state.published?'':`<div class="grow-setup-foot-v301">${state.step>1?'<button type="button" class="btn ghost" id="growSetupBackV301">Back</button>':''}<span class="spacer"></span><button type="button" class="btn grow-setup-next-v301" id="growSetupNextV301"${publishBlockedW6I2()?' disabled':''}>${stepKindW6I2()==='live'?'Publish now':'Next →'}</button>${stepKindW6I2()==='live'&&!anySwitchOnW6I2()?'<p class="muted small" style="width:100%;margin-top:8px" data-grow-setup-nopublish-w6i2>Nothing is turned on, so there is nothing to publish. Go back to Programmes and turn one on.</p>':''}${stepKindW6I2()==='live'&&anySwitchOnW6I2()&&pointsLadderStalledW6I2()?`<p class="muted small" style="width:100%;margin-top:8px" data-grow-setup-ladderstalled-w6i2>${esc(POINTS_LADDER_REFUSAL_W6I2)}</p>`:''}</div>`}
+      ${state.published?'':`<div class="grow-setup-foot-v301">${state.step>1?'<button type="button" class="btn ghost" id="growSetupBackV301">Back</button>':''}<span class="spacer"></span><button type="button" class="btn grow-setup-next-v301" id="growSetupNextV301"${publishBlockedW6I2()?' disabled':''}>${stepKindW6I2()==='live'?'Publish now':state.simpleEditModeV335?'Save':'Next →'}</button>${stepKindW6I2()==='live'&&!anySwitchOnW6I2()?'<p class="muted small" style="width:100%;margin-top:8px" data-grow-setup-nopublish-w6i2>Nothing is turned on, so there is nothing to publish. Go back to Programmes and turn one on.</p>':''}${stepKindW6I2()==='live'&&anySwitchOnW6I2()&&pointsLadderStalledW6I2()?`<p class="muted small" style="width:100%;margin-top:8px" data-grow-setup-ladderstalled-w6i2>${esc(POINTS_LADDER_REFUSAL_W6I2)}</p>`:''}</div>`}
     </section>`;
     localizeWorkspaceSubtreeV97(host);
     bind();
@@ -26653,7 +26678,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const retry=$('growSetupRetryV301');
     if(retry)retry.onclick=()=>{state.error='';render();advance()};
     const back=$('growSetupBackV301');
-    if(back)back.onclick=()=>{readStepFields();goto(state.step-1)};
+    /* V335 (owner markup, photo 3: "when i press back it must go back to my main page"): this
+       entry has no earlier step to return to — Back leaves the wizard for the page that opened it. */
+    if(back)back.onclick=state.simpleEditModeV335?()=>nav('#/grow/points'):()=>{readStepFields();goto(state.step-1)};
     const next=$('growSetupNextV301');
     if(next)next.onclick=()=>advance();
     const addAnother=$('growSetupAddAnotherV301');
@@ -26859,7 +26886,11 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       const result=await saveDraft(programRowV305(model));
       if(!isCurrent())return;
       if(!result.ok)return failStep(result.error,'Nothing was saved.');
-      goto(state.step+1);
+      /* V335 (owner markup, photo 3: "delete unwanted fields" — Gifts/Climbing/Tiers/Referral
+         struck out): this entry has nothing to do on those screens, so Save jumps straight to
+         Go-live — the SAME publish confirmation the wizard has always used, not a new path —
+         rather than stepping through screens this entry never asked to touch. */
+      goto(state.simpleEditModeV335?railCountW6I2():state.step+1);
     });
     /* The Climbing screen saves the basis the owner just answered — plus the earn rate on a
        tiers-only firm, where under a points basis it IS the climbing speed — through the SAME

@@ -373,13 +373,16 @@ test("V324 growSwitchSetOpenV324 toggles `hidden` on every row and keeps exactly
     'the module-level flags stay in sync even though no re-render reads them until the next one');
 });
 
-test('V324 confirming the switch is UNCHANGED — it still writes and still re-renders', () => {
+test('V335 confirming the switch still writes and still repaints, quietly', () => {
   /* The one case that legitimately needs the network: state actually changes on the server, and
-     other parts of the page (rewardJourney, the programme tiles) depend on the new spine. */
+     other parts of the page (rewardJourney, the programme tiles) depend on the new spine.
+     V335 (owner markup, photo 2: "should not refresh my entire website"): the repaint no longer
+     shows the full loading-skeleton flash — growRerenderV322({quiet:true}) still re-fetches and
+     swaps in fresh state, just without wiping the page first. */
   const confirmHandler = closure("outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]')",
     '/* V229: tiles drill in');
   assert.match(confirmHandler, /writeProgrammeSwitchesV314\(/);
-  assert.match(confirmHandler, /growRerenderV322\(\)/, 'a real write still repaints from the server reply');
+  assert.match(confirmHandler, /growRerenderV322\(\{quiet:true\}\)/, 'a real write still repaints from the server reply');
 });
 
 test('V322 R6 the panel switches in ONE call and keeps referral_programs in step', () => {
