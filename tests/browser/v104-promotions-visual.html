@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="05580ccb3d461db43df7b431741479d5eb1e10e96a2f724d8c3c0a217f775ada">
+<meta name="v104-production-source-sha256" content="d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1901,8 +1901,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head-v337 .customer-programme-tier-jump-v327{flex:0 0 100%}
 /* The red-gradient points hero. Uses --merchant-accent when the firm has a brand colour and
    falls back to the coral token otherwise, exactly like the rest of this screen's accents. */
-.customer-points-hero-v337{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;padding:20px 20px 22px;border:0;color:#fff;background:linear-gradient(135deg,var(--merchant-accent,var(--coral)),color-mix(in srgb,var(--merchant-accent,var(--coral)) 65%,#7a1230))}
-.customer-points-hero-copy-v337{min-width:0}
+/* v338 depth pass (owner: hero read "flat solid red", not enticing): a diagonal highlight sheen
+   plus a tinted shadow so the card lifts off the page instead of sitting as a flat colour block —
+   CSS-only (gradient/shadow), no new decorative assets. */
+.customer-points-hero-v337{position:relative;overflow:hidden;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;padding:20px 20px 22px;border:0;color:#fff;background:linear-gradient(135deg,var(--merchant-accent,var(--coral)),color-mix(in srgb,var(--merchant-accent,var(--coral)) 62%,#5c0d22));box-shadow:0 16px 32px -14px color-mix(in srgb,var(--merchant-accent,var(--coral)) 65%,transparent),var(--shadow)}
+.customer-points-hero-v337::before{content:'';position:absolute;inset:0;background:radial-gradient(130% 150% at 100% -10%,rgba(255,255,255,.28),transparent 55%);pointer-events:none}
+.customer-points-hero-copy-v337{position:relative;z-index:1;min-width:0}
 .customer-points-hero-label-v337{font-size:.85rem;font-weight:650;opacity:.9;text-transform:uppercase;letter-spacing:.04em}
 .customer-points-hero-figure-v337{margin-top:6px;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1;letter-spacing:-.03em}
 .customer-points-hero-figure-v337 span{margin-left:6px;font-size:.9rem;font-weight:650;letter-spacing:0;opacity:.9}
@@ -1911,7 +1915,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-points-hero-bar-v337{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.28);overflow:hidden;max-width:260px}
 .customer-points-hero-bar-v337 span{display:block;height:100%;border-radius:inherit;background:#fff}
 .customer-points-hero-pill-v337{display:inline-block;margin-top:12px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.22);font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-.customer-points-hero-icon-v337{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff}
+.customer-points-hero-icon-v337{position:relative;z-index:1;flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff}
 /* Address / Call / Book now, three tappable segments instead of one link plus a button. */
 .customer-programme-contact-row-v337{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .customer-programme-contact-row-v337 .customer-programme-contact-v326{display:contents}
@@ -1921,7 +1925,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-contact-item-book-v337{border-color:var(--coral);background:var(--coral);color:#fff}
 .customer-programme-contact-item-book-v337 svg{color:#fff}
 /* The cream "reward ready" banner — only painted when a reward is actually claimable now. */
-.customer-claimable-banner-v337{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding:16px 18px;border:1px solid #f0dfa0;border-radius:16px;background:#fdf6df}
+.customer-claimable-banner-v337{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding:16px 18px;border:1px solid #f0dfa0;border-radius:16px;background:#fdf6df;box-shadow:0 10px 22px -16px rgba(138,109,26,.55),var(--shadow)}
 .customer-claimable-banner-icon-v337{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:#f7e9b8;color:#8a6d1a}
 .customer-claimable-banner-copy-v337{flex:1;min-width:0}
 .customer-claimable-banner-kicker-v337{font-size:.78rem;font-weight:700;color:#8a6d1a;text-transform:uppercase;letter-spacing:.03em}
@@ -2261,7 +2265,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 05580ccb3d461db43df7b431741479d5eb1e10e96a2f724d8c3c0a217f775ada</p>
+  <p class="v104-provenance">Local production-render harness · source d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2273,7 +2277,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="05580ccb3d461db43df7b431741479d5eb1e10e96a2f724d8c3c0a217f775ada";
+const PRODUCTION_SOURCE_SHA256="d51342845a9cc418a05b0162d31902a98d33e6b1e450046b9f32725fec9cb761";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -2900,7 +2904,7 @@ function customerProgrammeModeV230({points_mode=null,tiers=false,rewards=false}=
 /* v310 (W4b): `progressMarkupV310` lets the stack supply the same meter with its sentence routed
    through ct(). Omitted — which is every v194 fallback caller — the panel builds the V167 English
    line exactly as it has since v167. Nothing else about this panel changes. */
-function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null}){
+function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null,hideSummaryV338=false}){
   const unitLabel=ct(presentation.unit);
   /* V289 (audit A3, G4). Both wallet readers return loyalty.enabled=false with EVERY number
      zeroed when the firm has the module off or its programme inactive — the server cannot
@@ -2915,8 +2919,14 @@ function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=nul
   }
   const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
   const progress=progressMarkupV310??customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward});
-  return `<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
-    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}
+  /* v338 (owner: v337's red points hero + reward banner already say this balance and "ready to
+     claim" fact once, directly above this card): when the hero already painted it for this
+     business, the summary line/progress here would be a straight repeat, so it is skipped —
+     the card keeps existing only as the mount point for the rewards strip below it. Any
+     business where the hero doesn't render (paused programme, tiers-only) is untouched, because
+     the caller only sets this flag when the hero itself is visible. */
+  return `${hideSummaryV338?'':`<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
+    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}`}
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}`;
 }
 /* In tiers mode the balance is not a wallet — it is the distance travelled — so it is stated as
@@ -3201,12 +3211,12 @@ function customerStampQuestBodyV323(quest){
 }
 /* 2 · POINTS & GIFTS. The one card that prints a raw point number — the stack's single hero. The
    body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
-function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false}){
+function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false}){
   const paused=entry?.active===false||loyalty.enabled===false;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
     <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
-      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,
+      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,
         progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
   </section>`;
 }
@@ -3263,7 +3273,7 @@ function customerClaimableStripMarkupV310(facts){
 function customerMemberCodeSlotMarkupV310(){
   return '<div id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden></div>';
 }
-function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null}={}){
+function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false}={}){
   const entries=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
     .map(kind=>[kind,programmeStackEntryV310(programmes,kind)]));
   const show=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
@@ -3282,7 +3292,14 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        unaffected: it is decided by which accruing card is present, never by which is on top. */
     show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
     show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
-    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost}):'',
+    /* v338 (owner: v337's red hero + reward banner duplicated this same points balance and
+       "ready to claim" fact a second time on the same screen). The card stays — it is still the
+       mount point for the rewards list (rewardsHost/#walletRewards) — but its own balance/
+       progress summary is skipped whenever the v337 hero is the thing actually painting that
+       balance for THIS business. suppressPointsCardV337 is computed by the caller with the exact
+       same visibility check the hero uses (customerPointsHeroVisibleV337), so a stamps-only or
+       tiers-only business, where the hero renders nothing, keeps this card exactly as before. */
+    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost,hideSummaryV338:suppressPointsCardV337}):'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
@@ -3291,7 +3308,11 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        for the read path, not for this decision. */
     '<div id="walletReferralSlot" hidden></div>'
   ].filter(Boolean).join('');
-  return `${customerClaimableStripMarkupV310(customerClaimableFactsV310({reward,birthday}))}
+  /* v338: the reward half of this strip's facts duplicates the v337 "reward ready" banner
+     one-for-one (both read reward.available_now/name) whenever that banner is already showing —
+     suppressRewardFactV337 drops just that fact, never the birthday one, which the banner does
+     not cover and which would otherwise vanish along with it. */
+  return `${customerClaimableStripMarkupV310(customerClaimableFactsV310({reward:suppressRewardFactV337?null:reward,birthday}))}
     ${customerMemberCodeSlotMarkupV310()}
     <div class="customer-programme-stack" data-programme-stack="v310">${cards}</div>`;
 }
@@ -3322,8 +3343,16 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
   const balance=Math.max(0,Number(loyalty.balance)||0);
   const cost=reward?Math.max(0,Number(reward.cost_units)||0):0;
   const progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):(reward?100:0);
-  const fraction=reward&&cost>0?`${esc(customerPointTotalV103(balance))}/${esc(customerPointTotalV103(cost))}`:'';
   const remaining=reward?Math.max(0,Number(reward.remaining_units??Math.max(0,cost-balance))||0):0;
+  /* v338 fix: balance is the customer's LIFETIME/spendable total, not "progress toward this one
+     reward" — a member who has long since cleared the threshold (77,877 points against a
+     1,000-point reward) printed a nonsensical "77,877/1,000" fraction here. The reward is already
+     ready (nextLine says so) once remaining===0, so the fraction is only meaningful while still
+     accruing toward it, and even then it must be the earned-toward-this-reward amount capped at
+     the cost, never the raw balance — the same clamp customerRewardProgressMarkupV310 already
+     applies via Math.min(100,...) for its percentage. */
+  const fraction=reward&&cost>0&&remaining>0
+    ?`${esc(customerPointTotalV103(Math.min(balance,cost)))}/${esc(customerPointTotalV103(cost))}`:'';
   const rewardName=reward?String(reward.name||'').trim()||ct('rewardsTab'):'';
   const nextLine=reward
     ?(reward.available_now===true||remaining===0

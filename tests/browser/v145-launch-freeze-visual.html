@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5bbcc3c0d6f1e08920c5b15047d135285e7a4cc976096baa329d0b92ff5338c9"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="bca22e1dad98d616e2ca21d9d1a81d5fbec17fb671f5011216be0175fa7f600f"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1894,8 +1894,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head-v337 .customer-programme-tier-jump-v327{flex:0 0 100%}
 /* The red-gradient points hero. Uses --merchant-accent when the firm has a brand colour and
    falls back to the coral token otherwise, exactly like the rest of this screen's accents. */
-.customer-points-hero-v337{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;padding:20px 20px 22px;border:0;color:#fff;background:linear-gradient(135deg,var(--merchant-accent,var(--coral)),color-mix(in srgb,var(--merchant-accent,var(--coral)) 65%,#7a1230))}
-.customer-points-hero-copy-v337{min-width:0}
+/* v338 depth pass (owner: hero read "flat solid red", not enticing): a diagonal highlight sheen
+   plus a tinted shadow so the card lifts off the page instead of sitting as a flat colour block —
+   CSS-only (gradient/shadow), no new decorative assets. */
+.customer-points-hero-v337{position:relative;overflow:hidden;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;padding:20px 20px 22px;border:0;color:#fff;background:linear-gradient(135deg,var(--merchant-accent,var(--coral)),color-mix(in srgb,var(--merchant-accent,var(--coral)) 62%,#5c0d22));box-shadow:0 16px 32px -14px color-mix(in srgb,var(--merchant-accent,var(--coral)) 65%,transparent),var(--shadow)}
+.customer-points-hero-v337::before{content:'';position:absolute;inset:0;background:radial-gradient(130% 150% at 100% -10%,rgba(255,255,255,.28),transparent 55%);pointer-events:none}
+.customer-points-hero-copy-v337{position:relative;z-index:1;min-width:0}
 .customer-points-hero-label-v337{font-size:.85rem;font-weight:650;opacity:.9;text-transform:uppercase;letter-spacing:.04em}
 .customer-points-hero-figure-v337{margin-top:6px;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1;letter-spacing:-.03em}
 .customer-points-hero-figure-v337 span{margin-left:6px;font-size:.9rem;font-weight:650;letter-spacing:0;opacity:.9}
@@ -1904,7 +1908,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-points-hero-bar-v337{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.28);overflow:hidden;max-width:260px}
 .customer-points-hero-bar-v337 span{display:block;height:100%;border-radius:inherit;background:#fff}
 .customer-points-hero-pill-v337{display:inline-block;margin-top:12px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.22);font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-.customer-points-hero-icon-v337{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff}
+.customer-points-hero-icon-v337{position:relative;z-index:1;flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff}
 /* Address / Call / Book now, three tappable segments instead of one link plus a button. */
 .customer-programme-contact-row-v337{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .customer-programme-contact-row-v337 .customer-programme-contact-v326{display:contents}
@@ -1914,7 +1918,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-contact-item-book-v337{border-color:var(--coral);background:var(--coral);color:#fff}
 .customer-programme-contact-item-book-v337 svg{color:#fff}
 /* The cream "reward ready" banner — only painted when a reward is actually claimable now. */
-.customer-claimable-banner-v337{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding:16px 18px;border:1px solid #f0dfa0;border-radius:16px;background:#fdf6df}
+.customer-claimable-banner-v337{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding:16px 18px;border:1px solid #f0dfa0;border-radius:16px;background:#fdf6df;box-shadow:0 10px 22px -16px rgba(138,109,26,.55),var(--shadow)}
 .customer-claimable-banner-icon-v337{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:#f7e9b8;color:#8a6d1a}
 .customer-claimable-banner-copy-v337{flex:1;min-width:0}
 .customer-claimable-banner-kicker-v337{font-size:.78rem;font-weight:700;color:#8a6d1a;text-transform:uppercase;letter-spacing:.03em}
@@ -2250,7 +2254,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5bbcc3c0d6f1e08920c5b15047d135285e7a4cc976096baa329d0b92ff5338c9</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · bca22e1dad98d616e2ca21d9d1a81d5fbec17fb671f5011216be0175fa7f600f</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5579,7 +5583,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'5bbcc3c0d6f1e08920c5b15047d135285e7a4cc976096baa329d0b92ff5338c9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'bca22e1dad98d616e2ca21d9d1a81d5fbec17fb671f5011216be0175fa7f600f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

@@ -3449,7 +3449,7 @@ function customerProgrammeModeV230({points_mode=null,tiers=false,rewards=false}=
 /* v310 (W4b): `progressMarkupV310` lets the stack supply the same meter with its sentence routed
    through ct(). Omitted — which is every v194 fallback caller — the panel builds the V167 English
    line exactly as it has since v167. Nothing else about this panel changes. */
-function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null}){
+function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null,hideSummaryV338=false}){
   const unitLabel=ct(presentation.unit);
   /* V289 (audit A3, G4). Both wallet readers return loyalty.enabled=false with EVERY number
      zeroed when the firm has the module off or its programme inactive — the server cannot
@@ -3464,8 +3464,14 @@ function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=nul
   }
   const balance=customerPointTotalV103(loyalty.balance??presentation.balance??0);
   const progress=progressMarkupV310??customerRewardProgressMarkupV167({loyalty,next_eligible_reward:reward});
-  return `<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
-    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}
+  /* v338 (owner: v337's red points hero + reward banner already say this balance and "ready to
+     claim" fact once, directly above this card): when the hero already painted it for this
+     business, the summary line/progress here would be a straight repeat, so it is skipped —
+     the card keeps existing only as the mount point for the rewards strip below it. Any
+     business where the hero doesn't render (paused programme, tiers-only) is untouched, because
+     the caller only sets this flag when the hero itself is visible. */
+  return `${hideSummaryV338?'':`<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
+    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}`}
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}`;
 }
 /* In tiers mode the balance is not a wallet — it is the distance travelled — so it is stated as
@@ -3633,12 +3639,12 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
 }
 /* 2 · POINTS & GIFTS. The one card that prints a raw point number — the stack's single hero. The
    body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
-function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false}){
+function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false}){
   const paused=entry?.active===false||loyalty.enabled===false;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
     <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
-      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,
+      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,
         progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
   </section>`;
 }
@@ -3695,7 +3701,7 @@ function customerClaimableStripMarkupV310(facts){
 function customerMemberCodeSlotMarkupV310(){
   return '<div id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden></div>';
 }
-function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null}={}){
+function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false}={}){
   const entries=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
     .map(kind=>[kind,programmeStackEntryV310(programmes,kind)]));
   const show=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
@@ -3714,7 +3720,14 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        unaffected: it is decided by which accruing card is present, never by which is on top. */
     show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
     show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
-    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost}):'',
+    /* v338 (owner: v337's red hero + reward banner duplicated this same points balance and
+       "ready to claim" fact a second time on the same screen). The card stays — it is still the
+       mount point for the rewards list (rewardsHost/#walletRewards) — but its own balance/
+       progress summary is skipped whenever the v337 hero is the thing actually painting that
+       balance for THIS business. suppressPointsCardV337 is computed by the caller with the exact
+       same visibility check the hero uses (customerPointsHeroVisibleV337), so a stamps-only or
+       tiers-only business, where the hero renders nothing, keeps this card exactly as before. */
+    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost,hideSummaryV338:suppressPointsCardV337}):'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
@@ -3723,7 +3736,11 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        for the read path, not for this decision. */
     '<div id="walletReferralSlot" hidden></div>'
   ].filter(Boolean).join('');
-  return `${customerClaimableStripMarkupV310(customerClaimableFactsV310({reward,birthday}))}
+  /* v338: the reward half of this strip's facts duplicates the v337 "reward ready" banner
+     one-for-one (both read reward.available_now/name) whenever that banner is already showing —
+     suppressRewardFactV337 drops just that fact, never the birthday one, which the banner does
+     not cover and which would otherwise vanish along with it. */
+  return `${customerClaimableStripMarkupV310(customerClaimableFactsV310({reward:suppressRewardFactV337?null:reward,birthday}))}
     ${customerMemberCodeSlotMarkupV310()}
     <div class="customer-programme-stack" data-programme-stack="v310">${cards}</div>`;
 }
@@ -3754,8 +3771,16 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
   const balance=Math.max(0,Number(loyalty.balance)||0);
   const cost=reward?Math.max(0,Number(reward.cost_units)||0):0;
   const progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):(reward?100:0);
-  const fraction=reward&&cost>0?`${esc(customerPointTotalV103(balance))}/${esc(customerPointTotalV103(cost))}`:'';
   const remaining=reward?Math.max(0,Number(reward.remaining_units??Math.max(0,cost-balance))||0):0;
+  /* v338 fix: balance is the customer's LIFETIME/spendable total, not "progress toward this one
+     reward" — a member who has long since cleared the threshold (77,877 points against a
+     1,000-point reward) printed a nonsensical "77,877/1,000" fraction here. The reward is already
+     ready (nextLine says so) once remaining===0, so the fraction is only meaningful while still
+     accruing toward it, and even then it must be the earned-toward-this-reward amount capped at
+     the cost, never the raw balance — the same clamp customerRewardProgressMarkupV310 already
+     applies via Math.min(100,...) for its percentage. */
+  const fraction=reward&&cost>0&&remaining>0
+    ?`${esc(customerPointTotalV103(Math.min(balance,cost)))}/${esc(customerPointTotalV103(cost))}`:'';
   const rewardName=reward?String(reward.name||'').trim()||ct('rewardsTab'):'';
   const nextLine=reward
     ?(reward.available_now===true||remaining===0
@@ -3816,6 +3841,12 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
      [data-company-detail] wiring — nothing about that click path changed. "Other branch" from
      the mockup is left out: this surface has no branch list loaded to link to. */
   const accentV326=esc(contrastSafeBrandColor(presentation.heroColor));
+  /* v338: both duplication fixes below key off the SAME visibility checks the hero/banner
+     themselves already use — customerPointsHeroVisibleV337 for the points-summary duplicate,
+     reward.available_now for the reward-ready duplicate — so a business where the hero/banner
+     don't render never has its old stack cards touched. */
+  const pointsHeroVisibleV338=customerPointsHeroVisibleV337({loyalty,programmeCapabilities});
+  const rewardBannerVisibleV338=!!(reward&&reward.available_now===true);
   /* v327 (owner: "photo 2 - add company name" / "Company Name (missing)"): the v326 markup put
      .customer-programme-cover-v326 and .customer-programme-head-row-v326 as SIBLINGS, both
      children of the <header>. The cover div was empty — pure decoration — so the row (with its
@@ -3858,7 +3889,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     </div>
     ${customerPointsExplainerMarkupV167(business)}
     ${programmeStackV310(programmeCapabilities)
-      ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null})
+      ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:pointsHeroVisibleV338,suppressRewardFactV337:rewardBannerVisibleV338})
       :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
     ${programmeStackV310(programmeCapabilities)?'':'<div id="walletReferralSlot" hidden></div>'}
