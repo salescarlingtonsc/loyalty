@@ -66,11 +66,29 @@ test('V325 the Done step is static, with no new state or logic', () => {
   assert.doesNotMatch(done, /sb\.from\(|sb\.rpc\(|localStorage|Object\.assign\(S\.biz/);
 });
 
-test('V325 steps 1-2 pair the form with the SAME preview card, reusing its own URL helper', () => {
+/* V326 (owner, 2026-08-15): "press publish > confirmed > customer app will reflect the exact
+   changes without discrepancies". Every section on this page already writes on its OWN save
+   click (name/colour/policy/bio via #bsave, logo via #workspaceLogoPublishV96, programme and
+   sign-up fields via their own RPCs) — there is no staged/draft state anywhere to commit. Publish
+   is therefore a review-and-confirm step, not a second write path. */
+test('V326 Publish is a confirm-and-review step, not a new write path', () => {
+  assert.match(page, /id="ciPublishV326">Publish<\/button>/);
+  const wiring = section(app, "const ciPublishBtn=$('ciPublishV326');", 'wireWorkspaceBrandV259();');
+  assert.match(wiring, /toast\('Published — customers will see these changes\.'\);/);
+  assert.match(wiring, /location\.hash='#\/customer-interface\/done';/);
+  // No write of its own: it must not touch sb.from/sb.rpc.
+  assert.doesNotMatch(wiring, /sb\.from\(|sb\.rpc\(/);
+  // Only the owner (canEditCustomerInterface) sees it — a non-owner has nothing to publish.
+  assert.match(page, /\$\{canEditCustomerInterface\?`<button type="button" class="btn" id="ciPublishV326">Publish<\/button>`:''\}/);
+});
+
+test('V325 steps 1-2 pair the form with the SAME live-preview renderer as step 3', () => {
   assert.match(page, /const ciWithPreviewV325=formHtml=>/);
   assert.match(page, /customerInterfacePreviewSideCardHtmlV325\(\)/);
   const sideCard = section(app, 'function customerInterfacePreviewSideCardHtmlV325(', 'function customerInterfacePreviewUrlV243(');
-  assert.match(sideCard, /customerInterfacePreviewUrlV243\(\)/);
+  // V326: no iframe/URL — the side card and the step-3 card both call the ONE inline renderer.
+  assert.match(sideCard, /customerInterfaceLivePreviewMarkupV326\(\)/);
+  assert.doesNotMatch(sideCard, /<iframe/);
   // Step 3 (Preview) still renders the untouched, pinned V243 card — no forced-open param.
   assert.match(page, /ciSectionV296\('preview',customerInterfacePreviewCardHtmlV243\(\)\)/);
 });

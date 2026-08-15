@@ -23525,6 +23525,7 @@ async function loadWorkspaceLogoEditorV96(){
       </div>
     </div>
   </div>`;
+  refreshCustomerInterfaceLivePreviewV326();
   const fileInput=$('workspaceLogoFileV96'),preview=$('workspaceLogoPreviewV96');
   const publish=$('workspaceLogoPublishV96'),status=$('workspaceLogoHelpV96');
   let previewUrl='';
@@ -23537,11 +23538,13 @@ async function loadWorkspaceLogoEditorV96(){
         ?`<img src="${esc(currentUrl)}" alt="${esc(existing?.alt_en||`${S.biz.name} logo`)}" width="184" height="184">`
         :esc(initial);
       status.textContent='Maximum 10 MB. Nothing changes until you publish.';
+      refreshCustomerInterfaceLivePreviewV326();
       return;
     }
     previewUrl=URL.createObjectURL(file);
     preview.innerHTML=`<img src="${esc(previewUrl)}" alt="New logo preview" width="184" height="184">`;
     status.textContent='Preview only — publish when this looks right.';
+    refreshCustomerInterfaceLivePreviewV326();
   };
   publish.onclick=async()=>{
     const file=fileInput.files?.[0],altEn=$('workspaceLogoAltV96').value.trim();
@@ -25167,13 +25170,40 @@ function wireBookingRulesV325(isCurrent=()=>true){
    wiring lives in wireCustomerInterfacePreviewV243, whose exact source is asserted byte-for-byte
    by tests/business-ui/v243-customer-interface-module.test.mjs, so this is a second small
    function rather than an edit to it. */
+/* V326 (owner report, 2026-08-15: the phone frame rendered blank). Root cause: the site sends
+   `frame-ancestors 'none'` + `X-Frame-Options: DENY` (app/vercel.json) — a deliberate anti-
+   clickjacking header that refuses to let this app frame itself, on any page, including its own
+   public portal. The previous iframe-based preview could never have worked in production.
+   Rather than weaken that header sitewide (it protects the staff dashboard, not just this
+   preview), this renders the customer-facing markup directly into the panel — the same approach
+   openCustomerProgrammePreviewV148 already uses for its owner-preview modal — reading the LIVE
+   form values (not last-saved DB state) so edits show before Save is even clicked. */
+function customerInterfaceLivePreviewMarkupV326(){
+  const logoImg=document.querySelector('#workspaceLogoPreviewV96 img');
+  const logoUrl=logoImg?.getAttribute('src')||'';
+  const name=($('bn')?.value||S.biz.name||'').trim()||'Your business';
+  const initial=name.charAt(0).toUpperCase()||'N';
+  const brandColor=$('bc')?.value||S.biz.brand_color||'#FF6B5E';
+  const bio=($('bbio')?.value||'').trim();
+  const policy=($('bp')?.value||'').trim();
+  return `<div class="ci-live-preview-inner-v326">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:52px;height:52px;border-radius:14px;overflow:hidden;background:${esc(brandColor)}22;display:flex;align-items:center;justify-content:center;font-weight:700;color:${esc(brandColor)};flex:0 0 auto">${logoUrl?`<img src="${esc(logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover">`:esc(initial)}</div>
+      <div><h1 style="font-size:1.25rem;margin:0;color:#17161a">${esc(name)}</h1><p style="margin:2px 0 0;color:#8a8f98;font-size:.85rem">Book with us — it takes 30 seconds.</p></div>
+    </div>
+    ${bio?`<p style="margin:14px 0 0;color:#4b4f57;font-size:.9rem;line-height:1.5">${esc(bio)}</p>`:''}
+    <button type="button" disabled style="margin-top:18px;background:${esc(brandColor)};color:#fff;border:0;border-radius:12px;padding:12px 18px;font-weight:600;font-size:.95rem">Book now</button>
+    ${policy?`<p style="margin-top:14px;color:#8a8f98;font-size:.8rem"><b>Good to know:</b> ${esc(policy)}</p>`:''}
+  </div>`;
+}
+function refreshCustomerInterfaceLivePreviewV326(){
+  const markup=customerInterfaceLivePreviewMarkupV326();
+  document.querySelectorAll('.ci-live-preview-body-v326').forEach(el=>{el.innerHTML=markup});
+}
 function customerInterfacePreviewSideCardHtmlV325(){
-  const previewUrl=customerInterfacePreviewUrlV243();
   return `<div class="card customer-preview-v243 customer-preview-side-v325">
       <b>Live preview</b><span class="muted small" style="display:block;margin-top:2px">What customers see as you edit</span>
-      <div class="customer-preview-phone-v243" style="margin-top:10px"><div class="customer-preview-screen-v243">
-        <iframe data-preview-src="${esc(previewUrl)}" src="${esc(previewUrl)}" title="Customer app preview" loading="lazy" referrerpolicy="no-referrer"></iframe>
-      </div></div>
+      <div class="customer-preview-phone-v243" style="margin-top:10px"><div class="customer-preview-screen-v243 ci-live-preview-body-v326">${customerInterfaceLivePreviewMarkupV326()}</div></div>
     </div>`;
 }
 /* The public page a customer meets before joining. Relative to this document, so it is the same
@@ -25181,38 +25211,21 @@ function customerInterfacePreviewSideCardHtmlV325(){
 function customerInterfacePreviewUrlV243(){
   return `${location.pathname}#/b/${encodeURIComponent(String(S.biz?.slug||''))}`;
 }
-/* Lazy by construction: the iframe ships with NO src, so a visit that never opens the card costs
-   nothing. wireCustomerInterfacePreviewV243 fills it in on the first open and leaves it filled. */
 function customerInterfacePreviewCardHtmlV243(){
   const previewUrl=customerInterfacePreviewUrlV243();
-  return `<details class="card customer-preview-v243" id="customerAppPreviewV243" style="margin-top:16px">
-      <summary class="customer-preview-summary-v243"><b>Preview the customer app</b><span class="muted small">Opens your public page in a phone frame</span></summary>
+  return `<div class="card customer-preview-v243" id="customerAppPreviewV243" style="margin-top:16px">
+      <b>Preview the customer app</b><span class="muted small" style="display:block;margin-top:2px">What a customer sees before joining</span>
       <p class="muted small" style="margin:10px 0 12px">This is your public page — what a customer sees before joining. After joining, they also see your points, tiers and rewards in their wallet.</p>
-      <p class="small"><a class="btn ghost sm" id="customerAppPreviewOpenV243" href="${esc(previewUrl)}" target="_blank" rel="noopener noreferrer">Open full size</a></p>
-      <div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243">
-        <iframe id="customerAppPreviewFrameV243" data-preview-src="${esc(previewUrl)}" title="Customer app preview" loading="lazy" referrerpolicy="no-referrer"></iframe>
-      </div></div>
-      <p class="muted small" id="customerAppPreviewBlockedV243" style="margin-top:10px" hidden>The preview could not be shown inside this page. Use “Open full size” — your public page itself is unaffected.</p>
-    </details>`;
+      <p class="small"><a class="btn ghost sm" id="customerAppPreviewOpenV243" href="${esc(previewUrl)}" target="_blank" rel="noopener noreferrer">Open full size (real page, new tab)</a></p>
+      <div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243 ci-live-preview-body-v326">${customerInterfaceLivePreviewMarkupV326()}</div></div>
+    </div>`;
 }
 function wireCustomerInterfacePreviewV243(){
-  const card=$('customerAppPreviewV243'),frame=$('customerAppPreviewFrameV243');
-  if(!card||!frame)return;
-  card.ontoggle=()=>{
-    if(!card.open||frame.getAttribute('src'))return;
-    frame.setAttribute('src',frame.dataset.previewSrc||'');
-    /* The frame is same-origin, so we can tell "still loading" from "never rendered" by looking
-       for the app's own root element. A blank rectangle with no explanation is the one outcome
-       this card must not produce — a response header or a browser policy that refuses framing
-       leaves exactly that, and the full-size link works regardless. */
-    setTimeout(()=>{
-      if(!frame.isConnected)return;
-      let painted=false;
-      try{painted=!!frame.contentDocument?.getElementById('root')}catch{painted=true}
-      const blocked=$('customerAppPreviewBlockedV243');
-      if(blocked)blocked.hidden=painted;
-    },5000);
-  };
+  refreshCustomerInterfaceLivePreviewV326();
+  ['bn','bc','bp','bbio'].forEach(id=>{
+    const el=$(id);
+    if(el)el.addEventListener('input',refreshCustomerInterfaceLivePreviewV326);
+  });
 }
 /* V269 (owner drew the target shape: Customer Interface → Workspace & Brand / Customer Programme
    / Interface). The three panels already lived on this page in that order; what was missing was
@@ -25388,7 +25401,7 @@ async function customerInterfacePageV243(hashParam){
       <div class="ci-step-main-v325">${formHtml}</div>
       <div class="ci-step-preview-v325">${customerInterfacePreviewSideCardHtmlV325()}</div>
     </div>`;
-  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>Customer Interface</h1><p class="muted small">Everything a customer sees and uses · <b data-ci-active-view-v296>${esc(ciActiveLabelV296)}</b></p></div></div>
+  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>Customer Interface</h1><p class="muted small">Everything a customer sees and uses · <b data-ci-active-view-v296>${esc(ciActiveLabelV296)}</b></p></div>${canEditCustomerInterface?`<button type="button" class="btn" id="ciPublishV326">Publish</button>`:''}</div>
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
     ${workspaceBrandPanelHtmlV259()}
@@ -25406,6 +25419,19 @@ async function customerInterfacePageV243(hashParam){
   </div>`;
   wireCustomerInterfacePreviewV243();
   if(!canEditCustomerInterface)return;
+  /* V326 (owner, 2026-08-15): "press publish > confirmed > customer app will reflect the exact
+     changes without discrepancies". Every section on this page already saves and goes live the
+     moment its own Save/Replace/Add button is clicked — Business Profile via #bsave, the logo via
+     #workspaceLogoPublishV96, the programme editor and sign-up fields via their own RPC calls —
+     there is no separate draft state anywhere to stage and commit atomically. Publish is
+     therefore the review-and-confirm step the owner described: it does not write anything itself
+     (every field it could touch has already been written by its own Save), it takes the owner to
+     Done to confirm the customer-facing result. */
+  const ciPublishBtn=$('ciPublishV326');
+  if(ciPublishBtn)ciPublishBtn.onclick=()=>{
+    toast('Published — customers will see these changes.');
+    location.hash='#/customer-interface/done';
+  };
   /* V259: brand/identity first, then the customer programme, then sign-up QR and app actions —
      the order the panels are rendered in above. */
   wireWorkspaceBrandV259();

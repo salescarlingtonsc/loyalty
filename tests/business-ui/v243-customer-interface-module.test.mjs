@@ -129,26 +129,31 @@ test('V243 Settings no longer renders or wires the moved forms', () => {
 
 /* ------------------------------------------------------------------ (d) the customer preview */
 
-test('V243 the preview iframe is lazy — no src until the card is opened', () => {
-  assert.match(preview, /<details class="card customer-preview-v243" id="customerAppPreviewV243"/);
-  assert.match(preview, /<iframe id="customerAppPreviewFrameV243" data-preview-src="\$\{esc\(previewUrl\)\}"/);
-  assert.doesNotMatch(preview, /<iframe[^>]*\ssrc=/, 'a src in the markup would load on every visit');
-  assert.match(preview, /loading="lazy"/);
-  const wire = section(app, 'function wireCustomerInterfacePreviewV243(', 'function customerInterfaceSectionsHtmlV243(');
-  assert.match(wire, /card\.ontoggle=\(\)=>\{/);
-  assert.match(wire, /if\(!card\.open\|\|frame\.getAttribute\('src'\)\)return;/);
-  assert.match(wire, /frame\.setAttribute\('src',frame\.dataset\.previewSrc\|\|''\);/);
+/* V326 SUPERSEDES the iframe contract. Owner report (2026-08-15): the phone frame rendered
+   blank in production. Root cause: app/vercel.json sends `frame-ancestors 'none'` +
+   `X-Frame-Options: DENY` — a deliberate anti-clickjacking header that refuses to let this app
+   frame itself on ANY page, including its own public portal, so the iframe could never have
+   painted in production regardless of same-origin same-tab logic. Rather than weaken that header
+   sitewide, the preview now renders the customer-facing markup directly — no iframe, nothing to
+   be blocked, nothing to detect. */
+test('V326 the preview renders customer-facing markup inline — no iframe, no CSP dependency', () => {
+  assert.doesNotMatch(preview, /<iframe/, 'an iframe here would hit the same frame-ancestors wall the old preview did');
+  assert.match(preview, /<div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243 ci-live-preview-body-v326">\$\{customerInterfaceLivePreviewMarkupV326\(\)\}<\/div><\/div>/);
+  assert.match(app, /function customerInterfaceLivePreviewMarkupV326\(\)\{/);
   assert.match(page, /wireCustomerInterfacePreviewV243\(\);/);
 });
 
-/* A blank rectangle with no explanation is the one outcome this card must not produce: framing can
-   be refused by a response header or a browser policy, and the full-size link works regardless. */
-test('V243 a preview that never paints says so instead of showing an empty frame', () => {
+test('V326 the live preview reflects the CURRENT form values, not last-saved state', () => {
   const wire = section(app, 'function wireCustomerInterfacePreviewV243(', 'function customerInterfaceSectionsHtmlV243(');
-  assert.match(preview, /<p class="muted small" id="customerAppPreviewBlockedV243"[^>]*hidden>/);
-  assert.match(preview, /Use “Open full size” — your public page itself is unaffected\./);
-  assert.match(wire, /painted=!!frame\.contentDocument\?\.getElementById\('root'\)/);
-  assert.match(wire, /if\(blocked\)blocked\.hidden=painted;/);
+  assert.match(wire, /refreshCustomerInterfaceLivePreviewV326\(\);/);
+  assert.match(wire, /\['bn','bc','bp','bbio'\]\.forEach\(id=>\{/);
+  assert.match(wire, /el\.addEventListener\('input',refreshCustomerInterfaceLivePreviewV326\)/);
+  const markup = section(app, 'function customerInterfaceLivePreviewMarkupV326(', 'function refreshCustomerInterfaceLivePreviewV326(');
+  // Reads the live input value, falling back to saved state only when the field isn't on screen.
+  assert.match(markup, /\$\('bn'\)\?\.value\|\|S\.biz\.name/);
+  assert.match(markup, /\$\('bc'\)\?\.value\|\|S\.biz\.brand_color/);
+  assert.match(markup, /\$\('bbio'\)\?\.value\|\|''/);
+  assert.match(markup, /\$\('bp'\)\?\.value\|\|''/);
 });
 
 test('V243 the preview points at the PUBLIC slug page, same-origin and relative', () => {
@@ -163,14 +168,16 @@ test('V243 the preview points at the PUBLIC slug page, same-origin and relative'
 test('V243 the preview is honestly labelled and openable full size', () => {
   assert.match(preview, /<b>Preview the customer app<\/b>/);
   assert.match(preview, /This is your public page — what a customer sees before joining\. After joining, they also see your points, tiers and rewards in their wallet\./);
-  assert.match(preview, /<a class="btn ghost sm" id="customerAppPreviewOpenV243" href="\$\{esc\(previewUrl\)\}" target="_blank" rel="noopener noreferrer">Open full size<\/a>/);
+  // V326: the link now says explicitly that it opens the REAL page (a normal top-level
+  // navigation, unaffected by frame-ancestors) — distinguishing it from the inline preview above,
+  // which is a re-render of the same data, not the live page itself.
+  assert.match(preview, /<a class="btn ghost sm" id="customerAppPreviewOpenV243" href="\$\{esc\(previewUrl\)\}" target="_blank" rel="noopener noreferrer">Open full size \(real page, new tab\)<\/a>/);
 });
 
 test('V243 the phone frame is a real device mock that still fits a 390px screen', () => {
-  assert.match(preview, /<div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243">/);
+  assert.match(preview, /<div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243 ci-live-preview-body-v326">/);
   assert.match(indexHtml, /\.customer-preview-phone-v243\{[^}]*width:390px;max-width:100%/);
   assert.match(indexHtml, /\.customer-preview-screen-v243\{[^}]*height:640px;max-height:70vh;[^}]*overflow:hidden/);
-  assert.match(indexHtml, /\.customer-preview-screen-v243 iframe\{[^}]*width:100%;height:100%;border:0/);
   // The workspace page must never scroll sideways because of it.
   assert.match(indexHtml, /\.settings-page,\.settings-page \.split,\.settings-page \.card\{[^}]*min-width:0[^}]*max-width:100%/s);
   assert.match(page, /<div class="settings-page" data-workspace-i18n>/);
