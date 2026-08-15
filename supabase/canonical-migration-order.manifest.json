@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 276,
-  "itemCount": 321,
+  "pendingCount": 277,
+  "itemCount": 322,
   "items": [
     {
       "order": 1,
@@ -3220,7 +3220,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 321,
+      "order": 322,
       "kind": "pending",
       "version": "20260815090003",
       "name": "nestly_v329_owner_reschedule_booking_request",

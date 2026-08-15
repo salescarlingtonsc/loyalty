@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 320,
-  "executableCount": 306,
+  "itemCount": 321,
+  "executableCount": 307,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -3046,7 +3046,7 @@
       "sha256": "68827ed3ed9ffbd78aacd7afe6c6581831ebf936f389f17ad0c9044d1e05bf3c"
     },
     {
-      "order": 320,
+      "order": 321,
       "kind": "executable",
       "path": "db/migrations/20260815_nestly_v329_owner_reschedule_booking_request.sql",
       "semanticVersion": "v329",
