@@ -11353,7 +11353,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      reader is. "All programmes" sat alone on the right of the heading, so at 390px it read as a
      stray action rather than the level above. The same trail now renders for every category, and
      it keeps the one back control (id and handler unchanged) instead of adding a second. */
-  const growBreadcrumbV268=topic=>!topic?'':`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button><span aria-hidden="true">/</span><span class="grow-breadcrumb-current-v268">${esc(topic.title)}</span></nav>`;
+  /* V346 (owner annotation, screenshot 2026-08-16): the "All programmes" pill-with-label was too
+     heavy for a plain back action — replaced with a small icon-only back button, same target. */
+  const growBreadcrumbV268=topic=>!topic?'':`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button><span class="grow-breadcrumb-current-v268">${esc(topic.title)}</span></nav>`;
   const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
   /* V235: the Stamp card tile is a third VIEW of the point engine, not a third section — it
      drills into the same rows, so nothing is duplicated and no tile is a dead end. */
@@ -11998,11 +12000,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      visits/spend/points) stays the one thing this page does not expose — "Edit" jumps there. */
   const growTiersConfiguredV331=liveLoyaltyModelKeysV240.includes('tiers');
   const growTiersOnV331=programmeSpineOnV314('tiers')===true;
+  /* V347: the real stored basis, read off the live loyalty_programs row — this used to be a
+     hardcoded "Points earned" label regardless of what was actually saved. */
+  const growTiersBasisV347=snapshot.loyalty?.tier_basis||'visits';
+  const growTiersBasisLabelV347=({points_earned:'Points earned',spend:'Lifetime spend',visits:'Visits'})[growTiersBasisV347]||'Visits';
   const growTiersLosingV331=growTiersOnV331?[]:programmeExclusionsV322('tiers').filter(other=>programmeSpineOnV314(other)===true);
   const growTiersRowV331=(tier,{history=false}={})=>{
     const threshold=Math.max(0,Number(tier.threshold||0));
     const multiplier=Number(tier.points_multiplier||1);
-    const meta=`<span class="grow-tier-name-cell-v343"><span class="grow-tier-row-icon-v343" aria-hidden="true">${CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:18})}</span><b data-merchant-content>${esc(tier.name)}</b>${multiplier!==1?`<small class="muted" data-merchant-content>${multiplier}× points</small>`:''}</span>`;
+    const perkNote=String(tier.perk_note||'').trim();
+    const meta=`<span class="grow-tier-name-cell-v343"><span class="grow-tier-row-icon-v343" aria-hidden="true">${CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:18})}</span><b data-merchant-content>${esc(tier.name)}</b>${multiplier!==1?`<small class="muted" data-merchant-content>${multiplier}× points</small>`:''}${perkNote?`<small class="muted" data-merchant-content>${esc(perkNote)}</small>`:''}</span>`;
     if(history)return `<li class="grow-tier-table-row-v343" data-grow-tiers-row-v331="${esc(tier.id)}">${meta}<span data-merchant-content>${threshold} points</span><span class="pill off">In history</span><span></span></li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
@@ -12010,7 +12017,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span data-merchant-content>${threshold} points</span>
       <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${paused?'Off':'Live'}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-        ${canSetupGrow?`<button type="button" class="btn ghost sm" role="switch" aria-checked="${!paused}" data-grow-tiers-toggle-v331="${esc(tier.id)}">${paused?'Turn on':'Turn off'}</button>
+        ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
+        <button type="button" class="btn ghost sm" role="switch" aria-checked="${!paused}" data-grow-tiers-toggle-v331="${esc(tier.id)}">${paused?'Turn on':'Turn off'}</button>
         <button type="button" class="btn ghost sm" data-grow-tiers-delete-v331="${esc(tier.id)}">Delete</button>`:''}
       </span></li>
       <li class="imp-note" data-grow-tiers-deleteconfirm-v331="${esc(tier.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
@@ -12020,11 +12028,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </li>`;
   };
   const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note" data-grow-tiers-addform-v331>
-    <b>Add a tier</b>
+    <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Reached at</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddPerkV345">Benefit <span class="muted">(optional)</span></label><br><textarea id="growTiersAddPerkV345" class="grow-setup-input-v301" style="width:100%;max-width:420px" rows="2" placeholder="e.g. Free item every visit, or 10% off">${esc(growTiersAddDraftV331.perkNote||'')}</textarea></p>
     ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>Save tier</button><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button></div>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Save tier'}</button><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button></div>
   </li>`:growTiersAddOpenV331==='prompt'?`<li class="imp-note" data-grow-tiers-addprompt-v331>
     <b>Tier saved and live for customers.</b>
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-add-again-v331="1">Add another tier</button><button type="button" class="btn ghost sm" data-grow-tiers-add-done-v331="1">Done</button></div>
@@ -12051,18 +12060,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         actionHtml:'<a class="btn ghost sm" href="#/grow/tiers">Retry</a>'})
     :!growTiersConfiguredV331
     ?CUI.emptyState({iconName:'star',title:'Tier membership is not set up yet',
-        body:'Choose tiers, set how tiers are earned, and add a first rung customers can climb to.',
+        body:'Starts customers on Points earned (recommended) — change how tiers are earned any time from this page, then add your first rung below.',
         actionHtml:canSetupGrow
-          ?'<button type="button" class="btn sm" id="growTiersSetupV331">Set up Tier membership</button>'
+          ?`<button type="button" class="btn sm" id="growTiersSetupV331"${growTiersBusyV331?' disabled':''}>Set up Tier membership</button>${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<div class="grow-tiers-page-v343">
-      <div class="grow-tier-basis-card-v343"><span><b>Tier level is earned by</b><p class="muted small">Points earned</p></span>${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-edit-v331="1">Change</button>`:''}</div>
+      <div class="grow-tier-basis-card-v343"><span><b>Tier level is earned by</b><p class="muted small">${esc(growTiersBasisLabelV347)}</p></span>${canSetupGrow?`<label class="btn ghost sm" style="cursor:pointer;position:relative"><span>Change</span><select data-grow-tiers-basis-select-v347 aria-label="Tier level is earned by" style="position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer"${growTiersBusyV331?' disabled':''}>
+        <option value="points_earned"${growTiersBasisV347==='points_earned'?' selected':''}>Points earned</option>
+        <option value="visits"${growTiersBasisV347==='visits'?' selected':''}>Visits</option>
+        <option value="spend"${growTiersBasisV347==='spend'?' selected':''}>Lifetime spend</option>
+      </select></label>`:''}</div>
+      ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
       ${growTiersLadderV343}
       <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
         <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} set up</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-edit-v331="1">Edit</button>
-            <button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">Add tier</button>
+            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">Add tier</button>
             <button type="button" class="btn sm" role="switch" aria-checked="${growTiersOnV331}" data-grow-switchtoggle-v322="tiers">${growTiersOnV331?'Turn off':'Turn on'}</button>`:''}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="tiers" style="margin-top:8px"${growSwitchPendingV322==='tiers'?'':' hidden'}>
@@ -12236,7 +12249,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','offers','history'].includes(programmeView);
         const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:18})} `:'';
-        return `<div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):(dedicatedViewV341?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm" href="#/grow">${CUI.icon('back',{size:16})}<span>All programmes</span></a></nav>`:'')}<h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
+        return `<div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):(dedicatedViewV341?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a></nav>`:'')}<h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
       })()}
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
@@ -12290,7 +12303,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true,pending:growRetentionDiffV291.changed.get(String(program.id))||null})}).join('')
         +growRetentionDiffV291.added.map(rule=>programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:rule.name,copy:'Customers see this bring-back rule once you publish.',status:'Not live yet',statusTone:'new',merchant:true})).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
-      ${canWinback?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
+      <!-- V346 (owner annotation, screenshot 2026-08-16): removed from the Lifestyle rewards
+           detail page specifically ("Remove"). renderComebackCardV300/comebackHost itself is left
+           untouched — it is still mounted from the main Grow tiles view (line ~23392) and the
+           standalone Retention programs page, both unaffected by this one call site. -->
+      ${canWinback&&!topicOnV229('lifestyle')?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
       `:''}
       ${/* V319: one definition, two entry points — the drilled Promotions topic (this line) and
            the Limited Offer rail child below. */''}
@@ -13067,10 +13084,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      Same shape as the V326 points wiring above: the summary row's own on/off toggle reuses
      data-grow-switchtoggle-v322/data-grow-switchconfirm-yes-v322/-no-v322 verbatim (kind="tiers"),
      already wired over the whole of outerMain. Everything below is genuinely new. */
+  /* V347 (owner: "why does Set up tier still bring me to that page"): first-time tier setup now
+     happens entirely on THIS page — no more bounce into the multi-step wizard. Defaults to Points
+     earned (the same basis this page always displayed, even back when the label was hardcoded),
+     turns the tiers spine on (self-healing, immediate-write, no draft — set_programmes_v314), and
+     opens the Add-tier form so the owner adds their first rung right here. */
   const growTiersSetupCta=$('growTiersSetupV331');
-  if(growTiersSetupCta)growTiersSetupCta.onclick=()=>{
-    pendingGrowSetupModelV303={kind:'tiers',from:'tiers'};
-    nav('#/grow/setup');
+  if(growTiersSetupCta)growTiersSetupCta.onclick=async()=>{
+    if(growTiersBusyV331)return;
+    growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    const {error:basisError}=await sb.rpc('business_set_tier_basis_v347',{p_business:S.biz.id,p_basis:'points_earned'});
+    if(!isGrowCurrent())return;
+    if(basisError){growTiersBusyV331=false;growTiersErrorV331=ownerErrorText(basisError);return growRerenderV322();}
+    if(snapshot.loyalty)snapshot.loyalty.tier_basis='points_earned';else snapshot.loyalty={tier_basis:'points_earned'};
+    const set={tiers:true};
+    programmeExclusionsV322('tiers').forEach(other=>{set[other]=false});
+    const {ok,error:switchError}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
+    if(!isGrowCurrent())return;
+    growTiersBusyV331=false;
+    if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} Nothing was changed.`;return growRerenderV322();}
+    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};
+    growRerenderV322();
   };
   outerMain.querySelectorAll('[data-grow-tiers-manage-tab-v331]').forEach(button=>button.onclick=()=>{
     const tab=button.dataset.growTiersManageTabV331;
@@ -13078,27 +13112,51 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersManageTabV331=tab;
     growRerenderV322();
   });
-  const growTiersEditLink=outerMain.querySelector('[data-grow-tiers-edit-v331]');
-  if(growTiersEditLink)growTiersEditLink.onclick=()=>{
-    /* Lands the wizard on the Climbing step (tier basis: visits/spend/points) -- the one tier
-       setting this page does not expose. Gift/rung management is this page's own job now. */
-    pendingGrowSetupModelV303={kind:'tiers',from:'tiers'};
-    pendingGrowSetupRewardV303={mode:'climbing'};
-    nav('#/grow/setup');
+  /* V347: the "Change" pill's real control is an invisible <select> stacked on top of it (see
+     render, ~23216) — this avoids building a whole popover for a 3-option choice, same trick the
+     photo-upload "Choose photo" label+file-input control already uses elsewhere on this page. */
+  const growTiersBasisSelect=outerMain.querySelector('[data-grow-tiers-basis-select-v347]');
+  if(growTiersBasisSelect)growTiersBasisSelect.onchange=async()=>{
+    if(growTiersBusyV331)return;
+    const basis=growTiersBasisSelect.value;
+    if(!['visits','spend','points_earned'].includes(basis))return;
+    growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    const {error}=await sb.rpc('business_set_tier_basis_v347',{p_business:S.biz.id,p_basis:basis});
+    if(!isGrowCurrent())return;
+    growTiersBusyV331=false;
+    if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
+    if(snapshot.loyalty)snapshot.loyalty.tier_basis=basis;else snapshot.loyalty={tier_basis:basis};
+    toast('Tier basis updated');
+    growRerenderV322();
   };
   const growTiersAddOpen=outerMain.querySelector('[data-grow-tiers-add-v331]');
   if(growTiersAddOpen)growTiersAddOpen.onclick=()=>{
-    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';
+    growTiersEditingV331=null;
+    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';
     growRerenderV322();
   };
+  /* V345: each tier row's own Edit button opens the same form, pre-filled, targeting
+     business_update_tier_v331 instead of the create RPC on Save — same pattern V343 already
+     established for gift rows (growPointsScopedRewardsV326 edit above). */
+  outerMain.querySelectorAll('[data-grow-tiers-row-edit-v345]').forEach(button=>button.onclick=()=>{
+    const id=button.dataset.growTiersRowEditV345;
+    const tier=[...growTiersPublishedV331,...growTiersHistoryV331].find(t=>String(t.id)===String(id));
+    if(!tier)return;
+    growTiersEditingV331=id;
+    growTiersAddOpenV331='form';
+    growTiersAddDraftV331={name:tier.name||'',threshold:String(tier.threshold||''),perkNote:tier.perk_note||''};
+    growTiersErrorV331='';
+    growRerenderV322();
+  });
   const growTiersAddCancel=outerMain.querySelector('[data-grow-tiers-add-cancel-v331]');
   if(growTiersAddCancel)growTiersAddCancel.onclick=()=>{
-    growTiersAddOpenV331='';growTiersErrorV331='';
+    growTiersAddOpenV331='';growTiersErrorV331='';growTiersEditingV331=null;
     growRerenderV322();
   };
   const growTiersAddAgain=outerMain.querySelector('[data-grow-tiers-add-again-v331]');
   if(growTiersAddAgain)growTiersAddAgain.onclick=()=>{
-    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:''};growTiersErrorV331='';
+    growTiersEditingV331=null;
+    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';
     growRerenderV322();
   };
   const growTiersAddDone=outerMain.querySelector('[data-grow-tiers-add-done-v331]');
@@ -13109,20 +13167,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersAddSave=outerMain.querySelector('[data-grow-tiers-add-save-v331]');
   if(growTiersAddSave)growTiersAddSave.onclick=async()=>{
     if(growTiersBusyV331)return;
-    const nameField=$('growTiersAddNameV331'),thresholdField=$('growTiersAddThresholdV331');
+    const nameField=$('growTiersAddNameV331'),thresholdField=$('growTiersAddThresholdV331'),perkField=$('growTiersAddPerkV345');
     const name=String(nameField?.value||'').trim();
     const threshold=Math.round(Number(thresholdField?.value||''));
-    growTiersAddDraftV331={name,threshold:thresholdField?.value||''};
+    const perkNote=String(perkField?.value||'').trim();
+    growTiersAddDraftV331={name,threshold:thresholdField?.value||'',perkNote};
     if(!name){growTiersErrorV331='Name the tier customers will see.';return growRerenderV322();}
     if(!Number.isFinite(threshold)||threshold<0){growTiersErrorV331='Reached-at must be zero or a positive number.';return growRerenderV322();}
     growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
-    const {error}=await sb.rpc('business_create_tier_v331',{
-      p_business:S.biz.id,p_name:name,p_threshold:threshold});
+    let error;
+    if(growTiersEditingV331){
+      ({error}=await sb.rpc('business_update_tier_v331',{
+        p_business:S.biz.id,p_tier:growTiersEditingV331,p_name:name,p_threshold:threshold,p_perk_note:perkNote||null}));
+    }else{
+      ({error}=await sb.rpc('business_create_tier_v331',{
+        p_business:S.biz.id,p_name:name,p_threshold:threshold,p_perk_note:perkNote||null}));
+    }
     if(!isGrowCurrent())return;
     growTiersBusyV331=false;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
-    toast('Tier added and live for customers');
-    growTiersAddOpenV331='prompt';
+    if(growTiersEditingV331){
+      growTiersEditingV331=null;growTiersAddOpenV331='';
+      toast('Tier updated');
+    }else{
+      toast('Tier added and live for customers');
+      growTiersAddOpenV331='prompt';
+    }
     growRerenderV322();
   };
   outerMain.querySelectorAll('[data-grow-tiers-toggle-v331]').forEach(button=>button.onclick=async()=>{
