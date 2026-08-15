@@ -152,8 +152,22 @@ test('V326 the live preview reflects the CURRENT form values, not last-saved sta
   // Reads the live input value, falling back to saved state only when the field isn't on screen.
   assert.match(markup, /\$\('bn'\)\?\.value\|\|S\.biz\.name/);
   assert.match(markup, /\$\('bc'\)\?\.value\|\|S\.biz\.brand_color/);
-  assert.match(markup, /\$\('bbio'\)\?\.value\|\|''/);
-  assert.match(markup, /\$\('bp'\)\?\.value\|\|''/);
+});
+
+/* V327 (owner, screenshot of the real wallet — tier, points, rewards, bottom nav — "must tally
+   100%"). Bio and booking policy are still listened for (harmless — they just re-trigger an
+   identical render) but no longer READ here: the wallet a customer reaches after joining never
+   shows either field (confirmed against renderCustomerWallet/customerMerchantExperienceMarkupV95
+   — neither field is referenced anywhere in that render path). Only the pre-join public portal
+   shows them, which this preview no longer represents. */
+test('V327 the preview calls the REAL wallet render function, not a hand-rolled lookalike', () => {
+  const markup = section(app, 'function customerInterfaceLivePreviewMarkupV326(', 'function customerInterfacePreviewSideCardHtmlV325(');
+  assert.match(markup, /customerMerchantExperienceMarkupV95\(\{/);
+  assert.match(markup, /customerPrimaryNavigation\('programmes',\{\}\)/);
+  assert.doesNotMatch(markup, /\$\('bbio'\)/, 'bio never renders in the wallet — reading it here would show a field production never displays');
+  assert.doesNotMatch(markup, /\$\('bp'\)/, 'booking policy never renders in the wallet either');
+  // The sample numbers are clearly labelled, not presented as if they were a real customer's.
+  assert.match(markup, /Sample customer — points, tier and rewards are for scale, not live data\./);
 });
 
 test('V243 the preview points at the PUBLIC slug page, same-origin and relative', () => {
@@ -165,13 +179,16 @@ test('V243 the preview points at the PUBLIC slug page, same-origin and relative'
   assert.doesNotMatch(preview, /join\?token=/);
 });
 
-test('V243 the preview is honestly labelled and openable full size', () => {
+/* V327 SUPERSEDES the V326 copy: the card now shows the WALLET (post-join), not the pre-join
+   public page, so its own label must say so — the old sentence would now describe a screen the
+   card no longer renders. */
+test('V327 the preview is honestly labelled for the screen it actually shows, and openable full size', () => {
   assert.match(preview, /<b>Preview the customer app<\/b>/);
-  assert.match(preview, /This is your public page — what a customer sees before joining\. After joining, they also see your points, tiers and rewards in their wallet\./);
-  // V326: the link now says explicitly that it opens the REAL page (a normal top-level
-  // navigation, unaffected by frame-ancestors) — distinguishing it from the inline preview above,
-  // which is a re-render of the same data, not the live page itself.
-  assert.match(preview, /<a class="btn ghost sm" id="customerAppPreviewOpenV243" href="\$\{esc\(previewUrl\)\}" target="_blank" rel="noopener noreferrer">Open full size \(real page, new tab\)<\/a>/);
+  assert.match(preview, /This is the wallet a customer reaches by clicking into your firm — their tier, points and rewards\. Your bio and booking policy show on your public page instead, before a customer joins\./);
+  // The link still opens the REAL public page (a normal top-level navigation, unaffected by
+  // frame-ancestors) — distinguishing it from the inline preview above, which is a re-render of
+  // sample wallet data, not a live page at all.
+  assert.match(preview, /<a class="btn ghost sm" id="customerAppPreviewOpenV243" href="\$\{esc\(previewUrl\)\}" target="_blank" rel="noopener noreferrer">Open your public page \(real page, new tab\)<\/a>/);
 });
 
 test('V243 the phone frame is a real device mock that still fits a 390px screen', () => {

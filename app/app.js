@@ -35819,23 +35819,65 @@ function wireBookingRulesV325(isCurrent=()=>true){
    preview), this renders the customer-facing markup directly into the panel — the same approach
    openCustomerProgrammePreviewV148 already uses for its owner-preview modal — reading the LIVE
    form values (not last-saved DB state) so edits show before Save is even clicked. */
+/* V327 (owner, 2026-08-15, screenshot of the actual wallet — tier pill, points balance, reward
+   list, bottom nav — with: "must tally 100% if not there will be misalignment and
+   misunderstanding"). "What a customer sees before joining" (the booking teaser above) and "what
+   a customer sees after they click into the firm" (this) are two different screens; the owner's
+   photo is the second one. Points balance, tier and which rewards are ready to claim belong to
+   ONE specific joined customer — nothing on THIS settings page can produce a real customer's
+   real balance, because Business Profile does not configure that. So this calls the SAME
+   production functions the real wallet calls (customerMerchantExperienceMarkupV95,
+   customerPrimaryNavigation — not a lookalike copy) for everything the owner's edits here
+   actually control (name, logo, brand colour), fed with clearly-labelled SAMPLE tier/points/
+   reward numbers for the parts only a real customer's data could ever fill in. rewardsHost is
+   left false (the real reward list is an authenticated RPC read with no owner-safe substitute)
+   and customerInterfaceSampleRewardRowsV326 draws sample reward rows in the exact "wallet-reward"
+   markup that RPC would have produced, with the QR action stripped (no real intent to create). */
+function customerInterfaceSampleRewardRowsV326(rewardUnit){
+  const sample=[
+    {cost:5,name:'Free Lotion',ready:true},
+    {cost:1000,name:'Free Facial cream',ready:true}
+  ];
+  return `<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
+    <div class="wallet-rewards">${sample.map(r=>`<article class="wallet-reward">
+      <div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(r.cost))} ${esc(rewardUnit)}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.name)}</span></b><span class="spacer"></span>${r.ready?'<span class="pill ok">Ready</span>':''}</div>
+      <p class="small" style="margin-top:9px">Available at counter</p>
+      <div class="wallet-reward-actions"><button class="btn sm" type="button" disabled title="Sample preview — not a real redemption">${CUI.icon('scan',{size:17})}<span>Show QR at counter</span></button></div>
+    </article>`).join('')}</div>`;
+}
 function customerInterfaceLivePreviewMarkupV326(){
   const logoImg=document.querySelector('#workspaceLogoPreviewV96 img');
   const logoUrl=logoImg?.getAttribute('src')||'';
   const name=($('bn')?.value||S.biz.name||'').trim()||'Your business';
-  const initial=name.charAt(0).toUpperCase()||'N';
   const brandColor=$('bc')?.value||S.biz.brand_color||'#FF6B5E';
-  const bio=($('bbio')?.value||'').trim();
-  const policy=($('bp')?.value||'').trim();
-  return `<div class="ci-live-preview-inner-v326">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:52px;height:52px;border-radius:14px;overflow:hidden;background:${esc(brandColor)}22;display:flex;align-items:center;justify-content:center;font-weight:700;color:${esc(brandColor)};flex:0 0 auto">${logoUrl?`<img src="${esc(logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover">`:esc(initial)}</div>
-      <div><h1 style="font-size:1.25rem;margin:0;color:#17161a">${esc(name)}</h1><p style="margin:2px 0 0;color:#8a8f98;font-size:.85rem">Book with us — it takes 30 seconds.</p></div>
+  const presentation={
+    locale:normalizeCustomerLocale(customerLocale),logoUrl,heroImageUrl:'',
+    heroColor:contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(brandColor)?brandColor:'#28212f'),
+    name,tagline:'',description:'',balance:77877,unit:'points',
+    tier:{current:{label:'Diamond'},basis:'points_earned',metric:77877,tiers:[]},
+    benefits:[],offers:[],rewards:[],products:[],services:[],capabilities:{}
+  };
+  const loyalty={balance:77877,unit:'points',enabled:true};
+  const reward={name:'Free Facial cream',cost_units:1000,available_now:true,remaining_units:0};
+  const actionableCard={loyalty,next_eligible_reward:reward,birthday_benefit:null};
+  const merchantExperience=customerMerchantExperienceMarkupV95({
+    presentation,business:{name,slug:S.biz?.slug||'',currency:'SGD'},actionableCard,programmeCards:[],
+    bookingEnabled:true,offersStatus:'ready',rewardsHost:false,
+    programmeCapabilities:{
+      programmes:[{kind:'points',customer_visible:true,active:true},{kind:'tiers',customer_visible:true,active:true}],
+      programmes_contract:'v310',rewards:true,activity:true,appointments:true,booking_request:true
+    }
+  });
+  return `<div class="wallet-shell customer-shell customer-surface ci-live-preview-inner-v326"><div class="wallet-inner">
+    <p class="muted small ci-live-preview-sample-badge-v326" role="note">Sample customer — points, tier and rewards are for scale, not live data.</p>
+    <div id="walletBody">${merchantExperience}
+      <section class="card customer-programme-card-v310" aria-label="Sample rewards">
+        <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>Rewards</span></h2>
+        ${customerInterfaceSampleRewardRowsV326('points')}
+      </section>
     </div>
-    ${bio?`<p style="margin:14px 0 0;color:#4b4f57;font-size:.9rem;line-height:1.5">${esc(bio)}</p>`:''}
-    <button type="button" disabled style="margin-top:18px;background:${esc(brandColor)};color:#fff;border:0;border-radius:12px;padding:12px 18px;font-weight:600;font-size:.95rem">Book now</button>
-    ${policy?`<p style="margin-top:14px;color:#8a8f98;font-size:.8rem"><b>Good to know:</b> ${esc(policy)}</p>`:''}
-  </div>`;
+    ${customerPrimaryNavigation('programmes',{})}
+  </div></div>`;
 }
 function refreshCustomerInterfaceLivePreviewV326(){
   const markup=customerInterfaceLivePreviewMarkupV326();
@@ -35852,12 +35894,19 @@ function customerInterfacePreviewSideCardHtmlV325(){
 function customerInterfacePreviewUrlV243(){
   return `${location.pathname}#/b/${encodeURIComponent(String(S.biz?.slug||''))}`;
 }
+/* V327 (owner: "must tally 100%… what happened when customer click into the firm"): this now
+   shows the WALLET a customer reaches after clicking into your firm (tier, points, rewards) —
+   the surface the owner's screenshot was of — not the pre-join public page this card described
+   until V326. Name, logo and brand colour are exact; points/tier/rewards are labelled sample
+   data (see customerInterfaceLivePreviewMarkupV326's own note). The pre-join public page (where
+   Company bio and Booking policy actually show — neither appears in the wallet at all) is still
+   reachable, unstyled preview aside, via "Open full size" below, which opens the real page. */
 function customerInterfacePreviewCardHtmlV243(){
   const previewUrl=customerInterfacePreviewUrlV243();
   return `<div class="card customer-preview-v243" id="customerAppPreviewV243" style="margin-top:16px">
-      <b>Preview the customer app</b><span class="muted small" style="display:block;margin-top:2px">What a customer sees before joining</span>
-      <p class="muted small" style="margin:10px 0 12px">This is your public page — what a customer sees before joining. After joining, they also see your points, tiers and rewards in their wallet.</p>
-      <p class="small"><a class="btn ghost sm" id="customerAppPreviewOpenV243" href="${esc(previewUrl)}" target="_blank" rel="noopener noreferrer">Open full size (real page, new tab)</a></p>
+      <b>Preview the customer app</b><span class="muted small" style="display:block;margin-top:2px">What a customer sees after they join and open your firm</span>
+      <p class="muted small" style="margin:10px 0 12px">This is the wallet a customer reaches by clicking into your firm — their tier, points and rewards. Your bio and booking policy show on your public page instead, before a customer joins.</p>
+      <p class="small"><a class="btn ghost sm" id="customerAppPreviewOpenV243" href="${esc(previewUrl)}" target="_blank" rel="noopener noreferrer">Open your public page (real page, new tab)</a></p>
       <div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243 ci-live-preview-body-v326">${customerInterfaceLivePreviewMarkupV326()}</div></div>
     </div>`;
 }
