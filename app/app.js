@@ -35692,11 +35692,17 @@ function bookingRulesCardHtmlV325(){
    {date}/{time}/{location} are the only tokens the send path understands
    (bookingConfirmationMessageV330) — {location} is an exact pull of the branch's Address field
    from Branches, never a shortened or reformatted version of it. */
+const BOOKING_CONFIRMATION_TEMPLATE_TOKENS_V330=Object.freeze([
+  {token:'{customer}',label:'Customer'},{token:'{service}',label:'Service'},
+  {token:'{staff}',label:'Staff'},{token:'{date}',label:'Date'},{token:'{time}',label:'Time'},
+  {token:'{location}',label:'Location'}
+]);
 function bookingConfirmationTemplateCardHtmlV330(){
   const template=S.biz.booking_confirmation_template||DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330;
   return `<div class="card" style="margin-top:16px">
     <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">WhatsApp confirmation message</b>
-    <p class="muted small" style="margin-top:2px">Sent when you tap WhatsApp after confirming a booking request. Use {customer}, {service}, {staff}, {date}, {time}, {location} — they get filled in for each booking. {location} is the branch's Address, exactly as set in Branches.</p>
+    <p class="muted small" style="margin-top:2px">Sent when you tap WhatsApp after confirming a booking request. Tap a field below to insert it — {location} is the branch's Address, exactly as set in Branches.</p>
+    <div class="row" style="margin-top:10px;gap:6px;flex-wrap:wrap">${BOOKING_CONFIRMATION_TEMPLATE_TOKENS_V330.map(t=>`<button type="button" class="btn ghost sm" data-insert-template-token="${esc(t.token)}">+ ${esc(t.label)}</button>`).join('')}</div>
     <textarea id="setConfirmationTemplate" rows="4" style="margin-top:10px">${esc(template)}</textarea>
     <p class="muted small" id="setConfirmationTemplatePreview" style="margin-top:8px">${esc(bookingConfirmationMessageV330({template,customerName:'Mei',serviceName:'Facial',staffName:'Devi',startsAt:new Date(Date.now()+86400000).toISOString(),location:'313 Orchard Road, Singapore 238895'}))}</p>
     <div style="margin-top:10px"><button class="btn sm" id="setConfirmationTemplateSave">Save message</button></div>
@@ -35741,6 +35747,18 @@ function wireBookingRulesV325(isCurrent=()=>true){
         location:'313 Orchard Road, Singapore 238895'});
     };
     $('setConfirmationTemplate').oninput=updatePreview;
+    /* Owner: "those auto fill buttons needs to be present, so i can click myself instead of
+       guessing what auto fill buttons we can type". Inserts at the cursor (or replaces a
+       selection) rather than always appending, so a token can be dropped mid-sentence. */
+    document.querySelectorAll('[data-insert-template-token]').forEach(button=>button.onclick=()=>{
+      const field=$('setConfirmationTemplate');if(!field)return;
+      const token=button.dataset.insertTemplateToken;
+      const start=field.selectionStart??field.value.length,end=field.selectionEnd??field.value.length;
+      field.value=field.value.slice(0,start)+token+field.value.slice(end);
+      const caret=start+token.length;
+      field.focus();field.setSelectionRange(caret,caret);
+      updatePreview();
+    });
     if($('setConfirmationTemplateSave'))$('setConfirmationTemplateSave').onclick=async()=>{
       const value=$('setConfirmationTemplate').value.trim()||null;
       const button=$('setConfirmationTemplateSave'),err=$('setConfirmationTemplateErr');
