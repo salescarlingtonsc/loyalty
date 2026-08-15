@@ -11310,31 +11310,31 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     /* V294 (owner markup 2026-08-12): pending-setup cards carry the owner's own benefit lines. */
     /* V296: "Points redemption" renamed to "Points System" here too — the tile is the door the
        owner presses, so its title must match the page it opens. */
-    {key:'points',icon:'till',title:'Points System',blurb:'Let customers come back with points!',
+    {key:'points',icon:'star',title:'Point system',blurb:'Customers earn points and redeem gifts.',
       status:loyaltyModelTileStatusV235('redeem'),
       summary:!liveLoyaltyModelKeysV240.includes('redeem')?''
         :rewardCount?`${rewardCount} redeemable reward${rewardCount===1?'':'s'}`
         :'Set the earning rate and rewards'},
-    {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Do tier membership for your customers!',
+    {key:'tiers',icon:'memberships',title:'Tier membership',blurb:'Reward loyal customers as they climb tiers.',
       status:loyaltyModelTileStatusV235('tiers'),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?''
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(growTiersPublishedV331.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :growTiersPublishedV331.length?`${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'}: ${growTiersPublishedV331.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Create the ladder customers climb'},
-    {key:'stamps',icon:'check',title:'Stamp card',blurb:'Customers earn stamps and redeem!',
+    {key:'stamps',icon:'loyalty',title:'Stamp card',blurb:'Give rewards after a set number of visits or purchases.',
       status:loyaltyModelTileStatusV235('stamps'),
       summary:!liveLoyaltyModelKeysV240.includes('stamps')?''
         :rewardCount?`${rewardCount} milestone${rewardCount===1?'':'s'}`
         :'Set the spend per stamp and its milestones'},
-    {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
+    {key:'lifestyle',icon:'loyalty',title:'Lifestyle rewards',blurb:'Run campaigns like welcome offers, birthdays, and more.',
       status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
       summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
     /* V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out of the
        Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
        publishedPromotions/promotionDrafts computations stay in scope above for that page. */
-    {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Refer friends and get rewards!',
-      status:!modules.includes('referrals')?['Not included','off']:referralLive?['Live','on']:referralConfigured?['Paused','off']:['Not set up','off'],
+    {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Let customers refer friends and earn rewards.',
+      status:!modules.includes('referrals')?['Not included','off']:referralLive?['Ongoing','on']:referralConfigured?['Paused','off']:['Not set up','off'],
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
     /* V294 (owner markup 2026-08-12, combined "Memberships & gift cards" card crossed out:
        "remove this programme"). Memberships stands alone as its own card ("Do membership for
@@ -11432,7 +11432,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V343 (owner markup: "photo 1 change to become photo 2") — the square tile grid becomes a
      compact row list: icon, name, status pill inline, chevron trailing. Same button, same
      data-grow-topic-v229/aria-label wiring, only the layout class and markup shape changed. */
-  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-row-v343${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:20})}</span><span class="grow-topic-row-name-v343"><b>${esc(topic.title)}</b></span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><span class="grow-topic-tile-corner-v335" aria-hidden="true">${CUI.icon('forward',{size:16})}</span></button>`;
+  const growTopicButtonLabelV343=topic=>growTopicOngoingV244(topic)?'Edit':(String(topic.status[0]||'').toLowerCase().includes('not set up')?'Set up':'Edit');
+  const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-card-v343${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}">
+    <span class="grow-topic-card-head-v343"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:28})}</span><span><b>${esc(topic.title)}</b><small>${esc(topic.blurb)}</small></span></span>
+    <span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span>
+    <span class="grow-topic-card-foot-v343"><span class="btn sm ${growTopicOngoingV244(topic)?'':'ghost'}">${esc(growTopicButtonLabelV343(topic))} ${CUI.icon('forward',{size:14})}</span><span class="grow-topic-tile-corner-v335" aria-hidden="true">${CUI.icon('forward',{size:18})}</span></span>
+  </button>`;
   /* ============ V322 — OWNER RULING R6: THE SEPARATE ON/OFF CONTROL ==========================
      "if i unselect the program does not mean i want to turn off (i need a seperate button) — it
      just means i do not want to edit the rewards at this point in time"
@@ -11512,8 +11517,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div class="grow-topic-group-head-v244"><h3>${esc(title)}${topics.length?` <span class="muted small">(${topics.length})</span>`:''}</h3><p class="muted small">${esc(note)}</p></div>
     ${topics.length?`<div class="grow-topic-tiles-v229">${topics.map(growTileHtmlV244).join('')}</div>`
       :`<p class="muted small grow-topic-group-empty-v244">${esc(empty)}</p>`}</div>`;
-  const growTilesHtmlV229=`${growTileSectionV244('Ongoing programmes','Running now — customers can see and use these.',growOngoingTopicsV244,'Nothing is reaching customers yet. Set one up below.')}
-    ${growTileSectionV244('Pending setup','Not running yet. Open one to set it up.',growPendingTopicsV244,'Every programme is running.')}`;
+  const growDisplayTopicsV343=growTopicDefsV229.filter(topic=>topic.key!=='recurring');
+  const growDisplayLiveV343=growDisplayTopicsV343.filter(growTopicOngoingV244);
+  const growDisplayPendingV343=growDisplayTopicsV343.filter(topic=>!growTopicOngoingV244(topic));
+  const growDisplayHistoryCountV343=growHistoryRowsV271.length+growTiersHistoryV331.length;
+  const growTilesHtmlV229=`<div class="grow-programme-toolbar-v343">
+      <div class="v150-segment grow-programme-tabs-v343" role="group" aria-label="Programme status">
+        <button type="button" aria-pressed="true">All (${growDisplayTopicsV343.length})</button>
+        <button type="button" aria-pressed="false">Live (${growDisplayLiveV343.length})</button>
+        <button type="button" aria-pressed="false">Not set up (${growDisplayPendingV343.length})</button>
+        <button type="button" aria-pressed="false">History (${growDisplayHistoryCountV343})</button>
+      </div>
+    </div>
+    <div class="grow-topic-card-grid-v343">${growDisplayTopicsV343.map(growTileHtmlV244).join('')}</div>`;
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
   /* V250 (owner crossed out the "● Live: Points redemption / ● Live: Tiered membership /
      Stamp card" chip column on the Points redemption page). Which model is live is already the
@@ -11842,7 +11858,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      for a given business, and the page below is entirely driven by which one that is. */
   const growPointsIsStampsV326=liveLoyaltyModelV235==='stamps';
   const growPointsSpineKindV326=growPointsIsStampsV326?'stamps':'points';
-  const growPointsPageTitleV326=growPointsIsStampsV326?'Stamp card':'Points System';
+  const growPointsPageTitleV326=growPointsIsStampsV326?'Stamp card':'Point system';
   const growPointsRowLabelV326=growPointsIsStampsV326?'Stamp card':'Point system';
   const growPointsUnitV326=growPointsIsStampsV326?'stamp':'point';
   /* Same test the points tile's own summary line already uses (growTopicDefsV229 above) — points
@@ -12016,21 +12032,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published">Published${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
     <button type="button" aria-pressed="${growTiersManageTabV331==='history'}" data-grow-tiers-manage-tab-v331="history">History${growTiersHistoryV331.length?` (${growTiersHistoryV331.length})`:''}</button>
   </div>`;
+  const growTiersMaxThresholdV331=Math.max(1,...growTiersPublishedV331.map(tier=>Number(tier.threshold||0)));
+  const growTiersLadderV343=growTiersPublishedV331.length?`<div class="grow-tier-ladder-v343" aria-label="Tier ladder">
+    <div class="grow-tier-ladder-line-v343"></div>
+    ${growTiersPublishedV331.map(tier=>{
+      const pct=Math.max(0,Math.min(100,(Number(tier.threshold||0)/growTiersMaxThresholdV331)*100));
+      return `<span class="grow-tier-ladder-stop-v343" style="left:${pct}%"><i></i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
+    }).join('')}
+  </div>`:'';
   const growTiersManageV331=!canRewards
     ?CUI.emptyState({iconName:'star',title:'Loyalty is not included',
-        body:'This workspace does not include the loyalty module, so there is no Tiered membership to manage.',
+        body:'This workspace does not include the loyalty module, so there is no Tier membership to manage.',
         actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
     :loyaltyTiersV229===null
     ?CUI.emptyState({iconName:'star',title:'Tier details could not be loaded',
         body:'Reload the page and try again.',
         actionHtml:'<a class="btn ghost sm" href="#/grow/tiers">Retry</a>'})
     :!growTiersConfiguredV331
-    ?CUI.emptyState({iconName:'star',title:'Tiered membership is not set up yet',
+    ?CUI.emptyState({iconName:'star',title:'Tier membership is not set up yet',
         body:'Choose tiers, set how tiers are earned, and add a first rung customers can climb to.',
         actionHtml:canSetupGrow
-          ?'<button type="button" class="btn sm" id="growTiersSetupV331">Set up Tiered membership</button>'
+          ?'<button type="button" class="btn sm" id="growTiersSetupV331">Set up Tier membership</button>'
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
-    :`<ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
+    :`<div class="grow-tiers-page-v343">
+      <div class="grow-tier-basis-card-v343"><span><b>Tier level is earned by</b><p class="muted small">Points earned</p></span>${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-edit-v331="1">Change</button>`:''}</div>
+      ${growTiersLadderV343}
+      <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
         <li data-grow-tiers-header-v331><span><b>Tier membership</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} set up</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             <span class="muted small" data-grow-switchstate-v322="${growTiersOnV331?'on':'off'}"> · ${growTiersOnV331?'ON for customers':'off'}</span>
@@ -12055,7 +12082,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growTiersManageTabV331==='published'
           ?(growTiersPublishedV331.length?growTiersPublishedV331.map(tier=>growTiersRowV331(tier)).join(''):'<li class="muted small" style="cursor:default">No tier yet — add one above.</li>')
           :(growTiersHistoryV331.length?growTiersHistoryV331.map(tier=>growTiersRowV331(tier,{history:true})).join(''):'<li class="muted small" style="cursor:default">Nothing has been deleted yet.</li>')}
-      </ul>`;
+      </ul></div>`;
   /* One strip, three destinations, each with its own hash so it is linkable and back-button-safe.
      It reuses the house sub-module strip rather than reviving the V173-era one, which V173/V180
      removed because it duplicated the sidebar's own sub-rows. These three are not sidebar rows —
@@ -12191,8 +12218,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            subtitle under the H1, matching the mockup. Only that one view — the others already
            carry their own subtitle/blurb further down (blurb for a drilled tile, "Current
            setting: ..." for Points System, etc.), so a second one here would repeat it. -->
-      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Manage and customise your rewards, tiers and member benefits.</p>':''}</div>
-      <div class="v150-title-actions"></div>
+      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='points'?`<p class="muted small" style="margin-top:4px">${esc(earningOverviewCopy)}</p>`:programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div>
+      <div class="v150-title-actions">${programmeView==='list'?'<a class="btn ghost sm" href="#/grow/settings">'+CUI.icon('settings',{size:16})+'<span>More reward settings</span></a>':''}</div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
       <!-- V334 (owner markup, photo 4: "show this as header of gifts, it's the parent of this page,
@@ -12206,7 +12233,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            back except the sidebar. Same button, same destination, on those pages too. -->
       ${(()=>{
         const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','offers','history'].includes(programmeView);
-        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tiered membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
+        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:18})} `:'';
         return `<div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):(dedicatedViewV341?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm" href="#/grow">${CUI.icon('back',{size:16})}<span>All programmes</span></a></nav>`:'')}<h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
       })()}

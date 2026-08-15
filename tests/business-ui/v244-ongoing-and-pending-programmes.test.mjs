@@ -59,18 +59,17 @@ test('V244 a pending tile says which job it is, not a generic View', () => {
   assert.equal(action({ status: ['Not included', 'off'] }), 'See plan →');
 });
 
-test('V244 both groups render, ongoing first, with counts and empty states', () => {
-  assert.match(app, /growTileSectionV244\('Ongoing programmes','Running now — customers can see and use these\.',growOngoingTopicsV244,'Nothing is reaching customers yet\. Set one up below\.'\)/);
-  assert.match(app, /growTileSectionV244\('Pending setup','Not running yet\. Open one to set it up\.',growPendingTopicsV244,'Every programme is running\.'\)/);
+test('V343 the programme landing renders the owner mockup status strip and five-card grid', () => {
   const tiles = app.slice(app.indexOf('const growTilesHtmlV229='));
-  assert.ok(tiles.indexOf("'Ongoing programmes'") < tiles.indexOf("'Pending setup'"),
-    'ongoing must lead — pending is the work list beneath it');
-  const section = app.slice(app.indexOf('const growTileSectionV244='), app.indexOf('const growTilesHtmlV229='));
-  assert.match(section, /\$\{topics\.length\?` <span class="muted small">\(\$\{topics\.length\}\)<\/span>`:''\}/);
-  assert.match(section, /:`<p class="muted small grow-topic-group-empty-v244">\$\{esc\(empty\)\}<\/p>`/);
+  assert.match(app, /growDisplayTopicsV343=growTopicDefsV229\.filter\(topic=>topic\.key!=='recurring'\)/);
+  assert.match(tiles, /All \(\$\{growDisplayTopicsV343\.length\}\)/);
+  assert.match(tiles, /Live \(\$\{growDisplayLiveV343\.length\}\)/);
+  assert.match(tiles, /Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
+  assert.match(tiles, /History \(\$\{growDisplayHistoryCountV343\}\)/);
+  assert.match(tiles, /<div class="grow-topic-card-grid-v343">\$\{growDisplayTopicsV343\.map\(growTileHtmlV244\)\.join\(''\)\}<\/div>/);
 });
 
-test('V335 the tile keeps its classes, icon, pill and topic hook — summary line gone, action moved to a corner button', () => {
+test('V343 the tile keeps its topic hook and becomes the screenshot card shape', () => {
   /* V335 (owner markup, photo 1: "remove the explanation below '3 redeemable rewards'" +
      "shift the edit button to the top right corner — applies to all"). The status-line summary
      text and the bottom "Edit →" text link are gone; the action is now a small round arrow in
@@ -81,17 +80,18 @@ test('V335 the tile keeps its classes, icon, pill and topic hook — summary lin
      other contract this test protects (data attr, aria-label, corner button, pill, no summary
      text) is unchanged. */
   const tile = app.slice(app.indexOf('const growTileHtmlV244='), app.indexOf('const growOngoingTopicsV244='));
-  assert.match(tile, /class="grow-topic-row-v343/);
+  assert.match(tile, /class="grow-topic-card-v343/);
   assert.match(tile, /data-grow-topic-v229="\$\{topic\.key\}"/, 'the existing click contract survives');
   assert.match(tile, /aria-label="\$\{esc\(topic\.title\)\} — \$\{esc\(growTopicActionV244\(topic\)\)\}"/);
-  assert.match(tile, /<span class="grow-topic-tile-corner-v335" aria-hidden="true">\$\{CUI\.icon\('forward',\{size:16\}\)\}<\/span>/);
-  assert.match(tile, /<span class="grow-topic-tile-icon-v229">\$\{CUI\.icon\(topic\.icon,\{size:20\}\)\}<\/span>/);
+  assert.match(tile, /<span class="grow-topic-tile-corner-v335" aria-hidden="true">\$\{CUI\.icon\('forward',\{size:18\}\)\}<\/span>/);
+  assert.match(tile, /<span class="grow-topic-tile-icon-v229">\$\{CUI\.icon\(topic\.icon,\{size:28\}\)\}<\/span>/);
   assert.match(tile, /<span class="pill \$\{topic\.status\[1\]\}">\$\{esc\(topic\.status\[0\]\)\}<\/span>/);
-  assert.doesNotMatch(tile, /class="muted small">\$\{esc\(/, 'the summary/blurb text line is gone from every tile');
+  assert.match(tile, /<small>\$\{esc\(topic\.blurb\)\}<\/small>/);
+  assert.match(tile, /growTopicButtonLabelV343\(topic\)/);
   // Pending tiles are marked for styling without changing the tile's structure.
   assert.match(tile, /\$\{growTopicOngoingV244\(topic\)\?'':' grow-topic-tile-pending-v244'\}/);
   assert.match(shell, /\.grow-topic-tile-pending-v244\{border-style:dashed\}/);
-  assert.match(shell, /\.grow-topic-group-v244\{/);
+  assert.match(shell, /\.grow-topic-card-grid-v343\{/);
   assert.match(shell, /\.grow-topic-tile-corner-v335\{/);
 });
 
