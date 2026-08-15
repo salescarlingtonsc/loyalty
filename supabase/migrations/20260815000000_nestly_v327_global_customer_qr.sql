@@ -39,6 +39,23 @@
 -- verified relationship silently auto-provisions a clients row + link — no
 -- staff confirmation step, matching the walk-in feel of the existing
 -- lookup_client_by_phone/record_sale_by_phone till flow.
+--
+-- verification_method: 'qr_join' was found live in prod (12 rows, the
+-- business-join-QR flow) when this migration was dry-run and is added to the
+-- allowed set alongside the new 'qr_scan' method, on top of the documented
+-- email_claim/firm_invitation/phone_claim.
+--
+-- APPLIED (2026-08-15): owner explicitly approved applying this exact
+-- migration to production (gadpooereceldfpfxsod) after a full rolled-back
+-- dry run (this DDL + the pristine two-tenant fixture + every assertion in
+-- db/tests/v327_global_customer_qr.sql) passed against prod with nothing left
+-- behind, and after the auto-mode classifier initially blocked the apply
+-- call. Two things were fixed during that dry run and are folded in below:
+-- customer_links_verification_method_check needed 'qr_join' (an existing
+-- live value this migration hadn't accounted for), and the customer_links
+-- insert needed app.v31_link_immutable_guard's session-sentinel convention
+-- (set app.customer_link_insert_id to the pre-generated id before insert) —
+-- the same pattern every other verified-claim RPC in v31/v42 already follows.
 
 begin;
 
@@ -58,15 +75,17 @@ create unique index if not exists customer_identities_qr_token_hash_uk
 comment on column public.customer_identities.qr_token_hash is
   'v327. sha256 of the current derived member QR token (hmac(secret, id||'':''||qr_token_version)). Plaintext is never stored; recompute via app.v327_member_qr_token to redisplay.';
 
--- verification_method previously allowed only email_claim/firm_invitation
--- (v31) and phone_claim (v42). A QR-scan-provisioned link is a fourth,
--- distinct method — it establishes the merchant relationship, not the
--- platform identity itself.
+-- verification_method previously allowed email_claim/firm_invitation (v31),
+-- phone_claim (v42), and qr_join (live in prod — the business-join-QR flow,
+-- 12 rows found when this migration was dry-run, not documented in any
+-- checked-in migration same as norm_phone/super_admins). A QR-scan-provisioned
+-- link is a new, distinct method — it establishes the merchant relationship
+-- via the GLOBAL member QR, not the business-join QR.
 alter table public.customer_links
   drop constraint if exists customer_links_verification_method_check;
 alter table public.customer_links
   add constraint customer_links_verification_method_check
-  check (verification_method in ('email_claim', 'firm_invitation', 'phone_claim', 'qr_scan'));
+  check (verification_method in ('email_claim', 'firm_invitation', 'phone_claim', 'qr_join', 'qr_scan'));
 
 -- One platform-wide secret, generated inside Postgres so it is never handled
 -- by a person or a tool. Rotating it would invalidate every customer's member
@@ -215,6 +234,7 @@ declare
   v_client public.clients%rowtype;
   v_actor uuid := auth.uid();
   v_display_name text;
+  v_link_id uuid;
   v_created boolean := false;
   v_points integer;
   v_credit integer;
@@ -260,14 +280,17 @@ begin
     values (p_business, v_display_name)
     returning * into v_client;
 
+    v_link_id := gen_random_uuid();
+    perform set_config('app.customer_link_insert_id', v_link_id::text, true);
     insert into public.customer_links (
-      business_id, identity_id, auth_user_id, client_id, state,
+      id, business_id, identity_id, auth_user_id, client_id, state,
       verification_method, verified_at
     ) values (
-      p_business, v_identity.id, v_identity.auth_user_id, v_client.id, 'verified',
+      v_link_id, p_business, v_identity.id, v_identity.auth_user_id, v_client.id, 'verified',
       'qr_scan', now()
     )
     returning * into v_link;
+    perform set_config('app.customer_link_insert_id', '', true);
     v_created := true;
 
     insert into public.audit_log(business_id,actor,action,entity,entity_id,detail)

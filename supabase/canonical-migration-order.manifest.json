@@ -3185,8 +3185,8 @@
       "version": "20260815000000",
       "name": "nestly_v327_global_customer_qr",
       "path": "supabase/migrations/20260815000000_nestly_v327_global_customer_qr.sql",
-      "octetLength": 13631,
-      "sha256": "52f8fd567d764ec9f3209726c72dc52be963dbf7b15d27e0c6c236a785f6b393",
+      "octetLength": 15156,
+      "sha256": "93b24dfd97062f92caa931ed36258d9e92a6bd4ca7bf8822c41bdaf1552fff12",
       "provenance": "local-source"
     }
   ]
