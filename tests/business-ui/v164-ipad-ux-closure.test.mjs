@@ -91,7 +91,8 @@ test('V164 Programmes removes persistent setup CTA and keeps categorised overvie
   /* V339 (owner markup: "Rewards & Offer" struck out, "Point System" written, on the Points
      System edit screen specifically): the H1 stays "Rewards & Offer" for every OTHER view,
      which this regex now expresses instead of a literal always-static string. */
-  assert.match(appHtml, /<h1 id="growTitle">\$\{programmeView==='setup'&&pendingGrowSetupRewardV303\?\.mode==='earning'\?\(pendingGrowSetupRewardV303\.kind==='stamps'\?'Stamp Card':'Point System'\):'Rewards &amp;\s*Offer'\}<\/h1>/);
+  /* V340 (owner: "change rewards & offer to rewards programme"): the default arm renamed. */
+  assert.match(appHtml, /<h1 id="growTitle">\$\{programmeView==='setup'&&pendingGrowSetupRewardV303\?\.mode==='earning'\?\(pendingGrowSetupRewardV303\.kind==='stamps'\?'Stamp Card':'Point System'\):'Rewards Programme'\}<\/h1>/);
   /* V324 (owner markup 2026-08-14): the subtitle is struck through. The requirement this test
      exists for is the one above — the heading is the MODULE's name, not "Grow" — and it is
      untouched; what went was a second sentence restating that name underneath it. */

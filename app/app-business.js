@@ -12028,8 +12028,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            Points System edit/setup screen specifically): read BEFORE growSetupWizardV301 mounts
            and consumes pendingGrowSetupRewardV303 below, so the check is still valid here. This
            does not touch V319/V245's "heading follows the rail" rule for every other view — only
-           the standalone Points System/Stamp card edit entry gets its own title. -->
-      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):'Rewards &amp; Offer'}</h1></div>
+           the standalone Points System/Stamp card edit entry gets its own title.
+           V340 (owner: "change rewards & offer to rewards programme" — every other page's H1,
+           still reading the old module name): the default arm renamed to match. -->
+      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):'Rewards Programme'}</h1></div>
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
