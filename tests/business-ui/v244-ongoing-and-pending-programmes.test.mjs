@@ -76,12 +76,16 @@ test('V335 the tile keeps its classes, icon, pill and topic hook — summary lin
      text and the bottom "Edit →" text link are gone; the action is now a small round arrow in
      the tile's top-right corner (decorative — the action word moved to the tile's own
      aria-label instead, so assistive tech still gets it). */
+  /* V343 (owner markup: "photo 1 change to become photo 2"): the tile became a compact row —
+     class renamed grow-topic-row-v343, icon size 22->20, and a new name wrapper span — every
+     other contract this test protects (data attr, aria-label, corner button, pill, no summary
+     text) is unchanged. */
   const tile = app.slice(app.indexOf('const growTileHtmlV244='), app.indexOf('const growOngoingTopicsV244='));
-  assert.match(tile, /class="grow-topic-tile-v229/);
+  assert.match(tile, /class="grow-topic-row-v343/);
   assert.match(tile, /data-grow-topic-v229="\$\{topic\.key\}"/, 'the existing click contract survives');
   assert.match(tile, /aria-label="\$\{esc\(topic\.title\)\} — \$\{esc\(growTopicActionV244\(topic\)\)\}"/);
   assert.match(tile, /<span class="grow-topic-tile-corner-v335" aria-hidden="true">\$\{CUI\.icon\('forward',\{size:16\}\)\}<\/span>/);
-  assert.match(tile, /<span class="grow-topic-tile-icon-v229">\$\{CUI\.icon\(topic\.icon,\{size:22\}\)\}<\/span>/);
+  assert.match(tile, /<span class="grow-topic-tile-icon-v229">\$\{CUI\.icon\(topic\.icon,\{size:20\}\)\}<\/span>/);
   assert.match(tile, /<span class="pill \$\{topic\.status\[1\]\}">\$\{esc\(topic\.status\[0\]\)\}<\/span>/);
   assert.doesNotMatch(tile, /class="muted small">\$\{esc\(/, 'the summary/blurb text line is gone from every tile');
   // Pending tiles are marked for styling without changing the tile's structure.
