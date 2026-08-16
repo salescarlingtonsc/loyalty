@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 326,
-  "executableCount": 312,
+  "itemCount": 342,
+  "executableCount": 328,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -486,6 +486,34 @@
         "db/migrations/20260815_nestly_v331_tier_lifecycle.sql",
         "db/migrations/20260815_nestly_v332_retention_program_lifecycle.sql",
         "db/migrations/20260815_nestly_v340_reward_purchase_requirement.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260816",
+      "count": 12,
+      "paths": [
+        "db/migrations/20260816_nestly_v343_reward_edit_v326.sql",
+        "db/migrations/20260816_nestly_v345_tier_benefit_edit.sql",
+        "db/migrations/20260816_nestly_v347_tier_basis_immediate_write.sql",
+        "db/migrations/20260816_nestly_v348_spine_id_in_switch_response.sql",
+        "db/migrations/20260816_nestly_v350_welcome_offer_custom_item.sql",
+        "db/migrations/20260816_nestly_v353_stamp_model_immediate_write.sql",
+        "db/migrations/20260816_nestly_v354_spine_owns_loyalty_model.sql",
+        "db/migrations/20260816_nestly_v355_no_auto_pot_conversion.sql",
+        "db/migrations/20260816_nestly_v359_earning_rule_immediate_write.sql",
+        "db/migrations/20260816_nestly_v361_bringback_module.sql",
+        "db/migrations/20260816_nestly_v362_bringback_till_surface.sql",
+        "db/migrations/20260816_nestly_v365_tier_benefit_limits.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260817",
+      "count": 4,
+      "paths": [
+        "db/migrations/20260817_nestly_v367_birthday_month_benefit_period.sql",
+        "db/migrations/20260817_nestly_v369_structured_tier_benefits.sql",
+        "db/migrations/20260817_nestly_v370_tier_discount_at_checkout.sql",
+        "db/migrations/20260817_nestly_v371_programme_off_reaches_customer.sql"
       ]
     }
   ],
@@ -3097,6 +3125,134 @@
       "semanticVersion": "v340",
       "proposedDeployVersion": "20260815090400",
       "sha256": "b8180ffffdae64fe2bebdba1e334bf6aec9ed974f3e2636dc4591eef753e6970"
+    },
+    {
+      "order": 327,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v343_reward_edit_v326.sql",
+      "semanticVersion": "v343",
+      "proposedDeployVersion": "20260816000001",
+      "sha256": "02838234f799685d95f8532573f5a6d3c74f1da9518f24ee134639d28da03ee2"
+    },
+    {
+      "order": 328,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v345_tier_benefit_edit.sql",
+      "semanticVersion": "v345",
+      "proposedDeployVersion": "20260816000002",
+      "sha256": "93d466d96bfaaa1bf31fe3b56e0972dd8881b72a6272b8d0f1ecf5ad937452de"
+    },
+    {
+      "order": 329,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v347_tier_basis_immediate_write.sql",
+      "semanticVersion": "v347",
+      "proposedDeployVersion": "20260816000003",
+      "sha256": "7bdfa688ec9cc46c267610db6b32711bdeb7ccf07bfecc64d365e94dbbda48c1"
+    },
+    {
+      "order": 330,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v348_spine_id_in_switch_response.sql",
+      "semanticVersion": "v348",
+      "proposedDeployVersion": "20260816000004",
+      "sha256": "c4875f94833736e44d806559298dae8c6c7bfe8bc524245af1db71f4d85ca8eb"
+    },
+    {
+      "order": 331,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v350_welcome_offer_custom_item.sql",
+      "semanticVersion": "v350",
+      "proposedDeployVersion": "20260816000005",
+      "sha256": "2f3d54e4515ddb199bf47d6921bf4ebfba3f356b99e2e2e856182597b92040d9"
+    },
+    {
+      "order": 332,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v353_stamp_model_immediate_write.sql",
+      "semanticVersion": "v353",
+      "proposedDeployVersion": "20260816000006",
+      "sha256": "46d28a410a388d88bfdfa46e768c4a88b8a8f4f2cfab40e8476bc90ede616248"
+    },
+    {
+      "order": 333,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v354_spine_owns_loyalty_model.sql",
+      "semanticVersion": "v354",
+      "proposedDeployVersion": "20260816000007",
+      "sha256": "d423e0bc0f067faca64d0ef3d6a96a2eb25e4ba87f5d07c57dec5d47feb7c396"
+    },
+    {
+      "order": 334,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v355_no_auto_pot_conversion.sql",
+      "semanticVersion": "v355",
+      "proposedDeployVersion": "20260816000008",
+      "sha256": "c23d6b44eb5768bd8e788d491852d1054d2cf586d4c10ff10a4ff4ebedacdd5a"
+    },
+    {
+      "order": 335,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v359_earning_rule_immediate_write.sql",
+      "semanticVersion": "v359",
+      "proposedDeployVersion": "20260816000009",
+      "sha256": "00b083dbb5f3112d84d4a482c72f8b061da21cde41c2543f7c46fb713c5155dd"
+    },
+    {
+      "order": 336,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v361_bringback_module.sql",
+      "semanticVersion": "v361",
+      "proposedDeployVersion": "20260816000010",
+      "sha256": "6655e2089e4477f48aad384f787817d81ceeff636ca0bfdfa992a525eaa29813"
+    },
+    {
+      "order": 337,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v362_bringback_till_surface.sql",
+      "semanticVersion": "v362",
+      "proposedDeployVersion": "20260816000011",
+      "sha256": "61e8aeff8b37660b1ad08dcee2d4f9dc1257dde256c0d6b43376fab0328c1ef3"
+    },
+    {
+      "order": 338,
+      "kind": "executable",
+      "path": "db/migrations/20260816_nestly_v365_tier_benefit_limits.sql",
+      "semanticVersion": "v365",
+      "proposedDeployVersion": "20260816000012",
+      "sha256": "2fc383292de60949e3669723fb8e5acbdb0833dbef1bed2f932c7c68e5123417"
+    },
+    {
+      "order": 339,
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v367_birthday_month_benefit_period.sql",
+      "semanticVersion": "v367",
+      "proposedDeployVersion": "20260817000001",
+      "sha256": "0419dfa60e0b6c5d7fa3c3a5e9b832ea03f2b0810769294d5f172a4ba911bf8f"
+    },
+    {
+      "order": 340,
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v369_structured_tier_benefits.sql",
+      "semanticVersion": "v369",
+      "proposedDeployVersion": "20260817000002",
+      "sha256": "328e3c86f26ac4b15f1b073d4f9323b96308290b8faef709cc18b83dfa953743"
+    },
+    {
+      "order": 341,
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v370_tier_discount_at_checkout.sql",
+      "semanticVersion": "v370",
+      "proposedDeployVersion": "20260817000003",
+      "sha256": "d35566117991b313c6fad672092ac9bb2733ff5b3dec2d4af47357825cdfe2a8"
+    },
+    {
+      "order": 342,
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v371_programme_off_reaches_customer.sql",
+      "semanticVersion": "v371",
+      "proposedDeployVersion": "20260817000004",
+      "sha256": "2b14606d40252e5149aebce04efefdc39d5db4c90ae5afd1844f2edaa1b8ff47"
     }
   ]
 }

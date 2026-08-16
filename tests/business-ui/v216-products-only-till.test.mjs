@@ -15,12 +15,17 @@ const picker = app.slice(app.indexOf('const svcHeadingV216='), app.indexOf('${pk
 
 /* Renders the real picker branch for a given catalogue shape. */
 function render(services, products) {
+  /* The picker template gained two more banners since this test was written (v362's bring-back
+     voucher and v365/v369's tier benefits). They are declared immediately above the template in
+     the real renderer; the sandbox has to supply them or every case dies on a ReferenceError
+     that says nothing about product headings. */
   const build = new Function(
-    'catalog', 'welcomeBanner', 'ownedPackages', 'pendingVouchers',
+    'catalog', 'welcomeBanner', 'bringbackBanner', 'tierBenefitBannerV365',
+    'ownedPackages', 'pendingVouchers',
     'svcBtns', 'bundleBtns', 'prodBtns', 'CUI', 'noCheckoutItems',
     picker.replace('picker=`', 'return `') + '`;'
   );
-  return build({ services, products }, '', '', '', '[SVC]', '', '[PROD]',
+  return build({ services, products }, '', '', '', '', '', '[SVC]', '', '[PROD]',
     { emptyState: () => '[EMPTY]' }, !services.length && !products.length);
 }
 

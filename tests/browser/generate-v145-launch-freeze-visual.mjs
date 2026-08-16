@@ -22,7 +22,7 @@ export function buildV145LaunchFreezeVisual(app){
   const dataHelpers=between(app,'const DATA_API_PAGE_SIZE=1000;','function killCharts()');
   const requestHelpers=between(app,'function createLatestRequestGate','function nav(h)');
   const campaignProjection=between(app,'function campaignEntitlementDisplayV99(item)','function customerRedemptionIntentArgsV89');
-  const branchFilter=between(app,'async function visibleBranchesForCurrentUser()','/* ---------- dashboard ---------- */');
+  const branchFilter=between(app,'async function visibleBranchesForCurrentUser(','/* ---------- dashboard ---------- */');
   const dashboard=between(app,'async function dashboard()','/* ---------- customers ---------- */');
   const client=between(app,'async function clientDetail(id)','/* ---------- quick earn');
   const reports=between(app,'async function reportsPage()','/* ---------- get started');

@@ -50,7 +50,17 @@ test('fulfilment choices are controlled and preserve the existing credit contrac
   assert.match(app, /value="credit"[^>]*>Store credit/i);
   assert.match(app, /fulfillment_kind:kind/i);
   assert.match(app, /credit_cents:kind==='credit'?/i);
-  assert.doesNotMatch(app, /<option value="(?:discount|percentage|custom|cash)"/i);
+  /* The contract is that FULFILMENT has exactly two kinds — a manual item, or store credit.
+     Anything else (a discount, a cash payout) would put a second writer on the credit ledger.
+     The assertion used to scan the whole application source for `<option value="custom">` and
+     friends, so it broke the moment an unrelated dropdown used one of those words: v215's welcome
+     -offer item picker and v369's tier-benefit kind both legitimately offer "custom". Scope it to
+     the fulfilment select itself, which is what the contract is actually about. */
+  const fulfilmentSelect = app.match(/<select id="rwKind">[\s\S]*?<\/select>/i)?.[0];
+  assert.ok(fulfilmentSelect, 'the fulfilment select must be findable to be checked');
+  assert.doesNotMatch(fulfilmentSelect, /<option value="(?:discount|percentage|custom|cash)"/i);
+  assert.equal((fulfilmentSelect.match(/<option /g) || []).length, 2,
+    'fulfilment must offer exactly the two allowlisted kinds');
 });
 
 test('saving a reward uses the allowlisted version workflow and never deletes reward history', async () => {

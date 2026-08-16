@@ -2056,6 +2056,12 @@
       "version": "20260817000003",
       "name": "nestly_v370_tier_discount_at_checkout",
       "sourcePath": "db/migrations/20260817_nestly_v370_tier_discount_at_checkout.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000004",
+      "name": "nestly_v371_programme_off_reaches_customer",
+      "sourcePath": "db/migrations/20260817_nestly_v371_programme_off_reaches_customer.sql"
     }
   ]
 }

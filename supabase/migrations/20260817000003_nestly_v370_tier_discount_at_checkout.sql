@@ -753,4 +753,11 @@ begin
     'sale', v_financial->'sale', 'items', v_items, 'stored_value', v_sv_json);
 end $function$;
 
+-- Both functions are CREATE OR REPLACE'd from their production text, which does not carry their
+-- ACLs — so the ACLs are restated here rather than left to the default PUBLIC execute grant that
+-- a replace re-establishes. Same grants they hold today, named explicitly (the v14d rule).
+revoke all privileges on function app.ps1c_plan_checkout(uuid,uuid,uuid,jsonb,uuid) from public, anon, authenticated;
+revoke all privileges on function public.record_cart_sale(uuid,uuid,uuid,uuid,text,text,jsonb,uuid,boolean) from public, anon;
+grant execute on function public.record_cart_sale(uuid,uuid,uuid,uuid,text,text,jsonb,uuid,boolean) to authenticated;
+
 commit;

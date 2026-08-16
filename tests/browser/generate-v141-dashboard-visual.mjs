@@ -20,7 +20,7 @@ function between(source,start,end){
 export function buildV141DashboardVisual(app,customerUi){
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!style)throw new Error('production inline stylesheet missing');
-  const branchFilter=between(app,'async function visibleBranchesForCurrentUser()','/* ---------- dashboard ---------- */');
+  const branchFilter=between(app,'async function visibleBranchesForCurrentUser(','/* ---------- dashboard ---------- */');
   const dashboard=between(app,'async function dashboard()','/* ---------- customers ---------- */');
   const sourceHash=createHash('sha256').update([style,customerUi,branchFilter,dashboard].join('\n')).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

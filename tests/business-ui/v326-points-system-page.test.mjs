@@ -49,7 +49,16 @@ test('V326/V331 the points, stamps AND tiers tiles each navigate straight to the
   const code = stripComments(app);
   const handler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-topic-v229]')"),
     code.indexOf('growTopicV229=tile.dataset.growTopicV229;'));
-  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\|\|tile\.dataset\.growTopicV229==='stamps'\)return nav\('#\/grow\/points'\);/);
+  /* V363 put a confirmation popup in front of the stamps tile, so the points/stamps branch is no
+     longer a single `return nav(...)` line. What matters to this test is unchanged and is what is
+     asserted now: the branch exists, and everything it can do ends at #/grow/points. Pinning the
+     old one-liner made an intended UX addition look like a routing regression. */
+  const pointsBranch = handler.slice(
+    handler.indexOf("if(tile.dataset.growTopicV229==='points'||tile.dataset.growTopicV229==='stamps')"),
+    handler.indexOf("if(tile.dataset.growTopicV229==='tiers')"));
+  assert.ok(pointsBranch, 'the points/stamps tiles must still be handled before tiers');
+  assert.match(pointsBranch, /nav\('#\/grow\/points'\)/);
+  assert.doesNotMatch(pointsBranch, /nav\('#\/grow\/(?!points')/);
   assert.match(handler, /if\(tile\.dataset\.growTopicV229==='tiers'\)return nav\('#\/grow\/tiers'\);/);
   // V331: tiers joined points/stamps in getting its own page, so growSetupEntryV301's whole
   // ['points','stamps','tiers'] list now returns explicitly above — the wizard-entry fallback this
@@ -76,7 +85,13 @@ test('V326 programmeView="points" is excluded from the drilled-category branch',
 });
 
 test('V326 the render dispatch mounts growPointsManageV326 when programmeView is "points"', () => {
-  assert.match(app, /\$\{programmeView==='points'\?growPointsManageV326:''\}/);
+  /* V350 gave the stamp card its own page, so the 'points' view now picks between the two by
+     model. The contract this test exists for — the points view mounts the points page and nothing
+     else has to be routed for it — is asserted directly instead of by pinning the ternary. */
+  const dispatch = app.match(/\$\{programmeView==='points'\?[^}]*\}/)?.[0];
+  assert.ok(dispatch, 'the points view must still be dispatched from the programme render');
+  assert.match(dispatch, /growPointsManageV326/);
+  assert.match(dispatch, /growStampsPageV350/);
 });
 
 test('V326 the "edit" link lands the wizard on the Earning step, guarded on that step existing', () => {
@@ -147,6 +162,13 @@ function harness() {
       growPointsErrorV326 = '', growPointsBusyV326 = false,
       // V343: the form now serves edit too, and a gift can carry a photo.
       growPointsEditingV326 = null, growPointsPhotoFileV343 = null, growPointsRemovePhotoV343 = false,
+      // V350 gave the page an explicit kind override; null means "follow the live model", which is
+      // both the production default (see the reset in resetClientSessionState) and what these
+      // cases assume, so the harness passes null unless a case says otherwise.
+      growPointsViewKindV350 = null,
+      // V359 put the earning rule's inline editor on this page; its three state variables default
+      // to the same closed/idle values production resets them to.
+      growEarnEditOpenV359 = false, growEarnErrorV359 = '', growEarnBusyV359 = false,
       customerMediaUrlV95 = () => '',
     } = opts;
     const src = [
@@ -160,14 +182,16 @@ function harness() {
       'earningOverviewCopy', 'growProgrammeSwitchKindsV322', 'growSwitchPendingV322', 'growSwitchErrorV322',
       'growPointsManageTabV326', 'growPointsDeletePendingV326', 'growPointsAddOpenV326', 'growPointsAddDraftV326',
       'growPointsErrorV326', 'growPointsBusyV326', 'growPointsEditingV326', 'growPointsPhotoFileV343',
-      'growPointsRemovePhotoV343', 'customerMediaUrlV95', src
+      'growPointsRemovePhotoV343', 'customerMediaUrlV95', 'growPointsViewKindV350',
+      'growEarnEditOpenV359', 'growEarnErrorV359', 'growEarnBusyV359', src
     );
     const growProgrammeSwitchKindsV322 = [['points', 'Points & gifts'], ['tiers', 'Tier membership'], ['stamps', 'Stamp card'], ['referral', 'Referral']];
     return fn(esc, CUI, S, canRewards, canSetupGrow, { rewards: snapshotRewards }, liveLoyaltyModelKeysV240, liveLoyaltyModelV235,
       earningOverviewCopy, growProgrammeSwitchKindsV322, growSwitchPendingV322, growSwitchErrorV322,
       growPointsManageTabV326, growPointsDeletePendingV326, growPointsAddOpenV326, growPointsAddDraftV326,
       growPointsErrorV326, growPointsBusyV326, growPointsEditingV326, growPointsPhotoFileV343,
-      growPointsRemovePhotoV343, customerMediaUrlV95);
+      growPointsRemovePhotoV343, customerMediaUrlV95, growPointsViewKindV350,
+      growEarnEditOpenV359, growEarnErrorV359, growEarnBusyV359);
   };
 }
 

@@ -117,6 +117,19 @@ async function runRootRoute({
     renderCustomerClaim:()=>{},
     renderCustomerProgrammes:()=>{},
     renderCustomerBookings:()=>{},
+    /* route() writes the platform-boot and workspace-unavailable screens straight into the
+       page root, which is a module-level const in app/app.js (`const root=$('root')`). The
+       sandbox has no DOM, so it stands in with a sink: none of these cases reach those
+       branches, and without it every case died on ReferenceError before asserting anything. */
+    root:{set innerHTML(_value){},get innerHTML(){return ''},querySelector:()=>null},
+    /* The v345 localhost-only customer preview is checked before any real routing decision.
+       It is gated on location.hostname, so in production and here it is off — the stub returns
+       false so the sandbox exercises the real routing path rather than the preview. */
+    localCustomerPreviewEnabledV345:()=>false,
+    /* v370 put the persona read behind a caching loader instead of calling the RPC inline. The
+       sandbox already answers get_my_personas below; this routes the loader to that same answer
+       so the two cannot drift apart. */
+    loadPersonasV370:async()=>({data:{staff:[],customer:[],default_route:null},error:null}),
     renderCustomerMessages:()=>{},
     renderCustomerProfile:()=>{},
     renderCustomerWalletUnavailable:()=>{},
