@@ -23126,17 +23126,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const points=Math.max(0,Number(reward.cost_points||0));
     const dateText=promotionDateShortV324(reward.created_at);
     const photoUrl=customerMediaUrlV95(reward.image_ref);
-    const thumb=`<span class="grow-points-gift-thumb-v343"${photoUrl?'':' data-empty="1"'}>${photoUrl?`<img src="${esc(photoUrl)}" alt="" loading="lazy">`:CUI.icon('redeem',{size:22})}</span>`;
-    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('redeem',{size:12})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
+    /* V351 (owner: "the $ symbol makes the reward look like money/cash instead of a redeemable
+       gift"): swapped for the same gift icon the Welcome offer editor and Stamp Card page use. */
+    const thumb=`<span class="grow-points-gift-thumb-v343"${photoUrl?'':' data-empty="1"'}>${photoUrl?`<img src="${esc(photoUrl)}" alt="" loading="lazy">`:CUI.icon('giftcard',{size:22})}</span>`;
+    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('giftcard',{size:12})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
     if(history)return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}<span class="pill off">In history</span></li>`;
     const paused=reward.paused===true;
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);
+    /* V351 (owner: "Delete is given the same visual importance as Edit"): the row now shows a
+       plain status pill, an Edit button, and a "•••" overflow menu holding Turn on/off + Delete.
+       The <details>/<summary> pattern already used for the workspace switcher (~line 4904) closes
+       itself for free on the next rerender — no new open/close JS needed, and every
+       data-grow-points-gift-* attribute is unchanged, so the existing toggle/delete handlers keep
+       working without modification. */
     return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
-        <button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
-        <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`
-        :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${paused?'OFF':'ON'}</span>`}
+        <span class="pill ${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+        ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
+        <details class="grow-row-menu-v351"><summary class="btn ghost sm" aria-label="More actions for ${esc(name)}">•••</summary><div class="menu">
+          <button type="button" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'Turn on':'Turn off'}</button>
+          <button type="button" class="danger" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>
+        </div></details>`:''}
       </span></li>
       <li class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(reward.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
         <b>Delete ${esc(name)}?</b>
@@ -23176,8 +23186,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <b>Add a new gift</b>
     <span class="muted small">Create new gifts for your customers to redeem with ${growPointsUnitV326}s.</span>
   </li>`:'';
-  const growPointsTabStripV326=`<div class="v150-segment" role="group" aria-label="Gift status" data-grow-points-tabstrip-v326>
-    <button type="button" aria-pressed="${growPointsManageTabV326==='published'}" data-grow-points-manage-tab-v326="published">Published${growPointsPublishedV326.length?` (${growPointsPublishedV326.length})`:''}</button>
+  /* V351 (owner UX pass): "Published" reads as a content-publishing term, not "currently
+     available to customers" — Points renamed to "Live gifts"; Stamp Card (untouched per the
+     owner's own "do not modify unrelated screens") keeps the original "Published" wording via the
+     default parameter, so this one shared component serves both labels without duplicating it. */
+  const growPointsTabStripV326=(liveLabel='Published')=>`<div class="v150-segment" role="group" aria-label="Gift status" data-grow-points-tabstrip-v326>
+    <button type="button" aria-pressed="${growPointsManageTabV326==='published'}" data-grow-points-manage-tab-v326="published">${esc(liveLabel)}${growPointsPublishedV326.length?` (${growPointsPublishedV326.length})`:''}</button>
     <button type="button" aria-pressed="${growPointsManageTabV326==='history'}" data-grow-points-manage-tab-v326="history">History${growPointsHistoryV326.length?` (${growPointsHistoryV326.length})`:''}</button>
   </div>`;
   const growPointsManageV326=!canRewards
@@ -23190,20 +23204,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ?'Choose the stamp card, set how many stamps a visit earns, and add a first gift customers can redeem for.'
           :'Choose points, set the earning rate, and add a first gift customers can redeem for.',
         actionHtml:canSetupGrow
-          ?`<button type="button" class="btn sm" id="growPointsSetupV326">Set up ${growPointsPageTitleV326}</button>`
+          ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up ${growPointsPageTitleV326}</button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<ul class="grow-setup-rewardlist-v301" data-grow-points-summary-v326>
         <!-- V343 (owner mockup, photo 4): the summary row, Edit/Add gifts/ON-OFF and the
              Published/History tab strip now sit in ONE header row, "Edit" reads "Edit settings"
              to distinguish it from the per-gift Edit buttons below. -->
-        <li data-grow-points-header-v326><span><b>${esc(growPointsRowLabelV326)}</b><p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
+        <!-- V351 (owner: page title already says "Point system"; this card repeated it below —
+             renamed to "Earning rule" so the same fact isn't shown twice in a row. -->
+        <li data-grow-points-header-v326><span><b>Earning rule</b><p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
-            <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">Add gifts</button>
+            <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add gift</button>
             <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
             :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
             <span class="spacer"></span>
-            ${growPointsTabStripV326}
+            ${growPointsTabStripV326('Live gifts')}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
           <b>${growPointsOnV326?`Turn ${esc(growPointsRowLabelV326)} off for customers?`:`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
@@ -23302,7 +23318,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     ?CUI.emptyState({iconName:'till',title:'Stamp Card system is not set up yet',
         body:'Choose the stamp card, set how many stamps a visit earns, and add a first level customers can climb to.',
         actionHtml:canSetupGrow
-          ?'<button type="button" class="btn sm" id="growPointsSetupV326">Set up Stamp Card system</button>'
+          ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up Stamp Card system</button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<div class="grow-stamps-page-v350">
       <div class="grow-stamps-header-v350"><span class="grow-stamps-header-icon-v350" aria-hidden="true">${CUI.icon('star',{size:24})}</span>
@@ -23313,7 +23329,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">Add level</button>
           <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
           :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
-          ${growPointsTabStripV326}
+          ${growPointsTabStripV326()}
         </span>
       </div>
       <div class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
@@ -23356,41 +23372,56 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersBasisV347=snapshot.loyalty?.tier_basis||'visits';
   const growTiersBasisLabelV347=({points_earned:'Points earned',spend:'Lifetime spend',visits:'Visits'})[growTiersBasisV347]||'Visits';
   const growTiersLosingV331=growTiersOnV331?[]:programmeExclusionsV322('tiers').filter(other=>programmeSpineOnV314(other)===true);
+  /* V351 (owner UX pass): row went from a 4-column table look to a plain card — no per-tier
+     "Turn on/off" any more (the owner's own caution: pausing a MIDDLE rung of a ladder has no
+     defined, safe behaviour today — nothing in business_set_tier_paused_v331 or the read path
+     resolves what "Gold off, Essential and Diamond still live" means for a customer sitting
+     between them, so that action is withheld here, not silently kept). Only Edit and a "•••" menu
+     holding Delete remain per row; the programme-level Turn on/off stays on the "Manage tiers"
+     header, unaffected. */
   const growTiersRowV331=(tier,{history=false}={})=>{
     const threshold=Math.max(0,Number(tier.threshold||0));
     const multiplier=Number(tier.points_multiplier||1);
     const perkNote=String(tier.perk_note||'').trim();
-    const meta=`<span class="grow-tier-name-cell-v343"><span class="grow-tier-row-icon-v343" aria-hidden="true">${CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:18})}</span><b data-merchant-content>${esc(tier.name)}</b>${multiplier!==1?`<small class="muted" data-merchant-content>${multiplier}× points</small>`:''}${perkNote?`<small class="muted" data-merchant-content>${esc(perkNote)}</small>`:''}</span>`;
-    if(history)return `<li class="grow-tier-table-row-v343" data-grow-tiers-row-v331="${esc(tier.id)}">${meta}<span data-merchant-content>${threshold} points</span><span class="pill off">In history</span><span></span></li>`;
+    const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:18});
+    if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
+      <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkNote?`<span class="muted small" data-merchant-content>Benefit: ${esc(perkNote)}</span>`:''}</span>
+      <span class="pill off">In history</span>
+    </li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
-    return `<li class="grow-tier-table-row-v343" data-grow-tiers-row-v331="${esc(tier.id)}">${meta}
-      <span data-merchant-content>${threshold} points</span>
-      <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${paused?'Off':'Live'}</span>
-      <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+    return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
+      <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkNote?`<span class="muted small" data-merchant-content>Benefit: ${esc(perkNote)}</span>`:''}</span>
+      <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${paused?'Off':'Live'}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
-        <button type="button" class="btn ghost sm" role="switch" aria-checked="${!paused}" data-grow-tiers-toggle-v331="${esc(tier.id)}">${paused?'Turn on':'Turn off'}</button>
-        <button type="button" class="btn ghost sm" data-grow-tiers-delete-v331="${esc(tier.id)}">Delete</button>`:''}
-      </span></li>
+        <details class="grow-row-menu-v351"><summary class="btn ghost sm" aria-label="More actions for ${esc(tier.name)}">•••</summary><div class="menu">
+          <button type="button" class="danger" data-grow-tiers-delete-v331="${esc(tier.id)}">Delete</button>
+        </div></details>`:''}
+      </span>
+      </li>
       <li class="imp-note" data-grow-tiers-deleteconfirm-v331="${esc(tier.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
         <b>Delete ${esc(tier.name)}?</b>
         <p class="muted small" style="margin-top:6px">It moves to History. Customers currently between this rung and the next will register at whichever tier is left — nothing about their points or history changes, only which rung they show as.</p>
         <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-delete-yes-v331="${esc(tier.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-tiers-delete-no-v331="1">Cancel</button></div>
       </li>`;
   };
+  /* V351 (owner: "After successful creation, close the form again. Do not keep the form
+     permanently expanded."): the old 'prompt' state ("Tier saved... Add another tier / Done") is
+     gone — growTiersAddSave now closes straight back to '' on success (see its handler below), so
+     this is a plain open/closed ternary, one management surface, no second confirmation screen. */
   const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note" data-grow-tiers-addform-v331>
     <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
-    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Reached at</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
+    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Tier name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Required points</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddPerkV345">Benefit <span class="muted">(optional)</span></label><br><textarea id="growTiersAddPerkV345" class="grow-setup-input-v301" style="width:100%;max-width:420px" rows="2" placeholder="e.g. Free item every visit, or 10% off">${esc(growTiersAddDraftV331.perkNote||'')}</textarea></p>
     ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Save tier'}</button><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button></div>
-  </li>`:growTiersAddOpenV331==='prompt'?`<li class="imp-note" data-grow-tiers-addprompt-v331>
-    <b>Tier saved and live for customers.</b>
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-add-again-v331="1">Add another tier</button><button type="button" class="btn ghost sm" data-grow-tiers-add-done-v331="1">Done</button></div>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Add tier'}</button></div>
   </li>`:'';
   const growTiersTabStripV331=`<div class="v150-segment" role="group" aria-label="Tier status" data-grow-tiers-tabstrip-v331>
-    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published">Published${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
+    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published">Live tiers${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
     <button type="button" aria-pressed="${growTiersManageTabV331==='history'}" data-grow-tiers-manage-tab-v331="history">History${growTiersHistoryV331.length?` (${growTiersHistoryV331.length})`:''}</button>
   </div>`;
   const growTiersMaxThresholdV331=Math.max(1,...growTiersPublishedV331.map(tier=>Number(tier.threshold||0)));
@@ -23424,9 +23455,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
       ${growTiersLadderV343}
       <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
-        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} set up</p></span>
+        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} configured</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">Add tier</button>
+            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">+ Add tier</button>
             <button type="button" class="btn sm" role="switch" aria-checked="${growTiersOnV331}" data-grow-switchtoggle-v322="tiers">${growTiersOnV331?'Turn off':'Turn on'}</button>`:''}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="tiers" style="margin-top:8px"${growSwitchPendingV322==='tiers'?'':' hidden'}>
@@ -23443,7 +23474,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growSwitchErrorV322&&growSwitchPendingV322==='tiers'?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
       ${growTiersTabStripV331}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-tiers-list-v331>
-        ${growTiersManageTabV331==='published'&&growTiersPublishedV331.length?'<li class="grow-tier-table-head-v343"><span>Tier name</span><span>Required points</span><span>Status</span><span>Actions</span></li>':''}
         ${growTiersManageTabV331==='published'
           ?(growTiersPublishedV331.length?growTiersPublishedV331.map(tier=>growTiersRowV331(tier)).join(''):'<li class="muted small" style="cursor:default">No tier yet — add one above.</li>')
           :(growTiersHistoryV331.length?growTiersHistoryV331.map(tier=>growTiersRowV331(tier,{history:true})).join(''):'<li class="muted small" style="cursor:default">Nothing has been deleted yet.</li>')}
@@ -24281,10 +24311,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      on/off + delete (immediate-write RPCs the switch panel has no equivalent of), the add-gift
      form, and the empty-state CTA. All of it reads growPointsSpineKindV326/growPointsIsStampsV326
      (set at the top of the V326 render block above) so it works identically for either live model. */
+  /* V352 (owner: "click 'set up stamp card system' > should show photo 1" — same wizard-bounce
+     bug V347 already fixed for Tiers). Turning the points/stamps spine on is enough to make
+     growPointsConfiguredV326/growStampsPageV350's own "configured" check true (both read the
+     spine, not an earn-rate row) — no earn-rate RPC is required just to LAND on this page, only
+     to change the rate later, which "Edit settings" already covers. */
   const growPointsSetupCta=$('growPointsSetupV326');
-  if(growPointsSetupCta)growPointsSetupCta.onclick=()=>{
-    pendingGrowSetupModelV303={kind:growPointsSpineKindV326,from:growPointsSpineKindV326};
-    nav('#/grow/setup');
+  if(growPointsSetupCta)growPointsSetupCta.onclick=async()=>{
+    if(growPointsBusyV326)return;
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
+    const set={[growPointsSpineKindV326]:true};
+    programmeExclusionsV322(growPointsSpineKindV326).forEach(other=>{set[other]=false});
+    const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
+    if(!isGrowCurrent())return;
+    growPointsBusyV326=false;
+    if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
+    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
+    growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-points-manage-tab-v326]').forEach(button=>button.onclick=()=>{
     const tab=button.dataset.growPointsManageTabV326;
@@ -24524,17 +24567,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersAddOpenV331='';growTiersErrorV331='';growTiersEditingV331=null;
     growRerenderV322();
   };
-  const growTiersAddAgain=outerMain.querySelector('[data-grow-tiers-add-again-v331]');
-  if(growTiersAddAgain)growTiersAddAgain.onclick=()=>{
-    growTiersEditingV331=null;
-    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';
-    growRerenderV322();
-  };
-  const growTiersAddDone=outerMain.querySelector('[data-grow-tiers-add-done-v331]');
-  if(growTiersAddDone)growTiersAddDone.onclick=()=>{
-    growTiersAddOpenV331='';
-    growRerenderV322();
-  };
   const growTiersAddSave=outerMain.querySelector('[data-grow-tiers-add-save-v331]');
   if(growTiersAddSave)growTiersAddSave.onclick=async()=>{
     if(growTiersBusyV331)return;
@@ -24546,8 +24578,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!name){growTiersErrorV331='Name the tier customers will see.';return growRerenderV322();}
     if(!Number.isFinite(threshold)||threshold<0){growTiersErrorV331='Reached-at must be zero or a positive number.';return growRerenderV322();}
     growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    const wasEditing=Boolean(growTiersEditingV331);
     let error;
-    if(growTiersEditingV331){
+    if(wasEditing){
       ({error}=await sb.rpc('business_update_tier_v331',{
         p_business:S.biz.id,p_tier:growTiersEditingV331,p_name:name,p_threshold:threshold,p_perk_note:perkNote||null}));
     }else{
@@ -24557,29 +24590,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!isGrowCurrent())return;
     growTiersBusyV331=false;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
-    if(growTiersEditingV331){
-      growTiersEditingV331=null;growTiersAddOpenV331='';
-      toast('Tier updated');
-    }else{
-      toast('Tier added and live for customers');
-      growTiersAddOpenV331='prompt';
-    }
+    /* V351 (owner: "After successful creation, close the form again. Do not keep the form
+       permanently expanded."): both branches now close straight to '' — no more 'prompt'/
+       "Add another tier" screen. */
+    growTiersEditingV331=null;growTiersAddOpenV331='';
+    toast(wasEditing?'Tier updated':'Tier added and live for customers');
     growRerenderV322();
   };
-  outerMain.querySelectorAll('[data-grow-tiers-toggle-v331]').forEach(button=>button.onclick=async()=>{
-    if(growTiersBusyV331)return;
-    const id=button.dataset.growTiersToggleV331;
-    const want=button.getAttribute('aria-checked')!=='true';
-    growTiersBusyV331=true;growTiersErrorV331='';
-    button.disabled=true;
-    const {error}=await sb.rpc('business_set_tier_paused_v331',{
-      p_business:S.biz.id,p_tier:id,p_paused:!want});
-    if(!isGrowCurrent())return;
-    growTiersBusyV331=false;
-    if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
-    toast(want?'Turned on for customers':'Turned off for customers');
-    growRerenderV322();
-  });
   outerMain.querySelectorAll('[data-grow-tiers-delete-v331]').forEach(button=>button.onclick=()=>{
     growTiersDeletePendingV331=button.dataset.growTiersDeleteV331;
     growRerenderV322();

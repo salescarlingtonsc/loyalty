@@ -125,6 +125,20 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
    name/meta/description, then its own controls — instead of a single text line. */
 .grow-points-gift-card-v343{display:flex;align-items:center;gap:14px;padding:12px 0}
 .grow-points-gift-thumb-v343{flex-shrink:0;width:56px;height:56px;border-radius:14px;background:var(--tint);color:var(--coral);display:grid;place-items:center;overflow:hidden}
+/* V351 (owner UX pass, 2026-08-16): a reusable "•••" overflow menu for row actions on the Points
+   and Tiers pages — same <details>/<summary> + .menu technique already used by the workspace
+   switcher (~line 4904), scoped to its own class so it isn't tied to that component's styling. */
+.grow-row-menu-v351{position:relative;display:inline-block}
+.grow-row-menu-v351>summary{list-style:none;cursor:pointer}
+.grow-row-menu-v351>summary::-webkit-details-marker{display:none}
+.grow-row-menu-v351>summary::marker{display:none}
+.grow-row-menu-v351 .menu{position:absolute;top:calc(100% + 6px);right:0;z-index:20;min-width:150px;
+  background:#fff;border:1px solid var(--hair);border-radius:var(--r-sm);padding:6px;box-shadow:var(--shadow-lg)}
+.grow-row-menu-v351 .menu button{display:flex;width:100%;align-items:center;min-height:40px;padding:8px 10px;
+  border-radius:8px;font-size:13.5px;font-weight:600;color:var(--ink2);text-align:left;background:transparent}
+.grow-row-menu-v351 .menu button:hover{background:#F2EFEA;color:var(--ink)}
+.grow-row-menu-v351 .menu button.danger{color:var(--red)}
+.grow-row-menu-v351 .menu button.danger:hover{background:#FDEEEC}
 .grow-points-gift-thumb-v343 img{width:100%;height:100%;object-fit:cover}
 .grow-points-gift-body-v343{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
 .grow-points-gift-body-v343>b{font-size:.98rem}
@@ -1227,6 +1241,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-tier-row-icon-v343{width:40px;height:40px;border-radius:999px;background:#FFF0ED;color:var(--coral);display:grid;place-items:center;flex-shrink:0}
 @media(max-width:760px){.grow-tier-ladder-v343{overflow:auto;padding-bottom:70px}.grow-tier-ladder-line-v343{min-width:620px}.grow-tier-ladder-stop-v343{min-width:82px}.grow-tier-basis-card-v343{align-items:flex-start;flex-direction:column}}
 @media(max-width:860px){.grow-tier-table-head-v343{display:none}.grow-tier-table-row-v343{grid-template-columns:1fr}.grow-tier-table-row-v343>.row{justify-content:flex-start!important}}
+/* V351 (owner UX pass, 2026-08-16): the 4-column "Tier name / Required points / Status / Actions"
+   table read like a database admin screen — replaced with a plain card row, same information,
+   less chrome. Reuses .grow-tier-row-icon-v343 verbatim. */
+.grow-tier-card-row-v351{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-card-row-v351{padding:20px 24px;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(48,36,28,.07)}
+.grow-tier-card-body-v351{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.grow-tier-card-body-v351 b{font-size:1rem}
 /* The one choice for what points are FOR — two selectable cards, then a compact chosen state. */
 .points-mode-chooser-v229{width:100%}
 .points-mode-lead-v229{margin:0 0 10px}
@@ -2645,7 +2666,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=a52d9e59ee53","business":"/app-business.js?b=1f1ba9b220b9","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=a52d9e59ee53","business":"/app-business.js?b=7bf46c049c26","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
