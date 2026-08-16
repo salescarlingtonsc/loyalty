@@ -769,6 +769,12 @@ function growPointsPhotoPreviewUrlForV349(file){
 }
 let growPointsRemovePhotoV343=false;
 /* V331 — the same shape as the V326 points-page state above, for the new #/grow/tiers page. */
+/* V364 — the Referrals settings panel state (owner markup, photo 3: "settings put here, when
+   click edit setting page prompt here"). Page-level and not persisted, exactly like the tier and
+   gift form state above. */
+let growReferralEditOpenV364=false;
+let growReferralErrorV364='';
+let growReferralBusyV364=false;
 let growTiersManageTabV331='published';
 let growTiersDeletePendingV331='';
 let growTiersAddOpenV331='';
@@ -797,18 +803,47 @@ const GROW_TIER_BENEFIT_TEMPLATES_V363=Object.freeze([
   ['Free delivery on every order','Free delivery'],
   ['__custom__','Write my own']
 ]);
+/* V365 — every benefit carries a LIMIT, and the limit is part of the sentence the customer reads.
+   Owner (2026-08-16, photo 4): "all these needs to set a limit (like 30times per month or 1 time
+   per month - must be stated clearly)". The periods are the ones a shop actually rosters by;
+   'ever' covers a once-in-a-lifetime perk. The sentence built here MIRRORS app.v365_benefit_sentence
+   in the migration, so the preview an owner sees while typing is the text the server stores. */
+const GROW_TIER_BENEFIT_PERIODS_V365=Object.freeze([['day','per day'],['week','per week'],
+  ['month','per month'],['year','per year'],['ever','in total']]);
+function growTierBenefitSentenceV365(benefit){
+  const label=String(benefit?.label||'').trim();
+  const limit=Number(benefit?.limit_count);
+  if(!label)return '';
+  if(!Number.isFinite(limit)||limit<=0)return label;
+  const period=String(benefit?.limit_period||'month');
+  return `${label} — ${Math.round(limit)} ${period==='ever'?'in total':`per ${period}`}`;
+}
 /* V363 helpers. Kept beside the template list, not inside growPage, because both the renderer
    and the click handlers use them and neither owns the other. */
 function growTiersBenefitLinesV363(value){
   return String(value||'').split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
 }
+/* V365: a benefit is a row now, not a line. The editor's draft holds objects; these two turn the
+   stored shape into that draft and back. A tier whose benefits exist only as v363 perk_note text
+   (no v365 rows yet, or the migration not applied on this database) still opens correctly — the
+   line becomes an unlimited benefit, which is exactly what it meant when it was written. */
+function growTiersBenefitDraftFromV365(rows,perkNote){
+  if(Array.isArray(rows)&&rows.length)return rows.map(row=>({id:row.id||null,label:String(row.label||''),
+    limit_count:row.limit_count==null?'':String(row.limit_count),limit_period:row.limit_period||'month'}));
+  return growTiersBenefitLinesV363(perkNote).map(line=>({id:null,label:line,limit_count:'',limit_period:'month'}));
+}
 /* Reads the live form rows. Blanks are KEPT here on purpose: the remove buttons address rows by
    their rendered index, so silently dropping an empty row mid-capture would shift every index
    after it and delete the wrong benefit. Only the save path filters (see growTiersAddSave). */
 function growTiersReadBenefitFieldsV363(){
-  const nodes=document.querySelectorAll('[data-grow-tiers-benefit-input-v363]');
+  const nodes=document.querySelectorAll('[data-grow-tiers-benefit-row-v365]');
   if(!nodes.length)return [...(growTiersAddDraftV331.benefits||[])];
-  return [...nodes].map(node=>String(node.value||'').trim());
+  return [...nodes].map(node=>({
+    id:node.dataset.growTiersBenefitIdV365||null,
+    label:String(node.querySelector('[data-grow-tiers-benefit-input-v363]')?.value||'').trim(),
+    limit_count:String(node.querySelector('[data-grow-tiers-benefit-limit-v365]')?.value||'').trim(),
+    limit_period:String(node.querySelector('[data-grow-tiers-benefit-period-v365]')?.value||'month')
+  }));
 }
 let growTiersErrorV331='';
 let growTiersBusyV331=false;
@@ -1394,7 +1429,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -13238,6 +13273,12 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* V362: the bring-back voucher names the item handed over, same reason as welcomeOfferGiven
      directly above — interpolated runtime copy has to be a reviewed template, not a raw literal. */
   bringbackVoucherGiven:Object.freeze({en:'{item} given free — bring-back voucher used ✓','zh-CN':'已免费赠送 {item} —— 回流礼券已使用 ✓',ms:'{item} diberi percuma — baucar bawa-balik digunakan ✓'}),
+  /* V365: the four things the counter can be told after pressing Give on a tier benefit. Named
+     templates rather than inline interpolation, because every one of them names the benefit. */
+  tierBenefitGiven:Object.freeze({en:'{item} given ✓','zh-CN':'已提供 {item} ✓',ms:'{item} diberi ✓'}),
+  tierBenefitAlreadyGiven:Object.freeze({en:'{item} was already given.','zh-CN':'{item} 已经提供过了。',ms:'{item} telah pun diberi.'}),
+  tierBenefitUsedUp:Object.freeze({en:'{item} is already used up for this period.','zh-CN':'{item} 在本期内已用完。',ms:'{item} telah habis digunakan untuk tempoh ini.'}),
+  tierBenefitNotEarned:Object.freeze({en:'This customer\'s tier does not include {item}.','zh-CN':'该顾客的等级不包含 {item}。',ms:'Peringkat pelanggan ini tidak termasuk {item}.'}),
   sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
   catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
   catalogueDisabled:Object.freeze({en:'Catalogue-first checkout disabled','zh-CN':'已停用目录优先结账',ms:'Pembayaran katalog dahulu dinyahaktifkan'}),
@@ -13306,10 +13347,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   removeFromWaitlist:Object.freeze({en:'Remove {customer} from waitlist','zh-CN':'将 {customer} 从候补名单中移除',ms:'Alih keluar {customer} daripada senarai menunggu'}),
   joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
   viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
-  growPublishedReward:Object.freeze({en:'{count} published reward ready for customers.','zh-CN':'已有 {count} 项已发布奖励可供顾客使用。',ms:'{count} ganjaran diterbitkan sedia untuk pelanggan.'}),
-  growPublishedRewards:Object.freeze({en:'{count} published rewards ready for customers.','zh-CN':'已有 {count} 项已发布奖励可供顾客使用。',ms:'{count} ganjaran diterbitkan sedia untuk pelanggan.'}),
-  growPublishedBringBackRule:Object.freeze({en:'{count} published bring-back rule measuring return visits.','zh-CN':'已有 {count} 条已发布回流规则正在衡量回访。',ms:'{count} peraturan pelanggan kembali yang diterbitkan sedang mengukur lawatan kembali.'}),
-  growPublishedBringBackRules:Object.freeze({en:'{count} published bring-back rules measuring return visits.','zh-CN':'已有 {count} 条已发布回流规则正在衡量回访。',ms:'{count} peraturan pelanggan kembali yang diterbitkan sedang mengukur lawatan kembali.'}),
   growDraftReady:Object.freeze({en:'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.','zh-CN':'推荐草稿已就绪。您可编辑任何设置；发布前不会改变顾客体验。',ms:'Draf cadangan sedia. Edit mana-mana tetapan; tiada perubahan untuk pelanggan sehingga diterbitkan.'}),
   publishImpactAction:Object.freeze({en:'{live} action starts running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
   publishImpactActions:Object.freeze({en:'{live} actions start running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
@@ -13338,6 +13375,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
   'packageVersionCreated',
   'giftCardLoaded','sessionUsed','welcomeOfferGiven','bringbackVoucherGiven',
+  'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
@@ -13357,8 +13395,9 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
   'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails',
-  'growPublishedReward','growPublishedRewards','growPublishedBringBackRule',
-  'growPublishedBringBackRules','growDraftReady','publishImpactAction',
+  /* V364: growPublishedReward/-Rewards/-BringBackRule/-BringBackRules retired with the
+     "How the programme fits together" block that was their only render path. */
+  'growDraftReady','publishImpactAction',
   'publishImpactActions','publishMoneyLive','publishMoneyNone',
   'publishCustomersLive','publishCustomersNone','publishDraftVersion',
   'publishConfirmationSensitive','publishConfirmationStandard',
@@ -13596,7 +13635,13 @@ function renderShell(page){
     /* V288: every ROUTE entry into Programmes is marked as such, so a stale tile drill from an
        earlier visit cannot survive a fresh navigation. */
     grow:(hashParam,routedFocus)=>growPage('overview',hashParam,routedFocus,{fromRouteV288:true}),
-    bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus,{fromRouteV288:true}),retention:(hashParam,routedFocus)=>growPage('winback',hashParam,routedFocus,{fromRouteV288:true}),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam,null,{fromRouteV288:true}),storedvalue:hashParam=>growPage('storedvalue',hashParam,null,{fromRouteV288:true}),referrals:referralsPage,
+    bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus,{fromRouteV288:true}),retention:()=>{/* V364 (owner markup, photo 2: "Retention programs" struck through and renamed
+      "Bring Back Rewards", the draft/publish banner struck through with "delete this"). Owner
+      ruling when asked: fold this page into the v361 Bring-back module rather than maintain two
+      bring-back surfaces. The route survives so every existing link, bookmark and history entry
+      still lands somewhere true — it just lands on the module that actually runs. The winback
+      EDITOR surface is untouched; only this top-level page redirects. */
+      nav('#/grow/bringback');return Promise.resolve();},promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam,null,{fromRouteV288:true}),storedvalue:hashParam=>growPage('storedvalue',hashParam,null,{fromRouteV288:true}),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
@@ -16929,7 +16974,7 @@ async function tillPage(){
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
-    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows]=await Promise.all([
+    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
          reconstructs or broadens that availability rule. */
@@ -16950,7 +16995,17 @@ async function tillPage(){
          here; which of those services may actually be sold at THIS branch is still decided by
          the checkout catalogue above, never by this list. */
       sb.from('bundles').select('id,name,price_cents,active,bundle_items(service_id)')
-        .eq('business_id',S.biz.id).eq('active',true).order('name')
+        .eq('business_id',S.biz.id).eq('active',true).order('name'),
+      /* V365 (owner, photo 4: "there must be a qrcode for merchant to scan and issue the
+         rewards"). The scan already exists — "Scan customer QR" resolves the member code to this
+         client (staff_scan_member_qr_v327) — so what was missing was the thing to issue at the
+         end of it. This read answers "what is this customer's tier entitled to, and how much of
+         it is left in the current period", and rides the same load as the entitlements above for
+         the same reason they do: one round trip per looked-up customer.
+         Fail-soft: a database without the v365 migration simply yields no panel. */
+      walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_tier_benefits_for_client_v365',{
+        p_business:S.biz.id,p_client:cust.client_id
+      })
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
@@ -16993,6 +17048,8 @@ async function tillPage(){
          for the same reason — this is the one read the till already makes for a looked-up
          customer, so a second round-trip would be a second thing to keep in sync. */
       customerBringbackOffer:entitlements.error?null:(entitlements.data?.bringback_offer||null),
+      /* V365: the customer's claimable tier benefits, each with what is left this period. */
+      customerTierBenefits:tierBenefitsV365?.error?null:(tierBenefitsV365?.data||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
          missing a service is not the deal the customer was quoted, so it is withheld rather than
@@ -17430,6 +17487,27 @@ async function tillPage(){
             <p class="muted small" style="margin:5px 0">Sent because they had not visited for ${Math.max(0,Number(bringbackOffer.away_days)||0)} days. Nothing is charged.</p>
             <button type="button" class="btn primary sm" id="tBringbackRedeemV362" data-grant="${esc(bringbackOffer.grant_id)}">Give ${esc(bringbackOffer.reward_label||'the free item')}</button></div>`
           :'';
+        /* V365 (owner, photo 4): the tier benefits this customer has earned, each stating its own
+           limit and what is left this period. Staff scan the customer's Peekaa QR (or look them
+           up) and press Give; staff_issue_tier_benefit_v365 re-checks the tier, the period count
+           and the branch, so nothing here decides eligibility — this list is a display of the
+           server's answer, and a benefit with nothing left is shown spent rather than hidden, so
+           staff can tell "already used this month" from "not a benefit of this tier". */
+        const tierBenefitsV365=(!walkin&&catalog.customerTierBenefits&&Array.isArray(catalog.customerTierBenefits.benefits))
+          ?catalog.customerTierBenefits.benefits:[];
+        const tierBenefitBannerV365=tierBenefitsV365.length
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>${esc(catalog.customerTierBenefits?.tier?.label||'Tier')} benefits</b>
+            <p class="muted small" style="margin:5px 0">Earned by reaching ${esc(catalog.customerTierBenefits?.tier?.label||'this tier')}. Give one when the customer asks for it.</p>
+            ${tierBenefitsV365.map(benefit=>{
+              const spent=benefit.remaining!==null&&benefit.remaining!==undefined&&Number(benefit.remaining)<=0;
+              return `<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+                <span style="flex:1;min-width:160px"><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
+                ${benefit.limit_count==null?'<span class="muted small" style="display:block">No limit</span>'
+                  :`<span class="muted small" style="display:block">${Math.max(0,Number(benefit.remaining)||0)} left ${benefit.limit_period==='ever'?'in total':`this ${esc(benefit.limit_period||'month')}`}</span>`}</span>
+                ${spent?'<span class="pill off">Used up</span>'
+                  :`<button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>`}
+              </div>`}).join('')}</div>`
+          :'';
         const welcomeBanner=welcomeOffer
           ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
             <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
@@ -17446,7 +17524,7 @@ async function tillPage(){
            itself, and a group with nothing in it prints no heading. */
         const svcHeadingV216=catalog.services.length?'<b class="small" style="display:block">Services</b>':'';
         const prodHeadingV216=(catalog.products&&catalog.products.length)?'<b class="small" style="display:block;margin-top:14px">Products</b>':'';
-        picker=`${welcomeBanner}${bringbackBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
+        picker=`${welcomeBanner}${bringbackBanner}${tierBenefitBannerV365}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -17590,6 +17668,32 @@ async function tillPage(){
       catalog=null;
       draw();
     };
+    /* V365: give one tier benefit. The idempotency key is per press, so a double-tap on a slow
+       connection replays into the SAME issue rather than burning two of the customer's monthly
+       allowance; the server answers duplicate_ignored and the count does not move. */
+    document.querySelectorAll('[data-tier-benefit-give-v365]').forEach(button=>button.onclick=async()=>{
+      if(busy||!cust?.client_id)return;
+      const benefitId=button.dataset.tierBenefitGiveV365;
+      const label=button.dataset.label||'the benefit';
+      busy=true;button.disabled=true;
+      const {data,error}=await sb.rpc('staff_issue_tier_benefit_v365',{
+        p_business:S.biz.id,p_client:cust.client_id,p_benefit:benefitId,
+        p_branch:tillBranchId||null,p_idempotency_key:crypto.randomUUID()});
+      if(!isTillCurrent())return;
+      busy=false;
+      if(error){
+        button.disabled=false;
+        /* The two refusals staff will actually meet are stated in their own words rather than as
+           a raw code — everything else falls through to the standard error surface. */
+        const message=String(error?.message||'');
+        if(message.includes('tier_benefit_limit_reached'))return toast(workspaceTemplateTextV97('tierBenefitUsedUp',{item:label}));
+        if(message.includes('tier_benefit_not_earned'))return toast(workspaceTemplateTextV97('tierBenefitNotEarned',{item:label}));
+        return fail(error);
+      }
+      toast(workspaceTemplateTextV97(data?.status==='duplicate_ignored'?'tierBenefitAlreadyGiven':'tierBenefitGiven',{item:label}));
+      catalog=null;
+      draw();
+    });
     document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
@@ -21307,9 +21411,16 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
      deliberately not part of any draft comparison (see the v326 migration's own header comment
      for why). `programme_id` scopes that same page's list to the currently live model's spine —
      points and stamps are mutually exclusive (R2), but a business that has ever switched models
-     can have dormant rows tagged with the OTHER kind's programme_id still sitting in this table. */
+     can have dormant rows tagged with the OTHER kind's programme_id still sitting in this table.
+     V364 (owner, photo 5: "why after add photo & save, did not reflect?") — THIS SELECT LIST WAS
+     THE BUG, and it is the same class of defect V291's comment above describes. The photo saved
+     correctly every time: business_update_reward_v326 wrote image_ref, but the page that renders
+     the result never READ that column, so the gift row fell back to the icon and the edit form
+     said "No photo yet" — a write that worked, reported as a write that did nothing. `description`
+     was missing for the same reason, so the description an owner typed was equally invisible once
+     the form closed. Both are now read. */
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active,paused,programme_id,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
+    ?sb.from('loyalty_rewards').select('id,active,paused,programme_id,customer_name,name,description,image_ref,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
   /* Live reward eligibility, plus the names the diff prints. All four are fail-soft: a failed
      read drops the branch/service rows from the comparison rather than claiming "All branches". */
@@ -21470,6 +21581,150 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
 /* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
    with a free item, or no minimum with a free item. The item comes from the live catalogue —
    a free item that is not on sale cannot be handed over, so it cannot be chosen. */
+/* ============ V364 — THE BIRTHDAY BENEFIT, AS ITS OWN POPUP ==================================
+   Owner markup 2026-08-16 (photo 1): the whole Loyalty draft page struck through, with "when
+   click the birthday rewards straightaway pop up birthday gift setting. SKIP HERE".
+   Clicking Birthday reward used to open the deep Loyalty editor, where the birthday fields sit
+   inside a collapsed <details> under a draft/publish banner — three surfaces to cross for one
+   setting. This is that setting, and nothing else, in the shape the rest of the module now uses
+   (the Welcome offer modal directly above is its twin).
+
+   WHY IT STILL GOES THROUGH A CONFIG VERSION. Unlike gifts and tiers, the birthday rule has no
+   live table of its own: public.birthday_program_versions is keyed by config_version_id and the
+   customer read (get_active_birthday_program) resolves the business's ACTIVE version. Inventing a
+   second, unversioned writer would have created exactly the two-sources-of-truth drift V352/V353
+   cost us. So this saves the way the wizard's own Go-live step does (V360 auto-publish): make a
+   fresh draft FROM THE ACTIVE VERSION, write the birthday rule into it, publish it. Fresh —
+   never an existing draft — because publishing someone else's half-finished draft as a side
+   effect of saving a birthday gift would ship edits the owner never asked to go live. */
+async function openBirthdayBenefitEditorV364(current,onSaved){
+  const kindNow=current?.fulfillment_kind==='discount_pct'?'discount_pct':'free_item';
+  const monthMode=(current?.window_mode||'month')!=='days';
+  document.querySelector('#birthdayBenefitModalV364')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="birthdayBenefitModalV364" role="dialog" aria-modal="true" aria-labelledby="birthdayBenefitTitleV364" tabindex="-1">
+    <section class="modal-card" style="max-width:560px">
+      <div class="row" style="align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="birthdayBenefitTitleV364" style="margin-top:4px">Birthday gift</h2>
+        <p class="muted small" style="margin-top:6px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></div>
+        <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('loyalty',{size:34})}</span>
+      </div>
+      <button type="button" class="btn ghost sm welcome-offer-close-v350" id="birthdayCloseV364" aria-label="Close birthday gift">Close</button>
+      <label class="welcome-offer-togglerow-v350" style="margin-top:18px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('loyalty',{size:16})}</span><b>Give customers a birthday gift</b><input type="checkbox" id="birthdayActiveV364" ${current?.active?'checked':''}></label>
+      <label for="birthdayKindV364" style="margin-top:18px">What do they get?</label>
+      <select id="birthdayKindV364">
+        <option value="free_item" ${kindNow==='free_item'?'selected':''}>A free item</option>
+        <option value="discount_pct" ${kindNow==='discount_pct'?'selected':''}>A percentage discount</option>
+      </select>
+      <div id="birthdayItemWrapV364"${kindNow==='free_item'?'':' hidden'} style="margin-top:8px">
+        <label for="birthdayItemV364" class="muted small">What is it?</label>
+        <input id="birthdayItemV364" placeholder="e.g. Free slice of cake" maxlength="240" value="${esc(current?.manual_item||'')}">
+      </div>
+      <div id="birthdayDiscountWrapV364"${kindNow==='discount_pct'?'':' hidden'} style="margin-top:8px">
+        <label for="birthdayDiscountV364" class="muted small">Discount %</label>
+        <input id="birthdayDiscountV364" inputmode="decimal" placeholder="e.g. 10" value="${current?.discount_percent==null?'':esc(String(current.discount_percent))}">
+      </div>
+      <fieldset style="border:0;padding:0">
+        <legend class="small"><b>When can they use it?</b></legend>
+        <label class="welcome-offer-optioncard-v350${monthMode?' selected':''}" style="margin-top:10px"><input type="radio" name="birthdayWindowV364" value="month" ${monthMode?'checked':''}><span><b>Their whole birthday month</b><p class="muted small" style="margin-top:2px">Simplest, and what most customers expect.</p></span></label>
+        <label class="welcome-offer-optioncard-v350${monthMode?'':' selected'}"><input type="radio" name="birthdayWindowV364" value="days" ${monthMode?'':'checked'}><span><b>A window around the exact date</b><p class="muted small" style="margin-top:2px">Choose how many days either side.</p></span></label>
+        <div id="birthdayDaysWrapV364"${monthMode?' hidden':''} class="row" style="gap:10px;margin-top:10px;flex-wrap:wrap">
+          <span><label for="birthdayBeforeV364" class="muted small">Days before</label><input id="birthdayBeforeV364" inputmode="numeric" style="max-width:120px" value="${Number(current?.window_days_before)||0}"></span>
+          <span><label for="birthdayAfterV364" class="muted small">Days after</label><input id="birthdayAfterV364" inputmode="numeric" style="max-width:120px" value="${Number(current?.window_days_after)||0}"></span>
+        </div>
+      </fieldset>
+      ${/* The three copy fields the DB requires (label/description/terms are NOT NULL on
+           birthday_program_versions). They are prefilled from the benefit rather than left blank
+           so the owner is never stopped by a required field they did not know existed — but they
+           stay visible and editable, because this is the wording the customer reads. */''}
+      <details class="grow-secondary" style="margin-top:16px"><summary>Wording customers see</summary><div style="padding-top:10px">
+        <label for="birthdayLabelV364" class="muted small">Name</label>
+        <input id="birthdayLabelV364" maxlength="120" placeholder="e.g. Birthday treat" value="${esc(current?.customer_label||'')}">
+        <label for="birthdayDescriptionV364" class="muted small" style="margin-top:10px">Description</label>
+        <textarea id="birthdayDescriptionV364" rows="2" maxlength="1000">${esc(current?.customer_description||'')}</textarea>
+        <label for="birthdayTermsV364" class="muted small" style="margin-top:10px">Terms</label>
+        <textarea id="birthdayTermsV364" rows="3" maxlength="2000">${esc(current?.customer_terms||'')}</textarea>
+      </div></details>
+      <p class="notice warn small" id="birthdayErrorV364" style="margin-top:12px" hidden></p>
+      <div class="row" style="margin-top:18px;flex-wrap:wrap"><button type="button" class="btn primary" id="birthdaySaveV364">Save birthday gift</button><button type="button" class="btn ghost sm" id="birthdayCancelV364">Cancel</button></div>
+    </section></div>`);
+  const dialog=$('birthdayBenefitModalV364');
+  let deactivate,busy=false;
+  const close=()=>deactivate?.();
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#birthdayKindV364'});
+  $('birthdayCloseV364').onclick=close;
+  $('birthdayCancelV364').onclick=close;
+  const showError=message=>{
+    const box=$('birthdayErrorV364');if(!box)return;
+    box.textContent=message||'';box.hidden=!message;
+  };
+  const syncKind=()=>{
+    const kind=$('birthdayKindV364').value;
+    $('birthdayItemWrapV364').hidden=kind!=='free_item';
+    $('birthdayDiscountWrapV364').hidden=kind!=='discount_pct';
+  };
+  $('birthdayKindV364').onchange=syncKind;
+  const syncWindow=()=>{
+    const days=document.querySelector('input[name="birthdayWindowV364"]:checked')?.value==='days';
+    $('birthdayDaysWrapV364').hidden=!days;
+    dialog.querySelectorAll('.welcome-offer-optioncard-v350').forEach(card=>{
+      card.classList.toggle('selected',card.querySelector('input').checked);
+    });
+  };
+  dialog.querySelectorAll('input[name="birthdayWindowV364"]').forEach(radio=>{radio.onchange=syncWindow});
+  syncWindow();
+  $('birthdaySaveV364').onclick=async()=>{
+    if(busy)return;
+    const kind=$('birthdayKindV364').value;
+    const item=String($('birthdayItemV364').value||'').trim();
+    const discount=Number($('birthdayDiscountV364').value||'');
+    const daysMode=document.querySelector('input[name="birthdayWindowV364"]:checked')?.value==='days';
+    const before=daysMode?Math.round(Number($('birthdayBeforeV364').value||0)):0;
+    const after=daysMode?Math.round(Number($('birthdayAfterV364').value||0)):0;
+    if(kind==='free_item'&&!item)return showError('Say what the free item is.');
+    if(kind==='discount_pct'&&!(discount>0&&discount<=100))return showError('Enter a discount between 0.01 and 100.');
+    if(daysMode&&(!Number.isFinite(before)||!Number.isFinite(after)||before<0||after<0||before>182||after>182))
+      return showError('Days before and after must each be between 0 and 182.');
+    /* The benefit sentence both defaults are built from, so an owner who never opens the wording
+       section still gets copy that matches what they actually chose. */
+    const benefitText=kind==='discount_pct'?`${discount}% off`:item;
+    const label=String($('birthdayLabelV364').value||'').trim()||'Birthday treat';
+    const description=String($('birthdayDescriptionV364').value||'').trim()
+      ||(daysMode?`${benefitText} around your birthday.`:`${benefitText} during your birthday month.`);
+    const terms=String($('birthdayTermsV364').value||'').trim()||[
+      'One birthday benefit per customer per year.',
+      'Your date of birth must be on your customer profile before the visit.',
+      'Cannot be exchanged for cash and cannot be combined with other offers.'
+    ].join(' ');
+    busy=true;showError('');$('birthdaySaveV364').disabled=true;
+    const payload={active:$('birthdayActiveV364').checked,customer_label:label,customer_description:description,
+      customer_terms:terms,fulfillment_kind:kind,window_mode:daysMode?'days':'month',
+      window_days_before:before,window_days_after:after,sort:0};
+    if(kind==='discount_pct')payload.discount_percent=discount;else payload.manual_item=item;
+    const finish=message=>{busy=false;$('birthdaySaveV364').disabled=false;showError(message)};
+    /* A fresh draft off the ACTIVE version — see the header comment for why never an existing one. */
+    const {data:draft,error:draftError}=await sb.rpc('create_loyalty_config_draft',
+      {p_business:S.biz.id,p_based_on:null,p_source:'birthday_editor_v364'});
+    if(draftError)return finish(ownerErrorText(draftError));
+    const versionId=draft?.version_id;
+    if(!versionId)return finish('The editable draft was not returned. Reload and try again.');
+    /* save_birthday_program_draft compares the header hash and refuses on a mismatch, so the hash
+       is READ back rather than assumed — create_loyalty_config_draft writes one and then
+       refresh_loyalty_config_snapshot rewrites it, so no value known here would be current. */
+    const {data:header,error:headerError}=await sb.from('firm_config_versions')
+      .select('snapshot_hash').eq('id',versionId).maybeSingle();
+    if(headerError)return finish(ownerErrorText(headerError));
+    const programId=current?.program_id||crypto.randomUUID();
+    const {error:saveError}=await sb.rpc('save_birthday_program_draft',{p_config_version:versionId,
+      p_program_id:programId,p_program:payload,p_expected_snapshot_hash:header?.snapshot_hash||null});
+    if(saveError)return finish(ownerErrorText(saveError));
+    const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
+    if(publishError)return finish(`Saved to the draft, but it could not be made live — ${ownerErrorText(publishError)}`);
+    busy=false;
+    close();
+    toast($('birthdayActiveV364')?.checked===false?'Birthday gift saved and paused':'Birthday gift saved and live for customers');
+    if(typeof onSaved==='function')onSaved();
+  };
+}
 async function openWelcomeOfferEditorV215(current,onSaved){
   const [services,products]=await Promise.all([
     sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
@@ -22584,6 +22839,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       .then(r=>r.error?null:(r.data||[])).catch(()=>null)
     :[];
   if(!isGrowCurrent())return;
+  /* V365: the tier BENEFIT rows behind each ladder rung (label + its usage limit). Fail-soft in
+     the same shape as the reads above — a workspace whose database has not had the v365 migration
+     applied yet reads null here, and the editor then falls back to the perk_note lines it has
+     always used, so the page never breaks on a missing table. */
+  const growTierBenefitsV365=canRewards
+    ?await sb.from('tier_benefits_v365')
+      .select('id,tier_id,label,limit_count,limit_period,sort')
+      .eq('business_id',S.biz.id).is('deleted_at',null).eq('active',true).order('sort')
+      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :[];
+  if(!isGrowCurrent())return;
   /* V331: Published/History split for the new #/grow/tiers page and every existing tile/summary
      reader that used to (wrongly) rely on a nonexistent `active` column. Sorted by threshold —
      a tier ladder's order is always implicit rank, never insertion order (matches every existing
@@ -23512,7 +23778,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <b>Delete ${esc(name)}?</b>
         <p class="muted small" style="margin-top:6px">It moves to History. Customers can no longer redeem it.</p>
         <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-gift-delete-yes-v326="${esc(reward.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-points-gift-delete-no-v326="1">Cancel</button></div>
-      </li>`;
+      </li>
+      ${/* V364 (owner, photo 5: "every edit will show below its own header"). Editing a gift used
+           to open the form at the TOP of the page, several rows away from the gift it was editing
+           — on a list of nine, the owner could not see which row they were changing. The SAME
+           form node now renders directly under the row it belongs to; the add form still opens at
+           the top, because an add has no row to sit under yet. One definition, two positions. */''}
+      ${growPointsEditingV326&&String(growPointsEditingV326)===String(reward.id)?growPointsAddFormV326:''}`;
   };
   /* V343: the same form now serves BOTH Add and Edit (growPointsEditingV326 null = add), with a
      description field and a photo control matching the deep editor's own reward-photo pattern
@@ -23609,7 +23881,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${growPointsSpineKindV326}">${growPointsOnV326?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div>
         </li>
         ${growEarnRuleFormV359}
-        ${growPointsAddFormV326}
+        ${growPointsEditingV326?'':growPointsAddFormV326}
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
       ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">These gifts are available for your customers to redeem with their ${growPointsUnitV326}s.</p></div>`:''}
@@ -23688,6 +23960,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
+      ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
+           to give programmes to customer inactive for > 30 days / > 60 days / > 90 days"). The old
+           page's Quick templates were FREQUENCY shapes ("2 visits / week"), which is the opposite
+           mechanic — see the v361 migration header. These three are the owner's own absence
+           windows, and they only PREFILL the form: nothing is created until Save, so a mis-tap
+           costs a cancel, not a live campaign. */''}
+      ${canSetupWinback?`<div class="grow-bb-templates-v364" style="margin-top:12px">
+        <p class="muted small" style="margin:0 0 6px">Quick start — customers who have not visited for:</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          ${[30,60,90].map(days=>`<button type="button" class="btn ghost sm" data-grow-bb-template-v364="${days}">Away over ${days} days</button>`).join('')}
+        </div></div>`:''}
       <ul class="grow-setup-rewardlist-v301" data-grow-bb-summary-v361>
         <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${growBbRowsV361.length} campaign${growBbRowsV361.length===1?'':'s'} configured</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
@@ -23944,9 +24227,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div class="grow-tier-benefits-v363" data-grow-tiers-benefits-v363>
       <label class="muted small">Benefits <span class="muted">(optional — add as many as you like)</span></label>
       ${(growTiersAddDraftV331.benefits||[]).length
-        ?(growTiersAddDraftV331.benefits||[]).map((line,index)=>`<p class="grow-setup-sentence-v301 row" style="gap:8px;align-items:center;margin-top:6px">
-            <input class="grow-setup-input-v301" data-grow-tiers-benefit-input-v363="${index}" style="flex:1;min-width:0;max-width:420px" value="${esc(line||'')}" placeholder="e.g. 10% off every visit" data-workspace-i18n aria-label="Benefit ${index+1}">
+        ?(growTiersAddDraftV331.benefits||[]).map((benefit,index)=>`<p class="grow-setup-sentence-v301 row grow-tier-benefit-row-v365" data-grow-tiers-benefit-row-v365="${index}"${benefit.id?` data-grow-tiers-benefit-id-v365="${esc(benefit.id)}"`:''} style="gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
+            <input class="grow-setup-input-v301" data-grow-tiers-benefit-input-v363="${index}" style="flex:1;min-width:180px;max-width:320px" value="${esc(benefit.label||'')}" placeholder="e.g. 10% off every visit" data-workspace-i18n aria-label="Benefit ${index+1}">
+            ${/* V365: the limit, right beside the words it qualifies. Blank = no limit, and the
+                 field says so rather than defaulting to a number the owner never chose. */''}
+            <input class="grow-setup-input-v301" data-grow-tiers-benefit-limit-v365="${index}" inputmode="numeric" style="max-width:110px" value="${esc(String(benefit.limit_count??''))}" placeholder="No limit" data-workspace-i18n aria-label="How many times for benefit ${index+1}">
+            <select class="grow-setup-input-v301" data-grow-tiers-benefit-period-v365="${index}" style="max-width:130px" data-workspace-i18n aria-label="Limit period for benefit ${index+1}">
+              ${GROW_TIER_BENEFIT_PERIODS_V365.map(([value,label])=>`<option value="${esc(value)}"${(benefit.limit_period||'month')===value?' selected':''}>${esc(label)}</option>`).join('')}
+            </select>
             <button type="button" class="btn ghost sm" data-grow-tiers-benefit-remove-v363="${index}" data-workspace-i18n aria-label="Remove benefit ${index+1}">Remove</button>
+            <span class="muted small" style="flex-basis:100%">${esc(growTierBenefitSentenceV365(benefit)||'Customers see this line on their tier card.')}</span>
           </p>`).join('')
         :'<p class="muted small" style="margin:6px 0 0">No benefit yet — this tier is recognition only. Add one below if you want to give something.</p>'}
       <p class="grow-setup-sentence-v301 row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
@@ -23955,6 +24245,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         </select>
         <button type="button" class="btn ghost sm" data-grow-tiers-benefit-add-v363="1">+ Add benefit</button>
       </p>
+      <p class="muted small" style="margin-top:6px">Staff give a benefit from Record sale after scanning the customer's QR. Peekaa counts each one and refuses it once the limit is used up.</p>
     </div>
     ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Add tier'}</button></div>
@@ -24070,6 +24361,26 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          the clock are the same "no longer available" event from a customer's side, so "will be
          discard away" (the owner's words for Published) and "once expired goes to history" (their
          words for the SAME bucket, stated separately) are one rule, not two. */
+  /* ============ V364 — REFERRAL SETTINGS, INLINE UNDER THE ROW ================================
+     Owner markup 2026-08-16 (photo 3): the Referrals row circled with "settings put here, when
+     click edit setting page prompt here" and an arrow from Edit down into the space below it.
+     Two fields, because two is what public.referral_programs actually holds that an owner sets:
+     the points the referrer earns and the floor the friend must spend. save_referral_program_v322
+     is its only writer and the table is LIVE (not versioned), so this is immediate-write like the
+     rest of the module — no draft, no publish. `enabled` is deliberately NOT touched here: the
+     programme's on/off already has its own confirmed control (R6's "seperate button"), and a save
+     that silently switched a paused programme on would be the defect R6 exists to prevent. */
+  const growReferralRewardV364=Math.max(0,Math.round(Number(snapshot.referral?.reward_points)||0));
+  const growReferralMinCentsV364=Math.max(0,Math.round(Number(snapshot.referral?.min_spend_cents)||0));
+  const growReferralSettingsPanelV364=!(growReferralEditOpenV364&&isOwner&&modules.includes('referrals')&&canWriteModule('referrals'))?''
+    :`<div class="imp-note" data-grow-referral-settings-v364 style="margin-top:10px">
+      <b>Referral settings</b>
+      <p class="muted small" style="margin-top:6px">Paid after the friend's first qualifying visit, not when they sign up. One reward per referred customer, ever.</p>
+      <p class="grow-setup-sentence-v301" style="margin-top:10px"><label class="muted small" for="growReferralRewardV364">Points for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
+      <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least (${esc(S.biz?.currency||'SGD')})</label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
+      ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-referral-save-v364="1"${growReferralBusyV364?' disabled':''}>Save changes</button><button type="button" class="btn ghost sm" data-grow-referral-cancel-v364="1">Cancel</button></div>
+    </div>`;
   const growOffersNowV324=new Date();
   const growOfferBucketV324=item=>{
     const ends=item.ends_at?new Date(item.ends_at):null;
@@ -24169,7 +24480,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         if(growActiveTopicV229)return `<button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button>`;
         return dedicatedBackV362?`<a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a>`:'';
       })()}<div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
-      <div class="v150-title-actions">${programmeView==='list'?'<a class="btn ghost sm" href="#/grow/settings">'+CUI.icon('settings',{size:16})+'<span>More reward settings</span></a>':''}</div>
+      ${/* V364: the "More reward settings" header action went with the block it opened. */''}
+      <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
       <!-- V334 (owner markup, photo 4: "show this as header of gifts, it's the parent of this page,
@@ -24249,7 +24561,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </div>`:''}
       ${topicOnV229('referrals')?`
       <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
-        ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
+        ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),editKind:'referralSettingsV364',actionLabel:referralConfigured?'Edit':'Set up'})}
+        ${growReferralSettingsPanelV364}
       </div></div>
       `:''}
       ${topicOnV229('recurring')?`
@@ -24260,51 +24573,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
       </div></div>      `:''}
     </section>
-    ${programmeView!=='setup'&&(growActiveTopicV229?.key==='points'||(!growTilesModeV229&&!growActiveTopicV229)||routedSurface==='studio')?`
-    <details class="grow-secondary" id="growSecondarySettings">
-      <summary>More reward settings</summary><div class="grow-secondary-body">
-      <div class="grow-secondary-intro"><h2>How the programme fits together</h2><p class="muted small">Open these controls only when you want to fine-tune the automatic draft or review reward economics.</p></div>
-      <ol class="grow-flow" aria-label="Grow customer journey">
-        <li class="grow-flow-step" data-grow-step="trigger"><span class="grow-flow-icon">${CUI.icon('till',{size:22})}</span>
-          <h2>Trigger</h2><p>Choose which eligible sale or visit starts the journey.</p>
-          <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit earning','lm')}</div></li>
-        <li class="grow-flow-step" data-grow-step="who"><span class="grow-flow-icon">${CUI.icon('customers',{size:22})}</span>
-          <h2>Who</h2><p>Decide who earns, progresses, or receives a bring-back.</p>
-          <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit audience','loyaltyAudienceSettings')}</div></li>
-        <li class="grow-flow-step" data-grow-step="reward"><span class="grow-flow-icon">${CUI.icon('loyalty',{size:22})}</span>
-          <h2>Reward</h2><p>${rewardCount?workspaceTemplateHtmlV97(rewardCount===1?'growPublishedReward':'growPublishedRewards',{count:rewardCount}):'Define a clear reward your team can fulfil.'}</p>
-          <div class="grow-flow-foot">${growStatus(nodeStatus(rewardCount>0),nodeTone(rewardCount>0))}${editorAction('rewards','Edit reward','rwAdd')}</div></li>
-        <li class="grow-flow-step" data-grow-step="result"><span class="grow-flow-icon">${CUI.icon('retention',{size:22})}</span>
-          <h2>Result</h2><p>${bringBackCount?workspaceTemplateHtmlV97(bringBackCount===1?'growPublishedBringBackRule':'growPublishedBringBackRules',{count:bringBackCount}):'Measure repeat visits and bring customers back before they drift.'}</p>
-          <div class="grow-flow-foot">${growStatus(nodeStatus(bringBackLive),nodeTone(bringBackLive))}${editorAction('winback','Edit bring-back','rn')}</div></li>
-      </ol>
-    ${isOwner?`<section class="card profitability-overview-v122" aria-labelledby="profitabilityTitle">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Reward economics</p><h2 id="profitabilityTitle">Product cost and profitability</h2><p class="muted small">Use real cost, not retail price, when deciding what a reward can safely cost.</p></div></div>
-      ${profitabilityProducts.length?`<div class="profitability-product-grid">${profitabilityProducts.slice(0,6).map(product=>{
-        const safeReward=product.profit?Math.max(0,Math.round(product.profit.grossProfitCents*.25)):null;
-        return `<article data-product-profitability="${esc(product.id)}" data-price-cents="${Number(product.retail_price_cents)||0}" data-cost-cents="${product.cost_cents==null?'':Number(product.cost_cents)}"><b>${esc(product.name)}</b><dl><div><dt>Sell for</dt><dd>${money(product.retail_price_cents)}</dd></div><div><dt>Product cost</dt><dd>${product.cost_cents==null?'Not set':money(product.cost_cents)}</dd></div>${product.profit?`<div><dt>Gross profit</dt><dd>${money(product.profit.grossProfitCents)} · ${product.profit.marginPct}%</dd></div>`:''}</dl>
-          ${canEditProductCosts?`<label for="productCost-${esc(product.id)}" style="margin-top:10px">Unit cost (${esc(S.biz.currency||'SGD')})</label><div class="row"><input id="productCost-${esc(product.id)}" data-product-cost="${esc(product.id)}" inputmode="decimal" placeholder="e.g. 24.00" value="${product.cost_cents==null?'':(Number(product.cost_cents)/100).toFixed(2)}"><button type="button" class="btn ghost sm" data-product-cost-save="${esc(product.id)}" data-expected-cost="${product.cost_cents==null?'':Number(product.cost_cents)}">Save cost</button></div>`:''}
-          ${product.profit&&canSetupGrow?`<label for="rewardCost-${esc(product.id)}" style="margin-top:10px">Proposed reward cost (${esc(S.biz.currency||'SGD')})</label><div class="row"><input id="rewardCost-${esc(product.id)}" data-reward-cost="${esc(product.id)}" inputmode="decimal" value="${(safeReward/100).toFixed(2)}"><button type="button" class="btn ghost sm" data-reward-cost-use="${esc(product.id)}">Use in reward setup</button></div><p class="small" data-profit-after-reward="${esc(product.id)}" style="margin-top:8px">Reward cost ${money(safeReward)} leaves ${money(product.profit.grossProfitCents-safeReward)} profit after reward.</p>`:''}
-          <p class="muted small" style="margin-top:9px">${product.profit?`Assistant starting point: ${money(safeReward)} is 25% of gross profit. Edit the proposed cost, inspect the remaining profit, then send it to the reward draft.`:'Add the real unit cost to calculate gross profit and a cautious reward-cost starting point.'}</p></article>`;
-      }).join('')}</div>`:CUI.emptyState({iconName:'inventory',title:'No products available',body:'Add a real product through your catalogue setup, then return here to record its cost and review profitability.'})}
-      ${canEditProductCosts?'':`<p class="muted small" style="margin-top:12px">Product costs are read-only because this workspace does not grant Inventory write access.</p>`}
-      <p class="muted small" style="margin-top:12px">Guidance is deterministic and editable. It never publishes or changes a reward automatically.</p>
-    </section>`:''}
-    ${optionalTools.length?`<section aria-labelledby="growOptionalTitle"><div class="grow-section-heading">
-      <div><h2 id="growOptionalTitle">Optional growth tools</h2><p class="muted small">Add another growth loop only when it supports your programme.</p></div></div>
-      <div class="grow-optional">${optionalTools.map(tool=>`<article class="grow-optional-card"><div>
-        <b>${CUI.icon(tool.icon,{size:17})} ${esc(tool.title)}</b><p>${esc(tool.copy)}</p></div>
-        <a class="btn ghost sm" href="#/${tool.key}">Open</a></article>`).join('')}</div></section>`:''}
-    ${isOwner?`<details class="grow-advanced" id="growAdvanced" ${routedSurface==='studio'?'open':''}>
-      <summary>Advanced tools</summary>
-      <p class="muted small">Published advanced-rule controls, taxonomy, versions and rollback stay separate from everyday Grow setup.</p>
-      <div class="grow-advanced-actions">
-        <button type="button" class="btn ghost" data-grow-open="studio">Advanced rule controls</button>
-        ${canRewards?'<button type="button" class="btn ghost" data-grow-open="rewards">Rewards and versions</button>':''}
-        ${canWinback?'<button type="button" class="btn ghost" data-grow-open="winback">Bring-back rules and taxonomy</button>':''}
-      </div></details>`:''}
-      </div>
-    </details>`:''}
+    ${/* V364 (owner markup 2026-08-16, photos 6 and 7: the whole "How the programme fits
+         together" / "Product cost and profitability" block struck through with "delete this
+         portion", and the collapsed bar itself struck through with "remove this everywhere").
+         The entire `grow-secondary` details — its four Trigger/Who/Reward/Result steps, the
+         reward-economics card, Optional growth tools and Advanced tools — is gone from every
+         rewards view. Confirmed with the owner before removing (they chose "remove the whole
+         block everywhere" over keeping the four editors), because those rows were doors: their
+         targets are the same openGrowEditorV258 surfaces the individual programme pages already
+         open, so no editor is stranded, only this second index of them. The '#/grow/settings'
+         hash still resolves — it just lands on the programmes list now, so old links and history
+         entries do not 404. */''}
     <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
@@ -24343,10 +24622,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       lastCategory?.insertAdjacentHTML('afterend',`<div class="empty" role="status" style="margin-top:14px"><b>Nothing is running yet.</b><p class="muted small" style="margin-top:6px">Open the <a href="#/grow">Programmes list</a> — every programme there comes with a suggested starting point you can use in one tap.</p></div>`);
     }
   }else if(programmeView==='settings'){
-    const overviewSection=outerMain.querySelector('.reward-journey-v122');
-    if(overviewSection)overviewSection.hidden=true;
-    const settingsDetails=$('growSecondarySettings');
-    if(settingsDetails)settingsDetails.open=true;
+    /* V364: '#/grow/settings' used to hide the overview and spring the secondary block open.
+       The block is gone, so the hash now simply shows the ordinary programmes overview rather
+       than a page that hides its own content and reveals nothing. */
   }
   /* V173: every not-set-up programme row gets a concrete "Suggested" strip with a one-tap
      "Use suggestion" that opens the right editor prefilled. Suggestions are plain sector
@@ -24862,8 +25140,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     }
     if(tile.dataset.growTopicV229==='birthday'){
       if(!canSetupGrow)return;
-      return openGrowEditorV258({surface:'rewards',focusTarget:'birthdayLabel',
-        birthdayId:rewardJourney.birthday?.id||null,entryContext:growEntryContextV294()}).catch(fail);
+      /* V364 (owner, photo 1: "straightaway pop up birthday gift setting. SKIP HERE"): the tile
+         opens the setting itself now, not the deep Loyalty editor that held it. snapshot.birthday
+         is the ACTIVE programme row (get_active_birthday_program), which is exactly the state
+         this popup edits. */
+      return openBirthdayBenefitEditorV364(snapshot.birthday||null,
+        ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
     }
     if(tile.dataset.growTopicV229==='bringback')return nav('#/grow/bringback');
     /* V331: growSetupEntryV301's ['points','stamps','tiers'] list has no card left that reaches
@@ -24878,6 +25160,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
     growBbDraftV361={name:'',reward:'',away:'',expiry:''};
+    growRerenderV322({quiet:true});
+  });
+  outerMain.querySelectorAll('[data-grow-bb-template-v364]').forEach(el=>el.onclick=()=>{
+    const days=Math.max(1,Math.round(Number(el.dataset.growBbTemplateV364)||30));
+    growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
+    growBbDraftV361={name:`We miss you — away ${days} days`,reward:'',away:String(days),expiry:'30'};
     growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-bb-edit-v361]').forEach(el=>el.onclick=()=>{
@@ -25308,6 +25596,31 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     toast('Tier basis updated');
     growRerenderV322();
   };
+  /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
+  const growReferralCancelV364=outerMain.querySelector('[data-grow-referral-cancel-v364]');
+  if(growReferralCancelV364)growReferralCancelV364.onclick=()=>{
+    growReferralEditOpenV364=false;growReferralErrorV364='';
+    growRerenderV322({quiet:true});
+  };
+  const growReferralSaveV364=outerMain.querySelector('[data-grow-referral-save-v364]');
+  if(growReferralSaveV364)growReferralSaveV364.onclick=async()=>{
+    if(growReferralBusyV364)return;
+    const points=Math.round(Number($('growReferralRewardV364')?.value||''));
+    const amount=Number($('growReferralMinV364')?.value||'');
+    if(!Number.isFinite(points)||points<0){growReferralErrorV364='Points must be zero or a positive number.';return growRerenderV322({quiet:true});}
+    if(!Number.isFinite(amount)||amount<0){growReferralErrorV364='The minimum spend must be zero or more.';return growRerenderV322({quiet:true});}
+    growReferralBusyV364=true;growReferralErrorV364='';growRerenderV322({quiet:true});
+    /* `enabled` is handed straight back rather than decided here — see the panel's own comment. */
+    const {error}=await sb.rpc('save_referral_program_v322',{p_business:S.biz.id,
+      p_enabled:snapshot.referral?.enabled===true,
+      p_reward_points:points,p_min_spend_cents:Math.round(amount*100)});
+    if(!isGrowCurrent())return;
+    growReferralBusyV364=false;
+    if(error){growReferralErrorV364=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    growReferralEditOpenV364=false;
+    toast('Referral settings saved');
+    growRerenderV322({quiet:true});
+  };
   const growTiersAddOpen=outerMain.querySelector('[data-grow-tiers-add-v331]');
   if(growTiersAddOpen)growTiersAddOpen.onclick=()=>{
     growTiersEditingV331=null;
@@ -25324,7 +25637,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersEditingV331=id;
     growTiersAddOpenV331='form';
     growTiersAddDraftV331={name:tier.name||'',threshold:String(tier.threshold||''),perkNote:tier.perk_note||'',
-      benefits:growTiersBenefitLinesV363(tier.perk_note)};
+      benefits:growTiersBenefitDraftFromV365(
+        (growTierBenefitsV365||[]).filter(row=>String(row.tier_id)===String(tier.id)),tier.perk_note)};
     growTiersErrorV331='';
     growRerenderV322();
   });
@@ -25354,7 +25668,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     /* '' (the placeholder option) and '__custom__' both mean "a blank line I will type into" —
        the placeholder is not an error state, just the least-committed way to reach the same row. */
     const line=(picked&&picked!=='__custom__')?picked:'';
-    growTiersAddDraftV331={...growTiersAddDraftV331,benefits:[...(growTiersAddDraftV331.benefits||[]),line]};
+    growTiersAddDraftV331={...growTiersAddDraftV331,
+      benefits:[...(growTiersAddDraftV331.benefits||[]),{id:null,label:line,limit_count:'',limit_period:'month'}]};
     growRerenderV322({quiet:true});
   };
   const growTiersAddCancel=outerMain.querySelector('[data-grow-tiers-add-cancel-v331]');
@@ -25371,24 +25686,60 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     /* V363: rows in, one newline-joined perk_note out — exactly the shape every existing reader
        (workspace tierBenefitLines, the two customer ladder RPCs) already expects. Blank rows are
        dropped rather than saved as empty lines, which would render as empty customer chips. */
-    const benefits=growTiersReadBenefitFieldsV363().filter(Boolean);
-    const perkNote=benefits.join('\n');
+    const benefits=growTiersReadBenefitFieldsV363().filter(row=>String(row.label||'').trim());
+    /* V365: perk_note is DERIVED from the benefit rows — the server derives the stored copy from
+       the same numbers (app.v365_apply_perk_note), and this local build only keeps the tier RPC's
+       own perk_note argument honest in the moment between the two writes. */
+    const perkNote=benefits.map(row=>growTierBenefitSentenceV365(row)).filter(Boolean).join('\n');
     growTiersAddDraftV331={name,threshold:thresholdField?.value||'',perkNote,benefits};
+    const badLimit=benefits.find(row=>String(row.limit_count||'').trim()!==''
+      &&!(Number(row.limit_count)>0&&Number(row.limit_count)<=10000&&Number.isInteger(Number(row.limit_count))));
+    if(badLimit){growTiersErrorV331=`"${badLimit.label}" needs a whole number of times, or leave the limit blank for no limit.`;return growRerenderV322();}
     if(!name){growTiersErrorV331='Name the tier customers will see.';return growRerenderV322();}
     if(!Number.isFinite(threshold)||threshold<0){growTiersErrorV331='Reached-at must be zero or a positive number.';return growRerenderV322();}
     growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
     const wasEditing=Boolean(growTiersEditingV331);
-    let error;
+    let error,data;
     if(wasEditing){
-      ({error}=await sb.rpc('business_update_tier_v331',{
+      ({data,error}=await sb.rpc('business_update_tier_v331',{
         p_business:S.biz.id,p_tier:growTiersEditingV331,p_name:name,p_threshold:threshold,p_perk_note:perkNote||null}));
     }else{
-      ({error}=await sb.rpc('business_create_tier_v331',{
+      ({data,error}=await sb.rpc('business_create_tier_v331',{
         p_business:S.biz.id,p_name:name,p_threshold:threshold,p_perk_note:perkNote||null}));
     }
     if(!isGrowCurrent())return;
     growTiersBusyV331=false;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
+    /* V365: the benefit ROWS are written second, against the tier that now certainly exists (its
+       id comes back from either RPC). The order matters: the tier write above carries a perk_note
+       built locally, and this call re-derives the stored one from the rows — so if this second
+       call fails, the tier still reads exactly what the owner typed rather than losing the
+       benefits silently, and the failure says so instead of claiming success.
+       A workspace without the v365 migration answers PGRST202/42883; that is reported as the
+       one true thing — the words saved, the limits did not. */
+    const tierIdV365=wasEditing?growTiersEditingV331:(data?.tier_id||null);
+    if(tierIdV365){
+      const {error:benefitError}=await sb.rpc('business_set_tier_benefits_v365',{
+        p_business:S.biz.id,p_tier:tierIdV365,
+        p_benefits:benefits.map(row=>({label:String(row.label||'').trim(),
+          limit_count:String(row.limit_count||'').trim()===''?null:Math.round(Number(row.limit_count)),
+          limit_period:row.limit_period||'month',
+          ...(row.id&&wasEditing?{id:row.id}:{})}))});
+      if(!isGrowCurrent())return;
+      if(benefitError){
+        const missingV365=benefitError?.code==='PGRST202'||benefitError?.code==='42883';
+        growTiersEditingV331=null;growTiersAddOpenV331='';
+        if(missingV365){
+          /* The benefit WORDING is already saved (the tier RPC above carries it), so this is not
+             an error — it is the v363 behaviour, which is what this workspace had yesterday. Say
+             the one thing that is actually different: nothing is counting the limits yet. */
+          toast('Saved. Benefit limits start counting once the service update is applied.');
+          return growRerenderV322();
+        }
+        growTiersErrorV331=`The tier was saved, but its benefits could not be stored — ${ownerErrorText(benefitError)}`;
+        return growRerenderV322();
+      }
+    }
     /* V351 (owner: "After successful creation, close the form again. Do not keep the form
        permanently expanded."): both branches now close straight to '' — no more 'prompt'/
        "Add another tier" screen. */
@@ -25475,6 +25826,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   })();
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
+    /* V364 (owner markup, photo 3: "settings put here, when click edit setting page prompt here").
+       Referrals used to hand off to its own page at #/referrals/fe. Its two settings now open
+       inline, directly under the row that was pressed — the row stays the door, the destination
+       is this page. */
+    if(kind==='referralSettingsV364'){
+      growReferralEditOpenV364=!growReferralEditOpenV364;growReferralErrorV364='';
+      return growRerenderV322({quiet:true});
+    }
     const action=kind==='bringback'
       ?{surface:'winback',focusTarget:'rn',editProgramId:button.dataset.programId||null}
       :{surface:'rewards',focusTarget:kind==='earning'?'lm':kind==='classic'?'lr':kind==='birthday'?'birthdayLabel':kind==='add'?'rwAdd':null,
@@ -27941,7 +28300,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <button type="button" class="grow-setup-chip-v301" data-grow-setup-expiry-w6i2="year">One year (365 days)</button>
       <button type="button" class="grow-setup-chip-v301" data-grow-setup-expiry-w6i2="inactive-year">After 365 quiet days</button>
     </div>
-    <p class="muted small" style="margin-top:10px">Expiry runs on its own every day. Rung start and end dates stay in the full editor under More reward settings.</p>`;
+    <p class="muted small" style="margin-top:10px">Expiry runs on its own every day. Rung start and end dates stay in the full rewards editor.</p>`;
   };
   /* THE REFERRAL SCREEN. public.referral_programs is NOT part of the versioned draft —
      save_referral_program writes the live row — so this screen collects and Go-live writes, beside
@@ -28044,7 +28403,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         </div>
         <div class="grow-setup-formfoot-v304"><button type="button" class="btn" id="growSetupTierSaveV304">${editing?'Save':'Add tier'}</button>
         <span class="muted small">${editing?'Your changes save on their own.':'Add tier saves it to the list right away.'}</span></div>
-        <p class="muted small" style="margin-top:8px">Benefits, point multipliers and each rung's start and end dates live under More reward settings.</p></div>
+        <p class="muted small" style="margin-top:8px">Benefits, point multipliers and each rung's start and end dates live in the full rewards editor.</p></div>
       ${tierMovementBlockW6I2()}`;
   };
   const rewardFormHtml=()=>{
@@ -28341,7 +28700,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <!-- V339 (owner markup, photo 3: "delete this page" on the deep editor — owner confirmed
            "just remove the link to it", not the page/route itself): the standalone Points System
            edit entry no longer offers this link; the multi-programme setup flow still does. -->
-      <span class="grow-setup-head-links-v301">${state.simpleEditModeV335?'':`<a class="grow-setup-leave-v301" href="#/loyalty${state.versionId?`/${encodeURIComponent(state.versionId)}`:''}/${editorContextV303()}" id="growSetupFullEditorV302">More reward settings</a>`}
+      <span class="grow-setup-head-links-v301">${/* V364: "remove this everywhere" — the wizard's link to the same block goes too. */''}
       <a class="grow-setup-leave-v301" href="${state.simpleEditModeV335?growPointsPageHref:'#/grow'}">Leave set up</a></span></div>
       ${state.simpleEditModeV335?'':stepperHtml()}
       <div class="grow-setup-body-v301" id="growSetupBodyV301">${bodyHtml()}</div>

@@ -109,7 +109,13 @@ test('V288 MAJOR: a category drill does not survive a fresh navigation to Progra
   for (const route of [
     /grow:\(hashParam,routedFocus\)=>growPage\('overview',hashParam,routedFocus,\{fromRouteV288:true\}\)/,
     /loyalty:\(hashParam,routedFocus\)=>growPage\('rewards',hashParam,routedFocus,\{fromRouteV288:true\}\)/,
-    /retention:\(hashParam,routedFocus\)=>growPage\('winback',hashParam,routedFocus,\{fromRouteV288:true\}\)/,
+    /* V364 (owner markup, photo 2, and the owner's ruling when asked): the old Retention
+       programs PAGE is folded into the v361 Bring-back module, so this route redirects rather
+       than rendering growPage. It therefore cannot carry fromRouteV288 — there is no growPage
+       call to mark — and the contract this loop protects is preserved by the redirect target,
+       '#/grow/bringback', which is itself a route entry that clears the drill. */
+    /retention:\(\)=>\{/,
+    /nav\('#\/grow\/bringback'\);return Promise\.resolve\(\);/,
     /studio:hashParam=>growPage\('studio',hashParam,null,\{fromRouteV288:true\}\)/,
     /storedvalue:hashParam=>growPage\('storedvalue',hashParam,null,\{fromRouteV288:true\}\)/
   ]) assert.match(app, route);

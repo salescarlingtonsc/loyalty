@@ -31,16 +31,20 @@ const templateText=(key,values,locale)=>templateCopy[key][locale]
 
 test('Grow is one overview-first journey with secondary anatomy rather than four peer tabs',()=>{
   assert.match(grow,/class="grow-overview"/);
-  assert.match(grow,/aria-label="Grow customer journey"/);
+  /* V364 (owner markup 2026-08-16, photos 6 and 7: "delete this portion" / "remove this
+     everywhere"). The four-step Trigger/Who/Reward/Result journey and the collapsed block that
+     held it are gone; the owner reaches each of those editors from the programme it belongs to.
+     The assertions that required them now require their absence, so the removal is pinned. */
+  assert.doesNotMatch(grow,/aria-label="Grow customer journey"/);
   for(const step of ['trigger','who','reward','result']){
-    assert.match(grow,new RegExp(`data-grow-step="${step}"`));
+    assert.doesNotMatch(grow,new RegExp(`data-grow-step="${step}"`));
   }
   assert.doesNotMatch(grow,/role="tablist"|data-growtab|settings-tabs/);
   // The standalone growAutoSetup launcher was removed when Programmes was simplified to one
   // list; openRewardsAutoSetup is now the draft-creation GATE reached from the programme
   // rows and the template picker. Assert that entry point rather than the retired button.
-  assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'));
-  assert.match(grow,/<details class="grow-secondary" id="growSecondarySettings">[\s\S]*?aria-label="Grow customer journey"/);
+  assert.match(grow,/id="rewardJourneyTitle"/);
+  assert.doesNotMatch(grow,/id="growSecondarySettings"/);
   for(const status of ['Live','Draft ready','Needs setup'])assert.match(grow,new RegExp(`['"]${status}['"]`));
 });
 
@@ -72,13 +76,15 @@ test('one coherent Grow draft is passed to earning and bring-back editors',()=>{
 });
 
 test('one-sheet automatic popup is the guided start while detailed edits remain secondary',()=>{
-  for(const target of ['lm','loyaltyAudienceSettings','rwAdd']){
+  /* V364: 'loyaltyAudienceSettings' was only ever named by the deleted block's "Who" step; the
+     audience editor itself is unchanged and still reachable from the rewards editor. */
+  for(const target of ['lm','rwAdd']){
     assert.match(grow,new RegExp(`['"]${target}['"]`));
   }
   assert.match(grow,/Review the recommended starting point/);
   assert.doesNotMatch(grow,/Step 1 of 3|Step 2 of 3|Step 3 of 3/);
   assert.match(grow,/function openRewardsAutoSetup\(/);
-  assert.match(grow,/id="growSecondarySettings"/);
+  assert.doesNotMatch(grow,/id="growSecondarySettings"/);
   assert.doesNotMatch(grow,/data-grow-guide=/);
   assert.match(grow,/if\(activate\)\{element\.click\(\);return true\}/);
   assert.match(grow,/studio:\{hash:'#\/studio',label:'Advanced rule controls'\}/);
@@ -131,7 +137,9 @@ test('staff receive published summaries while authoring and Advanced remain owne
   assert.match(grow,/const isOwner=S\.myRole==='owner'/);
   assert.match(grow,/const canSetupGrow=isOwner&&canRewards&&canWriteModule\('loyalty'\)/);
   assert.match(grow,/if\(!isOwner\|\|!available\|\|!growDraftVersionId\)return ''/);
-  assert.match(grow,/\$\{isOwner\?`<details class="grow-advanced"/);
+  /* V364: the Advanced tools details went with the block that contained it. Owner-only authoring
+     is still gated the same way — by isOwner on the surfaces above. */
+  assert.doesNotMatch(grow,/<details class="grow-advanced"/);
   // V172 prefixed this with !hashParamIsProgrammeView so a tab name in the deep-link slot no
   // longer resolves to an unknown surface and crashes the workspace. Same three-way condition.
   assert.match(grow,/if\(!hashParamIsProgrammeView&&\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|routedSurface==='studio'\)\)/);
@@ -139,10 +147,11 @@ test('staff receive published summaries while authoring and Advanced remain owne
 });
 
 test('advanced authoring is collapsed and optional growth tools are acknowledged',()=>{
-  assert.match(grow,/<details class="grow-advanced"/);
-  assert.match(grow,/Advanced rule controls/);
+  /* V364: "remove this everywhere" took the Advanced tools details and the Optional growth tools
+     section with it. The studio route itself is untouched (#/studio still resolves). */
+  assert.doesNotMatch(grow,/<details class="grow-advanced"/);
+  assert.doesNotMatch(grow,/taxonomy, versions and rollback/);
   assert.doesNotMatch(grow,/Program Studio|Stored value/);
-  assert.match(grow,/taxonomy, versions and rollback/);
   /* V301 (owner: "i already removed gift card - but it keeps appearing"): gift cards are no
      longer one of Grow's optional growth tools — growOverviewSnapshot dropped its
      modules.includes('giftcards')-gated read along with the Programmes row it fed, since gift
@@ -209,10 +218,8 @@ test('critical new Grow copy has reviewed Chinese and Malay translations',()=>{
 
 test('dynamic Grow and publish-preview grammar executes named templates in both locales',()=>{
   const fixtures=[
-    ['growPublishedReward',{count:1},'1'],
-    ['growPublishedRewards',{count:7},'7'],
-    ['growPublishedBringBackRule',{count:1},'1'],
-    ['growPublishedBringBackRules',{count:4},'4'],
+    /* V364: the four growPublished* templates were retired with the "How the programme fits
+       together" block, their only render path. */
     ['publishImpactAction',{live:1,shadow:2,unbuilt:3},'1'],
     ['publishImpactActions',{live:6,shadow:2,unbuilt:3},'6'],
     ['publishDraftVersion',{version:31},'31'],

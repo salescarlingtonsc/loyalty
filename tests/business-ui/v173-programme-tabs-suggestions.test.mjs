@@ -92,6 +92,10 @@ test('V180: bare #/grow is the full list, and every old hash still resolves', ()
      are still in it, which is the property being kept. */
   assert.match(app, /\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)/,
     'removing a nav entry must not break its deep link');
-  assert.match(app, /id="growSecondarySettings"/, 'advanced settings section must remain on-page');
+  /* V364 (owner markup 2026-08-16, photo 7: "remove this everywhere"): the advanced settings
+     section is gone from the page. The property this line protects — that removing a control
+     never breaks its deep link — is kept by the assertion above: '#/grow/settings' still
+     resolves, it simply renders the ordinary overview now. */
+  assert.doesNotMatch(app, /id="growSecondarySettings"/);
   assert.match(app, /Nothing is running yet\./, 'Running must explain itself when empty');
 });

@@ -142,8 +142,13 @@ test('V314 (3) every publish route applies the switches through the same helper'
   /* Three call sites of publish_loyalty_config in the bundle; three switch applications. The
      wizard has its own wrapper because it owns the inline retry state, the other two share
      applyPublishedProgrammeSwitchesV314. */
+  /* V364 adds a FOURTH call site: the birthday-gift popup (openBirthdayBenefitEditorV364), which
+     saves the way the wizard's own Go-live step does — a fresh draft off the active version, the
+     birthday rule written into it, then publish. It applies no programme switch and must not:
+     the birthday benefit is not one of the four spine programmes, so there is nothing to switch,
+     and the three helper counts below are deliberately unchanged. */
   const publishes = [...code.matchAll(/sb\.rpc\('publish_loyalty_config'/g)].length;
-  assert.equal(publishes, 3, `expected the three known publish routes, found ${publishes}`);
+  assert.equal(publishes, 4, `expected the four known publish routes, found ${publishes}`);
   assert.equal([...code.matchAll(/applyPublishedProgrammeSwitchesV314\(/g)].length, 3,
     'the helper is declared once and called by exactly the two non-wizard routes');
   assert.equal([...code.matchAll(/applyProgrammeSwitchesV314\(/g)].length, 3,

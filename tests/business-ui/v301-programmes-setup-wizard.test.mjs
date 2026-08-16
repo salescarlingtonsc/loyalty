@@ -644,8 +644,10 @@ test('V301 (e) the pending point-engine cards and the bare Point system row open
      must be buildable the same way points are. The ABSENCE of the live gate is asserted. */
   assert.match(grow, /const growSetupEntryV301=key=>canSetupGrow&&\['points','stamps','tiers'\]\.includes\(String\(key\|\|''\)\);/);
   assert.doesNotMatch(grow, /growSetupEntryV301=key=>[^\n]*loyaltyLive/);
-  assert.match(app, /id="growSetupFullEditorV302"/);
-  assert.match(app, /More reward settings<\/a>/);
+  /* V364 (owner: "remove this everywhere"): the wizard's "More reward settings" link went with
+     the block it opened. The deep editor route itself is untouched. */
+  assert.doesNotMatch(app, /id="growSetupFullEditorV302"/);
+  assert.doesNotMatch(app, /More reward settings<\/a>/);
   // The card that was pressed decides which model the wizard opens on.
   /* The card key rides along with the model: the model is what the wizard EDITS, the card is
      which programme the owner came ABOUT — and that is what V294's editor entry context means.
@@ -827,8 +829,10 @@ test('W6I2 (g) every expiry knob is reachable — owner amendment 2026-08-14', (
   assert.match(wizard, /const needsDays=expiryModeRequiresDays\(state\.expiryMode\);/);
   assert.match(wizard, /if\(expiryModeRequiresDays\(state\.expiryMode\)&&!\(Number\(state\.expiryDays\)>0\)\)\{/);
   // Rung-level windows keep their home, and the screen says where that is.
-  assert.match(wizard, /Rung start and end dates stay in the full editor under More reward settings\./);
-  assert.match(wizard, /each rung's start and end dates live under More reward settings\./);
+  /* V364: both sentences kept their meaning and dropped the name of a control that no longer
+     exists — pointing an owner at "More reward settings" would now point at nothing. */
+  assert.match(wizard, /Rung start and end dates stay in the full rewards editor\./);
+  assert.match(wizard, /each rung's start and end dates live in the full rewards editor\./);
 });
 
 test('W6I2 (g) D3: a threshold or basis change states the movement and requires a tick', () => {

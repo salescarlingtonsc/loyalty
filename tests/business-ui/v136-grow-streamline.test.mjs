@@ -38,7 +38,10 @@ test('Grow starts with one task and one complete single-column programme overvie
   assert.match(app,/\.grow-programme-list\{display:grid;grid-template-columns:1fr/);
   assert.doesNotMatch(grow,/class="rewards-overview-grid"/,
     'the everyday overview must not return to a left/right reward grid');
-  assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'));
+  /* V364: there is no secondary block to sit after any more (owner: "remove this everywhere"),
+     so the ordering assertion becomes the removal it enforces. */
+  assert.match(grow,/id="rewardJourneyTitle"/);
+  assert.doesNotMatch(grow,/id="growSecondarySettings"/);
 });
 
 test('configured and not-yet-configured programme families share the overview',()=>{
@@ -141,8 +144,12 @@ test('read-only and unavailable rows expose status but no dead writer',()=>{
   assert.match(grow,/need owner edit access to configure it/);
 });
 
-test('advanced journey, profitability and technical tools remain collapsed after the overview',()=>{
-  assert.match(grow,/<details class="grow-secondary" id="growSecondarySettings">/);
-  assert.match(grow,/Product cost and profitability/);
-  assert.match(grow,/<details class="grow-advanced"/);
+/* V364 (owner markup 2026-08-16, photos 6 and 7): the collapsed "More reward settings" block —
+   the Trigger/Who/Reward/Result journey, the reward-economics card and the Advanced tools details
+   inside it — is gone from every rewards view. This test asserted it stayed collapsed; it now
+   asserts it is absent, which is the same guard pointed the other way. */
+test('the advanced journey, profitability and technical tools block is gone from the overview',()=>{
+  assert.doesNotMatch(grow,/<details class="grow-secondary" id="growSecondarySettings">/);
+  assert.doesNotMatch(grow,/id="profitabilityTitle"/);
+  assert.doesNotMatch(grow,/<details class="grow-advanced"/);
 });

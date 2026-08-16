@@ -293,8 +293,10 @@ test('W6I2 B3 every points expiry knob is reachable from the wizard', () => {
   assert.match(wizard, /expiry_mode:state\.expiryMode\};/);
   assert.match(wizard, /row\.expiry_days=row\.expiry_mode==='none'\?null:Math\.max\(1,Math\.round\(Number\(state\.expiryDays\)\|\|365\)\);/);
   // Rung-level effective/expiry windows keep their home, and both screens SAY where that is.
-  assert.match(wizard, /each rung's start and end dates live under More reward settings\./);
-  assert.match(wizard, /Rung start and end dates stay in the full editor under More reward settings\./);
+  /* V364: see the same pair in v301-programmes-setup-wizard.test.mjs — the copy no longer names
+     a control the owner had removed. */
+  assert.match(wizard, /each rung's start and end dates live in the full rewards editor\./);
+  assert.match(wizard, /Rung start and end dates stay in the full rewards editor\./);
   assert.match(app, /effective_from:tier\.effectiveFrom,expires_at:tier\.expiresAt\}/);
 });
 

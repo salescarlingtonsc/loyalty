@@ -86,10 +86,15 @@ test('Grow presents one automatic setup start followed immediately by the comple
      recommendation is the point. An existing programme gets its draft created implicitly. */
   assert.match(grow,/const openGrowEditorV258=async\(action\)=>\{/);
   assert.match(grow,/if\(!canSetupGrow\|\|!growProgrammeExistsV258\)return openRewardsAutoSetup\(action\);/);
-  assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'),
-    'the complete published overview must precede secondary settings');
-  assert.match(grow,/<details class="grow-secondary" id="growSecondarySettings">[\s\S]*?<ol class="grow-flow"/);
-  assert.match(grow,/<details class="grow-secondary" id="growSecondarySettings">[\s\S]*?Product cost and profitability/);
+  /* V364 (owner markup 2026-08-16, photos 6 and 7: "delete this portion" across the whole
+     "How the programme fits together" / "Product cost and profitability" block, and "remove this
+     everywhere" across the collapsed bar itself). The three assertions that stood here required
+     that block to exist. They are replaced by their opposite rather than deleted, so the removal
+     is pinned and cannot creep back: the overview is now the whole page. */
+  assert.doesNotMatch(grow,/id="growSecondarySettings"/);
+  assert.doesNotMatch(grow,/id="profitabilityTitle"/);
+  assert.doesNotMatch(grow,/<ol class="grow-flow"/);
+  assert.match(grow,/id="rewardJourneyTitle"/);
   assert.doesNotMatch(grow,/id="growSetupPrimary"/);
 });
 

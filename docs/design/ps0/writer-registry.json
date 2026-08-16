@@ -2252,6 +2252,27 @@
       "authority": "SECURITY DEFINER, canonical search_path, EXECUTE revoked from PUBLIC/anon and granted only to authenticated. Re-checks owner-or-till/loyalty module write, grant ownership, status, expiry and branch visibility via app.can_see_branch, so the till's entitlements read is a hint and never the authority.",
       "kernel": "NOT SETTLEMENT-BEARING. The $0 sale is the visit record the retention and loyalty engines already read; no money and no points change hands.",
       "kernel_migratability": "INDEPENDENT \u2014 it writes one zero-value sale and its own grant row, sharing no row with credit_ledger or points_ledger, so it moves under a unified checkout kernel unchanged."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_set_tier_benefits_v365",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_set_tier_benefits_v365",
+      "resolves_to": "business_set_tier_benefits_v365/3 (owner-only; V365). Replaces one tier's public.tier_benefits_v365 rows (label + limit_count/limit_period) and re-derives the DERIVED loyalty_tiers.perk_note from them.",
+      "call_site_finding": "none \u2014 NO VALUE WRITE. It defines what a rung PROMISES and how often it may be claimed; claiming is staff_issue_tier_benefit_v365. Rows dropped from the payload are soft-deleted so an already-issued benefit keeps the record it references. audit_log'd"
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_tier_benefits_for_client_v365",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_tier_benefits_for_client_v365",
+      "resolves_to": "staff_tier_benefits_for_client_v365/2 (till/loyalty read; V365). Lists the tier benefits a client has earned, with usage in the current period.",
+      "call_site_finding": "none \u2014 READ ONLY. Writes nothing; the till renders its answer."
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_issue_tier_benefit_v365",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_issue_tier_benefit_v365",
+      "resolves_to": "staff_issue_tier_benefit_v365/5 (till/loyalty write; V365). Records ONE public.tier_benefit_issues_v365 row after re-checking the client's tier, the per-period limit and the branch.",
+      "call_site_finding": "none \u2014 NO MONEY MOVES. Deliberately inserts no sale and touches no ledger: a tier benefit is a discount or extra on a purchase that is its own sale, so writing one here would double-count the visit (the v9/v10 rule). Idempotent on (benefit, client, idem_key); a replay returns the first issue. audit_log'd"
     }
   ],
   "allowlist": [

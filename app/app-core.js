@@ -473,6 +473,12 @@ let growPointsEditingV326=null;
 let growPointsPhotoFileV343=null;
 let growPointsRemovePhotoV343=false;
 /* V331 — the same shape as the V326 points-page state above, for the new #/grow/tiers page. */
+/* V364 — the Referrals settings panel state (owner markup, photo 3: "settings put here, when
+   click edit setting page prompt here"). Page-level and not persisted, exactly like the tier and
+   gift form state above. */
+let growReferralEditOpenV364=false;
+let growReferralErrorV364='';
+let growReferralBusyV364=false;
 let growTiersManageTabV331='published';
 let growTiersDeletePendingV331='';
 let growTiersAddOpenV331='';
@@ -826,7 +832,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -5308,6 +5314,12 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* V362: the bring-back voucher names the item handed over, same reason as welcomeOfferGiven
      directly above — interpolated runtime copy has to be a reviewed template, not a raw literal. */
   bringbackVoucherGiven:Object.freeze({en:'{item} given free — bring-back voucher used ✓','zh-CN':'已免费赠送 {item} —— 回流礼券已使用 ✓',ms:'{item} diberi percuma — baucar bawa-balik digunakan ✓'}),
+  /* V365: the four things the counter can be told after pressing Give on a tier benefit. Named
+     templates rather than inline interpolation, because every one of them names the benefit. */
+  tierBenefitGiven:Object.freeze({en:'{item} given ✓','zh-CN':'已提供 {item} ✓',ms:'{item} diberi ✓'}),
+  tierBenefitAlreadyGiven:Object.freeze({en:'{item} was already given.','zh-CN':'{item} 已经提供过了。',ms:'{item} telah pun diberi.'}),
+  tierBenefitUsedUp:Object.freeze({en:'{item} is already used up for this period.','zh-CN':'{item} 在本期内已用完。',ms:'{item} telah habis digunakan untuk tempoh ini.'}),
+  tierBenefitNotEarned:Object.freeze({en:'This customer\'s tier does not include {item}.','zh-CN':'该顾客的等级不包含 {item}。',ms:'Peringkat pelanggan ini tidak termasuk {item}.'}),
   sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
   catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
   catalogueDisabled:Object.freeze({en:'Catalogue-first checkout disabled','zh-CN':'已停用目录优先结账',ms:'Pembayaran katalog dahulu dinyahaktifkan'}),
@@ -5376,10 +5388,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   removeFromWaitlist:Object.freeze({en:'Remove {customer} from waitlist','zh-CN':'将 {customer} 从候补名单中移除',ms:'Alih keluar {customer} daripada senarai menunggu'}),
   joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
   viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
-  growPublishedReward:Object.freeze({en:'{count} published reward ready for customers.','zh-CN':'已有 {count} 项已发布奖励可供顾客使用。',ms:'{count} ganjaran diterbitkan sedia untuk pelanggan.'}),
-  growPublishedRewards:Object.freeze({en:'{count} published rewards ready for customers.','zh-CN':'已有 {count} 项已发布奖励可供顾客使用。',ms:'{count} ganjaran diterbitkan sedia untuk pelanggan.'}),
-  growPublishedBringBackRule:Object.freeze({en:'{count} published bring-back rule measuring return visits.','zh-CN':'已有 {count} 条已发布回流规则正在衡量回访。',ms:'{count} peraturan pelanggan kembali yang diterbitkan sedang mengukur lawatan kembali.'}),
-  growPublishedBringBackRules:Object.freeze({en:'{count} published bring-back rules measuring return visits.','zh-CN':'已有 {count} 条已发布回流规则正在衡量回访。',ms:'{count} peraturan pelanggan kembali yang diterbitkan sedang mengukur lawatan kembali.'}),
   growDraftReady:Object.freeze({en:'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.','zh-CN':'推荐草稿已就绪。您可编辑任何设置；发布前不会改变顾客体验。',ms:'Draf cadangan sedia. Edit mana-mana tetapan; tiada perubahan untuk pelanggan sehingga diterbitkan.'}),
   publishImpactAction:Object.freeze({en:'{live} action starts running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
   publishImpactActions:Object.freeze({en:'{live} actions start running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
@@ -5408,6 +5416,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
   'packageVersionCreated',
   'giftCardLoaded','sessionUsed','welcomeOfferGiven','bringbackVoucherGiven',
+  'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
@@ -5427,8 +5436,9 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
   'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails',
-  'growPublishedReward','growPublishedRewards','growPublishedBringBackRule',
-  'growPublishedBringBackRules','growDraftReady','publishImpactAction',
+  /* V364: growPublishedReward/-Rewards/-BringBackRule/-BringBackRules retired with the
+     "How the programme fits together" block that was their only render path. */
+  'growDraftReady','publishImpactAction',
   'publishImpactActions','publishMoneyLive','publishMoneyNone',
   'publishCustomersLive','publishCustomersNone','publishDraftVersion',
   'publishConfirmationSensitive','publishConfirmationStandard',
@@ -5530,6 +5540,9 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
   return canSetup
     ?`<button type="button" class="grow-programme-row" data-programme-kind="welcome" data-welcome-offer-edit-v215>${inner}</button>`
     :`<article class="grow-programme-row" data-programme-kind="welcome">${inner}</article>`;
+}
+function growStatus(label,tone=''){
+  return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
 }
 function promotionDateTextV104(value){
   if(!value)return '';
