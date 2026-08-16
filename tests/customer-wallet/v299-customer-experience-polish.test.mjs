@@ -117,9 +117,11 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(helper,/if\(sessions>0\)modules\.push\(\{href:'#customerBusinessPackagesDetailV347',action:'packages'/);
   assert.match(helper,/if\(hasActivity\)modules\.push\(\{href:'#customerBusinessActivityDetailV347',action:'activity'/);
   assert.match(helper,/if\(membership\.active===true\)modules\.push/);
+  assert.match(helper,/if\(hasReferral\)modules\.push\(\{href:'#customerBusinessReferralDetailV362',action:'referral'/);
   assert.match(helper,/data-business-shortcut-v347="\$\{esc\(item\.action\)\}"/);
   assert.match(helper,/function wireCustomerBusinessShortcutsV347/);
-  assert.match(helper,/shareButton\.click\(\)/);
+  assert.match(helper,/referral:'#customerBusinessReferralDetailV362'/);
+  assert.doesNotMatch(helper,/shareButton\.click\(\)/);
   assert.match(helper,/openCustomerBusinessShortcutPageV348\(\{action,title:labels\[action\]/);
   assert.match(helper,/function openCustomerBusinessShortcutPageV348/);
   assert.match(helper,/function closeCustomerBusinessShortcutPageV348/);
@@ -133,6 +135,10 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.doesNotMatch(collapsed,/customer-business-book-v346/);
   assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business\}\)/);
   assert.match(collapsed,/customerRewardOfferSwipeMarkupV339\(\{reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'\}\)/);
+  assert.match(collapsed,/customerBusinessReferralDetailMarkupV362\(\)/);
+  assert.doesNotMatch(collapsed,/customerEarnMorePointsMarkupV339\(\{loyalty,presentation,programmeCapabilities\}\)\}\n\s+\$\{customerReferralSlotMarkupV360\(\)\}/);
+  assert.match(app,/function customerBusinessReferralDetailMarkupV362/);
+  assert.doesNotMatch(app,/id="customerEarnMoreReferralV339"/);
   assert.match(app,/class="customer-business-book-inline-v349"/);
   const wallet=app.slice(app.indexOf('async function renderCustomerWallet'),app.indexOf('async function renderCustomerInAppInbox'));
   assert.match(wallet,/const showPackageGroupV347=showGiftCardSectionV347\|\|capabilities\.packages===true\|\|capabilities\.membership===true/);
@@ -141,8 +147,13 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(wallet,/id="walletSections" hidden/);
   assert.match(wallet,/\$\{showPackageGroupV347\?`[\s\S]*id="customerBusinessPackagesDetailV347"/);
   assert.match(indexHtml,/\.customer-business-profile-v346>\.customer-business-rewards-v346\{display:none!important\}/);
+  assert.match(indexHtml,/\.customer-business-profile-v346>\.customer-business-referral-v362\{display:none!important\}/);
+  assert.match(indexHtml,/\.customer-business-shortcut-content-v348>\.customer-business-referral-v362\{display:grid!important\}/);
   assert.match(indexHtml,/\.customer-business-detail-store-v348\[hidden\]\{display:none!important\}/);
   assert.doesNotMatch(indexHtml,/\.customer-business-profile-v346 \.customer-reward-offer-swipe-v339\{display:none!important\}/);
   assert.match(indexHtml,/\.customer-business-offers-head-v349 h2\{font-family:Georgia/);
-  assert.match(indexHtml,/\.customer-business-summary-actions-v349\{[^}]*justify-content:space-between/);
+  assert.match(indexHtml,/\.customer-shell \.card\.customer-business-summary-v346\{[^}]*linear-gradient\(145deg,#F06A4F 0%,#D94A38 100%\)/);
+  assert.match(indexHtml,/\.customer-business-balance-v347\{[^}]*font-size:56px!important/);
+  assert.match(indexHtml,/\.customer-business-summary-actions-v349\{[^}]*grid-template-columns:1fr 1fr!important/);
+  assert.match(indexHtml,/\.customer-referral-code-row\{[^}]*grid-template-columns:1fr 1fr!important/);
 });

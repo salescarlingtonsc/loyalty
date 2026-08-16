@@ -3131,16 +3131,6 @@ function openCustomerPointsExplainerV339(trigger){
     trigger?.remove();close();
   };
 }
-/* Built from the SAME payload the referral card below it renders, so the two can never disagree
-   about the payout. Rendered only when the server says the programme is enabled AND names a
-   positive reward_points — an unset or zero payout gets no row rather than a "+0 pts" promise. */
-function customerEarnMoreReferralRowMarkupV339(card){
-  const points=Math.max(0,Math.round(Number(card?.reward_points)||0));
-  if(!points)return '';
-  return `<span class="customer-earn-more-icon-v339" aria-hidden="true">${CUI.icon('referrals',{size:18})}</span>
-    <span class="customer-earn-more-copy-v339"><b>Refer a friend</b><span class="muted small">Paid after their qualifying first visit.</span></span>
-    <span class="pill ok customer-earn-more-points-v339">+${esc(customerPointTotalV103(points))} pts</span>`;
-}
 function wireCustomerProgrammeTabsV194(host=document){
   const tabs=[...host.querySelectorAll('[data-programme-tab]')];
   if(!tabs.length)return;
@@ -3284,7 +3274,7 @@ function wireCustomerBusinessShortcutsV347(root=document){
     tiers:'#customerBusinessRewardsDetailV347',
     packages:'#customerBusinessPackagesDetailV347',
     membership:'#walletMemberships,#customerBusinessPackagesDetailV347',
-    referral:'#walletReferralSlot,#customerBusinessRewardsDetailV347',
+    referral:'#customerBusinessReferralDetailV362',
     activity:'#customerBusinessActivityDetailV347'
   };
   const labels={
@@ -3300,10 +3290,6 @@ function wireCustomerBusinessShortcutsV347(root=document){
     card.onclick=event=>{
       event.preventDefault();
       const action=String(card.dataset.businessShortcutV347||'');
-      if(action==='referral'){
-        const shareButton=$('customerReferralShare');
-        if(shareButton){shareButton.click();return;}
-      }
       const selector=selectors[action]||card.getAttribute('href')||'';
       const target=selector?document.querySelector(selector):null;
       if(!target||target.hidden){
@@ -4366,15 +4352,6 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     const {data,error}=await customerRpc('customer_get_referral_card_v300',{p_business_slug:businessSlug});
     if(!isWalletCurrent()||!slot.isConnected)return;
     if(error||data?.enabled!==true){slot.remove();return}
-    /* v339: the "Earn more points" referral row is filled from THIS payload — the same
-       reward_points the card below it prints — so the two can never advertise different payouts.
-       An answer without a positive payout leaves the row hidden and empty. */
-    const earnReferralRowV339=$('customerEarnMoreReferralV339');
-    if(earnReferralRowV339){
-      const rowMarkup=customerEarnMoreReferralRowMarkupV339(data);
-      if(rowMarkup){earnReferralRowV339.innerHTML=rowMarkup;earnReferralRowV339.hidden=false;
-        earnReferralRowV339.classList.add('customer-earn-more-row-v339');}
-    }
     slot.outerHTML=customerReferralCardMarkupV300(data,{...b,id:businessId||b.id,slug:businessSlug});
     const copyButton=$('customerReferralCopy');
     if(copyButton)copyButton.onclick=()=>copyTextToClipboard(String(data.code||''),{button:copyButton,
