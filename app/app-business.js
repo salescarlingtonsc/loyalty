@@ -241,6 +241,20 @@ let pendingProgrammeSuggestV172=null;
    once, on the first render that can use them, so a later plain visit to the wizard is unaffected. */
 let pendingGrowSetupModelV303=null;
 let pendingGrowSetupRewardV303=null;
+/* V349: lazily-created/revoked preview blob URL for a newly-picked (not-yet-uploaded) gift photo
+   — reused across rerenders as long as the File reference is unchanged, so choosing a photo
+   doesn't leak a fresh object URL on every keystroke-triggered rerender. */
+let growPointsPhotoPreviewUrlV349=null;
+let growPointsPhotoPreviewFileRefV349=null;
+function growPointsPhotoPreviewUrlForV349(file){
+  if(!file)return '';
+  if(growPointsPhotoPreviewFileRefV349!==file){
+    if(growPointsPhotoPreviewUrlV349)URL.revokeObjectURL(growPointsPhotoPreviewUrlV349);
+    growPointsPhotoPreviewUrlV349=URL.createObjectURL(file);
+    growPointsPhotoPreviewFileRefV349=file;
+  }
+  return growPointsPhotoPreviewUrlV349;
+}
 let shellRenderEpoch=0;
 let waitlistActiveCount=0;
 let waitlistBadgeRequest=0;
@@ -11919,7 +11933,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" style="width:100%;max-width:420px" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
     <p class="grow-setup-sentence-v301">
       <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
-      ${growPointsPhotoFileV343?`<span class="muted small">New photo selected — saved when you press Save.</span>`
+      ${growPointsPhotoFileV343?`<img src="${esc(growPointsPhotoPreviewUrlForV349(growPointsPhotoFileV343))}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px"><span class="muted small">New photo — saved when you press Save.</span>`
         :growPointsCurrentPhotoUrlV343?`<img src="${esc(growPointsCurrentPhotoUrlV343)}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px">`
         :'<span class="muted small">No photo yet — customers see a gift icon.</span>'}
       <br><label class="btn ghost sm service-photo-uploader-v158" style="margin-top:6px">Choose photo<input id="growPointsPhotoInputV343" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload gift photo"></label>
@@ -12986,15 +13000,30 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsAddOpenV326='';
     growRerenderV322({quiet:true});
   };
+  /* V349: choosing/removing a photo rerenders the form (to swap in the new preview), and that
+     rerender rebuilds the Name/Points/Description inputs from growPointsAddDraftV326 — whatever
+     the owner had typed but not yet Saved was NOT in that draft object (only Save itself captured
+     it), so it silently reverted to blank. Capture the live DOM values into the draft first, same
+     as growPointsAddSave already does on its own validation-error path just below. */
+  const growPointsCaptureFieldsV349=()=>{
+    const nameField=$('growPointsAddNameV326'),pointsField=$('growPointsAddPointsV326'),descField=$('growPointsAddDescV343');
+    growPointsAddDraftV326={
+      name:String(nameField?.value??growPointsAddDraftV326.name??''),
+      points:pointsField?.value??growPointsAddDraftV326.points??'',
+      description:String(descField?.value??growPointsAddDraftV326.description??'')
+    };
+  };
   const growPointsPhotoInput=outerMain.querySelector('[data-grow-points-addform-v326] #growPointsPhotoInputV343');
   if(growPointsPhotoInput)growPointsPhotoInput.onchange=()=>{
     const file=growPointsPhotoInput.files?.[0];
     if(!file)return;
+    growPointsCaptureFieldsV349();
     growPointsPhotoFileV343=file;growPointsRemovePhotoV343=false;
     growRerenderV322({quiet:true});
   };
   const growPointsPhotoRemove=outerMain.querySelector('[data-grow-points-addform-v326] #growPointsPhotoRemoveV343');
   if(growPointsPhotoRemove)growPointsPhotoRemove.onclick=()=>{
+    growPointsCaptureFieldsV349();
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=true;
     growRerenderV322({quiet:true});
   };
