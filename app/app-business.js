@@ -11097,6 +11097,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       .then(r=>r.error?null:(r.data||[])).catch(()=>null)
     :[];
   if(!isGrowCurrent())return;
+  /* V361: the Bring-back module's campaigns. Read via PostgREST under the SELECT-only policy the
+     migration installs; every write goes through its definer RPCs. Soft-deleted rows are excluded
+     here rather than filtered later, so nothing downstream has to remember to. */
+  const growBbCampaignsV361=canWinback
+    ?await sb.from('bringback_campaigns_v361')
+      .select('id,name,reward_label,away_days,expiry_days,active,created_at')
+      .eq('business_id',S.biz.id).is('deleted_at',null).order('away_days')
+      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :[];
+  if(!isGrowCurrent())return;
   /* V331: Published/History split for the new #/grow/tiers page and every existing tile/summary
      reader that used to (wrongly) rely on a nonexistent `active` column. Sorted by threshold —
      a tier ladder's order is always implicit rank, never insertion order (matches every existing
@@ -11298,7 +11308,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      click handler below), whether or not a points programme has ever been configured — an
      unconfigured business sees this same page with an empty/set-up-prompt state instead of the
      wizard, per owner ruling (AskUserQuestion, 2026-08-15: "Photo 3 always, with an empty state"). */
-  const programmeView=['overview','history','offers','points','tiers','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
+  const programmeView=['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
   /* V303: 'review' is now a NAME, not the number 4. A tier model runs a five-step wizard, so a
      hardcoded 4 would have opened the Reward step and called it the publish gate. The wizard
      resolves the name against its own active step list. */
@@ -12138,6 +12148,72 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      "Points"/"Stamps" field label already branches on growPointsIsStampsV326), and every
      data-grow-points-* attribute below is wired by the EXACT SAME handlers the Points page uses —
      nothing about save/edit/delete/toggle/photo-upload is stamps-specific or duplicated. */
+  /* ============ V361 — BRING-BACK REWARDS: ITS OWN MODULE ==================================
+     Owner: "a separate module for bring back rewards (so we can create customisable marketing
+     vouchers or gifts to customers away for the stated period of time)". Same immediate-write
+     shape as Points/Tiers/Stamps — no draft, no publish. A campaign says "away this long -> this
+     gift"; the nightly sweep issues a voucher to each lapsed customer, and staff hand it over at
+     the till. Deliberately NOT built on retention_programs: that engine pays on visit FREQUENCY,
+     the opposite trigger, and reusing it would have produced a voucher that fires for the wrong
+     customers. See db/migrations/20260816_nestly_v361_bringback_module.sql. */
+  const growBbRowsV361=Array.isArray(growBbCampaignsV361)?growBbCampaignsV361:[];
+  const growBbRowV361=campaign=>{
+    const paused=campaign.active!==true;
+    const confirmOpen=growBbDeletePendingV361===String(campaign.id);
+    const expiry=Number(campaign.expiry_days)||0;
+    return `<li class="grow-tier-card-row-v351" data-grow-bb-row-v361="${esc(campaign.id)}">
+      <span class="grow-tier-row-icon-v343" aria-hidden="true">${CUI.icon('retention',{size:18})}</span>
+      <span class="grow-tier-card-body-v351">
+        <b data-merchant-content>${esc(campaign.name)}</b>
+        <span class="muted small" data-merchant-content>Away ${Math.max(0,Number(campaign.away_days)||0)} days → ${esc(campaign.reward_label)}</span>
+        <span class="muted small">${expiry?`Voucher expires ${expiry} days after it is sent`:'Voucher does not expire'}</span>
+      </span>
+      <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="pill ${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+        ${canSetupWinback?`<button type="button" class="btn ghost sm" data-grow-bb-edit-v361="${esc(campaign.id)}">Edit</button>
+        <details class="grow-row-menu-v351"><summary class="btn ghost sm" aria-label="More actions for ${esc(campaign.name)}">•••</summary><div class="menu">
+          <button type="button" data-grow-bb-toggle-v361="${esc(campaign.id)}" aria-checked="${!paused}" role="switch">${paused?'Turn on':'Turn off'}</button>
+          <button type="button" class="danger" data-grow-bb-delete-v361="${esc(campaign.id)}">Delete</button>
+        </div></details>`:''}
+      </span>
+      </li>
+      <li class="imp-note" data-grow-bb-deleteconfirm-v361="${esc(campaign.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
+        <b>Delete ${esc(campaign.name)}?</b>
+        <p class="muted small" style="margin-top:6px">It stops sending. Vouchers already sent stay valid — a gift a customer has been promised is not withdrawn.</p>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-bb-delete-yes-v361="${esc(campaign.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-bb-delete-no-v361="1">Cancel</button></div>
+      </li>`;
+  };
+  const growBbFormV361=growBbAddOpenV361?`<li class="grow-points-form-card-v343" data-grow-bb-form-v361>
+    <b>${growBbEditingV361?'Edit campaign':'New bring-back campaign'}</b>
+    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growBbNameV361">Campaign name</label><br><input id="growBbNameV361" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growBbDraftV361.name)}" placeholder="e.g. We miss you"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growBbAwayV361">Send when away for (days)</label><br><input id="growBbAwayV361" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growBbDraftV361.away)}" placeholder="e.g. 60"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growBbRewardV361">Voucher or gift</label><br><input id="growBbRewardV361" class="grow-setup-input-v301" style="width:100%;max-width:320px" value="${esc(growBbDraftV361.reward)}" placeholder="e.g. Free coffee on your next visit"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growBbExpiryV361">Voucher expires after (days, optional)</label><br><input id="growBbExpiryV361" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:180px" value="${esc(growBbDraftV361.expiry)}" placeholder="Leave blank for no expiry"></p>
+    ${growBbErrorV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-bb-cancel-v361="1">Cancel</button><button type="button" class="btn sm" data-grow-bb-save-v361="1"${growBbBusyV361?' disabled':''}>${growBbEditingV361?'Save changes':'Add campaign'}</button></div>
+  </li>`:'';
+  const growBbPageV361=!canWinback
+    ?CUI.emptyState({iconName:'retention',title:'Retention is not included',
+        body:'This workspace does not include the retention module, so there are no bring-back rewards to manage.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
+    :growBbCampaignsV361===null
+    ?CUI.emptyState({iconName:'retention',title:'Bring-back rewards could not be loaded',
+        body:'Reload the page and try again.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow/bringback">Retry</a>'})
+    :`<div class="grow-tiers-page-v343">
+      <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
+        <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
+      ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
+      <ul class="grow-setup-rewardlist-v301" data-grow-bb-summary-v361>
+        <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${growBbRowsV361.length} campaign${growBbRowsV361.length===1?'':'s'} configured</p></span>
+          <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+            ${canSetupWinback?`<button type="button" class="btn ghost sm" data-grow-bb-add-v361="1">+ Add campaign</button>`:''}
+          </span></li>
+        ${growBbFormV361}
+      </ul>
+      <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-bb-list-v361>
+        ${growBbRowsV361.length?growBbRowsV361.map(growBbRowV361).join(''):'<li class="muted small" style="cursor:default">No campaign yet — add one above.</li>'}
+      </ul></div>`;
   const growStampsLevelsSortedV350=growPointsPublishedV326.slice()
     .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0));
   /* V356 (owner mockup, photo 1): one column-header row for the whole table, so each level row no
@@ -12576,7 +12652,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            subtitle under the H1, matching the mockup. Only that one view — the others already
            carry their own subtitle/blurb further down (blurb for a drilled tile, "Current
            setting: ..." for Points System, etc.), so a second one here would repeat it. -->
-      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div>
+      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div>
       <div class="v150-title-actions">${programmeView==='list'?'<a class="btn ghost sm" href="#/grow/settings">'+CUI.icon('settings',{size:16})+'<span>More reward settings</span></a>':''}</div>
     </header>
     <!-- V357 (owner annotation, photo 1: back arrow circled inside the card with "button at
@@ -12586,7 +12662,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          to every reward page ("it applies to all rewards, not just for this module"), which is
          exactly what this shared composer covers. -->
     ${(()=>{
-      const dedicatedBackV357=!growActiveTopicV229&&['points','tiers','offers','history'].includes(programmeView);
+      const dedicatedBackV357=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
       if(growActiveTopicV229)return growBreadcrumbV268(growActiveTopicV229);
       return dedicatedBackV357?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a></nav>`:'';
     })()}
@@ -12601,8 +12677,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            dedicated standalone pages — Points System, Tiers, Limited Offer, History — had no way
            back except the sidebar. Same button, same destination, on those pages too. -->
       ${(()=>{
-        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','offers','history'].includes(programmeView);
-        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
+        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
+        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:18})} `:'';
         return `<div class="grow-section-heading"><div><h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
       })()}
@@ -12621,6 +12697,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${programmeView==='overview'?growOverviewTableV271:''}
       ${programmeView==='history'?growHistoryTableV271:''}
       ${programmeView==='points'?(growPointsIsStampsV326?growStampsPageV350:growPointsManageV326):''}
+      ${programmeView==='bringback'?growBbPageV361:''}
       ${programmeView==='tiers'?growTiersManageV331:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
@@ -13282,19 +13359,94 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       return openGrowEditorV258({surface:'rewards',focusTarget:'birthdayLabel',
         birthdayId:rewardJourney.birthday?.id||null,entryContext:growEntryContextV294()}).catch(fail);
     }
-    if(tile.dataset.growTopicV229==='bringback'){
-      if(!canSetupWinback)return;
-      /* Batch 2 keeps the EXISTING bring-back editor as this tile's door. The owner's own
-         "separate module for bring back rewards" is the next increment; routing to a page that
-         does not exist yet would make the tile look dead, which is worse than a working door. */
-      return openGrowEditorV258({surface:'winback',focusTarget:'rn'}).catch(fail);
-    }
+    if(tile.dataset.growTopicV229==='bringback')return nav('#/grow/bringback');
     /* V331: growSetupEntryV301's ['points','stamps','tiers'] list has no card left that reaches
        this line — all three now return above, straight to their own dedicated page. The wizard
        entry it used to send them to is still reachable from each page's own "Set up"/"Edit"
        controls (see growPointsSetupV326/growPointsEditV326 and growTiersSetupV331/
        growTiersEditV331's click handlers below), just never from this tile click any more. */
     growTopicV229=tile.dataset.growTopicV229;
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
+  /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
+  outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
+    growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
+    growBbDraftV361={name:'',reward:'',away:'',expiry:''};
+    growRerenderV322({quiet:true});
+  });
+  outerMain.querySelectorAll('[data-grow-bb-edit-v361]').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.growBbEditV361;
+    const row=growBbRowsV361.find(c=>String(c.id)===String(id));
+    if(!row)return;
+    growBbEditingV361=id;growBbAddOpenV361=true;growBbErrorV361='';
+    growBbDraftV361={name:row.name||'',reward:row.reward_label||'',
+      away:String(row.away_days||''),expiry:row.expiry_days?String(row.expiry_days):''};
+    growRerenderV322({quiet:true});
+  });
+  const growBbCancel=outerMain.querySelector('[data-grow-bb-cancel-v361]');
+  if(growBbCancel)growBbCancel.onclick=()=>{
+    growBbAddOpenV361=false;growBbEditingV361=null;growBbErrorV361='';
+    growRerenderV322({quiet:true});
+  };
+  const growBbSave=outerMain.querySelector('[data-grow-bb-save-v361]');
+  if(growBbSave)growBbSave.onclick=async()=>{
+    if(growBbBusyV361)return;
+    const name=String($('growBbNameV361')?.value||'').trim();
+    const reward=String($('growBbRewardV361')?.value||'').trim();
+    const awayRaw=String($('growBbAwayV361')?.value||'').trim();
+    const expiryRaw=String($('growBbExpiryV361')?.value||'').trim();
+    growBbDraftV361={name,reward,away:awayRaw,expiry:expiryRaw};
+    const away=Math.round(Number(awayRaw));
+    if(!name){growBbErrorV361='Name the campaign.';return growRerenderV322({quiet:true});}
+    if(!reward){growBbErrorV361='Say what the voucher or gift is.';return growRerenderV322({quiet:true});}
+    if(!Number.isFinite(away)||away<1||away>3650){growBbErrorV361='Away days must be between 1 and 3650.';return growRerenderV322({quiet:true});}
+    let expiry=null;
+    if(expiryRaw){
+      expiry=Math.round(Number(expiryRaw));
+      if(!Number.isFinite(expiry)||expiry<1||expiry>3650){growBbErrorV361='Expiry must be between 1 and 3650 days, or blank.';return growRerenderV322({quiet:true});}
+    }
+    growBbBusyV361=true;growBbErrorV361='';growRerenderV322({quiet:true});
+    const {error}=await sb.rpc('business_upsert_bringback_v361',{p_business:S.biz.id,
+      p_campaign:growBbEditingV361,p_name:name,p_reward_label:reward,
+      p_away_days:away,p_expiry_days:expiry});
+    if(!isGrowCurrent())return;
+    growBbBusyV361=false;
+    if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    const wasEditing=Boolean(growBbEditingV361);
+    growBbEditingV361=null;growBbAddOpenV361=false;
+    toast(wasEditing?'Campaign updated':'Campaign added — it starts sending tonight');
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  };
+  outerMain.querySelectorAll('[data-grow-bb-toggle-v361]').forEach(el=>el.onclick=async()=>{
+    if(growBbBusyV361)return;
+    const id=el.dataset.growBbToggleV361;
+    const want=el.getAttribute('aria-checked')!=='true';
+    growBbBusyV361=true;growBbErrorV361='';
+    const {error}=await sb.rpc('business_set_bringback_paused_v361',{
+      p_business:S.biz.id,p_campaign:id,p_paused:!want});
+    if(!isGrowCurrent())return;
+    growBbBusyV361=false;
+    if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    toast(want?'Sending again':'Stopped sending');
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
+  outerMain.querySelectorAll('[data-grow-bb-delete-v361]').forEach(el=>el.onclick=()=>{
+    growBbDeletePendingV361=el.dataset.growBbDeleteV361;
+    growRerenderV322({quiet:true});
+  });
+  outerMain.querySelectorAll('[data-grow-bb-delete-no-v361]').forEach(el=>el.onclick=()=>{
+    growBbDeletePendingV361='';
+    growRerenderV322({quiet:true});
+  });
+  outerMain.querySelectorAll('[data-grow-bb-delete-yes-v361]').forEach(el=>el.onclick=async()=>{
+    if(growBbBusyV361)return;
+    const id=el.dataset.growBbDeleteYesV361;
+    growBbBusyV361=true;growBbErrorV361='';
+    const {error}=await sb.rpc('business_delete_bringback_v361',{p_business:S.biz.id,p_campaign:id});
+    if(!isGrowCurrent())return;
+    growBbBusyV361=false;growBbDeletePendingV361='';
+    if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    toast('Campaign deleted — vouchers already sent stay valid');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
   /* V357: the overview status tabs actually filter now (they were inert markup before). */
