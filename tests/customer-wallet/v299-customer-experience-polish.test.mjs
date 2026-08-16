@@ -99,6 +99,12 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(app,/wireCustomerBusinessShortcutPageV348\(\$\(\'walletBody\'\)\)/);
   assert.match(helper,/if\(!modules\.length\)return ''/);
   assert.doesNotMatch(helper,/No active package/);
+  const merchant=app.slice(app.indexOf('function customerMerchantExperienceMarkupV95'),app.indexOf('/* W4c lives HERE',app.indexOf('function customerMerchantExperienceMarkupV95')));
+  const collapsed=merchant.slice(merchant.indexOf('if(collapsedHeaderV339)return'),merchant.indexOf('return `${customerProgrammeSwitcherMarkup',merchant.indexOf('if(collapsedHeaderV339)return')));
+  assert.doesNotMatch(collapsed,/customer-business-book-v346/);
+  assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business\}\)/);
+  assert.match(collapsed,/customerRewardOfferSwipeMarkupV339\(\{reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'\}\)/);
+  assert.match(app,/class="customer-business-book-inline-v349"/);
   const wallet=app.slice(app.indexOf('async function renderCustomerWallet'),app.indexOf('async function renderCustomerInAppInbox'));
   assert.match(wallet,/const showPackageGroupV347=showGiftCardSectionV347\|\|capabilities\.packages===true\|\|capabilities\.membership===true/);
   assert.match(wallet,/id="customerBusinessMainV348"/);
@@ -107,4 +113,7 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(wallet,/\$\{showPackageGroupV347\?`[\s\S]*id="customerBusinessPackagesDetailV347"/);
   assert.match(indexHtml,/\.customer-business-profile-v346>\.customer-business-rewards-v346\{display:none!important\}/);
   assert.match(indexHtml,/\.customer-business-detail-store-v348\[hidden\]\{display:none!important\}/);
+  assert.doesNotMatch(indexHtml,/\.customer-business-profile-v346 \.customer-reward-offer-swipe-v339\{display:none!important\}/);
+  assert.match(indexHtml,/\.customer-business-offers-head-v349 h2\{font-family:Georgia/);
+  assert.match(indexHtml,/\.customer-business-summary-actions-v349\{[^}]*justify-content:space-between/);
 });

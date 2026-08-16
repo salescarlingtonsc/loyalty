@@ -23,7 +23,7 @@ test('customer surfaces expose Book again only through booking-enabled paths',()
   assert.match(app,/data-repeat-booking data-business-slug/);
   // v178: Book again is now offered on the Cancelled and History tabs (anything that is not a
   // live upcoming booking), still only when the business has customer booking enabled.
-  assert.match(app,/group\.bookingEnabled&&group\.business_slug&&customerBookingAppointmentTabV178\(item\)!=='bookings'/);
+  assert.match(app,/group\.bookingEnabled&&group\.business_slug&&tab!=='bookings'/);
   assert.match(app,/a\.status==='completed'/);
   // v194 shrank the programme's own booking action into the header; Book again on the booking
   // tabs is unchanged and still gated on the business having customer booking enabled.

@@ -7574,19 +7574,21 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
    identical mechanism .customer-promotions-grid and the v337 rewards strip already use on this
    surface. It advances ONLY when the customer swipes it: there is no timer, no auto-advance and
    no script driving the track at all, which is the v104 ruling this region inherits. */
-function customerRewardOfferSwipeMarkupV339({reward=null,items=[],status='ready',business={},bookingEnabled=false}={}){
-  const banner=customerClaimableRewardBannerMarkupV337({reward});
+function customerRewardOfferSwipeMarkupV339({reward=null,items=[],status='ready',business={},bookingEnabled=false,includeReward=true,title=''}={}){
+  const banner=includeReward?customerClaimableRewardBannerMarkupV337({reward}):'';
   const pages=[
     banner?`<div class="customer-reward-offer-page-v339">${banner}</div>`:'',
     ...items.map(item=>`<div class="customer-reward-offer-page-v339">${customerPromotionCardV104(item,business,bookingEnabled)}</div>`)
   ].filter(Boolean);
+  const head=title?`<div class="customer-business-offers-head-v349"><h2>${esc(title)}</h2></div>`:'';
   if(!pages.length){
     const state=status==='error'
       ?'<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>'
       :'<div class="card customer-home-offers-state"><p class="muted small">No offers right now. New offers from this business appear here first.</p></div>';
-    return `<section class="customer-reward-offer-swipe-v339" aria-label="Rewards and offers">${state}</section>`;
+    return `<section class="customer-reward-offer-swipe-v339" aria-label="${esc(title||'Rewards and offers')}">${head}${state}</section>`;
   }
-  return `<section class="customer-reward-offer-swipe-v339" aria-label="Rewards and offers">
+  return `<section class="customer-reward-offer-swipe-v339" aria-label="${esc(title||'Rewards and offers')}">
+    ${head}
     <div class="customer-reward-offer-track-v339"${pages.length>1?' tabindex="0"':''}>${pages.join('')}</div>
     ${status==='error'?'<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>':''}
   </section>`;
@@ -8359,7 +8361,7 @@ function customerClaimableRewardBannerMarkupV337({reward=null}={}){
     <button type="button" class="btn sm customer-claimable-banner-cta-v337" data-claim-reward-scroll-v337>Claim reward ›</button>
   </section>`;
 }
-function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={}}={}){
+function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={}}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
   const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
@@ -8380,6 +8382,9 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     ?`${rewardName||'Reward'} ready to claim`
     :sessions>0?`${sessions} session${sessions===1?'':'s'} left`
     :subline;
+  const bookAction=bookingEnabled&&business?.slug
+    ?`<a class="customer-business-book-inline-v349" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`
+    :'';
   return `<section class="card customer-business-summary-v346" aria-label="Membership summary">
     <div class="customer-business-summary-top-v347">
       <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(heroLabel)}</span></span>
@@ -8387,7 +8392,10 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     </div>
     <b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>
     <p>${esc(claimLine)}</p>
-    ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
+    ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
+      ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
+      ${bookAction}
+    </div>`:''}
   </section>`;
 }
 function customerBusinessSecondaryMarkupV346(presentation={}){
@@ -8590,11 +8598,10 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
         <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:18})}<span>Directions</span></button>
         <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>
       </div>
-      ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337 customer-business-book-v346" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:18})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </header>
-    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership})}
+    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business})}
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
-    ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled})}
+    ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
       ${programmeStackV310(programmeCapabilities)
