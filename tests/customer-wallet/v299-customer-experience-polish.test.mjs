@@ -94,17 +94,25 @@ test('home and rewards cards keep points/stamps labels honest and compact',()=>{
 });
 
 test('customer surface uses the warm premium accent palette without changing the app background',()=>{
-  assert.match(indexHtml,/--peekaa-red:#E89A72;--peekaa-red-dark:#D9825E;--peekaa-red-soft:#F9E7DD;--peekaa-red-faint:#FFF3D6;/);
+  assert.match(indexHtml,/--peekaa-red:#F06A4F;--peekaa-red-dark:#D94A38;--peekaa-red-soft:#FFE1D7;--peekaa-red-faint:#FFF0EA;/);
   assert.match(indexHtml,/--peekaa-bg:#F8F4F1;/,
     'the existing customer app background must stay exactly unchanged');
   assert.match(indexHtml,/--peekaa-text:#251F1B;--peekaa-text-secondary:#7C746E;/);
   assert.match(indexHtml,/--peekaa-success:#4F8A72;--peekaa-success-bg:#E7F3ED;/);
   assert.match(indexHtml,/--peekaa-gold:#D8B15A;--peekaa-gold-bg:#FFF3D6;/);
   assert.match(indexHtml,/\/\* V361: warm premium customer accents\. The page background stays on --peekaa-bg exactly as-is\. \*\//);
-  assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:0 8px 22px rgba\(232,154,114,\.24\)!important\}/);
+  assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:0 8px 22px rgba\(240,106,79,\.28\)!important\}/);
   assert.match(indexHtml,/\.customer-primary-nav a\[aria-current="page"\],[^{]+\.is-active\{background:var\(--peekaa-red-soft\)!important;border-color:var\(--peekaa-red\)!important;color:var\(--peekaa-red\)!important\}/);
   assert.match(indexHtml,/\.customer-claimable-banner-v337,\.customer-claimable-strip\{border-color:var\(--peekaa-gold\)!important;background:var\(--peekaa-gold-bg\)!important/);
   assert.match(indexHtml,/\.customer-surface \.pill\.ok\{background:var\(--peekaa-success-bg\)!important;color:var\(--peekaa-success\)!important\}/);
+});
+
+test('compact customer pills and programme card metrics are optically centered',()=>{
+  assert.match(indexHtml,/\/\* V364: optical alignment fixes for compact customer cards and pills\. \*\//);
+  assert.match(indexHtml,/\.customer-home-offer-countdown,\.customer-offer-new\{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;white-space:nowrap!important\}/);
+  assert.match(indexHtml,/\.customer-home-offer-countdown\{min-height:26px!important;padding:0 12px!important\}/);
+  assert.match(indexHtml,/\.customer-programme-card-v95 \.customer-programme-card-balance\{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;align-self:center!important;min-width:0!important;text-align:right!important\}/);
+  assert.match(indexHtml,/\.customer-programme-card-v95 \.customer-programme-card-balance span\{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;transform:none!important\}/);
 });
 
 test('business profile shortcuts are relationship-specific, not static decoration',()=>{
@@ -117,9 +125,11 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(helper,/if\(sessions>0\)modules\.push\(\{href:'#customerBusinessPackagesDetailV347',action:'packages'/);
   assert.match(helper,/if\(hasActivity\)modules\.push\(\{href:'#customerBusinessActivityDetailV347',action:'activity'/);
   assert.match(helper,/if\(membership\.active===true\)modules\.push/);
+  assert.match(helper,/if\(hasReferral\)modules\.push\(\{href:'#customerBusinessReferralDetailV362',action:'referral'/);
   assert.match(helper,/data-business-shortcut-v347="\$\{esc\(item\.action\)\}"/);
   assert.match(helper,/function wireCustomerBusinessShortcutsV347/);
-  assert.match(helper,/shareButton\.click\(\)/);
+  assert.match(helper,/referral:'#customerBusinessReferralDetailV362'/);
+  assert.doesNotMatch(helper,/shareButton\.click\(\)/);
   assert.match(helper,/openCustomerBusinessShortcutPageV348\(\{action,title:labels\[action\]/);
   assert.match(helper,/function openCustomerBusinessShortcutPageV348/);
   assert.match(helper,/function closeCustomerBusinessShortcutPageV348/);
@@ -133,6 +143,10 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.doesNotMatch(collapsed,/customer-business-book-v346/);
   assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business\}\)/);
   assert.match(collapsed,/customerRewardOfferSwipeMarkupV339\(\{reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'\}\)/);
+  assert.match(collapsed,/customerBusinessReferralDetailMarkupV362\(\)/);
+  assert.doesNotMatch(collapsed,/customerEarnMorePointsMarkupV339\(\{loyalty,presentation,programmeCapabilities\}\)\}\n\s+\$\{customerReferralSlotMarkupV360\(\)\}/);
+  assert.match(app,/function customerBusinessReferralDetailMarkupV362/);
+  assert.doesNotMatch(app,/id="customerEarnMoreReferralV339"/);
   assert.match(app,/class="customer-business-book-inline-v349"/);
   const wallet=app.slice(app.indexOf('async function renderCustomerWallet'),app.indexOf('async function renderCustomerInAppInbox'));
   assert.match(wallet,/const showPackageGroupV347=showGiftCardSectionV347\|\|capabilities\.packages===true\|\|capabilities\.membership===true/);
@@ -141,8 +155,13 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(wallet,/id="walletSections" hidden/);
   assert.match(wallet,/\$\{showPackageGroupV347\?`[\s\S]*id="customerBusinessPackagesDetailV347"/);
   assert.match(indexHtml,/\.customer-business-profile-v346>\.customer-business-rewards-v346\{display:none!important\}/);
+  assert.match(indexHtml,/\.customer-business-profile-v346>\.customer-business-referral-v362\{display:none!important\}/);
+  assert.match(indexHtml,/\.customer-business-shortcut-content-v348>\.customer-business-referral-v362\{display:grid!important\}/);
   assert.match(indexHtml,/\.customer-business-detail-store-v348\[hidden\]\{display:none!important\}/);
   assert.doesNotMatch(indexHtml,/\.customer-business-profile-v346 \.customer-reward-offer-swipe-v339\{display:none!important\}/);
   assert.match(indexHtml,/\.customer-business-offers-head-v349 h2\{font-family:Georgia/);
-  assert.match(indexHtml,/\.customer-business-summary-actions-v349\{[^}]*justify-content:space-between/);
+  assert.match(indexHtml,/\.customer-shell \.card\.customer-business-summary-v346\{[^}]*linear-gradient\(145deg,#F06A4F 0%,#D94A38 100%\)/);
+  assert.match(indexHtml,/\.customer-business-balance-v347\{[^}]*font-size:56px!important/);
+  assert.match(indexHtml,/\.customer-business-summary-actions-v349\{[^}]*grid-template-columns:1fr 1fr!important/);
+  assert.match(indexHtml,/\.customer-referral-code-row\{[^}]*grid-template-columns:1fr 1fr!important/);
 });

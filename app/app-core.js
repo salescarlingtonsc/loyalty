@@ -3357,12 +3357,10 @@ function customerRewardOfferSwipeMarkupV339({reward=null,items=[],status='ready'
     ${status==='error'?'<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>':''}
   </section>`;
 }
-/* v339: the honest "earn more" list. There is no admin-configurable per-action earn table in this
-   product — earning is the sale-completion trigger plus the single referral payout — so this
-   section prints only what a real field can back. The referral row is INJECTED later by
-   loadReferralCardV300 from customer_get_referral_card_v300's own reward_points (the number the
-   engine actually pays), never a guess; until that read answers there is no referral row at all.
-   The visit row carries NO "+N pts": the customer surface is never told this firm's
+/* v339/v362: the honest "earn more" list. There is no admin-configurable per-action earn table in
+   this product, so this section prints only what a real field can back. Referral now lives behind
+   the Refer a friend shortcut instead of inside Points & gifts. The visit row carries NO "+N pts":
+   the customer surface is never told this firm's
    earn_points_per_dollar (customer_get_wallet returns enabled/model/unit/balance and nothing
    else), so a number here would be invented. It is therefore phrased without one, and it renders
    only where spendable points are actually running — the same customerPointsHeroVisibleV337 check
@@ -3379,7 +3377,6 @@ function customerEarnMorePointsMarkupV339({loyalty={},presentation={},programmeC
         <span class="customer-earn-more-icon-v339" aria-hidden="true">${CUI.icon('bookings',{size:18})}</span>
         <span class="customer-earn-more-copy-v339"><b>Visit and spend here</b><span class="muted small">Every qualifying purchase adds ${esc(unitLabel)} to your balance.</span></span>
       </li>
-      <li class="customer-earn-more-referral-slot-v339" id="customerEarnMoreReferralV339" hidden></li>
     </ul>
   </section>`;
 }
@@ -3896,11 +3893,10 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
        gating the slot on programmes['referral'] too would give referral presentation two truths
-       that can disagree, and the one that would lose is the card. The spine's referral row exists
-       for the read path, not for this decision. */
-    /* v339: the slot is EMITTED EXACTLY ONCE either way — deferred here means the profile page
-       renders the identical node further down, after "Earn more points", per photo 1. Two slots
-       with one id would give loadReferralCardV300 an ambiguous target. */
+       that can disagree, and the one that would lose is the card. */
+    /* v339/v362: the slot is EMITTED EXACTLY ONCE either way. Deferred here means the caller owns
+       the one slot location; two slots with one id would give loadReferralCardV300 an ambiguous
+       target. */
     deferReferralSlotV339?'':'<div id="walletReferralSlot" hidden></div>'
   ].filter(Boolean).join('');
   /* v338: the reward half of this strip's facts duplicates the v337 "reward ready" banner
@@ -4015,10 +4011,16 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const heroLabel=tierLabel?tierLabel.toUpperCase():membership.active===true?'MEMBER':unit==='stamps'?'STAMPS':'POINTS';
   const rewardName=String(reward?.name||'').trim();
   const sessions=Number(packages.sessions_remaining||0);
+  const cost=reward?Math.max(0,Number(reward.cost_units)||0):0;
   const claimLine=rewardReady
     ?`${rewardName||'Reward'} ready to claim`
     :sessions>0?`${sessions} session${sessions===1?'':'s'} left`
     :subline;
+  const progressLine=remaining>0
+    ?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to next reward`
+    :rewardReady?'Ready to redeem on your next visit'
+      :cost>0?`${customerPointTotalV103(cost)} ${unit==='stamps'?'stamps':unitLabel} reward threshold`
+        :'';
   const bookAction=bookingEnabled&&business?.slug
     ?`<a class="customer-business-book-inline-v349" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`
     :'';
@@ -4028,7 +4030,8 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
       <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(subline)}</span></span>
     </div>
     <b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>
-    <p>${esc(claimLine)}</p>
+    <p class="customer-business-summary-line-v362">${esc(claimLine)}</p>
+    ${progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
     ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
       ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
       ${bookAction}
@@ -4037,6 +4040,12 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
 }
 function customerReferralSlotMarkupV360(){
   return '<div id="walletReferralSlot" hidden></div>';
+}
+function customerBusinessReferralDetailMarkupV362(){
+  return `<section class="customer-business-group-v346 customer-business-referral-v362" id="customerBusinessReferralDetailV362" aria-labelledby="customerBusinessReferralTitleV362">
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessReferralTitleV362">Refer a friend</h2><p class="muted small">Share this business and your referral code.</p></div>
+    ${customerReferralSlotMarkupV360()}
+  </section>`;
 }
 function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},membership={},loyalty={},capabilities={}}={}){
   const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
@@ -4057,7 +4066,7 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
-  if(hasReferral)modules.push({href:'#walletReferralSlot',action:'referral',icon:'referrals',title:'Refer a friend',body:'Share this business'});
+  if(hasReferral)modules.push({href:'#customerBusinessReferralDetailV362',action:'referral',icon:'referrals',title:'Refer a friend',body:'Share this business'});
   if(hasActivity)modules.push({href:'#customerBusinessActivityDetailV347',action:'activity',icon:'bookings',title:'Activity',body:'Visits and history'});
   if(!modules.length)return '';
   return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
@@ -4145,13 +4154,13 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business})}
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
+    ${customerBusinessReferralDetailMarkupV362()}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
       ${programmeStackV310(programmeCapabilities)
         ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:true,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
       ${customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities})}
-      ${customerReferralSlotMarkupV360()}
       ${customerPointsExplainerMarkupV167(business)}
     </section>
   </div>`;
@@ -4177,11 +4186,9 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${programmeStackV310(programmeCapabilities)
       ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:pointsHeroVisibleV338,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:collapsedHeaderV339})
       :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
-    ${/* v339: "Earn more points", then the referral card, then the explainer — photo 1's tail
-          order. The referral SLOT is the same #walletReferralSlot node loadReferralCardV300
-          already replaces; it has simply moved down the page, so the card's copy/share wiring is
-          byte-for-byte the same code acting on the same element. On the non-collapsed callers
-          (the workspace Live preview) the slot stays where the stack emits it, unmoved. */''}
+    ${/* v339/v362: the older non-collapsed preview path still renders the referral slot near this
+          tail. The collapsed customer app renders its referral slot in customerBusinessReferralDetailV362
+          so Points & gifts remains only points, rewards and earn guidance. */''}
     ${collapsedHeaderV339?customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities}):''}
     ${collapsedHeaderV339||!programmeStackV310(programmeCapabilities)?'<div id="walletReferralSlot" hidden></div>':''}
     ${customerPointsExplainerMarkupV167(business)}
