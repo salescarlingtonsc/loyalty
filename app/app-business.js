@@ -281,15 +281,13 @@ function growPointsPhotoPreviewUrlForV349(file){
    the resulting sentence (rather than a structured rule) is deliberate: perk_note is descriptive
    copy shown to customers, not something the engine computes with — the only benefit the engine
    actually enforces is points_multiplier, which has its own field and is untouched here. */
+/* V369: the picker seeds a KIND and its value now, not a sentence. "Write my own" is the only
+   entry that produces free text. */
 const GROW_TIER_BENEFIT_TEMPLATES_V363=Object.freeze([
-  ['','Pick a benefit template'],
-  ['10% off every visit','Discount every visit'],
-  ['Free item every month','Free item every month'],
-  ['Free birthday treat','Birthday reward — free item'],
-  ['20% off during your birthday month','Birthday reward — discount'],
-  ['Early access to new offers','Early access to offers'],
-  ['Free delivery on every order','Free delivery'],
-  ['__custom__','Write my own']
+  ['discount_pct:10','10% off every visit'],
+  ['discount_pct:20','20% off every visit'],
+  ['free_item:','Free item'],
+  ['custom:','Write my own']
 ]);
 /* V365 — every benefit carries a LIMIT, and the limit is part of the sentence the customer reads.
    Owner (2026-08-16, photo 4): "all these needs to set a limit (like 30times per month or 1 time
@@ -304,13 +302,20 @@ const GROW_TIER_BENEFIT_PERIODS_V365=Object.freeze([['day','per day'],['week','p
   ['month','per month'],['year','per year'],['ever','in total'],
   ['birthday_month','during birthday month']]);
 function growTierBenefitSentenceV365(benefit){
-  const label=String(benefit?.label||'').trim();
-  const limit=Number(benefit?.limit_count);
+  /* V369: the words are DERIVED from the kind and its number/item — mirroring
+     app.v369_benefit_label + app.v365_benefit_sentence — so the preview an owner reads while
+     typing is the text the server will store. 'custom' is the only kind whose words are typed. */
+  const kind=String(benefit?.kind||'custom');
+  const discount=Number(benefit?.discount);
+  const label=kind==='discount_pct'
+    ?(Number.isFinite(discount)&&discount>0?`${String(discount).replace(/\.0+$/,'')}% off`:'')
+    :kind==='free_item'
+    ?((String(benefit?.itemLabel||'').trim()||String(benefit?.productName||'').trim())
+        ?`Free ${String(benefit?.productName||benefit?.itemLabel).trim()}`:'')
+    :String(benefit?.label||'').trim();
   if(!label)return '';
+  const limit=Number(benefit?.limit_count);
   const period=String(benefit?.limit_period||'month');
-  /* Mirrors app.v365_benefit_sentence exactly, including V367's unlimited-but-birthday-only case
-     — an unlimited benefit normally reads as bare text, but "during their birthday month" is a
-     restriction the customer must be told about even when there is no count. */
   if(!Number.isFinite(limit)||limit<=0)return period==='birthday_month'?`${label} — during their birthday month`:label;
   const n=Math.round(limit);
   if(period==='birthday_month')return `${label} — ${n} during their birthday month`;
@@ -326,9 +331,16 @@ function growTiersBenefitLinesV363(value){
    (no v365 rows yet, or the migration not applied on this database) still opens correctly — the
    line becomes an unlimited benefit, which is exactly what it meant when it was written. */
 function growTiersBenefitDraftFromV365(rows,perkNote){
-  if(Array.isArray(rows)&&rows.length)return rows.map(row=>({id:row.id||null,label:String(row.label||''),
+  if(Array.isArray(rows)&&rows.length)return rows.map(row=>({id:row.id||null,
+    kind:row.benefit_kind||'custom',
+    label:String(row.label||''),
+    /* V369: the two structured kinds carry a number or an item; 'custom' carries only words. */
+    discount:row.discount_percent==null?'':String(row.discount_percent).replace(/\.00$/,''),
+    productId:row.product_id||'',
+    itemLabel:row.item_label||'',
     limit_count:row.limit_count==null?'':String(row.limit_count),limit_period:row.limit_period||'month'}));
-  return growTiersBenefitLinesV363(perkNote).map(line=>({id:null,label:line,limit_count:'',limit_period:'month'}));
+  return growTiersBenefitLinesV363(perkNote).map(line=>({id:null,kind:'custom',label:line,
+    discount:'',productId:'',itemLabel:'',limit_count:'',limit_period:'month'}));
 }
 /* Reads the live form rows. Blanks are KEPT here on purpose: the remove buttons address rows by
    their rendered index, so silently dropping an empty row mid-capture would shift every index
@@ -338,7 +350,11 @@ function growTiersReadBenefitFieldsV363(){
   if(!nodes.length)return [...(growTiersAddDraftV331.benefits||[])];
   return [...nodes].map(node=>({
     id:node.dataset.growTiersBenefitIdV365||null,
+    kind:String(node.querySelector('[data-grow-tiers-benefit-kind-v369]')?.value||'custom'),
     label:String(node.querySelector('[data-grow-tiers-benefit-input-v363]')?.value||'').trim(),
+    discount:String(node.querySelector('[data-grow-tiers-benefit-discount-v369]')?.value||'').trim(),
+    productId:String(node.querySelector('[data-grow-tiers-benefit-product-v369]')?.value||''),
+    itemLabel:String(node.querySelector('[data-grow-tiers-benefit-item-v369]')?.value||'').trim(),
     limit_count:String(node.querySelector('[data-grow-tiers-benefit-limit-v365]')?.value||'').trim(),
     limit_period:String(node.querySelector('[data-grow-tiers-benefit-period-v365]')?.value||'month')
   }));
@@ -6172,24 +6188,27 @@ async function tillPage(){
            and the branch, so nothing here decides eligibility — this list is a display of the
            server's answer, and a benefit with nothing left is shown spent rather than hidden, so
            staff can tell "already used this month" from "not a benefit of this tier". */
-        const tierBenefitsV365=(!walkin&&catalog.customerTierBenefits&&Array.isArray(catalog.customerTierBenefits.benefits))
+        const tierBenefitsAllV365=(!walkin&&catalog.customerTierBenefits&&Array.isArray(catalog.customerTierBenefits.benefits))
           ?catalog.customerTierBenefits.benefits:[];
+        /* V369 (owner: "this is affecting the ui ux and alignment issue. (only show available
+           rewards)"). The panel used to print EVERY benefit of the customer's tier as a wide row
+           of side-by-side blocks — with used-up and out-of-season ones among them — which
+           overflowed the cart column and pushed the packages list sideways. Two changes: only
+           what the customer can actually be given right now is listed (the server already answers
+           that in claimable_now), and the list is vertical, one benefit per line, inside the same
+           narrow column as every other till banner. */
+        const tierBenefitsV365=tierBenefitsAllV365.filter(benefit=>benefit.claimable_now!==false);
+        const tierBenefitsHiddenV369=tierBenefitsAllV365.length-tierBenefitsV365.length;
         const tierBenefitBannerV365=tierBenefitsV365.length
-          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>${esc(catalog.customerTierBenefits?.tier?.label||'Tier')} benefits</b>
-            <p class="muted small" style="margin:5px 0">Earned by reaching ${esc(catalog.customerTierBenefits?.tier?.label||'this tier')}. Give one when the customer asks for it.</p>
-            ${tierBenefitsV365.map(benefit=>{
-              const spent=benefit.remaining!==null&&benefit.remaining!==undefined&&Number(benefit.remaining)<=0;
-              /* V367: a birthday-month benefit outside the customer's own birth month is shown
-                 with the reason rather than a Give button that the server would only refuse. */
-              const blockedV367=benefit.claimable_now===false;
-              return `<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
-                <span style="flex:1;min-width:160px"><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
-                ${benefit.limit_count==null?'<span class="muted small" style="display:block">No limit</span>'
-                  :`<span class="muted small" style="display:block">${Math.max(0,Number(benefit.remaining)||0)} left ${benefit.limit_period==='ever'?'in total':`this ${esc(benefit.limit_period||'month')}`}</span>`}</span>
-                ${blockedV367?'<span class="pill off">Birthday month only</span>'
-                  :spent?'<span class="pill off">Used up</span>'
-                  :`<button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>`}
-              </div>`}).join('')}</div>`
+          ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${esc(catalog.customerTierBenefits?.tier?.label||'Tier')} benefits</b>
+            <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
+            ${tierBenefitsV365.map(benefit=>`<div class="till-tier-benefit-row-v369">
+                <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
+                ${benefit.limit_count==null?'<span class="muted small">No limit</span>'
+                  :`<span class="muted small">${Math.max(0,Number(benefit.remaining)||0)} left ${benefit.limit_period==='birthday_month'?'this birthday month':benefit.limit_period==='ever'?'in total':`this ${esc(benefit.limit_period||'month')}`}</span>`}</span>
+                <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>
+              </div>`).join('')}
+            ${tierBenefitsHiddenV369?`<p class="muted small" style="margin:8px 0 0">${tierBenefitsHiddenV369} other tier benefit${tierBenefitsHiddenV369===1?' is':'s are'} not available right now (used up, or birthday month only).</p>`:''}</div>`
           :'';
         const welcomeBanner=welcomeOffer
           ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
@@ -11471,9 +11490,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      always used, so the page never breaks on a missing table. */
   const growTierBenefitsV365=canRewards
     ?await sb.from('tier_benefits_v365')
-      .select('id,tier_id,label,limit_count,limit_period,sort')
+      .select('id,tier_id,label,limit_count,limit_period,sort,benefit_kind,discount_percent,product_id,item_label')
       .eq('business_id',S.biz.id).is('deleted_at',null).eq('active',true).order('sort')
       .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :[];
+  if(!isGrowCurrent())return;
+  /* V369 (owner: "pull from existing products (drop down selection)"). The catalogue the free-item
+     benefit picks from. Fail-soft: no products simply means the owner types the item instead. */
+  const growBenefitProductsV369=canRewards
+    ?await sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+      .then(r=>r.error?[]:(r.data||[])).catch(()=>[])
     :[];
   if(!isGrowCurrent())return;
   /* V331: Published/History split for the new #/grow/tiers page and every existing tile/summary
@@ -12863,17 +12889,35 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div class="grow-tier-benefits-v363" data-grow-tiers-benefits-v363>
       <label class="muted small">Benefits <span class="muted">(optional — add as many as you like)</span></label>
       ${(growTiersAddDraftV331.benefits||[]).length
-        ?(growTiersAddDraftV331.benefits||[]).map((benefit,index)=>`<p class="grow-setup-sentence-v301 row grow-tier-benefit-row-v365" data-grow-tiers-benefit-row-v365="${index}"${benefit.id?` data-grow-tiers-benefit-id-v365="${esc(benefit.id)}"`:''} style="gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
-            <input class="grow-setup-input-v301" data-grow-tiers-benefit-input-v363="${index}" style="flex:1;min-width:180px;max-width:320px" value="${esc(benefit.label||'')}" placeholder="e.g. 10% off every visit" data-workspace-i18n aria-label="Benefit ${index+1}">
-            ${/* V365: the limit, right beside the words it qualifies. Blank = no limit, and the
-                 field says so rather than defaulting to a number the owner never chose. */''}
-            <input class="grow-setup-input-v301" data-grow-tiers-benefit-limit-v365="${index}" inputmode="numeric" style="max-width:110px" value="${esc(String(benefit.limit_count??''))}" placeholder="No limit" data-workspace-i18n aria-label="How many times for benefit ${index+1}">
-            <select class="grow-setup-input-v301" data-grow-tiers-benefit-period-v365="${index}" style="max-width:130px" data-workspace-i18n aria-label="Limit period for benefit ${index+1}">
+        ?(growTiersAddDraftV331.benefits||[]).map((benefit,index)=>{
+            /* V369 (owner: "currently is using words - very misleading ... drop down > discount >
+               add % . or drop down > free item > type the item out or pull from existing
+               products"). The row leads with WHAT KIND of benefit it is; the field beside it is
+               whatever that kind actually needs. Only "My own wording" is free text now. */
+            const kind=String(benefit.kind||'custom');
+            const productName=(growBenefitProductsV369.find(row=>String(row.id)===String(benefit.productId))||{}).name||'';
+            return `<div class="grow-tier-benefit-row-v365" data-grow-tiers-benefit-row-v365="${index}"${benefit.id?` data-grow-tiers-benefit-id-v365="${esc(benefit.id)}"`:''}>
+            <select class="grow-setup-input-v301" data-grow-tiers-benefit-kind-v369="${index}" data-workspace-i18n aria-label="Benefit type ${index+1}">
+              <option value="discount_pct"${kind==='discount_pct'?' selected':''}>Discount</option>
+              <option value="free_item"${kind==='free_item'?' selected':''}>Free item</option>
+              <option value="custom"${kind==='custom'?' selected':''}>My own wording</option>
+            </select>
+            ${kind==='discount_pct'?`<span class="grow-tier-benefit-value-v369"><input class="grow-setup-input-v301" data-grow-tiers-benefit-discount-v369="${index}" inputmode="decimal" value="${esc(String(benefit.discount??''))}" placeholder="10" data-workspace-i18n aria-label="Discount percent for benefit ${index+1}"><b class="muted">% off</b></span>`
+              :kind==='free_item'?`<span class="grow-tier-benefit-value-v369">
+                  ${growBenefitProductsV369.length?`<select class="grow-setup-input-v301" data-grow-tiers-benefit-product-v369="${index}" data-workspace-i18n aria-label="Free product for benefit ${index+1}">
+                    <option value="">Type it instead…</option>
+                    ${growBenefitProductsV369.map(row=>`<option value="${esc(row.id)}"${String(benefit.productId)===String(row.id)?' selected':''}>${esc(row.name)}</option>`).join('')}
+                  </select>`:''}
+                  <input class="grow-setup-input-v301" data-grow-tiers-benefit-item-v369="${index}" value="${esc(benefit.itemLabel||'')}" placeholder="e.g. lollipop" data-workspace-i18n aria-label="Free item for benefit ${index+1}"${benefit.productId?' hidden':''}>
+                </span>`
+              :`<input class="grow-setup-input-v301" data-grow-tiers-benefit-input-v363="${index}" value="${esc(benefit.label||'')}" placeholder="e.g. 1 for 1 deals" data-workspace-i18n aria-label="Benefit ${index+1}">`}
+            <input class="grow-setup-input-v301" data-grow-tiers-benefit-limit-v365="${index}" inputmode="numeric" value="${esc(String(benefit.limit_count??''))}" placeholder="No limit" data-workspace-i18n aria-label="How many times for benefit ${index+1}">
+            <select class="grow-setup-input-v301" data-grow-tiers-benefit-period-v365="${index}" data-workspace-i18n aria-label="Limit period for benefit ${index+1}">
               ${GROW_TIER_BENEFIT_PERIODS_V365.map(([value,label])=>`<option value="${esc(value)}"${(benefit.limit_period||'month')===value?' selected':''}>${esc(label)}</option>`).join('')}
             </select>
             <button type="button" class="btn ghost sm" data-grow-tiers-benefit-remove-v363="${index}" data-workspace-i18n aria-label="Remove benefit ${index+1}">Remove</button>
-            <span class="muted small" style="flex-basis:100%">${esc(growTierBenefitSentenceV365(benefit)||'Customers see this line on their tier card.')}</span>
-          </p>`).join('')
+            <span class="muted small grow-tier-benefit-preview-v369">${esc(growTierBenefitSentenceV365({...benefit,kind,productName})||'Customers see this line on their tier card.')}</span>
+          </div>`}).join('')
         :'<p class="muted small" style="margin:6px 0 0">No benefit yet — this tier is recognition only. Add one below if you want to give something.</p>'}
       <p class="grow-setup-sentence-v301 row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
         <select class="grow-setup-input-v301" id="growTiersBenefitTemplateV363" style="max-width:260px" aria-label="Benefit template">
@@ -14288,6 +14332,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       threshold:thresholdField?thresholdField.value:growTiersAddDraftV331.threshold,
       benefits:growTiersReadBenefitFieldsV363()};
   };
+  /* V369: changing the kind changes which field the row needs, so the row is re-rendered from the
+     captured draft rather than mutated in place. */
+  outerMain.querySelectorAll('[data-grow-tiers-benefit-kind-v369]').forEach(select=>select.onchange=()=>{
+    growTiersCaptureDraftV363();
+    growRerenderV322({quiet:true});
+  });
+  /* Picking a catalogue product hides the typed-item box, and vice versa. */
+  outerMain.querySelectorAll('[data-grow-tiers-benefit-product-v369]').forEach(select=>select.onchange=()=>{
+    growTiersCaptureDraftV363();
+    growRerenderV322({quiet:true});
+  });
   outerMain.querySelectorAll('[data-grow-tiers-benefit-remove-v363]').forEach(button=>button.onclick=()=>{
     const index=Number(button.dataset.growTiersBenefitRemoveV363);
     growTiersCaptureDraftV363();
@@ -14299,13 +14354,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   const growTiersBenefitAdd=outerMain.querySelector('[data-grow-tiers-benefit-add-v363]');
   if(growTiersBenefitAdd)growTiersBenefitAdd.onclick=()=>{
-    const picked=String($('growTiersBenefitTemplateV363')?.value||'');
+    const picked=String($('growTiersBenefitTemplateV363')?.value||'custom:');
     growTiersCaptureDraftV363();
-    /* '' (the placeholder option) and '__custom__' both mean "a blank line I will type into" —
-       the placeholder is not an error state, just the least-committed way to reach the same row. */
-    const line=(picked&&picked!=='__custom__')?picked:'';
+    const [kind,value]=picked.split(':');
     growTiersAddDraftV331={...growTiersAddDraftV331,
-      benefits:[...(growTiersAddDraftV331.benefits||[]),{id:null,label:line,limit_count:'',limit_period:'month'}]};
+      benefits:[...(growTiersAddDraftV331.benefits||[]),
+        {id:null,kind:kind||'custom',label:'',discount:value||'',productId:'',itemLabel:'',
+         limit_count:'',limit_period:'month'}]};
     growRerenderV322({quiet:true});
   };
   const growTiersAddCancel=outerMain.querySelector('[data-grow-tiers-add-cancel-v331]');
@@ -14322,15 +14377,28 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     /* V363: rows in, one newline-joined perk_note out — exactly the shape every existing reader
        (workspace tierBenefitLines, the two customer ladder RPCs) already expects. Blank rows are
        dropped rather than saved as empty lines, which would render as empty customer chips. */
-    const benefits=growTiersReadBenefitFieldsV363().filter(row=>String(row.label||'').trim());
+    /* V369: a row counts as filled in when its OWN kind has what it needs — a percentage, an item
+       (typed or picked), or words. Filtering on `label` alone would have silently dropped every
+       structured row, whose label is derived server-side. */
+    const benefits=growTiersReadBenefitFieldsV363().filter(row=>{
+      const kind=String(row.kind||'custom');
+      if(kind==='discount_pct')return String(row.discount||'').trim()!=='';
+      if(kind==='free_item')return Boolean(row.productId)||String(row.itemLabel||'').trim()!=='';
+      return String(row.label||'').trim()!=='';
+    });
     /* V365: perk_note is DERIVED from the benefit rows — the server derives the stored copy from
        the same numbers (app.v365_apply_perk_note), and this local build only keeps the tier RPC's
        own perk_note argument honest in the moment between the two writes. */
-    const perkNote=benefits.map(row=>growTierBenefitSentenceV365(row)).filter(Boolean).join('\n');
+    const perkNote=benefits.map(row=>growTierBenefitSentenceV365({...row,
+      productName:(growBenefitProductsV369.find(p=>String(p.id)===String(row.productId))||{}).name||''}))
+      .filter(Boolean).join('\n');
     growTiersAddDraftV331={name,threshold:thresholdField?.value||'',perkNote,benefits};
     const badLimit=benefits.find(row=>String(row.limit_count||'').trim()!==''
       &&!(Number(row.limit_count)>0&&Number(row.limit_count)<=10000&&Number.isInteger(Number(row.limit_count))));
-    if(badLimit){growTiersErrorV331=`"${badLimit.label}" needs a whole number of times, or leave the limit blank for no limit.`;return growRerenderV322();}
+    if(badLimit){growTiersErrorV331='A benefit limit needs a whole number of times, or leave it blank for no limit.';return growRerenderV322();}
+    const badDiscount=benefits.find(row=>String(row.kind||'')==='discount_pct'
+      &&!(Number(row.discount)>0&&Number(row.discount)<=100));
+    if(badDiscount){growTiersErrorV331='A discount must be between 0.01 and 100 percent.';return growRerenderV322();}
     if(!name){growTiersErrorV331='Name the tier customers will see.';return growRerenderV322();}
     if(!Number.isFinite(threshold)||threshold<0){growTiersErrorV331='Reached-at must be zero or a positive number.';return growRerenderV322();}
     growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
@@ -14357,7 +14425,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(tierIdV365){
       const {error:benefitError}=await sb.rpc('business_set_tier_benefits_v365',{
         p_business:S.biz.id,p_tier:tierIdV365,
-        p_benefits:benefits.map(row=>({label:String(row.label||'').trim(),
+        p_benefits:benefits.map(row=>({benefit_kind:row.kind||'custom',
+          label:String(row.label||'').trim()||null,
+          discount_percent:String(row.kind)==='discount_pct'?Number(row.discount):null,
+          product_id:String(row.kind)==='free_item'&&row.productId?row.productId:null,
+          item_label:String(row.kind)==='free_item'&&!row.productId?String(row.itemLabel||'').trim():null,
           limit_count:String(row.limit_count||'').trim()===''?null:Math.round(Number(row.limit_count)),
           limit_period:row.limit_period||'month',
           ...(row.id&&wasEditing?{id:row.id}:{})}))});

@@ -197,6 +197,27 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-segment a{min-height:44px;display:inline-flex;align-items:center;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px;text-decoration:none}
 .v150-segment a[aria-pressed="true"]{background:var(--ink);color:#fff}
 .ci-tabs-v368{margin:14px 0 4px;max-width:100%;overflow-x:auto}
+/* V369 — the tier-benefit editor row and the till's benefit list.
+   The editor row is a grid so the kind, its value, the limit, the period and Remove line up
+   column-for-column down the list instead of wrapping differently on every row; the preview
+   sentence spans the full width underneath. The till list is one benefit per line, inside the
+   narrow cart column — it used to lay its blocks out side by side and overflow the page. */
+.grow-tier-benefit-row-v365{display:grid;gap:8px;align-items:center;margin-top:8px;
+  grid-template-columns:minmax(120px,150px) minmax(140px,1fr) 96px minmax(110px,150px) auto}
+.grow-tier-benefit-row-v365 input,.grow-tier-benefit-row-v365 select{width:100%;min-width:0;margin:0}
+.grow-tier-benefit-value-v369{display:flex;gap:6px;align-items:center;min-width:0}
+.grow-tier-benefit-value-v369 input,.grow-tier-benefit-value-v369 select{flex:1;min-width:0}
+.grow-tier-benefit-value-v369 b{flex:none;font-size:13px}
+.grow-tier-benefit-preview-v369{grid-column:1/-1;margin-top:-2px}
+@media(max-width:900px){
+  .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
+  .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}
+}
+.till-tier-benefits-v369 .till-tier-benefit-row-v369{display:flex;gap:10px;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
+.till-tier-benefits-v369 .till-tier-benefit-row-v369>span{display:flex;flex-direction:column;min-width:0;flex:1}
+.till-tier-benefits-v369 .till-tier-benefit-row-v369 b{overflow-wrap:anywhere}
+
 /* V200 sub-module tabs. The strip scrolls horizontally rather than wrapping: a wrapped pill strip
    changes height as tabs re-flow, which shifts the whole page under the owner's thumb on the exact
    tap they were aiming at. `flex` on the buttons is off so labels keep their natural width. */
@@ -2824,7 +2845,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=3bfa648b8f3e","business":"/app-business.js?b=b2c8777ee02a","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=3bfa648b8f3e","business":"/app-business.js?b=b3c6e4da1a37","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

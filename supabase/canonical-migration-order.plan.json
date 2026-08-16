@@ -2044,6 +2044,12 @@
       "version": "20260817000001",
       "name": "nestly_v367_birthday_month_benefit_period",
       "sourcePath": "db/migrations/20260817_nestly_v367_birthday_month_benefit_period.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000002",
+      "name": "nestly_v369_structured_tier_benefits",
+      "sourcePath": "db/migrations/20260817_nestly_v369_structured_tier_benefits.sql"
     }
   ]
 }
