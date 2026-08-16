@@ -22758,7 +22758,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      saying Programmes. Only the ROUTER clears it: in-page re-renders (a save, a retry, the mode
      switch) must keep the owner where they are. */
   if(fromRouteV288)growTopicV229='';
-  const directFocusTokens=new Set(['earning','classic','birthday','add','bringback','new']);
+  /* V366 — THE BUG THAT MADE THE WHOLE v361 BRING-BACK PAGE UNREACHABLE.
+     'bringback' sat in BOTH lists: this focus-token set and programmeView's list of views. This
+     line wins, because it runs first — so '#/grow/bringback' never became the view. hashParam was
+     moved into the focus slot, programmeView fell back to 'list', and routedAction mapped the
+     focus 'bringback' onto {surface:'winback'}, which mounted the OLD Retention programs deep
+     editor (creating a fresh draft on the way in). Every door the owner has been given to
+     Bring-back — the tile, the rail child, V364's own #/retention redirect — pointed at that
+     hash, so the page shipped as v361 has never once rendered, and V364's "fold Retention into
+     Bring-back" folded it into a route that led straight back to Retention.
+     'bringback' is a VIEW now and only a view. The winback surface is still reachable by its own
+     focus token 'new' (routedAction below), which is what the deep editor's own links use. */
+  const directFocusTokens=new Set(['earning','classic','birthday','add','new']);
   /* V294: a focus token may carry an entry-context suffix (earning~ctx-points) or be a bare
      context (ctx-tiers); both belong in the focus slot, not the draft-id slot. */
   const hashParamBaseV294=String(hashParam||'').replace(/~?ctx-(points|tiers)$/,'');
@@ -23003,7 +23014,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(focus==='birthday')return withCtx({surface:'rewards',focusTarget:'birthdayLabel'});
     if(focus==='add')return withCtx({surface:'rewards',focusTarget:'rwAdd',activateTarget:true});
     if(focus.startsWith('program~'))return {surface:'winback',focusTarget:'rn',editProgramId:focus.slice(8)||null};
-    if(focus==='bringback'||focus==='new')return {surface:'winback',focusTarget:'rn',editProgramId:null};
+    /* V366: 'bringback' is no longer routed here — it is the Bring-back VIEW (see the
+       directFocusTokens comment above). 'new' still opens the retention deep editor, which is the
+       token its own in-editor links produce. */
+    if(focus==='new')return {surface:'winback',focusTarget:'rn',editProgramId:null};
     return null;
   })();
   /* V174: two owner-facing views. "Running" is the default landing (what customers can use
