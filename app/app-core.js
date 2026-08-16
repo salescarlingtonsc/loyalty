@@ -853,6 +853,89 @@ function invalidateBranchModuleProjectionCache({businessId='',branchId='',userId
   // Keep this hook for mutation call sites and older callers, but do not store
   // identity or permission state that another session cannot invalidate.
   void businessId;void branchId;void userId;
+  /* V370: the per-BRANCH module projection above is still never cached — that one carries
+     permission state another session can revoke. What is cached below is the bootstrap identity
+     that route() was re-reading on every single hash change: which workspaces this person has,
+     which firm row is open, whether that firm is allowed in, and which branches are visible. */
+  invalidateWorkspaceBootstrapCachesV370();
+}
+/* ---------- V370 workspace bootstrap caches (Supabase load audit, 2026-08-17) ----------
+   route() → renderShell() re-issued the same four reads on EVERY hash change: get_my_personas
+   (twice, sometimes three times — see hasCustomerPersona below), platform_get_business_control_v94,
+   the businesses row, and the branch list (again inside wireProfile, and a THIRD time on the
+   dashboard). None of those four answers can change from inside this tab without going through a
+   write this file also performs, so each is cached for a short window and invalidated explicitly
+   at the write. S.myModules was already cached exactly this way since v14; these four were the
+   inconsistency, not the new idea.
+
+   Deliberately SHORT windows, not session-lifetime: the platform console can suspend a firm from
+   another session, and an owner can be granted a branch while their tab is open. A ≤2 minute
+   staleness on those is the price of not re-reading them 20 times a minute; anything the tab does
+   itself invalidates immediately. */
+const BOOTSTRAP_CACHE_TTL_V370={personas:45000,control:120000,business:120000,branches:120000};
+let personaCacheV370={userId:'',at:0,result:null};
+let businessControlCacheV370={key:'',at:0,result:null};
+let businessRecordCacheV370={key:'',at:0,result:null};
+let branchScopeCacheV370={key:'',at:0,result:null};
+/* The customer-persona answer is USER-scoped, not business-scoped. It was being recomputed on
+   every business switch (S.hasCustomerPersona is reset with S.biz) and, when the answer was "no",
+   on every navigation — because "no" was stored as null, which is also the "not checked yet"
+   value. Resolved false is now a real answer and is remembered for this user. */
+let customerPersonaResolvedV370={userId:'',value:null};
+const bootstrapCacheFreshV370=(entry,key,ttl,now=Date.now())=>
+  !!entry&&entry.key===key&&entry.result!==null&&(now-entry.at)<ttl;
+function invalidateWorkspaceBootstrapCachesV370(){
+  personaCacheV370={userId:'',at:0,result:null};
+  businessControlCacheV370={key:'',at:0,result:null};
+  businessRecordCacheV370={key:'',at:0,result:null};
+  branchScopeCacheV370={key:'',at:0,result:null};
+  customerPersonaResolvedV370={userId:'',value:null};
+}
+/* Called at the write sites that can change any of them. Cheap and blunt on purpose: these are
+   rare owner actions, and a needless extra read after one of them costs nothing. */
+function invalidatePersonaCacheV370(){
+  personaCacheV370={userId:'',at:0,result:null};
+  customerPersonaResolvedV370={userId:'',value:null};
+}
+function invalidateBusinessControlCacheV370(){businessControlCacheV370={key:'',at:0,result:null}}
+/* One get_my_personas per user per window, shared by every caller in a navigation.
+   A FAILURE is never cached: personaError drives a "could not resolve" screen, and caching that
+   would keep the screen up for 45 seconds after the network came back. */
+async function loadPersonasV370({refresh=false,abortable=false}={}){
+  const userId=String(S.user?.id||'');
+  if(!userId)return {data:null,error:null};
+  if(!refresh&&personaCacheV370.userId===userId&&personaCacheV370.result
+    &&(Date.now()-personaCacheV370.at)<BOOTSTRAP_CACHE_TTL_V370.personas){
+    return personaCacheV370.result;
+  }
+  /* The customer surface reads this behind the v177 12s abort signal; the workspace does not.
+     Same cache either way — the answer does not depend on how it was fetched. */
+  const result=abortable?await customerRpc('get_my_personas'):await sb.rpc('get_my_personas');
+  if(result?.error)return result;
+  personaCacheV370={userId,at:Date.now(),result};
+  return result;
+}
+async function loadBusinessControlV370(businessId,{refresh=false}={}){
+  const key=String(businessId||'');
+  if(!key)return {data:null,error:null};
+  if(!refresh&&bootstrapCacheFreshV370(businessControlCacheV370,key,BOOTSTRAP_CACHE_TTL_V370.control)){
+    return businessControlCacheV370.result;
+  }
+  const result=await sb.rpc('platform_get_business_control_v94',{p_business:key});
+  if(result?.error||!result?.data)return result;
+  businessControlCacheV370={key,at:Date.now(),result};
+  return result;
+}
+async function loadBusinessRecordV370(slug,{refresh=false}={}){
+  const key=String(slug||'');
+  if(!key)return {data:null,error:null};
+  if(!refresh&&bootstrapCacheFreshV370(businessRecordCacheV370,key,BOOTSTRAP_CACHE_TTL_V370.business)){
+    return businessRecordCacheV370.result;
+  }
+  const result=await sb.from('businesses').select('*').eq('slug',key).single();
+  if(result?.error||!result?.data)return result;
+  businessRecordCacheV370={key,at:Date.now(),result};
+  return result;
 }
 let toastGeneration=0,toastTimer=null;
 const showToast=message=>{
@@ -1326,7 +1409,7 @@ async function route(){
       if(staffInviteCodeV151)return renderBusinessStaffInviteAcceptV151(staffInviteCodeV151);
       const approvedInvite=String(location.search||'').match(/(?:^\?|&)invite=([0-9a-f]{64})(?:&|$)/i)?.[1]?.toLowerCase()||'';
       if(/^[0-9a-f]{64}$/.test(approvedInvite))return renderApprovedBusinessActivation(approvedInvite,isRouteCurrent);
-      const {data:businessPersonas,error:businessPersonaError}=await sb.rpc('get_my_personas');
+      const {data:businessPersonas,error:businessPersonaError}=await loadPersonasV370();
       if(!isRouteCurrent())return;
       if(businessPersonaError)return renderPersonaResolutionUnavailable();
       const staff=sortStaffWorkspaces(businessPersonas?.staff||[]);
@@ -1369,7 +1452,7 @@ async function route(){
       const workspaceParts=h.slice(12).split('/');
       const workspaceSlug=decodeURIComponent(workspaceParts[0]||'');
       const requestedModule=decodeURIComponent(workspaceParts[1]||'dashboard');
-      const {data:personas,error:personaError}=await sb.rpc('get_my_personas');
+      const {data:personas,error:personaError}=await loadPersonasV370();
       if(!isRouteCurrent())return;
       S.staffWorkspaces=sortStaffWorkspaces(personas?.staff||[]);
       workspaceStaffPersona=!personaError&&(personas?.staff||[]).find(p=>p.business_slug===workspaceSlug);
@@ -1379,15 +1462,18 @@ async function route(){
         wireAccountDeletionButton();
         $('workspaceHome').onclick=()=>nav(personas?.default_route||'#/');return;
       }
+      /* V370: a POSITIVE answer is final and user-scoped — record it so a business switch (which
+         resets S.hasCustomerPersona along with S.biz) does not re-resolve it. A negative stays
+         null here on purpose: customer_get_profile below is still allowed to discover a
+         phone-registered customer who has no personas row. */
       S.hasCustomerPersona=(personas?.customer||[]).length>0?true:null;
-      const {data:workspaceGate,error:workspaceGateError}=await sb.rpc(
-        'platform_get_business_control_v94',{p_business:workspaceStaffPersona.business_id}
-      );
+      if(S.hasCustomerPersona===true)customerPersonaResolvedV370={userId:String(S.user?.id||''),value:true};
+      const {data:workspaceGate,error:workspaceGateError}=await loadBusinessControlV370(workspaceStaffPersona.business_id);
       if(!isRouteCurrent())return;
       if(workspaceGateError||!workspaceGate)return renderPersonaResolutionUnavailable();
       resolvedWorkspaceControl=workspaceGate;
       if(workspaceGate.workspace_access!==true)return renderBusinessWorkspaceControl(workspaceGate);
-      const {data:workspace,error:workspaceError}=await sb.from('businesses').select('*').eq('slug',workspaceSlug).single();
+      const {data:workspace,error:workspaceError}=await loadBusinessRecordV370(workspaceSlug);
       if(!isRouteCurrent())return;
       if(workspaceError||!workspace){
         root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;$('main').focus();wireAccountDeletionButton();return;
@@ -1398,7 +1484,7 @@ async function route(){
       workspacePage=requestedModule;
     }
     if(!S.biz){
-      const {data:personas,error:personaError}=await sb.rpc('get_my_personas');
+      const {data:personas,error:personaError}=await loadPersonasV370();
       if(!isRouteCurrent())return;
       if(personaError)return renderPersonaResolutionUnavailable();
       const staff=sortStaffWorkspaces(personas?.staff||[]);
@@ -1406,7 +1492,7 @@ async function route(){
       if(staff.length){
         const defaultSlug=normalizeCustomerBusinessIntent(String(personas?.default_route||'').match(/#\/workspace\/([^/]+)/)?.[1]||'');
         const selected=staff.find(workspace=>workspace.business_slug===defaultSlug)||staff[0];
-        const {data:b,error:businessError}=await sb.from('businesses').select('*').eq('slug',selected.business_slug).single();
+        const {data:b,error:businessError}=await loadBusinessRecordV370(selected.business_slug);
         if(!isRouteCurrent())return;
         if(!businessError&&b)S.biz=b;
       }
@@ -1417,7 +1503,7 @@ async function route(){
        but cannot enter a tenant route or trigger its queries. */
     let workspaceControl=resolvedWorkspaceControl;
     if(!workspaceControl){
-      const result=await sb.rpc('platform_get_business_control_v94',{p_business:S.biz.id});
+      const result=await loadBusinessControlV370(S.biz.id);
       if(!isRouteCurrent())return;
       if(result.error||!result.data)return renderPersonaResolutionUnavailable();
       workspaceControl=result.data;
@@ -1480,8 +1566,22 @@ async function route(){
       await refreshProgrammeSpineV314();
       if(!isRouteCurrent())return;
     }
+    /* V370. Two bugs lived in this block, and both cost a request on EVERY navigation.
+       (1) The personas read above already answered this — it was asked again here.
+       (2) "This person has no customer persona" was stored as null, which is also the value
+           meaning "not checked yet", so a staff-only account re-ran the whole block (personas +
+           customer_get_profile) on every single hash change, forever. The resolved answer is
+           USER-scoped — it cannot change because the open workspace changed — so it is now
+           remembered as a real false against the user id, and survives a business switch.
+       The resolution ORDER is untouched, deliberately: a phone-registered customer with no
+       personas row is still discovered through customer_get_profile, so nobody loses the
+       Customer link in their workspace header. */
+    if(S.hasCustomerPersona===null&&customerPersonaResolvedV370.userId===String(S.user?.id||'')
+      &&customerPersonaResolvedV370.value!==null){
+      S.hasCustomerPersona=customerPersonaResolvedV370.value;
+    }
     if(S.hasCustomerPersona===null){
-      const {data:personas}=await sb.rpc('get_my_personas');
+      const {data:personas}=await loadPersonasV370();
       if(!isRouteCurrent())return;
       S.staffWorkspaces=sortStaffWorkspaces(personas?.staff||S.staffWorkspaces);
       S.hasCustomerPersona=!!((personas?.customer||[]).length);
@@ -1494,6 +1594,7 @@ async function route(){
           S.hasCustomerPersona=customerProfile?.profile!==null&&customerProfile?.profile!==undefined;
         }
       }
+      customerPersonaResolvedV370={userId:String(S.user?.id||''),value:S.hasCustomerPersona===true};
     }
     const frontlineDefault=!workspacePage&&h==='#/'&&['staff','frontdesk'].includes(S.myRole)&&S.myModules.includes('till');
     const page=workspacePage?[workspacePage]:frontlineDefault?['till']:(h.replace('#/','')||'dashboard').split('/');
@@ -2845,7 +2946,7 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true,{silent=false}={}){
   if(!features.customer_wallet){if(!silent)renderCustomerWalletUnavailable();return null}
   const [profileResult,personaResult]=await Promise.all([
     features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
-    customerRpc('get_my_personas')
+    loadPersonasV370({abortable:true})
   ]);
   if(!isCurrent())return null;
   let {data:personas,error:personasError}=personaResult;
@@ -3095,6 +3196,7 @@ async function loadMemberQrIntoV327({card,slot,status},isCurrent){
   if(!isCurrent()||!card.isConnected)return;
   if(error?.code==='42501'){
     // No platform identity yet — create one (same call the claim flow makes) and retry once.
+    invalidatePersonaCacheV370();
     const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:crypto.randomUUID()});
     if(!isCurrent()||!card.isConnected)return;
     if(!identity.error)({data,error}=await sb.rpc('customer_get_member_qr_v327'));
@@ -4195,63 +4297,6 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
-/* v295 (owner: the counter moment — "staff records the sale, the customer is holding the phone").
-   The customer surface only ever read on render, so a balance earned while the app sat open was
-   invisible until the customer navigated, and a balance earned while it sat in a pocket was
-   stale on return.
-
-   Deliberately NOT a realtime socket: a customer holds no SELECT policy on points_ledger or
-   credit_ledger (staff-only, by design — app.has_perm(business_id,'view_sales')), so
-   postgres_changes would deliver nothing to them, and widening the ledger's read policy to feed
-   a UI nicety would trade the system's most sensitive table for an animation. Refresh instead:
-
-     * FOREGROUND — returning to the app re-reads immediately. This is the common case: the
-       customer opens the app to show a QR, the sale lands, they look back.
-     * WHILE WATCHING — a slow poll covers the case the app never left the foreground, and it
-       stops itself. Bounded by design: paused whenever the tab is hidden (a phone left face-up
-       on a counter costs nothing), and capped, because a wallet nobody is looking at must not
-       poll the database until the battery dies. Any customer action re-arms it by re-rendering.
-
-   Every tick is epoch-guarded and DOM-guarded, so a stale page can never repaint over a newer
-   one — the same discipline every other async path on this surface uses. */
-const CUSTOMER_WALLET_POLL_MS_V295=20000;
-const CUSTOMER_WALLET_POLL_LIMIT_V295=9; // ≈3 minutes of active watching, then quiet
-function watchCustomerWalletV295(isCurrent,refresh){
-  activeCustomerWalletLiveCleanupV295();
-  let ticks=0,timer=0,stopped=false;
-  const stop=()=>{
-    if(stopped)return;stopped=true;
-    if(timer)clearTimeout(timer);timer=0;
-    document.removeEventListener('visibilitychange',onVisibility);
-    if(activeCustomerWalletLiveCleanupV295===stop)activeCustomerWalletLiveCleanupV295=()=>{};
-  };
-  const alive=()=>!stopped&&isCurrent()&&!!$('walletBody')?.isConnected;
-  const arm=()=>{
-    if(timer)clearTimeout(timer);
-    if(!alive()||ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295||document.visibilityState!=='visible')return;
-    timer=setTimeout(async()=>{
-      timer=0;
-      if(!alive()||document.visibilityState!=='visible')return;
-      ticks+=1;
-      /* v333: the watcher re-arms ITSELF. Before, the only thing that armed the next tick was
-         the full re-render the tick triggered — which is precisely the rebuild v333 removed, so
-         a silent refresh would have polled once and then gone quiet. */
-      try{await refresh()}catch{}
-      arm();
-    },CUSTOMER_WALLET_POLL_MS_V295);
-  };
-  async function onVisibility(){
-    if(!alive())return stop();
-    if(document.visibilityState!=='visible'){if(timer)clearTimeout(timer);timer=0;return}
-    ticks=0;                    // back in the customer's hand: read now, and re-arm the window
-    try{await refresh()}catch{}
-    arm();
-  }
-  document.addEventListener('visibilitychange',onVisibility);
-  activeCustomerWalletLiveCleanupV295=stop;
-  arm();
-  return {stop,rearm:arm};
-}
 async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
   const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;
   const {data,error}=await sb.rpc('customer_get_notification_preferences',{p_business_slug:businessSlug});
@@ -5210,9 +5255,14 @@ window.openImport=function(moduleKey,onDone){
   render();
   deactivateDialog=CUI.activateDialog(wrap,{onClose:close,initialFocus:'#impX'});
 };
+let autoRefreshTimerV370=0,pendingBookingCountTimerV370=0;
 function killChannels(){
   if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} }
   rtChannel=null;rtChannelBizId=null;
+  /* V370: a debounced refresh scheduled by the last event this channel delivered must not fire
+     into a signed-out session and re-query a workspace this browser no longer has. */
+  if(autoRefreshTimerV370){clearTimeout(autoRefreshTimerV370);autoRefreshTimerV370=0}
+  if(pendingBookingCountTimerV370){clearTimeout(pendingBookingCountTimerV370);pendingBookingCountTimerV370=0}
 }
 
 /* v97 translates Peekaa's workspace interface only. Merchant-entered records remain

@@ -66,8 +66,14 @@ test('customer reads carry a deadline and fail into the existing retry branches'
 test('every hangable customer read path is routed through the timeout helper',()=>{
   const context=section(app,'async function loadCustomerSurfaceContext(','async function renderCustomerProgrammes(');
   assert.match(context,/customerRpc\('customer_get_profile'\)/);
-  assert.match(context,/customerRpc\('get_my_personas'\)/);
+  /* V370: personas is shared with the workspace surface through loadPersonasV370, which takes
+     `abortable` precisely so the customer side keeps the v177 timeout. The invariant is the same
+     one — no unbounded call in this gate — so it is asserted at the helper as well. */
+  assert.match(context,/loadPersonasV370\(\{abortable:true\}\)/);
   assert.doesNotMatch(context,/sb\.rpc\(/,'the surface context gate must not keep an unbounded call');
+  const personaHelper=section(app,'async function loadPersonasV370(','async function loadBusinessControlV370(');
+  assert.match(personaHelper,/abortable\?await customerRpc\('get_my_personas'\)/,
+    'the shared persona loader must still use the timeout helper on the customer surface');
 
   const join=section(app,'async function renderCustomerQrJoin(','async function renderCustomerClaim(');
   assert.match(join,/customerRpc\('customer_join_business_from_qr_v89'/);

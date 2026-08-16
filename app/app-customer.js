@@ -226,7 +226,12 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     countdown.textContent=redemptionCountdownText(intent?.expires_at);
     if(countdown.textContent==='Expired')void reconcileRedemptionState();
   };
-  const onVisibilityChange=()=>{if(document.visibilityState==='visible')updateCountdown()};
+  const onVisibilityChange=()=>{
+    if(document.visibilityState!=='visible')return;
+    updateCountdown();
+    /* Re-arm: schedulePoll stands down while hidden, so returning is what restarts the loop. */
+    if(!closed&&!terminal&&!pollTimer)void reconcileRedemptionState();
+  };
   const close=({restoreFocus=true}={})=>{
     if(closed)return;closed=true;clearTimeout(pollTimer);clearInterval(countdownTimer);document.removeEventListener('visibilitychange',onVisibilityChange);
     if(deactivateDialog){const cleanup=deactivateDialog;deactivateDialog=null;cleanup({restoreFocus})}
@@ -296,7 +301,16 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     })();
     try{await pollInFlight}finally{pollInFlight=null}
   };
-  const schedulePoll=(delay=1500)=>{if(!closed&&!terminal)pollTimer=setTimeout(reconcileRedemptionState,delay)};
+  /* V370: the reconcile poll skips ticks while the tab is hidden and reconciles once on return.
+     The QR is only useful while the customer is holding the phone up to the counter, so a
+     backgrounded modal has nothing to reconcile against; onVisibilityChange below already runs
+     on return and now reconciles as well as repainting the countdown, so a redemption completed
+     while the phone was away still resolves the moment the customer looks back. */
+  const schedulePoll=(delay=1500)=>{
+    if(closed||terminal)return;
+    if(document.visibilityState!=='visible'){pollTimer=0;return}
+    pollTimer=setTimeout(reconcileRedemptionState,delay);
+  };
   document.addEventListener('visibilitychange',onVisibilityChange);
   countdownTimer=setInterval(updateCountdown,1000);
   schedulePoll(800);
@@ -1028,6 +1042,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     }
     await runCustomerRegistrationProfileSubmission({
       registerRequest:async()=>{
+        invalidatePersonaCacheV370(); // V370: a new customer profile is a new persona
         const result=await sb.rpc('customer_register_verified_phone',{
           p_full_name:fullName,p_birth_date:birthDate,p_gender:gender,p_preferred_language:language,
           p_accept_terms:true,p_accept_privacy:true,
@@ -2243,6 +2258,7 @@ async function renderCustomerClaim(){
     const originalLabel=invitationToken?ct('Accept invitation'):ct('Claim');
     $('claimStart').disabled=true;$('claimStart').textContent=ct('Checking…');
     if(method==='email'||method==='invitation'){
+      invalidatePersonaCacheV370();
       const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:identityAttemptId});
       if(!isClaimCurrent())return;
       if(identity.error){
@@ -2251,10 +2267,10 @@ async function renderCustomerClaim(){
       }
     }
     const {data,error}=invitationToken
-      ?await sb.rpc('customer_claim_link_invitation',{p_token:invitationToken,p_idempotency_key:claimAttempt.id})
+      ?await (invalidatePersonaCacheV370(),sb.rpc('customer_claim_link_invitation',{p_token:invitationToken,p_idempotency_key:claimAttempt.id}))
       :method==='phone'
-        ?await sb.rpc('customer_claim_link_by_verified_phone',{p_business_slug:slug,p_idempotency_key:claimAttempt.id})
-        :await sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id});
+        ?await (invalidatePersonaCacheV370(),sb.rpc('customer_claim_link_by_verified_phone',{p_business_slug:slug,p_idempotency_key:claimAttempt.id}))
+        :await (invalidatePersonaCacheV370(),sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id}));
     if(!isClaimCurrent())return;
     $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
     if(error){$('claimResult').innerHTML=`<div class="err">${esc(ct('Customer access is unavailable. Please try again later.'))}</div>`;return}
@@ -3779,6 +3795,148 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   wireCustomerHomeOffersV167(repaint);
   return true;
 }
+/* v295 (owner: the counter moment — "staff records the sale, the customer is holding the phone").
+   The customer surface only ever read on render, so a balance earned while the app sat open was
+   invisible until the customer navigated, and a balance earned while it sat in a pocket was
+   stale on return.
+
+   Deliberately NOT a realtime socket: a customer holds no SELECT policy on points_ledger or
+   credit_ledger (staff-only, by design — app.has_perm(business_id,'view_sales')), so
+   postgres_changes would deliver nothing to them, and widening the ledger's read policy to feed
+   a UI nicety would trade the system's most sensitive table for an animation. Refresh instead:
+
+     * FOREGROUND — returning to the app re-reads immediately. This is the common case: the
+       customer opens the app to show a QR, the sale lands, they look back.
+     * WHILE WATCHING — a slow poll covers the case the app never left the foreground, and it
+       stops itself. Bounded by design: paused whenever the tab is hidden (a phone left face-up
+       on a counter costs nothing), and capped, because a wallet nobody is looking at must not
+       poll the database until the battery dies. Any customer action re-arms it by re-rendering.
+
+   Every tick is epoch-guarded and DOM-guarded, so a stale page can never repaint over a newer
+   one — the same discipline every other async path on this surface uses. */
+const CUSTOMER_WALLET_POLL_MS_V295=20000;
+const CUSTOMER_WALLET_POLL_LIMIT_V295=9; // ≈3 minutes of active watching, then quiet
+/* V370 (load audit 2026-08-17). The behaviour contract above is unchanged — the wallet still
+   re-reads on foreground and still watches for ~3 minutes — but the COST of a tick is not.
+
+   Before: `refresh` was renderCustomerWallet(slug,{silent:true}), which restarts at
+   loadCustomerSurfaceContext and re-issues the whole pipeline (12 reads on a programme page,
+   8 on Home) BEFORE the v333 signature comparison can say "nothing moved". An idle wallet
+   therefore cost ~108 requests per 3-minute window to discover, nine times over, that it was
+   idle. Two of those reads are customer_get_actionable_wallet / customer_get_actionable_business,
+   the two most expensive reads on the surface.
+
+   After: a tick reads ONE thing — the actionable payload, which is the read that carries every
+   fact this watcher exists for (balance, reward-ready, expiry band, visit progress) — and only
+   pays for the full refresh when that payload differs from what is on screen. The comparison
+   baseline is customerWalletPulseSignatureV370, which every render writes from the actionable
+   payload it has already fetched, so re-seeding costs nothing.
+
+   Deliberately unchanged: the foreground listener still performs a FULL refresh, because
+   returning to the app is exactly the moment a customer should not be shown anything stale, and
+   a full refresh is the only thing that also picks up a newly published offer or a changed
+   catalogue. What no longer happens is the tick allowance resetting to zero on that return: a
+   phone picked up and put down twenty times used to buy twenty fresh 3-minute polling windows,
+   which is why the "cap" was not a cap. */
+let customerWalletPulseSignatureV370='';
+function customerWalletPulseSignatureOfV370(payload){
+  try{return JSON.stringify(payload??null)}catch{return ''}
+}
+function rememberCustomerWalletPulseV370(payload){
+  customerWalletPulseSignatureV370=customerWalletPulseSignatureOfV370(payload);
+}
+/* Takes an ALREADY-computed signature. Kept separate from rememberCustomerWalletPulseV370 on
+   purpose: passing a signature string to that one would JSON-encode it a second time, and the
+   tick — which compares against a singly-encoded string — would then report "changed" forever. */
+function rememberCustomerWalletPulseSignatureV370(signature){
+  customerWalletPulseSignatureV370=String(signature??'');
+}
+/* One projection, used for BOTH the seed and the tick, so the two can never drift into
+   comparing different shapes and polling forever (or never). The programme page prefers the
+   actionable card; with the actionable wallet feature off there is no card, so the same three
+   sections of the business summary the page draws its balances from stand in. */
+function customerWalletProgrammePulseOfV370(card,summary){
+  return customerWalletPulseSignatureOfV370(card
+    ??[summary?.loyalty??null,summary?.packages??null,summary?.membership??null]);
+}
+function customerWalletProgrammePulseReaderV370(businessSlug,actionable){
+  return async()=>{
+    if(actionable){
+      const result=await customerRpc('customer_get_actionable_business',{p_business_slug:businessSlug});
+      if(result.error)return null;
+      return customerWalletProgrammePulseOfV370(result.data?.card||null,null);
+    }
+    const result=await customerRpc('customer_get_business_summary',{p_business_slug:businessSlug});
+    if(result.error)return null;
+    return customerWalletProgrammePulseOfV370(null,result.data||null);
+  };
+}
+/* V370: the global inbox sync is idempotent but not free. A real render always syncs; a silent
+   background re-read syncs only if the last one is older than this. Reset to 0 on failure so the
+   next pass retries rather than waiting out the window on a sync that never landed. */
+const CUSTOMER_INBOX_SYNC_MIN_MS_V370=300000; // 5 minutes
+let customerInboxSyncedAtV370=0;
+function customerInboxSyncDueV370(silent,now=Date.now()){
+  if(!silent){customerInboxSyncedAtV370=now;return true}
+  if(now-customerInboxSyncedAtV370<CUSTOMER_INBOX_SYNC_MIN_MS_V370)return false;
+  customerInboxSyncedAtV370=now;return true;
+}
+function customerWalletHomePulseReaderV370(){
+  return async()=>{
+    const result=await customerRpc('customer_get_wallet');
+    if(result.error)return null;
+    return customerWalletPulseSignatureOfV370(result.data??null);
+  };
+}
+function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
+  activeCustomerWalletLiveCleanupV295();
+  let ticks=0,timer=0,stopped=false;
+  const stop=()=>{
+    if(stopped)return;stopped=true;
+    if(timer)clearTimeout(timer);timer=0;
+    document.removeEventListener('visibilitychange',onVisibility);
+    if(activeCustomerWalletLiveCleanupV295===stop)activeCustomerWalletLiveCleanupV295=()=>{};
+  };
+  const alive=()=>!stopped&&isCurrent()&&!!$('walletBody')?.isConnected;
+  const arm=()=>{
+    if(timer)clearTimeout(timer);
+    if(!alive()||ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295||document.visibilityState!=='visible')return;
+    timer=setTimeout(async()=>{
+      timer=0;
+      if(!alive()||document.visibilityState!=='visible')return;
+      ticks+=1;
+      /* v333: the watcher re-arms ITSELF. Before, the only thing that armed the next tick was
+         the full re-render the tick triggered — which is precisely the rebuild v333 removed, so
+         a silent refresh would have polled once and then gone quiet. */
+      try{
+        if(typeof pulse==='function'){
+          const observed=await pulse();
+          /* A failed pulse is not "nothing changed" and it is not a reason to repaint either:
+             leave the working page alone and try again on the next tick, exactly as v333 does
+             for every other failed background read. */
+          if(observed===null||observed===undefined){arm();return}
+          if(!alive()||document.visibilityState!=='visible')return;
+          if(observed===customerWalletPulseSignatureV370){arm();return}
+        }
+        await refresh();
+      }catch{}
+      arm();
+    },CUSTOMER_WALLET_POLL_MS_V295);
+  };
+  async function onVisibility(){
+    if(!alive())return stop();
+    if(document.visibilityState!=='visible'){if(timer)clearTimeout(timer);timer=0;return}
+    /* Back in the customer's hand: read now — in full, because this is the counter moment the
+       feature was built for. V370: the allowance is NOT reset; the window is a budget for this
+       page, not for this glance. */
+    try{await refresh()}catch{}
+    arm();
+  }
+  document.addEventListener('visibilitychange',onVisibility);
+  activeCustomerWalletLiveCleanupV295=stop;
+  arm();
+  return {stop,rearm:arm};
+}
 /* v333 (owner, 2026-08-15: "keep refreshing by itself — i need it to load seamlessly, must be
    immediate"). v295's watcher was right about the fact — a balance earned at the counter while
    the customer holds the phone must appear — and wrong about the method: its refresh was this
@@ -3849,6 +4007,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     if(!businessSlug){
       const {data,error}=await customerRpc('customer_get_actionable_wallet');
       if(!isWalletCurrent())return;
+      /* V370: `as_of` is statement_timestamp() and moves on every call, so the pulse baseline is
+         taken over the cards alone — comparing the envelope would report "changed" every tick. */
+      if(!error)rememberCustomerWalletPulseV370(data?.cards??null);
       if(!error&&Array.isArray(data?.cards)&&data.cards.length){
         /* v286: this pair used raw sb.rpc, so it carried NO abortSignal while every other read in
            the Promise.all aborts at 12s (v177) — and Promise.all waits for the slowest, so one
@@ -3856,10 +4017,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            and no Retry. Both calls now go through customerRpc, AND the badge no longer gates the
            paint: Home renders from the wallet/bookings/offers reads and the bell slot hydrates
            when the count lands. */
+        /* V370: the SYNC is a materialisation pass, not a read — it was running on every silent
+           20-second re-read of Home, so an idle phone re-materialised its whole inbox 180 times
+           an hour. The count is still read on every pass (it is what the bell shows); the sync
+           now runs on a real render and, at most, once every CUSTOMER_INBOX_SYNC_MIN_MS_V370.
+           Nothing about the badge changes: a customer who opens Home, or returns to it from the
+           background, still syncs before the count is read, which is every case the sync existed
+           for. */
         const messagePromise=customerFeatures.customer_in_app_inbox===true
         ?(async()=>{
-          const syncResult=await customerRpc('customer_sync_in_app_inbox_global',{p_idempotency_key:crypto.randomUUID()});
-          if(syncResult.error)return {data:null,error:syncResult.error};
+          if(customerInboxSyncDueV370(silent)){
+            const syncResult=await customerRpc('customer_sync_in_app_inbox_global',{p_idempotency_key:crypto.randomUUID()});
+            if(syncResult.error){customerInboxSyncedAtV370=0;return {data:null,error:syncResult.error}}
+          }
           return customerRpc('customer_get_in_app_inbox_global_count');
         })().catch(error=>({data:null,error}))
         :Promise.resolve({data:null,error:null});
@@ -3933,6 +4103,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       if(error)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
       actionableCard=data?.card||null;
       programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
+      /* V370: seed the poll baseline from the card this render is about to draw, so the first
+         tick compares against exactly what is on screen. */
+      rememberCustomerWalletPulseSignatureV370(customerWalletProgrammePulseOfV370(actionableCard,null));
       if(!actionableCard)return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
     }
   }
@@ -3977,8 +4150,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
     if(!silent)focusCustomerRoute();
     /* v295: Home carries balances too — same watcher, same bounds.
-       v333: the watcher now re-arms itself, so a silent pass must not build a second one. */
-    if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(null,{silent:true}));
+       v333: the watcher now re-arms itself, so a silent pass must not build a second one.
+       V370: the tick reads customer_get_wallet only — the one read this fallback Home draws its
+       balances and booking counts from — and pays for the other three only when it moves. */
+    rememberCustomerWalletPulseV370(data??null);
+    if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(null,{silent:true}),
+      customerWalletHomePulseReaderV370());
     return;
   }
   const args={p_business_slug:businessSlug};
@@ -3992,6 +4169,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
      business with 42501 before they refuse anything else. */
   if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
   if(summaryError||capabilitiesError)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
+  /* V370: with the actionable wallet feature OFF there is no card to pulse against, so the poll
+     baseline comes from the same three summary sections the page draws its balances from. With it
+     ON the card was already seeded above and this must not overwrite it with a different shape. */
+  if(!actionableCard)rememberCustomerWalletPulseSignatureV370(customerWalletProgrammePulseOfV370(null,summary));
   /* v286 (audit: a wasted round trip that also cost a control). This customer_get_wallet read was
      fetched and then never referenced, so with customer_actionable_wallet off programmeCards
      stayed empty: the multi-business switcher above the header vanished (it bails under two
@@ -4286,8 +4467,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   });
   if(!silent)focusCustomerRoute();
   /* v295: keep the balance honest while the customer is looking at it.
-     v333: silently — and the watcher re-arms itself now, so only a real render builds one. */
-  if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}));
+     v333: silently — and the watcher re-arms itself now, so only a real render builds one.
+     V370: a tick reads the actionable card alone (one RPC) and only pays for the full 12-read
+     refresh when that card differs from what is on screen. */
+  if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}),
+    customerWalletProgrammePulseReaderV370(businessSlug,customerFeatures.customer_actionable_wallet===true));
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
      rating; a high rating only adds an extra prominent share card. review_url rides the existing
@@ -4439,10 +4623,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const loadRewards=async()=>{
     const host=$('walletRewards');if(!host)return;
     host.setAttribute('aria-busy','true');
-    const [catalogResult,actionsResult]=await Promise.all([
-      customerRpc('customer_get_reward_catalog',args),
-      businessId?customerRpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId()
-    ]);
+    /* V370: customer_get_business_actions_v89 is already fetched by this very render, a few
+       dozen lines above, with the same p_business and inside the same epoch — this was a second
+       round trip for an answer we were already holding. `businessActionsResult` is reused
+       verbatim (same {data,error} shape) so every consumer below is unchanged, including the
+       error branch: a failed actions read still degrades exactly as it did before. */
+    const catalogResult=await customerRpc('customer_get_reward_catalog',args);
+    /* Awaited, not the raw promise: every reader below touches .error/.data synchronously. */
+    const actionsResult=businessId?businessActionsResult:await unavailableBusinessId();
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?ct('Rewards are not available for this account.'):ct('Rewards could not be loaded.'),loadRewards,error);
@@ -5288,7 +5476,7 @@ async function renderPortal(slug){
   /* sb.rpc() returns a thenable builder with no .catch method — calling .catch on it directly
      throws synchronously for signed-in users and aborted the whole portal render. Wrap in a real
      Promise so a failed optional prefill degrades to the anonymous experience instead. */
-  const personaPromise=signedInUser?Promise.resolve(sb.rpc('get_my_personas')).catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
+  const personaPromise=signedInUser?Promise.resolve(loadPersonasV370()).catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
   const profilePromise=signedInUser?Promise.resolve(sb.rpc('customer_get_profile')).catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
   let biz;
   const portalLoadTimeout=12000,portalLoadController=new AbortController();

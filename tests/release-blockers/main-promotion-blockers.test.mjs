@@ -16,7 +16,7 @@ test('root is customer-first while the clean business entry resolves staff befor
   const routing=section('async function route()','/* ---------- customer wallet ---------- */');
   const customerRoot=routing.indexOf("if(h==='#/'||h==='#/customer'||h==='#/customer/register'");
   const businessEntry=routing.indexOf("if(h==='#/business'){");
-  const staffLookup=routing.indexOf("if(!S.biz){\n      const {data:personas,error:personaError}=await sb.rpc('get_my_personas')");
+  const staffLookup=routing.indexOf("if(!S.biz){\n      const {data:personas,error:personaError}=await loadPersonasV370()");
   const onboarding=routing.indexOf('if(!S.biz) return renderOnboard()');
 
   assert.ok(customerRoot>=0&&customerRoot<businessEntry&&businessEntry<staffLookup&&staffLookup<onboarding,
@@ -47,7 +47,7 @@ test('an older deferred business-persona route cannot redirect over newer naviga
 
   const routing=section('async function route()','/* ---------- customer wallet ---------- */');
   assert.match(routing,/const isRouteCurrent=beginRouteInvocation\(\)/);
-  assert.match(routing,/const \{data:businessPersonas,error:businessPersonaError\}=await sb\.rpc\('get_my_personas'\);\n      if\(!isRouteCurrent\(\)\)return;/);
+  assert.match(routing,/const \{data:businessPersonas,error:businessPersonaError\}=await loadPersonasV370\(\);\n      if\(!isRouteCurrent\(\)\)return;/);
 });
 
 test('390px navigation uses a bounded persistent dock and a discoverable module drawer',()=>{

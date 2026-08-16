@@ -94,8 +94,15 @@ test('V288 MAJOR: a scheduled promotion is not listed under Ongoing programmes',
 test('V288 MAJOR: the Today schedule respects the selected branch on first paint', () => {
   assert.match(dashboard, /let appliedDashboardScopeV141=\{from:d30,to:today,branchId:selectedBranchId\|\|null,/);
   // ...and is re-fetched once, and only once, if the resolved branch differs.
-  assert.match(dashboard, /const previousScheduleBranchV288=appliedDashboardScopeV141\.branchId;/);
-  assert.match(dashboard, /if\(previousScheduleBranchV288!==appliedDashboardScopeV141\.branchId\)\{\s*\n\s*loadDashboardScheduleGlanceV180\(dashboardRoot,appliedDashboardScopeV141\.branchId,scheduleDateInputV252\?\.value\|\|null\);/);
+  /* V370: the comparison is made against the branch the glance is PAINTED for, not against the
+     reporting scope — which load() has already overwritten by the time this runs, so on a first
+     load the two never matched and the glance was fetched twice for the same branch. The V288
+     rule is unchanged and is exactly what is still asserted: re-fetch only on a real change. */
+  assert.match(dashboard, /const previousScheduleBranchV288=dashboardScheduleGlancePaintedForV370;/);
+  assert.match(dashboard, /if\(previousScheduleBranchV288!==appliedDashboardScopeV141\.branchId\)\{\s*\n\s*dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141\.branchId;\s*\n\s*loadDashboardScheduleGlanceV180\(dashboardRoot,appliedDashboardScopeV141\.branchId,scheduleDateInputV252\?\.value\|\|null\);/);
+  /* V370 regression: first paint owns the glance, so the two call sites can never both fire for
+     the same branch on one load. */
+  assert.match(dashboard, /dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141\.branchId;\s*\n\s*loadDashboardScheduleGlanceV180\(dashboardRoot,appliedDashboardScopeV141\.branchId\);/);
 });
 
 /* ------------------------------------------------------------------ MAJOR 5 */

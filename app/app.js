@@ -1491,6 +1491,91 @@ function invalidateBranchModuleProjectionCache({businessId='',branchId='',userId
   // Keep this hook for mutation call sites and older callers, but do not store
   // identity or permission state that another session cannot invalidate.
   void businessId;void branchId;void userId;
+  /* V370: the per-BRANCH module projection above is still never cached — that one carries
+     permission state another session can revoke. What is cached below is the bootstrap identity
+     that route() was re-reading on every single hash change: which workspaces this person has,
+     which firm row is open, whether that firm is allowed in, and which branches are visible. */
+  invalidateWorkspaceBootstrapCachesV370();
+}
+/* ---------- V370 workspace bootstrap caches (Supabase load audit, 2026-08-17) ----------
+   route() → renderShell() re-issued the same four reads on EVERY hash change: get_my_personas
+   (twice, sometimes three times — see hasCustomerPersona below), platform_get_business_control_v94,
+   the businesses row, and the branch list (again inside wireProfile, and a THIRD time on the
+   dashboard). None of those four answers can change from inside this tab without going through a
+   write this file also performs, so each is cached for a short window and invalidated explicitly
+   at the write. S.myModules was already cached exactly this way since v14; these four were the
+   inconsistency, not the new idea.
+
+   Deliberately SHORT windows, not session-lifetime: the platform console can suspend a firm from
+   another session, and an owner can be granted a branch while their tab is open. A ≤2 minute
+   staleness on those is the price of not re-reading them 20 times a minute; anything the tab does
+   itself invalidates immediately. */
+const BOOTSTRAP_CACHE_TTL_V370={personas:45000,control:120000,business:120000,branches:120000};
+let personaCacheV370={userId:'',at:0,result:null};
+let businessControlCacheV370={key:'',at:0,result:null};
+let businessRecordCacheV370={key:'',at:0,result:null};
+let branchScopeCacheV370={key:'',at:0,result:null};
+/* The customer-persona answer is USER-scoped, not business-scoped. It was being recomputed on
+   every business switch (S.hasCustomerPersona is reset with S.biz) and, when the answer was "no",
+   on every navigation — because "no" was stored as null, which is also the "not checked yet"
+   value. Resolved false is now a real answer and is remembered for this user. */
+let customerPersonaResolvedV370={userId:'',value:null};
+const bootstrapCacheFreshV370=(entry,key,ttl,now=Date.now())=>
+  !!entry&&entry.key===key&&entry.result!==null&&(now-entry.at)<ttl;
+function invalidateWorkspaceBootstrapCachesV370(){
+  personaCacheV370={userId:'',at:0,result:null};
+  businessControlCacheV370={key:'',at:0,result:null};
+  businessRecordCacheV370={key:'',at:0,result:null};
+  branchScopeCacheV370={key:'',at:0,result:null};
+  customerPersonaResolvedV370={userId:'',value:null};
+}
+/* Called at the write sites that can change any of them. Cheap and blunt on purpose: these are
+   rare owner actions, and a needless extra read after one of them costs nothing. */
+function invalidatePersonaCacheV370(){
+  personaCacheV370={userId:'',at:0,result:null};
+  customerPersonaResolvedV370={userId:'',value:null};
+}
+function invalidateBusinessRecordCacheV370(){businessRecordCacheV370={key:'',at:0,result:null}}
+function invalidateBranchScopeCacheV370(){branchScopeCacheV370={key:'',at:0,result:null}}
+function invalidateBusinessControlCacheV370(){businessControlCacheV370={key:'',at:0,result:null}}
+/* One get_my_personas per user per window, shared by every caller in a navigation.
+   A FAILURE is never cached: personaError drives a "could not resolve" screen, and caching that
+   would keep the screen up for 45 seconds after the network came back. */
+async function loadPersonasV370({refresh=false,abortable=false}={}){
+  const userId=String(S.user?.id||'');
+  if(!userId)return {data:null,error:null};
+  if(!refresh&&personaCacheV370.userId===userId&&personaCacheV370.result
+    &&(Date.now()-personaCacheV370.at)<BOOTSTRAP_CACHE_TTL_V370.personas){
+    return personaCacheV370.result;
+  }
+  /* The customer surface reads this behind the v177 12s abort signal; the workspace does not.
+     Same cache either way — the answer does not depend on how it was fetched. */
+  const result=abortable?await customerRpc('get_my_personas'):await sb.rpc('get_my_personas');
+  if(result?.error)return result;
+  personaCacheV370={userId,at:Date.now(),result};
+  return result;
+}
+async function loadBusinessControlV370(businessId,{refresh=false}={}){
+  const key=String(businessId||'');
+  if(!key)return {data:null,error:null};
+  if(!refresh&&bootstrapCacheFreshV370(businessControlCacheV370,key,BOOTSTRAP_CACHE_TTL_V370.control)){
+    return businessControlCacheV370.result;
+  }
+  const result=await sb.rpc('platform_get_business_control_v94',{p_business:key});
+  if(result?.error||!result?.data)return result;
+  businessControlCacheV370={key,at:Date.now(),result};
+  return result;
+}
+async function loadBusinessRecordV370(slug,{refresh=false}={}){
+  const key=String(slug||'');
+  if(!key)return {data:null,error:null};
+  if(!refresh&&bootstrapCacheFreshV370(businessRecordCacheV370,key,BOOTSTRAP_CACHE_TTL_V370.business)){
+    return businessRecordCacheV370.result;
+  }
+  const result=await sb.from('businesses').select('*').eq('slug',key).single();
+  if(result?.error||!result?.data)return result;
+  businessRecordCacheV370={key,at:Date.now(),result};
+  return result;
 }
 async function loadBranchModuleProjection(branchId,{force=false}={}){
   if(!branchId)return null;
@@ -2052,7 +2137,12 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     countdown.textContent=redemptionCountdownText(intent?.expires_at);
     if(countdown.textContent==='Expired')void reconcileRedemptionState();
   };
-  const onVisibilityChange=()=>{if(document.visibilityState==='visible')updateCountdown()};
+  const onVisibilityChange=()=>{
+    if(document.visibilityState!=='visible')return;
+    updateCountdown();
+    /* Re-arm: schedulePoll stands down while hidden, so returning is what restarts the loop. */
+    if(!closed&&!terminal&&!pollTimer)void reconcileRedemptionState();
+  };
   const close=({restoreFocus=true}={})=>{
     if(closed)return;closed=true;clearTimeout(pollTimer);clearInterval(countdownTimer);document.removeEventListener('visibilitychange',onVisibilityChange);
     if(deactivateDialog){const cleanup=deactivateDialog;deactivateDialog=null;cleanup({restoreFocus})}
@@ -2122,7 +2212,16 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     })();
     try{await pollInFlight}finally{pollInFlight=null}
   };
-  const schedulePoll=(delay=1500)=>{if(!closed&&!terminal)pollTimer=setTimeout(reconcileRedemptionState,delay)};
+  /* V370: the reconcile poll skips ticks while the tab is hidden and reconciles once on return.
+     The QR is only useful while the customer is holding the phone up to the counter, so a
+     backgrounded modal has nothing to reconcile against; onVisibilityChange below already runs
+     on return and now reconciles as well as repainting the countdown, so a redemption completed
+     while the phone was away still resolves the moment the customer looks back. */
+  const schedulePoll=(delay=1500)=>{
+    if(closed||terminal)return;
+    if(document.visibilityState!=='visible'){pollTimer=0;return}
+    pollTimer=setTimeout(reconcileRedemptionState,delay);
+  };
   document.addEventListener('visibilitychange',onVisibilityChange);
   countdownTimer=setInterval(updateCountdown,1000);
   schedulePoll(800);
@@ -2895,7 +2994,7 @@ async function route(){
       if(staffInviteCodeV151)return renderBusinessStaffInviteAcceptV151(staffInviteCodeV151);
       const approvedInvite=String(location.search||'').match(/(?:^\?|&)invite=([0-9a-f]{64})(?:&|$)/i)?.[1]?.toLowerCase()||'';
       if(/^[0-9a-f]{64}$/.test(approvedInvite))return renderApprovedBusinessActivation(approvedInvite,isRouteCurrent);
-      const {data:businessPersonas,error:businessPersonaError}=await sb.rpc('get_my_personas');
+      const {data:businessPersonas,error:businessPersonaError}=await loadPersonasV370();
       if(!isRouteCurrent())return;
       if(businessPersonaError)return renderPersonaResolutionUnavailable();
       const staff=sortStaffWorkspaces(businessPersonas?.staff||[]);
@@ -2938,7 +3037,7 @@ async function route(){
       const workspaceParts=h.slice(12).split('/');
       const workspaceSlug=decodeURIComponent(workspaceParts[0]||'');
       const requestedModule=decodeURIComponent(workspaceParts[1]||'dashboard');
-      const {data:personas,error:personaError}=await sb.rpc('get_my_personas');
+      const {data:personas,error:personaError}=await loadPersonasV370();
       if(!isRouteCurrent())return;
       S.staffWorkspaces=sortStaffWorkspaces(personas?.staff||[]);
       workspaceStaffPersona=!personaError&&(personas?.staff||[]).find(p=>p.business_slug===workspaceSlug);
@@ -2948,15 +3047,18 @@ async function route(){
         wireAccountDeletionButton();
         $('workspaceHome').onclick=()=>nav(personas?.default_route||'#/');return;
       }
+      /* V370: a POSITIVE answer is final and user-scoped — record it so a business switch (which
+         resets S.hasCustomerPersona along with S.biz) does not re-resolve it. A negative stays
+         null here on purpose: customer_get_profile below is still allowed to discover a
+         phone-registered customer who has no personas row. */
       S.hasCustomerPersona=(personas?.customer||[]).length>0?true:null;
-      const {data:workspaceGate,error:workspaceGateError}=await sb.rpc(
-        'platform_get_business_control_v94',{p_business:workspaceStaffPersona.business_id}
-      );
+      if(S.hasCustomerPersona===true)customerPersonaResolvedV370={userId:String(S.user?.id||''),value:true};
+      const {data:workspaceGate,error:workspaceGateError}=await loadBusinessControlV370(workspaceStaffPersona.business_id);
       if(!isRouteCurrent())return;
       if(workspaceGateError||!workspaceGate)return renderPersonaResolutionUnavailable();
       resolvedWorkspaceControl=workspaceGate;
       if(workspaceGate.workspace_access!==true)return renderBusinessWorkspaceControl(workspaceGate);
-      const {data:workspace,error:workspaceError}=await sb.from('businesses').select('*').eq('slug',workspaceSlug).single();
+      const {data:workspace,error:workspaceError}=await loadBusinessRecordV370(workspaceSlug);
       if(!isRouteCurrent())return;
       if(workspaceError||!workspace){
         root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;$('main').focus();wireAccountDeletionButton();return;
@@ -2967,7 +3069,7 @@ async function route(){
       workspacePage=requestedModule;
     }
     if(!S.biz){
-      const {data:personas,error:personaError}=await sb.rpc('get_my_personas');
+      const {data:personas,error:personaError}=await loadPersonasV370();
       if(!isRouteCurrent())return;
       if(personaError)return renderPersonaResolutionUnavailable();
       const staff=sortStaffWorkspaces(personas?.staff||[]);
@@ -2975,7 +3077,7 @@ async function route(){
       if(staff.length){
         const defaultSlug=normalizeCustomerBusinessIntent(String(personas?.default_route||'').match(/#\/workspace\/([^/]+)/)?.[1]||'');
         const selected=staff.find(workspace=>workspace.business_slug===defaultSlug)||staff[0];
-        const {data:b,error:businessError}=await sb.from('businesses').select('*').eq('slug',selected.business_slug).single();
+        const {data:b,error:businessError}=await loadBusinessRecordV370(selected.business_slug);
         if(!isRouteCurrent())return;
         if(!businessError&&b)S.biz=b;
       }
@@ -2986,7 +3088,7 @@ async function route(){
        but cannot enter a tenant route or trigger its queries. */
     let workspaceControl=resolvedWorkspaceControl;
     if(!workspaceControl){
-      const result=await sb.rpc('platform_get_business_control_v94',{p_business:S.biz.id});
+      const result=await loadBusinessControlV370(S.biz.id);
       if(!isRouteCurrent())return;
       if(result.error||!result.data)return renderPersonaResolutionUnavailable();
       workspaceControl=result.data;
@@ -3049,8 +3151,22 @@ async function route(){
       await refreshProgrammeSpineV314();
       if(!isRouteCurrent())return;
     }
+    /* V370. Two bugs lived in this block, and both cost a request on EVERY navigation.
+       (1) The personas read above already answered this — it was asked again here.
+       (2) "This person has no customer persona" was stored as null, which is also the value
+           meaning "not checked yet", so a staff-only account re-ran the whole block (personas +
+           customer_get_profile) on every single hash change, forever. The resolved answer is
+           USER-scoped — it cannot change because the open workspace changed — so it is now
+           remembered as a real false against the user id, and survives a business switch.
+       The resolution ORDER is untouched, deliberately: a phone-registered customer with no
+       personas row is still discovered through customer_get_profile, so nobody loses the
+       Customer link in their workspace header. */
+    if(S.hasCustomerPersona===null&&customerPersonaResolvedV370.userId===String(S.user?.id||'')
+      &&customerPersonaResolvedV370.value!==null){
+      S.hasCustomerPersona=customerPersonaResolvedV370.value;
+    }
     if(S.hasCustomerPersona===null){
-      const {data:personas}=await sb.rpc('get_my_personas');
+      const {data:personas}=await loadPersonasV370();
       if(!isRouteCurrent())return;
       S.staffWorkspaces=sortStaffWorkspaces(personas?.staff||S.staffWorkspaces);
       S.hasCustomerPersona=!!((personas?.customer||[]).length);
@@ -3063,6 +3179,7 @@ async function route(){
           S.hasCustomerPersona=customerProfile?.profile!==null&&customerProfile?.profile!==undefined;
         }
       }
+      customerPersonaResolvedV370={userId:String(S.user?.id||''),value:S.hasCustomerPersona===true};
     }
     const frontlineDefault=!workspacePage&&h==='#/'&&['staff','frontdesk'].includes(S.myRole)&&S.myModules.includes('till');
     const page=workspacePage?[workspacePage]:frontlineDefault?['till']:(h.replace('#/','')||'dashboard').split('/');
@@ -3923,6 +4040,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     }
     await runCustomerRegistrationProfileSubmission({
       registerRequest:async()=>{
+        invalidatePersonaCacheV370(); // V370: a new customer profile is a new persona
         const result=await sb.rpc('customer_register_verified_phone',{
           p_full_name:fullName,p_birth_date:birthDate,p_gender:gender,p_preferred_language:language,
           p_accept_terms:true,p_accept_privacy:true,
@@ -5299,7 +5417,7 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true,{silent=false}={}){
   if(!features.customer_wallet){if(!silent)renderCustomerWalletUnavailable();return null}
   const [profileResult,personaResult]=await Promise.all([
     features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
-    customerRpc('get_my_personas')
+    loadPersonasV370({abortable:true})
   ]);
   if(!isCurrent())return null;
   let {data:personas,error:personasError}=personaResult;
@@ -6129,6 +6247,7 @@ async function loadMemberQrIntoV327({card,slot,status},isCurrent){
   if(!isCurrent()||!card.isConnected)return;
   if(error?.code==='42501'){
     // No platform identity yet — create one (same call the claim flow makes) and retry once.
+    invalidatePersonaCacheV370();
     const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:crypto.randomUUID()});
     if(!isCurrent()||!card.isConnected)return;
     if(!identity.error)({data,error}=await sb.rpc('customer_get_member_qr_v327'));
@@ -6576,6 +6695,7 @@ async function renderCustomerClaim(){
     const originalLabel=invitationToken?ct('Accept invitation'):ct('Claim');
     $('claimStart').disabled=true;$('claimStart').textContent=ct('Checking…');
     if(method==='email'||method==='invitation'){
+      invalidatePersonaCacheV370();
       const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:identityAttemptId});
       if(!isClaimCurrent())return;
       if(identity.error){
@@ -6584,10 +6704,10 @@ async function renderCustomerClaim(){
       }
     }
     const {data,error}=invitationToken
-      ?await sb.rpc('customer_claim_link_invitation',{p_token:invitationToken,p_idempotency_key:claimAttempt.id})
+      ?await (invalidatePersonaCacheV370(),sb.rpc('customer_claim_link_invitation',{p_token:invitationToken,p_idempotency_key:claimAttempt.id}))
       :method==='phone'
-        ?await sb.rpc('customer_claim_link_by_verified_phone',{p_business_slug:slug,p_idempotency_key:claimAttempt.id})
-        :await sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id});
+        ?await (invalidatePersonaCacheV370(),sb.rpc('customer_claim_link_by_verified_phone',{p_business_slug:slug,p_idempotency_key:claimAttempt.id}))
+        :await (invalidatePersonaCacheV370(),sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id}));
     if(!isClaimCurrent())return;
     $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
     if(error){$('claimResult').innerHTML=`<div class="err">${esc(ct('Customer access is unavailable. Please try again later.'))}</div>`;return}
@@ -9210,7 +9330,79 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
    one — the same discipline every other async path on this surface uses. */
 const CUSTOMER_WALLET_POLL_MS_V295=20000;
 const CUSTOMER_WALLET_POLL_LIMIT_V295=9; // ≈3 minutes of active watching, then quiet
-function watchCustomerWalletV295(isCurrent,refresh){
+/* V370 (load audit 2026-08-17). The behaviour contract above is unchanged — the wallet still
+   re-reads on foreground and still watches for ~3 minutes — but the COST of a tick is not.
+
+   Before: `refresh` was renderCustomerWallet(slug,{silent:true}), which restarts at
+   loadCustomerSurfaceContext and re-issues the whole pipeline (12 reads on a programme page,
+   8 on Home) BEFORE the v333 signature comparison can say "nothing moved". An idle wallet
+   therefore cost ~108 requests per 3-minute window to discover, nine times over, that it was
+   idle. Two of those reads are customer_get_actionable_wallet / customer_get_actionable_business,
+   the two most expensive reads on the surface.
+
+   After: a tick reads ONE thing — the actionable payload, which is the read that carries every
+   fact this watcher exists for (balance, reward-ready, expiry band, visit progress) — and only
+   pays for the full refresh when that payload differs from what is on screen. The comparison
+   baseline is customerWalletPulseSignatureV370, which every render writes from the actionable
+   payload it has already fetched, so re-seeding costs nothing.
+
+   Deliberately unchanged: the foreground listener still performs a FULL refresh, because
+   returning to the app is exactly the moment a customer should not be shown anything stale, and
+   a full refresh is the only thing that also picks up a newly published offer or a changed
+   catalogue. What no longer happens is the tick allowance resetting to zero on that return: a
+   phone picked up and put down twenty times used to buy twenty fresh 3-minute polling windows,
+   which is why the "cap" was not a cap. */
+let customerWalletPulseSignatureV370='';
+function customerWalletPulseSignatureOfV370(payload){
+  try{return JSON.stringify(payload??null)}catch{return ''}
+}
+function rememberCustomerWalletPulseV370(payload){
+  customerWalletPulseSignatureV370=customerWalletPulseSignatureOfV370(payload);
+}
+/* Takes an ALREADY-computed signature. Kept separate from rememberCustomerWalletPulseV370 on
+   purpose: passing a signature string to that one would JSON-encode it a second time, and the
+   tick — which compares against a singly-encoded string — would then report "changed" forever. */
+function rememberCustomerWalletPulseSignatureV370(signature){
+  customerWalletPulseSignatureV370=String(signature??'');
+}
+/* One projection, used for BOTH the seed and the tick, so the two can never drift into
+   comparing different shapes and polling forever (or never). The programme page prefers the
+   actionable card; with the actionable wallet feature off there is no card, so the same three
+   sections of the business summary the page draws its balances from stand in. */
+function customerWalletProgrammePulseOfV370(card,summary){
+  return customerWalletPulseSignatureOfV370(card
+    ??[summary?.loyalty??null,summary?.packages??null,summary?.membership??null]);
+}
+function customerWalletProgrammePulseReaderV370(businessSlug,actionable){
+  return async()=>{
+    if(actionable){
+      const result=await customerRpc('customer_get_actionable_business',{p_business_slug:businessSlug});
+      if(result.error)return null;
+      return customerWalletProgrammePulseOfV370(result.data?.card||null,null);
+    }
+    const result=await customerRpc('customer_get_business_summary',{p_business_slug:businessSlug});
+    if(result.error)return null;
+    return customerWalletProgrammePulseOfV370(null,result.data||null);
+  };
+}
+/* V370: the global inbox sync is idempotent but not free. A real render always syncs; a silent
+   background re-read syncs only if the last one is older than this. Reset to 0 on failure so the
+   next pass retries rather than waiting out the window on a sync that never landed. */
+const CUSTOMER_INBOX_SYNC_MIN_MS_V370=300000; // 5 minutes
+let customerInboxSyncedAtV370=0;
+function customerInboxSyncDueV370(silent,now=Date.now()){
+  if(!silent){customerInboxSyncedAtV370=now;return true}
+  if(now-customerInboxSyncedAtV370<CUSTOMER_INBOX_SYNC_MIN_MS_V370)return false;
+  customerInboxSyncedAtV370=now;return true;
+}
+function customerWalletHomePulseReaderV370(){
+  return async()=>{
+    const result=await customerRpc('customer_get_wallet');
+    if(result.error)return null;
+    return customerWalletPulseSignatureOfV370(result.data??null);
+  };
+}
+function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
   activeCustomerWalletLiveCleanupV295();
   let ticks=0,timer=0,stopped=false;
   const stop=()=>{
@@ -9230,14 +9422,27 @@ function watchCustomerWalletV295(isCurrent,refresh){
       /* v333: the watcher re-arms ITSELF. Before, the only thing that armed the next tick was
          the full re-render the tick triggered — which is precisely the rebuild v333 removed, so
          a silent refresh would have polled once and then gone quiet. */
-      try{await refresh()}catch{}
+      try{
+        if(typeof pulse==='function'){
+          const observed=await pulse();
+          /* A failed pulse is not "nothing changed" and it is not a reason to repaint either:
+             leave the working page alone and try again on the next tick, exactly as v333 does
+             for every other failed background read. */
+          if(observed===null||observed===undefined){arm();return}
+          if(!alive()||document.visibilityState!=='visible')return;
+          if(observed===customerWalletPulseSignatureV370){arm();return}
+        }
+        await refresh();
+      }catch{}
       arm();
     },CUSTOMER_WALLET_POLL_MS_V295);
   };
   async function onVisibility(){
     if(!alive())return stop();
     if(document.visibilityState!=='visible'){if(timer)clearTimeout(timer);timer=0;return}
-    ticks=0;                    // back in the customer's hand: read now, and re-arm the window
+    /* Back in the customer's hand: read now — in full, because this is the counter moment the
+       feature was built for. V370: the allowance is NOT reset; the window is a budget for this
+       page, not for this glance. */
     try{await refresh()}catch{}
     arm();
   }
@@ -9316,6 +9521,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     if(!businessSlug){
       const {data,error}=await customerRpc('customer_get_actionable_wallet');
       if(!isWalletCurrent())return;
+      /* V370: `as_of` is statement_timestamp() and moves on every call, so the pulse baseline is
+         taken over the cards alone — comparing the envelope would report "changed" every tick. */
+      if(!error)rememberCustomerWalletPulseV370(data?.cards??null);
       if(!error&&Array.isArray(data?.cards)&&data.cards.length){
         /* v286: this pair used raw sb.rpc, so it carried NO abortSignal while every other read in
            the Promise.all aborts at 12s (v177) — and Promise.all waits for the slowest, so one
@@ -9323,10 +9531,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            and no Retry. Both calls now go through customerRpc, AND the badge no longer gates the
            paint: Home renders from the wallet/bookings/offers reads and the bell slot hydrates
            when the count lands. */
+        /* V370: the SYNC is a materialisation pass, not a read — it was running on every silent
+           20-second re-read of Home, so an idle phone re-materialised its whole inbox 180 times
+           an hour. The count is still read on every pass (it is what the bell shows); the sync
+           now runs on a real render and, at most, once every CUSTOMER_INBOX_SYNC_MIN_MS_V370.
+           Nothing about the badge changes: a customer who opens Home, or returns to it from the
+           background, still syncs before the count is read, which is every case the sync existed
+           for. */
         const messagePromise=customerFeatures.customer_in_app_inbox===true
         ?(async()=>{
-          const syncResult=await customerRpc('customer_sync_in_app_inbox_global',{p_idempotency_key:crypto.randomUUID()});
-          if(syncResult.error)return {data:null,error:syncResult.error};
+          if(customerInboxSyncDueV370(silent)){
+            const syncResult=await customerRpc('customer_sync_in_app_inbox_global',{p_idempotency_key:crypto.randomUUID()});
+            if(syncResult.error){customerInboxSyncedAtV370=0;return {data:null,error:syncResult.error}}
+          }
           return customerRpc('customer_get_in_app_inbox_global_count');
         })().catch(error=>({data:null,error}))
         :Promise.resolve({data:null,error:null});
@@ -9400,6 +9617,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       if(error)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
       actionableCard=data?.card||null;
       programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
+      /* V370: seed the poll baseline from the card this render is about to draw, so the first
+         tick compares against exactly what is on screen. */
+      rememberCustomerWalletPulseSignatureV370(customerWalletProgrammePulseOfV370(actionableCard,null));
       if(!actionableCard)return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
     }
   }
@@ -9444,8 +9664,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
     if(!silent)focusCustomerRoute();
     /* v295: Home carries balances too — same watcher, same bounds.
-       v333: the watcher now re-arms itself, so a silent pass must not build a second one. */
-    if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(null,{silent:true}));
+       v333: the watcher now re-arms itself, so a silent pass must not build a second one.
+       V370: the tick reads customer_get_wallet only — the one read this fallback Home draws its
+       balances and booking counts from — and pays for the other three only when it moves. */
+    rememberCustomerWalletPulseV370(data??null);
+    if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(null,{silent:true}),
+      customerWalletHomePulseReaderV370());
     return;
   }
   const args={p_business_slug:businessSlug};
@@ -9459,6 +9683,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
      business with 42501 before they refuse anything else. */
   if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
   if(summaryError||capabilitiesError)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
+  /* V370: with the actionable wallet feature OFF there is no card to pulse against, so the poll
+     baseline comes from the same three summary sections the page draws its balances from. With it
+     ON the card was already seeded above and this must not overwrite it with a different shape. */
+  if(!actionableCard)rememberCustomerWalletPulseSignatureV370(customerWalletProgrammePulseOfV370(null,summary));
   /* v286 (audit: a wasted round trip that also cost a control). This customer_get_wallet read was
      fetched and then never referenced, so with customer_actionable_wallet off programmeCards
      stayed empty: the multi-business switcher above the header vanished (it bails under two
@@ -9753,8 +9981,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   });
   if(!silent)focusCustomerRoute();
   /* v295: keep the balance honest while the customer is looking at it.
-     v333: silently — and the watcher re-arms itself now, so only a real render builds one. */
-  if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}));
+     v333: silently — and the watcher re-arms itself now, so only a real render builds one.
+     V370: a tick reads the actionable card alone (one RPC) and only pays for the full 12-read
+     refresh when that card differs from what is on screen. */
+  if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}),
+    customerWalletProgrammePulseReaderV370(businessSlug,customerFeatures.customer_actionable_wallet===true));
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
      rating; a high rating only adds an extra prominent share card. review_url rides the existing
@@ -9906,10 +10137,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const loadRewards=async()=>{
     const host=$('walletRewards');if(!host)return;
     host.setAttribute('aria-busy','true');
-    const [catalogResult,actionsResult]=await Promise.all([
-      customerRpc('customer_get_reward_catalog',args),
-      businessId?customerRpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId()
-    ]);
+    /* V370: customer_get_business_actions_v89 is already fetched by this very render, a few
+       dozen lines above, with the same p_business and inside the same epoch — this was a second
+       round trip for an answer we were already holding. `businessActionsResult` is reused
+       verbatim (same {data,error} shape) so every consumer below is unchanged, including the
+       error branch: a failed actions read still degrades exactly as it did before. */
+    const catalogResult=await customerRpc('customer_get_reward_catalog',args);
+    /* Awaited, not the raw promise: every reader below touches .error/.data synchronously. */
+    const actionsResult=businessId?businessActionsResult:await unavailableBusinessId();
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?ct('Rewards are not available for this account.'):ct('Rewards could not be loaded.'),loadRewards,error);
@@ -11101,6 +11336,7 @@ function renderBusinessStaffInviteAcceptV151(code){
       $('staffInviteAcceptStatus').innerHTML='<div class="err">This invite is not active. Ask the business owner for a new company invite link.</div>';
       $('staffInviteAcceptGo').disabled=false;return;
     }
+    invalidatePersonaCacheV370(); // V370: accepting an invite creates a staff persona
     const {data,error}=await sb.rpc('accept_invite',{p_code:normalized});
     if(error){
       $('staffInviteAcceptStatus').innerHTML=`<div class="err">${esc(error.message||'This invite could not be accepted. It may be invalid, expired, revoked, already used, or restricted to another email.')}</div>`;
@@ -11836,6 +12072,7 @@ function renderOnboard(){
       const setupKey=sessionStorage.getItem('nestly-self-serve-setup')||crypto.randomUUID();sessionStorage.setItem('nestly-self-serve-setup',setupKey);
       if(!$('onboardLegalConsent').checked){$('onboardError').innerHTML='<div class="err">Please agree to the Terms of Service and acknowledge the Privacy Policy.</div>';return}
       $('startSelfServe').disabled=true;$('onboardStatus').textContent='Saving the locked workspace and server-priced plan…';
+      invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
       const started=await sb.rpc('start_self_serve_business_v130',{
         p_owner_name:$('ownerFullName').value.trim(),p_business_name:$('businessName').value.trim(),
         p_business_slug:$('businessSlug').value.trim(),p_sector_key:$('businessSector').value,
@@ -11847,7 +12084,7 @@ function renderOnboard(){
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
     };
-    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
+    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;invalidatePersonaCacheV370();const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
     $('out').onclick=async()=>{killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();route()};
   })();
 }
@@ -12592,7 +12829,23 @@ function renderBell(page){
 /* Re-runs the currently-open page's own render fn (no hash change) so new booking activity
    shows up without the owner having to manually refresh — the #1 complaint this feature set
    is meant to fix. Only wired for the pages where booking/waitlist activity is visible. */
+/* V370. One customer booking produces TWO realtime events on this channel — the booking_requests
+   INSERT and the notifications INSERT the DB trigger writes alongside it — and each handler called
+   autoRefreshIfRelevant(), so a single booking re-rendered the whole open page twice within
+   milliseconds (Bookings ≈ 6 reads each time) and re-counted the pending badge twice on top.
+   Both are now trailing-debounced: every event still triggers a refresh, and a burst of events
+   still triggers exactly one. The delay is short enough to stay imperceptible and long enough to
+   coalesce the trigger-written pair. Nothing about WHAT gets refreshed changes — the V171 page
+   allowlist and the V288 mid-typing guard below are untouched and still evaluated at the moment
+   the refresh actually runs, not when it was scheduled. */
+const REALTIME_REFRESH_DEBOUNCE_MS_V370=350;
+let autoRefreshTimerV370=0,pendingBookingCountTimerV370=0;
 function autoRefreshIfRelevant(){
+  if(autoRefreshTimerV370)clearTimeout(autoRefreshTimerV370);
+  autoRefreshTimerV370=setTimeout(()=>{autoRefreshTimerV370=0;autoRefreshIfRelevantNowV370()},
+    REALTIME_REFRESH_DEBOUNCE_MS_V370);
+}
+function autoRefreshIfRelevantNowV370(){
   const key=(currentPage&&currentPage[0])||'';
   /* V171: the old 'customers' entry was dead — the router's key for that screen is 'clients',
      so it never matched. It is deliberately NOT fixed to 'clients': these events are booking/
@@ -12649,6 +12902,10 @@ function ensureRealtimeChannel(){
 function killChannels(){
   if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} }
   rtChannel=null;rtChannelBizId=null;
+  /* V370: a debounced refresh scheduled by the last event this channel delivered must not fire
+     into a signed-out session and re-query a workspace this browser no longer has. */
+  if(autoRefreshTimerV370){clearTimeout(autoRefreshTimerV370);autoRefreshTimerV370=0}
+  if(pendingBookingCountTimerV370){clearTimeout(pendingBookingCountTimerV370);pendingBookingCountTimerV370=0}
 }
 
 /* ---------- V329: booking-request pop-up, persistent reminder badge ----------
@@ -12669,7 +12926,19 @@ function wireBookingRequestsBadgeV329(){
   const button=$('bookingRequestsBadgeV329');
   if(button)button.onclick=()=>nav('#/bookings');
 }
-async function refreshPendingBookingRequestCountV329(){
+function refreshPendingBookingRequestCountV329(){
+  /* V370: same coalescing as autoRefreshIfRelevant, and for the same reason — the three
+     booking_requests handlers can fire together. Returns the scheduling promise so existing
+     callers that `await` it (renderShell does not) still resolve. */
+  if(pendingBookingCountTimerV370)clearTimeout(pendingBookingCountTimerV370);
+  return new Promise(resolve=>{
+    pendingBookingCountTimerV370=setTimeout(()=>{
+      pendingBookingCountTimerV370=0;
+      Promise.resolve(refreshPendingBookingRequestCountNowV370()).then(resolve,resolve);
+    },REALTIME_REFRESH_DEBOUNCE_MS_V370);
+  });
+}
+async function refreshPendingBookingRequestCountNowV370(){
   if(!S.biz?.id||!canReadModule('bookings'))return;
   const {count,error}=await sb.from('booking_requests').select('id',{count:'exact',head:true})
     .eq('business_id',S.biz.id).in('status',[...STAFF_BOOKING_DECISION_STATUSES]);
@@ -13966,7 +14235,21 @@ function openSaleAmountCorrectionDialog(item,onDone){
    left it unscoped so the picker has names to show) — the allow-list built here is what
    the *picker offers*, not the security boundary; the real boundary is server-side
    RLS/RPC, which every consumer of this filter still applies on its own query. */
-async function visibleBranchesForCurrentUser(){
+/* V370: the same answer was fetched on every navigation (wireProfile hydrates the top-bar
+   selector unconditionally), on every profile/bell menu open AND close (renderProfile re-runs
+   wireProfile), and a second time by the dashboard's own load(). A branch roster changes only
+   through the Branches page and the Team panel, both of which invalidate below, so it is held
+   for a short window keyed by the firm, the person and their role — role is in the key because
+   the admin and employee branches of this function return different sets. */
+async function visibleBranchesForCurrentUser({refresh=false}={}){
+  const cacheKeyV370=`${S.biz?.id||''}:${S.user?.id||''}:${S.myRole||''}`;
+  if(!refresh&&bootstrapCacheFreshV370(branchScopeCacheV370,cacheKeyV370,BOOTSTRAP_CACHE_TTL_V370.branches)){
+    /* A fresh array per caller: refreshBranchFilter and the dashboard both sort and filter what
+       they get back, and handing out the cached array itself would let one caller's work show up
+       in another's. */
+    const cached=branchScopeCacheV370.result;
+    return {isAdmin:cached.isAdmin,branches:cached.branches.map(branch=>({...branch}))};
+  }
   const isAdmin=S.myRole==='owner'||S.myRole==='manager';
   let branches=[];
   if(isAdmin){
@@ -13982,7 +14265,10 @@ async function visibleBranchesForCurrentUser(){
       branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     }
   }
-  return {isAdmin,branches};
+  /* Only a SUCCESSFUL read is cached — every failure path above throws, so reaching here means
+     the roster is real. */
+  branchScopeCacheV370={key:cacheKeyV370,at:Date.now(),result:{isAdmin,branches}};
+  return {isAdmin,branches:branches.map(branch=>({...branch}))};
 }
 /* V285: no page mounts a wrap for this any more. V260/V272 removed the per-page pickers one at a
    time and V285 removed the last two (P&L and Customer intelligence), so the top bar's selector is
@@ -14487,6 +14773,9 @@ async function dashboard(){
      scoped to one branch opened on a business-wide schedule count, then quietly shrank the first
      time the owner touched a day tab. The first number on the page must be the scoped one. */
   let appliedDashboardScopeV141={from:d30,to:today,branchId:selectedBranchId||null,branchName:'All permitted branches'};
+  /* Which branch the schedule glance is currently PAINTED for — distinct from the reporting scope
+     above, which load() rewrites before the glance has been told about it. */
+  let dashboardScheduleGlancePaintedForV370=null;
   /* V287: openDashboardMetricDetailV141 lived here. V225 turned every KPI tile into a direct
      link to its report ("once clicked, straight away go to sales"), which left this modal
      reachable only through an `else` branch that required a metric definition WITHOUT a route —
@@ -14529,6 +14818,14 @@ async function dashboard(){
     if(appliedEndV295)applyScheduleDayV252(appliedEndV295,false);
     load();
   };
+  /* V370: this first-paint call and the V288 re-fetch below were both landing on a normal load,
+     because appliedDashboardScopeV141.branchId starts from selectedBranchId while load() resolves
+     it from the reporting scope — two different values on the very first dashboard of a session,
+     so the "only if the branch actually changed" guard fired every time. The glance is now painted
+     ONCE: first paint owns it while the branch is still the one the top bar is showing, and load()
+     re-fetches only on a real change, which is what V288 was written to do.
+     Nothing about the rendered card changes — same function, same arguments, same day. */
+  dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
@@ -14632,12 +14929,13 @@ async function dashboard(){
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
-    const previousScheduleBranchV288=appliedDashboardScopeV141.branchId;
+    const previousScheduleBranchV288=dashboardScheduleGlancePaintedForV370;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
     /* V288: nothing re-invoked the schedule loader after the real branch was resolved, so the
        glance kept whatever scope first paint guessed until a day tab was pressed. Re-fetch only
        when the resolved branch actually differs, and keep the day currently on screen. */
     if(previousScheduleBranchV288!==appliedDashboardScopeV141.branchId){
+      dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
       loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,scheduleDateInputV252?.value||null);
     }
     /* V266: the period is written from the range the RPC was actually answered for, next to the
@@ -17899,8 +18197,31 @@ async function tillPage(){
     if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
     closePaynowDialogV142();checkoutError=null;step=3;draw();
   }
+  /* V370: the PayNow poll ran at 2s forever with no visibility gate — a till tablet left on a
+     payment screen asked the database 1,800 times an hour whether a QR nobody was showing had
+     been paid. It now SUSPENDS while the tab is hidden and resumes the instant it is shown, so
+     the payment flow itself is unchanged: no cap, no backoff, no missed terminal state (the
+     first poll after resume reads the current status, whatever happened while away). */
+  let paynowHiddenResumeV370=null;
+  function paynowSuspendedForVisibilityV370(attemptId){
+    if(globalThis.document?.visibilityState!=='hidden')return false;
+    if(paynowHiddenResumeV370)return true;
+    paynowHiddenResumeV370=()=>{
+      if(globalThis.document?.visibilityState==='hidden')return;
+      document.removeEventListener('visibilitychange',paynowHiddenResumeV370);
+      paynowHiddenResumeV370=null;
+      /* Only resume a poll that is still wanted: the dialog may have been closed, or the
+         attempt cleared, while the tab was away. paynowAttempt is nulled by every terminal
+         path (completePaynowReceiptV142, the failure branches, closePaynowDialogV142). */
+      if(!isTillCurrent()||!paynowAttempt)return;
+      pollPaynowAttemptV142(attemptId);
+    };
+    document.addEventListener('visibilitychange',paynowHiddenResumeV370);
+    return true;
+  }
   async function pollPaynowAttemptV142(attemptId){
     if(!attemptId)return;
+    if(paynowSuspendedForVisibilityV370(attemptId))return;
     const {data,error}=await sb.rpc('get_pos_paynow_attempt_v142',{p_attempt:attemptId});
     if(!isTillCurrent())return;
     if(error){paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),2500);return;}
@@ -35216,6 +35537,7 @@ async function branchesPage(){
          branch and a second charge. */
       if(!branchAddAttemptKey)branchAddAttemptKey=crypto.randomUUID();
       const copyFrom=$('brCopyFrom')?$('brCopyFrom').value||null:null;
+      invalidateBranchScopeCacheV370(); // V370: a new branch changes every scope selector
       const {data:added,error:addError}=await sb.rpc('business_add_branch_v202',{
         p_business:S.biz.id,p_name:payload.name,p_address:payload.address,
         p_phone:payload.phone,p_email:payload.email,p_copy_from:copyFrom,
@@ -35299,10 +35621,12 @@ async function branchesPage(){
   };
   window.toggleStaffBranch=async(branchId,staffId,checked)=>{
     if(checked){
+      invalidateBranchScopeCacheV370();
       const {error}=await sb.from('staff_branches').insert({business_id:S.biz.id,staff_id:staffId,branch_id:branchId});
       if(error) return fail(error);
       toast('Staff assigned to branch');
     }else{
+      invalidateBranchScopeCacheV370();
       const {error}=await sb.from('staff_branches').delete().eq('business_id',S.biz.id).eq('staff_id',staffId).eq('branch_id',branchId);
       if(error) return fail(error);
       toast('Staff unassigned from branch');
@@ -38906,6 +39230,7 @@ function wireWorkspaceBrandV259(){
     const registrationNumber=($('buen')?.value||'').trim()||null;
     /* V325: bio rides this same UPDATE — no new call site. */
     const bio=($('bbio')?.value||'').trim()||null;
+    invalidateBusinessRecordCacheV370(); // V370: the cached firm row is now stale
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
       brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,
       legal_name:legalName,registration_number:registrationNumber,bio}).eq('id',S.biz.id);
@@ -39055,6 +39380,7 @@ function wireBookingRulesV325(isCurrent=()=>true){
   const isOwner=S.myRole==='owner';
   if($('aac')&&isOwner)$('aac').onchange=async()=>{
     const to=$('aac').checked;
+    invalidateBusinessRecordCacheV370();
     const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
     if(!isCurrent())return;
     if(error){$('aac').checked=!to;return fail(error)}
@@ -39105,6 +39431,7 @@ function wireBookingRulesV325(isCurrent=()=>true){
       const value=$('setConfirmationTemplate').value.trim()||null;
       const button=$('setConfirmationTemplateSave'),err=$('setConfirmationTemplateErr');
       button.disabled=true;err.innerHTML='';
+      invalidateBusinessRecordCacheV370();
       const {error}=await sb.from('businesses').update({booking_confirmation_template:value}).eq('id',S.biz.id);
       if(!isCurrent())return;
       button.disabled=false;
@@ -39166,7 +39493,7 @@ function wireBookingRulesV325(isCurrent=()=>true){
     const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
     const closedDays=shop.closed;
     const results=await Promise.all([
-      sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
+      (invalidateBusinessRecordCacheV370(),sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id)),
       branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
       branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
     ]);
@@ -39782,7 +40109,7 @@ async function renderPortal(slug){
   /* sb.rpc() returns a thenable builder with no .catch method — calling .catch on it directly
      throws synchronously for signed-in users and aborted the whole portal render. Wrap in a real
      Promise so a failed optional prefill degrades to the anonymous experience instead. */
-  const personaPromise=signedInUser?Promise.resolve(sb.rpc('get_my_personas')).catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
+  const personaPromise=signedInUser?Promise.resolve(loadPersonasV370()).catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
   const profilePromise=signedInUser?Promise.resolve(sb.rpc('customer_get_profile')).catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
   let biz;
   const portalLoadTimeout=12000,portalLoadController=new AbortController();

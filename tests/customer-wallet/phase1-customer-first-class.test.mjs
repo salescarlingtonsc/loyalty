@@ -176,7 +176,6 @@ test('customer shell, deep links, and profile transitions are predictable and ac
 test('customer home and destinations reuse existing customer contracts with honest unavailable states',()=>{
   const surfaces=section('async function loadCustomerSurfaceContext','async function renderCustomerClaim');
   for(const rpc of [
-    'get_my_personas',
     'customer_get_actionable_wallet',
     'customer_get_wallet',
     'customer_get_appointments_page',
