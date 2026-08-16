@@ -12044,10 +12044,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      nothing about save/edit/delete/toggle/photo-upload is stamps-specific or duplicated. */
   const growStampsLevelsSortedV350=growPointsPublishedV326.slice()
     .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0));
-  const growStampsLevelRowV350=(reward,index)=>{
+  const growStampsLevelRowV350=(reward,index,{history=false}={})=>{
     const name=reward.customer_name||reward.name||'Reward';
     const stamps=Math.max(0,Number(reward.cost_points||0));
     const photoUrl=customerMediaUrlV95(reward.image_ref);
+    if(history)return `<div class="grow-stamps-level-row-v350" data-grow-points-giftrow-v326="${esc(reward.id)}">
+      <span class="grow-stamps-level-badge-v350" aria-hidden="true">${CUI.icon('star',{size:16})}<b>${index+1}</b></span>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Level</label><b data-merchant-content>Level ${index+1}</b></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Stamps required</label><span class="grow-stamps-static-v350" data-merchant-content>${stamps}</span></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Reward</label><span class="grow-stamps-static-v350" data-merchant-content>${esc(name)}</span></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Description</label><span class="grow-stamps-static-v350 muted" data-merchant-content>${reward.description?esc(reward.description):'—'}</span></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Photo</label>${photoUrl?`<img src="${esc(photoUrl)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">`:`<span class="muted small">No photo</span>`}</div>
+      <span class="pill off" style="justify-self:end">In history</span>
+    </div>`;
     const paused=reward.paused===true;
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);
     return `<div class="grow-stamps-level-row-v350" data-grow-points-giftrow-v326="${esc(reward.id)}">
@@ -12127,8 +12136,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           <b>Stamp reward levels</b>
           <p class="muted small" style="margin-top:2px">Customers unlock rewards at different stamp milestones. Add, edit, or remove levels anytime.</p>
           ${growPointsManageTabV326==='published'
-            ?(growStampsLevelsSortedV350.length?growStampsLevelsSortedV350.map(growStampsLevelRowV350).join(''):'<p class="muted small" style="margin-top:14px">No level yet — add one below.</p>')
-            :(growPointsHistoryV326.length?growPointsHistoryV326.map(reward=>growPointsGiftRowV326(reward,{history:true})).join(''):'<p class="muted small" style="margin-top:14px">Nothing has been deleted yet.</p>')}
+            ?(growStampsLevelsSortedV350.length?growStampsLevelsSortedV350.map((reward,index)=>growStampsLevelRowV350(reward,index)).join(''):'<p class="muted small" style="margin-top:14px">No level yet — add one below.</p>')
+            :(growPointsHistoryV326.length?growPointsHistoryV326.slice().sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0)).map((reward,index)=>growStampsLevelRowV350(reward,index,{history:true})).join(''):'<p class="muted small" style="margin-top:14px">Nothing has been deleted yet.</p>')}
           ${growPointsAddOpenV326?`<ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growPointsAddFormV326}</ul>`:canSetupGrow&&growPointsManageTabV326==='published'?`<button type="button" class="grow-stamps-addlevel-v350" data-grow-points-add-v326="1">+ Add another level</button>`:''}
         </div>
         ${growStampsPreviewV350}
