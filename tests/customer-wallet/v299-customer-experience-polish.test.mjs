@@ -107,6 +107,14 @@ test('customer surface uses the warm premium accent palette without changing the
   assert.match(indexHtml,/\.customer-surface \.pill\.ok\{background:var\(--peekaa-success-bg\)!important;color:var\(--peekaa-success\)!important\}/);
 });
 
+test('compact customer pills and programme card metrics are optically centered',()=>{
+  assert.match(indexHtml,/\/\* V364: optical alignment fixes for compact customer cards and pills\. \*\//);
+  assert.match(indexHtml,/\.customer-home-offer-countdown,\.customer-offer-new\{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;white-space:nowrap!important\}/);
+  assert.match(indexHtml,/\.customer-home-offer-countdown\{min-height:26px!important;padding:0 12px!important\}/);
+  assert.match(indexHtml,/\.customer-programme-card-v95 \.customer-programme-card-balance\{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;align-self:center!important;min-width:0!important;text-align:right!important\}/);
+  assert.match(indexHtml,/\.customer-programme-card-v95 \.customer-programme-card-balance span\{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;transform:none!important\}/);
+});
+
 test('business profile shortcuts are relationship-specific, not static decoration',()=>{
   const helperStart=app.indexOf('function customerBusinessDashboardModulesV347');
   const helper=app.slice(helperStart,app.indexOf('/* v340',helperStart));
