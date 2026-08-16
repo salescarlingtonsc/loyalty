@@ -483,6 +483,11 @@ let growTiersEditingV331=null;
 /* V357: which of the Rewards Programme overview's status tabs is selected. Page-level, not
    persisted — the tabs are a view filter, not a setting. */
 let growTileFilterStateV357='all';
+/* V359: the inline "Edit settings" (earning rule) editor on the Points/Stamp Card pages. Replaces
+   the wizard hand-off — the rule is written immediately by business_set_earning_rule_v359. */
+let growEarnEditOpenV359=false;
+let growEarnErrorV359='';
+let growEarnBusyV359=false;
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -814,7 +819,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';

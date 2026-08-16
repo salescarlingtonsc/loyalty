@@ -779,6 +779,11 @@ let growTiersEditingV331=null;
 /* V357: which of the Rewards Programme overview's status tabs is selected. Page-level, not
    persisted — the tabs are a view filter, not a setting. */
 let growTileFilterStateV357='all';
+/* V359: the inline "Edit settings" (earning rule) editor on the Points/Stamp Card pages. Replaces
+   the wizard hand-off — the rule is written immediately by business_set_earning_rule_v359. */
+let growEarnEditOpenV359=false;
+let growEarnErrorV359='';
+let growEarnBusyV359=false;
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -1345,7 +1350,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -23381,6 +23386,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <b>Add a new gift</b>
     <span class="muted small">Create new gifts for your customers to redeem with ${growPointsUnitV326}s.</span>
   </li>`:'';
+  /* V359 (owner: "adding or editing the fields will be auto publish (with a save button that
+     already exist) - dont need the wizard go live steps"). The earning rule is edited HERE now,
+     writing straight through business_set_earning_rule_v359 — no draft, no publish step. Used by
+     both the Points System and Stamp Card pages; which field shows follows growPointsIsStampsV326,
+     because a firm running stamps sets spend-per-stamp and a firm running points sets points-per-
+     dollar, and showing both would offer a knob the live engine ignores. */
+  const growEarnRuleFormV359=growEarnEditOpenV359?`<li class="grow-points-form-card-v343" data-grow-earn-form-v359>
+    <b>Edit earning rule</b>
+    ${growPointsIsStampsV326
+      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">Spend per stamp (${esc(S.biz?.currency||'SGD')})</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>`
+      :`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnPointsV359">Points per ${esc(S.biz?.currency||'SGD')} 1 spent</label><br><input id="growEarnPointsV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(String(snapshot.loyalty?.earn_points_per_dollar??1))}" placeholder="e.g. 1"></p>`}
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnExpiryModeV359">When ${growPointsUnitV326}s expire</label><br>
+      <select id="growEarnExpiryModeV359" class="grow-setup-input-v301" style="width:100%;max-width:260px">
+        <option value="none"${(snapshot.loyalty?.expiry_mode||'none')==='none'?' selected':''}>Never expire</option>
+        <option value="fixed"${snapshot.loyalty?.expiry_mode==='fixed'?' selected':''}>A fixed number of days after earning</option>
+        <option value="inactivity"${snapshot.loyalty?.expiry_mode==='inactivity'?' selected':''}>After a period of no visits</option>
+      </select></p>
+    <p class="grow-setup-sentence-v301" data-grow-earn-days-v359${(snapshot.loyalty?.expiry_mode||'none')==='none'?' hidden':''}><label class="muted small" for="growEarnExpiryDaysV359">Number of days</label><br><input id="growEarnExpiryDaysV359" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.expiry_days||''))}" placeholder="e.g. 365"></p>
+    ${growEarnErrorV359?`<p class="notice warn small" style="margin-top:8px">${esc(growEarnErrorV359)}</p>`:''}
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-earn-save-v359="1"${growEarnBusyV359?' disabled':''}>Save changes</button><button type="button" class="btn ghost sm" data-grow-earn-cancel-v359="1">Cancel</button></div>
+  </li>`:'';
   /* V351 (owner UX pass): "Published" reads as a content-publishing term, not "currently
      available to customers" — Points renamed to "Live gifts"; Stamp Card (untouched per the
      owner's own "do not modify unrelated screens") keeps the original "Published" wording via the
@@ -23425,6 +23451,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
               :'Customers can start earning straight away.'}</p>
           <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${growPointsSpineKindV326}">${growPointsOnV326?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div>
         </li>
+        ${growEarnRuleFormV359}
         ${growPointsAddFormV326}
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
@@ -23609,6 +23636,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <div class="grow-stamps-levels-v350">
           <b>Stamp reward levels</b>
           <p class="muted small" style="margin-top:2px">Customers unlock rewards at different stamp milestones. Add, edit, or remove levels anytime.</p>
+          ${growEarnEditOpenV359?`<ul class="grow-setup-rewardlist-v301" style="margin:10px 0">${growEarnRuleFormV359}</ul>`:''}
           ${growStampsLevelsSortedV350.length?growStampsHeadRowV356+growStampsLevelsSortedV350.map((reward,index)=>growStampsLevelRowV350(reward,index)).join(''):'<p class="muted small" style="margin-top:14px">No level yet — add one below.</p>'}
           ${growPointsAddOpenV326==='form'?`<ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growPointsAddFormV326}</ul>`:canSetupGrow?`<button type="button" class="grow-stamps-addlevel-v350" data-grow-points-add-v326="1">+ Add another level</button>`:''}
         </div>
@@ -24657,14 +24685,56 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsManageTabV326=tab;
     growRerenderV322({quiet:true});
   });
-  const growPointsEditLink=outerMain.querySelector('[data-grow-points-edit-v326]');
-  if(growPointsEditLink)growPointsEditLink.onclick=()=>{
-    /* Lands the wizard on the Earning step (see rewardHandoffV303 in growSetupWizardV301) rather
-       than the Gifts step the old mode:'view' hand-off used — gift management is this page's own
-       job now, not the wizard's. */
-    pendingGrowSetupModelV303={kind:growPointsSpineKindV326,from:growPointsSpineKindV326};
-    pendingGrowSetupRewardV303={mode:'earning',kind:growPointsSpineKindV326};
-    nav('#/grow/setup');
+  /* V359: "Edit settings" opens the inline earning-rule form on this page instead of handing off
+     to the wizard's Earning step. The wizard was the only reason this field needed a publish. */
+  outerMain.querySelectorAll('[data-grow-points-edit-v326]').forEach(el=>el.onclick=()=>{
+    growEarnEditOpenV359=true;growEarnErrorV359='';
+    growRerenderV322({quiet:true});
+  });
+  const growEarnCancel=outerMain.querySelector('[data-grow-earn-cancel-v359]');
+  if(growEarnCancel)growEarnCancel.onclick=()=>{
+    growEarnEditOpenV359=false;growEarnErrorV359='';
+    growRerenderV322({quiet:true});
+  };
+  const growEarnModeSel=$('growEarnExpiryModeV359');
+  if(growEarnModeSel)growEarnModeSel.onchange=()=>{
+    const wrap=outerMain.querySelector('[data-grow-earn-days-v359]');
+    if(wrap)wrap.hidden=growEarnModeSel.value==='none';
+  };
+  const growEarnSave=outerMain.querySelector('[data-grow-earn-save-v359]');
+  if(growEarnSave)growEarnSave.onclick=async()=>{
+    if(growEarnBusyV359)return;
+    const mode=String($('growEarnExpiryModeV359')?.value||'none');
+    const daysRaw=String($('growEarnExpiryDaysV359')?.value||'').trim();
+    let days=null;
+    if(mode!=='none'){
+      days=Math.round(Number(daysRaw));
+      if(!Number.isFinite(days)||days<1||days>3650){growEarnErrorV359='Enter a number of days between 1 and 3650.';return growRerenderV322({quiet:true});}
+    }
+    let pointsRate=null,stampCents=null;
+    if(growPointsIsStampsV326){
+      const spend=Number(String($('growEarnStampV359')?.value||'').trim());
+      if(!Number.isFinite(spend)||spend<=0){growEarnErrorV359='Spend per stamp must be more than zero.';return growRerenderV322({quiet:true});}
+      stampCents=Math.round(spend*100);
+    }else{
+      pointsRate=Number(String($('growEarnPointsV359')?.value||'').trim());
+      if(!Number.isFinite(pointsRate)||pointsRate<=0){growEarnErrorV359='Points per dollar must be more than zero.';return growRerenderV322({quiet:true});}
+    }
+    growEarnBusyV359=true;growEarnErrorV359='';growRerenderV322({quiet:true});
+    const {error}=await sb.rpc('business_set_earning_rule_v359',{p_business:S.biz.id,
+      p_earn_points_per_dollar:pointsRate,p_stamp_per_cents:stampCents,
+      p_expiry_mode:mode,p_expiry_days:days});
+    if(!isGrowCurrent())return;
+    growEarnBusyV359=false;
+    if(error){growEarnErrorV359=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    /* Local echo so the header line ("Current setting: ...") updates without a full refetch. */
+    if(!snapshot.loyalty)snapshot.loyalty={};
+    if(pointsRate!=null)snapshot.loyalty.earn_points_per_dollar=pointsRate;
+    if(stampCents!=null)snapshot.loyalty.stamp_per_cents=stampCents;
+    snapshot.loyalty.expiry_mode=mode;snapshot.loyalty.expiry_days=days;
+    growEarnEditOpenV359=false;
+    toast('Earning rule saved');
+    growRerenderV322({quiet:true});
   };
   /* V343: two elements can now carry data-grow-points-add-v326 — the header's own "Add gifts"
      button and the dashed "Add a new gift" card at the foot of the list — so this wires ALL of
