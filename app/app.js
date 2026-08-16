@@ -22674,9 +22674,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       summary:!liveLoyaltyModelKeysV240.includes('stamps')?''
         :rewardCount?`${rewardCount} milestone${rewardCount===1?'':'s'}`
         :'Set the spend per stamp and its milestones'},
-    {key:'lifestyle',icon:'loyalty',title:'Lifestyle rewards',blurb:'Run campaigns like welcome offers, birthdays, and more.',
-      status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
-      summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
+    /* V358 (owner, photo 5: "remove this, take out everything outside" against the Lifestyle
+       rewards card, with Welcome Gift / Birthday Benefit / Bring Back Rewards drawn as their own
+       cards). The grouping card is gone; its three programmes are peers of Points/Tiers/Stamps
+       here, each with its own status and its own door, so nothing is one level deeper than the
+       thing it sits beside. */
+    {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
+      status:!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?['Live','on']:welcomeOfferStatusV215?.configured?['Paused','off']:['Not set up','off'],
+      summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
+        ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
+    {key:'birthday',icon:'loyalty',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
+      status:!canRewards?['Not included','off']:rewardJourney.birthday?.active?['Live','on']:rewardJourney.birthday?['Paused','off']:['Not set up','off'],
+      summary:rewardJourney.birthday?.active&&rewardJourney.birthday?.value
+        ?`${rewardJourney.birthday.value}`:'Set the birthday treat and its window'},
+    {key:'bringback',icon:'retention',title:'Bring-back rewards',blurb:'Win back customers who have gone quiet.',
+      status:!canWinback?['Not included','off']:bringBackLiveV229?['Live','on']:snapshot.retention?.length?['Paused','off']:['Not set up','off'],
+      summary:bringBackLiveV229?`${bringBackLiveV229} running`:'Reward customers who return after a break'},
     /* V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out of the
        Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
        publishedPromotions/promotionDrafts computations stay in scope above for that page. */
@@ -23844,7 +23857,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       ${growTilesModeV229?growProgrammeSwitchPanelV322():''}
       ${growTilesModeV229?growTilesHtmlV229:''}
-      ${growTilesModeV229&&canWinback?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
+      ${/* V358 (owner, photo 5: "Gone quiet, and who came back" struck through on the overview).
+            Removed from THIS view only. renderComebackCardV300 and its RPCs stay live and stay
+            mounted on the standalone Retention page, which is where that analysis belongs. */''}
       ${programmeView==='setup'?(canSetupGrow
         ?'<div id="growSetupHostV301"></div>'
         :CUI.emptyState({iconName:'loyalty',title:canRewards?'Owner access only':'Loyalty is not included',
@@ -24500,6 +24515,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       return nav('#/grow/points');
     }
     if(tile.dataset.growTopicV229==='tiers')return nav('#/grow/tiers');
+    /* V358: the three ex-Lifestyle tiles are peers now, so each opens its OWN editor directly
+       rather than drilling into a grouping view that no longer exists. Welcome gift owns a modal;
+       birthday reuses the rewards editor's existing birthday focus target; bring-back has its own
+       page. All three doors already existed — only the entry point moved. */
+    if(tile.dataset.growTopicV229==='welcome'){
+      if(!canSetupGrow)return;
+      return openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+        ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+    }
+    if(tile.dataset.growTopicV229==='birthday'){
+      if(!canSetupGrow)return;
+      return openGrowEditorV258({surface:'rewards',focusTarget:'birthdayLabel',
+        birthdayId:rewardJourney.birthday?.id||null,entryContext:growEntryContextV294()}).catch(fail);
+    }
+    if(tile.dataset.growTopicV229==='bringback'){
+      if(!canSetupWinback)return;
+      /* Batch 2 keeps the EXISTING bring-back editor as this tile's door. The owner's own
+         "separate module for bring back rewards" is the next increment; routing to a page that
+         does not exist yet would make the tile look dead, which is worse than a working door. */
+      return openGrowEditorV258({surface:'winback',focusTarget:'rn'}).catch(fail);
+    }
     /* V331: growSetupEntryV301's ['points','stamps','tiers'] list has no card left that reaches
        this line — all three now return above, straight to their own dedicated page. The wizard
        entry it used to send them to is still reachable from each page's own "Set up"/"Edit"
