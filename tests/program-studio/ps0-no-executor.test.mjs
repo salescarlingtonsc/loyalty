@@ -312,8 +312,17 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
   // shadow increment (v61-v64) may redefine any of the three.
   const corpus = await readMigrationCorpus();
   const kernelFns = ['app.ps1c_plan_checkout', 'public.record_cart_sale', 'public.evaluate_checkout'];
-  const allowedPlan = /frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)/;
-  const allowedTender = /frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)/;
+  /* V370 (owner ruling 2026-08-17: "for tiers it will be automatic if there is a discount %
+     allocated to it"). The guardrail this test exists for is that the checkout money path is not
+     edited casually or by a PS-2 shadow increment — not that it can never change again. A tier
+     discount has to be applied by the pricing authority itself; computing it anywhere else would
+     make the receipt and the engine disagree, which is the very failure this test protects.
+     nestly_v370 is therefore added to BOTH lists as a named, sanctioned point, exactly as v67 was
+     for stored value. Its acceptance suite is db/tests/v370_tier_discount_at_checkout.sql, which
+     proves end to end that the sale is recorded at the discounted total. The PS-2A shadow
+     increments (v61-v64) remain barred from all three functions. */
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout)/;
+  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;
     const re = new RegExp(`create\\s+or\\s+replace\\s+function\\s+${fn.replace('.', '\\.')}\\s*\\(`, 'i');
@@ -450,8 +459,14 @@ test('checkout_discount_lines is written ONLY by the kernel finaliser (record_ca
     // its checkout_discount_lines insert) by the v59 PS-1C.1 cart-hardening increment and
     // the v67 PS-2 LIVE stored-value-tender increment. No other migration may write the table;
     // every insert still lives inside record_cart_sale and traces to a consumed token.
-    assert.match(file, /frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)/,
-      `${file} must not insert into checkout_discount_lines outside the v58/v59/v67 kernel migrations`);
+    /* V370 joins the list for the same reason v59 and v67 did: it CREATE-OR-REPLACEs the same
+       finaliser, carrying the same single insert. What it adds is a guard around that insert —
+       an effect with no rule_id (the automatic tier discount) gets no Studio provenance row,
+       because this table's rule_id is NOT NULL and its key is (sale_id, rule_id, effect_index).
+       The invariant this test protects is unchanged: the ONLY writer is record_cart_sale, and
+       every row it writes still traces to a consumed evaluation token. */
+    assert.match(file, /(frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout)/,
+      `${file} must not insert into checkout_discount_lines outside the v58/v59/v67/v370 kernel migrations`);
     const finaliserAt = sql.search(/create\s+or\s+replace\s+function\s+public\.record_cart_sale\s*\(/i);
     const evalAt = sql.search(/create\s+or\s+replace\s+function\s+public\.evaluate_checkout\s*\(/i);
     assert.notEqual(finaliserAt, -1, `${file} must define the record_cart_sale finaliser`);

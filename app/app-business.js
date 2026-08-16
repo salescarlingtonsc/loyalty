@@ -5991,7 +5991,14 @@ async function tillPage(){
       return `<li class="ck-effect ck-effect-off"><span class="ck-effect-label">${CUI.icon('info',{size:14})}<span>Discount${scopeTxt}</span></span><span class="ck-effect-why">${esc(why)}</span></li>`;
     }
     const amt=e.amount_cents!=null?e.amount_cents:(e.discount_cents!=null?e.discount_cents:(e.amount!=null?e.amount:0));
-    return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:14})}<span>Discount${scopeTxt}</span></span><span>−${money(amt)}</span></li>`;
+    /* V370: the automatic tier discount arrives in the same applied_effects list as a Studio rule
+       effect, carrying no rule and its own label. It is named on the receipt line, because
+       "Discount (whole bill)" tells the counter nothing about why the price dropped — and the
+       customer will ask. Every figure is still the server's; only the words differ. */
+    const labelV370=e.source==='tier_benefit'
+      ?`${String(e.label||'Tier benefit')}${scopeTxt}`
+      :`Discount${scopeTxt}`;
+    return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:14})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
   // The server-priced checkout panel. Every payable figure here is copied verbatim from the last
   // evaluate_checkout — the client never computes a total or a discount.
@@ -12925,7 +12932,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         </select>
         <button type="button" class="btn ghost sm" data-grow-tiers-benefit-add-v363="1">+ Add benefit</button>
       </p>
-      <p class="muted small" style="margin-top:6px">Staff give a benefit from Record sale after scanning the customer's QR. Peekaa counts each one and refuses it once the limit is used up.</p>
+      ${/* V370: the one thing an owner has to know before choosing a limit on a discount. */''}
+      <p class="muted small" style="margin-top:6px">A <b>discount with no limit</b> comes off the bill automatically at Record sale. Everything else is handed over by staff after scanning the customer's QR — Peekaa counts each one and refuses it once the limit is used up.</p>
     </div>
     ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Add tier'}</button></div>

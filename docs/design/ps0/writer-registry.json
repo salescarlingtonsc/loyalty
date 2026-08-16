@@ -1508,7 +1508,7 @@
     {
       "id": "db.fn:public.record_cart_sale/9",
       "surface": "db_function",
-      "latest_file": "20260725060000_frenly_v67_ps2live_checkout_tender.sql",
+      "latest_file": "20260817000003_nestly_v370_tier_discount_at_checkout.sql",
       "rows_written": "sale_items:INSERT (server lines + signed studio_discount lines), checkout_discount_lines:INSERT, benefit_fulfilments:INSERT, budget_reservations:INSERT, budget_periods:INSERT/UPDATE, checkout_evaluations:UPDATE (consume), checkout_sv_tenders:UPDATE (reserved -> consumed, binding sale_id + spend_operation_id)",
       "detected_signals": "idem-signal, for-update",
       "entry_point": "record_cart_sale(p_business,p_client,p_branch,p_staff,p_method,p_idempotency_key,p_lines,p_evaluation_id,p_paid)  [the arity-9 TOKEN finaliser]",
@@ -1524,7 +1524,8 @@
       "reversal": "reverse_sale releases the budget commitment and writes a compensating (negative) fulfilment per discount",
       "value": "VALUE \u2014 the ONLY path that applies a Studio discount to money; writes the signed discount line + provenance",
       "kernel_migratability": "KERNEL \u2014 the finalisation half of the unified checkout kernel (v51 record_cart_sale extended with the signed discount line + evaluation token, per architecture \u00a79)",
-      "kernel": "KERNEL \u2014 PS-1C finalisation; the single authoritative discount-applying write path. v67 EXTENDS this finaliser (byte-preserving) to consume a stored-value TENDER: when a checkout_sv_tenders hold is bound to the token it releases the hold and spends via app.sv_spend_core (PS-0 paid/bonus split) in the SAME atomic transaction as the sale, records the non-sv remainder as the only public.payments row (p_paid=false; no cash double-count), and writes the tender evidence. No tender -> byte-unchanged."
+      "kernel": "KERNEL \u2014 PS-1C finalisation; the single authoritative discount-applying write path. v67 EXTENDS this finaliser (byte-preserving) to consume a stored-value TENDER: when a checkout_sv_tenders hold is bound to the token it releases the hold and spends via app.sv_spend_core (PS-0 paid/bonus split) in the SAME atomic transaction as the sale, records the non-sv remainder as the only public.payments row (p_paid=false; no cash double-count), and writes the tender evidence. No tender -> byte-unchanged.",
+      "call_site_finding": " V370 re-creates it to guard the checkout_discount_lines insert: an applied effect with no rule_id is the automatic tier discount, which gets a fulfilment row and a signed sale_items line but no Studio provenance row (that table's rule_id is NOT NULL and its key is (sale_id, rule_id, effect_index)). No change to what it writes for rule-backed effects."
     },
     {
       "id": "db.fn:public.reverse_sale_v40_base/6",
