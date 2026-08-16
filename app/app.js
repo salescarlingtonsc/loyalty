@@ -1464,6 +1464,8 @@ function redemptionPayloadFromQr(value,currentUrl=location.href){
      while this one only records that a named customer showed a named public offer. */
   const promotionPrefixed=raw.match(/^nestly:promotion:([A-Za-z0-9_-]{20,512})$/i);
   if(promotionPrefixed)return {kind:'promotion',token:promotionPrefixed[1]};
+  const packagePrefixed=raw.match(/^nestly:package:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
+  if(packagePrefixed)return {kind:'package',token:packagePrefixed[1]};
   /* W4c: the member's own identity code — the fourth prefix, and the only one that redeems
      nothing. The three above all settle something (points, an entitlement, an offer); this one
      answers "who is standing in front of me" and its destination is the existing Customer 360
@@ -1495,6 +1497,8 @@ function merchantRedemptionReceiptView(data={}){
     ?'growth_offer'
     :data.redemption_kind==='promotion_offer'
     ?'promotion_offer'
+    :data.redemption_kind==='package_session'
+    ?'package_session'
     :data.redemption_kind==='classic_points'?'classic_points':'catalog_reward';
   const creditCents=Math.max(0,Number(data.credit_cents||0));
   const offerValueCents=Math.max(0,Number(data.value_cents||0));
@@ -1515,6 +1519,8 @@ function merchantRedemptionReceiptView(data={}){
       ?'This customer offer is now linked to the completed purchase. Provide the advertised benefit now if it was not already included in the sale.'
       :kind==='promotion_offer'
       ?'This offer is recorded as accepted for this customer. Apply the advertised benefit at the till — the scan records the acceptance, it does not calculate a discount.'
+      :kind==='package_session'
+      ?`One package session has been used. ${Number.isFinite(Number(data.remaining_after))?`${Number(data.remaining_after)} session${Number(data.remaining_after)===1?'':'s'} remain.`:'The package history now shows this use.'}`
       :kind==='classic_points'
       ?`Store credit of ${money(creditCents)} has been added to the customer’s programme.`
       :'Provide the reward shown above to the customer now. The scan records the points redemption but does not hand over a physical item.'
@@ -1526,7 +1532,7 @@ function merchantRedemptionReceiptHtml(data={}){
     <dl class="receipt-detail" style="margin-top:16px">
       <div><dt>Customer</dt><dd>${esc(receipt.customerName)}</dd></div>
       <div><dt>Reward</dt><dd>${esc(receipt.rewardLabel)}</dd></div>
-      ${receipt.kind==='growth_offer'||receipt.kind==='promotion_offer'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
+      ${receipt.kind==='growth_offer'||receipt.kind==='promotion_offer'||receipt.kind==='package_session'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
       ${receipt.creditCents?`<div><dt>Store credit</dt><dd>${esc(money(receipt.creditCents))}</dd></div>`:''}
       ${receipt.offerValueCents&&receipt.offerCurrency
         ?`<div><dt>Offer value</dt><dd>${esc(`${receipt.offerCurrency} ${(receipt.offerValueCents/100).toFixed(2)}`)}</dd></div>`
@@ -1645,6 +1651,10 @@ function openMerchantRedemptionScanner({
       close();
       return;
     }
+    if(payload.kind==='package'&&!branchId){
+      status.textContent='Choose an accessible branch before using this package session.';
+      return;
+    }
     const attemptFingerprint=`${payload.kind}:${token}:${saleId||''}`;
     if(!redemptionAttempt||redemptionAttempt.fingerprint!==attemptFingerprint){
       redemptionAttempt={fingerprint:attemptFingerprint,key:crypto.randomUUID()};
@@ -1653,7 +1663,12 @@ function openMerchantRedemptionScanner({
     /* V290: the same scanner now also accepts a published promotion. It is the existing
        affordance rather than a second button — the counter should not have to know which of
        three codes a customer is holding before deciding which control to press. */
-    const response=payload.kind==='promotion'
+    const response=payload.kind==='package'
+      ?await sb.rpc('use_package_session_v102',{
+        p_business:businessId,p_client_package:token,p_branch:branchId,
+        p_idempotency_key:redemptionAttempt.key
+      })
+      :payload.kind==='promotion'
       ?await sb.rpc('staff_redeem_promotion_intent_v290',{
         p_business:businessId,p_token:token,p_branch:branchId||null,
         p_idempotency_key:redemptionAttempt.key
@@ -1671,6 +1686,8 @@ function openMerchantRedemptionScanner({
     submitting=false;
     if(error){status.textContent=error.code==='PGRST202'||error.code==='42883'
       ?'Redemption scanning needs the latest Peekaa service update.'
+      :payload.kind==='package'
+        ?'This package session could not be used. It may have no sessions left, belong to another business, or not be valid at this branch.'
       :payload.kind==='promotion'
         ?'This offer could not be accepted. It may have expired, or it belongs to another business.'
       :payload.kind==='growth'
@@ -1680,7 +1697,9 @@ function openMerchantRedemptionScanner({
       status.textContent=`This offer was already accepted${data.redeemed_at?` on ${new Date(data.redeemed_at).toLocaleString('en-SG',{timeZone:'Asia/Singapore'})}`:''}.`;
       return;
     }
-    const accepted=payload.kind==='promotion'
+    const accepted=payload.kind==='package'
+      ?packageUseResultV102(data)!==null
+      :payload.kind==='promotion'
       ?data?.status==='redeemed'||data?.status==='duplicate_ignored'
       :data?.status==='completed'||data?.status==='redeemed';
     if(!accepted){
@@ -1695,6 +1714,14 @@ function openMerchantRedemptionScanner({
         reward_label:data.promotion_name||'Offer',
         customer_name:data.customer_name||customerName||'Customer',
         operation_id:data.redemption_id||data.intent_id||''};
+    }
+    if(payload.kind==='package'){
+      const packageResult=packageUseResultV102(data);
+      data={...data,redemption_kind:'package_session',
+        reward_label:'Package session used',
+        customer_name:customerName||'Customer package',
+        operation_id:packageResult?.consumptionId||data?.consumption_id||'',
+        remaining_after:packageResult?.remainingAfter};
     }
     stopCamera();
     const panel=overlay.querySelector('.modal-card');
@@ -1836,6 +1863,41 @@ function showPendingPromotionQrV290({intent,businessName,promotionName}={}){
   overlay.querySelector('#customerPromotionQrDone').onclick=close;
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerPromotionQrDone'});
+}
+function showCustomerPackageQrV347({item={},businessName='',onClose=()=>{}}={}){
+  const packageId=String(item?.client_package_id||item?.id||'').trim();
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(packageId)){
+    toast('This package QR could not be prepared. Refresh and try again.');
+    return;
+  }
+  const remaining=Math.max(0,Number(item?.sessions_remaining||0));
+  const name=String(item?.plan_name||'Package').trim();
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-redemption-modal';overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerPackageQrTitle');
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerPackageQrTitle">${esc(name)}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to use one session.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPackageQrClose" type="button" aria-label="Close package QR">${CUI.icon('close',{size:18})}</button></div>
+    <div class="redemption-qr" id="customerPackageQr" aria-label="Package session QR code"></div>
+    <span class="pill new">${remaining} session${remaining===1?'':'s'} left before scan</span>
+    <p class="muted small" id="customerPackageQrStatus" role="status" aria-live="polite" style="margin-top:10px">Nothing is deducted until staff scans and confirms this QR.</p>
+    <div class="row" style="margin-top:16px"><button class="btn ghost" id="customerPackageQrDone" type="button">Close</button></div></section>`;
+  document.body.appendChild(overlay);
+  const qrValue=`nestly:package:${packageId}`;
+  let deactivate=null;
+  const close=()=>{
+    if(deactivate){const cleanup=deactivate;deactivate=null;cleanup({restoreFocus:true})}
+    else overlay.remove();
+    onClose?.();
+  };
+  void loadQrLibrary().then(()=>new QRCode(overlay.querySelector('#customerPackageQr'),
+    {text:qrValue,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}))
+    .catch(()=>{
+      const status=overlay.querySelector('#customerPackageQrStatus');
+      if(status)status.insertAdjacentHTML('afterend',`<details style="margin-top:12px;text-align:left"><summary class="small">Show fallback code</summary><code class="growth-redemption-token">${esc(qrValue)}</code></details>`);
+    });
+  overlay.querySelector('#customerPackageQrClose').onclick=close;
+  overlay.querySelector('#customerPackageQrDone').onclick=close;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerPackageQrDone'});
 }
 function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}={}){
   const token=String(intent?.qr_token||'');
@@ -8345,20 +8407,54 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const hasTiers=visibleEntry('tiers')&&(tierLabel||tier.unavailable!=='not_running');
   const hasReferral=visibleEntry('referral');
   const modules=[];
-  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#walletRewards',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
-  if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
-  if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
-  if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',icon:'memberships',title:'Membership',body:'Active membership'});
-  if(hasReferral)modules.push({href:'#walletReferralSlot',icon:'referrals',title:'Refer a friend',body:'Share this business'});
+  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
+  if(hasPoints)modules.push({href:'#walletRewards',action:'points',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
+  if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
+  if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
+  if(hasReferral)modules.push({href:'#walletReferralSlot',action:'referral',icon:'referrals',title:'Refer a friend',body:'Share this business'});
   if(!modules.length)return '';
   return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
-    ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}">
+    ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}" data-business-shortcut-v347="${esc(item.action)}">
       <span class="customer-business-module-icon-v347" aria-hidden="true">${CUI.icon(item.icon,{size:22})}</span>
       <span class="customer-business-module-copy-v347"><b>${esc(item.title)}</b><small>${esc(item.body)}</small></span>
       <span class="customer-business-module-chevron-v347" aria-hidden="true">›</span>
     </a>`).join('')}
   </section>`;
+}
+function wireCustomerBusinessShortcutsV347(root=document){
+  const selectors={
+    points:'#walletRewards',
+    rewards:'#customerBusinessRewardsDetailV347',
+    tiers:'[data-programme-card="tiers"],#customerBusinessOverviewDetailV347',
+    packages:'#walletPackages,#customerBusinessPackagesDetailV347',
+    membership:'#walletMemberships,#customerBusinessPackagesDetailV347',
+    referral:'#walletReferral,#walletReferralSlot'
+  };
+  root.querySelectorAll('[data-business-shortcut-v347]').forEach(card=>{
+    card.onclick=event=>{
+      event.preventDefault();
+      const action=String(card.dataset.businessShortcutV347||'');
+      if(action==='referral'){
+        const shareButton=$('customerReferralShare');
+        if(shareButton){shareButton.click();return;}
+      }
+      const selector=selectors[action]||card.getAttribute('href')||'';
+      const target=selector?document.querySelector(selector):null;
+      if(!target||target.hidden){
+        toast(action==='referral'?'Referral sharing is not available for this business yet.':'This section is still loading. Try again in a moment.');
+        return;
+      }
+      target.scrollIntoView({
+        behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',
+        block:'start'
+      });
+      const focusTarget=target.matches('button,a,input,select,textarea,[tabindex]')
+        ?target
+        :target.querySelector('button,a,input,select,textarea,[tabindex]');
+      focusTarget?.focus?.({preventScroll:true});
+    };
+  });
 }
 /* v340 (gap 2): `backHrefV340` carries the profile's real "go back" destination INTO this markup
    so the chevron can sit inline with the business name, where photo 1 draws it. It is a
@@ -9298,6 +9394,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   customerWalletFactsPaintedV333(programmeSignatureV333);
   wireCustomerRepeatBookingV167($('walletBody'));
   wireCustomerProgrammeTabsV194($('walletBody'));
+  wireCustomerBusinessShortcutsV347($('walletBody'));
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
@@ -9919,11 +10016,24 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     packageState.items=cursor?[...packageState.items,...next]:next;packageState.nextCursor=data?.next_cursor||null;
     if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages',ct('No packages are available for this account.'),businessSlug,'packages',()=>loadPackages(null),isWalletCurrent);
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Packages'))}</h2><p class="muted small">${esc(ct('Session balances and recent usage.'))}</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Packages'))}</h2><p class="muted small">${esc(ct('Session balances and recent usage.'))}</p></div></div>${packageState.items.map(item=>{
+      const packageId=String(item.client_package_id||item.id||'');
+      const remaining=Math.max(0,Number(item.sessions_remaining||0));
+      return `<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${remaining} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
-      ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
+      ${remaining>0&&packageId?`<button class="btn sm" type="button" data-customer-package-qr-v347="${esc(packageId)}" style="margin-top:10px">${CUI.icon('scan',{size:17})}<span>Show package QR</span></button>`:''}
+      ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`;
+    }).join('')}
       ${packageState.nextCursor?`<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
     if($('walletPackagesMore'))$('walletPackagesMore').onclick=()=>{ $('walletPackagesMore').disabled=true;loadPackages(packageState.nextCursor) };
+    host.querySelectorAll('[data-customer-package-qr-v347]').forEach(button=>{
+      button.onclick=()=>{
+        const packageId=String(button.dataset.customerPackageQrV347||'');
+        const item=packageState.items.find(pkg=>String(pkg.client_package_id||pkg.id||'')===packageId);
+        if(!item){toast('This package is still loading. Try again in a moment.');return}
+        showCustomerPackageQrV347({item,businessName:b.name,onClose:()=>loadPackages(null)});
+      };
+    });
   };
   const loadMemberships=async()=>{
     const host=$('walletMemberships');if(!host)return;

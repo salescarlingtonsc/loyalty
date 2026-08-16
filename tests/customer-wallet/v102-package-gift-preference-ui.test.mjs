@@ -100,6 +100,25 @@ test('package session retries retain one key per exact package and branch',()=>{
   }
 });
 
+test('customer package QR opens from wallet and is accepted by the staff scanner',()=>{
+  const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
+  assert.match(wallet,/data-customer-package-qr-v347="\$\{esc\(packageId\)\}"/);
+  assert.match(wallet,/showCustomerPackageQrV347\(\{item,businessName:b\.name,onClose:\(\)=>loadPackages\(null\)\}\)/);
+  assert.match(app,/function showCustomerPackageQrV347\(\{item=\{\},businessName='',onClose=\(\)=>\{\}\}=\{\}\)/);
+  assert.match(app,/const qrValue=`nestly:package:\$\{packageId\}`/);
+
+  const parser=section('function redemptionPayloadFromQr','function redemptionTokenFromQr');
+  assert.match(parser,/nestly:package:/);
+  assert.match(parser,/return \{kind:'package',token:packagePrefixed\[1\]\}/);
+
+  const scanner=section('function openMerchantRedemptionScanner','function redemptionCountdownText');
+  assert.match(scanner,/payload\.kind==='package'&&!branchId/);
+  assert.match(scanner,/payload\.kind==='package'[\s\S]*?sb\.rpc\('use_package_session_v102'/);
+  assert.match(scanner,/p_client_package:token/);
+  assert.match(scanner,/packageUseResultV102\(data\)!==null/);
+  assert.match(scanner,/redemption_kind:'package_session'/);
+});
+
 test('package sale UI accepts only authoritative v102 receipt IDs and exact points',()=>{
   assert.deepEqual(helpers.packageSaleResultV102({
     status:'completed',sale_id:'sale-1',client_package_id:'cp-1',

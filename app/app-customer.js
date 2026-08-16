@@ -163,6 +163,41 @@ function showPendingPromotionQrV290({intent,businessName,promotionName}={}){
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerPromotionQrDone'});
 }
+function showCustomerPackageQrV347({item={},businessName='',onClose=()=>{}}={}){
+  const packageId=String(item?.client_package_id||item?.id||'').trim();
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(packageId)){
+    toast('This package QR could not be prepared. Refresh and try again.');
+    return;
+  }
+  const remaining=Math.max(0,Number(item?.sessions_remaining||0));
+  const name=String(item?.plan_name||'Package').trim();
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-redemption-modal';overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerPackageQrTitle');
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerPackageQrTitle">${esc(name)}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to use one session.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPackageQrClose" type="button" aria-label="Close package QR">${CUI.icon('close',{size:18})}</button></div>
+    <div class="redemption-qr" id="customerPackageQr" aria-label="Package session QR code"></div>
+    <span class="pill new">${remaining} session${remaining===1?'':'s'} left before scan</span>
+    <p class="muted small" id="customerPackageQrStatus" role="status" aria-live="polite" style="margin-top:10px">Nothing is deducted until staff scans and confirms this QR.</p>
+    <div class="row" style="margin-top:16px"><button class="btn ghost" id="customerPackageQrDone" type="button">Close</button></div></section>`;
+  document.body.appendChild(overlay);
+  const qrValue=`nestly:package:${packageId}`;
+  let deactivate=null;
+  const close=()=>{
+    if(deactivate){const cleanup=deactivate;deactivate=null;cleanup({restoreFocus:true})}
+    else overlay.remove();
+    onClose?.();
+  };
+  void loadQrLibrary().then(()=>new QRCode(overlay.querySelector('#customerPackageQr'),
+    {text:qrValue,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}))
+    .catch(()=>{
+      const status=overlay.querySelector('#customerPackageQrStatus');
+      if(status)status.insertAdjacentHTML('afterend',`<details style="margin-top:12px;text-align:left"><summary class="small">Show fallback code</summary><code class="growth-redemption-token">${esc(qrValue)}</code></details>`);
+    });
+  overlay.querySelector('#customerPackageQrClose').onclick=close;
+  overlay.querySelector('#customerPackageQrDone').onclick=close;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerPackageQrDone'});
+}
 function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}={}){
   const token=String(intent?.qr_token||'');
   if(!token)return;
@@ -3242,6 +3277,40 @@ function customerBusinessSecondaryMarkupV346(presentation={}){
     ${benefitMarkup}
   </section>`;
 }
+function wireCustomerBusinessShortcutsV347(root=document){
+  const selectors={
+    points:'#walletRewards',
+    rewards:'#customerBusinessRewardsDetailV347',
+    tiers:'[data-programme-card="tiers"],#customerBusinessOverviewDetailV347',
+    packages:'#walletPackages,#customerBusinessPackagesDetailV347',
+    membership:'#walletMemberships,#customerBusinessPackagesDetailV347',
+    referral:'#walletReferral,#walletReferralSlot'
+  };
+  root.querySelectorAll('[data-business-shortcut-v347]').forEach(card=>{
+    card.onclick=event=>{
+      event.preventDefault();
+      const action=String(card.dataset.businessShortcutV347||'');
+      if(action==='referral'){
+        const shareButton=$('customerReferralShare');
+        if(shareButton){shareButton.click();return;}
+      }
+      const selector=selectors[action]||card.getAttribute('href')||'';
+      const target=selector?document.querySelector(selector):null;
+      if(!target||target.hidden){
+        toast(action==='referral'?'Referral sharing is not available for this business yet.':'This section is still loading. Try again in a moment.');
+        return;
+      }
+      target.scrollIntoView({
+        behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',
+        block:'start'
+      });
+      const focusTarget=target.matches('button,a,input,select,textarea,[tabindex]')
+        ?target
+        :target.querySelector('button,a,input,select,textarea,[tabindex]');
+      focusTarget?.focus?.({preventScroll:true});
+    };
+  });
+}
 /* W4c lives HERE, not beside the slot it fills, and that placement is deliberate rather than
    tidy: tests/browser/generate-v104-promotions-visual.mjs extracts production source from
    `openCustomerPromotionDetailsV104` to `customerMerchantExperienceMarkupV95` and pins the result
@@ -4002,6 +4071,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   customerWalletFactsPaintedV333(programmeSignatureV333);
   wireCustomerRepeatBookingV167($('walletBody'));
   wireCustomerProgrammeTabsV194($('walletBody'));
+  wireCustomerBusinessShortcutsV347($('walletBody'));
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
@@ -4623,11 +4693,24 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     packageState.items=cursor?[...packageState.items,...next]:next;packageState.nextCursor=data?.next_cursor||null;
     if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages',ct('No packages are available for this account.'),businessSlug,'packages',()=>loadPackages(null),isWalletCurrent);
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Packages'))}</h2><p class="muted small">${esc(ct('Session balances and recent usage.'))}</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Packages'))}</h2><p class="muted small">${esc(ct('Session balances and recent usage.'))}</p></div></div>${packageState.items.map(item=>{
+      const packageId=String(item.client_package_id||item.id||'');
+      const remaining=Math.max(0,Number(item.sessions_remaining||0));
+      return `<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${remaining} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
-      ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
+      ${remaining>0&&packageId?`<button class="btn sm" type="button" data-customer-package-qr-v347="${esc(packageId)}" style="margin-top:10px">${CUI.icon('scan',{size:17})}<span>Show package QR</span></button>`:''}
+      ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`;
+    }).join('')}
       ${packageState.nextCursor?`<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
     if($('walletPackagesMore'))$('walletPackagesMore').onclick=()=>{ $('walletPackagesMore').disabled=true;loadPackages(packageState.nextCursor) };
+    host.querySelectorAll('[data-customer-package-qr-v347]').forEach(button=>{
+      button.onclick=()=>{
+        const packageId=String(button.dataset.customerPackageQrV347||'');
+        const item=packageState.items.find(pkg=>String(pkg.client_package_id||pkg.id||'')===packageId);
+        if(!item){toast('This package is still loading. Try again in a moment.');return}
+        showCustomerPackageQrV347({item,businessName:b.name,onClose:()=>loadPackages(null)});
+      };
+    });
   };
   const loadMemberships=async()=>{
     const host=$('walletMemberships');if(!host)return;

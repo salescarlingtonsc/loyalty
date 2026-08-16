@@ -4019,15 +4019,15 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const hasTiers=visibleEntry('tiers')&&(tierLabel||tier.unavailable!=='not_running');
   const hasReferral=visibleEntry('referral');
   const modules=[];
-  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#walletRewards',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
-  if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
-  if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
-  if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',icon:'memberships',title:'Membership',body:'Active membership'});
-  if(hasReferral)modules.push({href:'#walletReferralSlot',icon:'referrals',title:'Refer a friend',body:'Share this business'});
+  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
+  if(hasPoints)modules.push({href:'#walletRewards',action:'points',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
+  if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
+  if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
+  if(hasReferral)modules.push({href:'#walletReferralSlot',action:'referral',icon:'referrals',title:'Refer a friend',body:'Share this business'});
   if(!modules.length)return '';
   return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
-    ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}">
+    ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}" data-business-shortcut-v347="${esc(item.action)}">
       <span class="customer-business-module-icon-v347" aria-hidden="true">${CUI.icon(item.icon,{size:22})}</span>
       <span class="customer-business-module-copy-v347"><b>${esc(item.title)}</b><small>${esc(item.body)}</small></span>
       <span class="customer-business-module-chevron-v347" aria-hidden="true">›</span>

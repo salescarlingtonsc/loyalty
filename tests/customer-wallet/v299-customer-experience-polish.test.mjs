@@ -84,9 +84,13 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(helper,/const hasPoints=visibleEntry\('points'\)/);
   assert.match(helper,/const hasStamps=visibleEntry\('stamps'\)/);
   assert.match(helper,/const hasTiers=visibleEntry\('tiers'\)/);
-  assert.match(helper,/if\(hasTiers\)modules\.push\(\{href:'#customerBusinessOverviewDetailV347'/);
-  assert.match(helper,/if\(sessions>0\)modules\.push\(\{href:'#customerBusinessPackagesDetailV347'/);
+  assert.match(helper,/if\(hasTiers\)modules\.push\(\{href:'#customerBusinessOverviewDetailV347',action:'tiers'/);
+  assert.match(helper,/if\(sessions>0\)modules\.push\(\{href:'#customerBusinessPackagesDetailV347',action:'packages'/);
   assert.match(helper,/if\(membership\.active===true\)modules\.push/);
+  assert.match(helper,/data-business-shortcut-v347="\$\{esc\(item\.action\)\}"/);
+  assert.match(helper,/function wireCustomerBusinessShortcutsV347/);
+  assert.match(helper,/shareButton\.click\(\)/);
+  assert.match(app,/wireCustomerBusinessShortcutsV347\(\$\(\'walletBody\'\)\)/);
   assert.match(helper,/if\(!modules\.length\)return ''/);
   assert.doesNotMatch(helper,/No active package/);
   const wallet=app.slice(app.indexOf('async function renderCustomerWallet'),app.indexOf('async function renderCustomerInAppInbox'));

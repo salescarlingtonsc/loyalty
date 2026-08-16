@@ -490,6 +490,8 @@ function redemptionPayloadFromQr(value,currentUrl=location.href){
      while this one only records that a named customer showed a named public offer. */
   const promotionPrefixed=raw.match(/^nestly:promotion:([A-Za-z0-9_-]{20,512})$/i);
   if(promotionPrefixed)return {kind:'promotion',token:promotionPrefixed[1]};
+  const packagePrefixed=raw.match(/^nestly:package:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
+  if(packagePrefixed)return {kind:'package',token:packagePrefixed[1]};
   /* W4c: the member's own identity code — the fourth prefix, and the only one that redeems
      nothing. The three above all settle something (points, an entitlement, an offer); this one
      answers "who is standing in front of me" and its destination is the existing Customer 360
@@ -520,6 +522,8 @@ function merchantRedemptionReceiptView(data={}){
     ?'growth_offer'
     :data.redemption_kind==='promotion_offer'
     ?'promotion_offer'
+    :data.redemption_kind==='package_session'
+    ?'package_session'
     :data.redemption_kind==='classic_points'?'classic_points':'catalog_reward';
   const creditCents=Math.max(0,Number(data.credit_cents||0));
   const offerValueCents=Math.max(0,Number(data.value_cents||0));
@@ -540,6 +544,8 @@ function merchantRedemptionReceiptView(data={}){
       ?'This customer offer is now linked to the completed purchase. Provide the advertised benefit now if it was not already included in the sale.'
       :kind==='promotion_offer'
       ?'This offer is recorded as accepted for this customer. Apply the advertised benefit at the till — the scan records the acceptance, it does not calculate a discount.'
+      :kind==='package_session'
+      ?`One package session has been used. ${Number.isFinite(Number(data.remaining_after))?`${Number(data.remaining_after)} session${Number(data.remaining_after)===1?'':'s'} remain.`:'The package history now shows this use.'}`
       :kind==='classic_points'
       ?`Store credit of ${money(creditCents)} has been added to the customer’s programme.`
       :'Provide the reward shown above to the customer now. The scan records the points redemption but does not hand over a physical item.'
@@ -551,7 +557,7 @@ function merchantRedemptionReceiptHtml(data={}){
     <dl class="receipt-detail" style="margin-top:16px">
       <div><dt>Customer</dt><dd>${esc(receipt.customerName)}</dd></div>
       <div><dt>Reward</dt><dd>${esc(receipt.rewardLabel)}</dd></div>
-      ${receipt.kind==='growth_offer'||receipt.kind==='promotion_offer'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
+      ${receipt.kind==='growth_offer'||receipt.kind==='promotion_offer'||receipt.kind==='package_session'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
       ${receipt.creditCents?`<div><dt>Store credit</dt><dd>${esc(money(receipt.creditCents))}</dd></div>`:''}
       ${receipt.offerValueCents&&receipt.offerCurrency
         ?`<div><dt>Offer value</dt><dd>${esc(`${receipt.offerCurrency} ${(receipt.offerValueCents/100).toFixed(2)}`)}</dd></div>`
@@ -636,6 +642,10 @@ function openMerchantRedemptionScanner({
       close();
       return;
     }
+    if(payload.kind==='package'&&!branchId){
+      status.textContent='Choose an accessible branch before using this package session.';
+      return;
+    }
     const attemptFingerprint=`${payload.kind}:${token}:${saleId||''}`;
     if(!redemptionAttempt||redemptionAttempt.fingerprint!==attemptFingerprint){
       redemptionAttempt={fingerprint:attemptFingerprint,key:crypto.randomUUID()};
@@ -644,7 +654,12 @@ function openMerchantRedemptionScanner({
     /* V290: the same scanner now also accepts a published promotion. It is the existing
        affordance rather than a second button — the counter should not have to know which of
        three codes a customer is holding before deciding which control to press. */
-    const response=payload.kind==='promotion'
+    const response=payload.kind==='package'
+      ?await sb.rpc('use_package_session_v102',{
+        p_business:businessId,p_client_package:token,p_branch:branchId,
+        p_idempotency_key:redemptionAttempt.key
+      })
+      :payload.kind==='promotion'
       ?await sb.rpc('staff_redeem_promotion_intent_v290',{
         p_business:businessId,p_token:token,p_branch:branchId||null,
         p_idempotency_key:redemptionAttempt.key
@@ -662,6 +677,8 @@ function openMerchantRedemptionScanner({
     submitting=false;
     if(error){status.textContent=error.code==='PGRST202'||error.code==='42883'
       ?'Redemption scanning needs the latest Peekaa service update.'
+      :payload.kind==='package'
+        ?'This package session could not be used. It may have no sessions left, belong to another business, or not be valid at this branch.'
       :payload.kind==='promotion'
         ?'This offer could not be accepted. It may have expired, or it belongs to another business.'
       :payload.kind==='growth'
@@ -671,7 +688,9 @@ function openMerchantRedemptionScanner({
       status.textContent=`This offer was already accepted${data.redeemed_at?` on ${new Date(data.redeemed_at).toLocaleString('en-SG',{timeZone:'Asia/Singapore'})}`:''}.`;
       return;
     }
-    const accepted=payload.kind==='promotion'
+    const accepted=payload.kind==='package'
+      ?packageUseResultV102(data)!==null
+      :payload.kind==='promotion'
       ?data?.status==='redeemed'||data?.status==='duplicate_ignored'
       :data?.status==='completed'||data?.status==='redeemed';
     if(!accepted){
@@ -686,6 +705,14 @@ function openMerchantRedemptionScanner({
         reward_label:data.promotion_name||'Offer',
         customer_name:data.customer_name||customerName||'Customer',
         operation_id:data.redemption_id||data.intent_id||''};
+    }
+    if(payload.kind==='package'){
+      const packageResult=packageUseResultV102(data);
+      data={...data,redemption_kind:'package_session',
+        reward_label:'Package session used',
+        customer_name:customerName||'Customer package',
+        operation_id:packageResult?.consumptionId||data?.consumption_id||'',
+        remaining_after:packageResult?.remainingAfter};
     }
     stopCamera();
     const panel=overlay.querySelector('.modal-card');
