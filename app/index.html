@@ -2633,15 +2633,18 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-category-grid .customer-programme-card-v95 .customer-programme-card-body{align-items:center!important}
 .customer-home-business-track-v343 .customer-programme-card-balance{justify-content:flex-start!important;gap:4px!important}
 /* V365: business quick actions sit beside the merchant name to remove the extra row. */
-.customer-business-header-v346{grid-template-columns:28px minmax(0,1fr) minmax(142px,158px)!important;gap:8px!important;align-items:center!important;min-height:56px!important}
+.customer-business-header-v346{grid-template-columns:28px minmax(0,1fr) minmax(166px,184px)!important;gap:8px!important;align-items:center!important;min-height:56px!important}
 .customer-business-back-v346{grid-column:1!important;grid-row:1!important}
 .customer-business-identity-v346{grid-column:2!important;grid-row:1!important;min-width:0!important}
-.customer-business-actions-v346{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:minmax(0,1fr) 56px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important}
+.customer-business-actions-v346{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:minmax(0,1fr) 34px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important}
 .customer-business-actions-v346 .customer-programme-contact-item-v337{min-width:0!important;min-height:34px!important;padding:0 8px!important;border-radius:13px!important;font-size:12px!important}
 .customer-business-actions-v346 .customer-programme-contact-item-v337 svg{width:15px!important;height:15px!important;flex:0 0 auto!important}
 .customer-business-actions-v346 .customer-programme-contact-item-v337 span{min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.customer-business-actions-v346 .customer-business-address-v366{justify-content:flex-start!important}
+.customer-business-actions-v346 .customer-business-call-icon-v366{width:34px!important;padding:0!important;justify-content:center!important}
+.customer-business-actions-v346 .customer-business-call-icon-v366 span{display:none!important}
 .customer-business-profile-v346 .customer-business-summary-v346{margin-top:2px!important}
-@media(max-width:380px){.customer-business-header-v346{grid-template-columns:24px minmax(0,1fr) minmax(126px,138px)!important;gap:6px!important}.customer-business-identity-v346 .customer-programme-logo{width:40px!important;height:40px!important}.customer-business-identity-v346 b{font-size:17px!important}.customer-business-identity-v346 small{font-size:12px!important}.customer-business-actions-v346{grid-template-columns:minmax(0,1fr) 50px!important;gap:5px!important}.customer-business-actions-v346 .customer-programme-contact-item-v337{min-height:32px!important;padding:0 7px!important;font-size:11px!important}}
+@media(max-width:380px){.customer-business-header-v346{grid-template-columns:24px minmax(0,1fr) minmax(150px,164px)!important;gap:6px!important}.customer-business-identity-v346 .customer-programme-logo{width:40px!important;height:40px!important}.customer-business-identity-v346 b{font-size:17px!important}.customer-business-identity-v346 small{font-size:12px!important}.customer-business-actions-v346{grid-template-columns:minmax(0,1fr) 32px!important;gap:5px!important}.customer-business-actions-v346 .customer-programme-contact-item-v337{min-height:32px!important;padding:0 7px!important;font-size:11px!important}.customer-business-actions-v346 .customer-business-call-icon-v366{width:32px!important}}
 /* V167 Phase 4: customer-only system dark mode. Merchant/admin surfaces retain their
    established light palette. The redemption QR intentionally stays on a light scan surface. */
 .customer-surface{min-height:100dvh;background:var(--bg);color:var(--ink)}
@@ -2781,7 +2784,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=45798a89d42a","business":"/app-business.js?b=25ff9d6127a2","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=3bfa648b8f3e","business":"/app-business.js?b=25ff9d6127a2","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

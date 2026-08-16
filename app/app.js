@@ -9582,12 +9582,22 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         if(error||!contactHostV326.isConnected)return;
         const branch=data?.branch||{};
         if(!branch.address&&!branch.phone)return;
-        const addressLabel=branch.address?esc(branch.address):'Address';
+        const compactHeaderContactV366=contactHostV326.classList.contains('customer-business-actions-v346');
+        const shortAddressLabelV366=(address)=>{
+          const first=String(address||'').replace(/\s+/g,' ').trim().split(',')[0]?.trim()||'';
+          const short=first.replace(/\b(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln)\.?$/i,'').trim();
+          return short||first||'Address';
+        };
+        const rawAddressLabelV366=branch.address
+          ?(compactHeaderContactV366?shortAddressLabelV366(branch.address):String(branch.address))
+          :'Address';
+        const addressTitleV366=branch.address?String(branch.address):'Address';
+        const callTitleV366=branch.phone?`Call ${branch.phone}`:'Call';
         const openSheet=()=>showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug});
-        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:18})}<span>${addressLabel}</span></button>${
+        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337 customer-business-address-v366" data-company-detail aria-label="${esc(addressTitleV366)}" title="${esc(addressTitleV366)}">${CUI.icon('branch',{size:18})}<span>${esc(rawAddressLabelV366)}</span></button>${
           branch.phone
-            ?`<a class="customer-programme-contact-item-v337" href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${CUI.icon('phone',{size:18})}<span>Call</span></a>`
-            :`<button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>`
+            ?`<a class="customer-programme-contact-item-v337 customer-business-call-icon-v366" href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}" aria-label="${esc(callTitleV366)}" title="${esc(callTitleV366)}">${CUI.icon('phone',{size:18})}${compactHeaderContactV366?'':`<span>Call</span>`}</a>`
+            :`<button type="button" class="customer-programme-contact-item-v337 customer-business-call-icon-v366" data-company-detail aria-label="Call" title="Call">${CUI.icon('phone',{size:18})}${compactHeaderContactV366?'':`<span>Call</span>`}</button>`
         }`;
         contactHostV326.querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=openSheet);
       }).catch(()=>{});
