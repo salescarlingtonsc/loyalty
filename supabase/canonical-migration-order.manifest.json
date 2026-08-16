@@ -3395,8 +3395,8 @@
       "version": "20260816000012",
       "name": "nestly_v365_tier_benefit_limits",
       "path": "supabase/migrations/20260816000012_nestly_v365_tier_benefit_limits.sql",
-      "octetLength": 24225,
-      "sha256": "860d941a0bb4b2a00ebf37924070000db2161c27ed55d19b96eda3f80dd61936",
+      "octetLength": 24504,
+      "sha256": "2fc383292de60949e3669723fb8e5acbdb0833dbef1bed2f932c7c68e5123417",
       "provenance": "local-source"
     }
   ]

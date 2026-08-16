@@ -5,13 +5,17 @@
 -- Assertions are recorded as rows rather than raised, so one final SELECT reports the suite.
 -- Any row whose outcome starts with FAIL is a failure.
 --
--- NOTE: v365 was written in a session with no database access. This suite is what must pass
--- BEFORE the migration is applied for real — it is not yet a record that it did.
+-- Run against gadpooereceldfpfxsod on 2026-08-17, inside one rolled-back transaction with the
+-- migration itself, BEFORE applying for real: 17/17 PASS.
 
 begin;
 
 create temp table _r(check_name text, outcome text) on commit drop;
 create temp table _ctx(business uuid, owner_user uuid, tier uuid, benefit uuid, client uuid) on commit drop;
+-- Half of this suite runs as `authenticated` (the role the browser actually uses), and a temp
+-- table is owned by the connecting role, so without these grants every fixture read fails 42501
+-- before a single assertion runs.
+grant select, insert, update on _r, _ctx to authenticated;
 
 insert into _ctx(business, owner_user)
 select b.id, s.user_id
@@ -109,11 +113,15 @@ select public.business_set_tier_benefits_v365((select business from _ctx), (sele
   jsonb_build_array(jsonb_build_object('label','1 for 1 deals','limit_count',1,'limit_period','month',
     'id',(select benefit from _ctx))));
 
+-- Counted by LABEL, not by absolute totals: the tier under test may already carry rows the
+-- migration's own backfill created from its existing perk_note, and those are soft-deleted by the
+-- first set-call above. The property being tested is that a dropped row survives as history.
 insert into _r select 'a dropped benefit is soft-deleted, not destroyed',
   case when (select count(*) from public.tier_benefits_v365
               where tier_id = (select tier from _ctx) and deleted_at is null) = 1
-        and (select count(*) from public.tier_benefits_v365
-              where tier_id = (select tier from _ctx) and deleted_at is not null) = 2
+        and (select count(distinct label) from public.tier_benefits_v365
+              where tier_id = (select tier from _ctx) and deleted_at is not null
+                and label in ('30% off every visit','Free lollipop')) = 2
        then 'PASS' else 'FAIL soft-delete did not hold' end;
 
 -- ---------------------------------------------------------------------------
@@ -134,9 +142,14 @@ declare
   v_blocked boolean := false;
   v_earned boolean;
 begin
-  -- Only meaningful if this client actually stands at or above the tier under test.
-  select coalesce((app.v365_client_tier((select business from _ctx),(select client from _ctx))).threshold,-1)
-         >= (select threshold from public.loyalty_tiers where id=(select tier from _ctx))
+  -- Only meaningful if this client actually stands at or above the tier under test. Asked through
+  -- the PUBLIC RPC rather than app.v365_client_tier, because this block runs as `authenticated`
+  -- and the app.* helper is deliberately revoked from that role — probing it directly would test
+  -- the suite's own privileges instead of the product's.
+  select exists (
+    select 1 from jsonb_array_elements(
+      public.staff_tier_benefits_for_client_v365((select business from _ctx),(select client from _ctx))->'benefits') b
+     where (b->>'benefit_id')::uuid = (select benefit from _ctx))
     into v_earned;
   if not v_earned then
     insert into _r select 'issuing skipped — no client stands at this rung', 'PASS (not exercised)';

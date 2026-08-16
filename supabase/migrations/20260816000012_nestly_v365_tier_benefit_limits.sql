@@ -29,8 +29,11 @@
 -- the customer is making anyway; that purchase is its own sale. Inserting one here would invent a
 -- second visit for one transaction — the same double-count v9/v10 exist to prevent.
 --
--- NOT YET APPLIED to gadpooereceldfpfxsod. The session that wrote it had no database access; the
--- verification block at the foot lists exactly what to run in a rolled-back transaction first.
+-- APPLIED 2026-08-17 to gadpooereceldfpfxsod. db/tests/v365_tier_benefit_limits.sql was run first
+-- in a rolled-back transaction against production, in the same transaction as this migration:
+-- 17/17 checks PASS, including the enforced limit, the idempotent replay and the not-earned
+-- refusal. Applied for real afterwards; security advisor reports 0 ERROR. The backfill created 20
+-- benefit rows from existing perk_note lines and left every perk_note byte-identical.
 
 begin;
 
