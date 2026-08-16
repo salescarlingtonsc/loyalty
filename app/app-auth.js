@@ -226,6 +226,7 @@ function renderBusinessStaffInviteAcceptV151(code){
       $('staffInviteAcceptStatus').innerHTML='<div class="err">This invite is not active. Ask the business owner for a new company invite link.</div>';
       $('staffInviteAcceptGo').disabled=false;return;
     }
+    invalidatePersonaCacheV370(); // V370: accepting an invite creates a staff persona
     const {data,error}=await sb.rpc('accept_invite',{p_code:normalized});
     if(error){
       $('staffInviteAcceptStatus').innerHTML=`<div class="err">${esc(error.message||'This invite could not be accepted. It may be invalid, expired, revoked, already used, or restricted to another email.')}</div>`;

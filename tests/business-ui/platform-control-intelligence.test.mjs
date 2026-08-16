@@ -119,12 +119,20 @@ test('owner Settings exposes a stock-free Checkout Catalogue with fail-closed RP
 test('business routes fail closed before modules when approval or billing blocks the workspace',()=>{
   const route=section('async function route(){','/* ---------- customer wallet ---------- */');
   const blocked=section('function renderBusinessWorkspaceControl(','/* ---------- auth ---------- */');
-  const controlCall=route.indexOf("'platform_get_business_control_v94'");
+  /* V370: both reads now go through the short-lived bootstrap caches (loadBusinessControlV370 /
+     loadBusinessRecordV370) instead of an inline sb.rpc/sb.from. The INVARIANT this test protects
+     is unchanged and still the point: the workspace gate must be resolved before any module or
+     business-row read, so a pending or payment-blocked firm never reaches tenant data. */
+  const controlCall=route.indexOf('loadBusinessControlV370(');
   const moduleCall=route.indexOf("'get_my_modules'");
   assert.ok(controlCall>0&&controlCall<moduleCall,'workspace control must resolve before module or business data');
-  const businessRead=route.indexOf("sb.from('businesses').select('*').eq('slug',workspaceSlug)");
+  const businessRead=route.indexOf('loadBusinessRecordV370(workspaceSlug)');
   assert.ok(controlCall<businessRead,'pending owners must see the gate before the business-row policy is evaluated');
-  assert.match(route,/p_business:workspaceStaffPersona\.business_id/);
+  /* V370: the gate is still resolved for the WORKSPACE's own firm — that is the invariant. It is
+     the cache helper's argument now rather than an inline p_business payload. */
+  assert.match(route,/loadBusinessControlV370\(workspaceStaffPersona\.business_id\)/);
+  assert.match(section('async function loadBusinessControlV370(','async function loadBusinessRecordV370('),
+    /p_business:key/,'and the helper passes it through unchanged');
   assert.match(route,/if\(result\.error\|\|!result\.data\)return renderPersonaResolutionUnavailable\(\)/);
   assert.match(route,/if\(workspaceControl\.workspace_access!==true\)return renderBusinessWorkspaceControl\(workspaceControl\)/);
   assert.match(route,/S\.biz\.quick_earn_catalogue_enabled=workspaceControl\.quick_earn_catalogue_enabled!==false/);

@@ -35,8 +35,10 @@ test('route generation rejects an older workspace resolution before it can commi
 test('workspace, business, module, persona, and profile awaits are generation guarded',()=>{
   const route=section('async function route(){','/* ---------- customer wallet ---------- */');
   for(const guarded of [
-    /get_my_personas'\);\s*if\(!isRouteCurrent\(\)\)return;\s*S\.staffWorkspaces=/,
-    /from\('businesses'\)\.select\('\*'\)\.eq\('slug',workspaceSlug\)\.single\(\);\s*if\(!isRouteCurrent\(\)\)return;/,
+    /* V370: the persona and business-row reads are served by the bootstrap caches now. The
+       generation guard is what this test is about, and it still immediately follows each await. */
+    /loadPersonasV370\(\);\s*if\(!isRouteCurrent\(\)\)return;\s*S\.staffWorkspaces=/,
+    /loadBusinessRecordV370\(workspaceSlug\);\s*if\(!isRouteCurrent\(\)\)return;/,
     /get_my_modules',\{p_business:S\.biz\.id\}\);\s*if\(!isRouteCurrent\(\)\)return;/,
     /from\('staff'\)\.select\('role,modules,module_perms'\)[\s\S]*?limit\(1\);\s*if\(!isRouteCurrent\(\)\)return;/,
     /loadCustomerFeatureCapabilities\(\);\s*if\(!isRouteCurrent\(\)\)return;/,

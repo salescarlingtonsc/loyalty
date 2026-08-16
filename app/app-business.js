@@ -569,6 +569,8 @@ async function applyPublishedProgrammeSwitchesV314({active=null,loyaltyModel=nul
 const canWriteModule=module=>S.myModules?.includes(module)===true
   &&roleCanUseModule(S.myRole,module)
   &&(S.myRole==='owner'||S.myModulePerms?.[module]==='rw');
+function invalidateBusinessRecordCacheV370(){businessRecordCacheV370={key:'',at:0,result:null}}
+function invalidateBranchScopeCacheV370(){branchScopeCacheV370={key:'',at:0,result:null}}
 async function loadBranchModuleProjection(branchId,{force=false}={}){
   if(!branchId)return null;
   void force;
@@ -1377,6 +1379,7 @@ function renderOnboard(){
       const setupKey=sessionStorage.getItem('nestly-self-serve-setup')||crypto.randomUUID();sessionStorage.setItem('nestly-self-serve-setup',setupKey);
       if(!$('onboardLegalConsent').checked){$('onboardError').innerHTML='<div class="err">Please agree to the Terms of Service and acknowledge the Privacy Policy.</div>';return}
       $('startSelfServe').disabled=true;$('onboardStatus').textContent='Saving the locked workspace and server-priced plan…';
+      invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
       const started=await sb.rpc('start_self_serve_business_v130',{
         p_owner_name:$('ownerFullName').value.trim(),p_business_name:$('businessName').value.trim(),
         p_business_slug:$('businessSlug').value.trim(),p_sector_key:$('businessSector').value,
@@ -1388,7 +1391,7 @@ function renderOnboard(){
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
     };
-    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
+    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;invalidatePersonaCacheV370();const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
     $('out').onclick=async()=>{killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();route()};
   })();
 }
@@ -1943,7 +1946,22 @@ function renderBell(page){
 /* Re-runs the currently-open page's own render fn (no hash change) so new booking activity
    shows up without the owner having to manually refresh — the #1 complaint this feature set
    is meant to fix. Only wired for the pages where booking/waitlist activity is visible. */
+/* V370. One customer booking produces TWO realtime events on this channel — the booking_requests
+   INSERT and the notifications INSERT the DB trigger writes alongside it — and each handler called
+   autoRefreshIfRelevant(), so a single booking re-rendered the whole open page twice within
+   milliseconds (Bookings ≈ 6 reads each time) and re-counted the pending badge twice on top.
+   Both are now trailing-debounced: every event still triggers a refresh, and a burst of events
+   still triggers exactly one. The delay is short enough to stay imperceptible and long enough to
+   coalesce the trigger-written pair. Nothing about WHAT gets refreshed changes — the V171 page
+   allowlist and the V288 mid-typing guard below are untouched and still evaluated at the moment
+   the refresh actually runs, not when it was scheduled. */
+const REALTIME_REFRESH_DEBOUNCE_MS_V370=350;
 function autoRefreshIfRelevant(){
+  if(autoRefreshTimerV370)clearTimeout(autoRefreshTimerV370);
+  autoRefreshTimerV370=setTimeout(()=>{autoRefreshTimerV370=0;autoRefreshIfRelevantNowV370()},
+    REALTIME_REFRESH_DEBOUNCE_MS_V370);
+}
+function autoRefreshIfRelevantNowV370(){
   const key=(currentPage&&currentPage[0])||'';
   /* V171: the old 'customers' entry was dead — the router's key for that screen is 'clients',
      so it never matched. It is deliberately NOT fixed to 'clients': these events are booking/
@@ -2015,7 +2033,19 @@ function wireBookingRequestsBadgeV329(){
   const button=$('bookingRequestsBadgeV329');
   if(button)button.onclick=()=>nav('#/bookings');
 }
-async function refreshPendingBookingRequestCountV329(){
+function refreshPendingBookingRequestCountV329(){
+  /* V370: same coalescing as autoRefreshIfRelevant, and for the same reason — the three
+     booking_requests handlers can fire together. Returns the scheduling promise so existing
+     callers that `await` it (renderShell does not) still resolve. */
+  if(pendingBookingCountTimerV370)clearTimeout(pendingBookingCountTimerV370);
+  return new Promise(resolve=>{
+    pendingBookingCountTimerV370=setTimeout(()=>{
+      pendingBookingCountTimerV370=0;
+      Promise.resolve(refreshPendingBookingRequestCountNowV370()).then(resolve,resolve);
+    },REALTIME_REFRESH_DEBOUNCE_MS_V370);
+  });
+}
+async function refreshPendingBookingRequestCountNowV370(){
   if(!S.biz?.id||!canReadModule('bookings'))return;
   const {count,error}=await sb.from('booking_requests').select('id',{count:'exact',head:true})
     .eq('business_id',S.biz.id).in('status',[...STAFF_BOOKING_DECISION_STATUSES]);
@@ -2615,7 +2645,21 @@ function openSaleAmountCorrectionDialog(item,onDone){
    left it unscoped so the picker has names to show) — the allow-list built here is what
    the *picker offers*, not the security boundary; the real boundary is server-side
    RLS/RPC, which every consumer of this filter still applies on its own query. */
-async function visibleBranchesForCurrentUser(){
+/* V370: the same answer was fetched on every navigation (wireProfile hydrates the top-bar
+   selector unconditionally), on every profile/bell menu open AND close (renderProfile re-runs
+   wireProfile), and a second time by the dashboard's own load(). A branch roster changes only
+   through the Branches page and the Team panel, both of which invalidate below, so it is held
+   for a short window keyed by the firm, the person and their role — role is in the key because
+   the admin and employee branches of this function return different sets. */
+async function visibleBranchesForCurrentUser({refresh=false}={}){
+  const cacheKeyV370=`${S.biz?.id||''}:${S.user?.id||''}:${S.myRole||''}`;
+  if(!refresh&&bootstrapCacheFreshV370(branchScopeCacheV370,cacheKeyV370,BOOTSTRAP_CACHE_TTL_V370.branches)){
+    /* A fresh array per caller: refreshBranchFilter and the dashboard both sort and filter what
+       they get back, and handing out the cached array itself would let one caller's work show up
+       in another's. */
+    const cached=branchScopeCacheV370.result;
+    return {isAdmin:cached.isAdmin,branches:cached.branches.map(branch=>({...branch}))};
+  }
   const isAdmin=S.myRole==='owner'||S.myRole==='manager';
   let branches=[];
   if(isAdmin){
@@ -2631,7 +2675,10 @@ async function visibleBranchesForCurrentUser(){
       branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     }
   }
-  return {isAdmin,branches};
+  /* Only a SUCCESSFUL read is cached — every failure path above throws, so reaching here means
+     the roster is real. */
+  branchScopeCacheV370={key:cacheKeyV370,at:Date.now(),result:{isAdmin,branches}};
+  return {isAdmin,branches:branches.map(branch=>({...branch}))};
 }
 /* V285: no page mounts a wrap for this any more. V260/V272 removed the per-page pickers one at a
    time and V285 removed the last two (P&L and Customer intelligence), so the top bar's selector is
@@ -3136,6 +3183,9 @@ async function dashboard(){
      scoped to one branch opened on a business-wide schedule count, then quietly shrank the first
      time the owner touched a day tab. The first number on the page must be the scoped one. */
   let appliedDashboardScopeV141={from:d30,to:today,branchId:selectedBranchId||null,branchName:'All permitted branches'};
+  /* Which branch the schedule glance is currently PAINTED for — distinct from the reporting scope
+     above, which load() rewrites before the glance has been told about it. */
+  let dashboardScheduleGlancePaintedForV370=null;
   /* V287: openDashboardMetricDetailV141 lived here. V225 turned every KPI tile into a direct
      link to its report ("once clicked, straight away go to sales"), which left this modal
      reachable only through an `else` branch that required a metric definition WITHOUT a route —
@@ -3178,6 +3228,14 @@ async function dashboard(){
     if(appliedEndV295)applyScheduleDayV252(appliedEndV295,false);
     load();
   };
+  /* V370: this first-paint call and the V288 re-fetch below were both landing on a normal load,
+     because appliedDashboardScopeV141.branchId starts from selectedBranchId while load() resolves
+     it from the reporting scope — two different values on the very first dashboard of a session,
+     so the "only if the branch actually changed" guard fired every time. The glance is now painted
+     ONCE: first paint owns it while the branch is still the one the top bar is showing, and load()
+     re-fetches only on a real change, which is what V288 was written to do.
+     Nothing about the rendered card changes — same function, same arguments, same day. */
+  dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
@@ -3281,12 +3339,13 @@ async function dashboard(){
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
-    const previousScheduleBranchV288=appliedDashboardScopeV141.branchId;
+    const previousScheduleBranchV288=dashboardScheduleGlancePaintedForV370;
     appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
     /* V288: nothing re-invoked the schedule loader after the real branch was resolved, so the
        glance kept whatever scope first paint guessed until a day tab was pressed. Re-fetch only
        when the resolved branch actually differs, and keep the day currently on screen. */
     if(previousScheduleBranchV288!==appliedDashboardScopeV141.branchId){
+      dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
       loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,scheduleDateInputV252?.value||null);
     }
     /* V266: the period is written from the range the RPC was actually answered for, next to the
@@ -6549,8 +6608,31 @@ async function tillPage(){
     if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
     closePaynowDialogV142();checkoutError=null;step=3;draw();
   }
+  /* V370: the PayNow poll ran at 2s forever with no visibility gate — a till tablet left on a
+     payment screen asked the database 1,800 times an hour whether a QR nobody was showing had
+     been paid. It now SUSPENDS while the tab is hidden and resumes the instant it is shown, so
+     the payment flow itself is unchanged: no cap, no backoff, no missed terminal state (the
+     first poll after resume reads the current status, whatever happened while away). */
+  let paynowHiddenResumeV370=null;
+  function paynowSuspendedForVisibilityV370(attemptId){
+    if(globalThis.document?.visibilityState!=='hidden')return false;
+    if(paynowHiddenResumeV370)return true;
+    paynowHiddenResumeV370=()=>{
+      if(globalThis.document?.visibilityState==='hidden')return;
+      document.removeEventListener('visibilitychange',paynowHiddenResumeV370);
+      paynowHiddenResumeV370=null;
+      /* Only resume a poll that is still wanted: the dialog may have been closed, or the
+         attempt cleared, while the tab was away. paynowAttempt is nulled by every terminal
+         path (completePaynowReceiptV142, the failure branches, closePaynowDialogV142). */
+      if(!isTillCurrent()||!paynowAttempt)return;
+      pollPaynowAttemptV142(attemptId);
+    };
+    document.addEventListener('visibilitychange',paynowHiddenResumeV370);
+    return true;
+  }
   async function pollPaynowAttemptV142(attemptId){
     if(!attemptId)return;
+    if(paynowSuspendedForVisibilityV370(attemptId))return;
     const {data,error}=await sb.rpc('get_pos_paynow_attempt_v142',{p_attempt:attemptId});
     if(!isTillCurrent())return;
     if(error){paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),2500);return;}
@@ -23469,6 +23551,7 @@ async function branchesPage(){
          branch and a second charge. */
       if(!branchAddAttemptKey)branchAddAttemptKey=crypto.randomUUID();
       const copyFrom=$('brCopyFrom')?$('brCopyFrom').value||null:null;
+      invalidateBranchScopeCacheV370(); // V370: a new branch changes every scope selector
       const {data:added,error:addError}=await sb.rpc('business_add_branch_v202',{
         p_business:S.biz.id,p_name:payload.name,p_address:payload.address,
         p_phone:payload.phone,p_email:payload.email,p_copy_from:copyFrom,
@@ -23552,10 +23635,12 @@ async function branchesPage(){
   };
   window.toggleStaffBranch=async(branchId,staffId,checked)=>{
     if(checked){
+      invalidateBranchScopeCacheV370();
       const {error}=await sb.from('staff_branches').insert({business_id:S.biz.id,staff_id:staffId,branch_id:branchId});
       if(error) return fail(error);
       toast('Staff assigned to branch');
     }else{
+      invalidateBranchScopeCacheV370();
       const {error}=await sb.from('staff_branches').delete().eq('business_id',S.biz.id).eq('staff_id',staffId).eq('branch_id',branchId);
       if(error) return fail(error);
       toast('Staff unassigned from branch');
@@ -27115,6 +27200,7 @@ function wireWorkspaceBrandV259(){
     const registrationNumber=($('buen')?.value||'').trim()||null;
     /* V325: bio rides this same UPDATE — no new call site. */
     const bio=($('bbio')?.value||'').trim()||null;
+    invalidateBusinessRecordCacheV370(); // V370: the cached firm row is now stale
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
       brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,
       legal_name:legalName,registration_number:registrationNumber,bio}).eq('id',S.biz.id);
@@ -27264,6 +27350,7 @@ function wireBookingRulesV325(isCurrent=()=>true){
   const isOwner=S.myRole==='owner';
   if($('aac')&&isOwner)$('aac').onchange=async()=>{
     const to=$('aac').checked;
+    invalidateBusinessRecordCacheV370();
     const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
     if(!isCurrent())return;
     if(error){$('aac').checked=!to;return fail(error)}
@@ -27314,6 +27401,7 @@ function wireBookingRulesV325(isCurrent=()=>true){
       const value=$('setConfirmationTemplate').value.trim()||null;
       const button=$('setConfirmationTemplateSave'),err=$('setConfirmationTemplateErr');
       button.disabled=true;err.innerHTML='';
+      invalidateBusinessRecordCacheV370();
       const {error}=await sb.from('businesses').update({booking_confirmation_template:value}).eq('id',S.biz.id);
       if(!isCurrent())return;
       button.disabled=false;
@@ -27375,7 +27463,7 @@ function wireBookingRulesV325(isCurrent=()=>true){
     const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
     const closedDays=shop.closed;
     const results=await Promise.all([
-      sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
+      (invalidateBusinessRecordCacheV370(),sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id)),
       branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
       branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
     ]);
