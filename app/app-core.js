@@ -4021,13 +4021,15 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const hasStamps=visibleEntry('stamps');
   const hasTiers=visibleEntry('tiers')&&(tierLabel||tier.unavailable!=='not_running');
   const hasReferral=visibleEntry('referral');
+  const hasActivity=capabilities.appointments===true||capabilities.activity===true;
   const modules=[];
   if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#walletRewards',action:'points',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
   if(hasReferral)modules.push({href:'#walletReferralSlot',action:'referral',icon:'referrals',title:'Refer a friend',body:'Share this business'});
+  if(hasActivity)modules.push({href:'#customerBusinessActivityDetailV347',action:'activity',icon:'bookings',title:'Activity',body:'Visits and history'});
   if(!modules.length)return '';
   return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
     ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}" data-business-shortcut-v347="${esc(item.action)}">

@@ -8409,13 +8409,15 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const hasStamps=visibleEntry('stamps');
   const hasTiers=visibleEntry('tiers')&&(tierLabel||tier.unavailable!=='not_running');
   const hasReferral=visibleEntry('referral');
+  const hasActivity=capabilities.appointments===true||capabilities.activity===true;
   const modules=[];
   if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#walletRewards',action:'points',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
   if(hasReferral)modules.push({href:'#walletReferralSlot',action:'referral',icon:'referrals',title:'Refer a friend',body:'Share this business'});
+  if(hasActivity)modules.push({href:'#customerBusinessActivityDetailV347',action:'activity',icon:'bookings',title:'Activity',body:'Visits and history'});
   if(!modules.length)return '';
   return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
     ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}" data-business-shortcut-v347="${esc(item.action)}">
@@ -8427,12 +8429,22 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
 }
 function wireCustomerBusinessShortcutsV347(root=document){
   const selectors={
-    points:'#walletRewards',
+    points:'#customerBusinessRewardsDetailV347',
     rewards:'#customerBusinessRewardsDetailV347',
-    tiers:'[data-programme-card="tiers"],#customerBusinessOverviewDetailV347',
-    packages:'#walletPackages,#customerBusinessPackagesDetailV347',
+    tiers:'#customerBusinessRewardsDetailV347',
+    packages:'#customerBusinessPackagesDetailV347',
     membership:'#walletMemberships,#customerBusinessPackagesDetailV347',
-    referral:'#walletReferral,#walletReferralSlot'
+    referral:'#walletReferralSlot,#customerBusinessRewardsDetailV347',
+    activity:'#customerBusinessActivityDetailV347'
+  };
+  const labels={
+    points:'Points & gifts',
+    rewards:'Rewards',
+    tiers:'Tier benefits',
+    packages:'Packages',
+    membership:'Membership',
+    referral:'Refer a friend',
+    activity:'Activity'
   };
   root.querySelectorAll('[data-business-shortcut-v347]').forEach(card=>{
     card.onclick=event=>{
@@ -8448,15 +8460,49 @@ function wireCustomerBusinessShortcutsV347(root=document){
         toast(action==='referral'?'Referral sharing is not available for this business yet.':'This section is still loading. Try again in a moment.');
         return;
       }
-      target.scrollIntoView({
-        behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',
-        block:'start'
-      });
-      const focusTarget=target.matches('button,a,input,select,textarea,[tabindex]')
-        ?target
-        :target.querySelector('button,a,input,select,textarea,[tabindex]');
-      focusTarget?.focus?.({preventScroll:true});
+      openCustomerBusinessShortcutPageV348({action,title:labels[action]||card.textContent.trim()||'Details',target});
     };
+  });
+}
+function openCustomerBusinessShortcutPageV348({action='',title='Details',target=null}={}){
+  const page=$('customerBusinessShortcutPageV348'),main=$('customerBusinessMainV348'),content=$('customerBusinessShortcutContentV348'),heading=$('customerBusinessShortcutTitleV348');
+  if(!page||!main||!content||!target)return;
+  closeCustomerBusinessShortcutPageV348();
+  const placeholder=document.createElement('span');
+  placeholder.hidden=true;
+  placeholder.dataset.customerBusinessShortcutPlaceholderV348=action||'details';
+  target.parentNode?.insertBefore(placeholder,target);
+  content.replaceChildren(target);
+  if(heading)heading.textContent=title;
+  page._customerBusinessShortcutRestoreV348=()=>{
+    if(placeholder.parentNode)placeholder.parentNode.insertBefore(target,placeholder);
+    placeholder.remove();
+  };
+  main.hidden=true;
+  page.hidden=false;
+  page.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  requestAnimationFrame(()=>{
+    const focusTarget=action==='tiers'
+      ?target.querySelector('[data-programme-card="tiers"],button,a,[tabindex]')
+      :target.querySelector('button,a,input,select,textarea,[tabindex]');
+    focusTarget?.focus?.({preventScroll:true});
+  });
+}
+function closeCustomerBusinessShortcutPageV348(){
+  const page=$('customerBusinessShortcutPageV348'),main=$('customerBusinessMainV348'),content=$('customerBusinessShortcutContentV348');
+  if(!page||!main||!content)return;
+  if(typeof page._customerBusinessShortcutRestoreV348==='function'){
+    page._customerBusinessShortcutRestoreV348();
+    page._customerBusinessShortcutRestoreV348=null;
+  }
+  content.replaceChildren();
+  page.hidden=true;
+  main.hidden=false;
+}
+function wireCustomerBusinessShortcutPageV348(root=document){
+  root.querySelector('#customerBusinessShortcutBackV348')?.addEventListener('click',()=>{
+    closeCustomerBusinessShortcutPageV348();
+    root.querySelector('[data-business-shortcut-v347]')?.focus?.({preventScroll:true});
   });
 }
 /* v340 (gap 2): `backHrefV340` carries the profile's real "go back" destination INTO this markup
@@ -9363,8 +9409,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const programmeSignatureV333=customerWalletFactSignatureOfV333(['programme',businessSlug,summary,
     capabilities,actionableCard,programmeCards,presentation,businessActions]);
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
-  const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
-    <div class="wallet-sections" id="walletSections">
+  const programmeBodyMarkupV333=`<div id="customerBusinessMainV348" class="customer-business-main-v348">
+      ${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
+    </div>
+    <section class="customer-business-shortcut-page-v348" id="customerBusinessShortcutPageV348" hidden aria-labelledby="customerBusinessShortcutTitleV348">
+      <header class="customer-business-shortcut-head-v348">
+        <button class="btn ghost sm customer-business-shortcut-back-v348" id="customerBusinessShortcutBackV348" type="button">${CUI.icon('back',{size:18})}<span>Back</span></button>
+        <h1 id="customerBusinessShortcutTitleV348">Details</h1>
+      </header>
+      <div class="customer-business-shortcut-content-v348" id="customerBusinessShortcutContentV348"></div>
+    </section>
+    <div class="wallet-sections customer-business-detail-store-v348" id="walletSections" hidden>
       ${showPackageGroupV347?`
       <section class="customer-business-group-v346" id="customerBusinessPackagesDetailV347" aria-labelledby="customerBusinessPackagesTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessPackagesTitle">Packages</h2><p class="muted small">Active plans, sessions and stored value.</p></div>
@@ -9398,6 +9453,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   wireCustomerRepeatBookingV167($('walletBody'));
   wireCustomerProgrammeTabsV194($('walletBody'));
   wireCustomerBusinessShortcutsV347($('walletBody'));
+  wireCustomerBusinessShortcutPageV348($('walletBody'));
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));

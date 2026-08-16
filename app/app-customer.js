@@ -3279,12 +3279,22 @@ function customerBusinessSecondaryMarkupV346(presentation={}){
 }
 function wireCustomerBusinessShortcutsV347(root=document){
   const selectors={
-    points:'#walletRewards',
+    points:'#customerBusinessRewardsDetailV347',
     rewards:'#customerBusinessRewardsDetailV347',
-    tiers:'[data-programme-card="tiers"],#customerBusinessOverviewDetailV347',
-    packages:'#walletPackages,#customerBusinessPackagesDetailV347',
+    tiers:'#customerBusinessRewardsDetailV347',
+    packages:'#customerBusinessPackagesDetailV347',
     membership:'#walletMemberships,#customerBusinessPackagesDetailV347',
-    referral:'#walletReferral,#walletReferralSlot'
+    referral:'#walletReferralSlot,#customerBusinessRewardsDetailV347',
+    activity:'#customerBusinessActivityDetailV347'
+  };
+  const labels={
+    points:'Points & gifts',
+    rewards:'Rewards',
+    tiers:'Tier benefits',
+    packages:'Packages',
+    membership:'Membership',
+    referral:'Refer a friend',
+    activity:'Activity'
   };
   root.querySelectorAll('[data-business-shortcut-v347]').forEach(card=>{
     card.onclick=event=>{
@@ -3300,15 +3310,49 @@ function wireCustomerBusinessShortcutsV347(root=document){
         toast(action==='referral'?'Referral sharing is not available for this business yet.':'This section is still loading. Try again in a moment.');
         return;
       }
-      target.scrollIntoView({
-        behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',
-        block:'start'
-      });
-      const focusTarget=target.matches('button,a,input,select,textarea,[tabindex]')
-        ?target
-        :target.querySelector('button,a,input,select,textarea,[tabindex]');
-      focusTarget?.focus?.({preventScroll:true});
+      openCustomerBusinessShortcutPageV348({action,title:labels[action]||card.textContent.trim()||'Details',target});
     };
+  });
+}
+function openCustomerBusinessShortcutPageV348({action='',title='Details',target=null}={}){
+  const page=$('customerBusinessShortcutPageV348'),main=$('customerBusinessMainV348'),content=$('customerBusinessShortcutContentV348'),heading=$('customerBusinessShortcutTitleV348');
+  if(!page||!main||!content||!target)return;
+  closeCustomerBusinessShortcutPageV348();
+  const placeholder=document.createElement('span');
+  placeholder.hidden=true;
+  placeholder.dataset.customerBusinessShortcutPlaceholderV348=action||'details';
+  target.parentNode?.insertBefore(placeholder,target);
+  content.replaceChildren(target);
+  if(heading)heading.textContent=title;
+  page._customerBusinessShortcutRestoreV348=()=>{
+    if(placeholder.parentNode)placeholder.parentNode.insertBefore(target,placeholder);
+    placeholder.remove();
+  };
+  main.hidden=true;
+  page.hidden=false;
+  page.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  requestAnimationFrame(()=>{
+    const focusTarget=action==='tiers'
+      ?target.querySelector('[data-programme-card="tiers"],button,a,[tabindex]')
+      :target.querySelector('button,a,input,select,textarea,[tabindex]');
+    focusTarget?.focus?.({preventScroll:true});
+  });
+}
+function closeCustomerBusinessShortcutPageV348(){
+  const page=$('customerBusinessShortcutPageV348'),main=$('customerBusinessMainV348'),content=$('customerBusinessShortcutContentV348');
+  if(!page||!main||!content)return;
+  if(typeof page._customerBusinessShortcutRestoreV348==='function'){
+    page._customerBusinessShortcutRestoreV348();
+    page._customerBusinessShortcutRestoreV348=null;
+  }
+  content.replaceChildren();
+  page.hidden=true;
+  main.hidden=false;
+}
+function wireCustomerBusinessShortcutPageV348(root=document){
+  root.querySelector('#customerBusinessShortcutBackV348')?.addEventListener('click',()=>{
+    closeCustomerBusinessShortcutPageV348();
+    root.querySelector('[data-business-shortcut-v347]')?.focus?.({preventScroll:true});
   });
 }
 /* W4c lives HERE, not beside the slot it fills, and that placement is deliberate rather than
@@ -4037,8 +4081,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const programmeSignatureV333=customerWalletFactSignatureOfV333(['programme',businessSlug,summary,
     capabilities,actionableCard,programmeCards,presentation,businessActions]);
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
-  const programmeBodyMarkupV333=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
-    <div class="wallet-sections" id="walletSections">
+  const programmeBodyMarkupV333=`<div id="customerBusinessMainV348" class="customer-business-main-v348">
+      ${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
+    </div>
+    <section class="customer-business-shortcut-page-v348" id="customerBusinessShortcutPageV348" hidden aria-labelledby="customerBusinessShortcutTitleV348">
+      <header class="customer-business-shortcut-head-v348">
+        <button class="btn ghost sm customer-business-shortcut-back-v348" id="customerBusinessShortcutBackV348" type="button">${CUI.icon('back',{size:18})}<span>Back</span></button>
+        <h1 id="customerBusinessShortcutTitleV348">Details</h1>
+      </header>
+      <div class="customer-business-shortcut-content-v348" id="customerBusinessShortcutContentV348"></div>
+    </section>
+    <div class="wallet-sections customer-business-detail-store-v348" id="walletSections" hidden>
       ${showPackageGroupV347?`
       <section class="customer-business-group-v346" id="customerBusinessPackagesDetailV347" aria-labelledby="customerBusinessPackagesTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessPackagesTitle">Packages</h2><p class="muted small">Active plans, sessions and stored value.</p></div>
@@ -4072,6 +4125,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   wireCustomerRepeatBookingV167($('walletBody'));
   wireCustomerProgrammeTabsV194($('walletBody'));
   wireCustomerBusinessShortcutsV347($('walletBody'));
+  wireCustomerBusinessShortcutPageV348($('walletBody'));
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
