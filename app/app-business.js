@@ -11984,9 +11984,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     </p>
     ${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button><button type="button" class="btn ghost sm" data-grow-points-add-cancel-v326="1">Cancel</button></div>
-  </li>`:growPointsAddOpenV326==='prompt'?`<li class="imp-note" data-grow-points-addprompt-v326>
-    <b>Gift saved and live for customers.</b>
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-again-v326="1">Add another gift</button><button type="button" class="btn ghost sm" data-grow-points-add-done-v326="1">Done</button></div>
   </li>`:'';
   /* V343 (owner mockup, photo 4): a dashed placeholder card at the foot of the gift list, the
      same "Add a new gift" affordance the mockup shows — opens the SAME form/handler the header's
@@ -12065,10 +12062,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      nothing about save/edit/delete/toggle/photo-upload is stamps-specific or duplicated. */
   const growStampsLevelsSortedV350=growPointsPublishedV326.slice()
     .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0));
+  /* V356 (owner mockup, photo 1): one column-header row for the whole table, so each level row no
+     longer repeats a "Level" caption above its own "Level 1" text. The per-cell <label>s survive
+     for narrow screens only (CSS hides the head row and shows the labels below 1180px) — the same
+     responsive trade the Tiers table already made. */
+  const growStampsHeadRowV356=`<div class="grow-stamps-head-v356" aria-hidden="true">
+    <span></span><span>Level</span><span>Stamps required</span><span>Reward</span>
+    <span>Description <span class="muted">(optional)</span></span><span>Photo <span class="muted">(optional)</span></span><span></span>
+  </div>`;
   const growStampsLevelRowV350=(reward,index,{history=false}={})=>{
     const name=reward.customer_name||reward.name||'Reward';
     const stamps=Math.max(0,Number(reward.cost_points||0));
     const photoUrl=customerMediaUrlV95(reward.image_ref);
+    const busy=growPointsBusyV326;
     if(history)return `<div class="grow-stamps-level-row-v350" data-grow-points-giftrow-v326="${esc(reward.id)}">
       <span class="grow-stamps-level-badge-v350" aria-hidden="true">${CUI.icon('star',{size:16})}<b>${index+1}</b></span>
       <div class="grow-stamps-level-col-v350"><label class="muted small">Level</label><b data-merchant-content>Level ${index+1}</b></div>
@@ -12080,13 +12086,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     </div>`;
     const paused=reward.paused===true;
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);
-    return `<div class="grow-stamps-level-row-v350" data-grow-points-giftrow-v326="${esc(reward.id)}">
+    /* V356: the mockup's cells are live inputs, not read-only text. Each writes through the same
+       business_update_reward_v326 RPC the Edit form already uses, on `change` (i.e. on blur), so
+       this page stays immediate-write like the rest of V326 rather than growing a batch-save
+       state machine with its own "unsaved changes" failure modes. The handler re-reads all three
+       fields from the row before writing, so a photo pick mid-edit cannot drop a typed value —
+       the same capture-before-write rule V349 established for the add form. */
+    const ro=canSetupGrow?'':' disabled';
+    return `<div class="grow-stamps-level-row-v350" data-grow-points-giftrow-v326="${esc(reward.id)}" data-grow-stamps-row-v356="${esc(reward.id)}">
       <span class="grow-stamps-level-badge-v350" aria-hidden="true">${CUI.icon('star',{size:16})}<b>${index+1}</b></span>
       <div class="grow-stamps-level-col-v350"><label class="muted small">Level</label><b data-merchant-content>Level ${index+1}</b></div>
-      <div class="grow-stamps-level-col-v350"><label class="muted small">Stamps required</label><span class="grow-stamps-static-v350" data-merchant-content>${stamps}</span></div>
-      <div class="grow-stamps-level-col-v350"><label class="muted small">Reward</label><span class="grow-stamps-static-v350" data-merchant-content>${esc(name)}</span></div>
-      <div class="grow-stamps-level-col-v350"><label class="muted small">Description</label><span class="grow-stamps-static-v350 muted" data-merchant-content>${reward.description?esc(reward.description):'—'}</span></div>
-      <div class="grow-stamps-level-col-v350"><label class="muted small">Photo</label>${photoUrl?`<img src="${esc(photoUrl)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">`:`<span class="muted small">No photo</span>`}</div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small" for="stampsQty${esc(reward.id)}">Stamps required</label>
+        <input id="stampsQty${esc(reward.id)}" class="grow-stamps-input-v356" inputmode="numeric" value="${esc(String(stamps))}" data-grow-stamps-field-v356="stamps"${ro}${busy?' disabled':''}>
+        <span class="muted small">stamps</span></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small" for="stampsName${esc(reward.id)}">Reward</label>
+        <input id="stampsName${esc(reward.id)}" class="grow-stamps-input-v356" value="${esc(name)}" data-grow-stamps-field-v356="name"${ro}${busy?' disabled':''}></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small" for="stampsDesc${esc(reward.id)}">Description</label>
+        <textarea id="stampsDesc${esc(reward.id)}" class="grow-stamps-input-v356" rows="2" placeholder="e.g. Free drink (up to $6) or service." data-grow-stamps-field-v356="description"${ro}${busy?' disabled':''}>${esc(reward.description||'')}</textarea></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Photo</label>
+        ${photoUrl?`<img src="${esc(photoUrl)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px;margin-bottom:4px">`:''}
+        ${canSetupGrow?`<label class="btn ghost sm service-photo-uploader-v158">${photoUrl?'Change photo':'Choose photo'}<input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload photo for level ${index+1}" data-grow-stamps-photo-v356="${esc(reward.id)}"${busy?' disabled':''}></label>
+        <span class="muted small">Optional</span>`:`<span class="muted small">${photoUrl?'':'No photo'}</span>`}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
         ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
         <button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
@@ -12105,21 +12125,61 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      avatar row. There is no real customer in this editor, so progress is shown at 0 collected —
      honestly a template preview, not a live reading of any actual customer's card. */
   const growStampsMaxV350=Math.max(1,...growStampsLevelsSortedV350.map(reward=>Number(reward.cost_points||0)));
+  /* V356 (owner mockup, photo 1): the preview was a bare dot-and-line reusing the Tiers ladder,
+     which positioned each stop by ABSOLUTE PERCENTAGE of the highest milestone — so a card with a
+     single level rendered one dot pinned to the far right with an empty line trailing to nowhere.
+     Rebuilt as an evenly-spaced flex row of milestones (gift icon, numbered circle, unit, reward
+     name) plus a row of stamp slots, which reads correctly at one level or six.
+     The slot row and "collected" count show ZERO deliberately: there is no real customer in this
+     editor, and inventing a part-filled progress ("4 of 12") would put a number on screen that
+     belongs to nobody. The slots are capped so a 50-stamp card does not draw 50 circles. */
+  const growStampsSlotCountV356=Math.min(growStampsMaxV350,10);
   const growStampsPreviewV350=`<div class="grow-stamps-preview-card-v350">
     <b>Customer preview</b>
     <p class="muted small" style="margin-top:2px">Here's how your stamp card will look to customers.</p>
-    <div class="grow-stamps-preview-hero-v350"><b data-merchant-content>${esc(S.biz?.name||'Stamp Card')}</b><p class="small">Collect stamps and unlock rewards!</p></div>
-    ${growStampsLevelsSortedV350.length?`<div class="grow-tier-ladder-v343" aria-label="Stamp levels">
-      <div class="grow-tier-ladder-line-v343"></div>
-      ${growStampsLevelsSortedV350.map(reward=>{
+    <div class="grow-stamps-preview-hero-v350"><b data-merchant-content>${esc(S.biz?.name||'Stamp card')}</b><p class="small">Collect stamps and unlock rewards!</p></div>
+    ${growStampsLevelsSortedV350.length?`
+    <div class="grow-stamps-milestones-v356" aria-label="Stamp milestones">
+      ${growStampsLevelsSortedV350.map((reward,index)=>{
         const stamps=Math.max(0,Number(reward.cost_points||0));
-        const pct=Math.max(0,Math.min(100,(stamps/growStampsMaxV350)*100));
-        return `<span class="grow-tier-ladder-stop-v343" style="left:${pct}%"><i></i><b data-merchant-content>${esc(reward.customer_name||reward.name||'Reward')}</b><small>${stamps} stamp${stamps===1?'':'s'}</small></span>`;
+        return `<div class="grow-stamps-milestone-v356"${index?' data-linked="1"':''}>
+          <span class="grow-stamps-milestone-gift-v356" aria-hidden="true">${CUI.icon('giftcard',{size:18})}</span>
+          <span class="grow-stamps-milestone-circle-v356"><b data-merchant-content>${stamps}</b></span>
+          <small class="muted">stamp${stamps===1?'':'s'}</small>
+          <span class="grow-stamps-milestone-name-v356" data-merchant-content>${esc(reward.customer_name||reward.name||'Reward')}</span>
+        </div>`;
       }).join('')}
     </div>
-    <p class="muted small" style="margin-top:22px">0 of ${growStampsMaxV350} stamps collected</p>`
+    <div class="grow-stamps-slots-v356" aria-hidden="true">
+      ${Array.from({length:growStampsSlotCountV356},()=>`<span class="grow-stamps-slot-v356">${CUI.icon('star',{size:15})}</span>`).join('')}
+    </div>
+    <p class="muted small" style="margin-top:10px">0 of ${growStampsMaxV350} stamps collected</p>`
     :'<p class="muted small" style="margin-top:14px">Add a level below to see the preview.</p>'}
   </div>`;
+  /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
+     NOT carry the mockup's "Duplicate" button: a firm has exactly one stamps programme row on the
+     spine, so there is nothing a duplicate could be created as, and inventing a second card would
+     need a schema that does not exist. Delete is likewise absent — deleting "the stamp card" means
+     turning the programme off, which the ON/OFF switch above already does, reversibly. */
+  const growStampsDatesV356=(()=>{
+    const times=growStampsLevelsSortedV350.map(r=>Date.parse(r.created_at||'')).filter(Number.isFinite);
+    if(!times.length)return '';
+    const created=promotionDateShortV324(new Date(Math.min(...times)).toISOString());
+    const updated=promotionDateShortV324(new Date(Math.max(...times)).toISOString());
+    return created?`Created ${esc(created)}${updated&&updated!==created?` · Last level added ${esc(updated)}`:''}`:'';
+  })();
+  const growStampsSummaryV356=growStampsLevelsSortedV350.length?`<div class="grow-stamps-summary-v356">
+    <span class="grow-stamps-summary-icon-v356" aria-hidden="true">${CUI.icon('giftcard',{size:22})}</span>
+    <span class="grow-stamps-summary-body-v356">
+      <b data-merchant-content>${esc(S.biz?.name||'Stamp card')} rewards</b>
+      <span class="muted small" data-merchant-content>${growStampsLevelsSortedV350.map(r=>`${Math.max(0,Number(r.cost_points||0))} stamps: ${esc(r.customer_name||r.name||'Reward')}`).join(' · ')}</span>
+      ${growStampsDatesV356?`<span class="muted small">${growStampsDatesV356}</span>`:''}
+    </span>
+    <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+      <span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>
+      ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>`:''}
+    </span>
+  </div>`:'';
   const growStampsPageV350=!canRewards
     ?CUI.emptyState({iconName:'till',title:'Loyalty is not included',
         body:'This workspace does not include the loyalty module, so there is no stamp card to manage.',
@@ -12131,15 +12191,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up Stamp Card system</button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<div class="grow-stamps-page-v350">
+      <!-- V356 (owner annotations): the earning rate moved OFF the page title and into this card
+           ("put here"), and the Published/History tab strip is gone ("don't need published button
+           anymore") — every level on this page is live the moment it is saved, so a tab labelling
+           them "Published" was describing a publish step that no longer exists here. Deleted rows
+           stay reachable from the History rail item. -->
       <div class="grow-stamps-header-v350"><span class="grow-stamps-header-icon-v350" aria-hidden="true">${CUI.icon('star',{size:24})}</span>
-        <span><b>Stamp Card system</b><p class="muted small" style="margin:2px 0 0">Set rewards by stamp milestones</p></span>
+        <span><b>Stamp Card system</b><p class="muted small" style="margin:2px 0 0">Set rewards by stamp milestones</p>
+        <p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
         <span class="spacer"></span>
         <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
           ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
-          <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">Add level</button>
+          <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add level</button>
           <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
           :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
-          ${growPointsTabStripV326()}
         </span>
       </div>
       <div class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
@@ -12156,13 +12221,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <div class="grow-stamps-levels-v350">
           <b>Stamp reward levels</b>
           <p class="muted small" style="margin-top:2px">Customers unlock rewards at different stamp milestones. Add, edit, or remove levels anytime.</p>
-          ${growPointsManageTabV326==='published'
-            ?(growStampsLevelsSortedV350.length?growStampsLevelsSortedV350.map((reward,index)=>growStampsLevelRowV350(reward,index)).join(''):'<p class="muted small" style="margin-top:14px">No level yet — add one below.</p>')
-            :(growPointsHistoryV326.length?growPointsHistoryV326.slice().sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0)).map((reward,index)=>growStampsLevelRowV350(reward,index,{history:true})).join(''):'<p class="muted small" style="margin-top:14px">Nothing has been deleted yet.</p>')}
-          ${growPointsAddOpenV326?`<ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growPointsAddFormV326}</ul>`:canSetupGrow&&growPointsManageTabV326==='published'?`<button type="button" class="grow-stamps-addlevel-v350" data-grow-points-add-v326="1">+ Add another level</button>`:''}
+          ${growStampsLevelsSortedV350.length?growStampsHeadRowV356+growStampsLevelsSortedV350.map((reward,index)=>growStampsLevelRowV350(reward,index)).join(''):'<p class="muted small" style="margin-top:14px">No level yet — add one below.</p>'}
+          ${growPointsAddOpenV326==='form'?`<ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growPointsAddFormV326}</ul>`:canSetupGrow?`<button type="button" class="grow-stamps-addlevel-v350" data-grow-points-add-v326="1">+ Add another level</button>`:''}
         </div>
-        ${growStampsPreviewV350}
       </div>
+      ${growStampsSummaryV356}
+      <!-- V356 (owner: "preview can put below"): the customer preview was a right-hand column
+           squeezing the level table; it now sits full-width underneath it. -->
+      ${growStampsPreviewV350}
     </div>`;
   /* ============ V331 — TIERED MEMBERSHIP: A FULL PARALLEL IMMEDIATE-WRITE PAGE ================
      Owner ruling ("proceed all at once", 2026-08-15): NOT a read-only view over the existing
@@ -12423,7 +12489,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            subtitle under the H1, matching the mockup. Only that one view — the others already
            carry their own subtitle/blurb further down (blurb for a drilled tile, "Current
            setting: ..." for Points System, etc.), so a second one here would repeat it. -->
-      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='points'?`<p class="muted small" style="margin-top:4px">${esc(earningOverviewCopy)}</p>`:programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div>
+      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div>
       <div class="v150-title-actions">${programmeView==='list'?'<a class="btn ghost sm" href="#/grow/settings">'+CUI.icon('settings',{size:16})+'<span>More reward settings</span></a>':''}</div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
@@ -13193,17 +13259,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
     growRerenderV322({quiet:true});
   };
-  const growPointsAddAgain=outerMain.querySelector('[data-grow-points-add-again-v326]');
-  if(growPointsAddAgain)growPointsAddAgain.onclick=()=>{
-    growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
-    growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
-    growRerenderV322({quiet:true});
-  };
-  const growPointsAddDone=outerMain.querySelector('[data-grow-points-add-done-v326]');
-  if(growPointsAddDone)growPointsAddDone.onclick=()=>{
-    growPointsAddOpenV326='';
-    growRerenderV322({quiet:true});
-  };
+  /* V356: the 'prompt' state's own "Add another gift"/"Done" handlers are deleted with it — the
+     form now closes straight back to the list after a save. */
   /* V349: choosing/removing a photo rerenders the form (to swap in the new preview), and that
      rerender rebuilds the Name/Points/Description inputs from growPointsAddDraftV326 — whatever
      the owner had typed but not yet Saved was NOT in that draft object (only Save itself captured
@@ -13270,15 +13327,76 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsBusyV326=false;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
-    if(growPointsEditingV326){
-      growPointsEditingV326=null;growPointsAddOpenV326='';
-      toast('Gift updated');
-    }else{
-      toast('Gift added and live for customers');
-      growPointsAddOpenV326='prompt';
-    }
+    /* V356: the old 'prompt' state ("Gift saved and live... / Add another gift / Done") is gone.
+       It said "gift" on the Stamp Card page, where the thing just saved is a LEVEL, and it kept a
+       confirmation panel expanded where the mockup shows the list plus a dashed add card. Both
+       pages now close straight back — same rule V351 applied to Tiers. */
+    const wasEditingV356=Boolean(growPointsEditingV326);
+    growPointsEditingV326=null;growPointsAddOpenV326='';
+    toast(wasEditingV356
+      ?(growPointsIsStampsV326?'Level updated':'Gift updated')
+      :(growPointsIsStampsV326?'Level added and live for customers':'Gift added and live for customers'));
     growRerenderV322({quiet:true});
   };
+  /* ---- V356: Stamp Card inline row editing (owner mockup, photo 1) -------------------------
+     The mockup's Stamps/Reward/Description cells are live inputs and each row has its own
+     "Choose photo". Both write through business_update_reward_v326 — the SAME RPC the Edit form
+     uses — so there is no second write path to keep in sync, and no batch-save state to lose.
+     Every write re-reads all three fields from the row first (never trusting one changed field in
+     isolation), which is what stops a photo pick from discarding a value typed a second earlier —
+     the capture-before-write rule V349 established for the add form. */
+  const growStampsRowValuesV356=id=>{
+    const row=outerMain.querySelector(`[data-grow-stamps-row-v356="${CSS.escape(String(id))}"]`);
+    if(!row)return null;
+    const read=field=>row.querySelector(`[data-grow-stamps-field-v356="${field}"]`)?.value;
+    return {name:String(read('name')??'').trim(),
+            stamps:Math.round(Number(read('stamps')??'')),
+            description:String(read('description')??'').trim()};
+  };
+  /* No busy-guard inside the save itself, deliberately: the photo path awaits an upload first, and
+     a guard here would make a slow field-save silently swallow the photo the owner just picked.
+     Callers that can fire repeatedly (the field inputs) guard themselves instead. Two saves racing
+     is harmless — both read the same row and write the same values through the same RPC. */
+  const growStampsSaveRowV356=async(id,{imageRef}={})=>{
+    const values=growStampsRowValuesV356(id);
+    if(!values)return;
+    if(!values.name){growPointsErrorV326='Name the reward customers will see.';return growRerenderV322({quiet:true});}
+    if(!Number.isFinite(values.stamps)||values.stamps<=0){growPointsErrorV326='Stamps required must be a positive number.';return growRerenderV322({quiet:true});}
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
+    const {error}=await sb.rpc('business_update_reward_v326',{
+      p_business:S.biz.id,p_reward:id,p_name:values.name,p_points:values.stamps,
+      p_description:values.description||null,p_credit_cents:0,
+      p_image_ref:imageRef||null,p_clear_image:false});
+    if(!isGrowCurrent())return;
+    growPointsBusyV326=false;
+    if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    toast('Level updated');
+    growRerenderV322({quiet:true});
+  };
+  outerMain.querySelectorAll('[data-grow-stamps-field-v356]').forEach(field=>{
+    const row=field.closest('[data-grow-stamps-row-v356]');
+    if(!row)return;
+    field.onchange=()=>{
+      if(growPointsBusyV326)return;
+      growStampsSaveRowV356(row.dataset.growStampsRowV356);
+    };
+  });
+  outerMain.querySelectorAll('[data-grow-stamps-photo-v356]').forEach(input=>input.onchange=async()=>{
+    const file=input.files?.[0];
+    if(!file)return;
+    /* No rerender before the upload: it would rebuild this row from server state and throw away
+       anything typed but not yet blurred. The upload's own await is the serialization point. */
+    const id=input.dataset.growStampsPhotoV356;
+    growPointsErrorV326='';
+    let imageRef;
+    try{imageRef=await uploadRewardPhotoV326(file)}
+    catch(uploadError){
+      growPointsErrorV326=uploadError?.message||'The photo could not be uploaded.';
+      return growRerenderV322({quiet:true});
+    }
+    if(!isGrowCurrent())return;
+    await growStampsSaveRowV356(id,{imageRef});
+  });
   outerMain.querySelectorAll('[data-grow-points-gift-toggle-v326]').forEach(button=>button.onclick=async()=>{
     if(growPointsBusyV326)return;
     const id=button.dataset.growPointsGiftToggleV326;
