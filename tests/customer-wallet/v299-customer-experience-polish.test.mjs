@@ -115,6 +115,13 @@ test('compact customer pills and programme card metrics are optically centered',
   assert.match(indexHtml,/\.customer-programme-card-v95 \.customer-programme-card-balance span\{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;transform:none!important\}/);
 });
 
+test('business detail address and call actions share the merchant header row',()=>{
+  assert.match(indexHtml,/\/\* V365: business quick actions sit beside the merchant name to remove the extra row\. \*\//);
+  assert.match(indexHtml,/\.customer-business-header-v346\{grid-template-columns:28px minmax\(0,1fr\) minmax\(142px,158px\)!important;gap:8px!important;align-items:center!important;min-height:56px!important\}/);
+  assert.match(indexHtml,/\.customer-business-actions-v346\{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:minmax\(0,1fr\) 56px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important\}/);
+  assert.match(indexHtml,/\.customer-business-profile-v346 \.customer-business-summary-v346\{margin-top:2px!important\}/);
+});
+
 test('business profile shortcuts are relationship-specific, not static decoration',()=>{
   const helperStart=app.indexOf('function customerBusinessDashboardModulesV347');
   const helper=app.slice(helperStart,app.indexOf('/* v340',helperStart));
