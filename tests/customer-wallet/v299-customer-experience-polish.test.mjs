@@ -94,14 +94,14 @@ test('home and rewards cards keep points/stamps labels honest and compact',()=>{
 });
 
 test('customer surface uses the warm premium accent palette without changing the app background',()=>{
-  assert.match(indexHtml,/--peekaa-red:#E89A72;--peekaa-red-dark:#D9825E;--peekaa-red-soft:#F9E7DD;--peekaa-red-faint:#FFF3D6;/);
+  assert.match(indexHtml,/--peekaa-red:#F06A4F;--peekaa-red-dark:#D94A38;--peekaa-red-soft:#FFE1D7;--peekaa-red-faint:#FFF0EA;/);
   assert.match(indexHtml,/--peekaa-bg:#F8F4F1;/,
     'the existing customer app background must stay exactly unchanged');
   assert.match(indexHtml,/--peekaa-text:#251F1B;--peekaa-text-secondary:#7C746E;/);
   assert.match(indexHtml,/--peekaa-success:#4F8A72;--peekaa-success-bg:#E7F3ED;/);
   assert.match(indexHtml,/--peekaa-gold:#D8B15A;--peekaa-gold-bg:#FFF3D6;/);
   assert.match(indexHtml,/\/\* V361: warm premium customer accents\. The page background stays on --peekaa-bg exactly as-is\. \*\//);
-  assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:0 8px 22px rgba\(232,154,114,\.24\)!important\}/);
+  assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:0 8px 22px rgba\(240,106,79,\.28\)!important\}/);
   assert.match(indexHtml,/\.customer-primary-nav a\[aria-current="page"\],[^{]+\.is-active\{background:var\(--peekaa-red-soft\)!important;border-color:var\(--peekaa-red\)!important;color:var\(--peekaa-red\)!important\}/);
   assert.match(indexHtml,/\.customer-claimable-banner-v337,\.customer-claimable-strip\{border-color:var\(--peekaa-gold\)!important;background:var\(--peekaa-gold-bg\)!important/);
   assert.match(indexHtml,/\.customer-surface \.pill\.ok\{background:var\(--peekaa-success-bg\)!important;color:var\(--peekaa-success\)!important\}/);
