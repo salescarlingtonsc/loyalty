@@ -12029,6 +12029,111 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           :(growPointsHistoryV326.length?growPointsHistoryV326.map(reward=>growPointsGiftRowV326(reward,{history:true})).join(''):'<li class="muted small" style="cursor:default">Nothing has been deleted yet.</li>')}
         ${growPointsAddCardV343}
       </ul>`;
+  /* ============ V350 — STAMP CARD: OWN INTERFACE, SHARED PLUMBING ==============================
+     Owner (2026-08-16): "when clicked stamp card > it should not link to points system. should be
+     stamp's own interface." Stamps and points already share one data model (loyalty_rewards rows
+     scoped by programme spine kind, cost_points doubling as "stamps required") and every RPC
+     above (business_create_reward_v326/business_update_reward_v326/
+     business_set_reward_paused_v326/business_delete_reward_v326) and every add/edit/photo click
+     handler below is already generic over both — none of that changes. Only the TEMPLATE differs:
+     a numbered level table (Level / Stamps required / Reward / Description / Photo / status /
+     actions) instead of the flat gift-card list, plus a live "Customer preview" ladder panel
+     matching the owner's mockup. Reuses growPointsAddFormV326 verbatim for add/edit (its own
+     "Points"/"Stamps" field label already branches on growPointsIsStampsV326), and every
+     data-grow-points-* attribute below is wired by the EXACT SAME handlers the Points page uses —
+     nothing about save/edit/delete/toggle/photo-upload is stamps-specific or duplicated. */
+  const growStampsLevelsSortedV350=growPointsPublishedV326.slice()
+    .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0));
+  const growStampsLevelRowV350=(reward,index)=>{
+    const name=reward.customer_name||reward.name||'Reward';
+    const stamps=Math.max(0,Number(reward.cost_points||0));
+    const photoUrl=customerMediaUrlV95(reward.image_ref);
+    const paused=reward.paused===true;
+    const confirmOpen=growPointsDeletePendingV326===String(reward.id);
+    return `<div class="grow-stamps-level-row-v350" data-grow-points-giftrow-v326="${esc(reward.id)}">
+      <span class="grow-stamps-level-badge-v350" aria-hidden="true">${CUI.icon('star',{size:16})}<b>${index+1}</b></span>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Level</label><b data-merchant-content>Level ${index+1}</b></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Stamps required</label><span class="grow-stamps-static-v350" data-merchant-content>${stamps}</span></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Reward</label><span class="grow-stamps-static-v350" data-merchant-content>${esc(name)}</span></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Description</label><span class="grow-stamps-static-v350 muted" data-merchant-content>${reward.description?esc(reward.description):'—'}</span></div>
+      <div class="grow-stamps-level-col-v350"><label class="muted small">Photo</label>${photoUrl?`<img src="${esc(photoUrl)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">`:`<span class="muted small">No photo</span>`}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+        ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
+        <button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
+        <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`
+        :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${paused?'OFF':'ON'}</span>`}
+      </div>
+      <div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(reward.id)}" style="grid-column:1/-1;margin-top:4px"${confirmOpen?'':' hidden'}>
+        <b>Delete Level ${index+1} (${esc(name)})?</b>
+        <p class="muted small" style="margin-top:6px">It moves to History. Customers can no longer redeem it.</p>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-gift-delete-yes-v326="${esc(reward.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-points-gift-delete-no-v326="1">Cancel</button></div>
+      </div>
+    </div>`;
+  };
+  /* Live "Customer preview" ladder — same stop/line/percent-position mechanics as the Tiers page's
+     own growTiersLadderV343, adapted to stamp milestones with a gift icon per stop and a demo
+     avatar row. There is no real customer in this editor, so progress is shown at 0 collected —
+     honestly a template preview, not a live reading of any actual customer's card. */
+  const growStampsMaxV350=Math.max(1,...growStampsLevelsSortedV350.map(reward=>Number(reward.cost_points||0)));
+  const growStampsPreviewV350=`<div class="grow-stamps-preview-card-v350">
+    <b>Customer preview</b>
+    <p class="muted small" style="margin-top:2px">Here's how your stamp card will look to customers.</p>
+    <div class="grow-stamps-preview-hero-v350"><b data-merchant-content>${esc(S.biz?.name||'Stamp Card')}</b><p class="small">Collect stamps and unlock rewards!</p></div>
+    ${growStampsLevelsSortedV350.length?`<div class="grow-tier-ladder-v343" aria-label="Stamp levels">
+      <div class="grow-tier-ladder-line-v343"></div>
+      ${growStampsLevelsSortedV350.map(reward=>{
+        const stamps=Math.max(0,Number(reward.cost_points||0));
+        const pct=Math.max(0,Math.min(100,(stamps/growStampsMaxV350)*100));
+        return `<span class="grow-tier-ladder-stop-v343" style="left:${pct}%"><i></i><b data-merchant-content>${esc(reward.customer_name||reward.name||'Reward')}</b><small>${stamps} stamp${stamps===1?'':'s'}</small></span>`;
+      }).join('')}
+    </div>
+    <p class="muted small" style="margin-top:22px">0 of ${growStampsMaxV350} stamps collected</p>`
+    :'<p class="muted small" style="margin-top:14px">Add a level below to see the preview.</p>'}
+  </div>`;
+  const growStampsPageV350=!canRewards
+    ?CUI.emptyState({iconName:'till',title:'Loyalty is not included',
+        body:'This workspace does not include the loyalty module, so there is no stamp card to manage.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
+    :!growPointsConfiguredV326
+    ?CUI.emptyState({iconName:'till',title:'Stamp Card system is not set up yet',
+        body:'Choose the stamp card, set how many stamps a visit earns, and add a first level customers can climb to.',
+        actionHtml:canSetupGrow
+          ?'<button type="button" class="btn sm" id="growPointsSetupV326">Set up Stamp Card system</button>'
+          :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
+    :`<div class="grow-stamps-page-v350">
+      <div class="grow-stamps-header-v350"><span class="grow-stamps-header-icon-v350" aria-hidden="true">${CUI.icon('star',{size:24})}</span>
+        <span><b>Stamp Card system</b><p class="muted small" style="margin:2px 0 0">Set rewards by stamp milestones</p></span>
+        <span class="spacer"></span>
+        <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+          ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
+          <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">Add level</button>
+          <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
+          :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
+          ${growPointsTabStripV326}
+        </span>
+      </div>
+      <div class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
+        <b>${growPointsOnV326?'Turn Stamp Card system off for customers?':'Turn Stamp Card system on for customers?'}</b>
+        <p class="muted small" style="margin-top:6px">${growPointsOnV326
+          ?'Customers stop earning and stop being able to claim rewards straight away. Everything you have set up stays saved and comes back when you turn it on again.'
+          :growPointsLosingV326.length
+            ?`${esc(growPointsLosingV326.map(other=>(growProgrammeSwitchKindsV322.find(row=>row[0]===other)||[,other])[1]).join(' and '))} ${growPointsLosingV326.length===1?'runs':'run'} separately, so turning this on switches ${growPointsLosingV326.length===1?'it':'them'} off. Their setup stays saved.`
+            :'Customers can start earning straight away.'}</p>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-switchconfirm-yes-v322="${growPointsSpineKindV326}">${growPointsOnV326?'Turn it off':'Turn it on'}</button><button type="button" class="btn ghost sm" data-grow-switchconfirm-no-v322="1">Cancel</button></div>
+      </div>
+      ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
+      <div class="grow-stamps-body-v350">
+        <div class="grow-stamps-levels-v350">
+          <b>Stamp reward levels</b>
+          <p class="muted small" style="margin-top:2px">Customers unlock rewards at different stamp milestones. Add, edit, or remove levels anytime.</p>
+          ${growPointsManageTabV326==='published'
+            ?(growStampsLevelsSortedV350.length?growStampsLevelsSortedV350.map(growStampsLevelRowV350).join(''):'<p class="muted small" style="margin-top:14px">No level yet — add one below.</p>')
+            :(growPointsHistoryV326.length?growPointsHistoryV326.map(reward=>growPointsGiftRowV326(reward,{history:true})).join(''):'<p class="muted small" style="margin-top:14px">Nothing has been deleted yet.</p>')}
+          ${growPointsAddOpenV326?`<ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growPointsAddFormV326}</ul>`:canSetupGrow&&growPointsManageTabV326==='published'?`<button type="button" class="grow-stamps-addlevel-v350" data-grow-points-add-v326="1">+ Add another level</button>`:''}
+        </div>
+        ${growStampsPreviewV350}
+      </div>
+    </div>`;
   /* ============ V331 — TIERED MEMBERSHIP: A FULL PARALLEL IMMEDIATE-WRITE PAGE ================
      Owner ruling ("proceed all at once", 2026-08-15): NOT a read-only view over the existing
      draft/publish tier editor — a genuine second immediate-write surface, mirroring the Points
@@ -12305,7 +12410,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})):''}
       ${programmeView==='overview'?growOverviewTableV271:''}
       ${programmeView==='history'?growHistoryTableV271:''}
-      ${programmeView==='points'?growPointsManageV326:''}
+      ${programmeView==='points'?(growPointsIsStampsV326?growStampsPageV350:growPointsManageV326):''}
       ${programmeView==='tiers'?growTiersManageV331:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone

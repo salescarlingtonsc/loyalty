@@ -1195,6 +1195,24 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-tier-ladder-stop-v343 i{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid #C98D32;box-shadow:0 0 0 2px #fff}
 .grow-tier-ladder-stop-v343 b{margin-top:14px;font-size:.95rem}
 .grow-tier-ladder-stop-v343 small{color:var(--muted);font-size:.82rem}
+/* V350 (owner mockup, photo 1): the Stamp Card page's own interface — a numbered level table plus
+   a live customer-preview panel — replacing the shared gift-list template Stamps used to borrow
+   from the Points page. */
+.grow-stamps-page-v350{background:#fff;border:1px solid var(--hair);border-radius:16px;box-shadow:0 14px 34px rgba(48,36,28,.07);padding:20px 24px}
+.grow-stamps-header-v350{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.grow-stamps-header-icon-v350{width:48px;height:48px;min-width:48px;border-radius:14px;background:var(--tint);color:var(--coral);display:flex;align-items:center;justify-content:center}
+.grow-stamps-body-v350{display:grid;grid-template-columns:1.6fr 1fr;gap:22px;margin-top:22px;align-items:start}
+@media(max-width:980px){.grow-stamps-body-v350{grid-template-columns:1fr}}
+.grow-stamps-levels-v350{min-width:0}
+.grow-stamps-level-row-v350{display:grid;grid-template-columns:auto 1fr 1fr 1.4fr 1.6fr auto auto;gap:14px;align-items:center;padding:16px 4px;border-bottom:1px solid var(--line)}
+@media(max-width:1180px){.grow-stamps-level-row-v350{grid-template-columns:1fr 1fr;row-gap:8px}}
+.grow-stamps-level-badge-v350{display:flex;align-items:center;gap:6px;color:var(--coral);font-weight:800}
+.grow-stamps-level-col-v350{display:flex;flex-direction:column;gap:4px;min-width:0}
+.grow-stamps-static-v350{border:1px solid var(--control-border);border-radius:10px;padding:8px 10px;font-weight:600;overflow-wrap:anywhere}
+.grow-stamps-addlevel-v350{width:100%;margin-top:10px;padding:14px;border:1px dashed var(--control-border);border-radius:14px;background:transparent;color:var(--coral);font-weight:700;cursor:pointer;text-align:center}
+.grow-stamps-preview-card-v350{background:linear-gradient(180deg,#FFF3EC,#FFF9F5);border:1px solid #F2D5C0;border-radius:16px;padding:18px}
+.grow-stamps-preview-hero-v350{margin-top:14px;padding:16px;border-radius:14px;background:#fff}
+.grow-stamps-preview-hero-v350 p{margin-top:2px;color:var(--muted)}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331],
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]{gap:18px}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li,
@@ -2627,7 +2645,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=a52d9e59ee53","business":"/app-business.js?b=b0729c995b86","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=a52d9e59ee53","business":"/app-business.js?b=bbcde9c7cfc6","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
