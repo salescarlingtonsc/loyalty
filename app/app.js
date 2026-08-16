@@ -21156,29 +21156,41 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     ...(services.data||[]).map(row=>({kind:'service',id:row.id,name:row.name})),
     ...(products.data||[]).map(row=>({kind:'product',id:row.id,name:row.name}))
   ];
-  if(!items.length)return toast('Add a service or product first — the welcome offer gives one away');
-  const selected=current?.reward_catalog_id
-    ?`${current.reward_catalog_kind}:${current.reward_catalog_id}`
-    :`${items[0].kind}:${items[0].id}`;
+  /* V350 (owner, photo 3): "Free item does not need to be owner's own products, can be anything
+     else." A business with no catalogue at all used to be unable to set a welcome offer here;
+     now "Something else" is always an option, and is the only one when the catalogue is empty. */
+  const isCustomCurrent=current?.reward_catalog_kind==='custom';
+  const selected=isCustomCurrent?'custom'
+    :current?.reward_catalog_id?`${current.reward_catalog_kind}:${current.reward_catalog_id}`
+    :items.length?`${items[0].kind}:${items[0].id}`:'custom';
   const minValue=Number(current?.min_spend_cents)||0;
   document.querySelector('#welcomeOfferModalV215')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="welcomeOfferModalV215" role="dialog" aria-modal="true" aria-labelledby="welcomeOfferTitleV215" tabindex="-1">
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal welcome-offer-modal-v350" id="welcomeOfferModalV215" role="dialog" aria-modal="true" aria-labelledby="welcomeOfferTitleV215" tabindex="-1">
     <section class="modal-card" style="max-width:560px">
-      <div class="row"><div><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px">Welcome offer</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button></div>
-      <p class="muted small">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p>
-      <label class="check-row" style="margin-top:12px"><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}><span>Give new sign-ups a welcome offer</span></label>
-      <label for="welcomeItemV215" style="margin-top:14px">Free item</label>
-      <select id="welcomeItemV215">${items.map(item=>`<option value="${esc(item.kind+':'+item.id)}" ${selected===item.kind+':'+item.id?'selected':''}>${esc(item.name)} (${item.kind})</option>`).join('')}</select>
-      <fieldset style="margin-top:16px;border:0;padding:0">
+      <div class="row" style="align-items:flex-start;gap:12px">
+        <div><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px;font-size:1.7rem">Welcome offer</h2>
+        <p class="muted small" style="margin-top:8px">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p></div>
+        <span class="spacer"></span>
+        <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('giftcard',{size:34})}</span>
+      </div>
+      <button type="button" class="btn ghost sm welcome-offer-close-v350" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button>
+      <label class="welcome-offer-togglerow-v350" style="margin-top:16px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><b>Give new sign-ups a welcome offer</b><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}></label>
+      <label for="welcomeItemV215" style="margin-top:16px">Free item</label>
+      <select id="welcomeItemV215">${items.map(item=>`<option value="${esc(item.kind+':'+item.id)}" ${selected===item.kind+':'+item.id?'selected':''}>${esc(item.name)} (${item.kind})</option>`).join('')}<option value="custom" ${selected==='custom'?'selected':''}>Something else…</option></select>
+      <div id="welcomeCustomLabelWrapV350"${selected==='custom'?'':' hidden'} style="margin-top:10px">
+        <label for="welcomeCustomLabelV350" class="muted small">What is it?</label>
+        <input id="welcomeCustomLabelV350" placeholder="e.g. Free thank-you card" value="${esc(current?.custom_label||(!items.length&&current?.reward_label)||'')}" maxlength="120">
+      </div>
+      <fieldset style="margin-top:18px;border:0;padding:0">
         <legend class="small"><b>When can they claim it?</b></legend>
-        <label class="check-row"><input type="radio" name="welcomeMinV215" value="none" ${minValue?'':'checked'}><span>Straight away — no minimum spend</span></label>
-        <label class="check-row"><input type="radio" name="welcomeMinV215" value="min" ${minValue?'checked':''}><span>After they spend a minimum amount</span></label>
+        <label class="welcome-offer-optioncard-v350${minValue?'':' selected'}" style="margin-top:10px"><input type="radio" name="welcomeMinV215" value="none" ${minValue?'':'checked'}><span><b>Straight away — no minimum spend</b><p class="muted small" style="margin-top:2px">They can claim the offer as soon as they join.</p></span></label>
+        <label class="welcome-offer-optioncard-v350${minValue?' selected':''}"><input type="radio" name="welcomeMinV215" value="min" ${minValue?'checked':''}><span><b>After they spend a minimum amount</b><p class="muted small" style="margin-top:2px">They must spend at least the minimum amount first.</p></span></label>
         <label for="welcomeMinAmountV215" style="margin-top:10px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
         <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
       </fieldset>
       <label for="welcomeExpiryV215" style="margin-top:14px">Expires after (days, optional)</label>
       <input id="welcomeExpiryV215" inputmode="numeric" placeholder="Leave blank for no expiry" value="${current?.expiry_days?String(current.expiry_days):''}">
-      <p class="muted small" style="margin-top:12px">Staff give the item from Record sale after looking the customer up. Nothing is charged, and the visit is recorded at zero.</p>
+      <p class="welcome-offer-infobox-v350"><span aria-hidden="true">${CUI.icon('info',{size:16})}</span><span>Staff give the item from Record sale after looking the customer up. Nothing is charged, and the visit is recorded at zero.</span></p>
       <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="welcomeSaveV215">Save welcome offer</button><button type="button" class="btn ghost sm" id="welcomeCancelV215">Cancel</button></div>
     </section></div>`);
   const dialog=$('welcomeOfferModalV215');
@@ -21190,9 +21202,17 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const syncMin=()=>{
     const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
     $('welcomeMinAmountV215').disabled=!wantsMin;
+    document.querySelectorAll('.welcome-offer-optioncard-v350').forEach(card=>{
+      card.classList.toggle('selected',card.querySelector('input').checked);
+    });
   };
   document.querySelectorAll('input[name="welcomeMinV215"]').forEach(radio=>radio.onchange=syncMin);
   syncMin();
+  const syncItem=()=>{
+    $('welcomeCustomLabelWrapV350').hidden=$('welcomeItemV215').value!=='custom';
+  };
+  $('welcomeItemV215').onchange=syncItem;
+  syncItem();
   $('welcomeSaveV215').onclick=async()=>{
     const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
     let minCents=0;
@@ -21208,11 +21228,19 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       if(!/^\d+$/.test(expiryRaw)||Number(expiryRaw)<1||Number(expiryRaw)>3650)return toast('Expiry must be a whole number of days from 1 to 3650');
       expiry=Number(expiryRaw);
     }
-    const [kind,id]=String($('welcomeItemV215').value||'').split(':');
+    const itemValue=String($('welcomeItemV215').value||'');
+    let kind,id,customLabel=null;
+    if(itemValue==='custom'){
+      kind='custom';id=null;
+      customLabel=String($('welcomeCustomLabelV350').value||'').trim();
+      if(!customLabel)return toast('Say what the free item is');
+    }else{
+      [kind,id]=itemValue.split(':');
+    }
     const {error}=await sb.rpc('business_set_welcome_offer_v215',{
       p_business:S.biz.id,p_active:$('welcomeActiveV215').checked,
       p_min_spend_cents:minCents,p_reward_catalog_kind:kind,
-      p_reward_catalog_id:id,p_expiry_days:expiry
+      p_reward_catalog_id:id,p_expiry_days:expiry,p_custom_label:customLabel
     });
     if(error)return fail(error);
     toast('Welcome offer saved');
