@@ -307,7 +307,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
   /* 132 -> 133: V362 adds bringbackVoucherGiven — the till's bring-back voucher toast names the
      item handed over, exactly as welcomeOfferGiven does for the welcome gift, so it is reviewed
      interpolated copy rather than a raw template literal. Three locales, one {item} placeholder. */
-  assert.equal(keys.length,133,'mixed-interface interpolation inventory changed without review');
+  /* 133 -> 133 (V364/V365, net zero): the four growPublished* entries retired with the "How the
+     programme fits together" block are replaced by the four tier-benefit till toasts.
+     133 -> 135: V367 adds tierBenefitBirthdayOnly and tierBenefitBirthdayUnknown — the two
+     refusals a birthday-month benefit can produce at the counter, each naming the benefit, with
+     all three locales and one {item} placeholder. */
+  assert.equal(keys.length,135,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

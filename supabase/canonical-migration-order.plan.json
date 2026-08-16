@@ -2038,6 +2038,12 @@
       "version": "20260816000012",
       "name": "nestly_v365_tier_benefit_limits",
       "sourcePath": "db/migrations/20260816_nestly_v365_tier_benefit_limits.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000001",
+      "name": "nestly_v367_birthday_month_benefit_period",
+      "sourcePath": "db/migrations/20260817_nestly_v367_birthday_month_benefit_period.sql"
     }
   ]
 }

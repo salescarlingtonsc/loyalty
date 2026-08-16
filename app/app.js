@@ -808,15 +808,25 @@ const GROW_TIER_BENEFIT_TEMPLATES_V363=Object.freeze([
    per month - must be stated clearly)". The periods are the ones a shop actually rosters by;
    'ever' covers a once-in-a-lifetime perk. The sentence built here MIRRORS app.v365_benefit_sentence
    in the migration, so the preview an owner sees while typing is the text the server stores. */
+/* V367 (owner, photo 2: "add during birthday month (because there are birthday rewards given)
+   and set how many times (example 1time)"). A sixth period whose window differs per customer —
+   the till refuses it outside the customer's own birth month, and a profile with no birth date
+   is refused rather than guessed. */
 const GROW_TIER_BENEFIT_PERIODS_V365=Object.freeze([['day','per day'],['week','per week'],
-  ['month','per month'],['year','per year'],['ever','in total']]);
+  ['month','per month'],['year','per year'],['ever','in total'],
+  ['birthday_month','during birthday month']]);
 function growTierBenefitSentenceV365(benefit){
   const label=String(benefit?.label||'').trim();
   const limit=Number(benefit?.limit_count);
   if(!label)return '';
-  if(!Number.isFinite(limit)||limit<=0)return label;
   const period=String(benefit?.limit_period||'month');
-  return `${label} — ${Math.round(limit)} ${period==='ever'?'in total':`per ${period}`}`;
+  /* Mirrors app.v365_benefit_sentence exactly, including V367's unlimited-but-birthday-only case
+     — an unlimited benefit normally reads as bare text, but "during their birthday month" is a
+     restriction the customer must be told about even when there is no count. */
+  if(!Number.isFinite(limit)||limit<=0)return period==='birthday_month'?`${label} — during their birthday month`:label;
+  const n=Math.round(limit);
+  if(period==='birthday_month')return `${label} — ${n} during their birthday month`;
+  return `${label} — ${n} ${period==='ever'?'in total':`per ${period}`}`;
 }
 /* V363 helpers. Kept beside the template list, not inside growPage, because both the renderer
    and the click handlers use them and neither owns the other. */
@@ -13273,6 +13283,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   tierBenefitAlreadyGiven:Object.freeze({en:'{item} was already given.','zh-CN':'{item} 已经提供过了。',ms:'{item} telah pun diberi.'}),
   tierBenefitUsedUp:Object.freeze({en:'{item} is already used up for this period.','zh-CN':'{item} 在本期内已用完。',ms:'{item} telah habis digunakan untuk tempoh ini.'}),
   tierBenefitNotEarned:Object.freeze({en:'This customer\'s tier does not include {item}.','zh-CN':'该顾客的等级不包含 {item}。',ms:'Peringkat pelanggan ini tidak termasuk {item}.'}),
+  tierBenefitBirthdayOnly:Object.freeze({en:'{item} can only be given in the customer\'s birthday month.','zh-CN':'{item} 只能在顾客生日当月提供。',ms:'{item} hanya boleh diberi dalam bulan hari jadi pelanggan.'}),
+  tierBenefitBirthdayUnknown:Object.freeze({en:'Add this customer\'s date of birth before giving {item}.','zh-CN':'请先填写该顾客的出生日期，才能提供 {item}。',ms:'Tambah tarikh lahir pelanggan ini sebelum memberi {item}.'}),
   sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
   catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
   catalogueDisabled:Object.freeze({en:'Catalogue-first checkout disabled','zh-CN':'已停用目录优先结账',ms:'Pembayaran katalog dahulu dinyahaktifkan'}),
@@ -13370,6 +13382,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'packageVersionCreated',
   'giftCardLoaded','sessionUsed','welcomeOfferGiven','bringbackVoucherGiven',
   'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned',
+  'tierBenefitBirthdayOnly','tierBenefitBirthdayUnknown',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
@@ -17494,11 +17507,15 @@ async function tillPage(){
             <p class="muted small" style="margin:5px 0">Earned by reaching ${esc(catalog.customerTierBenefits?.tier?.label||'this tier')}. Give one when the customer asks for it.</p>
             ${tierBenefitsV365.map(benefit=>{
               const spent=benefit.remaining!==null&&benefit.remaining!==undefined&&Number(benefit.remaining)<=0;
+              /* V367: a birthday-month benefit outside the customer's own birth month is shown
+                 with the reason rather than a Give button that the server would only refuse. */
+              const blockedV367=benefit.claimable_now===false;
               return `<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
                 <span style="flex:1;min-width:160px"><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
                 ${benefit.limit_count==null?'<span class="muted small" style="display:block">No limit</span>'
                   :`<span class="muted small" style="display:block">${Math.max(0,Number(benefit.remaining)||0)} left ${benefit.limit_period==='ever'?'in total':`this ${esc(benefit.limit_period||'month')}`}</span>`}</span>
-                ${spent?'<span class="pill off">Used up</span>'
+                ${blockedV367?'<span class="pill off">Birthday month only</span>'
+                  :spent?'<span class="pill off">Used up</span>'
                   :`<button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>`}
               </div>`}).join('')}</div>`
           :'';
@@ -17682,6 +17699,9 @@ async function tillPage(){
         const message=String(error?.message||'');
         if(message.includes('tier_benefit_limit_reached'))return toast(workspaceTemplateTextV97('tierBenefitUsedUp',{item:label}));
         if(message.includes('tier_benefit_not_earned'))return toast(workspaceTemplateTextV97('tierBenefitNotEarned',{item:label}));
+        /* V367: the two birthday-month refusals, in the counter's own words. */
+        if(message.includes('tier_benefit_not_birthday_month'))return toast(workspaceTemplateTextV97('tierBenefitBirthdayOnly',{item:label}));
+        if(message.includes('tier_benefit_birthday_unknown'))return toast(workspaceTemplateTextV97('tierBenefitBirthdayUnknown',{item:label}));
         return fail(error);
       }
       toast(workspaceTemplateTextV97(data?.status==='duplicate_ignored'?'tierBenefitAlreadyGiven':'tierBenefitGiven',{item:label}));
@@ -21595,7 +21615,7 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
   const kindNow=current?.fulfillment_kind==='discount_pct'?'discount_pct':'free_item';
   const monthMode=(current?.window_mode||'month')!=='days';
   document.querySelector('#birthdayBenefitModalV364')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="birthdayBenefitModalV364" role="dialog" aria-modal="true" aria-labelledby="birthdayBenefitTitleV364" tabindex="-1">
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal birthday-gift-modal-v366" id="birthdayBenefitModalV364" role="dialog" aria-modal="true" aria-labelledby="birthdayBenefitTitleV364" tabindex="-1">
     <section class="modal-card" style="max-width:560px">
       <div class="row" style="align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="birthdayBenefitTitleV364" style="margin-top:4px">Birthday gift</h2>
@@ -21621,9 +21641,9 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
         <legend class="small"><b>When can they use it?</b></legend>
         <label class="welcome-offer-optioncard-v350${monthMode?' selected':''}" style="margin-top:10px"><input type="radio" name="birthdayWindowV364" value="month" ${monthMode?'checked':''}><span><b>Their whole birthday month</b><p class="muted small" style="margin-top:2px">Simplest, and what most customers expect.</p></span></label>
         <label class="welcome-offer-optioncard-v350${monthMode?'':' selected'}"><input type="radio" name="birthdayWindowV364" value="days" ${monthMode?'':'checked'}><span><b>A window around the exact date</b><p class="muted small" style="margin-top:2px">Choose how many days either side.</p></span></label>
-        <div id="birthdayDaysWrapV364"${monthMode?' hidden':''} class="row" style="gap:10px;margin-top:10px;flex-wrap:wrap">
-          <span><label for="birthdayBeforeV364" class="muted small">Days before</label><input id="birthdayBeforeV364" inputmode="numeric" style="max-width:120px" value="${Number(current?.window_days_before)||0}"></span>
-          <span><label for="birthdayAfterV364" class="muted small">Days after</label><input id="birthdayAfterV364" inputmode="numeric" style="max-width:120px" value="${Number(current?.window_days_after)||0}"></span>
+        <div id="birthdayDaysWrapV364"${monthMode?' hidden':''} class="row birthday-days-v366" style="gap:10px;margin-top:10px;flex-wrap:wrap">
+          <span><label for="birthdayBeforeV364" class="muted small">Days before</label><input id="birthdayBeforeV364" inputmode="numeric" value="${Number(current?.window_days_before)||0}"></span>
+          <span><label for="birthdayAfterV364" class="muted small">Days after</label><input id="birthdayAfterV364" inputmode="numeric" value="${Number(current?.window_days_after)||0}"></span>
         </div>
       </fieldset>
       ${/* The three copy fields the DB requires (label/description/terms are NOT NULL on

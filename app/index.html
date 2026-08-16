@@ -751,6 +751,41 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .welcome-offer-modal-v350 legend.small{margin-bottom:2px}
 .welcome-offer-modal-v350 .welcome-offer-infobox-v350{display:flex;align-items:flex-start;gap:8px;margin-top:16px;padding:10px 12px;border-radius:12px;background:#FBF3E7;color:var(--ink);font-size:13px}
 .welcome-offer-modal-v350 .welcome-offer-infobox-v350>span:first-child{color:var(--amber);flex-shrink:0;margin-top:1px}
+/* V366 — the Birthday gift modal (owner markup, photo 1: oversized checkbox, a double-outlined
+   dropdown, oversized radios, and timing options spread too far apart). Every one of those is the
+   same root cause: the modal reused the welcome-offer MARKUP but not its class, so its controls
+   fell through to the global `input,select,textarea{width:100%;min-height:var(--control-h)}` rule
+   and a checkbox became a 44px square. This is the welcome-offer treatment, scoped to its own
+   class and tightened to the sizes the owner asked for. */
+.birthday-gift-modal-v366 .welcome-offer-togglerow-v350{display:flex;align-items:center;gap:10px;min-height:52px;padding:9px 14px;border:1px solid var(--control-border);border-radius:12px;background:#FBFAF8;cursor:pointer}
+.birthday-gift-modal-v366 .welcome-offer-togglerow-v350>b{flex:1;min-width:0;font-size:15px}
+.birthday-gift-modal-v366 .welcome-offer-togglerow-icon-v350{width:28px;height:28px;min-width:28px;border-radius:9px;background:#FFF0ED;color:var(--coral);display:flex;align-items:center;justify-content:center}
+/* Issue 1 — a standard compact checkbox, fixed box so the row cannot grow when it is ticked. */
+.birthday-gift-modal-v366 .welcome-offer-togglerow-v350 input[type="checkbox"]{margin-left:auto;flex:none;
+  width:22px;height:22px;min-width:22px;max-width:22px;min-height:22px;max-height:22px;
+  appearance:auto;-webkit-appearance:checkbox;accent-color:var(--coral);cursor:pointer}
+/* Issue 2 — one border, not two. The global focus ring is 3.5px and read as a second outline
+   around the select; inside this modal focus is a thin coral border with a soft 2px halo. */
+.birthday-gift-modal-v366 select,.birthday-gift-modal-v366 input[type="text"],
+.birthday-gift-modal-v366 input:not([type]),.birthday-gift-modal-v366 textarea{box-shadow:none}
+.birthday-gift-modal-v366 select:focus,.birthday-gift-modal-v366 input:focus,
+.birthday-gift-modal-v366 textarea:focus{border-color:var(--coral);box-shadow:0 0 0 2px rgba(194,65,53,.12)}
+/* Issues 3 and 4 — compact selectable rows (~30% tighter) with a normal-sized radio. */
+.birthday-gift-modal-v366 .welcome-offer-optioncard-v350{display:flex;align-items:center;gap:10px;
+  min-height:auto;padding:11px 14px;border:1px solid var(--control-border);border-radius:12px;margin-top:6px;cursor:pointer}
+.birthday-gift-modal-v366 .welcome-offer-optioncard-v350>span{flex:1;min-width:0}
+.birthday-gift-modal-v366 .welcome-offer-optioncard-v350 b{font-size:15px;font-weight:650;display:block}
+.birthday-gift-modal-v366 .welcome-offer-optioncard-v350 p{font-size:13.5px;margin-top:1px!important;overflow-wrap:anywhere}
+.birthday-gift-modal-v366 .welcome-offer-optioncard-v350 input[type="radio"]{flex:none;margin:0;
+  width:19px;height:19px;min-width:19px;max-width:19px;min-height:19px;max-height:19px;
+  appearance:auto;-webkit-appearance:radio;accent-color:var(--coral);cursor:pointer}
+.birthday-gift-modal-v366 .welcome-offer-optioncard-v350.selected{border-color:var(--coral);background:#FFF6F4}
+.birthday-gift-modal-v366 fieldset{margin-top:16px!important}
+.birthday-gift-modal-v366 legend.small{margin-bottom:2px}
+.birthday-gift-modal-v366 .birthday-days-v366 input{width:96px;min-width:96px}
+.birthday-gift-modal-v366 .grow-secondary{margin-top:14px}
+.birthday-gift-modal-v366 .grow-secondary summary{font-size:14px}
+.birthday-gift-modal-v366 label{margin-top:12px}
 .seg{display:inline-flex;gap:4px;background:#F1EEE9;border-radius:100px;padding:3px}
 .seg button{background:transparent;border-radius:100px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--muted)}
 .seg button.act{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
@@ -2784,7 +2819,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=3bfa648b8f3e","business":"/app-business.js?b=25ff9d6127a2","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=3bfa648b8f3e","business":"/app-business.js?b=db1f42f36eb2","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -2808,6 +2843,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=07cc9732ec72" defer></script>
+<script src="/app-core.js?b=8ab118cbedbf" defer></script>
 </body>
 </html>
