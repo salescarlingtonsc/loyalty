@@ -8417,6 +8417,9 @@ function customerBusinessSecondaryMarkupV346(presentation={}){
     ${benefitMarkup}
   </section>`;
 }
+function customerReferralSlotMarkupV360(){
+  return '<div id="walletReferralSlot" hidden></div>';
+}
 function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},membership={},loyalty={},capabilities={}}={}){
   const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
   const sessions=Math.max(0,Number(packages.sessions_remaining)||0);
@@ -8608,7 +8611,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
         ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:true,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
       ${customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities})}
-      <div id="walletReferralSlot" hidden></div>
+      ${customerReferralSlotMarkupV360()}
       ${customerPointsExplainerMarkupV167(business)}
     </section>
   </div>`;
@@ -8810,14 +8813,35 @@ function customerProgrammeDirectoryTypeV346(business={}){
   if(/fitness|gym|yoga|pilates|sport/i.test(raw))return 'FITNESS';
   return raw.toUpperCase().slice(0,18);
 }
+function customerProgrammeCardProgrammesV360(card){
+  if(Array.isArray(card?.programmes))return card.programmes;
+  const fromCapabilities=programmeStackV310(card?.programmeCapabilities||card?.capabilities||card?.programme_capabilities);
+  return Array.isArray(fromCapabilities)?fromCapabilities:[];
+}
+function customerProgrammeCardActiveProgrammeV360(card,kind){
+  const entry=programmeStackEntryV310(customerProgrammeCardProgrammesV360(card),kind);
+  return programmeStackCardVisibleV310(entry)&&entry?.active!==false;
+}
+function customerProgrammeCardMetricKindV360(card){
+  const hasPoints=customerProgrammeCardActiveProgrammeV360(card,'points');
+  const hasStamps=customerProgrammeCardActiveProgrammeV360(card,'stamps');
+  if(hasStamps&&!hasPoints)return 'stamps';
+  if(hasPoints)return 'points';
+  const loyalty=card?.loyalty||{};
+  const tierLabel=String(loyalty.tier_name||loyalty.tier_level||card?.tier?.current?.label||card?.tier?.label||'').trim();
+  if(tierLabel)return 'points';
+  const rawModel=String(loyalty.model||loyalty.loyalty_model||card?.loyalty_model||'').toLowerCase();
+  const rawUnit=String(loyalty.unit||'points').toLowerCase();
+  return rawModel==='stamps'||rawUnit==='stamps'?'stamps':'points';
+}
 function customerProgrammeDirectoryMetricV346(card){
   const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
     packages=card?.packages||{},membership=card?.membership||{};
-  const unit=String(loyalty.unit||'points').toLowerCase();
+  const unit=customerProgrammeCardMetricKindV360(card);
   const balance=Math.max(0,Number(loyalty.balance)||0);
   if(unit==='stamps'&&reward){
     const target=Math.max(balance,Number(reward.cost_units||0),Number(reward.target_units||0));
-    if(target>0)return `${customerPointTotalV103(balance)} of ${customerPointTotalV103(target)} stamps`;
+    if(target>0)return `${customerPointTotalV103(balance)} / ${customerPointTotalV103(target)} stamps`;
     return `${customerPointTotalV103(balance)} stamps`;
   }
   if(membership.active===true)return 'Member';
@@ -8827,10 +8851,11 @@ function customerProgrammeDirectoryMetricV346(card){
 function customerProgrammeDirectoryStatusV346(card){
   const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
     packages=card?.packages||{},membership=card?.membership||{},
-    remaining=Math.max(0,Number(reward?.remaining_units||0));
+    remaining=Math.max(0,Number(reward?.remaining_units||0)),
+    unit=customerProgrammeCardMetricKindV360(card);
   if(reward?.available_now===true)return '1 reward ready';
-  if(String(loyalty.unit||'').toLowerCase()==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamps to reward`;
-  if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points')} to reward`;
+  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamps to reward`;
+  if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct('points')} to reward`;
   if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} session${Number(packages.sessions_remaining)===1?'':'s'} left`;
   if(membership.active===true)return '1 active perk';
   return 'No reward yet';
@@ -8890,15 +8915,16 @@ function customerHomeSummaryV343(cards=[]){
   const rewardCount=customerRewardReadyCountV343(cards);
   const businessCount=(Array.isArray(cards)?cards:[]).filter(card=>card?.next_eligible_reward?.available_now===true).length;
   const expiringCount=customerExpiringRowsV286(cards).length;
-  return `<a class="customer-home-ready-card-v343" href="#/customer/programmes" aria-label="${esc(rewardCount)} rewards ready across ${esc(businessCount)} businesses">
+  const rewardWord=rewardCount===1?'reward':'rewards';
+  return `<a class="customer-home-ready-card-v343" href="#/customer/programmes" aria-label="${esc(rewardCount)} ${esc(rewardWord)} ready across ${esc(businessCount)} businesses">
     <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:42})}</span>
-    <span class="customer-home-ready-copy-v343"><b><span>${esc(customerPointTotalV103(rewardCount))}</span> rewards ready</b><small>across ${esc(customerPointTotalV103(businessCount))} ${businessCount===1?'business':'businesses'}</small>${expiringCount?`<em>${CUI.icon('appointments',{size:15})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:14})}</em>`:''}</span>
+    <span class="customer-home-ready-copy-v343"><b><span>${esc(customerPointTotalV103(rewardCount))}</span> ${esc(rewardWord)} ready</b><small>across ${esc(customerPointTotalV103(businessCount))} ${businessCount===1?'business':'businesses'}</small>${expiringCount?`<em>${CUI.icon('appointments',{size:15})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:14})}</em>`:''}</span>
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
 function customerHomeBusinessStatusV345(card){
-  const reward=card?.next_eligible_reward||{},loyalty=card?.loyalty||{},
-    unit=String(loyalty.unit||'points').toLowerCase(),remaining=Math.max(0,Number(reward.remaining_units)||0);
+  const reward=card?.next_eligible_reward||{},
+    unit=customerProgrammeCardMetricKindV360(card),remaining=Math.max(0,Number(reward.remaining_units)||0);
   if(reward.available_now===true)return '1 reward ready';
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamp${remaining===1?'':'s'} to go`;
   if(unit==='stamps')return 'Stamp card';
@@ -8908,10 +8934,10 @@ function customerHomeBusinessStatusV345(card){
   return '';
 }
 function customerHomeBusinessBalanceV345(card){
-  const loyalty=card?.loyalty||{},unit=String(loyalty.unit||'points').toLowerCase(),
+  const loyalty=card?.loyalty||{},unit=customerProgrammeCardMetricKindV360(card),
     balance=Math.max(0,Number(loyalty.balance)||0),remaining=Math.max(0,Number(card?.next_eligible_reward?.remaining_units)||0);
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(balance)} / ${customerPointTotalV103(balance+remaining)} stamps`;
-  return `${customerPointTotalV103(balance)} ${unit==='stamps'?'stamps':unit==='points'?'pts':unit}`;
+  return `${customerPointTotalV103(balance)} ${unit==='stamps'?'stamps':'pts'}`;
 }
 function customerHomeBusinessCardV345(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},name=business.name||ct('localBusiness'),

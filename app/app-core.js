@@ -4029,6 +4029,9 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     </div>`:''}
   </section>`;
 }
+function customerReferralSlotMarkupV360(){
+  return '<div id="walletReferralSlot" hidden></div>';
+}
 function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},membership={},loyalty={},capabilities={}}={}){
   const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
   const sessions=Math.max(0,Number(packages.sessions_remaining)||0);
@@ -4142,7 +4145,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
         ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:true,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
       ${customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities})}
-      <div id="walletReferralSlot" hidden></div>
+      ${customerReferralSlotMarkupV360()}
       ${customerPointsExplainerMarkupV167(business)}
     </section>
   </div>`;

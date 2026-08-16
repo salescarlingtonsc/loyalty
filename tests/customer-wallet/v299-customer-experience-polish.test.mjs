@@ -78,6 +78,21 @@ test('the reward card sheds the legacy 7px corner radius',()=>{
   assert.doesNotMatch(indexHtml,/\.wallet-reward\{[^}]*border-radius:7px/);
 });
 
+test('home and rewards cards keep points/stamps labels honest and compact',()=>{
+  assert.match(app,/const rewardWord=rewardCount===1\?'reward':'rewards'/);
+  assert.match(app,/\$\{esc\(customerPointTotalV103\(rewardCount\)\)\}<\/span> \$\{esc\(rewardWord\)\} ready/);
+  assert.match(app,/function customerProgrammeCardMetricKindV360/);
+  assert.match(app,/if\(hasStamps&&!hasPoints\)return 'stamps'/);
+  assert.match(app,/if\(tierLabel\)return 'points'/);
+  assert.match(app,/customerProgrammeDirectoryMetricV346\(card\)/);
+  assert.match(app,/customerHomeBusinessBalanceV345\(card\)/);
+  assert.match(app,/\$\{customerPointTotalV103\(balance\)\} \/\ \$\{customerPointTotalV103\(target\)\} stamps/);
+  assert.match(app,/\$\{customerPointTotalV103\(balance\)\} pts/);
+  assert.doesNotMatch(app,/customerPointTotalV103\(balance\)\} of \$\{customerPointTotalV103\(target\)\} stamps/);
+  assert.match(indexHtml,/\.customer-programme-card-balance b\{[^}]*white-space:nowrap!important/s);
+  assert.match(indexHtml,/\.customer-home-business-track-v343 \.customer-programme-card-balance b\{[^}]*font-size:10\.5px!important/s);
+});
+
 test('business profile shortcuts are relationship-specific, not static decoration',()=>{
   const helperStart=app.indexOf('function customerBusinessDashboardModulesV347');
   const helper=app.slice(helperStart,app.indexOf('/* v340',helperStart));
