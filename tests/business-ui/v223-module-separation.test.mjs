@@ -63,10 +63,13 @@ test('V223 customer app actions live with the other customer settings, not in Bo
   assert.doesNotMatch(bookings, /customerBookingEnabled/);
   // Moved whole: markup in the Customer interface tab, behaviour in a sibling loader.
   assert.match(app, /async function loadCustomerCapabilitiesV223\(\)\{/);
-  assert.match(app, /loadSignupConfig\(\);\s*\n\s*loadCustomerCapabilitiesV223\(\);/);
+  /* V368: the sign-up QR left this page for the profile menu's dialog, so the capabilities
+     loader no longer has it as a neighbour. The property this line protects — the switches load
+     through their own loader on the page that shows them — is asserted directly. */
+  assert.match(app, /loadCustomerCapabilitiesV223\(\);/);
   // settingsPage has no isCurrent(); the moved loader must use this page's own guard.
   const loader = app.slice(app.indexOf('async function loadCustomerCapabilitiesV223'),
-    app.indexOf('async function loadSignupConfig'));
+    app.indexOf('function openBusinessQrModalV368'));
   assert.doesNotMatch(loader, /isCurrent\(\)/);
   assert.match(loader, /\$\('businessCustomerCapabilities'\)\?\.isConnected/);
   assert.match(loader, /business_set_customer_capabilities_v89/);

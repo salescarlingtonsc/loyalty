@@ -192,6 +192,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-segment{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow)}
 .v150-segment button{min-height:44px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
 .v150-segment button[aria-pressed="true"]{background:var(--ink);color:#fff}
+/* V368: the Customer settings tab strip is built from links (each tab is a real hash a reader can
+   bookmark or open in a new tab), so the segment's own button styling is extended to <a>. */
+.v150-segment a{min-height:44px;display:inline-flex;align-items:center;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px;text-decoration:none}
+.v150-segment a[aria-pressed="true"]{background:var(--ink);color:#fff}
+.ci-tabs-v368{margin:14px 0 4px;max-width:100%;overflow-x:auto}
 /* V200 sub-module tabs. The strip scrolls horizontally rather than wrapping: a wrapped pill strip
    changes height as tabs re-flow, which shifts the whole page under the owner's thumb on the exact
    tap they were aiming at. `flex` on the buttons is off so labels keep their natural width. */
@@ -2819,7 +2824,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=3bfa648b8f3e","business":"/app-business.js?b=db1f42f36eb2","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=3bfa648b8f3e","business":"/app-business.js?b=b2c8777ee02a","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

@@ -88,7 +88,9 @@ test('V269 each moved panel is defined exactly once in the bundle', () => {
     ['brand colour field', /<label for="bc">Brand colour/g],
     ['customer programme editor host', /id="customerProgrammeEditorV95"/g],
     ['Interface markup', /function customerInterfaceSectionsHtmlV243\(/g],
-    ['sign-up card host', /id="signupWrap"/g],
+    /* V368: the sign-up QR card now renders into the profile menu's dialog host instead of a
+       page card. Still exactly one host, and still one loader writing into it. */
+    ['sign-up card host', /id="businessQrHostV368"/g],
     ['customer fields list', /id="cfList"/g],
     ['customer app actions', /id="businessCustomerCapabilities"/g],
   ]) assert.equal((app.match(marker) || []).length, 1, `${what} must exist exactly once`);
@@ -130,7 +132,11 @@ test('V269 Customer Interface presents the three sections the owner named, in or
      "Appointment Setting" section (step 2, the relocated booking-rules card). Preview and Done
      are static/unchanged-content steps that do not call customerInterfaceSectionHeadingV269, so
      they never appeared in this heading list and still do not. */
-  assert.deepEqual(headings, ['Business Profile', 'Appointment Setting', 'Customer programme', 'Sign-up & fields']);
+  /* V368 (owner markup, photo 5: the "Sign-up & fields" heading and its blurb struck through;
+     photos 3/4: its surviving cards moved to the new Customer Action page). The section is no
+     longer introduced by a heading of its own — the page title names it — so the list is the
+     three headings that remain. */
+  assert.deepEqual(headings, ['Business Profile', 'Appointment Setting', 'Customer programme']);
   // each heading immediately precedes the panel it names
   const order = [
     "customerInterfaceSectionHeadingV269('ciSectionBrandV269'",
@@ -139,7 +145,7 @@ test('V269 Customer Interface presents the three sections the owner named, in or
     'bookingRulesCardHtmlV325()',
     "customerInterfaceSectionHeadingV269('ciSectionProgrammeV269'",
     'id="customerProgrammeEditorV95"',
-    "customerInterfaceSectionHeadingV269('ciSectionInterfaceV269'",
+    /* V368: the panel survives, its heading does not (see above). */
     'customerInterfaceSectionsHtmlV243(',
     /* V303: the V296 Gift cards section and its switch left this page with the rest of the
        gift-card surface (owner: "remove gift cards from the business UI entirely"). */

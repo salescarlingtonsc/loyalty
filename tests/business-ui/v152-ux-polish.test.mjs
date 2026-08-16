@@ -67,7 +67,9 @@ test('V152 key business pages use skeleton loading instead of generic spinners',
   assert.match(pnl, /CUI\.chartSkeleton\(\{title:'Expenses by category'\}\)/);
   assert.match(packages, /CUI\.tableSkeleton\(\{rows:4,columns:5\}\)/);
   assert.match(branches, /CUI\.skeletonGrid\(\{cards:3,lines:3\}\)/);
-  assert.match(customerInterface, /CUI\.skeletonCard\(\{lines:5\}\)/);
+  /* V368: the card that carried this skeleton is the sign-up QR, which moved into the profile
+     menu's dialog. The skeleton moved with it — same component, same shape, new host. */
+  assert.match(app, /id="businessQrHostV368"[^>]*>\$\{CUI\.skeletonCard\(\{lines:5\}\)\}/);
 });
 
 test('V152 empty states explain what happened and what to do next', () => {

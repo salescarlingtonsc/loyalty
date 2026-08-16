@@ -44,14 +44,17 @@ test('V325 the stepper renders all six steps with their hashes, in order', () =>
     ['done', 'Done', '#/customer-interface/done'],
     ['programme', 'Customer programme', '#/customer-interface/programme'],
     ['interface', 'Customer Sign-up', '#/customer-interface/interface'],
+    /* V368: 'actions' (Customer Action) joins the list — the rail's second child, holding the
+       app-action switches and customer fields that outlived the retired sign-up page. */
+    ['actions', 'Customer Action', '#/customer-interface/actions'],
   ];
   const viewsSource = section(app, 'const CUSTOMER_INTERFACE_VIEWS_V296=[', '];');
-  let cursor = -1;
+  /* V368 no longer asserts ORDER across the whole list — 'actions' is declared beside the
+     appointment entry it pairs with as a tab, not appended — only that every entry still exists
+     with its own hash, which is what "no hash was renamed or removed" actually means. */
   for (const [key, label, href] of expected) {
-    const marker = `['${key}','${label}','${href}'`;
-    const at = viewsSource.indexOf(marker, cursor + 1);
-    assert.ok(at > cursor, `${key} missing or out of order in CUSTOMER_INTERFACE_VIEWS_V296`);
-    cursor = at;
+    assert.ok(viewsSource.includes(`['${key}','${label}','${href}'`),
+      `${key} missing from CUSTOMER_INTERFACE_VIEWS_V296`);
   }
   // Every existing hash before V325 still resolves — none were renamed or removed.
   for (const href of ['#/customer-interface', '#/customer-interface/brand', '#/customer-interface/programme', '#/customer-interface/interface']) {
@@ -60,8 +63,12 @@ test('V325 the stepper renders all six steps with their hashes, in order', () =>
   /* V334 (owner markup, photo 9: hide Preview/Done/Customer programme from nav/stepper): the
      stepper now renders the filtered VISIBLE list — those three routes still resolve (asserted
      above), they just no longer have a stepper circle or sidebar row. */
-  assert.match(stepper, /CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334\.map\(\(\[key,label,href,,step\]\)=>\{/);
-  assert.match(stepper, /class="ci-stepper-v325"/);
+  /* V368 (owner markup, photo 4: the numbered step line struck through with "do into tabs"):
+     the stepper is the house segmented tab strip now, and on the Customer Action page it shows
+     that page's own two tabs. Same hashes, same sections, one control. */
+  assert.match(stepper, /CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334/);
+  assert.match(stepper, /class="v150-segment ci-tabs-v368"/);
+  assert.match(stepper, /CUSTOMER_INTERFACE_TABS_V368/);
   assert.match(page, /\$\{customerInterfaceStepperHtmlV325\(customerInterfaceViewV296\)\}/);
 });
 
@@ -76,15 +83,22 @@ test('V325 the Done step is static, with no new state or logic', () => {
    click (name/colour/policy/bio via #bsave, logo via #workspaceLogoPublishV96, programme and
    sign-up fields via their own RPCs) — there is no staged/draft state anywhere to commit. Publish
    is therefore a review-and-confirm step, not a second write path. */
-test('V326 Publish is a confirm-and-review step, not a new write path', () => {
-  assert.match(page, /id="ciPublishV326">Publish<\/button>/);
-  const wiring = section(app, "const ciPublishBtn=$('ciPublishV326');", 'wireWorkspaceBrandV259();');
-  assert.match(wiring, /toast\('Published — customers will see these changes\.'\);/);
-  assert.match(wiring, /location\.hash='#\/customer-interface\/done';/);
+/* V368 (owner markup, photo 4: "Publish" struck through, "Save" written, "move this button to
+   below of the page"; owner ruling when asked: saving applies immediately, no publish step).
+   Publish is gone. The bottom Save is a real save-all for the section on screen — it presses that
+   section's own enabled Save buttons — rather than a button that only says a reassuring word, and
+   it still writes nothing itself. */
+test('V368 Save replaces Publish, sits at the foot, and presses the section\'s own saves', () => {
+  assert.doesNotMatch(page, /ciPublishV326/);
+  assert.match(page, /id="ciSaveV368">Save<\/button>/);
+  assert.match(page, /class="row ci-savebar-v368"/);
+  const wiring = section(app, "const ciSaveBtnV368=$('ciSaveV368');", 'wireWorkspaceBrandV259();');
+  assert.match(wiring, /\.customer-interface-view-v296:not\(\[hidden\]\)/);
+  assert.match(wiring, /saves\.forEach\(button=>button\.click\(\)\)/);
   // No write of its own: it must not touch sb.from/sb.rpc.
   assert.doesNotMatch(wiring, /sb\.from\(|sb\.rpc\(/);
-  // Only the owner (canEditCustomerInterface) sees it — a non-owner has nothing to publish.
-  assert.match(page, /\$\{canEditCustomerInterface\?`<button type="button" class="btn" id="ciPublishV326">Publish<\/button>`:''\}/);
+  // Only the owner sees it — a non-owner has nothing to save.
+  assert.match(page, /\$\{canEditCustomerInterface\?`<div class="row ci-savebar-v368"/);
 });
 
 test('V325 steps 1-2 pair the form with the SAME live-preview renderer as step 3', () => {
@@ -140,7 +154,10 @@ test('V325 buffer-before/after are wired into the existing add and edit service 
 /* -------------------------------------------------------- (d) relocated booking rules, exc. 2 */
 
 test('V325 the booking-rules card renders under Appointment Setting with every relocated control', () => {
-  assert.match(page, /\$\{ciSectionV296\('appointment',ciWithPreviewV325\(/);
+  /* V368 (owner markup, photo 4: the Live preview column crossed out with "this one no need
+     here"): Appointment Setting renders its form full width. Step 3 IS the preview and keeps it. */
+  assert.match(page, /\$\{ciSectionV296\('appointment',`/);
+  assert.doesNotMatch(page, /ciSectionV296\('appointment',ciWithPreviewV325/);
   assert.match(page, /bookingRulesCardHtmlV325\(\)/);
   assert.match(page, /serviceBufferPointerCardHtmlV325\(\)/);
   for (const id of ['aac', 'setHold', 'setOverflow', 'setAutoConfirm', 'setSave', 'setStaffChoice', 'setAvailabilityBody', 'setAvailabilitySave']) {

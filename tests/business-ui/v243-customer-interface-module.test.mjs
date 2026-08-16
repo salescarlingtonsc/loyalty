@@ -50,7 +50,10 @@ test('V243 the rail entry resolves to a routed page function', () => {
   assert.match(app, /'customer-interface':customerInterfacePageV243\}/);
   assert.match(app, /async function customerInterfacePageV243\(hashParam\)\{/);
   // V296: the bare '#/customer-interface' still lands on the page's first view.
-  assert.match(app, /const customerInterfaceViewV296=CUSTOMER_INTERFACE_VIEWS_V296\.some\(view=>view\[0\]===String\(hashParam\|\|''\)\)/);
+  /* V368: the requested view is normalised first (the retired 'interface' hash now resolves to
+     Customer Action, where its content moved), then matched against the same list. */
+  assert.match(app, /const customerInterfaceViewV296=CUSTOMER_INTERFACE_VIEWS_V296\.some\(view=>view\[0\]===ciRequestedViewV368\)/);
+  assert.match(app, /const ciRequestedViewV368=String\(hashParam\|\|''\)==='interface'\?'actions':String\(hashParam\|\|''\);/);
 });
 
 test('V243 the workspace chunk classifier no longer swallows every "#/customer…" hash', () => {
@@ -65,14 +68,19 @@ test('V243 the workspace chunk classifier no longer swallows every "#/customer�
 /* ------------------------------- (b) the module reuses the functions Settings used, not copies */
 
 test('V243 the module hosts the sign-up QR and customer-app switches through the same loaders', () => {
-  assert.match(wiring, /loadSignupConfig\(\);\s*\n\s*loadCustomerCapabilitiesV223\(\);/);
-  // The hosts those loaders write into come from the lifted markup, not a second copy.
-  assert.match(sections, /<div class="card" id="signupWrap">/);
+  /* V368 (owner markup, photo 2: the QR card arrowed into the profile menu, renamed "My Business
+     QR"). The QR left this page for the account menu's dialog, so the loader is called from
+     there — with a host — and this page loads only the capabilities card. Still ONE loader and
+     one definition of the card, which is what this test exists to protect. */
+  assert.match(wiring, /loadCustomerCapabilitiesV223\(\);/);
+  assert.doesNotMatch(wiring, /loadSignupConfig\(\);/);
+  assert.match(app, /loadSignupConfig\(\$\('businessQrHostV368'\)\)/);
+  assert.match(app, /<b>My Business QR<\/b>/);
   assert.match(sections, /id="businessCustomerCapabilities"/);
   // V296: the re-render callback carries the open sub-tab so add/retire returns to it.
   assert.match(page, /wireCustomerInterfaceV243\(\(\)=>customerInterfacePageV243\(hashParam\)\)/);
   // One definition of each, still where it always was.
-  assert.equal((app.match(/async function loadSignupConfig\(\)/g) || []).length, 1);
+  assert.equal((app.match(/async function loadSignupConfig\(host\)/g) || []).length, 1);
   assert.equal((app.match(/async function loadCustomerCapabilitiesV223\(\)/g) || []).length, 1);
 });
 
@@ -84,13 +92,17 @@ test('V243 the module hosts the customer programme editor through the same v95 l
 
 test('V243 the customer fields and CSV import moved with their panel, once', () => {
   assert.match(sections, /<b>Customer fields<\/b>/);
-  assert.match(sections, /<b>Import customers \(CSV\)<\/b>/);
+  /* V368 (owner ruling: move, don't delete): the importer moved on again, to Customers, where
+     bringing in a customer list belongs. Still exactly one copy of its markup and its wiring. */
+  assert.match(app, /function customerCsvImportCardHtmlV368\(\)/);
+  assert.match(app, /function wireCustomerCsvImportV368\(\)/);
+  assert.match(app, /staff_create_client/);
   assert.match(wiring, /create_client_field_definition/);
-  assert.match(wiring, /staff_create_client/);
   // add/retire re-render the page they now live on, not Settings.
   assert.match(wiring, /toast\('Customer field added'\);rerender\(\);/);
   assert.equal((app.match(/<b>Customer fields<\/b>/g) || []).length, 1, 'one copy of the form');
   assert.equal((app.match(/<b>Import customers \(CSV\)<\/b>/g) || []).length, 1);
+  assert.equal((app.match(/function wireCustomerCsvImportV368\(\)/g) || []).length, 1);
 });
 
 /* V259 SUPERSEDES this expectation. The owner drew arrows from ALL THREE Settings tabs —

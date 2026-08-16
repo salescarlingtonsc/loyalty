@@ -558,6 +558,11 @@ const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?m
 const CUSTOMER_INTERFACE_VIEWS_V296=[
   ['brand','Business Profile','#/customer-interface/brand','settings',1],
   ['appointment','Appointment Setting','#/customer-interface/appointment','appointments',2],
+  /* V368 (owner markup 2026-08-17, photos 3 and 4): "Customer Action" is its own destination —
+     the customer app-action switches and the customer fields that used to sit at the bottom of
+     the retired Customer Sign-up page. It is the rail's second child; Appointment Setting stays
+     as a TAB beside it on the same page, which is how the owner drew it. */
+  ['actions','Customer Action','#/customer-interface/actions','customers',2],
   ['preview','Preview','#/customer-interface','customers',3],
   ['done','Done','#/customer-interface/done','check',4],
   ['programme','Customer programme','#/customer-interface/programme','loyalty',5],
@@ -574,8 +579,15 @@ const CUSTOMER_INTERFACE_VIEWS_V296=[
    the owner's answer was "just hide from nav, don't delete routes/code", so the full array above
    (routes, stepper aria-labels, hash matching) stays untouched; only the two render sites below
    read this filtered view. */
+/* V368: 'interface' (Customer Sign-up) joins the hidden set — the owner struck it from the rail;
+   its QR moved to the profile menu, its importer to Customers, and its remaining two cards to
+   Customer Action. 'appointment' leaves the RAIL but stays a tab on the Customer Action page
+   (CUSTOMER_INTERFACE_TABS_V368), so the rail reads Business Profile / Customer Action exactly as
+   drawn while every existing hash still resolves to the content it always did. */
 const CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334=CUSTOMER_INTERFACE_VIEWS_V296
-  .filter(([key])=>!['preview','done','programme'].includes(key));
+  .filter(([key])=>!['preview','done','programme','interface','appointment'].includes(key));
+/* The two tabs the Customer Action page itself shows. */
+const CUSTOMER_INTERFACE_TABS_V368=['appointment','actions'];
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
@@ -12360,6 +12372,12 @@ function profileHtml(){
         </div>
         ${S.hasCustomerPersona?`<a href="#/wallet" id="pmWallet">${CUI.icon('wallet',{size:18})}${esc(BRAND.customerLabel)}</a>`:''}
         ${S.myRole==='owner'?`<a href="#/setup" id="pmSetup">${CUI.icon('setup',{size:18})}Get started</a>`:''}
+        ${/* V368 (owner markup, photo 2: the QR card circled with an arrow into this menu, and
+             "My Business QR" written over its old heading). The sign-up page it lived on is
+             retired, so this is now the ONLY door to the counter QR — a menu entry that opens the
+             same card in a dialog, because printing, replacing and revoking a QR needs more room
+             than a dropdown row. */''}
+        ${S.myRole==='owner'?`<a href="#" id="pmBusinessQrV368">${CUI.icon('scan',{size:18})}My Business QR</a>`:''}
         ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:18})}Settings</a>`:''}
         <!-- V209 (owner annotations): "remove this" on Team & staff — Staff Members is already in
              the sidebar, and two doors to one page is the duplicated navigation flagged at V180.
@@ -12412,6 +12430,12 @@ function wireProfile(page){
     $('pmSignout').onclick=async(e)=>{e.preventDefault();killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();nav('#/')};
     const pmSetup=$('pmSetup');if(pmSetup)pmSetup.onclick=()=>{profileOpen=false};
     const pmS=$('pmSettings');if(pmS) pmS.onclick=()=>{profileOpen=false};
+    /* V368: the business QR, in a dialog, from the account menu. */
+    const pmQrV368=$('pmBusinessQrV368');
+    if(pmQrV368)pmQrV368.onclick=event=>{
+      event.preventDefault();profileOpen=false;
+      openBusinessQrModalV368();
+    };
     const pmT=$('pmTeam');if(pmT) pmT.onclick=()=>{profileOpen=false};
     const pmP=$('pmPlatform');if(pmP) pmP.onclick=()=>{profileOpen=false};
     const pmW=$('pmWallet');if(pmW) pmW.onclick=()=>{profileOpen=false};
@@ -14943,6 +14967,10 @@ async function clientsPage(){
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
+    ${/* V368 (owner ruling: move the importer here rather than delete it). Collapsed, because it
+         is an occasional job and the list is the page. Same markup and wiring as the Customer
+         Interface page had — only the home changed. */''}
+    ${canWrite?`<div data-subtab="Customers">${customerCsvImportCardHtmlV368()}</div>`:''}
     <div class="card" id="fbQueueCard" data-subtab="Visit feedback"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
       <div class="fb-chips" id="fbChips" role="group" aria-label="Filter feedback by status"></div>
       <div id="fbQueue">${CUI.tableSkeleton({rows:3,columns:4})}</div></div></section>`;
@@ -14950,6 +14978,7 @@ async function clientsPage(){
      two share — the inactive shortcuts, reporting scope, and the Add-customer form, which opens
      from the actions bar — stays pinned above the strip so it works from either tab. */
   sectionTabsV200($('customersView'),{key:'customers',label:'Customer sections'});
+  if(canWrite)wireCustomerCsvImportV368();
   const customersView=$('customersView');
   const isCustomersCurrent=()=>routeMain.isConnected&&M()===routeMain&&customersView.isConnected&&$('customersView')===customersView;
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
@@ -23394,7 +23423,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growDisplayTopicsV343=growTopicDefsV229.filter(topic=>topic.key!=='recurring');
   const growDisplayLiveV343=growDisplayTopicsV343.filter(growTopicOngoingV244);
   const growDisplayPendingV343=growDisplayTopicsV343.filter(topic=>!growTopicOngoingV244(topic));
-  const growDisplayHistoryCountV343=growTopicDefsV229.filter(topic=>String(topic.status?.[0]||'')==='History').length+growTiersHistoryV331.length;
+  /* V368 (owner markup 2026-08-17, photo 1: "why here stated 12 but none"). This count added
+     growTiersHistoryV331.length — deleted tier RUNGS — to a tab whose list can only ever render
+     programme TILES (growHistoryTilesV362 below). So a firm that had deleted twelve rungs read
+     "History (12)" above the words "Nothing has been deleted yet", which is the count and the
+     list answering two different questions. The count is the list's own length now. Deleted rungs
+     and gifts are not lost: each has its own History tab on its own page, which is where a row
+     that belongs to one programme belongs. */
+  const growDisplayHistoryCountV343=growTopicDefsV229.filter(topic=>String(topic.status?.[0]||'')==='History').length;
   /* V357 (owner: "why cannot click" against all four tabs). They were decoration — no click
      handler, no data attribute, and aria-pressed hardcoded to All. They never filtered anything.
      Now a real filter over the same list, with History routing to the History page (that view
@@ -23417,7 +23453,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <button type="button" aria-pressed="${growTileFilterV357==='history'}" data-grow-tile-filter-v357="history">History (${growDisplayHistoryCountV343})</button>
       </div>
     </div>
-    <div class="grow-topic-card-grid-v343">${growFilteredTilesV357.length?growFilteredTilesV357.map(growTileHtmlV244).join(''):`<p class="muted small" style="padding:8px 4px">${growTileFilterV357==='live'?'No programme is live yet.':growTileFilterV357==='history'?'Nothing has been deleted yet.':'Everything here is already set up.'}</p>`}</div>`;
+    <div class="grow-topic-card-grid-v343">${growFilteredTilesV357.length?growFilteredTilesV357.map(growTileHtmlV244).join(''):`<p class="muted small" style="padding:8px 4px">${growTileFilterV357==='live'?'No programme is live yet.':growTileFilterV357==='history'?'No programme has been deleted. Deleted gifts and tiers are kept on their own page&rsquo;s History tab.':'Everything here is already set up.'}</p>`}</div>`;
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
   /* V250 (owner crossed out the "● Live: Points redemption / ● Live: Tiered membership /
      Stamp card" chip column on the Points redemption page). Which model is live is already the
@@ -38571,8 +38607,30 @@ async function loadCustomerCapabilitiesV223(){
     }
   
 }
-async function loadSignupConfig(){
-  $('signupWrap').innerHTML=`<b>Customer sign-up</b>
+/* V368 (owner markup, photo 2: "Customer sign-up" struck through and "My Business QR" written,
+   with an arrow into the profile menu; and "remove this" against Accept new sign-ups).
+   The card now renders into whatever host it is given — the profile menu's modal is the only
+   caller left, since the page it used to sit on is retired. businesses.join_enabled is untouched
+   in the database; only the control is gone, per the owner's mark. */
+/* V368: the counter QR in a dialog. It holds the SAME card loadSignupConfig has always rendered
+   and the same wiring, so Generate/Replace/Copy/Download/Revoke behave exactly as they did on the
+   retired page — this is a relocation, not a rebuild. */
+function openBusinessQrModalV368(){
+  if($('businessQrModalV368'))return;
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="businessQrModalV368" role="dialog" aria-modal="true" aria-labelledby="businessQrTitleV368" tabindex="-1"><div class="modal-card" style="max-width:520px">
+    <div class="row"><div><p class="eyebrow">Customer sign-up</p><h2 id="businessQrTitleV368" style="margin-top:4px">My Business QR</h2></div><span class="spacer"></span><button class="btn ghost sm" id="businessQrCloseV368" type="button">Close</button></div>
+    <div class="card" id="businessQrHostV368" style="margin-top:14px">${CUI.skeletonCard({lines:5})}</div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('businessQrModalV368')?.remove();};
+  deactivate=CUI.activateDialog($('businessQrModalV368'),{onClose:close,initialFocus:'#businessQrCloseV368'});
+  $('businessQrCloseV368').onclick=close;
+  loadSignupConfig($('businessQrHostV368')).catch(fail);
+}
+async function loadSignupConfig(host){
+  const wrap=host||$('signupWrap');
+  if(!wrap)return;
+  wrap.innerHTML=`<b>My Business QR</b>
     <p class="muted small" style="margin:6px 0 10px">Print the current business-issued QR for your counter. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
     <div id="joinQr" style="width:180px;min-height:180px;margin:0 auto;display:grid;place-items:center"><span class="muted small">Generate a QR to begin</span></div>
     <p class="small portal-link-row" id="joinQrLink" style="margin-top:12px"></p>
@@ -38581,9 +38639,7 @@ async function loadSignupConfig(){
     <button class="btn ghost sm" id="dlQr" disabled>Download QR</button>
     ${window.NestlyNativeBridge?.isNative?'<button class="btn ghost sm" id="shareJoin" disabled>Share link</button>':''}
     <button class="btn danger sm" id="revokeJoinQr">Revoke all QRs</button></div>
-    <p class="muted small" id="joinQrStatus" role="status" aria-live="polite" style="margin-top:8px">The raw join token is shown only in this browser session. Download the QR before leaving this page.</p>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-      <input type="checkbox" id="joinEnabled" style="width:auto" ${S.biz.join_enabled!==false?'checked':''}> Accept new sign-ups</label>`;
+    <p class="muted small" id="joinQrStatus" role="status" aria-live="polite" style="margin-top:8px">The raw join token is shown only in this browser session. Download the QR before leaving this page.</p>`;
   let url='';
   const showJoinQr=async data=>{
     url=publicAppUrl(`join?token=${encodeURIComponent(data.join_token)}`);
@@ -38643,13 +38699,9 @@ async function loadSignupConfig(){
     const revoked=Number(data?.revoked_count||0);
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(revoked===1?'activeQrRevoked':'activeQrsRevoked',{count:revoked});
   };
-  $('joinEnabled').onchange=async()=>{
-    const to=$('joinEnabled').checked;
-    const {error}=await sb.from('businesses').update({join_enabled:to}).eq('id',S.biz.id);
-    if(error){$('joinEnabled').checked=!to;return fail(error)}
-    Object.assign(S.biz,{join_enabled:to});
-    toast(to?'Accepting new sign-ups':'New sign-ups paused');
-  };
+  /* V368: the Accept-new-sign-ups control was removed with the owner's mark. The stored flag is
+     still read below — a business that had paused sign-ups stays paused and its QR keeps saying
+     so — it simply has no toggle on this surface any more. */
   const statusResult=S.biz.join_enabled===false
     ?await sb.rpc('business_get_customer_join_qr_status_v91',{p_business:S.biz.id})
     :await sb.rpc('business_ensure_customer_join_qr_v91',{p_business:S.biz.id});
@@ -38794,13 +38846,18 @@ function wireWorkspaceBrandV259(){
    stepper at the top of the page — a picture of CUSTOMER_INTERFACE_VIEWS_V296 itself, so a new
    step only ever needs adding to that one array. Each circle is a routable link to the step's own
    hash, exactly like the rail children it sits alongside; nothing here bypasses the router. */
+/* V368 (owner markup, photo 4: the numbered "1Business Profile 2Appointment Setting 6Customer
+   Sign-up" line struck through with "do into tabs"). The V325 stepper implied an order and a
+   completion that never existed — these are settings pages, not steps — so it is the house
+   segmented tab strip now. On the Customer Action page the strip is its own two tabs; anywhere
+   else it is the rail's visible children. Same hashes, same sections, one control. */
 function customerInterfaceStepperHtmlV325(activeKey){
-  return `<div class="ci-stepper-v325" role="tablist" aria-label="Customer Interface setup steps">
-    ${CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334.map(([key,label,href,,step])=>{
-      const active=key===activeKey;
-      return `<a class="ci-step-v325${active?' active':''}" role="tab" aria-selected="${active}" href="${esc(href)}">
-        <span class="ci-step-dot-v325">${step}</span><span class="ci-step-label-v325">${esc(label)}</span></a>`;
-    }).join('<span class="ci-step-line-v325" aria-hidden="true"></span>')}
+  const onActionPage=CUSTOMER_INTERFACE_TABS_V368.includes(activeKey);
+  const views=(onActionPage?CUSTOMER_INTERFACE_TABS_V368.map(key=>CUSTOMER_INTERFACE_VIEWS_V296.find(view=>view[0]===key))
+    :CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334).filter(Boolean);
+  if(views.length<2)return '';
+  return `<div class="v150-segment ci-tabs-v368" role="group" aria-label="Customer settings">
+    ${views.map(([key,label,href])=>`<a href="${esc(href)}" role="button" aria-pressed="${key===activeKey}">${esc(label)}</a>`).join('')}
   </div>`;
 }
 /* V325: a plain, static terminal step. No new state field and no new logic — the owner asked
@@ -39187,12 +39244,12 @@ function customerInterfaceSectionHeadingV269(id,label,hint){
 }
 function customerInterfaceSectionsHtmlV243(fieldDefs){
   return `<div class="customer-interface-sections-v243">
-    <div class="split"><div class="card"><b>Import customers (CSV)</b>
-      <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, birth_date (YYYY-MM-DD).</p>
-      <label for="csvf">Customer CSV file</label>
-      <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
-      <div id="csvprev" style="margin-top:12px"></div></div>
-      <div class="card" id="signupWrap">${CUI.skeletonCard({lines:5})}</div></div>
+    ${/* V368 (owner markup 2026-08-17, photo 5: "remove this" across Import customers, and the
+         whole Customer Sign-up page struck out). The importer is not deleted — the owner chose to
+         MOVE it to Customers, where bringing in a customer list belongs — and the sign-up QR card
+         moved into the profile menu as "My Business QR". Both are the same markup and the same
+         wiring, called from their new homes (customerCsvImportCardHtmlV368 / loadSignupConfig with
+         a host). This section keeps only what still lives here. */''}
     <!-- V223 (owner: "customer app settings should not be in bookings - it should be in
          operation set up"). These switches govern what a customer may do in their own app —
          booking, redemption QR, appointment changes. Only one of the three is about bookings,
@@ -39231,9 +39288,20 @@ function customerInterfaceSectionsHtmlV243(fieldDefs){
 }
 /* Every handler the moved markup needs, in one place, so the page that renders it is also the page
    that wires it. `rerender` is what add/retire used to reach settingsPage for. */
-function wireCustomerInterfaceV243(rerender){
-  /* CSV import (moved with its panel by V243) */
-  $('csvf').onchange=async(ev)=>{
+/* V368: the CSV importer, now rendered by the Customers page. Markup and wiring are unchanged
+   from V243 — only the page that calls them moved, so nothing about idempotency keys, the column
+   sniffing or staff_create_client changes. */
+function customerCsvImportCardHtmlV368(){
+  return `<details class="card customer-csv-import-v368" style="margin-top:16px"><summary><b>Import customers (CSV)</b></summary>
+    <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, birth_date (YYYY-MM-DD).</p>
+    <label for="csvf">Customer CSV file</label>
+    <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
+    <div id="csvprev" style="margin-top:12px"></div></details>`;
+}
+function wireCustomerCsvImportV368(){
+  const field=$('csvf');
+  if(!field)return;
+  field.onchange=async(ev)=>{
     const file=ev.target.files[0];if(!file)return;
     const text=await file.text();
     const rows=[];let cur=[''],q=false,ri=0;
@@ -39271,6 +39339,9 @@ function wireCustomerInterfaceV243(rerender){
       toast(workspaceTemplateTextV97('customersImported',{count:done}));$('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersImportPreview',{count:done})}</p>`;
     };
   };
+}
+/* V243's own wiring resumes here, minus the importer that moved to Customers with V368. */
+function wireCustomerInterfaceV243(rerender){
   $('cfAdd').onclick=async()=>{
     const label=$('cfLabel').value.trim(),valueType=$('cfType').value;
     if(label.length<2)return toast('Give the field a clear name');
@@ -39304,7 +39375,8 @@ function wireCustomerInterfaceV243(rerender){
     const {error}=await sb.from('client_field_definitions').update({active:false}).eq('id',b.dataset.id).eq('business_id',S.biz.id);
     if(error)return fail(error);toast('Field retired; existing answers remain in history');rerender();
   });
-  loadSignupConfig();
+  /* V368: the sign-up QR is no longer part of this page — it is the profile menu's dialog. Only
+     the capabilities card, which moved here with the fields, still loads. */
   loadCustomerCapabilitiesV223();
 }
 async function customerInterfacePageV243(hashParam){
@@ -39317,8 +39389,11 @@ async function customerInterfacePageV243(hashParam){
   /* V296: which sub-tab the rail asked for. An unknown or absent segment is the preview, so the
      bare '#/customer-interface' — every existing link, bookmark and the V269 Settings redirect —
      lands exactly where it always did. */
-  const customerInterfaceViewV296=CUSTOMER_INTERFACE_VIEWS_V296.some(view=>view[0]===String(hashParam||''))
-    ?String(hashParam):'preview';
+  /* V368: the retired 'interface' hash resolves to Customer Action, which is where its content
+     went. Nothing 404s and no link has to be rewritten. */
+  const ciRequestedViewV368=String(hashParam||'')==='interface'?'actions':String(hashParam||'');
+  const customerInterfaceViewV296=CUSTOMER_INTERFACE_VIEWS_V296.some(view=>view[0]===ciRequestedViewV368)
+    ?ciRequestedViewV368:'preview';
   /* V288 (audit A2, MEDIUM 18): the field-definition read happens BEFORE anything is painted, so
      the owner sat on the previous route's markup — or, from a cold navigation, on an empty main
      — with no indication that the page was working. Every other workspace route opens with a
@@ -39352,21 +39427,41 @@ async function customerInterfacePageV243(hashParam){
       <div class="ci-step-main-v325">${formHtml}</div>
       <div class="ci-step-preview-v325">${customerInterfacePreviewSideCardHtmlV325()}</div>
     </div>`;
-  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>Customer Interface</h1><p class="muted small">Everything a customer sees and uses · <b data-ci-active-view-v296>${esc(ciActiveLabelV296)}</b></p></div>${canEditCustomerInterface?`<button type="button" class="btn" id="ciPublishV326">Publish</button>`:''}</div>
+  /* V368 (owner markup, photo 4): "Customer Interface" becomes "Customer Action" — the module's
+     name follows the page the owner is standing on — the "Everything a customer sees and uses ·
+     X" statement is struck out, and the Publish button becomes a Save that sits at the FOOT of
+     the page (see ciSaveBarV368 below). */
+  const ciOnActionPageV368=CUSTOMER_INTERFACE_TABS_V368.includes(customerInterfaceViewV296);
+  const ciPageTitleV368=ciOnActionPageV368?'Customer Action':(ciActiveLabelV296||'Customer Interface');
+  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>${esc(ciPageTitleV368)}</h1></div></div>
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
     ${workspaceBrandPanelHtmlV259()}
     ${businessProfileBranchCardHtmlV325()}`))}
-    ${ciSectionV296('appointment',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionAppointmentV325','Appointment Setting','Booking rules, auto-approve and opening hours for your customers.')}
+    ${/* V368 (owner markup, photo 4: the whole Live preview column crossed out with "this one no
+         need here"). The phone frame is gone from Appointment Setting; step 3 IS the preview and
+         still holds it, so nothing is lost — only the copy that showed it beside a booking form
+         it does not illustrate. */''}
+    ${ciSectionV296('appointment',`${customerInterfaceSectionHeadingV269('ciSectionAppointmentV325','Appointment Setting','Booking rules, auto-approve and opening hours for your customers.')}
     ${bookingRulesCardHtmlV325()}
-    ${serviceBufferPointerCardHtmlV325()}`))}
+    ${serviceBufferPointerCardHtmlV325()}`)}
     ${ciSectionV296('preview',customerInterfacePreviewCardHtmlV243())}
     ${ciSectionV296('done',customerInterfaceDoneCardHtmlV325())}
     ${ciSectionV296('programme',`${customerInterfaceSectionHeadingV269('ciSectionProgrammeV269','Customer programme','How your points, tiers and rewards are presented in the customer wallet.')}
     <div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>`)}
-    ${ciSectionV296('interface',`${customerInterfaceSectionHeadingV269('ciSectionInterfaceV269','Sign-up & fields','Sign-up, the fields you ask customers for, and what they may do in their app.')}
-    ${customerInterfaceSectionsHtmlV243(fieldDefs)}`)}`
+    ${/* V368: the two cards that outlived the retired Customer Sign-up page. Both are about what
+         a customer may do and what they are asked for, which is exactly this page's question. */''}
+    ${ciSectionV296('actions',customerInterfaceSectionsHtmlV243(fieldDefs))}
+    ${/* V368: '#/customer-interface/interface' still resolves — old links and history entries must
+         not 404 — but its content now lives on Customer Action, so the hash lands there rather
+         than rendering a second copy of the same ids. */''}`
     :'<div class="card" style="margin-top:16px"><p class="muted small">Only the owner can change what customers see.</p></div>'}
+    ${/* V368 (owner markup, photo 4: "Publish" struck through, "Save" written, "move this button
+         to below of the page"). Owner ruling when asked: saving applies immediately, no publish
+         step. Every card on this page already writes through its own Save the moment it is
+         pressed, so this is a real save-all for the section on screen — it presses those same
+         buttons — rather than a button that only says a reassuring word. */''}
+    ${canEditCustomerInterface?`<div class="row ci-savebar-v368" style="margin-top:18px;justify-content:flex-end"><button type="button" class="btn" id="ciSaveV368">Save</button></div>`:''}
   </div>`;
   wireCustomerInterfacePreviewV243();
   if(!canEditCustomerInterface)return;
@@ -39378,10 +39473,17 @@ async function customerInterfacePageV243(hashParam){
      therefore the review-and-confirm step the owner described: it does not write anything itself
      (every field it could touch has already been written by its own Save), it takes the owner to
      Done to confirm the customer-facing result. */
-  const ciPublishBtn=$('ciPublishV326');
-  if(ciPublishBtn)ciPublishBtn.onclick=()=>{
-    toast('Published — customers will see these changes.');
-    location.hash='#/customer-interface/done';
+  const ciSaveBtnV368=$('ciSaveV368');
+  if(ciSaveBtnV368)ciSaveBtnV368.onclick=()=>{
+    /* Press every enabled Save inside the SECTION the owner is looking at. Scoped to the visible
+       section because the hidden ones hold other pages' forms; enabled-only because a disabled
+       Save means that card has nothing pending (the capabilities card disables its own until a
+       switch actually changes). */
+    const section=document.querySelector('.customer-interface-view-v296:not([hidden])');
+    const saves=[...(section?section.querySelectorAll('button'):[])]
+      .filter(button=>button!==ciSaveBtnV368&&!button.disabled&&/^save\b/i.test(String(button.textContent||'').trim()));
+    if(!saves.length)return toast('Everything here is already saved.');
+    saves.forEach(button=>button.click());
   };
   /* V259: brand/identity first, then the customer programme, then sign-up QR and app actions —
      the order the panels are rendered in above. */
