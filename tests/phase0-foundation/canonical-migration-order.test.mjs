@@ -94,12 +94,12 @@ async function addRecoveryEvidence(root, plan) {
   }, null, 2)}\n`);
 }
 
-test('checked-in canonical plan preserves 45 trusted catalog versions then 216 unique pending versions', () => {
+test('checked-in canonical plan preserves 45 trusted catalog versions then 227 unique pending versions', () => {
   const result = run(repoRoot, '--check-plan');
   assert.equal(result.status, 0, result.stderr);
 });
 
-test('materializer creates one byte-preserving 320-file chain and deterministic manifests', async (t) => {
+test('materializer creates one byte-preserving 331-file chain and deterministic manifests', async (t) => {
   const { root, plan } = await fixture(t);
   await addRecoveryEvidence(root, plan);
   const materialized = run(root, '--materialize');

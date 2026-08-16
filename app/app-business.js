@@ -6174,7 +6174,7 @@ async function tillPage(){
       busy=false;
       if(error)return fail(error);
       if(data?.status!=='completed')return fail(new Error('The bring-back voucher receipt was incomplete. Check the customer before retrying.'));
-      toast(`${label} given`);
+      toast(workspaceTemplateTextV97('bringbackVoucherGiven',{item:label}));
       catalog=null;
       draw();
     };
@@ -12023,7 +12023,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}">${paused?'Off':'Live'}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
-        <details class="grow-row-menu-v351"><summary class="btn ghost sm" aria-label="More actions for ${esc(name)}">•••</summary><div class="menu">
+        <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(name)}">•••</summary><div class="menu">
           <button type="button" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'Turn on':'Turn off'}</button>
           <button type="button" class="danger" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>
         </div></details>`:''}
@@ -12175,7 +12175,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}">${paused?'Off':'Live'}</span>
         ${canSetupWinback?`<button type="button" class="btn ghost sm" data-grow-bb-edit-v361="${esc(campaign.id)}">Edit</button>
-        <details class="grow-row-menu-v351"><summary class="btn ghost sm" aria-label="More actions for ${esc(campaign.name)}">•••</summary><div class="menu">
+        <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(campaign.name)}">•••</summary><div class="menu">
           <button type="button" data-grow-bb-toggle-v361="${esc(campaign.id)}" aria-checked="${!paused}" role="switch">${paused?'Turn on':'Turn off'}</button>
           <button type="button" class="danger" data-grow-bb-delete-v361="${esc(campaign.id)}">Delete</button>
         </div></details>`:''}
@@ -12263,7 +12263,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <textarea id="stampsDesc${esc(reward.id)}" class="grow-stamps-input-v356" rows="2" placeholder="e.g. Free drink (up to $6) or service." data-grow-stamps-field-v356="description"${ro}${busy?' disabled':''}>${esc(reward.description||'')}</textarea></div>
       <div class="grow-stamps-level-col-v350"><label class="muted small">Photo</label>
         ${photoUrl?`<img src="${esc(photoUrl)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px;margin-bottom:4px">`:''}
-        ${canSetupGrow?`<label class="btn ghost sm service-photo-uploader-v158">${photoUrl?'Change photo':'Choose photo'}<input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload photo for level ${index+1}" data-grow-stamps-photo-v356="${esc(reward.id)}"${busy?' disabled':''}></label>
+        ${canSetupGrow?`<label class="btn ghost sm service-photo-uploader-v158">${photoUrl?'Change photo':'Choose photo'}<input type="file" accept="image/png,image/jpeg,image/webp" data-workspace-i18n aria-label="Upload photo for level ${index+1}" data-grow-stamps-photo-v356="${esc(reward.id)}"${busy?' disabled':''}></label>
         <span class="muted small">Optional</span>`:`<span class="muted small">${photoUrl?'':'No photo'}</span>`}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
         ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
@@ -12432,7 +12432,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${paused?'Off':'Live'}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
-        <details class="grow-row-menu-v351"><summary class="btn ghost sm" aria-label="More actions for ${esc(tier.name)}">•••</summary><div class="menu">
+        <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(tier.name)}">•••</summary><div class="menu">
           <button type="button" class="danger" data-grow-tiers-delete-v331="${esc(tier.id)}">Delete</button>
         </div></details>`:''}
       </span>
@@ -16720,6 +16720,14 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        than publishing blind, which is the one thing an owner must still see. */
     if(stepKindW6I2()==='live'&&!state.published&&!state.needAck&&!state.autoPublishedV360){
       state.autoPublishedV360=true;
+      /* Paint a progress panel rather than returning blank. The first cut returned here with no
+         innerHTML write, so the wizard showed a stale/empty screen for the whole round trip.
+         doPublishV339 re-renders on every outcome it can reach — success, error, and the ack
+         screen — so this panel is only ever on screen while the publish is genuinely in flight. */
+      host.innerHTML=`<section class="grow-setup-v301" aria-label="Set up rewards" aria-busy="true">
+        <div class="grow-setup-body-v301"><p class="grow-setup-lead-v301">Saving your changes…</p>
+        <p class="muted small">This goes live for customers as soon as it is saved.</p></div>
+      </section>`;
       doPublishV339();
       return;
     }

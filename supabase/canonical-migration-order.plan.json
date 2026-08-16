@@ -1966,6 +1966,72 @@
       "version": "20260815090400",
       "name": "nestly_v340_reward_purchase_requirement",
       "sourcePath": "db/migrations/20260815_nestly_v340_reward_purchase_requirement.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000001",
+      "name": "nestly_v343_reward_edit_v326",
+      "sourcePath": "db/migrations/20260816_nestly_v343_reward_edit_v326.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000002",
+      "name": "nestly_v345_tier_benefit_edit",
+      "sourcePath": "db/migrations/20260816_nestly_v345_tier_benefit_edit.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000003",
+      "name": "nestly_v347_tier_basis_immediate_write",
+      "sourcePath": "db/migrations/20260816_nestly_v347_tier_basis_immediate_write.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000004",
+      "name": "nestly_v348_spine_id_in_switch_response",
+      "sourcePath": "db/migrations/20260816_nestly_v348_spine_id_in_switch_response.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000005",
+      "name": "nestly_v350_welcome_offer_custom_item",
+      "sourcePath": "db/migrations/20260816_nestly_v350_welcome_offer_custom_item.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000006",
+      "name": "nestly_v353_stamp_model_immediate_write",
+      "sourcePath": "db/migrations/20260816_nestly_v353_stamp_model_immediate_write.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000007",
+      "name": "nestly_v354_spine_owns_loyalty_model",
+      "sourcePath": "db/migrations/20260816_nestly_v354_spine_owns_loyalty_model.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000008",
+      "name": "nestly_v355_no_auto_pot_conversion",
+      "sourcePath": "db/migrations/20260816_nestly_v355_no_auto_pot_conversion.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000009",
+      "name": "nestly_v359_earning_rule_immediate_write",
+      "sourcePath": "db/migrations/20260816_nestly_v359_earning_rule_immediate_write.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000010",
+      "name": "nestly_v361_bringback_module",
+      "sourcePath": "db/migrations/20260816_nestly_v361_bringback_module.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260816000011",
+      "name": "nestly_v362_bringback_till_surface",
+      "sourcePath": "db/migrations/20260816_nestly_v362_bringback_till_surface.sql"
     }
   ]
 }

@@ -304,7 +304,10 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      confirmed booking request (owner: "click into it > pop up approve/reject or change timing/
      staff", "colour differentiation from actual confirmed appointment") carries its own dynamic
      aria-label, reviewed with all three locales and matching placeholders like calendarAppointment. */
-  assert.equal(keys.length,132,'mixed-interface interpolation inventory changed without review');
+  /* 132 -> 133: V362 adds bringbackVoucherGiven — the till's bring-back voucher toast names the
+     item handed over, exactly as welcomeOfferGiven does for the welcome gift, so it is reviewed
+     interpolated copy rather than a raw template literal. Three locales, one {item} placeholder. */
+  assert.equal(keys.length,133,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

@@ -333,7 +333,23 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v331_tier_lifecycle', 'db/tests/v331_tier_lifecycle.sql'],
   ['nestly_v332_retention_program_lifecycle', 'db/tests/v332_retention_program_lifecycle.sql'],
   // v340 is WRITTEN, NOT APPLIED — this suite is the rehearsal it must pass first.
-  ['nestly_v340_reward_purchase_requirement', 'db/tests/v340_reward_purchase_requirement.sql']
+  ['nestly_v340_reward_purchase_requirement', 'db/tests/v340_reward_purchase_requirement.sql'],
+  /* The 2026-08-16 rewards wave shares ONE acceptance suite: these migrations are a single
+     connected change (move every reward setting off the draft/publish wizard onto immediate-write
+     pages), and several only make sense against each other — v354 fixes drift v353 introduced,
+     v355 removes a pot migration v354 would otherwise fire more often. Proving them apart would
+     assert a state the product is never actually in. */
+  ['nestly_v343_reward_edit_v326', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v345_tier_benefit_edit', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v347_tier_basis_immediate_write', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v348_spine_id_in_switch_response', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v350_welcome_offer_custom_item', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v353_stamp_model_immediate_write', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v354_spine_owns_loyalty_model', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v355_no_auto_pot_conversion', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v359_earning_rule_immediate_write', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v361_bringback_module', 'db/tests/v343_v362_rewards_wave.sql'],
+  ['nestly_v362_bringback_till_surface', 'db/tests/v343_v362_rewards_wave.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -837,7 +853,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 282); // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision) + v331 tier lifecycle + v332 retention program lifecycle + v340 reward purchase requirement (NOT applied)
+  assert.equal(pending.length, 293); // + the 2026-08-16 rewards wave (v343/v345/v347/v348/v350/v353/v354/v355/v359/v361/v362), all applied to prod and sharing one acceptance suite // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision) + v331 tier lifecycle + v332 retention program lifecycle + v340 reward purchase requirement (NOT applied)
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
