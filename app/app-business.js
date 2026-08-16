@@ -15455,6 +15455,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const state={
     step:1,
     visited:new Set([1]),
+    /* V360: one-shot guard so the hidden Go-live step auto-publishes exactly once per run.
+       Declared here rather than sprung into existence mid-flow, so its lifetime is the wizard's. */
+    autoPublishedV360:false,
     /* W6 increment 2: four independent booleans, not one of four exclusive keys. This object IS
        the switchboard, and it is also exactly what public.set_programmes_v314 is handed at
        Go-live — one shape, one mapping, no translation step that could disagree with itself. */
@@ -15953,7 +15956,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const errBlock=()=>state.error
     ?`<div class="err" role="alert">${esc(state.error)}<div class="row" style="margin-top:10px"><button type="button" class="btn ghost sm" id="growSetupRetryV301">Retry</button></div></div>`
     :'';
+  /* V360 (owner: "dont need the wizard go live steps"). The 'live' step is hidden from the
+     stepper, not deleted from the rail: every publish path, the ack screen and all the step
+     arithmetic (railCountW6I2, goto, state.step) still key off its index. Landing on it now
+     auto-publishes from render() below, so the owner never sees the Go-live screen — the same
+     thing simpleEditModeV335 already did for one entry, made universal. */
   const stepperHtml=()=>`<ol class="grow-setup-steps-v301" aria-label="Setup steps">${railW6I2().map((step,index)=>{
+    if(step.kind==='live')return '';
     const number=index+1,done=number<state.step,current=number===state.step;
     const reachable=state.visited.has(number)||number<state.step;
     return `<li><button type="button" class="grow-setup-step-v301${current?' is-current':''}${done?' is-done':''}" data-grow-setup-goto-v301="${number}"${step.programme?` data-grow-setup-programme-w6i2="${esc(step.programme)}"`:''}${current?' aria-current="step"':''}${reachable?'':' disabled'}><span class="grow-setup-step-num-v301" aria-hidden="true">${done?'✓':number}</span><span class="grow-setup-step-label-v301">${esc(step.label)}</span></button></li>`;
@@ -16562,6 +16571,17 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       :stepFourHtml();
   };
   function render(){
+    /* V360 (owner: "dont need the wizard go live steps"). ONE choke point for every route onto
+       the hidden 'live' step, whichever screen preceded it: publish immediately instead of
+       rendering the Go-live screen. Guarded by a one-shot flag because render() re-runs on every
+       state change and doPublishV339 itself calls render(). The ack case still surfaces — when the
+       server reports an advanced rule, doPublishV339 sets needAck and renders that screen rather
+       than publishing blind, which is the one thing an owner must still see. */
+    if(stepKindW6I2()==='live'&&!state.published&&!state.needAck&&!state.autoPublishedV360){
+      state.autoPublishedV360=true;
+      doPublishV339();
+      return;
+    }
     /* V335 (owner markup, photo 3: "delete unwanted fields"): entered from the Points System /
        Stamp card page's own "Edit" link, this is a standalone save-and-exit screen — the
        multi-step chrome (kicker, "Step X of Y", % done, the tab strip) describes a journey this
@@ -17046,7 +17066,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const addAnother=$('growSetupAddAnotherV301');
     if(addAnother)addAnother.onclick=()=>{
       state.published=false;state.form=null;state.ack=false;state.needAck=false;state.impactRules=[];
-      state.modeError='';
+      state.modeError='';state.autoPublishedV360=false;/* V360: re-arm, or the next pass onto the
+        hidden live step would render nothing and publish nothing. */
       goto(stepNumberForW6I2('reward'));
     };
     /* V303: the publish landed, the points_mode switch behind it did not. Retrying only re-tries
