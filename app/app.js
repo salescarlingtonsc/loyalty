@@ -776,6 +776,9 @@ let growTiersAddDraftV331={name:'',threshold:'',perkNote:''};
 let growTiersErrorV331='';
 let growTiersBusyV331=false;
 let growTiersEditingV331=null;
+/* V357: which of the Rewards Programme overview's status tabs is selected. Page-level, not
+   persisted — the tabs are a view filter, not a setting. */
+let growTileFilterStateV357='all';
 let settingsActiveTab='modules';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -1342,7 +1345,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -21287,10 +21290,12 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   document.querySelector('#welcomeOfferModalV215')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal welcome-offer-modal-v350" id="welcomeOfferModalV215" role="dialog" aria-modal="true" aria-labelledby="welcomeOfferTitleV215" tabindex="-1">
     <section class="modal-card" style="max-width:560px">
+      <!-- V357 (owner, photo 2: "misalignment"). The header row needs min-width:0 on the text
+           column: without it the flex item refuses to shrink below its longest word, so on an
+           iPad the heading and body squeezed into a one-word-per-line column beside the icon. -->
       <div class="row" style="align-items:flex-start;gap:12px">
-        <div><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px;font-size:1.7rem">Welcome offer</h2>
+        <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px;font-size:1.7rem">Welcome offer</h2>
         <p class="muted small" style="margin-top:8px">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p></div>
-        <span class="spacer"></span>
         <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('giftcard',{size:34})}</span>
       </div>
       <button type="button" class="btn ghost sm welcome-offer-close-v350" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button>
@@ -22865,15 +22870,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growDisplayLiveV343=growDisplayTopicsV343.filter(growTopicOngoingV244);
   const growDisplayPendingV343=growDisplayTopicsV343.filter(topic=>!growTopicOngoingV244(topic));
   const growDisplayHistoryCountV343=growTopicDefsV229.filter(topic=>String(topic.status?.[0]||'')==='History').length+growTiersHistoryV331.length;
+  /* V357 (owner: "why cannot click" against all four tabs). They were decoration — no click
+     handler, no data attribute, and aria-pressed hardcoded to All. They never filtered anything.
+     Now a real filter over the same list, with History routing to the History page (that view
+     already exists and owns deleted rows; duplicating it here would be a second answer to one
+     question). */
+  const growTileFilterV357=['all','live','pending'].includes(growTileFilterStateV357)?growTileFilterStateV357:'all';
+  const growFilteredTilesV357=growTileFilterV357==='live'?growDisplayLiveV343
+    :growTileFilterV357==='pending'?growDisplayPendingV343:growDisplayTopicsV343;
   const growTilesHtmlV229=`<div class="grow-programme-toolbar-v343">
       <div class="v150-segment grow-programme-tabs-v343" role="group" aria-label="Programme status">
-        <button type="button" aria-pressed="true">All (${growDisplayTopicsV343.length})</button>
-        <button type="button" aria-pressed="false">Live (${growDisplayLiveV343.length})</button>
-        <button type="button" aria-pressed="false">Not set up (${growDisplayPendingV343.length})</button>
-        <button type="button" aria-pressed="false">History (${growDisplayHistoryCountV343})</button>
+        <button type="button" aria-pressed="${growTileFilterV357==='all'}" data-grow-tile-filter-v357="all">All (${growDisplayTopicsV343.length})</button>
+        <button type="button" aria-pressed="${growTileFilterV357==='live'}" data-grow-tile-filter-v357="live">Live (${growDisplayLiveV343.length})</button>
+        <button type="button" aria-pressed="${growTileFilterV357==='pending'}" data-grow-tile-filter-v357="pending">Not set up (${growDisplayPendingV343.length})</button>
+        <a class="btn ghost sm" href="#/grow/history">History (${growDisplayHistoryCountV343})</a>
       </div>
     </div>
-    <div class="grow-topic-card-grid-v343">${growDisplayTopicsV343.map(growTileHtmlV244).join('')}</div>`;
+    <div class="grow-topic-card-grid-v343">${growFilteredTilesV357.length?growFilteredTilesV357.map(growTileHtmlV244).join(''):`<p class="muted small" style="padding:8px 4px">${growTileFilterV357==='live'?'No programme is live yet.':'Everything here is already set up.'}</p>`}</div>`;
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
   /* V250 (owner crossed out the "● Live: Points redemption / ● Live: Tiered membership /
      Stamp card" chip column on the Points redemption page). Which model is live is already the
@@ -23711,7 +23724,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growOfferBucketV324=item=>{
     const ends=item.ends_at?new Date(item.ends_at):null;
     if(ends&&ends<=growOffersNowV324)return 'history';
-    return item.active===true?'published':'draft';
+    /* V357 (owner, photo 1: "delete all draft"). A promotion that has not ended is simply LIVE or
+       paused — both belong in the same list, each row already showing its own state and its own
+       Edit/End buttons. Routing the old 'draft' bucket here rather than deleting those items is
+       deliberate: an inactive promotion is real data, and dropping the tab must not make it
+       unreachable. The bucket key survives (nothing else has to change) but is now never filled. */
+    return 'published';
   };
   const growOffersBucketedV324={published:[],draft:[],history:[]};
   growPromotionItemsV296.forEach(item=>{growOffersBucketedV324[growOfferBucketV324(item)].push(item)});
@@ -23748,9 +23766,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="${deleteBtnClass}" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
       </div></div>`;
   };
-  const growOffersEmptyV324={published:'No promotion is published right now.',
+  const growOffersEmptyV324={published:'No promotion is running right now.',
     draft:'No draft saved yet.',history:'Nothing has ended yet.'};
-  const growOffersTabsV324=[['published','Published'],['draft','Draft'],['history','History']];
+  const growOffersTabsV324=[['published','Live'],['history','History']];
   /* role="group", not "tablist": this is a FILTER over one page's own data (like the "Away
      threshold" segment above), not the peer-tab pattern growPage's own test forbids
      (v98-grow-unified-ux.test.mjs — "one overview-first journey... rather than four peer tabs").
@@ -23758,6 +23776,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growOffersTabStripV324=`<div class="v150-segment" role="group" aria-label="Offer status" data-grow-offers-tabstrip-v324>
     ${growOffersTabsV324.map(([key,title])=>`<button type="button" aria-pressed="${growOffersTabV324===key}" data-grow-offers-tab-v324="${key}">${esc(title)}${growOffersBucketedV324[key].length?` (${growOffersBucketedV324[key].length})`:''}</button>`).join('')}
   </div>`;
+  /* V357: a stale 'draft' tab value (from before that tab was removed) would otherwise select an
+     empty bucket and render a permanently empty list. Normalise to a tab that still exists. */
+  if(!growOffersTabsV324.some(([key])=>key===growOffersTabV324))growOffersTabV324='published';
   const growOffersListHtmlV324=growOffersBucketedV324[growOffersTabV324].length
     ?growOffersBucketedV324[growOffersTabV324].map(item=>growOffersRowHtmlV324(item,growOffersTabV324)).join('')
     :`<p class="muted small" style="padding:14px 0">${esc(growOffersEmptyV324[growOffersTabV324])}</p>`;
@@ -23792,6 +23813,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div>
       <div class="v150-title-actions">${programmeView==='list'?'<a class="btn ghost sm" href="#/grow/settings">'+CUI.icon('settings',{size:16})+'<span>More reward settings</span></a>':''}</div>
     </header>
+    <!-- V357 (owner annotation, photo 1: back arrow circled inside the card with "button at
+         outside"): the back button used to render INSIDE <section class="card">, so on every
+         dedicated reward page it sat within the white panel instead of above it. Lifted out here,
+         between the page header and the card, which is where the owner drew it — and it applies
+         to every reward page ("it applies to all rewards, not just for this module"), which is
+         exactly what this shared composer covers. -->
+    ${(()=>{
+      const dedicatedBackV357=!growActiveTopicV229&&['points','tiers','offers','history'].includes(programmeView);
+      if(growActiveTopicV229)return growBreadcrumbV268(growActiveTopicV229);
+      return dedicatedBackV357?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a></nav>`:'';
+    })()}
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
       <!-- V334 (owner markup, photo 4: "show this as header of gifts, it's the parent of this page,
            bring here his logo") — the same star icon the Rewards & Offer section uses leads
@@ -23806,7 +23838,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','offers','history'].includes(programmeView);
         const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:18})} `:'';
-        return `<div class="grow-section-heading"><div>${growActiveTopicV229?growBreadcrumbV268(growActiveTopicV229):(dedicatedViewV341?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a></nav>`:'')}<h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
+        return `<div class="grow-section-heading"><div><h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
       })()}
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
@@ -24354,7 +24386,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      row set itself changes, not just what is shown of one row. */
   outerMain.querySelectorAll('[data-grow-offers-tab-v324]').forEach(button=>button.onclick=()=>{
     const tab=button.dataset.growOffersTabV324;
-    if(!['published','draft','history'].includes(tab))return;
+    if(!['published','history'].includes(tab))return;
     growOffersTabV324=tab;
     growRerenderV322();
   });
@@ -24475,6 +24507,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        growTiersEditV331's click handlers below), just never from this tile click any more. */
     growTopicV229=tile.dataset.growTopicV229;
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
+  /* V357: the overview status tabs actually filter now (they were inert markup before). */
+  outerMain.querySelectorAll('[data-grow-tile-filter-v357]').forEach(button=>button.onclick=()=>{
+    const next=button.dataset.growTileFilterV357;
+    if(!['all','live','pending'].includes(next))return;
+    growTileFilterStateV357=next;
+    growRerenderV322({quiet:true});
   });
   const growTopicBack=$('growTopicBackV229');
   if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
