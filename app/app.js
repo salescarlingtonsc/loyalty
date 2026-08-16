@@ -772,7 +772,44 @@ let growPointsRemovePhotoV343=false;
 let growTiersManageTabV331='published';
 let growTiersDeletePendingV331='';
 let growTiersAddOpenV331='';
-let growTiersAddDraftV331={name:'',threshold:'',perkNote:''};
+let growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
+/* ============ V363 — A TIER HAS MANY BENEFITS, NOT ONE SENTENCE ==============================
+   Owner (2026-08-16, photo 2): "allow me to add multiple benefits (like essential = no benefits,
+   gold = 10% discount / free xx every month / birthday rewards) — i need all these templates
+   available for them to edit the values OR they can customise their own."
+   NO SCHEMA CHANGE IS NEEDED and none is made: loyalty_tiers.perk_note has been a NEWLINE-JOINED
+   list of benefit lines since V235, and both customer read paths already split it into one chip
+   per line (nestly_v186_customer_tier_ladder / v310's regexp_split_to_table on E'\\r?\\n', and
+   tierBenefitLines() on the workspace side). The editor was the only part still treating it as a
+   single sentence. So this is a form over the SAME field: rows in, '\n'.join out.
+   The templates are prefilled EDITABLE text, not codes — an owner picks one and changes "10" to
+   "15" or "coffee" to "pastry" right there, and "Write my own" gives them a blank row. Storing
+   the resulting sentence (rather than a structured rule) is deliberate: perk_note is descriptive
+   copy shown to customers, not something the engine computes with — the only benefit the engine
+   actually enforces is points_multiplier, which has its own field and is untouched here. */
+const GROW_TIER_BENEFIT_TEMPLATES_V363=Object.freeze([
+  ['','Pick a benefit template'],
+  ['10% off every visit','Discount every visit'],
+  ['Free item every month','Free item every month'],
+  ['Free birthday treat','Birthday reward — free item'],
+  ['20% off during your birthday month','Birthday reward — discount'],
+  ['Early access to new offers','Early access to offers'],
+  ['Free delivery on every order','Free delivery'],
+  ['__custom__','Write my own']
+]);
+/* V363 helpers. Kept beside the template list, not inside growPage, because both the renderer
+   and the click handlers use them and neither owns the other. */
+function growTiersBenefitLinesV363(value){
+  return String(value||'').split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+}
+/* Reads the live form rows. Blanks are KEPT here on purpose: the remove buttons address rows by
+   their rendered index, so silently dropping an empty row mid-capture would shift every index
+   after it and delete the wrong benefit. Only the save path filters (see growTiersAddSave). */
+function growTiersReadBenefitFieldsV363(){
+  const nodes=document.querySelectorAll('[data-grow-tiers-benefit-input-v363]');
+  if(!nodes.length)return [...(growTiersAddDraftV331.benefits||[])];
+  return [...nodes].map(node=>String(node.value||'').trim());
+}
 let growTiersErrorV331='';
 let growTiersBusyV331=false;
 let growTiersEditingV331=null;
@@ -1357,7 +1394,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -12585,6 +12622,31 @@ async function openBookingRequestPopupV329ById(id){
     .eq('id',id).eq('business_id',S.biz.id).maybeSingle();
   if(error||!data||!STAFF_BOOKING_DECISION_STATUSES.has(data.status))return;
   openBookingRequestPopupV329(data);
+}
+/* ============ V363 — THE STAMP-CARD EXCLUSIVITY WARNING, AT THE DOOR =========================
+   Owner (2026-08-16, photo 1): a popup on clicking into Stamp card whenever Point system and/or
+   Tier membership is active, saying setting up the stamp card will switch them off, yes/no.
+   Deliberately a plain confirm and nothing more: choosing "Yes, set up Stamp card" only OPENS the
+   page. Nothing is written here — the actual switch (and its own confirmation, which states the
+   same consequence at the moment it becomes true) still lives on that page's Turn-on control. */
+function openStampsExclusivityPopupV363(losingNames,onProceed){
+  if($('stampsExclusivityPopupV363'))return;
+  const names=(losingNames||[]).filter(Boolean);
+  const list=names.length>1?`${names.slice(0,-1).join(', ')} and ${names[names.length-1]}`:(names[0]||'your other programmes');
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="stampsExclusivityPopupV363" role="dialog" aria-modal="true" aria-labelledby="stampsExclusivityTitleV363" tabindex="-1"><div class="modal-card" style="max-width:460px">
+    <h2 id="stampsExclusivityTitleV363">Set up the Stamp card?</h2>
+    <p class="muted" style="margin-top:8px">The Stamp card runs on its own. Turning it on will switch ${esc(list)} off for your customers.</p>
+    <p class="muted small" style="margin-top:8px">Nothing changes yet — everything ${names.length>1?'they have':'it has'} collected stays saved, and you can come back at any time.</p>
+    <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="stampsExclusivityYesV363" type="button">Yes, continue</button>
+      <button class="btn ghost" id="stampsExclusivityNoV363" type="button">No, go back</button>
+    </div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('stampsExclusivityPopupV363')?.remove();};
+  deactivate=CUI.activateDialog($('stampsExclusivityPopupV363'),{onClose:close,initialFocus:'#stampsExclusivityNoV363'});
+  $('stampsExclusivityNoV363').onclick=close;
+  $('stampsExclusivityYesV363').onclick=()=>{close();if(typeof onProceed==='function')onProceed();};
 }
 function openBookingRequestPopupV329(row){
   if($('bookingRequestPopupV329'))return;
@@ -23836,17 +23898,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const threshold=Math.max(0,Number(tier.threshold||0));
     const multiplier=Number(tier.points_multiplier||1);
     const perkNote=String(tier.perk_note||'').trim();
+    /* V363: perk_note is a newline-joined LIST (see GROW_TIER_BENEFIT_TEMPLATES_V363) — the row
+       printed it as one run-on sentence, so a Gold tier with three benefits read as one. */
+    const perkLinesV363=perkNote.split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+    const perkHtmlV363=perkLinesV363.length
+      ?`<span class="muted small" data-merchant-content>${perkLinesV363.length===1?`Benefit: ${esc(perkLinesV363[0])}`:`Benefits: ${perkLinesV363.map(line=>esc(line)).join(' · ')}`}</span>`
+      :'';
     const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:18});
     if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkNote?`<span class="muted small" data-merchant-content>Benefit: ${esc(perkNote)}</span>`:''}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="pill off">In history</span>
     </li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
     return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkNote?`<span class="muted small" data-merchant-content>Benefit: ${esc(perkNote)}</span>`:''}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${paused?'Off':'Live'}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
@@ -23869,7 +23937,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Tier name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Required points</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddPerkV345">Benefit <span class="muted">(optional)</span></label><br><textarea id="growTiersAddPerkV345" class="grow-setup-input-v301" style="width:100%;max-width:420px" rows="2" placeholder="e.g. Free item every visit, or 10% off">${esc(growTiersAddDraftV331.perkNote||'')}</textarea></p>
+    ${/* V363: the single "Benefit" textarea became a list. Each row is one perk_note line and one
+         chip on the customer's tier card; the picker below prefills a row the owner then edits.
+         A tier with no rows is a legitimate, common shape (the owner's own example: Essential =
+         no benefits), so the empty state is a plain note, not a warning. */''}
+    <div class="grow-tier-benefits-v363" data-grow-tiers-benefits-v363>
+      <label class="muted small">Benefits <span class="muted">(optional — add as many as you like)</span></label>
+      ${(growTiersAddDraftV331.benefits||[]).length
+        ?(growTiersAddDraftV331.benefits||[]).map((line,index)=>`<p class="grow-setup-sentence-v301 row" style="gap:8px;align-items:center;margin-top:6px">
+            <input class="grow-setup-input-v301" data-grow-tiers-benefit-input-v363="${index}" style="flex:1;min-width:0;max-width:420px" value="${esc(line||'')}" placeholder="e.g. 10% off every visit" data-workspace-i18n aria-label="Benefit ${index+1}">
+            <button type="button" class="btn ghost sm" data-grow-tiers-benefit-remove-v363="${index}" data-workspace-i18n aria-label="Remove benefit ${index+1}">Remove</button>
+          </p>`).join('')
+        :'<p class="muted small" style="margin:6px 0 0">No benefit yet — this tier is recognition only. Add one below if you want to give something.</p>'}
+      <p class="grow-setup-sentence-v301 row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+        <select class="grow-setup-input-v301" id="growTiersBenefitTemplateV363" style="max-width:260px" aria-label="Benefit template">
+          ${GROW_TIER_BENEFIT_TEMPLATES_V363.map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`).join('')}
+        </select>
+        <button type="button" class="btn ghost sm" data-grow-tiers-benefit-add-v363="1">+ Add benefit</button>
+      </p>
+    </div>
     ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Add tier'}</button></div>
   </li>`:'';
@@ -24746,10 +24832,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        page. Owner ruling: a full parallel immediate-write page, not a read-only view over the
        wizard's tier editor. */
     if(tile.dataset.growTopicV229==='points'||tile.dataset.growTopicV229==='stamps'){
-      /* V350: both tiles share the '#/grow/points' hash — record which one was actually clicked so
-         the page renders what was asked for, not just whatever engine happens to be live today. */
-      growPointsViewKindV350=tile.dataset.growTopicV229;
-      return nav('#/grow/points');
+      /* V363 (owner, photo 1: "i need [a popup] when click into stamp card — it happens when
+         points and/or tier membership is active"). The exclusivity (R2/R3) has always been
+         enforced, but only at the moment the owner pressed "Turn on" several screens later. The
+         warning now meets them at the door, naming the programmes that would actually stop —
+         read off the SPINE (what is running for customers), never the tile status (what is
+         merely set up), because only the former is what a customer would lose.
+         It warns and then navigates; it does NOT switch anything off. Opening a setup page must
+         stay a read-only act — the write still belongs to the Turn-on control on that page, which
+         keeps its own confirmation. */
+      const openStampsV363=()=>{growPointsViewKindV350=tile.dataset.growTopicV229;nav('#/grow/points')};
+      if(tile.dataset.growTopicV229==='stamps'){
+        const losingV363=programmeExclusionsV322('stamps')
+          .filter(other=>programmeSpineOnV314(other)===true)
+          .map(other=>({points:'Point system',tiers:'Tier membership'})[other]||other);
+        if(losingV363.length)return openStampsExclusivityPopupV363(losingV363,openStampsV363);
+      }
+      return openStampsV363();
     }
     if(tile.dataset.growTopicV229==='tiers')return nav('#/grow/tiers');
     /* V358: the three ex-Lifestyle tiles are peers now, so each opens its OWN editor directly
@@ -25183,7 +25282,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!isGrowCurrent())return;
     growTiersBusyV331=false;
     if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} Nothing was changed.`;return growRerenderV322();}
-    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};
+    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
     growRerenderV322();
   };
   outerMain.querySelectorAll('[data-grow-tiers-manage-tab-v331]').forEach(button=>button.onclick=()=>{
@@ -25212,7 +25311,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersAddOpen=outerMain.querySelector('[data-grow-tiers-add-v331]');
   if(growTiersAddOpen)growTiersAddOpen.onclick=()=>{
     growTiersEditingV331=null;
-    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';
+    growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';
     growRerenderV322();
   };
   /* V345: each tier row's own Edit button opens the same form, pre-filled, targeting
@@ -25224,10 +25323,40 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!tier)return;
     growTiersEditingV331=id;
     growTiersAddOpenV331='form';
-    growTiersAddDraftV331={name:tier.name||'',threshold:String(tier.threshold||''),perkNote:tier.perk_note||''};
+    growTiersAddDraftV331={name:tier.name||'',threshold:String(tier.threshold||''),perkNote:tier.perk_note||'',
+      benefits:growTiersBenefitLinesV363(tier.perk_note)};
     growTiersErrorV331='';
     growRerenderV322();
   });
+  /* ---- V363: benefit rows. Every one of these buttons re-renders the whole page, which throws
+     away the form's DOM, so the typed values are captured back into the draft FIRST — the same
+     capture-before-rerender rule the V349 gift-photo fix established for this surface. ---- */
+  const growTiersCaptureDraftV363=()=>{
+    const nameField=$('growTiersAddNameV331'),thresholdField=$('growTiersAddThresholdV331');
+    growTiersAddDraftV331={...growTiersAddDraftV331,
+      name:nameField?nameField.value:growTiersAddDraftV331.name,
+      threshold:thresholdField?thresholdField.value:growTiersAddDraftV331.threshold,
+      benefits:growTiersReadBenefitFieldsV363()};
+  };
+  outerMain.querySelectorAll('[data-grow-tiers-benefit-remove-v363]').forEach(button=>button.onclick=()=>{
+    const index=Number(button.dataset.growTiersBenefitRemoveV363);
+    growTiersCaptureDraftV363();
+    const benefits=[...(growTiersAddDraftV331.benefits||[])];
+    if(!Number.isInteger(index)||index<0||index>=benefits.length)return;
+    benefits.splice(index,1);
+    growTiersAddDraftV331={...growTiersAddDraftV331,benefits};
+    growRerenderV322({quiet:true});
+  });
+  const growTiersBenefitAdd=outerMain.querySelector('[data-grow-tiers-benefit-add-v363]');
+  if(growTiersBenefitAdd)growTiersBenefitAdd.onclick=()=>{
+    const picked=String($('growTiersBenefitTemplateV363')?.value||'');
+    growTiersCaptureDraftV363();
+    /* '' (the placeholder option) and '__custom__' both mean "a blank line I will type into" —
+       the placeholder is not an error state, just the least-committed way to reach the same row. */
+    const line=(picked&&picked!=='__custom__')?picked:'';
+    growTiersAddDraftV331={...growTiersAddDraftV331,benefits:[...(growTiersAddDraftV331.benefits||[]),line]};
+    growRerenderV322({quiet:true});
+  };
   const growTiersAddCancel=outerMain.querySelector('[data-grow-tiers-add-cancel-v331]');
   if(growTiersAddCancel)growTiersAddCancel.onclick=()=>{
     growTiersAddOpenV331='';growTiersErrorV331='';growTiersEditingV331=null;
@@ -25236,11 +25365,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersAddSave=outerMain.querySelector('[data-grow-tiers-add-save-v331]');
   if(growTiersAddSave)growTiersAddSave.onclick=async()=>{
     if(growTiersBusyV331)return;
-    const nameField=$('growTiersAddNameV331'),thresholdField=$('growTiersAddThresholdV331'),perkField=$('growTiersAddPerkV345');
+    const nameField=$('growTiersAddNameV331'),thresholdField=$('growTiersAddThresholdV331');
     const name=String(nameField?.value||'').trim();
     const threshold=Math.round(Number(thresholdField?.value||''));
-    const perkNote=String(perkField?.value||'').trim();
-    growTiersAddDraftV331={name,threshold:thresholdField?.value||'',perkNote};
+    /* V363: rows in, one newline-joined perk_note out — exactly the shape every existing reader
+       (workspace tierBenefitLines, the two customer ladder RPCs) already expects. Blank rows are
+       dropped rather than saved as empty lines, which would render as empty customer chips. */
+    const benefits=growTiersReadBenefitFieldsV363().filter(Boolean);
+    const perkNote=benefits.join('\n');
+    growTiersAddDraftV331={name,threshold:thresholdField?.value||'',perkNote,benefits};
     if(!name){growTiersErrorV331='Name the tier customers will see.';return growRerenderV322();}
     if(!Number.isFinite(threshold)||threshold<0){growTiersErrorV331='Reached-at must be zero or a positive number.';return growRerenderV322();}
     growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
