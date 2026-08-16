@@ -715,18 +715,42 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .modal-card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);width:640px;max-width:100%;
   max-height:88vh;overflow-y:auto;padding:26px;animation:pop .22s var(--spring);transform-origin:center}
 /* V350 (owner mockup, photo 3): welcome offer modal — icon hero, an icon+label toggle row instead
-   of a bare checkbox, card-style radio options with a selected highlight, and a tinted info box. */
-.welcome-offer-modal-v350 .modal-card{position:relative}
-.welcome-offer-modal-v350 .welcome-offer-close-v350{position:absolute;top:22px;right:22px}
-.welcome-offer-modal-v350 .welcome-offer-hero-v350{width:64px;height:64px;min-width:64px;border-radius:20px;background:#FFF0ED;color:var(--coral,#FF6B5E);display:flex;align-items:center;justify-content:center;margin-top:4px}
-.welcome-offer-modal-v350 .welcome-offer-togglerow-v350{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--control-border);border-radius:14px;background:#FBFAF8;cursor:pointer}
-.welcome-offer-modal-v350 .welcome-offer-togglerow-v350 input{margin-left:auto}
-.welcome-offer-modal-v350 .welcome-offer-togglerow-icon-v350{width:30px;height:30px;min-width:30px;border-radius:10px;background:#FFF0ED;color:var(--coral,#FF6B5E);display:flex;align-items:center;justify-content:center}
-.welcome-offer-modal-v350 .welcome-offer-optioncard-v350{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--control-border);border-radius:14px;margin-top:8px;cursor:pointer}
-.welcome-offer-modal-v350 .welcome-offer-optioncard-v350 input{margin-top:3px}
-.welcome-offer-modal-v350 .welcome-offer-optioncard-v350.selected{border-color:var(--coral,#FF6B5E);background:#FFF3F1}
-.welcome-offer-modal-v350 .welcome-offer-infobox-v350{display:flex;align-items:flex-start;gap:8px;margin-top:14px;padding:12px 14px;border-radius:12px;background:#FBF3E7;color:var(--ink);font-size:13px}
-.welcome-offer-modal-v350 .welcome-offer-infobox-v350>span:first-child{color:var(--amber,#B87A1E);flex-shrink:0;margin-top:1px}
+   of a bare checkbox, card-style radio options with a selected highlight, and a tinted info box.
+   V362 (owner, photo 4: "compact, premium SaaS form, not large accessibility-style controls").
+   Every control here was oversized: a 22px checkbox rendering as a giant blue square, option cards
+   with huge padding, tall inputs, and section gaps ~30% larger than the rest of the admin UI. The
+   sizes below are the owner's own numbers. The selected state deliberately changes only colour —
+   never size — so a row cannot change height when it is picked. */
+.welcome-offer-modal-v350 .modal-card{position:relative;padding:22px}
+.welcome-offer-modal-v350 .welcome-offer-close-v350{position:absolute;top:18px;right:18px}
+.welcome-offer-modal-v350 h2#welcomeOfferTitleV215{font-size:1.45rem!important}
+.welcome-offer-modal-v350 label{font-size:14px}
+.welcome-offer-modal-v350 input:not([type="checkbox"]):not([type="radio"]),
+.welcome-offer-modal-v350 select{min-height:48px;border-radius:12px;padding:10px 12px;font-size:15px}
+.welcome-offer-modal-v350 .welcome-offer-hero-v350{width:46px;height:46px;min-width:46px;flex:none;border-radius:14px;background:#FFF0ED;color:var(--coral);display:flex;align-items:center;justify-content:center;margin-top:2px}
+/* Problem 5 — a compact setting row, not a bordered selection box. */
+.welcome-offer-modal-v350 .welcome-offer-togglerow-v350{display:flex;align-items:center;gap:10px;min-height:58px;padding:10px 14px;border:1px solid var(--control-border);border-radius:12px;background:#FBFAF8;cursor:pointer}
+.welcome-offer-modal-v350 .welcome-offer-togglerow-v350>b{flex:1;min-width:0;font-size:15px}
+.welcome-offer-modal-v350 .welcome-offer-togglerow-icon-v350{width:28px;height:28px;min-width:28px;border-radius:9px;background:#FFF0ED;color:var(--coral);display:flex;align-items:center;justify-content:center}
+/* Problem 1 — a normal compact checkbox. accent-color keeps the native tick inside the box. */
+.welcome-offer-modal-v350 .welcome-offer-togglerow-v350 input[type="checkbox"]{margin-left:auto;flex:none;
+  width:20px;height:20px;min-width:20px;max-width:20px;min-height:20px;max-height:20px;
+  appearance:auto;-webkit-appearance:checkbox;accent-color:var(--coral);cursor:pointer}
+/* Problem 2 — compact selectable rows; colour-only selected state. */
+.welcome-offer-modal-v350 .welcome-offer-optioncard-v350{display:flex;align-items:center;gap:12px;
+  min-height:76px;padding:16px 18px;border:1px solid var(--control-border);border-radius:12px;margin-top:8px;cursor:pointer}
+.welcome-offer-modal-v350 .welcome-offer-optioncard-v350>span{flex:1;min-width:0}
+.welcome-offer-modal-v350 .welcome-offer-optioncard-v350 b{font-size:15px;font-weight:650}
+.welcome-offer-modal-v350 .welcome-offer-optioncard-v350 p{font-size:13.5px;overflow-wrap:anywhere}
+.welcome-offer-modal-v350 .welcome-offer-optioncard-v350 input[type="radio"]{flex:none;margin:0;
+  width:20px;height:20px;min-width:20px;max-width:20px;min-height:20px;max-height:20px;
+  appearance:auto;-webkit-appearance:radio;accent-color:var(--coral);cursor:pointer}
+.welcome-offer-modal-v350 .welcome-offer-optioncard-v350.selected{border-color:var(--coral);background:#FFF6F4}
+/* Problem 4 — consistent, tighter section rhythm. */
+.welcome-offer-modal-v350 fieldset{margin-top:18px!important}
+.welcome-offer-modal-v350 legend.small{margin-bottom:2px}
+.welcome-offer-modal-v350 .welcome-offer-infobox-v350{display:flex;align-items:flex-start;gap:8px;margin-top:16px;padding:10px 12px;border-radius:12px;background:#FBF3E7;color:var(--ink);font-size:13px}
+.welcome-offer-modal-v350 .welcome-offer-infobox-v350>span:first-child{color:var(--amber);flex-shrink:0;margin-top:1px}
 .seg{display:inline-flex;gap:4px;background:#F1EEE9;border-radius:100px;padding:3px}
 .seg button{background:transparent;border-radius:100px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--muted)}
 .seg button.act{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
@@ -1311,6 +1335,10 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
 .grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
 .grow-breadcrumb-back-v346{padding:0;width:32px;height:32px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;flex-shrink:0}
+/* V362 (owner, photos 1+2): the back arrow sits inline to the LEFT of the page title rather than
+   on its own line under it. */
+.grow-title-row-v362{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
+.grow-title-text-v362{min-width:0}
 /* V301 (owner 2026-08-13: "ONE page with step subtabs… no popups"). The setup wizard lives
    inside the Programmes card, so it borrows the page's own tokens and adds no new colours. The
    step strip scrolls horizontally rather than wrapping into a second line at 390px, and every
@@ -2692,7 +2720,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=21ef641c6d77","business":"/app-business.js?b=98bcee770a1c","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=e6cf5965526e","customer":"/app-customer.js?b=21ef641c6d77","business":"/app-business.js?b=887492a69598","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -2716,6 +2744,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=111bc0036f85" defer></script>
+<script src="/app-core.js?b=ae5d60b0da7f" defer></script>
 </body>
 </html>

@@ -16891,6 +16891,10 @@ async function tillPage(){
          payload as packages and vouchers, because this is the one read the till already
          makes for a looked-up customer. */
       customerWelcomeOffer:entitlements.error?null:(entitlements.data?.welcome_offer||null),
+      /* V362: a bring-back voucher rides in the SAME entitlements payload as the welcome offer,
+         for the same reason — this is the one read the till already makes for a looked-up
+         customer, so a second round-trip would be a second thing to keep in sync. */
+      customerBringbackOffer:entitlements.error?null:(entitlements.data?.bringback_offer||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
          missing a service is not the deal the customer was quoted, so it is withheld rather than
@@ -17317,6 +17321,17 @@ async function tillPage(){
            Nothing here decides eligibility — staff_redeem_welcome_offer_v215 re-checks all of it. */
         const welcomeOffer=(!walkin&&catalog.customerWelcomeOffer)?catalog.customerWelcomeOffer:null;
         const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
+        /* V362: bring-back voucher. Always redeemable on sight — unlike the welcome offer there is
+           no minimum-spend variant, because the campaign's condition (being away) was already met
+           before it was ever issued. staff_redeem_bringback_v361 re-checks expiry, ownership and
+           branch, so nothing here decides eligibility. */
+        const bringbackOffer=(!walkin&&catalog.customerBringbackOffer)?catalog.customerBringbackOffer:null;
+        const bringbackBanner=bringbackOffer
+          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Bring-back voucher</b>
+            <p class="small" style="margin:5px 0">${esc(bringbackOffer.reward_label||'Free item')} is free for this customer.</p>
+            <p class="muted small" style="margin:5px 0">Sent because they had not visited for ${Math.max(0,Number(bringbackOffer.away_days)||0)} days. Nothing is charged.</p>
+            <button type="button" class="btn primary sm" id="tBringbackRedeemV362" data-grant="${esc(bringbackOffer.grant_id)}">Give ${esc(bringbackOffer.reward_label||'the free item')}</button></div>`
+          :'';
         const welcomeBanner=welcomeOffer
           ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
             <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
@@ -17333,7 +17348,7 @@ async function tillPage(){
            itself, and a group with nothing in it prints no heading. */
         const svcHeadingV216=catalog.services.length?'<b class="small" style="display:block">Services</b>':'';
         const prodHeadingV216=(catalog.products&&catalog.products.length)?'<b class="small" style="display:block;margin-top:14px">Products</b>':'';
-        picker=`${welcomeBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
+        picker=`${welcomeBanner}${bringbackBanner}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -17457,6 +17472,26 @@ async function tillPage(){
     /* v215 */
     const welcomeButton=$('tWelcomeRedeemV215');
     if(welcomeButton)welcomeButton.onclick=()=>redeemWelcomeOfferV215();
+    /* V362: hand over a bring-back voucher. Deliberately mirrors redeemWelcomeOfferV215's own
+       body — same busy guard, same isTillCurrent() re-checks around the await, same cust/
+       tillBranchId sources, same catalog=null + draw() refresh. The server re-checks expiry,
+       ownership and branch, so this only reports what it decided. */
+    const bringbackButton=$('tBringbackRedeemV362');
+    if(bringbackButton)bringbackButton.onclick=async()=>{
+      const offer=catalog?.customerBringbackOffer;
+      if(!offer||busy)return;
+      const label=offer.reward_label||'the free item';
+      busy=true;
+      const {data,error}=await sb.rpc('staff_redeem_bringback_v361',{
+        p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,p_grant:offer.grant_id});
+      if(!isTillCurrent())return;
+      busy=false;
+      if(error)return fail(error);
+      if(data?.status!=='completed')return fail(new Error('The bring-back voucher receipt was incomplete. Check the customer before retrying.'));
+      toast(`${label} given`);
+      catalog=null;
+      draw();
+    };
     document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
@@ -21362,29 +21397,29 @@ async function openWelcomeOfferEditorV215(current,onSaved){
            column: without it the flex item refuses to shrink below its longest word, so on an
            iPad the heading and body squeezed into a one-word-per-line column beside the icon. -->
       <div class="row" style="align-items:flex-start;gap:12px">
-        <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px;font-size:1.7rem">Welcome offer</h2>
-        <p class="muted small" style="margin-top:8px">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p></div>
+        <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px">Welcome offer</h2>
+        <p class="muted small" style="margin-top:6px">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p></div>
         <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('giftcard',{size:34})}</span>
       </div>
       <button type="button" class="btn ghost sm welcome-offer-close-v350" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button>
-      <label class="welcome-offer-togglerow-v350" style="margin-top:16px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><b>Give new sign-ups a welcome offer</b><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}></label>
-      <label for="welcomeItemV215" style="margin-top:16px">Free item</label>
+      <label class="welcome-offer-togglerow-v350" style="margin-top:18px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><b>Give new sign-ups a welcome offer</b><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}></label>
+      <label for="welcomeItemV215" style="margin-top:18px">Free item</label>
       <select id="welcomeItemV215">${items.map(item=>`<option value="${esc(item.kind+':'+item.id)}" ${selected===item.kind+':'+item.id?'selected':''}>${esc(item.name)} (${item.kind})</option>`).join('')}<option value="custom" ${selected==='custom'?'selected':''}>Something else…</option></select>
-      <div id="welcomeCustomLabelWrapV350"${selected==='custom'?'':' hidden'} style="margin-top:10px">
+      <div id="welcomeCustomLabelWrapV350"${selected==='custom'?'':' hidden'} style="margin-top:8px">
         <label for="welcomeCustomLabelV350" class="muted small">What is it?</label>
         <input id="welcomeCustomLabelV350" placeholder="e.g. Free thank-you card" value="${esc(current?.custom_label||(!items.length&&current?.reward_label)||'')}" maxlength="120">
       </div>
-      <fieldset style="margin-top:18px;border:0;padding:0">
+      <fieldset style="border:0;padding:0">
         <legend class="small"><b>When can they claim it?</b></legend>
         <label class="welcome-offer-optioncard-v350${minValue?'':' selected'}" style="margin-top:10px"><input type="radio" name="welcomeMinV215" value="none" ${minValue?'':'checked'}><span><b>Straight away — no minimum spend</b><p class="muted small" style="margin-top:2px">They can claim the offer as soon as they join.</p></span></label>
         <label class="welcome-offer-optioncard-v350${minValue?' selected':''}"><input type="radio" name="welcomeMinV215" value="min" ${minValue?'checked':''}><span><b>After they spend a minimum amount</b><p class="muted small" style="margin-top:2px">They must spend at least the minimum amount first.</p></span></label>
-        <label for="welcomeMinAmountV215" style="margin-top:10px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
+        <label for="welcomeMinAmountV215" style="margin-top:14px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
         <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
       </fieldset>
       <label for="welcomeExpiryV215" style="margin-top:14px">Expires after (days, optional)</label>
       <input id="welcomeExpiryV215" inputmode="numeric" placeholder="Leave blank for no expiry" value="${current?.expiry_days?String(current.expiry_days):''}">
       <p class="welcome-offer-infobox-v350"><span aria-hidden="true">${CUI.icon('info',{size:16})}</span><span>Staff give the item from Record sale after looking the customer up. Nothing is charged, and the visit is recorded at zero.</span></p>
-      <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="welcomeSaveV215">Save welcome offer</button><button type="button" class="btn ghost sm" id="welcomeCancelV215">Cancel</button></div>
+      <div class="row" style="margin-top:18px;flex-wrap:wrap"><button type="button" class="btn primary" id="welcomeSaveV215">Save welcome offer</button><button type="button" class="btn ghost sm" id="welcomeCancelV215">Cancel</button></div>
     </section></div>`);
   const dialog=$('welcomeOfferModalV215');
   let deactivate;
@@ -22736,7 +22771,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
      Reward milestones live INSIDE Point system — the overview never floods. */
   const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
-  const lifestyleLiveV229=(welcomeOfferStatusV215?.active?1:0)+(rewardJourney.birthday?.active?1:0)+bringBackLiveV229;
+  /* V362: lifestyleLiveV229 removed with the grouping card it counted for (V358). Each of the
+     three programmes now reports its own status on its own tile. */
   const growTopicDefsV229=[
     /* V294 (owner markup 2026-08-12): pending-setup cards carry the owner's own benefit lines. */
     /* V296: "Points redemption" renamed to "Points System" here too — the tile is the door the
@@ -22972,18 +23008,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      Now a real filter over the same list, with History routing to the History page (that view
      already exists and owns deleted rows; duplicating it here would be a second answer to one
      question). */
-  const growTileFilterV357=['all','live','pending'].includes(growTileFilterStateV357)?growTileFilterStateV357:'all';
+  const growTileFilterV357=['all','live','pending','history'].includes(growTileFilterStateV357)?growTileFilterStateV357:'all';
+  /* V362 (owner, photo 5): History was an <a class="btn ghost sm">, which gave it its own outlined
+     pill and a different hover/cursor from its three neighbours. It is the SAME component as the
+     others now — one filter, one interaction — and selecting it shows the deleted/ended rows
+     inline instead of navigating away. */
+  const growHistoryTilesV362=growTopicDefsV229.filter(topic=>String(topic.status?.[0]||'')==='History');
   const growFilteredTilesV357=growTileFilterV357==='live'?growDisplayLiveV343
-    :growTileFilterV357==='pending'?growDisplayPendingV343:growDisplayTopicsV343;
+    :growTileFilterV357==='pending'?growDisplayPendingV343
+    :growTileFilterV357==='history'?growHistoryTilesV362:growDisplayTopicsV343;
   const growTilesHtmlV229=`<div class="grow-programme-toolbar-v343">
       <div class="v150-segment grow-programme-tabs-v343" role="group" aria-label="Programme status">
         <button type="button" aria-pressed="${growTileFilterV357==='all'}" data-grow-tile-filter-v357="all">All (${growDisplayTopicsV343.length})</button>
         <button type="button" aria-pressed="${growTileFilterV357==='live'}" data-grow-tile-filter-v357="live">Live (${growDisplayLiveV343.length})</button>
         <button type="button" aria-pressed="${growTileFilterV357==='pending'}" data-grow-tile-filter-v357="pending">Not set up (${growDisplayPendingV343.length})</button>
-        <a class="btn ghost sm" href="#/grow/history">History (${growDisplayHistoryCountV343})</a>
+        <button type="button" aria-pressed="${growTileFilterV357==='history'}" data-grow-tile-filter-v357="history">History (${growDisplayHistoryCountV343})</button>
       </div>
     </div>
-    <div class="grow-topic-card-grid-v343">${growFilteredTilesV357.length?growFilteredTilesV357.map(growTileHtmlV244).join(''):`<p class="muted small" style="padding:8px 4px">${growTileFilterV357==='live'?'No programme is live yet.':'Everything here is already set up.'}</p>`}</div>`;
+    <div class="grow-topic-card-grid-v343">${growFilteredTilesV357.length?growFilteredTilesV357.map(growTileHtmlV244).join(''):`<p class="muted small" style="padding:8px 4px">${growTileFilterV357==='live'?'No programme is live yet.':growTileFilterV357==='history'?'Nothing has been deleted yet.':'Everything here is already set up.'}</p>`}</div>`;
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
   /* V250 (owner crossed out the "● Live: Points redemption / ● Live: Tiered membership /
      Stamp card" chip column on the Points redemption page). Which model is live is already the
@@ -23996,20 +24038,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            subtitle under the H1, matching the mockup. Only that one view — the others already
            carry their own subtitle/blurb further down (blurb for a drilled tile, "Current
            setting: ..." for Points System, etc.), so a second one here would repeat it. -->
-      <div class="cui-page-title"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div>
+      <!-- V362 (owner, photos 1+2: title circled with an arrow down to the back button, "arrow is
+           left side of the text ... do the same for all rewards"). The back button now sits INLINE
+           to the left of the H1 rather than on its own line beneath it, so the title reads as one
+           row. Same shared composer, so it applies to every reward page at once. -->
+      <div class="cui-page-title grow-title-row-v362">${(()=>{
+        const dedicatedBackV362=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
+        if(growActiveTopicV229)return `<button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button>`;
+        return dedicatedBackV362?`<a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a>`:'';
+      })()}<div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
       <div class="v150-title-actions">${programmeView==='list'?'<a class="btn ghost sm" href="#/grow/settings">'+CUI.icon('settings',{size:16})+'<span>More reward settings</span></a>':''}</div>
     </header>
-    <!-- V357 (owner annotation, photo 1: back arrow circled inside the card with "button at
-         outside"): the back button used to render INSIDE <section class="card">, so on every
-         dedicated reward page it sat within the white panel instead of above it. Lifted out here,
-         between the page header and the card, which is where the owner drew it — and it applies
-         to every reward page ("it applies to all rewards, not just for this module"), which is
-         exactly what this shared composer covers. -->
-    ${(()=>{
-      const dedicatedBackV357=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
-      if(growActiveTopicV229)return growBreadcrumbV268(growActiveTopicV229);
-      return dedicatedBackV357?`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a></nav>`:'';
-    })()}
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
       <!-- V334 (owner markup, photo 4: "show this as header of gifts, it's the parent of this page,
            bring here his logo") — the same star icon the Rewards & Offer section uses leads
@@ -24070,23 +24109,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
         ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',growTiersPublishedV331.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}
-      ${topicOnV229('lifestyle')?`
-      <div class="programme-category" data-programme-category-v268="lifestyle"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
-        ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards,Boolean(growDraftPendingId))}
-        ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
-          <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p>${growPendingBlockV268(growPendingBirthdayV291)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p>${growPendingBlockV268(growPendingBirthdayV291)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`)
-          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
-        ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true,pending:growRetentionDiffV291.changed.get(String(program.id))||null})}).join('')
-        +growRetentionDiffV291.added.map(rule=>programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:rule.name,copy:'Customers see this bring-back rule once you publish.',status:'Not live yet',statusTone:'new',merchant:true})).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
-      </div></div>
-      <!-- V346 (owner annotation, screenshot 2026-08-16): removed from the Lifestyle rewards
-           detail page specifically ("Remove"). renderComebackCardV300/comebackHost itself is left
-           untouched — it is still mounted from the main Grow tiles view (line ~23392) and the
-           standalone Retention programs page, both unaffected by this one call site. -->
-      ${canWinback&&!topicOnV229('lifestyle')?'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-top:14px"></section>':''}
-      `:''}
+      ${/* V362: the Lifestyle rewards drilled-topic block is DELETED. V358 removed the
+            'lifestyle' entry from growTopicDefsV229, so growActiveTopicV229 could never
+            resolve to it again and topicOnV229('lifestyle') was permanently false — this
+            template had been unreachable dead code since. Its three programmes are their own
+            tiles now, each with its own editor. */''}
       ${/* V319: one definition, two entry points — the drilled Promotions topic (this line) and
            the Limited Offer rail child below. */''}
       ${topicOnV229('promotions')?growLimitedOfferCategoryHtmlV319:''}
@@ -24796,7 +24823,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V357: the overview status tabs actually filter now (they were inert markup before). */
   outerMain.querySelectorAll('[data-grow-tile-filter-v357]').forEach(button=>button.onclick=()=>{
     const next=button.dataset.growTileFilterV357;
-    if(!['all','live','pending'].includes(next))return;
+    if(!['all','live','pending','history'].includes(next))return;
     growTileFilterStateV357=next;
     growRerenderV322({quiet:true});
   });
