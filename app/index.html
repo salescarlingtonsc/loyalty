@@ -45,12 +45,12 @@
   --line:#EAE6DF; --control-border:#817B88; --hair:rgba(23,22,26,.06);
   --coral:#C24135; --coral-hover:#9D352C; --amber:#A75514; --green:#1F6B48; --red:#9D352C;
   --grad:linear-gradient(135deg,#C24135,#9D352C);
-  --peekaa-red:#EE4D3A;--peekaa-red-dark:#D73D31;--peekaa-red-soft:#FDEAE5;--peekaa-red-faint:#FFF3F0;
+  --peekaa-red:#E89A72;--peekaa-red-dark:#D9825E;--peekaa-red-soft:#F9E7DD;--peekaa-red-faint:#FFF3D6;
   --peekaa-bg:#F8F4F1;--peekaa-card:#FFFDFC;--peekaa-white:#FFFFFF;
-  --peekaa-text:#18181B;--peekaa-text-secondary:#7B7B85;--peekaa-text-muted:#A39DA5;
+  --peekaa-text:#251F1B;--peekaa-text-secondary:#7C746E;--peekaa-text-muted:#A39DA5;
   --peekaa-border:#ECE3DE;--peekaa-divider:#F0EBE7;
-  --peekaa-success:#27845D;--peekaa-success-bg:#E5F5ED;
-  --peekaa-gold:#B6872F;--peekaa-gold-bg:#F8F0DF;
+  --peekaa-success:#4F8A72;--peekaa-success-bg:#E7F3ED;
+  --peekaa-gold:#D8B15A;--peekaa-gold-bg:#FFF3D6;
   /* V299: the one categorical palette for DOM proportion bars (reports, playbooks). */
   --chart-1:#C24135; --chart-2:#1F6B48; --chart-3:#1F5199; --chart-4:#8A5A12; --chart-5:#7A2E9D; --chart-6:#6B6673;
   --tint:#FFF0EC;            /* coral wash for selected/active surfaces */
@@ -2586,6 +2586,24 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-card-body{grid-template-columns:44px minmax(0,1fr) minmax(86px,auto)}
 .customer-programme-card-balance{min-width:0;max-width:100%}.customer-programme-card-balance b{max-width:none!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;font-size:14px!important;letter-spacing:0}.customer-programme-card-balance span{flex:0 0 auto}
 .customer-home-business-track-v343 .customer-programme-card-body{grid-template-columns:38px minmax(0,1fr) 10px}.customer-home-business-track-v343 .customer-programme-card-balance b{max-width:none!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;font-size:10.5px!important;letter-spacing:0}
+/* V361: warm premium customer accents. The page background stays on --peekaa-bg exactly as-is. */
+.customer-shell.customer-surface{--tint:var(--peekaa-red-soft);--coral:var(--peekaa-red);--coral-hover:var(--peekaa-red-dark);--red:var(--peekaa-red-dark);--green:var(--peekaa-success);--amber:var(--peekaa-gold);--grad:linear-gradient(135deg,var(--peekaa-red),var(--peekaa-red-dark));color:var(--peekaa-text)}
+.customer-shell .btn:not(.ghost),.customer-shell .customer-programme-contact-item-book-v337,.customer-my-rewards-title #customerHomeScan{background:var(--grad)!important;box-shadow:0 8px 22px rgba(232,154,114,.24)!important}
+.customer-shell .btn:not(.ghost):active,.customer-shell .customer-programme-contact-item-book-v337:active,.customer-my-rewards-title #customerHomeScan:active{background:var(--peekaa-red-dark)!important}
+.customer-nav-scan-fab{background:var(--peekaa-red)!important;box-shadow:0 8px 22px rgba(232,154,114,.24)!important}
+.customer-primary-nav a[aria-current="page"],.customer-rewards-filter-chips-v344 .is-active{background:var(--peekaa-red-soft)!important;border-color:var(--peekaa-red)!important;color:var(--peekaa-red)!important}
+.customer-home-section-head-v343 a,.customer-home-offers-head a,.customer-business-offers-head-v349 a,.customer-programme-category-head .pill,.customer-programme-card-copy .customer-quest-kicker,.customer-home-business-copy-v345 strong{color:var(--peekaa-red)!important}
+.customer-home-offer-countdown,.customer-offer-new{background:var(--peekaa-red-soft)!important;color:var(--peekaa-red)!important}
+.customer-home-ready-gift-v343{background:var(--peekaa-gold-bg)!important;color:var(--peekaa-gold)!important}
+.customer-home-ready-arrow-v343,.customer-business-module-icon-v347,.customer-home-booking-icon-v344{background:var(--peekaa-red-soft)!important;color:var(--peekaa-red)!important}
+.customer-shell .card.customer-business-summary-v346,.customer-shell .customer-points-hero-v337{background:linear-gradient(150deg,var(--peekaa-red) 0%,var(--peekaa-red-dark) 100%)!important;box-shadow:0 18px 34px rgba(232,154,114,.24)!important}
+.customer-business-tier-pill-v347{background:rgba(117,70,45,.22)!important}.customer-business-ready-v347{color:#fff!important}
+.customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{color:var(--peekaa-red)!important}
+.customer-referral-code{border-color:var(--peekaa-red)!important;color:var(--peekaa-red)!important}
+.customer-claimable-banner-v337,.customer-claimable-strip{border-color:var(--peekaa-gold)!important;background:var(--peekaa-gold-bg)!important;box-shadow:0 14px 34px rgba(216,177,90,.14),0 2px 8px rgba(77,55,44,.04)!important}
+.customer-claimable-banner-icon-v337{background:#F8E7B2!important;color:#A67919!important}.customer-claimable-banner-kicker-v337,.customer-claimable-strip-label{color:#A67919!important}
+.customer-surface .pill.ok{background:var(--peekaa-success-bg)!important;color:var(--peekaa-success)!important}
+.customer-reward-cost-v339,.wallet-reward-cost,.customer-reward-progress-pill-v340{color:var(--peekaa-gold)!important}.customer-reward-progress-pill-v340{background:var(--peekaa-gold-bg)!important}
 /* V167 Phase 4: customer-only system dark mode. Merchant/admin surfaces retain their
    established light palette. The redemption QR intentionally stays on a light scan surface. */
 .customer-surface{min-height:100dvh;background:var(--bg);color:var(--ink)}
