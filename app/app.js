@@ -24311,33 +24311,30 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      on/off + delete (immediate-write RPCs the switch panel has no equivalent of), the add-gift
      form, and the empty-state CTA. All of it reads growPointsSpineKindV326/growPointsIsStampsV326
      (set at the top of the V326 render block above) so it works identically for either live model. */
-  /* V352/V353 (owner: "click 'set up stamp card system' > should show photo 1" — same
-     wizard-bounce bug V347 already fixed for Tiers). V352 alone turned out incomplete: flipping
-     the business_programmes SPINE starts/stops accrual immediately (the engine reads it, per
-     V314), but growPointsConfiguredV326/growStampsPageV350's own "configured" check for stamps is
-     `liveLoyaltyModelV235==='stamps'` (app/app.js:22345), which reads
-     `snapshot.loyalty?.loyalty_model` — the loyalty_programs COLUMN, a completely separate write
-     from the spine. V352's click silently succeeded (the RPC ran) but the page never moved,
-     because it was reading a column the click never touched — the exact same class of gap V347
-     found for tier_basis. V353 (business_set_loyalty_model_v353) closes it: only called for
-     stamps, since points/redeem is already the fallback default liveLoyaltyModelV235 resolves to
-     when nothing is configured, so points never needed this RPC at all. */
+  /* V352/V353/V354 (owner: "click 'set up stamp card system' > should show photo 1"). The final
+     shape is ONE call, deliberately: V353's separate business_set_loyalty_model_v353 call used to
+     run here first, which made this a non-atomic two-step (declare the model, then flip the
+     spine). Those two came apart in production — the model write landed, the spine write did not,
+     and because set_programmes_v314 never touched loyalty_model, an owner who later switched back
+     to points kept loyalty_model='stamps' forever, so the customer app rendered a POINTS balance
+     as "75,877 stamps". V354 moves that write INSIDE set_programmes_v314, in the same transaction
+     as the switch, so the spine is the single source of truth for every caller and the two can no
+     longer disagree. Nothing to sync client-side any more — one call, one fact. */
   const growPointsSetupCta=$('growPointsSetupV326');
   if(growPointsSetupCta)growPointsSetupCta.onclick=async()=>{
     if(growPointsBusyV326)return;
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
-    if(growPointsIsStampsV326){
-      const {error:modelError}=await sb.rpc('business_set_loyalty_model_v353',{p_business:S.biz.id,p_model:'stamps'});
-      if(!isGrowCurrent())return;
-      if(modelError){growPointsBusyV326=false;growPointsErrorV326=ownerErrorText(modelError);return growRerenderV322({quiet:true});}
-      if(snapshot.loyalty)snapshot.loyalty.loyalty_model='stamps';else snapshot.loyalty={loyalty_model:'stamps'};
-    }
     const set={[growPointsSpineKindV326]:true};
     programmeExclusionsV322(growPointsSpineKindV326).forEach(other=>{set[other]=false});
     const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
     if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
+    /* The server just moved loyalty_model with the spine (V354), so the cached copy this page's
+       own "configured" check reads is stale by exactly one field. Mirror it rather than refetch
+       the whole snapshot — same local-echo the tier-basis handler uses. */
+    const modelAfterV354=growPointsIsStampsV326?'stamps':'classic';
+    if(snapshot.loyalty)snapshot.loyalty.loyalty_model=modelAfterV354;else snapshot.loyalty={loyalty_model:modelAfterV354};
     growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
     growRerenderV322({quiet:true});
   };
