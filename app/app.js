@@ -728,6 +728,16 @@ let growPointsRewardTabV324='published';
    another?" prompt; growPointsAddDraftV326 holds the in-progress form values across re-renders.
    growPointsBusyV326 guards against double-submit while an RPC is in flight. All cleared by the
    router alongside the other grow session state. */
+/* V350 (owner: "clicking stamp card still reflects point system"). Both the Points and Stamp card
+   tiles nav to the exact same '#/grow/points' hash — which template renders was decided entirely
+   by which engine is CURRENTLY LIVE (liveLoyaltyModelV235), never by which tile was actually
+   clicked. A business running points+tiers (stamps off) clicking "Stamp card" just saw its own
+   live Points page — not a bug in the render branch itself (already correctly wired to
+   growStampsPageV350), the tile click never recorded which page the owner asked for. Set by the
+   tile handler right before nav(), read once by growPointsIsStampsV326, persists across quiet
+   re-renders of this same page visit (an Add-level click must not silently flip the page back to
+   Points mid-interaction), reset alongside the rest of this section's per-visit state below. */
+let growPointsViewKindV350=null;
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
@@ -1332,7 +1342,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -23080,14 +23090,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the Stamp card destination rather than a second page built against the same unscoped list —
      points and stamps are mutually exclusive (R2), so exactly one of these is ever the live model
      for a given business, and the page below is entirely driven by which one that is. */
-  const growPointsIsStampsV326=liveLoyaltyModelV235==='stamps';
+  const growPointsIsStampsV326=growPointsViewKindV350?growPointsViewKindV350==='stamps':liveLoyaltyModelV235==='stamps';
   const growPointsSpineKindV326=growPointsIsStampsV326?'stamps':'points';
   const growPointsPageTitleV326=growPointsIsStampsV326?'Stamp card':'Point system';
   const growPointsRowLabelV326=growPointsIsStampsV326?'Stamp card':'Point system';
   const growPointsUnitV326=growPointsIsStampsV326?'stamp':'point';
   /* Same test the points tile's own summary line already uses (growTopicDefsV229 above) — points
      (or stamps) is "configured" the moment it is the live loyalty MODEL, whether on or paused. */
-  const growPointsConfiguredV326=growPointsIsStampsV326||liveLoyaltyModelKeysV240.includes('redeem');
+  /* V350: "configured" must answer whether the ENGINE is actually live, never whether the owner
+     merely clicked the Stamp card tile — growPointsIsStampsV326 now means "which page to render"
+     (see its own comment above), not "which engine is live". A business running points/tiers with
+     stamps untouched must still see the Stamp Card setup prompt, not an empty-but-"configured"
+     table, when the tile is clicked. liveLoyaltyModelV235 (unforced) is the real engine check. */
+  const growPointsConfiguredV326=growPointsIsStampsV326?liveLoyaltyModelV235==='stamps':liveLoyaltyModelKeysV240.includes('redeem');
   /* A business that has ever switched models can have dormant rows from the OTHER kind still
      sitting in loyalty_rewards, tagged with that kind's own programme_id (V313 default-fill). Scope
      to the spine row for whichever kind is actually live so a stamps firm never sees leftover
@@ -24240,7 +24255,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        (an ordered list of rungs, not independent gifts), not a third model sharing the points
        page. Owner ruling: a full parallel immediate-write page, not a read-only view over the
        wizard's tier editor. */
-    if(tile.dataset.growTopicV229==='points'||tile.dataset.growTopicV229==='stamps')return nav('#/grow/points');
+    if(tile.dataset.growTopicV229==='points'||tile.dataset.growTopicV229==='stamps'){
+      /* V350: both tiles share the '#/grow/points' hash — record which one was actually clicked so
+         the page renders what was asked for, not just whatever engine happens to be live today. */
+      growPointsViewKindV350=tile.dataset.growTopicV229;
+      return nav('#/grow/points');
+    }
     if(tile.dataset.growTopicV229==='tiers')return nav('#/grow/tiers');
     /* V331: growSetupEntryV301's ['points','stamps','tiers'] list has no card left that reaches
        this line — all three now return above, straight to their own dedicated page. The wizard

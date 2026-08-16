@@ -446,6 +446,16 @@ let growPointsRewardTabV324='published';
    another?" prompt; growPointsAddDraftV326 holds the in-progress form values across re-renders.
    growPointsBusyV326 guards against double-submit while an RPC is in flight. All cleared by the
    router alongside the other grow session state. */
+/* V350 (owner: "clicking stamp card still reflects point system"). Both the Points and Stamp card
+   tiles nav to the exact same '#/grow/points' hash — which template renders was decided entirely
+   by which engine is CURRENTLY LIVE (liveLoyaltyModelV235), never by which tile was actually
+   clicked. A business running points+tiers (stamps off) clicking "Stamp card" just saw its own
+   live Points page — not a bug in the render branch itself (already correctly wired to
+   growStampsPageV350), the tile click never recorded which page the owner asked for. Set by the
+   tile handler right before nav(), read once by growPointsIsStampsV326, persists across quiet
+   re-renders of this same page visit (an Add-level click must not silently flip the page back to
+   Points mid-interaction), reset alongside the rest of this section's per-visit state below. */
+let growPointsViewKindV350=null;
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
@@ -801,7 +811,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={programmes:0,bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:''};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
