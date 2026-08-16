@@ -22645,10 +22645,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      'list', the one screen the owner marked, not the concept everywhere it is still true. */
   /* V334 (owner markup, photo 1 + 4: "please remove this, don't need review & publish"):
      struck out again on Overview and on the Points System detail page specifically. */
-  const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'&&programmeView!=='list'
-    &&programmeView!=='overview'&&programmeView!=='points'
-    ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.${growDraftDetailErrorV268?' Your pending edits could not be loaded, so nothing below is marked as edited.':' Anything you have edited is marked with what it becomes.'}</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
-    :'';
+  /* V358 (owner, photo 4: the whole Review & publish screen struck out — "remove this review &
+     publish feature", "remove this entirely from my codebase / i dont want to see it"). Every
+     reward surface an owner touches is immediate-write now (V326 gifts, V331/V345 tiers, V347
+     tier basis, V350 stamp levels, V354 programme switches), so there is nothing left for an
+     owner to "publish" — the banner was advertising a step that no longer applies to anything
+     they can edit here. The versioned-config kernel underneath is deliberately untouched: gift
+     and tier creation still require an active config version (business_create_reward_v326 raises
+     'this business has no published loyalty configuration yet' without one), so removing the
+     PLUMBING would break creation outright. Only the owner-facing banner is gone. */
+  const growUnpublishedMarkerV198='';
   /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
      Reward milestones live INSIDE Point system — the overview never floods. */
   const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
