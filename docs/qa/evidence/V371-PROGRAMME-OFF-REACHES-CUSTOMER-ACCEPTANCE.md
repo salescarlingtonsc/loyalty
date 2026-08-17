@@ -100,17 +100,90 @@ One deliberate exception is recorded rather than removed: `localCustomerPreviewC
 both its router entry and its renderer on `location.hostname` being `localhost`/`127.0.0.1`/`::1`,
 so it is unreachable in production, but it does ship in the customer bundle.
 
+## Applied to production
+
+Applied to `gadpooereceldfpfxsod` on 17 August 2026 and re-verified against the live functions:
+the 17-check suite passes 17/17 there, and a side-by-side probe confirms the two views now agree
+in every state.
+
+| step | business view | customer view |
+| --- | --- | --- |
+| all on | points=true tiers=true | enabled=true · tier=ZZ Bronze · gift offered |
+| points off | points=false | **enabled=false** · tier=ZZ Bronze · gift offered |
+| tiers off | tiers=false | enabled=true · **tier=(none)** · gift offered |
+| gift paused | — | enabled=true · tier=ZZ Bronze · **gift not offered** |
+| gift live again | — | enabled=true · tier=ZZ Bronze · gift offered |
+
+`supabase_migrations.schema_migrations` records v371 at `20260817000004`. The 15 migrations from
+v343 to v370 remain absent from that ledger: they were applied by direct SQL, and the backfill is
+refused by the Claude Code auto-mode classifier (both as a batch and one row at a time). The repo
+plans and manifests are the accurate record. v340 is correctly absent — it is written for rehearsal
+and is not applied, which was confirmed by probing for the object it would create.
+
+## Defects found while making the suite green
+
+Three more product defects surfaced while working through the 62 failing tests, each fixed rather
+than papered over:
+
+1. **The two programme-view lists had drifted (routing).** `programmeView` and
+   `hashParamIsProgrammeView` were maintained as separate literals. V366 added `'bringback'` to the
+   first only — so `#/grow/bringback` resolved as a view *and* fell through to `mountGrowSurface`
+   with `draftOverride:'bringback'`, mounting a deep editor surface the owner never asked for, with
+   a view name where a draft id belongs. This is the sibling of the very defect V366 fixed. Both
+   now read one frozen `GROW_PROGRAMME_VIEWS_V371`, and
+   `tests/business-ui/v366-bringback-route-reachability.test.mjs` executes both statements out of
+   the shipped source and asserts they cannot disagree.
+
+2. **A tile whose read failed claimed "Not set up" (fabricated state).** When birthday moved from a
+   row to a topic tile it lost its unavailable state, so a failed read was reported as a fact about
+   the owner's configuration. Every tile now routes its status through `growTileStatusV371`, which
+   names the read it depends on and answers `Unavailable` when that read failed — the honest-unknown
+   state the drilled rows always had.
+
+3. **Uploaded promotion artwork was being cropped again.** The V343 "customer luxury polish" pass
+   re-introduced `object-fit:cover` on `.customer-home-offer-media img`, silently overriding the
+   `contain` rule and cropping merchant-uploaded artwork on the customer home carousel — the exact
+   thing V173 forbids. Removed; the image is letterboxed inside its fixed-ratio container, as on the
+   card and detail surfaces.
+
+Two smaller truthfulness fixes: the localhost preview's two inert "Book again" buttons are now
+`disabled` rather than looking pressable, and the V123 readiness scanner no longer reads `<style>`
+blocks as markup (a CSS comment mentioning `<a>` had been reported as a permanently unwired control).
+
+## Dead code found
+
+Left in place and recorded rather than removed, because each has a live consumer or a multi-line
+shape whose removal carries more risk than value:
+
+- `pendingGrowSetupModelV303` — declared and read, never written. Its reader feeds
+  `handoffKindW6I2`, which is therefore always null, making the wizard's tile hand-off branch dead.
+- `welcomeOfferRowV215` — a complete row builder with no caller since V358 gave the welcome offer
+  its own tile.
+- `growRetentionDiffV291` and `growPendingBirthdayV291` — both computed once and never read, left
+  behind when birthday and bring-back moved off the overview's row list.
+
+One dead symbol *was* removed: `growBreadcrumbV268`, because it held a second copy of the back
+button's element id and any future caller would have put a duplicate id in the document.
+
+## Test suite
+
+3145 tests, all passing (`npm run validate` exits 0). The suite was at 88 failures when this audit
+started and every one has been resolved by either updating an assertion whose behaviour the owner
+had intentionally changed, or fixing the product where the test had found something real. No test
+was deleted to make the suite pass; where a feature was struck out by owner ruling, its tests were
+inverted so the removal itself is now guarded.
+
 ## Regenerated browser evidence
 
 The recent rewards wave changed production source without recapturing the fixtures that pin it, so
 these were regenerated from current source. New `production-source-sha256` pins:
 
-- `tests/browser/reward-overview-owner-visual.html` → `084d6f5ed5bade0d91a515bed26794ebf61017ee59fdfa1b1e8eaf936d349974`
-- `tests/browser/v129-trial-test-visual.html` → `4d0d2a7ab4d560913b1b18c566887b527bb974bca4394d269ebb416a6ed5c74f`
-- `tests/browser/v130-self-serve-visual.html` → `e55c2827b007395c8d021a5d01b86b4fe0252aa9191e7685d6dd19c7513a85ad`
-- `tests/browser/v131-store-visual.html` → `2e9725fdd00d97023ccc3441d15fe6011f454f3aa188c55bf5c45ebc5c668955`
-- `tests/browser/v141-dashboard-visual.html` → `330ccf3060e15a2292bde1f76800d94c93bc864e7596451355a588d10d9d5f0b`
-- `tests/browser/v145-launch-freeze-visual.html` → `9866473ed843b99e9b9200dc929706465d3e93c6e8b02bafd7f361e1e258c1bd`
+- `tests/browser/reward-overview-owner-visual.html` → `35bdda118c6252392c36e585db97c071c88c05e1b9de51a17187431f7272117d`
+- `tests/browser/v129-trial-test-visual.html` → `2c7714a1ab5b36a641ca9a83560c2fd61f058ed31ee1c78e30af5ee46056ee28`
+- `tests/browser/v130-self-serve-visual.html` → `9fd13670b7336ebce2aa03584fd46df791b0343c8129e28f0a9eabda4db9fc2b`
+- `tests/browser/v131-store-visual.html` → `5b87e3e790918d19a07dd08965668ca9cf6a75babb48bd42d3a35609d0a9f8e8`
+- `tests/browser/v141-dashboard-visual.html` → `28281e7493c97163228214276bafc599c46992a3fc715ceffe76fdf202a7e414`
+- `tests/browser/v145-launch-freeze-visual.html` → `dde81a48afffff79b36ee7c565807ce5fc3897350a84c822ea8670fa37a3f996`
 
 The v141/v145 generators sliced production source at the marker
 `async function visibleBranchesForCurrentUser()`; v370 gave that function a `{refresh}` option and

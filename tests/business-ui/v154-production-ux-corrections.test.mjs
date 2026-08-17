@@ -121,7 +121,18 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
   /* V340 (owner: "change rewards & offer to rewards programme"): the default arm renamed. */
   /* V341 (owner markup: "move the point system up to the header"): drilled standalone pages
      (points/tiers/offers/history) now carry their OWN name in the H1, not the module's. */
-  assert.match(grow, /<h1 id="growTitle">\$\{programmeView==='setup'&&pendingGrowSetupRewardV303\?\.mode==='earning'\?\(pendingGrowSetupRewardV303\.kind==='stamps'\?'Stamp Card':'Point System'\):programmeView==='points'\?growPointsPageTitleV326:programmeView==='tiers'\?'Tiered membership':programmeView==='offers'\?'Limited Offer':programmeView==='history'\?'History':'Rewards Programme'\}<\/h1>/);
+  /* This pinned the whole page-title ternary verbatim, so it broke on every wording change and on
+     the V366 bring-back route being added. Evaluate the mapping instead — that is what the test is
+     about: each programme view names itself, and the list view keeps the module name. */
+  const titleExpr = grow.match(/<h1 id="growTitle">\$\{([\s\S]*?)\}<\/h1>/)[1];
+  const titleFor = view => new Function('programmeView', 'pendingGrowSetupRewardV303',
+    'growPointsPageTitleV326', `return (${titleExpr});`)(view, null, 'Point System');
+  assert.equal(titleFor('points'), 'Point System');
+  assert.equal(titleFor('tiers'), 'Tier membership');
+  assert.equal(titleFor('bringback'), 'Bring-back rewards');
+  assert.equal(titleFor('offers'), 'Limited Offer');
+  assert.equal(titleFor('history'), 'History');
+  assert.equal(titleFor('list'), 'Rewards Programme');
   /* V227 (owner: "all points reward in this tab") split "Loyalty & rewards" into two
      categories: Point system holds everything earned and spent in points, Other rewards
      holds the ones that do not use a balance. The behaviour this test protects — that the
@@ -130,7 +141,9 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
      restructured the overview into topic tiles and renamed the categories in the owner's own
      words. The categorisation these tests protect is unchanged. */
   assert.match(grow, /programme-category-title">Point system</);
-  assert.match(grow, /programme-category-title">Lifestyle rewards</);
+  /* V358 flattened the Lifestyle rewards grouping into peer tiles (Welcome gift / Birthday
+     benefit / Bring-back), so that category title is gone by owner ruling. */
+  assert.doesNotMatch(grow, /programme-category-title">Lifestyle rewards</);
   /* V229: renamed to plain "Promotions" (the owner's word) and Referrals became its own
      category, so both remain distinct from the points work — which is the point here. */
   assert.match(grow, /programme-category-title">Promotions</);

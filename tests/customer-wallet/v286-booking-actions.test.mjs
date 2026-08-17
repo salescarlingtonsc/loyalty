@@ -40,7 +40,11 @@ test('an upcoming booked appointment offers Change, under both of the wallet gat
 });
 
 test('the Bookings page renders and wires the existing wallet change control', () => {
-  assert.match(bookings, /customerBookingChangeActionV286\(group,item,changesFeatureEnabled\)\?`<button class="btn ghost sm walletChange" type="button" data-id="\$\{esc\(item\.appointment_id\)\}" data-business-slug="\$\{esc\(group\.business_slug\)\}">Change<\/button>`/);
+  /* V344 moved the row markup into its own renderer (customerBookingAppointmentRowV344) above the
+     page function, so it is matched against the file rather than the page slice. The contract is
+     unchanged: the Change button appears only when customerBookingChangeActionV286 says so, and it
+     carries its own appointment id and business slug. */
+  assert.match(appJs, /const action=customerBookingChangeActionV286\(group,item,changesFeatureEnabled\)\s*\n\s*\?`<button class="btn ghost sm walletChange" type="button" data-id="\$\{esc\(item\.appointment_id\)\}" data-business-slug="\$\{esc\(group\.business_slug\)\}">Change<\/button>`/);
   assert.match(bookings, /const changesFeatureEnabled=context\.features\.customer_actions===true;/);
   assert.match(bookings, /wireWalletAppointmentActions\('',\{onDone:\(\)=>renderCustomerBookings\(\)\}\)/,
     'every Change button carries its own slug, and a sent request repaints the page');

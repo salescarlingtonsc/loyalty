@@ -38,7 +38,9 @@ const bucketBody = [
   'const growOffersCanWriteV324=isOwner&&canRewards;',
   statement('const growOffersRowHtmlV324=(item,bucket)=>{', '};'),
   statement('const growOffersEmptyV324={', "draft:'No draft saved yet.',history:'Nothing has ended yet.'};"),
-  statement("const growOffersTabsV324=[['published','Published'],", "['history','History']];"),
+  /* The Live tab was labelled "Published" when this was written; the extraction is a slice
+     boundary, not an assertion about the wording. */
+  statement("const growOffersTabsV324=[['published','Live'],", "['history','History']];"),
   statement('const growOffersTabStripV324=`<div class="v150-segment" role="group"', '</div>`;'),
   `const growOffersListHtmlV324=growOffersBucketedV324[growOffersTabV324].length
      ?growOffersBucketedV324[growOffersTabV324].map(item=>growOffersRowHtmlV324(item,growOffersTabV324)).join('')
@@ -67,10 +69,16 @@ test('V324 a live and a scheduled promotion both bucket as Published', () => {
   assert.equal(buckets.history.length, 0);
 });
 
-test('V324 a never-published item buckets as Draft', () => {
-  const {buckets} = call([DRAFT_NEW], {tab: 'draft'});
-  assert.deepEqual(buckets.draft.map(i => i.id), ['d1']);
-  assert.equal(buckets.published.length, 0);
+test('V357 a never-published item joins the live list — the Draft bucket was struck out', () => {
+  /* Owner ruling (V357, photo 1: "delete all draft"). A promotion that has not ended is simply
+     live or paused; both belong in one list where each row already shows its own state and its own
+     Edit/End buttons. The key deliberately survives and is never filled, so an inactive promotion
+     stays REACHABLE rather than being dropped — losing real data to remove a tab would be the
+     worse bug. That reachability is what this test now holds. */
+  const {buckets} = call([DRAFT_NEW]);
+  assert.deepEqual(buckets.published.map(i => i.id), ['d1'],
+    'an unpublished promotion must still be listed, not stranded');
+  assert.equal(buckets.draft.length, 0, 'the struck-out bucket must stay empty');
   assert.equal(buckets.history.length, 0);
 });
 
@@ -95,40 +103,47 @@ test('V324 a retired (deleted-while-published) promotion also buckets as History
 });
 
 test('V324 the tab strip is a filter group, not the peer-tab pattern growPage forbids', () => {
-  const {tabStrip} = call([PUBLISHED_LIVE, DRAFT_NEW, ENDED_NATURALLY], {tab: 'draft'});
+  /* V357 struck the Draft tab out (see the bucketing test above), so the strip is two tabs. */
+  const {tabStrip} = call([PUBLISHED_LIVE, DRAFT_NEW, ENDED_NATURALLY], {tab: 'history'});
   assert.match(tabStrip, /role="group"/);
   assert.doesNotMatch(tabStrip, /role="tablist"|role="tab"/);
   assert.match(tabStrip, /data-grow-offers-tab-v324="published"/);
-  assert.match(tabStrip, /data-grow-offers-tab-v324="draft"/);
+  assert.doesNotMatch(tabStrip, /data-grow-offers-tab-v324="draft"/);
   assert.match(tabStrip, /data-grow-offers-tab-v324="history"/);
-  assert.match(tabStrip, /aria-pressed="true" data-grow-offers-tab-v324="draft"/, 'the active tab is pressed');
+  assert.match(tabStrip, /aria-pressed="true" data-grow-offers-tab-v324="history"/, 'the active tab is pressed');
   assert.match(tabStrip, /aria-pressed="false" data-grow-offers-tab-v324="published"/, 'an inactive tab is not');
 });
 
 test('V324 each row shows counts and only the active bucket\'s rows render', () => {
   const {tabStrip, list} = call([PUBLISHED_LIVE, DRAFT_NEW, ENDED_NATURALLY], {tab: 'published'});
-  assert.match(tabStrip, /Published \(1\)/);
-  assert.match(tabStrip, /Draft \(1\)/);
+  /* V357: the unpublished item now counts in Live rather than a Draft tab of its own. Each count
+     is still the length of the bucket it labels, which is the property under test. */
+  assert.match(tabStrip, /Live \(2\)/);
   assert.match(tabStrip, /History \(1\)/);
+  assert.doesNotMatch(tabStrip, /Draft \(/);
   assert.match(list, /20% off spa/);
-  assert.doesNotMatch(list, /Untitled draft/);
+  assert.match(list, /Untitled draft/, 'an unpublished promotion is listed with the live ones');
   assert.doesNotMatch(list, /Merdeka set/);
 });
 
 test('V324 an empty bucket says so instead of rendering nothing', () => {
   const {list} = call([], {tab: 'published'});
-  assert.match(list, /No promotion is published right now\./);
+  assert.match(list, /No promotion is running right now\./);
 });
 
-test('V334 Delete says End on Published (record survives) and Delete on Draft (it does not)', () => {
-  /* V334 (owner markup, photo 7: "all 'retire' change to 'end', i want red colour"). */
+test('V334 Delete says End on a running promotion, whose record survives', () => {
+  /* V334 (owner markup, photo 7: "all 'retire' change to 'end', i want red colour").
+     V357 removed the Draft bucket, so the "Delete on Draft" half no longer has a surface — an
+     unpublished promotion sits in the live list and is ended like any other. */
   const published = call([PUBLISHED_LIVE], {tab: 'published'}).list;
-  const drafted = call([DRAFT_NEW], {tab: 'draft'}).list;
+  const drafted = call([DRAFT_NEW], {tab: 'published'}).list;
   assert.match(published, />End</);
   assert.match(published, /class="btn sm danger"/);
   assert.doesNotMatch(published, />Delete</);
-  assert.match(drafted, />Delete</);
-  assert.doesNotMatch(drafted, />End</);
+  /* An unpublished promotion is now in the same list and gets the same control — "End", not
+     "Delete", because its row survives in reports either way. */
+  assert.match(drafted, />End</);
+  assert.doesNotMatch(drafted, />Delete</);
 });
 
 test('V324 a retired item in History says Ended, never Draft', () => {

@@ -94,7 +94,14 @@ test('V164 Programmes removes persistent setup CTA and keeps categorised overvie
   /* V340 (owner: "change rewards & offer to rewards programme"): the default arm renamed. */
   /* V341 (owner markup: "move the point system up to the header"): drilled standalone pages
      (points/tiers/offers/history) now carry their OWN name in the H1, not the module's. */
-  assert.match(appHtml, /<h1 id="growTitle">\$\{programmeView==='setup'&&pendingGrowSetupRewardV303\?\.mode==='earning'\?\(pendingGrowSetupRewardV303\.kind==='stamps'\?'Stamp Card':'Point System'\):programmeView==='points'\?growPointsPageTitleV326:programmeView==='tiers'\?'Tiered membership':programmeView==='offers'\?'Limited Offer':programmeView==='history'\?'History':'Rewards Programme'\}<\/h1>/);
+  /* Was a verbatim pin on the whole page-title ternary, so it broke on wording changes and on the
+     V366 bring-back route. Evaluate the mapping, which is the property this test is about. */
+  const titleExpr = appHtml.match(/<h1 id="growTitle">\$\{([\s\S]*?)\}<\/h1>/)[1];
+  const titleFor = view => new Function('programmeView', 'pendingGrowSetupRewardV303',
+    'growPointsPageTitleV326', `return (${titleExpr});`)(view, null, 'Point System');
+  assert.equal(titleFor('tiers'), 'Tier membership');
+  assert.equal(titleFor('bringback'), 'Bring-back rewards');
+  assert.equal(titleFor('list'), 'Rewards Programme');
   /* V324 (owner markup 2026-08-14): the subtitle is struck through. The requirement this test
      exists for is the one above — the heading is the MODULE's name, not "Grow" — and it is
      untouched; what went was a second sentence restating that name underneath it. */
@@ -108,7 +115,8 @@ test('V164 Programmes removes persistent setup CTA and keeps categorised overvie
      restructured the overview into topic tiles and renamed the categories in the owner's own
      words. The categorisation these tests protect is unchanged. */
   assert.match(appHtml, /programme-category-title">Point system</);
-  assert.match(appHtml, /programme-category-title">Lifestyle rewards</);
+  /* V358 flattened the Lifestyle rewards grouping into peer tiles by owner ruling. */
+  assert.doesNotMatch(appHtml, /programme-category-title">Lifestyle rewards</);
   /* V229: renamed to plain "Promotions" (the owner's word) and Referrals became its own
      category, so both remain distinct from the points work — which is the point here. */
   assert.match(appHtml, /programme-category-title">Promotions</);

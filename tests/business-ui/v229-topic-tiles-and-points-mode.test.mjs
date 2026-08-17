@@ -15,19 +15,31 @@ const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const shell = readFileSync(join(root, 'app', 'index.html'), 'utf8');
 const migration = readFileSync(join(root, 'db', 'migrations', '20260808_nestly_v229_points_mode_choice.sql'), 'utf8');
 
-test('V334 the overview is five topic tiles, and drilling in is the only way to the rows', () => {
+test('V358 the overview is eight peer topic tiles, and drilling in is the only way to the rows', () => {
   const defs = app.slice(app.indexOf('const growTopicDefsV229=['), app.indexOf('const growActiveTopicV229='));
   const keys = [...defs.matchAll(/\{key:'([a-z]+)'/g)].map((m) => m[1]);
   /* V235: a Stamp card tile joins the two points tiles, so all THREE loyalty models are
      represented on the overview and exactly one of them can read Active.
      V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out — Limited
      Offer already covers this surface from its own nav entry. */
-  assert.deepEqual(keys, ['points', 'tiers', 'stamps', 'lifestyle', 'referrals', 'recurring']);
+  /* V358 (owner, photo 5: "remove this, take out everything outside" against the Lifestyle
+     rewards card, with Welcome Gift / Birthday Benefit / Bring Back Rewards drawn as their own
+     cards). The 'lifestyle' grouping tile is gone and its three programmes are peers here, so
+     nothing sits one level deeper than the thing beside it. 'recurring' (Memberships) left the
+     grid with the same pass. */
+  assert.deepEqual(keys, ['points', 'tiers', 'stamps', 'welcome', 'birthday', 'bringback', 'referrals', 'recurring']);
+  assert.ok(!keys.includes('lifestyle'), 'the grouping tile the owner struck out must not come back');
   /* V244: the grid moved inside each of the two groups (Ongoing / Pending setup), so the
      render site emits the grouped markup rather than one bare grid. The tiles-mode gate — the
      thing this line actually protects — is unchanged. */
   assert.match(app, /\$\{growTilesModeV229\?growTilesHtmlV229:''\}/);
-  assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
+  /* V343/V357 replaced the two fixed sections (Ongoing programmes / Pending setup) with one
+     filter strip over the same tiles. Each count is rendered from the length of a real array, so
+     the strip cannot advertise a number the grid does not contain. */
+  assert.match(app, /data-grow-tile-filter-v357="all">All \(\$\{growDisplayTopicsV343\.length\}\)/);
+  assert.match(app, /data-grow-tile-filter-v357="live">Live \(\$\{growDisplayLiveV343\.length\}\)/);
+  assert.match(app, /data-grow-tile-filter-v357="pending">Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
+  assert.match(app, /data-grow-tile-filter-v357="history">History \(\$\{growDisplayHistoryCountV343\}\)/);
   /* V343 (owner markup: "photo 1 change to become photo 2"): the square-tile grid became a
      compact row list, one row per programme, inside its group's card border. */
   assert.match(shell, /\.grow-topic-tiles-v229\{display:flex;flex-direction:column/);
@@ -110,7 +122,12 @@ test('V229/V230 the loyalty editor shows ONE model, not both with banners', () =
 });
 
 test('V229 categories carry the owner\'s names', () => {
-  assert.match(app, /programme-category-title">Lifestyle rewards</);
+  /* V358 flattened the Lifestyle rewards grouping — Welcome gift, Birthday benefit and Bring-back
+     are peers now, each with its own tile and its own door, so there is no grouping card left to
+     carry that name. The categories that remain still carry the owner's words. */
+  assert.doesNotMatch(app, /programme-category-title">Lifestyle rewards</,
+    'the grouping the owner struck out must not come back');
+  assert.match(app, /programme-category-title">Point system</);
   assert.match(app, /programme-category-title">Promotions</);
   assert.match(app, /programme-category-title">Referrals</);
   /* V294 (owner: "remove this programme"): the combined card went; Memberships stands alone

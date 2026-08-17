@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="084d6f5ed5bade0d91a515bed26794ebf61017ee59fdfa1b1e8eaf936d349974"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="35bdda118c6252392c36e585db97c071c88c05e1b9de51a17187431f7272117d"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2522,7 +2522,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-home-ready-copy-v343 em{justify-self:start;display:inline-flex;align-items:center;gap:7px;margin-top:5px;padding:8px 13px;border-radius:999px;background:#F2EEEA;color:var(--ink2);font-style:normal;font-size:.92rem;font-weight:720}
 .customer-home-ready-arrow-v343{display:grid;place-items:center;width:50px;height:50px;border-radius:50%;background:var(--tint);color:var(--coral);font-size:2.1rem;line-height:1}
 .customer-home-section-head-v343,.customer-home-offers-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}.customer-home-section-head-v343 h2,.customer-home-offers-head h2{font-family:Georgia,'Times New Roman',serif;font-size:1.55rem;letter-spacing:0;color:#111}.customer-home-section-head-v343 a,.customer-home-offers-head a{color:var(--coral);font-weight:760}
-.customer-home-offers-title{gap:0}.customer-home-offers-badge{display:none}.customer-home-offers-track{gap:14px;padding:2px 4px 14px}.customer-home-offer{flex-basis:min(60vw,220px);min-height:308px;border-radius:16px;overflow:hidden}.customer-home-offer-media{aspect-ratio:1.55/1}.customer-shell .customer-home-offer-media img{object-fit:cover}.customer-home-offer-copy{position:relative;min-height:164px;padding:38px 14px 14px}.customer-home-offer-copy::before{content:"";position:absolute;left:-12%;right:-12%;top:-34px;height:76px;border-radius:50% 50% 0 0/70% 70% 0 0;background:#fff;z-index:0}.customer-home-offer-copy>*{position:relative;z-index:1}.customer-home-offer-copy h3{font-family:Georgia,'Times New Roman',serif;font-size:1.18rem;line-height:1.08;color:#111}.customer-home-offer-business{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--coral);font-weight:820}.customer-home-offer-logo{position:absolute;top:-38px;left:14px;width:56px;height:56px;border-radius:50%;border:5px solid #fff;box-shadow:0 10px 20px rgba(54,44,35,.12)}.customer-offer-new,.customer-home-offer-countdown{background:var(--tint);color:var(--coral);border-radius:999px}.customer-home-offer-countdown{display:inline-flex;padding:7px 11px;margin-top:10px;font-size:.82rem}
+.customer-home-offers-title{gap:0}.customer-home-offers-badge{display:none}.customer-home-offers-track{gap:14px;padding:2px 4px 14px}.customer-home-offer{flex-basis:min(60vw,220px);min-height:308px;border-radius:16px;overflow:hidden}.customer-home-offer-media{aspect-ratio:1.55/1}/* V371: the V343 polish pass re-added object-fit:cover here, which CROPS the artwork a merchant uploaded — the exact thing V173 forbids ("never cropped and never painted over"), and it silently overrode the contain rule above. The fixed aspect-ratio container stays; the image is letterboxed inside it so the whole picture is shown, as on the card and detail surfaces. */.customer-home-offer-copy{position:relative;min-height:164px;padding:38px 14px 14px}.customer-home-offer-copy::before{content:"";position:absolute;left:-12%;right:-12%;top:-34px;height:76px;border-radius:50% 50% 0 0/70% 70% 0 0;background:#fff;z-index:0}.customer-home-offer-copy>*{position:relative;z-index:1}.customer-home-offer-copy h3{font-family:Georgia,'Times New Roman',serif;font-size:1.18rem;line-height:1.08;color:#111}.customer-home-offer-business{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--coral);font-weight:820}.customer-home-offer-logo{position:absolute;top:-38px;left:14px;width:56px;height:56px;border-radius:50%;border:5px solid #fff;box-shadow:0 10px 20px rgba(54,44,35,.12)}.customer-offer-new,.customer-home-offer-countdown{background:var(--tint);color:var(--coral);border-radius:999px}.customer-home-offer-countdown{display:inline-flex;padding:7px 11px;margin-top:10px;font-size:.82rem}
 .customer-home-businesses-v343{margin-top:10px}.customer-home-business-track-v343{display:flex;gap:12px;overflow-x:auto;padding:2px 4px 18px;scroll-snap-type:x mandatory}.customer-home-business-track-v343 .customer-programme-card-v95{flex:0 0 150px;min-height:120px;scroll-snap-align:start}.customer-home-business-track-v343 .customer-programme-card-accent{display:none}.customer-home-business-track-v343 .customer-programme-card-body{grid-template-columns:42px minmax(0,1fr);padding:12px}.customer-home-business-track-v343 .customer-programme-card-balance{font-size:.9rem}
 .customer-my-rewards-title{align-items:center;margin:4px 0 18px}.customer-my-rewards-title h1{font-size:clamp(2.5rem,9vw,3.4rem)}.customer-my-rewards-title #customerHomeScan{min-height:56px;padding-inline:22px}.customer-my-rewards-search,.customer-booking-search{max-width:none;flex-basis:100%;order:3;min-height:58px;padding:0 18px;border-radius:999px;background:rgba(255,255,255,.82);box-shadow:inset 0 0 0 1px rgba(42,36,32,.08),0 10px 26px rgba(54,44,35,.06)}.customer-my-rewards-search input,.customer-booking-search input{min-height:56px;font-size:1rem}
 .customer-programme-grid-v96{gap:24px}.customer-programme-category-head{justify-content:space-between}.customer-programme-category-head h2{font-family:Georgia,'Times New Roman',serif;font-size:1.35rem;color:#111}.customer-programme-category-grid{grid-template-columns:1fr;gap:12px}.customer-programme-card-v95{border-radius:17px;min-height:136px}.customer-programme-card-accent{display:none}.customer-programme-card-body{grid-template-columns:78px minmax(0,1fr) auto;gap:14px;padding:16px}.customer-programme-card-v95 .customer-programme-logo{width:72px;height:72px;border-radius:18px}.customer-programme-card-copy .customer-quest-kicker{color:var(--coral);letter-spacing:.16em}.customer-programme-card-copy h2{font-family:Georgia,'Times New Roman',serif;font-size:1.35rem}.customer-programme-card-balance{grid-column:auto;display:grid;justify-items:end;margin:0;padding:0;border:0}.customer-programme-card-balance b{font-size:1.65rem}.customer-programme-holdings,.customer-reward-progress{grid-column:2/-1}
@@ -2769,7 +2769,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 084d6f5ed5bade0d91a515bed26794ebf61017ee59fdfa1b1e8eaf936d349974</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 35bdda118c6252392c36e585db97c071c88c05e1b9de51a17187431f7272117d</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6661,7 +6661,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      click handler below), whether or not a points programme has ever been configured — an
      unconfigured business sees this same page with an empty/set-up-prompt state instead of the
      wizard, per owner ruling (AskUserQuestion, 2026-08-15: "Photo 3 always, with an empty state"). */
-  const programmeView=['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
+  const programmeView=GROW_PROGRAMME_VIEWS_V371.includes(String(hashParam||''))?String(hashParam):'list';
   /* V303: 'review' is now a NAME, not the number 4. A tier model runs a five-step wizard, so a
      hardcoded 4 would have opened the Reward step and called it the publish gate. The wizard
      resolves the name against its own active step list. */
@@ -6747,24 +6747,32 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
   /* V362: lifestyleLiveV229 removed with the grouping card it counted for (V358). Each of the
      three programmes now reports its own status on its own tile. */
+  /* V371: a tile whose read FAILED used to fall through to 'Not set up', which states as a fact
+     that the owner has configured nothing — the one thing the page cannot know when the query it
+     would have answered from did not come back. The page-level retry banner above the grid warns
+     that unavailable rows are not assumed to be off, but the tile itself was still making the
+     claim. Each tile now names the read it depends on and says 'Unavailable' instead, which is the
+     same honest-unknown state the drilled rows (growProgrammeRow) have always used. */
+  const growTileStatusV371=(errorKey,status)=>
+    snapshot.overviewErrors?.[errorKey]?['Unavailable','off']:status;
   const growTopicDefsV229=[
     /* V294 (owner markup 2026-08-12): pending-setup cards carry the owner's own benefit lines. */
     /* V296: "Points redemption" renamed to "Points System" here too — the tile is the door the
        owner presses, so its title must match the page it opens. */
     {key:'points',icon:'star',title:'Point system',blurb:'Customers earn points and redeem gifts.',
-      status:loyaltyModelTileStatusV235('redeem'),
+      status:growTileStatusV371('loyalty',loyaltyModelTileStatusV235('redeem')),
       summary:!liveLoyaltyModelKeysV240.includes('redeem')?''
         :rewardCount?`${rewardCount} redeemable reward${rewardCount===1?'':'s'}`
         :'Set the earning rate and rewards'},
     {key:'tiers',icon:'memberships',title:'Tier membership',blurb:'Reward loyal customers as they climb tiers.',
-      status:loyaltyModelTileStatusV235('tiers'),
+      status:growTileStatusV371('loyalty',loyaltyModelTileStatusV235('tiers')),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?''
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(growTiersPublishedV331.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :growTiersPublishedV331.length?`${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'}: ${growTiersPublishedV331.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Create the ladder customers climb'},
     {key:'stamps',icon:'loyalty',title:'Stamp card',blurb:'Give rewards after a set number of visits or purchases.',
-      status:loyaltyModelTileStatusV235('stamps'),
+      status:growTileStatusV371('loyalty',loyaltyModelTileStatusV235('stamps')),
       summary:!liveLoyaltyModelKeysV240.includes('stamps')?''
         :rewardCount?`${rewardCount} milestone${rewardCount===1?'':'s'}`
         :'Set the spend per stamp and its milestones'},
@@ -6774,21 +6782,21 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        here, each with its own status and its own door, so nothing is one level deeper than the
        thing it sits beside. */
     {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
-      status:!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?['Live','on']:welcomeOfferStatusV215?.configured?['Paused','off']:['Not set up','off'],
+      status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?['Live','on']:welcomeOfferStatusV215?.configured?['Paused','off']:['Not set up','off']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
         ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
     {key:'birthday',icon:'loyalty',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
-      status:!canRewards?['Not included','off']:rewardJourney.birthday?.active?['Live','on']:rewardJourney.birthday?['Paused','off']:['Not set up','off'],
+      status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?['Live','on']:rewardJourney.birthday?['Paused','off']:['Not set up','off']),
       summary:rewardJourney.birthday?.active&&rewardJourney.birthday?.value
         ?`${rewardJourney.birthday.value}`:'Set the birthday treat and its window'},
     {key:'bringback',icon:'retention',title:'Bring-back rewards',blurb:'Win back customers who have gone quiet.',
-      status:!canWinback?['Not included','off']:bringBackLiveV229?['Live','on']:snapshot.retention?.length?['Paused','off']:['Not set up','off'],
+      status:growTileStatusV371('retention',!canWinback?['Not included','off']:bringBackLiveV229?['Live','on']:snapshot.retention?.length?['Paused','off']:['Not set up','off']),
       summary:bringBackLiveV229?`${bringBackLiveV229} running`:'Reward customers who return after a break'},
     /* V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out of the
        Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
        publishedPromotions/promotionDrafts computations stay in scope above for that page. */
     {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Let customers refer friends and earn rewards.',
-      status:!modules.includes('referrals')?['Not included','off']:referralLive?['Ongoing','on']:referralConfigured?['Paused','off']:['Not set up','off'],
+      status:growTileStatusV371('referrals',!modules.includes('referrals')?['Not included','off']:referralLive?['Ongoing','on']:referralConfigured?['Paused','off']:['Not set up','off']),
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
     /* V294 (owner markup 2026-08-12, combined "Memberships & gift cards" card crossed out:
        "remove this programme"). Memberships stands alone as its own card ("Do membership for
@@ -6809,7 +6817,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      it keeps the one back control (id and handler unchanged) instead of adding a second. */
   /* V346 (owner annotation, screenshot 2026-08-16): the "All programmes" pill-with-label was too
      heavy for a plain back action — replaced with a small icon-only back button, same target. */
-  const growBreadcrumbV268=topic=>!topic?'':`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button><span class="grow-breadcrumb-current-v268">${esc(topic.title)}</span></nav>`;
+  /* V371: the drilled-topic breadcrumb composer was removed. V346 moved that back control into the page's own
+     title bar, leaving this composer unreferenced — and holding a SECOND copy of the back
+     button's element id, so anything that called it again would have put a duplicate id in the
+     document. The live control is in the title bar; its handler is unchanged. */
   const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
   /* V235: the Stamp card tile is a third VIEW of the point engine, not a third section — it
      drills into the same rows, so nothing is duplicated and no tile is a dead end. */
@@ -8126,7 +8137,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
            V341: the icon now leads the H1 above instead (title moved there), so this h2 carries
            it only when growActiveTopicV229 supplies a DIFFERENT title (a drilled tile). -->
       <!-- V339 (owner markup, photo 4: "please add fixed back button in every available page").
-           The breadcrumb back button already exists for drilled tiles (growBreadcrumbV268); the
+           The breadcrumb back button already exists for drilled tiles; the
            dedicated standalone pages — Points System, Tiers, Limited Offer, History — had no way
            back except the sidebar. Same button, same destination, on those pages too. -->
       ${(()=>{
@@ -9630,13 +9641,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      would be handed to the deep-editor mount below and open a surface the owner did not ask for.
      V326: 'points' joins for the same reason — it is the new Points System page, not a deep link
      into mountGrowSurface. */
-  const hashParamIsProgrammeView=['overview','history','offers','points','tiers','ongoing','available','settings','setup'].includes(String(hashParam||''));
+  const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371.includes(String(hashParam||''));
   if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'084d6f5ed5bade0d91a515bed26794ebf61017ee59fdfa1b1e8eaf936d349974',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'35bdda118c6252392c36e585db97c071c88c05e1b9de51a17187431f7272117d',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

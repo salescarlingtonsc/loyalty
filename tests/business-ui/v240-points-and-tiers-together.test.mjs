@@ -117,7 +117,7 @@ test('V240 the overview can show two live models at once', () => {
      2026-08-12 and the helper went with them. What this test is really about — 'both' making two
      tiles live at once — is asserted directly on the tile status instead, which is stronger. */
   assert.doesNotMatch(app, /otherModelLiveV235\(\)\?/);
-  assert.match(app, /\{key:'points',icon:'till',title:'Points System'/);
+  assert.match(app, /\{key:'points',icon:'star',title:'Point system'/);
   assert.match(app, /summary:!liveLoyaltyModelKeysV240\.includes\('redeem'\)\?''/);
   assert.match(app, /summary:!liveLoyaltyModelKeysV240\.includes\('tiers'\)\?''/);
   // The stamp card is still exclusive with the points engine — 'both' never marks it live.

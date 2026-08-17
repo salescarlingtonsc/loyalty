@@ -46,18 +46,33 @@ test('V331 Published/History split is exactly deleted_at==null vs deleted_at!=nu
 });
 
 test('V331 History rows are read-only: no toggle/delete attributes, "In history" pill', () => {
-  const historyReturnLine = 'if(history)return `<li class="grow-tier-table-row-v343" data-grow-tiers-row-v331="${esc(tier.id)}">${meta}<span data-merchant-content>${threshold} points</span><span class="pill off">In history</span><span></span></li>`;';
-  assert.ok(app.includes(historyReturnLine), 'history branch must return exactly this early-exit line');
-  assert.doesNotMatch(historyReturnLine, /data-grow-tiers-toggle-v331|data-grow-tiers-delete-v331/);
+  /* V351 restyled the row into a card; what this test is for — a history row is READ-ONLY — is
+     unchanged, so it is asserted against the branch rather than against one frozen line of markup.
+     A pin on the exact string broke on a purely visual change while proving nothing. */
+  const rowFnForHistory = slice('const growTiersRowV331=(tier,{history=false}={})=>{', '  };');
+  const historyBranch = rowFnForHistory.slice(rowFnForHistory.indexOf('if(history)return'),
+    rowFnForHistory.indexOf('const paused='));
+  assert.ok(historyBranch, 'the history branch must still return early');
+  assert.match(historyBranch, /In history/);
+  assert.doesNotMatch(historyBranch, /data-grow-tiers-toggle-v331|data-grow-tiers-delete-v331|data-grow-tiers-row-edit-v345/,
+    'a retired tier offers no write control at all');
 });
 
 test('V331 the live-row toggle and delete button are gated on canSetupGrow', () => {
   const rowFn = slice('const growTiersRowV331=(tier,{history=false}={})=>{', '  };');
-  assert.match(rowFn,
-    /\$\{canSetupGrow\?`<button type="button" class="btn ghost sm" role="switch" aria-checked="\$\{!paused\}" data-grow-tiers-toggle-v331="\$\{esc\(tier\.id\)\}">\$\{paused\?'Turn on':'Turn off'\}<\/button>\s*\n\s*<button type="button" class="btn ghost sm" data-grow-tiers-delete-v331="\$\{esc\(tier\.id\)\}">Delete<\/button>`:''\}/);
-  assert.match(rowFn, /class="grow-tier-table-row-v343"/);
+  /* V351 (owner UX pass): the per-tier Turn on/off is GONE — "Gold off while Essential and
+     Diamond stay live" has no defined meaning for a ladder, so the programme-level switch on the
+     Manage tiers header is the only on/off. Delete moved into the row's "•••" menu. Both write
+     controls are still gated on canSetupGrow, which is what this test is here to hold. */
+  assert.doesNotMatch(rowFn, /data-grow-tiers-toggle-v331/,
+    'a per-tier on/off must not come back without a defined ladder behaviour');
+  assert.match(rowFn, /\$\{canSetupGrow\?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="\$\{esc\(tier\.id\)\}">Edit<\/button>/);
+  assert.match(rowFn, /<details class="grow-row-menu-v351">[\s\S]*?data-grow-tiers-delete-v331="\$\{esc\(tier\.id\)\}">Delete<\/button>/);
+  assert.match(rowFn, /class="grow-tier-card-row-v351"/);
+  /* V351 replaced the four-column table (and therefore its column header row) with one card per
+     tier, each card naming its own fields. The heading the owner reads is what still matters. */
+  assert.doesNotMatch(app, /grow-tier-table-head-v343/, 'the retired column header must not linger');
   assert.match(app, /<b>Manage tiers<\/b>/);
-  assert.match(app, /class="grow-tier-table-head-v343"><span>Tier name<\/span><span>Required points<\/span><span>Status<\/span><span>Actions<\/span><\/li>/);
 });
 
 test('V331 the delete confirmation copy names the adjacent-rung consequence', () => {
@@ -87,9 +102,15 @@ test('V331 cancelling the delete confirm just closes it — no RPC', () => {
   assert.match(noHandler, /growTiersDeletePendingV331='';/);
 });
 
-test('V331 turning a tier on/off calls business_set_tier_paused_v331 with the exact migration parameter names', () => {
-  assert.match(app,
-    /sb\.rpc\('business_set_tier_paused_v331',\{\s*\n\s*p_business:S\.biz\.id,p_tier:id,p_paused:!want\}\);/);
+test('V331 the per-tier pause RPC is no longer reachable from the tier list (V351 owner ruling)', () => {
+  /* This used to pin the call and its parameter names. V351 removed the control that made it:
+     "Gold off while Essential and Diamond stay live" has no defined meaning for a ladder, so the
+     only on/off is the programme-level switch. The RPC still exists in the database and is still
+     honoured by the customer read (v371 check 08), so the test now holds the UI side of the
+     ruling — nothing on this page may pause a single rung — rather than pinning a dead call. */
+  assert.doesNotMatch(app, /sb\.rpc\('business_set_tier_paused_v331'/,
+    'no tier-list control may pause a single rung');
+  assert.doesNotMatch(app, /data-grow-tiers-toggle-v331/);
 });
 
 test('V331 adding a tier validates name and a non-negative threshold before calling business_create_tier_v331', () => {
@@ -100,16 +121,21 @@ test('V331 adding a tier validates name and a non-negative threshold before call
   assert.match(saveHandler, /if\(!name\)\{growTiersErrorV331='Name the tier customers will see\.';return growRerenderV322\(\);\}/);
   assert.match(saveHandler, /if\(!Number\.isFinite\(threshold\)\|\|threshold<0\)/);
   assert.match(saveHandler,
-    /sb\.rpc\('business_create_tier_v331',\{\s*\n\s*p_business:S\.biz\.id,p_name:name,p_threshold:threshold\}\);/);
+    /sb\.rpc\('business_create_tier_v331',\{\s*\n\s*p_business:S\.biz\.id,p_name:name,p_threshold:threshold,p_perk_note:perkNote\|\|null\}\)/);
 });
 
-test('V331 the Edit link hands off mode:"climbing" rather than reusing the reward-step hand-off shape', () => {
-  const editHandler = slice(
-    "const growTiersEditLink=outerMain.querySelector('[data-grow-tiers-edit-v331]');",
-    '  };'
+test('V331/V345 editing a tier opens the inline form on that row, not the wizard climb step', () => {
+  /* The page-level "Edit" link that handed off to the wizard's climbing step is gone: V345 gave
+     every ROW its own Edit (data-grow-tiers-row-edit-v345) which loads that tier into the same
+     inline form used for Add, so the owner edits where they are looking. */
+  assert.doesNotMatch(app, /data-grow-tiers-edit-v331/, 'the retired page-level Edit link must not linger');
+  const rowEdit = slice(
+    "outerMain.querySelectorAll('[data-grow-tiers-row-edit-v345]')",
+    '  });'
   );
-  assert.match(editHandler, /pendingGrowSetupRewardV303=\{mode:'climbing'\};/);
-  assert.match(editHandler, /pendingGrowSetupModelV303=\{kind:'tiers',from:'tiers'\};/);
+  assert.match(rowEdit, /growTiersEditingV331=/);
+  assert.match(rowEdit, /growTiersAddOpenV331='form';/);
+  assert.doesNotMatch(rowEdit, /nav\('#\/grow\/setup'\)/);
 });
 
 test('V331 the wizard hand-off consumer lands mode:"climbing" on the climb step, never the reward step', () => {
@@ -121,13 +147,22 @@ test('V331 the wizard hand-off consumer lands mode:"climbing" on the climb step,
   assert.match(consumer, /if\(stepNumberOrNullW6I2\('climb'\)!==null\)state\.step=stepNumberForW6I2\('climb'\);/);
 });
 
-test('V331 the Setup CTA hands off kind:"tiers" to the wizard, matching the Points page pattern', () => {
+test('V331 the Setup CTA turns tiers on in place — it no longer bounces the owner into the wizard', () => {
+  /* V347/V351 made this an IMMEDIATE write: the CTA sets the basis, flips the spine (switching off
+     whatever is exclusive with tiers) and opens the inline add-tier form. It used to hand off to
+     the wizard, which is the bounce the owner asked to be rid of. The claim worth holding is that
+     the whole thing happens here and that the exclusivity is honoured. */
   const setupHandler = slice(
     "const growTiersSetupCta=$('growTiersSetupV331');",
     '  };'
   );
-  assert.match(setupHandler, /pendingGrowSetupModelV303=\{kind:'tiers',from:'tiers'\};/);
-  assert.match(setupHandler, /nav\('#\/grow\/setup'\);/);
+  assert.match(setupHandler, /sb\.rpc\('business_set_tier_basis_v347',\{p_business:S\.biz\.id,p_basis:'points_earned'\}\)/);
+  assert.match(setupHandler, /const set=\{tiers:true\};/);
+  assert.match(setupHandler, /programmeExclusionsV322\('tiers'\)\.forEach\(other=>\{set\[other\]=false\}\);/);
+  assert.match(setupHandler, /writeProgrammeSwitchesV314\(S\.biz\.id,set,/);
+  assert.match(setupHandler, /growTiersAddOpenV331='form';/);
+  assert.doesNotMatch(setupHandler, /nav\('#\/grow\/setup'\)/,
+    'setting tiers up must not bounce through the wizard any more');
 });
 
 test('V331 the tile click handler routes to #/grow/tiers and the dead growSetupEntryV301 branch is gone', () => {

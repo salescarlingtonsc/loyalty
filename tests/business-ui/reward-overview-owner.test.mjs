@@ -123,7 +123,15 @@ test('owner cards route by stable ID to the exact reward and birthday editors',(
   assert.match(grow,/data-rewards-overview-edit="\$\{esc\(editKind\)\}"/);
   assert.match(grow,/editKind:'catalogue',rewardId:milestone\.id/);
   assert.match(grow,/data-reward-id="\$\{esc\(rewardId\)\}"/);
-  assert.match(grow,/data-rewards-overview-edit="birthday"/);
+  /* V364 (owner, photo 1: "straightaway pop up birthday gift setting. SKIP HERE"): the birthday
+     tile opens its own editor directly instead of routing through the deep Loyalty editor, so it
+     no longer carries a data-rewards-overview-edit attribute. The routing CONTRACT this test is
+     about — reach the exact editor by stable id, never by display name — is unchanged for the
+     surfaces that still route that way, and the birthday tile is asserted to open its own editor
+     from the active programme row rather than guessing. */
+  assert.doesNotMatch(grow,/data-rewards-overview-edit="birthday"/);
+  assert.match(grow,/if\(tile\.dataset\.growTopicV229==='birthday'\)\{/);
+  assert.match(grow,/openBirthdayBenefitEditorV364\(/);
   assert.match(grow,/editKind:'classic'/);  // V250: emitted through the same card attribute
   assert.match(grow,/pendingGuideAction=action/,
     'clicking from a published overview must prepare a protected draft before editing');

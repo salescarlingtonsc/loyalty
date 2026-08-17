@@ -96,11 +96,17 @@ test('V268 (a) the earning row carries the same treatment, and does not break th
   assert.ok(!/querySelector\('\.pill'\)/.test(app), 'no bare .pill lookup may survive');
 });
 
-test('V268 (a) when the draft cannot be read, the banner says so instead of implying nothing changed', () => {
-  assert.match(app, /Your pending edits could not be loaded, so nothing below is marked as edited\./);
-  assert.match(app, /Anything you have edited is marked with what it becomes\./);
-  // V198's sentence — the reason the list shows published values — is untouched.
-  assert.match(app, /You have unpublished changes\. The names and numbers below are what customers see today/);
+test('V358 the draft banner and its could-not-be-loaded sentence are gone with the review step', () => {
+  /* This asserted that a FAILED draft read said so, rather than implying nothing had changed —
+     a good rule, for a banner the owner has since struck out entirely ("remove this review &
+     publish feature ... remove this entirely from my codebase"). Every reward surface is
+     immediate-write now, so there is no draft state left to misreport on this page. Inverted
+     rather than deleted, so the banner cannot return without this being reconsidered. */
+  assert.match(app, /const growUnpublishedMarkerV198='';/);
+  assert.doesNotMatch(app, /Your pending edits could not be loaded/);
+  assert.doesNotMatch(app, /You have unpublished changes\./);
+  /* The per-row pending markers are a different mechanism and are still live — asserted below. */
+  assert.match(app, /grow-pending-pill-v268/);
 });
 
 test('V268 (a) the marker is legible at 390px', () => {
@@ -112,8 +118,6 @@ test('V268 (a) the marker is legible at 390px', () => {
 /* ---------------- B. every programme category drills in the same way ---------------- */
 
 test('V268 (b) drilling into a category shows where you are, for every category', () => {
-  assert.match(app, /const growBreadcrumbV268=topic=>!topic\?''/);
-  assert.match(app, /class="grow-breadcrumb-current-v268">\$\{esc\(topic\.title\)\}/);
   // Rendered from the ACTIVE topic, so no category can be missing its trail.
   /* V319 renamed the module and the kicker followed it. V324 (owner markup 2026-08-14) struck
      the kicker out: it printed "REWARDS & OFFER" directly beneath an <h1> already reading
@@ -128,7 +132,12 @@ test('V268 (b) drilling into a category shows where you are, for every category'
   /* V341 (owner markup: "move the point system up to the header") moved this ternary inside an
      IIFE so the section-heading block could share dedicatedViewV341/h2TextV341/h2IconV341
      between the H1 and this h2 — the shape changed, the property this test protects did not. */
-  assert.match(app, /growActiveTopicV229\?growBreadcrumbV268\(growActiveTopicV229\):\(dedicatedViewV341\?/);
+  /* V346 moved the drill-in back control into the page's own title bar; V371 then deleted the
+     unreferenced growBreadcrumbV268 composer it left behind, which still held a second copy of the
+     back button's element id. The property this test protects is unchanged: a drilled topic always
+     renders a way back, with the one id its handler binds to. */
+  assert.match(app, /if\(growActiveTopicV229\)return `<button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">/);
+  assert.match(app, /const growTopicBack=\$\('growTopicBackV229'\);/, 'and the back control is still wired');
   assert.doesNotMatch(app, /<p class="customer-quest-kicker">Rewards &amp; Offer<\/p>/);
   // One back control, not two: the trail keeps the existing id and handler.
   assert.equal(app.split('id="growTopicBackV229"').length - 1, 1);
@@ -157,7 +166,8 @@ test('V268 (b) Tiered membership is a category like the others, not a drill-only
 
 test('V268 (b) every programme category carries its topic key, so the pattern is one shape', () => {
   const keys = [...app.matchAll(/data-programme-category-v268="([a-z]+)"/g)].map(match => match[1]);
-  assert.deepEqual(keys.sort(), ['lifestyle', 'points', 'promotions', 'recurring', 'referrals', 'tiers']);
+  /* V358 flattened the Lifestyle rewards grouping into peer tiles, so that category div is gone. */
+  assert.deepEqual(keys.sort(), ['points', 'promotions', 'recurring', 'referrals', 'tiers']);
   /* V334 (owner markup, photo 3: "delete this tab"): the Promotions TILE is gone from the
      Ongoing programmes grid, but its category div (growLimitedOfferCategoryHtmlV319, reached
      from the Limited Offer page) is untouched — hence 'promotions' still appears in `keys`
@@ -165,7 +175,8 @@ test('V268 (b) every programme category carries its topic key, so the pattern is
   // Every drillable tile resolves to one of those categories — no tile is a dead end.
   const tiles = section('const growTopicDefsV229=[', 'const growActiveTopicV229=');
   const tileKeys = [...tiles.matchAll(/\{key:'([a-z]+)',icon:/g)].map(match => match[1]);
-  assert.deepEqual(tileKeys.sort(), ['lifestyle', 'points', 'recurring', 'referrals', 'stamps', 'tiers']);
+  assert.deepEqual(tileKeys.sort(),
+    ['birthday', 'bringback', 'points', 'recurring', 'referrals', 'stamps', 'tiers', 'welcome']);
   // 'stamps' is a third VIEW of the point engine (V235), which is why it has no category of its own.
   assert.match(app, /const growTopicSectionV235=growActiveTopicV229\?\.key==='stamps'\?'points'/);
 });

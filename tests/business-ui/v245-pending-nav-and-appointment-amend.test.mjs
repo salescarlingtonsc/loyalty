@@ -35,8 +35,12 @@ test('V245 nav row, page heading and tile group all say the same words', () => {
      unchanged, which is what this assertion exists to protect. */
   assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes':programmeView==='available'\?'Pending setup':programmeView==='setup'\?'Set up rewards':'Rewards Programme'/);
   // ...and they are the exact strings the V244 groups use inside the list.
-  assert.match(app, /growTileSectionV244\('Ongoing programmes'/);
-  assert.match(app, /growTileSectionV244\('Pending setup'/);
+  /* V343/V357 replaced the two fixed sections (Ongoing programmes / Pending setup) with one
+     filter strip over the same tiles; "Not set up" is still a first-class view of the list, which
+     is what this nav test is about. */
+  assert.match(app, /data-grow-tile-filter-v357="pending">Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
+  assert.doesNotMatch(app, /growTileSectionV244\(/,
+    'the two fixed sections were replaced by the V357 filter strip, not kept alongside it');
   assert.doesNotMatch(app, /programmeView==='available'\?'To set up'/);
 });
 

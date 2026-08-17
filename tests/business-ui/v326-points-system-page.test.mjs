@@ -70,8 +70,11 @@ test('V326/V331 the points, stamps AND tiers tiles each navigate straight to the
 test('V326 hashParam="points" resolves programmeView correctly and is recognised as a view, not a deep link', () => {
   const programmeViewSrc = statementTo('const programmeView=');
   const hashParamIsViewSrc = statementTo('const hashParamIsProgrammeView=');
-  const evalProgrammeView = hashParam => new Function('hashParam', programmeViewSrc + ' return programmeView;')(hashParam);
-  const evalHashParamIsView = hashParam => new Function('hashParam', hashParamIsViewSrc + ' return hashParamIsProgrammeView;')(hashParam);
+  /* V371: both statements read one frozen constant instead of their own literals, so the constant
+     has to be in scope to execute them. Pulling it from source keeps this executing real code. */
+  const viewsConst = app.match(/const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\[[^\]]*\]\);/)[0];
+  const evalProgrammeView = hashParam => new Function('hashParam', viewsConst + programmeViewSrc + ' return programmeView;')(hashParam);
+  const evalHashParamIsView = hashParam => new Function('hashParam', viewsConst + hashParamIsViewSrc + ' return hashParamIsProgrammeView;')(hashParam);
   assert.equal(evalProgrammeView('points'), 'points');
   assert.equal(evalProgrammeView('bogus'), 'list');
   assert.equal(evalHashParamIsView('points'), true, 'or mountGrowSurface would wrongly try to open an editor for it');
@@ -129,8 +132,13 @@ test('V326 the "edit" link lands the wizard on the Earning step, guarded on that
   assert.equal(landingStep(pointsOnly, 'earning', 'points').step, 2);
 });
 
-test('V326 the edit link sets the earning hand-off, carrying the live model kind (points or stamps)', () => {
-  assert.match(app, /pendingGrowSetupModelV303=\{kind:growPointsSpineKindV326,from:growPointsSpineKindV326\};\s*\r?\n?\s*pendingGrowSetupRewardV303=\{mode:'earning',kind:growPointsSpineKindV326\};\s*\r?\n?\s*nav\('#\/grow\/setup'\);/);
+test('V359 the edit link opens the earning rule inline, instead of handing off to the wizard', () => {
+  /* This used to pin a hand-off into the wizard's earning step. V359 made the earning rule an
+     immediate write on this page — "Edit" opens the inline editor right here — so the hand-off it
+     pinned no longer exists, and neither does the bounce the owner asked to be rid of. */
+  assert.match(app, /outerMain\.querySelectorAll\('\[data-grow-points-edit-v326\]'\)\.forEach\(el=>el\.onclick=\(\)=>\{\s*\n\s*growEarnEditOpenV359=true;growEarnErrorV359='';/);
+  assert.doesNotMatch(app, /pendingGrowSetupModelV303\s*=\s*\{/,
+    'the retired wizard hand-off must not be rebuilt');
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -215,7 +223,10 @@ test('V326 a configured programme shows the Point system row, earn rate, and on/
   const r = render({});
   assert.equal(r.growPointsConfiguredV326, true);
   assert.equal(r.growPointsOnV326, true);
-  assert.match(r.growPointsManageV326, /<b>Point system<\/b>/);
+  /* V351 ("dedup title"): the page already carries "Point System" as its h1, so the row that
+     repeated it inside the panel was removed. The model name is still derived — it names the
+     on/off confirmation — which is what this assertion now holds. */
+  assert.match(r.growPointsManageV326, /Turn Point system off for customers\?/);
   assert.match(r.growPointsManageV326, /Earn 1 points per SGD 1 spent/);
   /* V334: "ON for customers" text replaced by a compact ON/OFF toggle pill (owner markup photo 4). */
   assert.match(r.growPointsManageV326, /pill-toggle-v334 on"[^>]*data-grow-switchtoggle-v322="points"[^>]*>ON</);
@@ -239,9 +250,14 @@ test('V326 Published tab shows live and paused gifts with correct per-row state,
   const coffeeIdx = html.indexOf('Free Coffee');
   const muffinIdx = html.indexOf('Free Muffin');
   assert.ok(coffeeIdx >= 0 && muffinIdx >= 0);
-  /* V334: "ON for customers"/"Turn off" text replaced by a compact ON/OFF toggle pill. */
-  assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /pill-toggle-v334 on[\s\S]*?>ON</, 'a live gift shows an ON pill');
-  assert.match(html.slice(muffinIdx, muffinIdx + 700), /pill-toggle-v334 off[\s\S]*?>OFF</, 'a paused gift shows an OFF pill');
+  /* V351 (owner: "Delete is given the same visual importance as Edit") made the row a plain status
+     pill plus an Edit button and a "•••" menu holding Turn on/off + Delete — the pill states the
+     gift's state, it is no longer itself the toggle. The per-row state is what this test is about
+     and it is still read straight off the row's own `paused`. */
+  assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /<span class="pill on">Live<\/span>/, 'a live gift reads Live');
+  assert.match(html.slice(muffinIdx, muffinIdx + 700), /<span class="pill off">Off<\/span>/, 'a paused gift reads Off');
+  assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /data-grow-points-gift-toggle-v326="r1"/,
+    'and the on/off control is still on the row, in its menu');
   assert.match(html, /data-grow-points-gift-delete-v326="r1"/);
   assert.match(html, /data-grow-points-gift-delete-v326="r2"/);
 });
@@ -279,9 +295,15 @@ test('V326 the add-gift form preserves in-progress values, and the post-save pro
   assert.match(formRender.growPointsManageV326, /data-grow-points-add-save-v326="1"/);
   assert.match(formRender.growPointsManageV326, /class="grow-points-form-card-v343" data-grow-points-addform-v326/);
 
-  const promptRender = render({ growPointsAddOpenV326: 'prompt' });
-  assert.match(promptRender.growPointsManageV326, /data-grow-points-add-again-v326="1"/);
-  assert.match(promptRender.growPointsManageV326, /data-grow-points-add-done-v326="1"/);
+  /* V351 (owner: "After successful creation, close the form again. Do not keep the form
+     permanently expanded."): the 'prompt' state — a second screen offering "Add another / Done" —
+     is gone; a successful save closes straight back to the list. The form is one open/closed
+     ternary now, so there is no third state to render. */
+  assert.doesNotMatch(app, /data-grow-points-add-again-v326/,
+    'the retired add-another prompt must not come back');
+  const closedRender = render({ growPointsAddOpenV326: '' });
+  assert.doesNotMatch(closedRender.growPointsManageV326, /data-grow-points-addform-v326/,
+    'and with nothing open the form is not rendered at all');
 });
 
 test('V326 read-only staff (canSetupGrow=false) sees state but no interactive controls', () => {
@@ -315,7 +337,7 @@ test('V326 stamps mode: growPointsIsStampsV326/growPointsSpineKindV326 derive fr
   assert.equal(r.growPointsRowLabelV326, 'Stamp card');
   assert.equal(r.growPointsConfiguredV326, true);
   assert.equal(r.growPointsOnV326, true);
-  assert.match(r.growPointsManageV326, /<b>Stamp card<\/b>/);
+  assert.match(r.growPointsManageV326, /Turn Stamp card off for customers\?/);
   assert.doesNotMatch(r.growPointsManageV326, /Points System/);
   // The summary row's own on/off toggle must move the STAMPS spine, not points.
   assert.match(r.growPointsManageV326, /data-grow-switchtoggle-v322="stamps"/);

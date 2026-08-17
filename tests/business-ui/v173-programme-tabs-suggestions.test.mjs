@@ -90,8 +90,14 @@ test('V180: bare #/grow is the full list, and every old hash still resolves', ()
   assert.match(app, /\?String\(hashParam\):'list';/, 'bare #/grow must land on the full list');
   /* V301 ADDITION: 'setup' joins the list; the five hashes this assertion has always protected
      are still in it, which is the property being kept. */
-  assert.match(app, /\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)/,
-    'removing a nav entry must not break its deep link');
+  /* V371 lifted the list into one frozen constant shared with the deep-link guard, after the two
+     literals drifted. The property this assertion has always protected — every one of those hashes
+     still resolves to its view — is checked against the constant. */
+  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\[([^\]]*)\]\);/);
+  const views = app.match(/const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\[([^\]]*)\]\);/)[1];
+  for (const hash of ['overview','history','offers','points','tiers','ongoing','available','settings','setup']) {
+    assert.ok(views.includes(`'${hash}'`), `removing a nav entry must not break its deep link: ${hash}`);
+  }
   /* V364 (owner markup 2026-08-16, photo 7: "remove this everywhere"): the advanced settings
      section is gone from the page. The property this line protects — that removing a control
      never breaks its deep link — is kept by the assertion above: '#/grow/settings' still

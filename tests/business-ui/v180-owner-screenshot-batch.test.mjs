@@ -37,8 +37,12 @@ test('programmes nav is one destination, and old hashes still resolve', () => {
   // V271 added the owner's 'overview' and 'history' views to the same list; the three older
   // hashes are still in it, which is what this assertion has always been protecting.
   // V301 added 'setup' (the one-page rewards wizard) for the same reason and on the same terms.
-  assert.ok(app.includes("['overview','history','offers','points','tiers','ongoing','available','settings','setup'].includes(String(hashParam||''))"),
-    'the removed hashes must still resolve to their views');
+  /* V371: one frozen constant now feeds both the view resolver and the deep-link guard. */
+  const views = app.match(/const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\[([^\]]*)\]\);/)?.[1];
+  assert.ok(views, 'the shared view list must exist');
+  for (const hash of ['overview','history','offers','points','tiers','ongoing','available','settings','setup']) {
+    assert.ok(views.includes(`'${hash}'`), `the removed hashes must still resolve to their views: ${hash}`);
+  }
   assert.ok(!app.includes('class="programme-tabs"'), 'in-page tabs duplicated the sidebar');
 });
 

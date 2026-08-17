@@ -24,14 +24,20 @@ const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
    in the order the owner sees them. */
 const pointsStart = app.indexOf('programme-category-title">Point system</div>');
 const tiersStart = app.indexOf('programme-category-title">Tiered membership</div>');
-const otherStart = app.indexOf('programme-category-title">Lifestyle rewards</div>');
+/* V358 flattened the "Lifestyle rewards" grouping card: Welcome gift, Birthday benefit and
+   Bring-back are peers of Point system now, each with its own tile and its own door. The property
+   this file exists for is unaffected and is what the tests below still hold — a points-priced
+   reward belongs to Point system, and a reward that costs no points never leaks into it. There is
+   simply no longer a single contiguous "other" block to slice, so the non-points programmes are
+   located by name instead. */
 const growthStart = app.indexOf("topicOnV229('promotions')?growLimitedOfferCategoryHtmlV319");
 const points = app.slice(pointsStart, tiersStart);
-const other = app.slice(otherStart, growthStart);
 
 test('V227 everything earned and spent in points is in one group', () => {
-  assert.ok(pointsStart > 0 && tiersStart > pointsStart && otherStart > tiersStart && growthStart > otherStart,
-    'the groups must exist in order: points, tiers, lifestyle, promotions');
+  assert.ok(pointsStart > 0 && tiersStart > pointsStart && growthStart > tiersStart,
+    'the groups must exist in order: points, tiers, promotions');
+  assert.equal(app.indexOf('programme-category-title">Lifestyle rewards</div>'), -1,
+    'the grouping card the owner struck out must not come back');
   /* V250 turned the reward ROWS into the card grid the owner drew, so the point-spending half
      of this group is now composed one step earlier in rewardCardGridV250 and rendered here. The
      grouping this file protects is unchanged: earning and every points-priced reward stay in
@@ -51,13 +57,14 @@ test('V227 everything earned and spent in points is in one group', () => {
   assert.doesNotMatch(app, /programme-category-title">Loyalty &amp; rewards</);
 });
 
-test('V227 rewards that do not use a points balance are their own group', () => {
-  for (const part of ['welcomeOfferRowV215', 'rewardJourney.birthday', "kind:'bringback'"]) {
-    assert.ok(other.includes(part), `Other rewards group is missing ${part}`);
+test('V227 rewards that do not use a points balance stay out of the Point system group', () => {
+  // Each still exists as its own surface, just no longer inside one shared grouping card.
+  for (const part of ['welcomeOfferRowV215', 'rewardJourney.birthday', "key:'bringback'"]) {
+    assert.ok(app.includes(part), `${part} must still be on the page`);
   }
-  // No leakage either way — that is the whole point of the split.
+  // No leakage into the points group — that is the whole point of the split.
   assert.ok(!points.includes('welcomeOfferRowV215'));
-  assert.ok(!other.includes('rewardJourney.milestones'));
+  assert.ok(!points.includes('rewardJourney.birthday'));
 });
 
 test('V227 the regrouping did not unbalance the markup', () => {

@@ -45,8 +45,13 @@ test('Grow starts with one task and one complete single-column programme overvie
 });
 
 test('configured and not-yet-configured programme families share the overview',()=>{
+  /* The row builder now templates the attribute (`data-programme-kind="${esc(kind)}"`), so a
+     literal `data-programme-kind="birthday"` no longer appears anywhere even though birthday is
+     very much on the overview. Assert the kinds themselves, the same way the loop below already
+     does, and assert the templated attribute exists once. */
+  assert.match(grow,/data-programme-kind="\$\{esc\(kind\)\}"/,'rows must still carry their kind');
   for(const kind of ['earning','redeemable','birthday']){
-    assert.match(grow,new RegExp(`data-programme-kind="${kind}"`),`${kind} is missing from the overview`);
+    assert.match(grow,new RegExp(`kind:'${kind}'`),`${kind} is missing from the overview`);
   }
   /* V294 (owner markup 2026-08-12): gift cards left the Programmes overview — they are sold at
      the counter, not configured as a programme — so their row moved to the Serve & sell nav
@@ -71,19 +76,33 @@ test('overview reads enough server state to label programme status without inven
   // V271 added created_at so Programmes History can say when a bring-back reward ran.
   assert.match(snapshot,/retention_programs'\)\.select\('id,name,active,goal_visits,period_days,starts_on,created_at'/);
   assert.match(snapshot,/overviewErrors:[\s\S]*referrals:[\s\S]*memberships:[\s\S]*promotions:/);
-  assert.match(grow,/snapshot\.retention\.length\?snapshot\.retention\.map/);
+  /* V229/V358 replaced the per-programme retention ROWS on the overview with one Bring-back tile
+     that reports a status. The point of this assertion — the label is read off real server state,
+     never invented — is now carried by that tile's own status expression, which distinguishes
+     "no module", "live", "configured but paused" and "not set up" from the same snapshot. */
+  assert.match(grow,/const bringBackLiveV229=\(snapshot\.retention\|\|\[\]\)\.filter\(program=>program\?\.active!==false\)\.length;/);
+  assert.match(grow,/bringBackLiveV229\?\['Live','on'\]:snapshot\.retention\?\.length\?\['Paused','off'\]:\['Not set up','off'\]/);
   assert.match(grow,/const retentionOverviewState=program=>/);
   assert.match(grow,/startsOn>growAsOfDate/);
   assert.match(grow,/status:'Scheduled'/);
-  assert.match(grow,/status:state\.status,statusTone:state\.tone/);
+  /* The per-programme retention ROWS became History entries when V229/V358 turned the overview
+     into topic tiles, so the status no longer travels as `status:/statusTone:` on a row. The
+     property under test — the state is READ from the programme, never assumed — is unchanged and
+     is now asserted at the one place that derives it. */
+  assert.match(grow,/const overview=retentionOverviewState\(program\);/);
+  assert.match(grow,/state:program\.active===false\?'retired':overview\.status==='Live'\?'live':'scheduled'/);
   assert.match(grow,/title:['"]Bring-back rewards['"][\s\S]*status:['"]Not set up['"]/);
   assert.match(grow,/snapshot\.referral\?['"]Paused['"]:['"]Not set up['"]/);
   assert.match(grow,/snapshot\.memberships\.length\?['"]Paused['"]:['"]Not set up['"]/);
   /* V301: overviewErrors.giftcards left with the read it reported on — there is no longer a
      retry banner to keep honest. */
   assert.doesNotMatch(snapshot,/overviewErrors:[\s\S]*giftcards:/);
-  for(const source of ['loyalty','rewards','birthday']){
-    assert.match(grow,new RegExp(`overviewErrors\\?\\.${source}`),`${source} read failures need a row-level unavailable state`);
+  /* V371: birthday moved from a row to a topic tile and lost its unavailable state on the way —
+     a failed read fell through to "Not set up", stating as fact that nothing is configured. Every
+     tile now routes its status through growTileStatusV371, which names the read it depends on. */
+  assert.match(grow,/const growTileStatusV371=\(errorKey,status\)=>\s*\n?\s*snapshot\.overviewErrors\?\.\[errorKey\]\?\['Unavailable','off'\]:status;/);
+  for(const source of ['loyalty','rewards','birthday','retention','referrals']){
+    assert.match(grow,new RegExp(`growTileStatusV371\\('${source}'`),`${source} read failures need an honest unavailable state`);
   }
 });
 
@@ -141,7 +160,13 @@ test('read-only and unavailable rows expose status but no dead writer',()=>{
   assert.match(grow,/programmeAction/);
   assert.match(grow,/if\(!canWrite\)return ''/);
   assert.match(grow,/const canSetupWinback=isOwner&&canWinback&&canWriteModule\('retention'\)/);
-  assert.match(grow,/need owner edit access to configure it/);
+  /* V358/V364 rewrote the refusal copy when the overview became topic tiles; the guard this test
+     exists for is the BEHAVIOUR — a row an employee cannot write offers no writer at all — which
+     the `if(!canWrite)return ''` pin above already holds. The remaining check is that a
+     non-writer is told to ask rather than shown a dead control. */
+  /* A row an employee cannot write renders no writer at all (the pin above), and says why with a
+     "Read only" marker rather than a dead control. */
+  assert.match(grow,/readOnly\?'<span class="grow-programme-access">Read only<\/span>':''/);
 });
 
 /* V364 (owner markup 2026-08-16, photos 6 and 7): the collapsed "More reward settings" block —

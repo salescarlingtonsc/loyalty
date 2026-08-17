@@ -63,13 +63,23 @@ test('V343 the programme landing renders the owner mockup status strip and five-
   const tiles = app.slice(app.indexOf('const growTilesHtmlV229='));
   const stripSetup = app.slice(app.indexOf('const growDisplayTopicsV343='), app.indexOf('const growTilesHtmlV229='));
   assert.match(app, /growDisplayTopicsV343=growTopicDefsV229\.filter\(topic=>topic\.key!=='recurring'\)/);
-  assert.match(app, /growDisplayHistoryCountV343=growTopicDefsV229\.filter\(topic=>String\(topic\.status\?\.\[0\]\|\|''\)==='History'\)\.length\+growTiersHistoryV331\.length/);
+  /* The count used to add growTiersHistoryV331.length — deleted tier RUNGS — to a tab whose list
+     shows programme TILES, so a firm that had removed twelve rungs read "History (12)" above the
+     words "Nothing has been deleted yet". The count is the length of the list it labels now, which
+     is the whole point of the tab, and deleted rungs still have their own History tab on the Tiers
+     page. Pinning the old formula would be pinning the defect. */
+  assert.match(app, /growDisplayHistoryCountV343=growTopicDefsV229\.filter\(topic=>String\(topic\.status\?\.\[0\]\|\|''\)==='History'\)\.length;/);
+  assert.doesNotMatch(app, /growDisplayHistoryCountV343=[^;]*growTiersHistoryV331\.length/,
+    'the History tab must not count rows its list does not show');
   assert.doesNotMatch(stripSetup, /growHistoryRowsV271/);
   assert.match(tiles, /All \(\$\{growDisplayTopicsV343\.length\}\)/);
   assert.match(tiles, /Live \(\$\{growDisplayLiveV343\.length\}\)/);
   assert.match(tiles, /Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
   assert.match(tiles, /History \(\$\{growDisplayHistoryCountV343\}\)/);
-  assert.match(tiles, /<div class="grow-topic-card-grid-v343">\$\{growDisplayTopicsV343\.map\(growTileHtmlV244\)\.join\(''\)\}<\/div>/);
+  /* V357 made the four status tabs real filters, so the grid renders the FILTERED list and shows
+     an explaining line when a filter is empty, rather than always mapping the full set. */
+  assert.match(tiles, /<div class="grow-topic-card-grid-v343">\$\{growFilteredTilesV357\.length\?growFilteredTilesV357\.map\(growTileHtmlV244\)\.join\(''\)/);
+  assert.match(tiles, /No programme is live yet\./, 'an empty filter says so instead of rendering nothing');
 });
 
 test('V343 the tile keeps its topic hook and becomes the screenshot card shape', () => {

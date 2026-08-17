@@ -201,8 +201,15 @@ test('W6I2 A6 a tile hands over a programme to turn ON, never a model to switch 
      elsewhere, e.g. v301-programmes-setup-wizard.test.mjs) but is no longer called from here; the
      ON-only, ever-growing kind:from shape it used to produce is now built directly by each page's
      own Setup/Edit controls instead — asserted by name, not through the retired helper. */
-  assert.match(grow, /pendingGrowSetupModelV303=\{kind:growPointsSpineKindV326,from:growPointsSpineKindV326\};/);
-  assert.match(grow, /pendingGrowSetupModelV303=\{kind:'tiers',from:'tiers'\};/);
+  /* The hand-off writers this used to pin are gone with the flow that needed them: after V331 the
+     points/stamps/tiles and the tiers tile route to their own pages, and those pages turn a
+     programme on by calling set_programmes_v314 directly rather than asking the wizard to do it on
+     arrival. `pendingGrowSetupModelV303` now has no writer at all in the shipped source, which is
+     asserted here so the dead consumer below cannot quietly come back to life with a new writer of
+     the old ever-growing shape. */
+  assert.doesNotMatch(code, /pendingGrowSetupModelV303\s*=\s*\{/,
+    'nothing may build the retired ON-only model hand-off again');
+  assert.match(grow, /data-grow-topic-v229/, 'the tiles are still the entry point');
   assert.match(wizard, /if\(handoffKindW6I2\)set\[handoffKindW6I2\]=true;/);
   /* ON only. The deleted helper answered "which of four exclusive models is this card", so opening
      the Stamp card tile at a points firm proposed the live points programme off. */
@@ -648,6 +655,22 @@ function mountWizard({ spine = null, industry = 'salon', snapshot = {}, liveTier
     open: () => api.growSetupWizardV301({ host: dom.host, snapshot: full, isCurrent: () => true,
       startStep, liveTiers }),
     press: async id => { const el = dom.$(id); assert.ok(el, `no #${id} on screen`); await el.onclick() },
+    /* V360 removed the Go-live screen ("dont need the wizard go live steps"): reaching the hidden
+       'live' step now publishes on its own, so the Next button is gone by the time the old
+       "walk to Go live, then press Next" idiom looked for it. This walks the wizard forward the
+       way an owner does and stops as soon as there is nothing left to press — whether that is
+       because the run published itself or because it parked on the ack screen. */
+    runToPublish: async (limit = 8) => {
+      for (let guard = 0; guard < limit; guard++) {
+        const next = dom.$('growSetupNextV301');
+        if (!next) break;
+        await next.onclick();
+      }
+      /* The auto-publish is deliberately not awaited by render() — it paints "Saving your
+         changes…" and lets doPublishV339 finish on its own — so the run has to settle before the
+         RPCs it makes can be asserted. */
+      await new Promise(resolve => setTimeout(resolve, 5));
+    },
     click: async selector => { const el = dom.host.querySelector(selector);
       assert.ok(el, `no ${selector} on screen`); await el.onclick() },
     title: () => /<h3 class="grow-setup-title-v301">([^<]*)</.exec(dom.markup)?.[1] || '',
@@ -758,9 +781,10 @@ test('W6I2 E3 turning Referral ON writes referral_programs, default accepted (de
   await w.open();
   await w.click('[data-grow-setup-switch-w6i2="referral"]');
   assert.ok(w.rail().includes('Referral'), 'the toggle put the referral rail on screen');
-  for (let guard = 0; guard < 8 && !/Go live/.test(w.title()); guard++) await w.press('growSetupNextV301');
-  assert.match(w.title(), /Go live/);
-  await w.press('growSetupNextV301');
+  /* V360: this path has no tier movement to acknowledge, so reaching the hidden 'live' step
+     publishes on its own — there is no Go-live screen left to land on and no Publish to press.
+     What the test is actually about (the referral row that publishing writes) is unchanged. */
+  await w.runToPublish();
   /* V322 (OWNER RULING R1/R4 — "why referral is a stored credits? please remove it as i already
      said no more store credits"): same write, same moment, same reason; the writer is
      save_referral_program_v322 and the amount is p_reward_points, an integer count of POINTS.
@@ -794,8 +818,7 @@ test('W6I2 E3 turning Referral OFF disables referral_programs, untouched inputs 
   await w.open();
   await w.click('[data-grow-setup-switch-w6i2="referral"]');
   assert.ok(!w.rail().includes('Referral'), 'the referral rail went with the scope');
-  for (let guard = 0; guard < 8 && !/Go live/.test(w.title()); guard++) await w.press('growSetupNextV301');
-  await w.press('growSetupNextV301');
+  await w.runToPublish();
   assert.equal(w.called('publish_loyalty_config').length, 1, 'the publish itself still happened');
   assert.deepEqual(w.called('save_referral_program_v322'), [],
     'a programme merely dropped from scope must not have its live payout row rewritten');
@@ -816,13 +839,25 @@ test('W6I2 E3 turning Referral OFF disables referral_programs, untouched inputs 
 });
 
 test('W6I2 E3 a keep-it-paused publish disables referral too (defect 3)', async () => {
-  const w = mountWizard({ spine: spineRows(['points', 'referral']), industry: 'retail',
-    snapshot: { loyalty: rowAsSelected(overviewColumns),
-      referral: { id: 'ref-1', enabled: true, reward_cents: 1000, min_spend_cents: 0 } },
+  /* V360 deleted the Go-live screen from the ordinary path — reaching the hidden 'live' step now
+     publishes on its own — and "Keep it paused for now" lives on that screen. It is still reachable
+     on the gated paths, where doPublishV339 refuses and renders the screen instead, so this run is
+     given the tier movement that holds it there. The claim under test is unchanged: keep-it-paused
+     must reach referral_programs, not just the spine. */
+  const w = mountWizard({ spine: spineRows(['points', 'tiers', 'referral']), industry: 'retail',
+    snapshot: { loyalty: { ...rowAsSelected(overviewColumns), tier_basis: 'visits' },
+      referral: { id: 'ref-1', enabled: true, reward_cents: 1000, min_spend_cents: 0 },
+      draft: { id: 'draft-1', snapshot_hash: 'h0' },
+      draftDetail: { program: { ...STORED_PROGRAM, tier_basis: 'points_earned' }, rewards: [], tiers: [] } },
+    liveTiers: [{ id: 't1', name: 'Silver', threshold: 0, active: true }],
     startStep: 'review' });
   await w.open();
   await new Promise(resolve => setTimeout(resolve, 5));
+  const tierTick = w.dom.$('growSetupTierAckW6I2');
+  assert.ok(tierTick, 'the movement gate is what keeps the Go-live screen on screen');
+  tierTick.checked = true; tierTick.onchange();
   const pause = w.dom.$('growSetupPauseV301');
+  assert.ok(pause, '"Keep it paused for now" must still be offered on the gated publish');
   pause.checked = true; pause.onchange();
   await w.press('growSetupNextV301');
   const [referral] = w.called('save_referral_program_v322');
@@ -836,7 +871,13 @@ test('W6I2 E3 a keep-it-paused publish disables referral too (defect 3)', async 
      `tiers:false, stamps:false` here would have been the wizard pausing two programmes the owner
      never selected — the very thing "if i unselect the program does not mean i want to turn off"
      forbids — and set_programmes_v314 leaves an unnamed kind exactly as it found it. */
-  assert.deepEqual(switches.args.p_switches, { points: false, referral: false });
+  /* This run now also has tiers in scope — that is what keeps the Go-live screen (and with it the
+     pause control) on screen at all under V360 — so the scope-shaped payload correctly carries
+     three kinds. The rule the assertion exists for is unchanged and still proves itself: `stamps`
+     is absent, because the owner never put it in scope. */
+  assert.deepEqual(switches.args.p_switches, { points: false, tiers: false, referral: false });
+  assert.ok(!('stamps' in switches.args.p_switches),
+    'a programme the owner never selected must not be paused by this run');
 });
 
 test('W6I2 E3 the referral "before" is read from referral_programs, not from the spine (defect 3)', async () => {
@@ -867,7 +908,8 @@ test('W6I2 E3 the referral "before" is read from referral_programs, not from the
     startStep: 'review' });
   await untouched.open();
   await new Promise(resolve => setTimeout(resolve, 5));
-  await untouched.press('growSetupNextV301');
+  /* V360: no gate holds this run, so it published itself on the way in. */
+  await untouched.runToPublish();
   assert.equal(untouched.called('publish_loyalty_config').length, 1, 'the publish itself happened');
   assert.deepEqual(untouched.called('save_referral_program_v322'), [],
     'a programme the owner never put in scope must not be written by this run');
@@ -881,7 +923,8 @@ test('W6I2 E3 the referral "before" is read from referral_programs, not from the
     startStep: 'review' });
   await w.open();
   await new Promise(resolve => setTimeout(resolve, 5));
-  await w.press('growSetupNextV301');
+  /* V360: ungated, so it publishes itself on the way in. */
+  await w.runToPublish();
   const [referral] = w.called('save_referral_program_v322');
   assert.ok(referral,
     'a spine row switched on with a dead referral_programs row behind it must be healed at publish');
@@ -972,6 +1015,9 @@ test('W6I2 E5 a points-earned ladder with Points & gifts off is refused, not pub
   assert.match(w.dom.markup, /Points &amp; gifts has to be running/);
 });
 
+/* V360 ("dont need the wizard go live steps") hides the hidden 'live' step from the rendered
+   stepper — stepperHtml returns '' for it — so the rail an owner sees ends at the last real
+   screen. The rail expectations below therefore no longer carry a trailing 'Go live'. */
 test('W6I2 E5 one tap turns Points & gifts on and keeps the owner on Climbing (defect 5)', async () => {
   const w = mountWizard({ spine: spineRows(['tiers']), industry: 'fitness',
     snapshot: { loyalty: { ...rowAsSelected(overviewColumns), tier_basis: 'points_earned' } },
@@ -980,7 +1026,7 @@ test('W6I2 E5 one tap turns Points & gifts on and keeps the owner on Climbing (d
   await w.press('growSetupTurnOnPointsW6I2');
   assert.match(w.title(), /Climbing/, 'the owner stays on the screen they were reading');
   /* V334: Earning + Expiry merged into one rail step. */
-  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Climbing', 'Tiers', 'Go live']);
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Climbing', 'Tiers']);
   assert.doesNotMatch(w.dom.markup, /data-grow-setup-climbneedspoints-w6i2/);
   await w.press('growSetupNextV301');
   assert.deepEqual(w.configWrites().map(config => config.tier_basis), ['points_earned'],
@@ -1021,7 +1067,7 @@ test('W6I2 E6 the four switches actually toggle, and only the one that was press
     snapshot: { loyalty: rowAsSelected(overviewColumns) } });
   await w.open();
   /* V334: Earning + Expiry merged into one rail step. */
-  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Go live']);
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts']);
   /* "Only the one that was pressed" is demonstrated on a NON-EXCLUDING toggle, because that is the
      only kind for which it is unconditionally true. V322 (OWNER RULING R2/R3 — "stamps is not
      supposed to be able to be live with points and tier - it is seperate rewards by itself") makes
@@ -1030,24 +1076,24 @@ test('W6I2 E6 the four switches actually toggle, and only the one that was press
      this half of the test presses. */
   await w.click('[data-grow-setup-switch-w6i2="referral"]');
   assert.deepEqual(w.rail(),
-    ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Referral', 'Go live'],
+    ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Referral'],
     'referral joined and points stayed exactly as it was');
   await w.click('[data-grow-setup-switch-w6i2="referral"]');
-  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Go live'],
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts'],
     'and unticking one takes its screens with it, leaving the other alone');
   /* The excluding toggle, which is the other half of the same wiring fact: a press whose kind
      excludes something already ticked FLIPS NOTHING and renders a named confirmation — the ruling
      is that the consequence is stated BEFORE it happens, not discovered afterwards. Pressing the
      confirm is what performs the flip, and the clearing is then the owner's own act. */
   await w.click('[data-grow-setup-switch-w6i2="stamps"]');
-  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts', 'Go live'],
+  assert.deepEqual(w.rail(), ['Programmes', 'Earning &amp; expiry', 'Gifts'],
     'the first press on an excluding switch changes nothing at all');
   assert.match(w.dom.markup, /data-grow-setup-exclusive-w6i2="stamps"/,
     'it arms a confirmation instead');
   assert.match(w.dom.markup, /Turning it on switches Points &amp; gifts off/,
     'and the confirmation NAMES what goes, before it goes');
   await w.click('[data-grow-setup-exclusive-confirm-w6i2="stamps"]');
-  assert.deepEqual(w.rail(), ['Programmes', 'Stamps', 'Milestones', 'Go live'],
+  assert.deepEqual(w.rail(), ['Programmes', 'Stamps', 'Milestones'],
     'the confirm is what flips it, and stamps clears the points side per R2/R3');
 });
 

@@ -45,9 +45,15 @@ test('V215 appears in Programmes with a state an owner can act on', () => {
   // Uses the shared pill, not an invented status class.
   assert.match(row, /class="pill \$\{esc\(tone\)\}"/);
   assert.match(app, /\[data-welcome-offer-edit-v215\]/);
-  /* V291 retarget (not a deletion): the row now also receives whether an editing draft is open,
-     so it can say the welcome offer is NOT part of that draft. Same call site, one argument more. */
-  assert.match(app, /welcomeOfferRowV215\(welcomeOfferStatusV215,canSetupGrow,canRewards,Boolean\(growDraftPendingId\)\)/);
+  /* V358 gave the welcome offer its own peer TILE on the overview instead of a row inside the
+     Lifestyle grouping card, so growPage no longer calls welcomeOfferRowV215 — the tile carries the
+     state and its click opens the editor directly. (The row builder itself is now unreferenced;
+     see the dead-code note in the V371 evidence document.) Both halves of "a state an owner can
+     act on" are asserted against what actually ships. */
+  assert.match(app, /status:growTileStatusV371\('rewards',!canRewards\?\['Not included','off'\]:welcomeOfferStatusV215\?\.active\?\['Live','on'\]:welcomeOfferStatusV215\?\.configured\?\['Paused','off'\]:\['Not set up','off'\]\)/,
+    'the tile reports live / paused / not set up, and says Unavailable when its read failed');
+  assert.match(app, /if\(tile\.dataset\.growTopicV229==='welcome'\)\{\s*\n\s*if\(!canSetupGrow\)return;\s*\n\s*return openWelcomeOfferEditorV215\(/,
+    'and pressing it opens the editor, gated on setup permission');
   // A failed status read must not blank the whole programme overview.
   assert.match(app, /business_get_welcome_offer_v215[\s\S]{0,200}catch\(\(\)=>null\)/);
 });

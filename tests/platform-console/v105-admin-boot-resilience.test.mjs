@@ -80,6 +80,10 @@ test('a missing platform module renders a recoverable error instead of falling t
       rememberCustomerRecoveryVerified(){},
       normalizeCustomerDestination:()=>'',normalizeCustomerBusinessIntent:value=>value,
       businessStaffInviteCodeV151:()=>'',
+      /* V345's localhost-only customer preview is consulted before any routing decision; it is
+         gated on location.hostname, so off here and in production alike. Without the stub the
+         sandbox threw and every case reported the ReferenceError as the platform's own failure. */
+      localCustomerPreviewEnabledV345:()=>false,
       /* v185: app/app.js is split by surface at build time. The router resolves which chunk a
          route needs and awaits it; in the sandbox every symbol is already present, so the loader
          is a no-op and the surface decision is exercised for real. */

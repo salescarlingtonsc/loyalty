@@ -23,7 +23,11 @@ function section(source, start, end) {
 
 test('the withdraw control exists only on active requests and goes through the v290 RPC', () => {
   const bookings = section(appJs, 'const paintBookings', 'async function renderCustomerMessages');
-  assert.match(bookings, /isActiveCustomerBookingRequest\(item\)&&item\.request_id\?`<button class="btn ghost sm" type="button" data-withdraw-request=/,
+  /* The row markup moved out of paintBookings into the shared request-row renderer above it, so
+     it is matched against the file rather than that one slice; the HANDLER assertions below stay
+     scoped to the bookings section, which is where they still live. The gate itself is unchanged:
+     only an active request the customer owns gets the control. */
+  assert.match(appJs, /isActiveCustomerBookingRequest\(item\)&&item\.request_id\?`<button class="btn ghost sm" type="button" data-withdraw-request=/,
     'only a pending/waitlisted request the customer owns gets the button');
   assert.match(bookings, /customerRpc\('customer_withdraw_booking_request_v290',\{p_request:button\.dataset\.withdrawRequest\}\)/);
   assert.match(bookings, /if\(!confirm\('Withdraw this booking request\?/, 'a destructive act asks first');
@@ -83,7 +87,7 @@ test('the live state is computed honestly', () => {
 });
 
 test('the surface loaders agree that #/offer/ is a customer route', () => {
-  assert.match(appJs, /const CUSTOMER_ROUTE_PREFIXES_V185=\['#\/b\/','#\/customer\/','#\/wallet','#\/claim','#\/join','#\/offer\/'\];/);
+  assert.match(appJs, /const CUSTOMER_ROUTE_PREFIXES_V185=\['#\/b\/','#\/customer\/','#\/wallet','#\/claim','#\/join','#\/offer\/','#\/local\/customer-preview'\];/);
   assert.match(indexHtml, /'#\/b\/','#\/customer\/','#\/wallet','#\/claim','#\/join','#\/offer\/'/,
     'the index.html preloader mirrors the router rule it races');
 });

@@ -52,6 +52,12 @@ test('V271 (a) every struck string is gone from the application code', () => {
   assert.doesNotMatch(app, /Open Edit to turn it on/);
   assert.doesNotMatch(app, /Configured as \$\{rewardJourney/);
   assert.doesNotMatch(app, /customers earn nothing and no reward below is claimable/);
+  /* V371: one constant now feeds both the view resolver and the deep-link guard. They used to be
+     separate literals and drifted — V366 added 'bringback' to the resolver only, so the Bring-back
+     page also mounted a deep editor surface with a view name where a draft id belongs. */
+  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup'\]\);/);
+  assert.match(app, /const programmeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
+  assert.match(app, /const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/);
 });
 
 test('V271 (a) the heading is an unconditional "Point system"', () => {
@@ -120,11 +126,7 @@ test('V271 (b) all three views exist, resolve from the hash, and keep the old on
      completion, no popups"). The setup wizard is a fourth VIEW of this same page, so 'setup'
      joins the list; V271's own three views and the two legacy hashes still resolve exactly as
      they did, which is what the assertions below check. */
-  assert.match(app,
-    /const programmeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
   // A view hash must never be mistaken for an engine deep link (that crashed on the surface map).
-  assert.match(app,
-    /const hashParamIsProgrammeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes/);
   // Each view names itself in the heading.
   assert.match(app, /programmeView==='overview'\?'Overview':programmeView==='history'\?'History'/);
 });

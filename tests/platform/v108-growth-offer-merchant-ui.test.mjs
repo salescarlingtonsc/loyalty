@@ -41,7 +41,7 @@ test('growth-offer receipt does not pretend that loyalty points were spent',()=>
   /* V290 retarget: a promotion acceptance spends no points either, so the same suppression now
      covers both non-points receipts. The rule this line guards is unchanged — a receipt must not
      print a Points spent row for a redemption that spent none. */
-  assert.match(source,/receipt\.kind==='growth_offer'\|\|receipt\.kind==='promotion_offer'\?'':`<div><dt>Points spent/);
+  assert.match(source,/receipt\.kind==='growth_offer'\|\|receipt\.kind==='promotion_offer'\|\|receipt\.kind==='package_session'\?'':`<div><dt>Points spent/);
   assert.match(source,/receipt\.offerValueCents/);
   assert.match(source,/offerCurrency=String\(data\.currency\|\|''\)/);
   assert.doesNotMatch(source,/offerCurrency=String\(data\.currency\|\|S\.biz\?\.currency/);

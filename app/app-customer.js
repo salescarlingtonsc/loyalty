@@ -1296,6 +1296,10 @@ function localCustomerPreviewShellV345(active='home'){
     if(href==='#/customer/profile')link.href=routeByTab.profile;
   });
 }
+/* V371: the two "Book again" buttons below are inert — this screen is a static localhost-only
+   visual preview, not a working surface — so they are marked disabled rather than left looking
+   pressable. That is both honest to whoever opens the preview and what the V123 readiness scan
+   asks of every control: do something, or say that you do not. */
 function renderLocalCustomerPreviewBookingsV345(){
   localCustomerPreviewShellV345('bookings');
   const group={business_slug:'cubbly',business_name:'Cubbly',business_logo:'',bookingEnabled:true,tabRequests:[],
@@ -1307,9 +1311,9 @@ function renderLocalCustomerPreviewBookingsV345(){
   $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div></header>
     <div class="customer-my-rewards-search"><label class="sr-only" for="localBookingSearchV345">Search company name</label>${CUI.icon('search',{size:17})}<input id="localBookingSearchV345" type="search" placeholder="Search company name"></div>
     ${customerBookingTablistMarkupV178('bookings',{bookings:1,cancelled:3,history:0})}
-    <div class="customer-booking-list"><section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>Cubbly</h2><p class="muted small">0 requests · 1 appointment</p></div><span class="spacer"></span><button class="btn sm" type="button">Book again</button></div>
+    <div class="customer-booking-list"><section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>Cubbly</h2><p class="muted small">0 requests · 1 appointment</p></div><span class="spacer"></span><button class="btn sm" type="button" disabled>Book again</button></div>
       <h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:18})}<span>Upcoming appointments</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,false)).join('')}</section>
-      <section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(bistro)}<div><h2>Bistro 88</h2><p class="muted small">2 appointments</p></div><span class="spacer"></span><button class="btn sm" type="button">Book again</button></div></section></div>`;
+      <section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(bistro)}<div><h2>Bistro 88</h2><p class="muted small">2 appointments</p></div><span class="spacer"></span><button class="btn sm" type="button" disabled>Book again</button></div></section></div>`;
   focusCustomerRoute();
 }
 function renderLocalCustomerPreviewProfileV345(){

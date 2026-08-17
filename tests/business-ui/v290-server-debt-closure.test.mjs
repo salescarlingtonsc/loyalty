@@ -305,7 +305,7 @@ test('6 — the till extends the scanner it already has rather than growing a se
   assert.match(app, /kind==='promotion_offer'\?'Offer':'Reward'/);
   /* The receipt must not invent a points line for something that spends no points. */
   assert.match(app,
-    /receipt\.kind==='growth_offer'\|\|receipt\.kind==='promotion_offer'\?'':`<div><dt>Points spent<\/dt>/);
+    /receipt\.kind==='growth_offer'\|\|receipt\.kind==='promotion_offer'\|\|receipt\.kind==='package_session'\?'':`<div><dt>Points spent<\/dt>/);
 });
 
 /* ------------------------------------------------------ housekeeping */

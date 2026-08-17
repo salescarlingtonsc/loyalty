@@ -58,7 +58,18 @@ const missingPlatformRoutes=platformRoutes.filter(key=>{
   return !new RegExp(`activeKey\\s*===\\s*'${key}'`).test(platform);
 });
 
+/* A <style> block is CSS, not markup, and must not be scanned for controls: a comment inside the
+   stylesheet that mentions an element (".. the segment's own button styling is extended to <a>.")
+   was being matched as a real anchor, and then reported as an unwired control forever. The block's
+   content is blanked rather than removed so every reported line number still points at the right
+   line of the real file. */
+function stripStyleBlocks(source){
+  return source.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,
+    block=>block.replace(/[^\n]/g,' '));
+}
+
 function staticControls(source,file){
+  source=stripStyleBlocks(source);
   const controls=[];
   const patterns=[
     ['button',/<button\b([^>]*)>([\s\S]*?)<\/button>/gi],

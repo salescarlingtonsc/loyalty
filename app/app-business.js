@@ -11490,6 +11490,12 @@ async function promotionsPage(selectedPromotionId=null){
   }
   routeDispose=()=>{if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl)};
 }
+/* V371: these two lists MUST agree. They were maintained separately and drifted: V366 added
+   'bringback' to the view resolver but not to the deep-link guard below, so opening
+   #/grow/bringback resolved as a view AND fell through to mountGrowSurface with
+   draftOverride:'bringback' — a deep editor surface the owner never asked for, mounted on top of
+   the Bring-back page with a view name where a draft id belongs. One list, two readers. */
+const GROW_PROGRAMME_VIEWS_V371=Object.freeze(['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup']);
 async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false,quiet=false}={}){
   /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
      pushing no hash — so the topic outlived the page. An owner who drilled into Points, went to
@@ -11795,7 +11801,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      click handler below), whether or not a points programme has ever been configured — an
      unconfigured business sees this same page with an empty/set-up-prompt state instead of the
      wizard, per owner ruling (AskUserQuestion, 2026-08-15: "Photo 3 always, with an empty state"). */
-  const programmeView=['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup'].includes(String(hashParam||''))?String(hashParam):'list';
+  const programmeView=GROW_PROGRAMME_VIEWS_V371.includes(String(hashParam||''))?String(hashParam):'list';
   /* V303: 'review' is now a NAME, not the number 4. A tier model runs a five-step wizard, so a
      hardcoded 4 would have opened the Reward step and called it the publish gate. The wizard
      resolves the name against its own active step list. */
@@ -11881,24 +11887,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
   /* V362: lifestyleLiveV229 removed with the grouping card it counted for (V358). Each of the
      three programmes now reports its own status on its own tile. */
+  /* V371: a tile whose read FAILED used to fall through to 'Not set up', which states as a fact
+     that the owner has configured nothing — the one thing the page cannot know when the query it
+     would have answered from did not come back. The page-level retry banner above the grid warns
+     that unavailable rows are not assumed to be off, but the tile itself was still making the
+     claim. Each tile now names the read it depends on and says 'Unavailable' instead, which is the
+     same honest-unknown state the drilled rows (growProgrammeRow) have always used. */
+  const growTileStatusV371=(errorKey,status)=>
+    snapshot.overviewErrors?.[errorKey]?['Unavailable','off']:status;
   const growTopicDefsV229=[
     /* V294 (owner markup 2026-08-12): pending-setup cards carry the owner's own benefit lines. */
     /* V296: "Points redemption" renamed to "Points System" here too — the tile is the door the
        owner presses, so its title must match the page it opens. */
     {key:'points',icon:'star',title:'Point system',blurb:'Customers earn points and redeem gifts.',
-      status:loyaltyModelTileStatusV235('redeem'),
+      status:growTileStatusV371('loyalty',loyaltyModelTileStatusV235('redeem')),
       summary:!liveLoyaltyModelKeysV240.includes('redeem')?''
         :rewardCount?`${rewardCount} redeemable reward${rewardCount===1?'':'s'}`
         :'Set the earning rate and rewards'},
     {key:'tiers',icon:'memberships',title:'Tier membership',blurb:'Reward loyal customers as they climb tiers.',
-      status:loyaltyModelTileStatusV235('tiers'),
+      status:growTileStatusV371('loyalty',loyaltyModelTileStatusV235('tiers')),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?''
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(growTiersPublishedV331.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :growTiersPublishedV331.length?`${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'}: ${growTiersPublishedV331.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Create the ladder customers climb'},
     {key:'stamps',icon:'loyalty',title:'Stamp card',blurb:'Give rewards after a set number of visits or purchases.',
-      status:loyaltyModelTileStatusV235('stamps'),
+      status:growTileStatusV371('loyalty',loyaltyModelTileStatusV235('stamps')),
       summary:!liveLoyaltyModelKeysV240.includes('stamps')?''
         :rewardCount?`${rewardCount} milestone${rewardCount===1?'':'s'}`
         :'Set the spend per stamp and its milestones'},
@@ -11908,21 +11922,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        here, each with its own status and its own door, so nothing is one level deeper than the
        thing it sits beside. */
     {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
-      status:!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?['Live','on']:welcomeOfferStatusV215?.configured?['Paused','off']:['Not set up','off'],
+      status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?['Live','on']:welcomeOfferStatusV215?.configured?['Paused','off']:['Not set up','off']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
         ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
     {key:'birthday',icon:'loyalty',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
-      status:!canRewards?['Not included','off']:rewardJourney.birthday?.active?['Live','on']:rewardJourney.birthday?['Paused','off']:['Not set up','off'],
+      status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?['Live','on']:rewardJourney.birthday?['Paused','off']:['Not set up','off']),
       summary:rewardJourney.birthday?.active&&rewardJourney.birthday?.value
         ?`${rewardJourney.birthday.value}`:'Set the birthday treat and its window'},
     {key:'bringback',icon:'retention',title:'Bring-back rewards',blurb:'Win back customers who have gone quiet.',
-      status:!canWinback?['Not included','off']:bringBackLiveV229?['Live','on']:snapshot.retention?.length?['Paused','off']:['Not set up','off'],
+      status:growTileStatusV371('retention',!canWinback?['Not included','off']:bringBackLiveV229?['Live','on']:snapshot.retention?.length?['Paused','off']:['Not set up','off']),
       summary:bringBackLiveV229?`${bringBackLiveV229} running`:'Reward customers who return after a break'},
     /* V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out of the
        Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
        publishedPromotions/promotionDrafts computations stay in scope above for that page. */
     {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Let customers refer friends and earn rewards.',
-      status:!modules.includes('referrals')?['Not included','off']:referralLive?['Ongoing','on']:referralConfigured?['Paused','off']:['Not set up','off'],
+      status:growTileStatusV371('referrals',!modules.includes('referrals')?['Not included','off']:referralLive?['Ongoing','on']:referralConfigured?['Paused','off']:['Not set up','off']),
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
     /* V294 (owner markup 2026-08-12, combined "Memberships & gift cards" card crossed out:
        "remove this programme"). Memberships stands alone as its own card ("Do membership for
@@ -11943,7 +11957,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      it keeps the one back control (id and handler unchanged) instead of adding a second. */
   /* V346 (owner annotation, screenshot 2026-08-16): the "All programmes" pill-with-label was too
      heavy for a plain back action — replaced with a small icon-only back button, same target. */
-  const growBreadcrumbV268=topic=>!topic?'':`<nav class="grow-breadcrumb-v268" aria-label="Programme location"><button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button><span class="grow-breadcrumb-current-v268">${esc(topic.title)}</span></nav>`;
+  /* V371: the drilled-topic breadcrumb composer was removed. V346 moved that back control into the page's own
+     title bar, leaving this composer unreferenced — and holding a SECOND copy of the back
+     button's element id, so anything that called it again would have put a duplicate id in the
+     document. The live control is in the title bar; its handler is unchanged. */
   const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
   /* V235: the Stamp card tile is a third VIEW of the point engine, not a third section — it
      drills into the same rows, so nothing is duplicated and no tile is a dead end. */
@@ -13260,7 +13277,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            V341: the icon now leads the H1 above instead (title moved there), so this h2 carries
            it only when growActiveTopicV229 supplies a DIFFERENT title (a drilled tile). -->
       <!-- V339 (owner markup, photo 4: "please add fixed back button in every available page").
-           The breadcrumb back button already exists for drilled tiles (growBreadcrumbV268); the
+           The breadcrumb back button already exists for drilled tiles; the
            dedicated standalone pages — Points System, Tiers, Limited Offer, History — had no way
            back except the sidebar. Same button, same destination, on those pages too. -->
       ${(()=>{
@@ -14764,7 +14781,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      would be handed to the deep-editor mount below and open a surface the owner did not ask for.
      V326: 'points' joins for the same reason — it is the new Points System page, not a deep link
      into mountGrowSurface. */
-  const hashParamIsProgrammeView=['overview','history','offers','points','tiers','ongoing','available','settings','setup'].includes(String(hashParam||''));
+  const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371.includes(String(hashParam||''));
   if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});

@@ -172,7 +172,15 @@ test('V326/V331 the Points, Stamp card AND Tiered membership tiles no longer arm
      by its absence, not by an ordering check against a still-present fallback. */
   const handler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-topic-v229]')"),
     code.indexOf("growTopicV229=tile.dataset.growTopicV229;"));
-  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='points'\|\|tile\.dataset\.growTopicV229==='stamps'\)return nav\('#\/grow\/points'\);/);
+  /* V363 put a confirmation popup in front of the stamps tile (it warns which live programmes
+     would stop), so the points/stamps branch is no longer a single `return nav(...)` line. The
+     destination is what this test is about: everything the branch can do ends at #/grow/points. */
+  const pointsBranch = handler.slice(
+    handler.indexOf("if(tile.dataset.growTopicV229==='points'||tile.dataset.growTopicV229==='stamps')"),
+    handler.indexOf("if(tile.dataset.growTopicV229==='tiers')"));
+  assert.ok(pointsBranch, 'the points/stamps tiles must still be handled before tiers');
+  assert.match(pointsBranch, /nav\('#\/grow\/points'\)/);
+  assert.doesNotMatch(pointsBranch, /nav\('#\/grow\/(?!points')/);
   assert.match(handler, /if\(tile\.dataset\.growTopicV229==='tiers'\)return nav\('#\/grow\/tiers'\);/);
   // growSetupEntryV301 (the wizard-entry gate) is no longer consulted anywhere in this handler —
   // every key it would ever return true for (points/stamps/tiers) is handled explicitly above it.

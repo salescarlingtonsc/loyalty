@@ -58,16 +58,18 @@ test('V301 (a) the wizard is a real function, mounted from growPage', () => {
   assert.match(grow, /growSetupWizardV301\(\{host:\$\('growSetupHostV301'\),snapshot,isCurrent:isGrowCurrent,startStep:growSetupStepV301,\s*\r?\n?\s*liveTiers:loyaltyTiersV229===null\?null:growTiersPublishedV331\}\)/);
   // It reuses the snapshot growPage already read — no second load of the programme.
   assert.doesNotMatch(wizard, /growOverviewSnapshot\(/);
+  /* V371: one constant now feeds both the view resolver and the deep-link guard. They used to be
+     separate literals and drifted — V366 added 'bringback' to the resolver only, so the Bring-back
+     page also mounted a deep editor surface with a view name where a draft id belongs. */
+  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup'\]\);/);
+  assert.match(app, /const programmeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
+  assert.match(app, /const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/);
 });
 
 test('V301 (a) "setup" resolves as a Programmes view, and is not mistaken for a deep link', () => {
   /* V331: 'tiers' joined this allow-list when Tiered membership got its own dedicated page,
      matching the exact 3-site pattern already established for 'points' (v326). */
-  assert.match(app,
-    /const programmeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list';/);
   // A view hash must never mount an engine surface — that crashed on the surface dictionary.
-  assert.match(app,
-    /const hashParamIsProgrammeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes/);
   // The three V271/V294 rail children keep resolving exactly as before.
   assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
   // The view replaces the category list rather than stacking on it.
@@ -664,8 +666,12 @@ test('V301 (e) the pending point-engine cards and the bare Point system row open
      the tile click. growSetupKindForTileW6I2 is consequently unused in app.js — its definition is
      left in place rather than deleted, since deleting it would touch nothing this session actually
      changed about its own behaviour. */
-  assert.match(grow, /pendingGrowSetupModelV303=\{kind:growPointsSpineKindV326,from:growPointsSpineKindV326\};/);
-  assert.match(grow, /pendingGrowSetupModelV303=\{kind:'tiers',from:'tiers'\};/);
+  /* V331/V359 retired this hand-off: the points/stamps and tiers tiles route to their own pages,
+     which turn a programme on by calling set_programmes_v314 directly and edit the earning rule
+     inline, so nothing builds the ON-only kind:from shape any more. The consumer inside the wizard
+     is still pinned above (line ~260) and is asserted to have no writer left. */
+  assert.doesNotMatch(app, /pendingGrowSetupModelV303\s*=\s*\{/);
+  assert.match(app, /if\(tile\.dataset\.growTopicV229==='tiers'\)return nav\('#\/grow\/tiers'\);/);
   assert.match(wizard, /const editorContextV303=\(\)=>handoffV303\?\.from/);
   assert.match(wizard, /\?\(handoffV303\.from==='tiers'\?'ctx-tiers':'ctx-points'\)/);
   assert.match(grow, /const growSetupKindForTileW6I2=key=>key==='stamps'\?'stamps':key==='tiers'\?'tiers':'points';/);
@@ -709,14 +715,15 @@ test('V303 (e) Add reward and per-reward Edit never open a dialog again', () => 
 });
 
 test('V301 (e) both unpublished-changes banners route to the wizard’s final step', () => {
-  assert.match(app, /if\(growDraftBarPublish\)growDraftBarPublish\.onclick=\(\)=>nav\('#\/grow\/setup\/review'\);/);
-  assert.match(app, /if\(growOverviewDraftPublish\)growOverviewDraftPublish\.onclick=\(\)=>nav\('#\/grow\/setup\/review'\);/);
   // The old review page is NOT deleted — the studio rule builder still links it.
   assert.match(app, /function openProtectedGrowPublishReview\(draftVersionId\)\{/);
   assert.match(app, /async function studioPublishReviewPage\(routeMain,isCurrent,draftVersionId\)\{/);
   assert.match(app, /nav\(`#\/studio\/\$\{draftVersionId\}`\)/);
   // ...and the wizard's own step 4 replaces the banner on that page, so there is one door.
-  assert.match(grow, /const growUnpublishedMarkerV198=growDraftPendingId&&canRewards&&programmeView!=='setup'/);
+  /* V358 struck the unpublished-changes banner out entirely (owner: "remove this entirely from my
+     codebase"), so the marker resolves to the empty string and there is no banner left to route.
+     The review page itself is deliberately kept — the Studio rule builder still links it. */
+  assert.match(grow, /const growUnpublishedMarkerV198='';/);
 });
 
 /* ---------------- F. the double publish modal cannot recur ---------------- */

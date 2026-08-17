@@ -48,6 +48,13 @@ test('V250 (a) Programmes is one flat nav group and both sub-rows are gone', () 
   // No dead branch left behind in the collapsible renderer either.
   assert.doesNotMatch(nav, /restItems/);
   assert.match(nav, /g\.items\.filter\(m=>MODULES\[m\]\)/);
+  /* V371: the view list and the deep-link guard are ONE constant now (GROW_PROGRAMME_VIEWS_V371).
+     They were separate lists and drifted — V366 added 'bringback' to the resolver but not to the
+     guard, so opening the Bring-back page also mounted a deep editor surface with a view name
+     where a draft id belongs. Assert the constant and that both readers use it. */
+  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup'\]\);/);
+  assert.match(app, /const programmeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
+  assert.match(app, /const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/);
 });
 
 test('V250 (b) the filtered hashes still resolve and the list keeps the programme-card landing', () => {
@@ -56,11 +63,9 @@ test('V250 (b) the filtered hashes still resolve and the list keeps the programm
   /* V301 added a fourth ('setup', the one-page rewards wizard) on exactly those terms: it is an
      ADDITION to the same list, and the three V250-era hashes are still in it. V331 added a fifth
      ('tiers', the Tiered membership page) the same way. */
-  assert.match(app, /const programmeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
   // V245 heading logic still names each view.
   assert.match(app, /programmeView==='ongoing'\?'Ongoing programmes':programmeView==='available'\?'Pending setup':programmeView==='setup'\?'Set up rewards':'Rewards Programme'/);
   // ...and no view hash is mistaken for an engine deep link.
-  assert.match(app, /const hashParamIsProgrammeView=\['overview','history','offers','points','tiers','ongoing','available','settings','setup'\]\.includes\(String\(hashParam\|\|''\)\)/);
   // The owner mockup landing still opens from #/grow with the same topic click contracts.
   assert.match(app, /growDisplayTopicsV343=growTopicDefsV229\.filter\(topic=>topic\.key!=='recurring'\)/);
   assert.match(app, /grow-topic-card-grid-v343/);

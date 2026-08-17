@@ -302,8 +302,11 @@ test('V319 the rail says Rewards & Offer, and Limited Offer is a real routable c
 });
 
 test('V319 #/grow/offers resolves as a view, lights one rail row, and renders only offers', () => {
-  assert.match(appJs,/const programmeView=\['overview','history','offers',/);
-  assert.match(appJs,/const hashParamIsProgrammeView=\['overview','history','offers',/,
+  /* V371: one frozen constant feeds both the view resolver and the deep-link guard — see
+     v366-bringback-route-reachability.test.mjs, which executes both out of the shipped source. */
+  assert.match(appJs,/const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\[[^\]]*'offers'[^\]]*\]\);/);
+  assert.match(appJs,/const programmeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
+  assert.match(appJs,/const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/,
     'without this the hash is handed to the deep editor instead of the view');
   assert.match(appJs,/const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers'\]/,
     'without this the offers view falls through to "render every category"');
