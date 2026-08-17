@@ -2127,6 +2127,18 @@
       "path": "db/migrations/20260817_nestly_v383_off_days_block_bookings.sql",
       "semanticVersion": "v383",
       "proposedDeployVersion": "20260817000015"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260818_nestly_v384_stamp_conversion_switch.sql",
+      "semanticVersion": "v384",
+      "proposedDeployVersion": "20260817162432"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260818_nestly_v385_profile_save_and_industry_label.sql",
+      "semanticVersion": "v385",
+      "proposedDeployVersion": "20260818000001"
     }
   ]
 }

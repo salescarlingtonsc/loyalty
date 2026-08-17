@@ -217,9 +217,20 @@ test('uncertain refresh recovery preserves the stable attempt and refund-require
 test('successful checkout presents a printable receipt without a customer-service phone field',()=>{
   assert.match(till,/id="posReceiptV142"/);
   assert.match(till,/id="tPrintReceiptV142"/);
-  assert.match(till,/window\.print\(\)/);
+  /* V385: the button no longer calls window.print() inline. In an iOS home-screen web app
+     window.print() is a documented no-op — the owner pressed the button and nothing happened —
+     so the handler now routes the standalone case through a real print window. */
+  assert.match(till,/printPosReceiptV385\(\)/);
   assert.match(till,/Provider reference:/);
   assert.match(till,/Receipt \$\{esc\(String\(d\.saleId\)/);
   assert.doesNotMatch(till,/customer service phone|support phone/i);
   assert.match(app,/@media print[\s\S]*pos-receipt-print/);
+  /* And the handler itself really does branch, rather than renaming the same no-op: a standalone
+     web app gets its own print window, every other browser keeps the in-page path, and the
+     print-only body class is always cleared even when print() throws. */
+  const printer=app.slice(app.indexOf('const posReceiptStandaloneV385'));
+  assert.match(printer,/navigator\?\.standalone===true/);
+  assert.match(printer,/window\.open\('','_blank'\)/);
+  assert.match(printer,/printWindow\.print\(\)/);
+  assert.match(printer,/catch\(error\)\{clear\(\);toast\(/);
 });

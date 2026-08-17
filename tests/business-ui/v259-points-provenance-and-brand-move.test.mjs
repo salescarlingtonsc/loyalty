@@ -145,10 +145,21 @@ test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
   /* V325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief): 'bbio'
      joined this same interleaved form and the same single UPDATE — still one form, one save. */
   /* V375 (owner, photo 17): 'bc', the brand colour picker, was removed from the form. */
-  for (const id of ['bn', 'bi', 'bp', 'bbio', 'blegal', 'buen', 'bru']) {
+  /* V385 (owner, photo 12): 'bp', the booking policy, moved to Appointment Setting and left this
+     write with it — so the rule this test guards is unchanged and still exact. Every field the
+     one UPDATE writes is in the one panel, and the panel holds no field the UPDATE ignores.
+     'bilabel' joined both at once (owner, photo 11). */
+  for (const id of ['bn', 'bi', 'bilabel', 'bbio', 'blegal', 'buen', 'bru']) {
     assert.match(brandPanel, new RegExp(`id="${id}"`), `${id} must not be split out of the form`);
   }
+  assert.doesNotMatch(brandPanel, /id="bp"/, 'the booking policy is saved by Appointment Setting now');
+  /* Scoped to the #bsave UPDATE itself — `brandWiring` runs on past this handler and into the
+     Appointment Setting card, which is exactly where booking_policy is supposed to be written now. */
+  const bsaveUpdate = brandWiring.slice(brandWiring.indexOf("sb.from('businesses').update("),
+    brandWiring.indexOf("Object.assign(S.biz"));
+  assert.doesNotMatch(bsaveUpdate, /booking_policy/, 'this save must not blank a column it no longer shows');
   assert.match(brandWiring, /sb\.from\('businesses'\)\.update\(\{name:\$\('bn'\)\.value\.trim\(\),/);
+  assert.match(brandWiring, /industry,industry_label:industryLabel,review_url:reviewUrl,/);
   assert.match(brandWiring, /legal_name:legalName,registration_number:registrationNumber,bio\}\)\.eq\('id',S\.biz\.id\)/);
 });
 

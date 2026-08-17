@@ -251,7 +251,9 @@ test('V324 a reward reads as belonging to the programme above it, not as its sib
   /* The child is indented; the programme it sits under is NOT. That contrast is the whole point —
      an indent applied to every row says nothing. */
   assert.doesNotMatch(cells[0],/grow-overview-child-v324/,'the Point system row is a parent and takes no indent');
-  assert.match(cells[1],/<span class="grow-overview-child-v324"><b data-merchant-content>Free Facial cream<\/b><\/span>/);
+  /* V385: the indent is a real \u21b3 glyph in the markup now, not a CSS ::before elbow that a
+     narrow-screen media query deleted — on a tablet the gifts were not indented at all. */
+  assert.match(cells[1],/<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3<\/span><b data-merchant-content>Free Facial cream<\/b><\/span>/);
 });
 
 test('V324 with no programme above it, a lone reward is not indented under nothing', () => {

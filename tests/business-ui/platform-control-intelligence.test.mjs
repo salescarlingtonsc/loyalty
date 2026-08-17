@@ -101,7 +101,11 @@ test('catalogue and workspace controls retain mobile touch sizing and responsive
 
 test('owner Settings exposes a stock-free Checkout Catalogue with fail-closed RPC controls',()=>{
   const settings=section('async function settingsPage(){','/* ---------- billing (read-only) ---------- */');
-  assert.match(settings,/data-settab="catalogue">Checkout catalogue/);
+  /* V385 (owner markup, photo 10: both tabs struck through and the catalogue panel crossed out;
+     owner ruling "remove tabs only, decide homes later"). The tab is hidden, and everything below
+     — the panel, its reads and its fail-closed writes — is deliberately still here, intact and
+     waiting for the page the owner gives it a home on. */
+  assert.match(settings,/data-settab="catalogue" hidden>Checkout catalogue/);
   assert.match(settings,/id="checkoutCatalogueWrap"/);
   assert.match(settings,/business_get_checkout_catalogue_v94/);
   assert.match(settings,/p_business:S\.biz\.id,p_branch:branchId\|\|null,p_include_inactive:true/);

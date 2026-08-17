@@ -67,7 +67,11 @@ test('V325 the stepper renders all six steps with their hashes, in order', () =>
   /* V368 (owner markup, photo 4: the numbered step line struck through with "do into tabs"):
      the stepper is the house segmented tab strip now, and on the Customer Action page it shows
      that page's own two tabs. Same hashes, same sections, one control. */
-  assert.match(stepper, /CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334/);
+  /* V385 (owner markup, photo 11: the "Customer Permissions" pill X'd out, "delete here"): off
+     the Customer Action page the strip repeated the rail's own two children one column to the
+     right of them, so it is not drawn there at all. It survives where it is a real tab strip. */
+  assert.doesNotMatch(stepper, /CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334/);
+  assert.match(stepper, /if\(!onActionPage\)return '';/);
   assert.match(stepper, /class="v150-segment ci-tabs-v368"/);
   assert.match(stepper, /CUSTOMER_INTERFACE_TABS_V368/);
   assert.match(page, /\$\{customerInterfaceStepperHtmlV325\(customerInterfaceViewV296\)\}/);

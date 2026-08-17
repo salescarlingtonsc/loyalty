@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="f1a6091ad84cc2cbb112a26c734591e1d23765201c25e692eb2405948a5d453d"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="98f8821df1dc9ad015f8914b02c1fb203af31d778228caef7fa0d381b167c4da"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -425,6 +425,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .staff-rank-basis{font-size:12px;color:var(--muted);margin:6px 0 0}
 .programme-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}.programme-tabs a{min-height:40px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:750;color:var(--ink)}.programme-tabs a.act{background:var(--ink);color:#fff;border-color:var(--ink)}
 .programme-category{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;margin-top:12px}.programme-category-title{background:#FFF7F4;padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
+/* V385: Settings has exactly one visible section now (owner, photo 10), so the tablist has
+   nothing left to switch between. The buttons stay in the DOM for staffMembersPage. */
+.settings-tabs{display:none}
 .staff-members-page .settings-tabs{display:none}.staff-members-page .settings-panel{margin-top:0}
 .staff-members-page .settings-team-card{display:grid;gap:16px}.staff-members-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.staff-members-tabs{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:#fff}.staff-members-tab{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-weight:750;cursor:pointer}.staff-members-tab.active{background:var(--ink);color:#fff}.staff-members-tab:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}.staff-members-tab-panel[hidden]{display:none!important}.staff-members-add-top{margin-left:auto;min-height:40px}.staff-members-section-card{display:grid;gap:12px}
 @media(min-width:761px) and (max-width:1180px){
@@ -791,6 +794,14 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .birthday-gift-modal-v366 fieldset{margin-top:16px!important}
 .birthday-gift-modal-v366 legend.small{margin-bottom:2px}
 .birthday-gift-modal-v366 .birthday-days-v366 input{width:96px;min-width:96px}
+/* V382 (owner: "when i select birthday month why am i still able to edit the days?"). The days
+   row also carries .row, whose display:flex outranks [hidden]'s UA display:none — so hiding it
+   from JS did nothing and the fields stayed editable in month mode. Same fix as
+   .grow-programme-row[hidden] and .appointment-list-filters[hidden] above. */
+.birthday-days-v366[hidden]{display:none!important}
+/* V382: with the gift switched off, nothing below the switch is editable. */
+.birthday-gift-modal-v366 [data-birthday-config-v382][aria-disabled="true"]{opacity:.55}
+.birthday-gift-modal-v366 [data-birthday-config-v382][aria-disabled="true"] *{pointer-events:none}
 .birthday-gift-modal-v366 .grow-secondary{margin-top:14px}
 .birthday-gift-modal-v366 .grow-secondary summary{font-size:14px}
 .birthday-gift-modal-v366 label{margin-top:12px}
@@ -965,9 +976,12 @@ input[type=range]:focus{box-shadow:none}
   .grow-overview-column-v319 .cui-table td[data-label="Ends"],
   .grow-overview-column-v319 .cui-table td[data-label="Ran from"],
   .grow-overview-column-v319 .cui-table td[data-label="Ran until"]{white-space:nowrap}}
-.grow-overview-child-v324{display:block;position:relative;padding-left:17px}
-.grow-overview-child-v324::before{content:"";position:absolute;left:4px;top:2px;bottom:calc(50% - 1px);width:7px;border-left:1.5px solid var(--hair);border-bottom:1.5px solid var(--hair);border-bottom-left-radius:4px}
-@media(max-width:820px){.grow-overview-child-v324{padding-left:0}.grow-overview-child-v324::before{display:none}}
+/* V385: the child indent is a real glyph now, not a ::before connector a narrow-screen rule
+   deleted — on a tablet the gift rows lost their indent AND ran into the parent note. */
+.grow-overview-child-v324{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:6px;align-items:start}
+.grow-overview-arrow-v385{color:var(--muted);font-size:13px;line-height:1.45}
+.grow-overview-child-v324>b{min-width:0}
+.grow-overview-parent-v375{display:block;grid-column:2}
 .grow-hero{display:grid;grid-template-columns:minmax(0,1fr);justify-items:start;gap:14px;padding:20px;
   border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(135deg,#fff 0%,var(--tint) 100%);box-shadow:var(--shadow)}
 .grow-hero-copy{max-width:620px}.grow-hero-copy h1{font-size:clamp(1.8rem,4vw,2.35rem);margin:0}
@@ -1783,7 +1797,24 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 /* V375: the one-off amount field, on the first Record sale screen. */
 .till-manual-amount-v375{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:#fff}
 /* V375: what a sale awarded, stated on the row it was awarded by. */
-.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px}
+.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px;white-space:nowrap}
+/* V378: a redemption spends the balance rather than adding to it. */
+.c360-act-earned-v375.is-spent-v378{background:#FBEAE7;color:#9B3B2B}
+.c360-act-earned-cell-v378{font-variant-numeric:tabular-nums}
+/* V378: a booking request that became an appointment is a door to it. */
+/* V378: the on-demand booking QR under the portal link. */
+/* V382 (owner, photo 4): a module a teammate holds reads green, one they do not reads red. The
+   colour follows the select's own value, never a second source of truth. */
+.module-perm-select-v382[data-perm-state-v382="on"]{border-color:#1F6F43;color:#1F6F43;font-weight:700;background:#EAF6EE}
+.module-perm-select-v382[data-perm-state-v382="off"]{border-color:#9B3B2B;color:#9B3B2B;font-weight:700;background:#FBEAE7}
+.module-perm-select-v382:disabled{opacity:.55}
+/* V385: the "?" help affordance next to a panel heading. */
+.help-dot-v385{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;padding:0;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px;font-weight:800;line-height:1;cursor:pointer;vertical-align:middle}
+.help-dot-v385:hover,.help-dot-v385:focus-visible{border-color:var(--coral);color:var(--coral)}
+.appt-portal-qr-v378{margin-top:12px}
+.appt-portal-qr-v378 img,.appt-portal-qr-v378 canvas{display:block}
+.booking-row-openable-v378{cursor:pointer}
+.booking-row-openable-v378:hover,.booking-row-openable-v378:focus-visible{background:#FBF4F1;outline:none}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 /* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
@@ -2834,7 +2865,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f1a6091ad84cc2cbb112a26c734591e1d23765201c25e692eb2405948a5d453d</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 98f8821df1dc9ad015f8914b02c1fb203af31d778228caef7fa0d381b167c4da</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -3403,6 +3434,46 @@ function serviceDisplayName(service={}){
   const duration=Number(service.duration_min);
   const detail=variant||(duration>0?`${duration} min`:'');
   return detail?`${name} · ${detail}`:name;
+}
+/* V385 (owner markup, photo 2, arrow on Print receipt: "click but nothing happened").
+   The button called window.print() directly. In an iOS home-screen web app — which is how the
+   owner was running the till, and how a counter tablet is meant to run it — window.print() is a
+   documented no-op: no dialog, no error, no console message. Nothing happened is exactly what
+   it does there.
+   So the standalone case takes the route that DOES work: the receipt is written into a new
+   browsing context, which on iOS opens in Safari where printing is available. The in-page path
+   is kept for every browser where it already worked, now inside a try/catch with a cleanup
+   timer — an exception used to leave the page stuck in its print-only stylesheet. And when
+   neither route is available the owner is TOLD, rather than shown a button that does nothing. */
+const posReceiptStandaloneV385=()=>globalThis.navigator?.standalone===true
+  ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
+function printPosReceiptV385(){
+  const receipt=document.getElementById('posReceiptV142');
+  if(!receipt)return toast('The receipt is no longer on screen.');
+  if(posReceiptStandaloneV385()){
+    let printWindow=null;
+    try{printWindow=window.open('','_blank')}catch(error){printWindow=null}
+    if(!printWindow)return toast('Open peekaa.asia in Safari to print this receipt.');
+    /* Only the receipt's own markup travels, and it is written as a plain document with its own
+       styles — the app's stylesheet is fingerprinted per deploy and this window must not depend
+       on a url that changes. No script is written into the new document. */
+    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title>
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <style>body{margin:0;padding:10mm;max-width:80mm;font:14px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1b1b1b}
+        .no-print{display:none}table{width:100%;border-collapse:collapse}img,canvas{max-width:100%}
+        @media print{body{padding:4mm}}</style></head><body>${receipt.innerHTML}</body></html>`);
+    printWindow.document.close();
+    /* Give the written document — the wallet QR image in particular — a moment to lay out before
+       the dialog freezes the page. focus() first, or Safari prints the opener on some versions. */
+    setTimeout(()=>{try{printWindow.focus();printWindow.print()}catch(error){}},350);
+    return;
+  }
+  document.body.classList.add('pos-receipt-print');
+  const clear=()=>document.body.classList.remove('pos-receipt-print');
+  window.addEventListener('afterprint',clear,{once:true});
+  /* afterprint does not fire in every browser; the page must never be left print-only. */
+  setTimeout(clear,60000);
+  try{window.print()}catch(error){clear();toast('This browser could not open the print dialog.')}
 }
 async function tillPage(){
   const routeMain=M();
@@ -4349,7 +4420,9 @@ async function tillPage(){
       <div class="till-head-id-v373"><b class="till-head-name-v373" data-merchant-content>${esc(cust.full_name)}</b>
         ${standing?`<p class="small till-head-standing-v373" data-merchant-content style="margin:2px 0 0">${standing}</p>`:''}
         ${contextLine?`<p class="muted small" style="margin:2px 0 0" data-merchant-content>${contextLine}</p>`:''}
-        <p class="muted small" style="margin:2px 0 0">Member since: ${esc(formatCustomerJoinedDateV141(cust.created_at))} · Last visit: ${cust.last_visit_at?esc(formatCustomerJoinedDateV141(cust.last_visit_at)):'Never visited'}</p></div>
+        ${/* V378 (owner, photo 4: this line struck through). "Member since / Last visit" is history,
+             and the counter is mid-sale — the card keeps only what identifies the person in front
+             of them. Both facts stay one tap away on the customer profile. */''}</div>
       <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>
     </div>${pickers}`;
   }
@@ -5465,7 +5538,7 @@ async function tillPage(){
           receiptQrHost.innerHTML=`<span class="small" style="word-break:break-all">${esc(walletUrl)}</span>`;
         });
     }
-    $('tPrintReceiptV142').onclick=()=>{document.body.classList.add('pos-receipt-print');window.addEventListener('afterprint',()=>document.body.classList.remove('pos-receipt-print'),{once:true});window.print()};
+    $('tPrintReceiptV142').onclick=()=>printPosReceiptV385();
     $('tNext').onclick=resetToStart;
   }
 
@@ -5483,7 +5556,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'f1a6091ad84cc2cbb112a26c734591e1d23765201c25e692eb2405948a5d453d',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'98f8821df1dc9ad015f8914b02c1fb203af31d778228caef7fa0d381b167c4da',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

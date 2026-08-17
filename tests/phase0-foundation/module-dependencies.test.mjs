@@ -32,9 +32,17 @@ test('legacy module RPC remains owner-authorized while tenant settings are platf
   assert.match(migration, /revoke all privileges on table public\.module_registry from public, anon, authenticated/i);
   assert.match(migration, /grant select on table public\.module_registry to authenticated/i);
   assert.doesNotMatch(app, /sb\.rpc\('set_business_modules',\{p_business:S\.biz\.id,p_modules:on\}\)/);
-  assert.match(app, /Set by Peekaa for your sector/);
-  assert.match(app, /<select id="bi" disabled/);
+  /* V385 (owner markup, photo 11: the Industry select ringed, "make editable"). The sector is
+     the owner's to state now. What this test actually guards is unchanged and asserted below:
+     the sector does not carry ENTITLEMENT. Choosing one writes businesses.industry and nothing
+     else — no enabled_modules write, no set_business_modules call — so a firm still cannot grant
+     itself a module by renaming what it does. */
+  assert.match(app, /Peekaa uses this to shape your defaults/);
+  assert.match(app, /<select id="bi" aria-describedby="biSectorHint">/);
   assert.doesNotMatch(app, /from\('businesses'\)\.update\(\{enabled_modules:on\}/);
+  const brandSave=app.slice(app.indexOf('function wireWorkspaceBrandV259(){'),app.indexOf('function customerInterfaceStepperHtmlV325('));
+  assert.doesNotMatch(brandSave, /enabled_modules|set_business_modules/,
+    'editing the sector must never rewrite this firm\'s module entitlement');
 });
 
 test('settings explains dependencies without presenting editable sector entitlements', async () => {

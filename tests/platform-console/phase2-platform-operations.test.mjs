@@ -136,7 +136,9 @@ test('responsive pipeline keeps a mobile list and accessible dialogs', async () 
   assert.match(styles, /\.platform-prospect-list:not\(\[hidden\]\)\{display:grid/);
   assert.match(styles, /\.platform-kanban\[hidden\],\.platform-prospect-list\[hidden\]\{display:none!important\}/);
   assert.match(styles, /min-height:44px/);
-  assert.match(index, /<select id="bi" disabled aria-describedby="biSectorHint">/);
+  /* V385 (owner, photo 11: "make editable"). The sector select is the owner's now; the platform
+     still owns the entitlement, which is what the two assertions below are about. */
+  assert.match(index, /<select id="bi" aria-describedby="biSectorHint">/);
   assert.doesNotMatch(index, /You can change them anytime in Settings/);
   assert.doesNotMatch(index, /id="msave"/);
 });

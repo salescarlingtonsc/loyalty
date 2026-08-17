@@ -4251,7 +4251,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       ${backHrefV340?`<a class="customer-programme-back-v340 customer-business-back-v346" href="${esc(backHrefV340)}" aria-label="${esc(ct('backProgrammes'))}">${CUI.icon('back',{size:18})}</a>`:''}
       <button class="customer-business-identity-v346" type="button" data-company-detail aria-label="Company details for ${headV327}">
         <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
-        <span><b>${headV327}</b><small>${esc(business.industry||'Location details')}</small></span>
+        <span><b>${headV327}</b>${customerBusinessTaglineV385(business)}</span>
       </button>
       <div class="customer-programme-contact-v326 customer-business-actions-v346" data-company-contact-inline-v326>
         <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:18})}<span>Directions</span></button>
@@ -4301,6 +4301,17 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerPointsExplainerMarkupV167(business)}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
+}
+/* V385 (owner markup, photo 11: an arrow from the workspace Industry field to this line,
+   "show here"). The line printed a hardcoded 'Location details' whenever industry was empty —
+   a placeholder that never filled in, which is exactly what the owner was pointing at.
+   industry_label is the firm's OWN wording for what it does and wins when set; the sector
+   value is the fallback; and when there is neither, the line is not drawn at all rather than
+   promising a detail that does not exist. */
+function customerBusinessTaglineV385(business={}){
+  const text=String(business.industry_label||'').trim()||String(business.industry||'').trim();
+  if(!text)return '';
+  return `<small>${esc(text)}</small>`;
 }
 async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
   const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;
@@ -5452,6 +5463,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   removeFromWaitlist:Object.freeze({en:'Remove {customer} from waitlist','zh-CN':'将 {customer} 从候补名单中移除',ms:'Alih keluar {customer} daripada senarai menunggu'}),
   joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
   viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
+  explainHelpDotV385:Object.freeze({en:'What is {topic}?','zh-CN':'什么是{topic}？',ms:'Apakah itu {topic}?'}),
   growDraftReady:Object.freeze({en:'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.','zh-CN':'推荐草稿已就绪。您可编辑任何设置；发布前不会改变顾客体验。',ms:'Draf cadangan sedia. Edit mana-mana tetapan; tiada perubahan untuk pelanggan sehingga diterbitkan.'}),
   publishImpactAction:Object.freeze({en:'{live} action starts running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
   publishImpactActions:Object.freeze({en:'{live} actions start running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
@@ -5499,7 +5511,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
   'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
   'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
-  'viewDashboardMetricDetails',
+  'viewDashboardMetricDetails','explainHelpDotV385',
   /* V364: growPublishedReward/-Rewards/-BringBackRule/-BringBackRules retired with the
      "How the programme fits together" block that was their only render path. */
   'growDraftReady','publishImpactAction',
@@ -5514,7 +5526,8 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
   'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
-  'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails'
+  'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
+  'explainHelpDotV385'
 ]);
 const workspaceTemplateTextV97=(key,values={},locale=workspaceLocale)=>{
   const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';

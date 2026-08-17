@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5a63c1ff37c4bab27ff4f33d5cd1504fac016db5a86cf80906febde8b7bf0202"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="b8d4418f766637d78739273d672835e56aa8ad373f557162e0ebc6b873d8ae12"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -426,6 +426,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .staff-rank-basis{font-size:12px;color:var(--muted);margin:6px 0 0}
 .programme-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}.programme-tabs a{min-height:40px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:750;color:var(--ink)}.programme-tabs a.act{background:var(--ink);color:#fff;border-color:var(--ink)}
 .programme-category{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;margin-top:12px}.programme-category-title{background:#FFF7F4;padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
+/* V385: Settings has exactly one visible section now (owner, photo 10), so the tablist has
+   nothing left to switch between. The buttons stay in the DOM for staffMembersPage. */
+.settings-tabs{display:none}
 .staff-members-page .settings-tabs{display:none}.staff-members-page .settings-panel{margin-top:0}
 .staff-members-page .settings-team-card{display:grid;gap:16px}.staff-members-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.staff-members-tabs{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:#fff}.staff-members-tab{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-weight:750;cursor:pointer}.staff-members-tab.active{background:var(--ink);color:#fff}.staff-members-tab:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}.staff-members-tab-panel[hidden]{display:none!important}.staff-members-add-top{margin-left:auto;min-height:40px}.staff-members-section-card{display:grid;gap:12px}
 @media(min-width:761px) and (max-width:1180px){
@@ -792,6 +795,14 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .birthday-gift-modal-v366 fieldset{margin-top:16px!important}
 .birthday-gift-modal-v366 legend.small{margin-bottom:2px}
 .birthday-gift-modal-v366 .birthday-days-v366 input{width:96px;min-width:96px}
+/* V382 (owner: "when i select birthday month why am i still able to edit the days?"). The days
+   row also carries .row, whose display:flex outranks [hidden]'s UA display:none — so hiding it
+   from JS did nothing and the fields stayed editable in month mode. Same fix as
+   .grow-programme-row[hidden] and .appointment-list-filters[hidden] above. */
+.birthday-days-v366[hidden]{display:none!important}
+/* V382: with the gift switched off, nothing below the switch is editable. */
+.birthday-gift-modal-v366 [data-birthday-config-v382][aria-disabled="true"]{opacity:.55}
+.birthday-gift-modal-v366 [data-birthday-config-v382][aria-disabled="true"] *{pointer-events:none}
 .birthday-gift-modal-v366 .grow-secondary{margin-top:14px}
 .birthday-gift-modal-v366 .grow-secondary summary{font-size:14px}
 .birthday-gift-modal-v366 label{margin-top:12px}
@@ -966,9 +977,12 @@ input[type=range]:focus{box-shadow:none}
   .grow-overview-column-v319 .cui-table td[data-label="Ends"],
   .grow-overview-column-v319 .cui-table td[data-label="Ran from"],
   .grow-overview-column-v319 .cui-table td[data-label="Ran until"]{white-space:nowrap}}
-.grow-overview-child-v324{display:block;position:relative;padding-left:17px}
-.grow-overview-child-v324::before{content:"";position:absolute;left:4px;top:2px;bottom:calc(50% - 1px);width:7px;border-left:1.5px solid var(--hair);border-bottom:1.5px solid var(--hair);border-bottom-left-radius:4px}
-@media(max-width:820px){.grow-overview-child-v324{padding-left:0}.grow-overview-child-v324::before{display:none}}
+/* V385: the child indent is a real glyph now, not a ::before connector a narrow-screen rule
+   deleted — on a tablet the gift rows lost their indent AND ran into the parent note. */
+.grow-overview-child-v324{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:6px;align-items:start}
+.grow-overview-arrow-v385{color:var(--muted);font-size:13px;line-height:1.45}
+.grow-overview-child-v324>b{min-width:0}
+.grow-overview-parent-v375{display:block;grid-column:2}
 .grow-hero{display:grid;grid-template-columns:minmax(0,1fr);justify-items:start;gap:14px;padding:20px;
   border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(135deg,#fff 0%,var(--tint) 100%);box-shadow:var(--shadow)}
 .grow-hero-copy{max-width:620px}.grow-hero-copy h1{font-size:clamp(1.8rem,4vw,2.35rem);margin:0}
@@ -1784,7 +1798,24 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 /* V375: the one-off amount field, on the first Record sale screen. */
 .till-manual-amount-v375{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:#fff}
 /* V375: what a sale awarded, stated on the row it was awarded by. */
-.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px}
+.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px;white-space:nowrap}
+/* V378: a redemption spends the balance rather than adding to it. */
+.c360-act-earned-v375.is-spent-v378{background:#FBEAE7;color:#9B3B2B}
+.c360-act-earned-cell-v378{font-variant-numeric:tabular-nums}
+/* V378: a booking request that became an appointment is a door to it. */
+/* V378: the on-demand booking QR under the portal link. */
+/* V382 (owner, photo 4): a module a teammate holds reads green, one they do not reads red. The
+   colour follows the select's own value, never a second source of truth. */
+.module-perm-select-v382[data-perm-state-v382="on"]{border-color:#1F6F43;color:#1F6F43;font-weight:700;background:#EAF6EE}
+.module-perm-select-v382[data-perm-state-v382="off"]{border-color:#9B3B2B;color:#9B3B2B;font-weight:700;background:#FBEAE7}
+.module-perm-select-v382:disabled{opacity:.55}
+/* V385: the "?" help affordance next to a panel heading. */
+.help-dot-v385{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;padding:0;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px;font-weight:800;line-height:1;cursor:pointer;vertical-align:middle}
+.help-dot-v385:hover,.help-dot-v385:focus-visible{border-color:var(--coral);color:var(--coral)}
+.appt-portal-qr-v378{margin-top:12px}
+.appt-portal-qr-v378 img,.appt-portal-qr-v378 canvas{display:block}
+.booking-row-openable-v378{cursor:pointer}
+.booking-row-openable-v378:hover,.booking-row-openable-v378:focus-visible{background:#FBF4F1;outline:none}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 /* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
@@ -3819,7 +3850,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       const inactiveTotal=inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0);
       metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30+ days ago'});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
        carried is still available inside the report it lands on, so the modal was a stop on the
@@ -3921,6 +3952,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'5a63c1ff37c4bab27ff4f33d5cd1504fac016db5a86cf80906febde8b7bf0202',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'b8d4418f766637d78739273d672835e56aa8ad373f557162e0ebc6b873d8ae12',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

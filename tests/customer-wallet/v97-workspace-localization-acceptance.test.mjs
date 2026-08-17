@@ -315,7 +315,9 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
   /* 135 -> 134: V375 retires classicEligibleEarning with the fixed-redeem panel that was its only
      render path (owner, photo 3: "i don't want credit feature") — the same rule V364 applied to
      the growPublished* keys when their block was removed. */
-  assert.equal(keys.length,134,'mixed-interface interpolation inventory changed without review');
+  /* 134 -> 135: V385 adds explainHelpDotV385, the label on the "?" affordance the owner asked
+     for on the Blocked time card (photo 4) — one {topic} placeholder, all three locales. */
+  assert.equal(keys.length,135,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -393,6 +395,9 @@ test('v97 exhaustively classifies signed-in workspace interpolated accessibility
     'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
     'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt',
     'viewDashboardMetricDetails',
+    /* V385: the "?" help affordance (owner, photo 4) — its label names the thing it explains,
+       so it interpolates and goes through the named template like every other one here. */
+    'explainHelpDotV385',
   ];
   assert.deepEqual([...interpolatedAttributeInventory].sort(),expected.sort());
   assert.equal(new Set(interpolatedAttributeInventory).size,interpolatedAttributeInventory.length);

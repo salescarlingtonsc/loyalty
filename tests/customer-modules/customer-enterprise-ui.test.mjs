@@ -216,6 +216,7 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
      so that form followed the other two. It is still ONE definition behind ONE #bsave save — the
      labelling contract simply moved with it. */
   const brand=section('function workspaceBrandPanelHtmlV259(){','function wireWorkspaceBrandV259(){');
+  const bookingRules=section('function bookingRulesCardHtmlV325(){','function wireBookingRulesV325(');
   const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
 
   assert.match(settings,/<div class="settings-page">/);
@@ -223,7 +224,10 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
   for(const [source,id,label] of [
     /* V375 (owner, photo 17: "remove") — the brand colour picker is gone from the form. */
     [brand,'bn','Name'],[brand,'bi','Industry'],
-    [brand,'bp','Booking policy (shown on your portal)'],[settings,'ir','Invite role'],
+    /* V385 (owner, photo 12): the booking policy moved to Appointment Setting, and is labelled
+       there. The customer-facing industry wording (photo 11) joined this form and is labelled here. */
+    [bookingRules,'bp','Booking policy (shown to customers when they book)'],
+    [brand,'bilabel','What customers see under your name'],[settings,'ir','Invite role'],
     [settings,'ie','Invite email (optional)'],[customerInterface,'csvf','Customer CSV file'],
     /* V375 (owner, photo 16): the custom customer-field editor and its four labelled inputs
        were deleted with the card that held them. */
@@ -233,7 +237,12 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
   assert.match(mobile,/\.settings-page \.row\{[^}]*flex-wrap:wrap[^}]*width:100%/s);
   assert.match(mobile,/\.settings-page \.row>input,\.settings-page \.row>select\{[^}]*width:100%[^}]*max-width:100%!important/s);
   assert.match(app,/\.settings-choice\{[^}]*min-height:44px/s);
-  assert.match(brand,/<p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{publicAppUrl\(`/);
+  /* V385 (owner, photo 8: the portal link struck through with "delete"). It left the Business
+     Profile form, where it sat between the last field and Save. The link itself is not gone from
+     the product — Appointments prints it at the top of its own page, which is where an owner is
+     when they want to share it, and it is still the same wrapping-safe markup. */
+  assert.doesNotMatch(brand,/portal-link-row/,'the portal link is not part of this form any more');
+  assert.match(app,/<p class="small portal-link-row"><a class="portal-link" href="\$\{appointmentsPortalLinkV375\}" target="_blank" rel="noopener noreferrer">/);
   assert.match(app,/\.portal-link\{[^}]*display:flex[^}]*width:100%[^}]*max-width:100%[^}]*min-height:44px[^}]*overflow-wrap:anywhere[^}]*word-break:break-word/s);
   assert.match(mobile,/\.portal-link-row,\.portal-link\{[^}]*width:100%[^}]*max-width:100%[^}]*min-width:0/s);
   assert.ok(contrast('#A64020','#FFFFFF')>=4.5,'portal URL text must meet WCAG AA on white');

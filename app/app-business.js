@@ -2725,9 +2725,9 @@ function openSaleAmountCorrectionDialog(item,onDone){
     return toast('Only an active quick sale can use fast amount correction');
   }
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="saleCorrectionModal" role="dialog" aria-modal="true" aria-labelledby="saleCorrectionTitle" tabindex="-1"><div class="modal-card" style="max-width:540px">
-    <div class="row"><div><h2 id="saleCorrectionTitle">Correct sale amount</h2><p class="muted small">${esc(item.customer_name||'Walk-in')} · original ${money(Number(item.amount_cents))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="saleCorrectionClose" type="button">Close</button></div>
+    <div class="row"><div><h2 id="saleCorrectionTitle">Amend sale amount</h2><p class="muted small">${esc(item.customer_name||'Walk-in')} · original ${money(Number(item.amount_cents))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="saleCorrectionClose" type="button">Close</button></div>
     <div class="imp-note"><b>The original stays in history.</b> ${esc(BRAND.productName)} reverses it and records a corrected replacement together, so customer points and financial records stay synchronized.</div>
-    <label for="saleCorrectedAmount">Correct amount (${esc(S.biz.currency||'SGD')})</label>
+    <label for="saleCorrectedAmount">Amended amount (${esc(S.biz.currency||'SGD')})</label>
     <input id="saleCorrectedAmount" type="number" min="0.01" step="0.01" inputmode="decimal" value="${(Number(item.amount_cents)/100).toFixed(2)}">
     <label for="saleCorrectionNote">Correction note (optional)</label>
     <textarea id="saleCorrectionNote" rows="3" placeholder="Add context only if useful"></textarea>
@@ -3076,6 +3076,48 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
   /* V299: a fall now reads in the same three-tone language Business Insights already uses —
      a −18% and a 0% were both the identical grey pill, distinguished only by the glyph. */
   return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${Math.abs(change)}% ${word} versus ${esc(previousFrom)} to ${esc(previousTo)}</span></span>`;
+}
+/* V385 (owner markup on the dashboard, photo 1: the ▲400% chip ringed with "Compare with
+   what? please state here"). The chip already knew its answer — previousEquivalentRangeV153
+   hands it the previous equal-length period — but that answer was only ever spoken to a screen
+   reader, inside the .sr-only span. A sighted owner read a percentage with no denominator.
+   One caption for the whole row, not one per tile: every chip on the row is measured against
+   the SAME previous period, so repeating it four times would be four readings of one fact. It
+   is printed only when at least one tile actually has a comparison to make — a first-ever
+   period has no previous equivalent, and percentageChangeV153 returns null for all of them. */
+/* V385: the house "?" affordance. A sentence an owner needs once — what a thing IS — should
+   not occupy the panel for every later visit, which is what the owner drew on the Blocked time
+   card. The button carries its own copy in data attributes and one delegated handler opens it,
+   so a second caller anywhere is one markup call and no new wiring. */
+function helpDotMarkupV385(title,body){
+  return ` <button type="button" class="help-dot-v385" data-help-dot-v385="${esc(String(body||''))}" data-help-dot-title-v385="${esc(String(title||'What this is'))}" ${workspaceTemplateAttributeV97('aria-label','explainHelpDotV385',{topic:String(title||'this')})}>?</button>`;
+}
+function openHelpDotV385(title,body){
+  document.getElementById('helpDotModalV385')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="helpDotModalV385" role="dialog" aria-modal="true" aria-labelledby="helpDotTitleV385" tabindex="-1"><div class="modal-card" style="max-width:420px">
+    <div class="row"><h2 id="helpDotTitleV385" style="font-size:1.05rem">${esc(title)}</h2><span class="spacer"></span><button class="btn ghost sm" id="helpDotCloseV385" type="button">Close</button></div>
+    <p class="muted small" style="margin-top:10px">${esc(body)}</p>
+  </div></div>`);
+  const modal=document.getElementById('helpDotModalV385');
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else modal?.remove()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#helpDotCloseV385'});
+  document.getElementById('helpDotCloseV385').onclick=close;
+}
+function wireHelpDotsV385(root){
+  (root||document).querySelectorAll?.('[data-help-dot-v385]').forEach(button=>{
+    button.onclick=event=>{
+      event.preventDefault();event.stopPropagation();
+      openHelpDotV385(button.dataset.helpDotTitleV385||'What this is',button.dataset.helpDotV385||'');
+    };
+  });
+}
+function dashboardDeltaLegendV385(metrics,previousRange){
+  const comparable=(metrics||[]).some(metric=>Number.isFinite(Number(metric?.delta)));
+  if(!comparable||!previousRange?.previousFrom||!previousRange?.previousTo)return '';
+  const days=Number(previousRange.days)||0;
+  const span=days===1?'day':`${days} days`;
+  return `<p class="muted small dashboard-delta-legend-v385" style="grid-column:1/-1;margin:2px 0 0">▲▼ compares each figure with the previous ${esc(span)}: ${esc(promotionDateShortV324(previousRange.previousFrom))} – ${esc(promotionDateShortV324(previousRange.previousTo))}.</p>`;
 }
 function dashboardLoyaltyRowV170(cards){
   return `<section class="dashboard-loyalty" aria-labelledby="dashboardLoyaltyTitle"><div class="dashboard-loyalty-head">${CUI.icon('loyalty',{size:20})}<div><h3 id="dashboardLoyaltyTitle">Loyalty this period</h3><p class="muted small">Programme activity for the selected dates.</p></div></div><div class="dashboard-loyalty-grid">${cards.map(card=>`<div class="dashboard-loyalty-card"><b>${esc(card.label)}</b><span class="v">${esc(card.value)}</span><span class="metric-hint">${esc(card.hint)}</span>${card.retryId?`<button type="button" class="btn ghost sm" id="${card.retryId}">Retry</button>`:''}</div>`).join('')}</div></section>`;
@@ -3527,7 +3569,7 @@ async function dashboard(){
       const inactiveTotal=inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0);
       metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30+ days ago'});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
        carried is still available inside the report it lands on, so the modal was a stop on the
@@ -5480,6 +5522,46 @@ function serviceDisplayName(service={}){
   const duration=Number(service.duration_min);
   const detail=variant||(duration>0?`${duration} min`:'');
   return detail?`${name} · ${detail}`:name;
+}
+/* V385 (owner markup, photo 2, arrow on Print receipt: "click but nothing happened").
+   The button called window.print() directly. In an iOS home-screen web app — which is how the
+   owner was running the till, and how a counter tablet is meant to run it — window.print() is a
+   documented no-op: no dialog, no error, no console message. Nothing happened is exactly what
+   it does there.
+   So the standalone case takes the route that DOES work: the receipt is written into a new
+   browsing context, which on iOS opens in Safari where printing is available. The in-page path
+   is kept for every browser where it already worked, now inside a try/catch with a cleanup
+   timer — an exception used to leave the page stuck in its print-only stylesheet. And when
+   neither route is available the owner is TOLD, rather than shown a button that does nothing. */
+const posReceiptStandaloneV385=()=>globalThis.navigator?.standalone===true
+  ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
+function printPosReceiptV385(){
+  const receipt=document.getElementById('posReceiptV142');
+  if(!receipt)return toast('The receipt is no longer on screen.');
+  if(posReceiptStandaloneV385()){
+    let printWindow=null;
+    try{printWindow=window.open('','_blank')}catch(error){printWindow=null}
+    if(!printWindow)return toast('Open peekaa.asia in Safari to print this receipt.');
+    /* Only the receipt's own markup travels, and it is written as a plain document with its own
+       styles — the app's stylesheet is fingerprinted per deploy and this window must not depend
+       on a url that changes. No script is written into the new document. */
+    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title>
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <style>body{margin:0;padding:10mm;max-width:80mm;font:14px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1b1b1b}
+        .no-print{display:none}table{width:100%;border-collapse:collapse}img,canvas{max-width:100%}
+        @media print{body{padding:4mm}}</style></head><body>${receipt.innerHTML}</body></html>`);
+    printWindow.document.close();
+    /* Give the written document — the wallet QR image in particular — a moment to lay out before
+       the dialog freezes the page. focus() first, or Safari prints the opener on some versions. */
+    setTimeout(()=>{try{printWindow.focus();printWindow.print()}catch(error){}},350);
+    return;
+  }
+  document.body.classList.add('pos-receipt-print');
+  const clear=()=>document.body.classList.remove('pos-receipt-print');
+  window.addEventListener('afterprint',clear,{once:true});
+  /* afterprint does not fire in every browser; the page must never be left print-only. */
+  setTimeout(clear,60000);
+  try{window.print()}catch(error){clear();toast('This browser could not open the print dialog.')}
 }
 async function tillPage(){
   const routeMain=M();
@@ -7544,7 +7626,7 @@ async function tillPage(){
           receiptQrHost.innerHTML=`<span class="small" style="word-break:break-all">${esc(walletUrl)}</span>`;
         });
     }
-    $('tPrintReceiptV142').onclick=()=>{document.body.classList.add('pos-receipt-print');window.addEventListener('afterprint',()=>document.body.classList.remove('pos-receipt-print'),{once:true});window.print()};
+    $('tPrintReceiptV142').onclick=()=>printPosReceiptV385();
     $('tNext').onclick=resetToStart;
   }
 
@@ -7729,7 +7811,7 @@ async function salesPage(){
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
         <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
         <td>${money(s.amount_cents)}</td><td><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
-        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Correct amount</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
+        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Amend</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
       <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
       :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
     bindReversalButtons(loadRecent);
@@ -13000,12 +13082,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
     ?esc(promotionDateShortV324(value)):'<span class="muted">Not tracked</span>';
   const GROW_PROGRAMME_PARENT_NAMES_V375=Object.freeze({points:'Point system',stamps:'Stamp card',tiers:'Tier membership'});
-  const growRewardParentNameV375=reward=>{
+  const growRewardParentKindV385=reward=>{
     const rows=programmeSpineRowsV314();
-    const kind=reward?.programme_id&&rows
-      ?rows.find(row=>String(row?.id)===String(reward.programme_id))?.kind:null;
-    return GROW_PROGRAMME_PARENT_NAMES_V375[kind]||null;
+    return reward?.programme_id&&rows
+      ?rows.find(row=>String(row?.id)===String(reward.programme_id))?.kind||null:null;
   };
+  const growRewardParentNameV375=reward=>GROW_PROGRAMME_PARENT_NAMES_V375[growRewardParentKindV385(reward)]||null;
   const growProgrammeEntriesV271=(()=>{
     const entries=[];
     const milestoneById=new Map();
@@ -13027,7 +13109,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          last year still says Stamp card after the firm switched to points. A gift with no
          programme link says nothing rather than guessing. */
       entries.push({name:reward.customer_name||reward.name||'Reward',type:'Reward',
-        parent:growRewardParentNameV375(reward),
+        parent:growRewardParentNameV375(reward),parentKind:growRewardParentKindV385(reward),
         started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
         customers:growRewardUsageV271.get(String(reward.id))??null,
         detail:`${Math.max(0,Number(reward.cost_points)||0)} ${rewardJourney.unit}`});
@@ -13108,7 +13190,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      The split predicate is the entry's own type, so it cannot drift from the Limited Offer page:
      both read the same 'Promotion' entries built above. */
   const growLimitedOfferEntryV319=entry=>entry.type==='Promotion';
-  const growOverviewRewardRowsV319=growOverviewRowsV271.filter(entry=>!growLimitedOfferEntryV319(entry));
   const growOverviewOfferRowsV319=growOverviewRowsV271.filter(growLimitedOfferEntryV319);
   /* V324 (owner markup 2026-08-14 over this same table). Two marks, and they are one change:
      the TYPE column is struck through, and the "Free Facial cream / Reward" row is ringed with
@@ -13123,17 +13204,45 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      hard-coding "Point system" would start lying the moment a stamps firm's milestones (v322 R5)
      render here. The indent claims the row is subordinate, nothing more. */
   const growOverviewChildRowV324=row=>row.type==='Reward';
+  /* V385 (owner, photo 5, ringed on the stamp-card gift: "if stamp card off, hide this too").
+     A gift's own `active` flag is not the whole answer — a live gift hanging off a programme the
+     firm has switched OFF cannot be earned or claimed by anybody, so listing it under
+     "running now" states something untrue. The spine is the authority on whether a programme is
+     on (programmeSpineOnV314), not whichever model happens to be live today.
+     Only an explicit `false` hides a row. A null means the spine has not been read for this
+     business yet, and a gift must not vanish because a fetch has not landed. */
+  const growOverviewGiftProgrammeOffV385=entry=>growOverviewChildRowV324(entry)&&entry.parentKind
+    &&programmeSpineOnV314(entry.parentKind)===false;
+  const growOverviewRewardRowsV319=growOverviewRowsV271
+    .filter(entry=>!growLimitedOfferEntryV319(entry)&&!growOverviewGiftProgrammeOffV385(entry));
   /* The indent claims "this belongs to the row above", so it may only be drawn when there IS a
      row above for it to belong to. History is the case that proves it: a firm that retired three
      rewards but never retired the points programme has a table of nothing but children, and
      indenting all three would point at a parent that is not on the screen. Same guard covers an
      Overview whose only live rows are rewards. */
+  /* V385 (owner markup, photo 5: an arrow drawn beside each gift, and "Under Point system"
+     struck through on the two gifts that sit directly under the Point system row — while the
+     stamp-card gift's parent name is left standing).
+     Both marks are the same defect seen from two sides. The V324 indent was drawn by a CSS
+     ::before connector that a @media(max-width:820px) rule DELETED, so on the owner's iPad the
+     gifts were not indented at all and the parent note ran straight on from the name —
+     "Free LotionUnder Point system". The arrow is now a real glyph in the markup, present at
+     every width, and the parent note sits on its own line.
+     With a visible arrow, naming the parent again is only worth the words when the arrow would
+     otherwise point at the wrong thing: a gift whose programme is the nearest programme row
+     above it needs no label, one belonging to a different programme still says so. */
+  const growOverviewParentAboveV385=(rows,at)=>{
+    for(let index=at-1;index>=0;index--){if(!growOverviewChildRowV324(rows[index]))return rows[index];}
+    return null;
+  };
   const growOverviewNameColumnV324=(rows,label)=>[label,row=>{
     const at=rows.indexOf(row);
-    const parentAbove=at>0&&rows.slice(0,at).some(entry=>!growOverviewChildRowV324(entry));
-    const parentNote=row.parent?`<span class="muted small grow-overview-parent-v375">Under ${esc(row.parent)}</span>`:'';
+    const above=growOverviewParentAboveV385(rows,at);
+    const parentAbove=Boolean(above);
+    const parentNote=row.parent&&String(above?.name||'')!==String(row.parent)
+      ?`<span class="muted small grow-overview-parent-v375">Under ${esc(row.parent)}</span>`:'';
     return growOverviewChildRowV324(row)&&parentAbove
-      ?`<span class="grow-overview-child-v324"><b data-merchant-content>${esc(row.name)}</b>${parentNote}</span>`
+      ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span><b data-merchant-content>${esc(row.name)}</b>${parentNote}</span>`
       :`<b data-merchant-content>${esc(row.name)}</b>${parentNote}`;
   }];
   const growOverviewRewardsTableV319=growTableV271({label:'Rewards and loyalty programmes running now',rows:growOverviewRewardRowsV319,
@@ -13232,10 +13341,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          rather than counted again, so this block and the table beside it can never disagree.
      Honesty rule kept from V271: a category whose usage the server did not answer says "Not
      tracked". It never shows a zero it did not measure. */
+  /* V385 (owner markup, photo 6: "Point system 12" ringed with "take out the point gift,
+     don't combine"). A gift filed itself under its PARENT programme's name, so the Point system
+     row counted one earning engine plus eleven gifts as twelve "programmes" and the owner could
+     no longer see how many of either they had. A gift is a different kind of thing from the
+     engine it hangs off, so it gets its own row per parent — "Point system gifts",
+     "Stamp card gifts" — and the parent row counts only itself.
+     A gift with no programme link (nothing on the spine to hang it off) keeps its own generic
+     row rather than being folded into a parent it was never proved to belong to. */
+  const growAnalyticsCategoryV385=entry=>growOverviewChildRowV324(entry)
+    ?(entry.parent?`${entry.parent} gifts`:'Gifts')
+    :(entry.type||'Programme');
   const growAnalyticsRowsV375=(()=>{
     const buckets=new Map();
     growProgrammeEntriesV271.forEach(entry=>{
-      const category=entry.parent||entry.type||'Programme';
+      const category=growAnalyticsCategoryV385(entry);
       const current=buckets.get(category)||{category,customers:null,programmes:0};
       current.programmes+=1;
       if(entry.customers!=null)current.customers=(current.customers||0)+Number(entry.customers||0);
@@ -21993,7 +22113,11 @@ async function appointmentsPage(){
       .filter(block=>staffFilter==='all'||block.staff_id===staffFilter);
     const blockedListHtmlV291=blockedResultV291.error
       ?`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time</b><p>Blocked time could not be read for ${esc(blockedWindowV291)}. The appointments above are unaffected.</p></div></section>`
-      :`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time</b><p>${esc(blockedWindowV291)} \u00b7 time your team is marked unavailable. Customers never see the reason.</p></div>
+      /* V385 (owner markup, photo 4): the window dates are struck through and the explanation is
+         ringed with "put inside this pop-up question mark button". The dates said nothing the two
+         date inputs directly above this card were not already showing, and the explanation is
+         read once and never again. Both leave the resting state; the sentence stays one tap away. */
+      :`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time${helpDotMarkupV385('Blocked time','Time your team is marked unavailable. Customers never see the reason.')}</b></div>
         ${calendarBlocks.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Blocked time"><table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>Team member</th><th>Reason</th><th>Actions</th></tr></thead><tbody>
           ${calendarBlocks.map(block=>{const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
             return `<tr><td data-label="When"><b>${esc(from.date)}</b><br><span class="small">${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></td><td data-label="Team member"><span data-merchant-content>${esc(staffName[block.staff_id]||'\u2014')}</span></td><td data-label="Reason">${esc(block.reason||(block.id?'Unavailable':'Busy at another branch'))}</td><td data-label="Actions">${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button> <button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:'<span class="muted small">Another branch</span>'}</td></tr>`;
@@ -22004,6 +22128,7 @@ async function appointmentsPage(){
     if(view==='block'){
       $('alist').innerHTML=blockedListHtmlV291;
       wireBlockedTimeActions();
+      wireHelpDotsV385($('alist'));
       return;
     }
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
@@ -26956,8 +27081,15 @@ async function settingsPage(){
       <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
            They are sections of the Customer Interface module now; see customerInterfacePageV243. -->
       <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="true" data-settab="modules">Modules &amp; plan</button>
-      <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
-      <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
+      ${/* V385 (owner markup, photo 10: both tabs struck through and the whole Checkout
+           catalogue panel crossed out; owner ruling — "remove tabs only, decide homes later").
+           The BUTTONS are hidden, not deleted, and both panels stay in the DOM. Staff Members is
+           this same page with the team tab preselected (staffMembersPage), so deleting the team
+           button would leave Modules & plan showing above the roster; and the catalogue panel
+           still holds the only editor for it, kept intact and ready for whichever page the owner
+           gives it a home on. Neither is reachable from Settings any more, which is the ask. */''}
+      <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue" hidden>Checkout catalogue</button>
+      <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team" hidden>Team &amp; permissions</button>
     </div>
     <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1"><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
       <p class="muted small" style="margin:6px 0 10px">Your sector sets a sensible default — a cafe starts with products only, a massage shop with services only, a salon with both. Change it here if your shop is different.</p>
@@ -28078,27 +28210,46 @@ function workspaceBrandPanelHtmlV259(){
   return `<div class="card" style="margin-top:16px"><b>Business</b>
       ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'business'})}</div>`:''}
       <label for="bn">Name</label><input id="bn" value="${esc(S.biz.name)}">
-      <label for="bi">Industry</label><select id="bi" disabled aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
-      <p class="muted small" id="biSectorHint" style="margin-top:4px">Set by Peekaa for your sector.</p>
+      ${/* V385 (owner markup, photo 11: the Industry select ringed with "make editable", and an
+            arrow from it to the customer preview's "Location …" line reading "show here" —
+            clarified by the owner as "the industry, but able to customise the wordings, because
+            might be facial and not spa").
+            Two fields, because they answer two different questions. The SELECT is what Peekaa
+            files this firm under; it drives the industry-shaped defaults elsewhere, so it stays
+            a fixed list. The free-text line beneath is the only thing a customer reads, and it
+            exists precisely because "Facial / Spa" is Peekaa's word for a sector rather than
+            this firm's word for itself. Blank means the sector label is used, so a firm that
+            never touches it still shows something true. */''}
+      <label for="bi">Industry</label><select id="bi" aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
+      <p class="muted small" id="biSectorHint" style="margin-top:4px">Peekaa uses this to shape your defaults.</p>
+      <label for="bilabel">What customers see under your name</label>
+      <input id="bilabel" maxlength="60" placeholder="e.g. Facial studio" value="${esc(S.biz.industry_label||'')}">
+      <p class="muted small" style="margin-top:4px">Shown under your business name in the customer app. Leave blank to use your industry above.</p>
       ${/* V375 (owner, photo 17: the swatch struck through, "remove"). Every business's customer
             surface now uses Peekaa's own accent, so there is no colour to pick and none to save.
             businesses.brand_color is left in place and simply stops being read. */''}
-      <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
+      ${/* V385 (owner markup, photo 12: the Booking policy field ringed, "put into appointment
+            setting"). It is a rule about booking, and Appointment Setting is where every other
+            booking rule already lives. The field moved whole — same id, same column, same save —
+            so nothing about how it is written or read changed. */''}
       <!-- V325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief):
            businesses.bio, nullable, shown to customers on the public booking portal alongside
            the booking policy above. -->
       <label for="bbio">Company bio (shown on your portal)</label><textarea id="bbio" rows="2" maxlength="500" placeholder="A short description shown to customers">${esc(S.biz.bio||'')}</textarea>
       <label for="blegal">Registered company name (for receipts)</label>
-      <input id="blegal" maxlength="200" placeholder="e.g. HOUGANG ABC PTE. LTD." value="${esc(S.biz.legal_name||'')}">
+      <input id="blegal" maxlength="200" placeholder="Company Name Pte. Ltd." value="${esc(S.biz.legal_name||'')}">
       <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
       <label for="buen">Business registration number / UEN</label>
       <input id="buen" maxlength="60" placeholder="e.g. 202612345A" value="${esc(S.biz.registration_number||'')}">
       <p class="muted small" style="margin-top:4px">Shown on receipts so customers can identify who they paid.</p>
       <label for="bru">Public review link (Google, Facebook, etc.)</label><input id="bru" type="url" inputmode="url" placeholder="https://g.page/your-business/review" value="${esc(S.biz.review_url||'')}" aria-describedby="bruHint">
       <p class="muted small" id="bruHint" style="margin-top:4px">Optional. Must start with https://. Shown to customers in their wallet — it is offered to everyone, never used to hide low ratings.</p>
-      <p class="field-label">Portal link (share with customers)</p>
-      <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}">${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}</a></p>
-      <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, brand colour, booking policy and public review link.</span></div></div>`;
+      ${/* V385 (owner markup, photo 8: the portal link struck through with "delete", the save
+            button relabelled "Profile", and the sentence beside it scribbled out). The link is
+            not deleted from the product — Appointments prints the same portal url at the top of
+            its own page, which is where an owner is when they want to share it. Here it sat
+            between the last field and the Save button, in the one place a form should end. */''}
+      <div class="settings-save-row"><button class="btn" id="bsave">Save Profile</button></div></div>`;
 }
 function wireWorkspaceBrandV259(){
   if(!$('bsave'))return;
@@ -28118,12 +28269,19 @@ function wireWorkspaceBrandV259(){
     const registrationNumber=($('buen')?.value||'').trim()||null;
     /* V325: bio rides this same UPDATE — no new call site. */
     const bio=($('bbio')?.value||'').trim()||null;
+    /* V385: industry is editable here now, and industry_label is the wording customers read.
+       Blank label is stored as NULL rather than '' so the sector label is what shows — an empty
+       string would print an empty line under the business name in the customer app.
+       booking_policy is gone from this write because its field moved to Appointment Setting;
+       sending it from here would blank the column every time this form saved. */
+    const industry=$('bi')?.value||S.biz.industry||null;
+    const industryLabel=($('bilabel')?.value||'').trim()||null;
     invalidateBusinessRecordCacheV370(); // V370: the cached firm row is now stale
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
-      booking_policy:$('bp').value||null,review_url:reviewUrl,
+      industry,industry_label:industryLabel,review_url:reviewUrl,
       legal_name:legalName,registration_number:registrationNumber,bio}).eq('id',S.biz.id);
     if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber,bio});
+    Object.assign(S.biz,{name:$('bn').value.trim(),industry,industry_label:industryLabel,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber,bio});
     toast('Saved');route();
   };
 }
@@ -28138,8 +28296,13 @@ function wireWorkspaceBrandV259(){
    else it is the rail's visible children. Same hashes, same sections, one control. */
 function customerInterfaceStepperHtmlV325(activeKey){
   const onActionPage=CUSTOMER_INTERFACE_TABS_V368.includes(activeKey);
-  const views=(onActionPage?CUSTOMER_INTERFACE_TABS_V368.map(key=>CUSTOMER_INTERFACE_VIEWS_V296.find(view=>view[0]===key))
-    :CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334).filter(Boolean);
+  /* V385 (owner markup, photo 11: the "Customer Permissions" pill beside "Business Profile"
+     X'd out, "delete here"). Off the Customer Action page this strip listed the rail's own two
+     children — the same two links, in the same order, one column to the right of the rail that
+     was already showing them. The strip stays where it is doing work: on Customer Action, where
+     Appointment Setting is a genuine sibling TAB and has no rail entry of its own. */
+  if(!onActionPage)return '';
+  const views=CUSTOMER_INTERFACE_TABS_V368.map(key=>CUSTOMER_INTERFACE_VIEWS_V296.find(view=>view[0]===key)).filter(Boolean);
   if(views.length<2)return '';
   return `<div class="v150-segment ci-tabs-v368" role="group" aria-label="Customer settings">
     ${views.map(([key,label,href])=>`<a href="${esc(href)}" role="button" aria-pressed="${key===activeKey}">${esc(label)}</a>`).join('')}
@@ -28219,6 +28382,12 @@ function bookingRulesCardHtmlV325(){
         :`<p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Only the owner can change this setting.</p>`}</div>
     <div class="card" style="margin-top:16px">
       <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
+      ${/* V385 (owner markup, photo 12): the Booking policy moved here from Business Profile —
+           it is the sentence a customer reads before booking, so it belongs with the rest of the
+           booking rules. Same id, same businesses.booking_policy column; it now rides the Save
+           booking rules button instead of the profile Save. */''}
+      <label for="bp">Booking policy (shown to customers when they book)</label>
+      <textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
       <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
       <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
       <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
@@ -28283,6 +28452,20 @@ function wireBookingRulesV325(isCurrent=()=>true){
     const overflow=$('setOverflow')?$('setOverflow').value:null;
     const autoConfirm=$('setAutoConfirm')?$('setAutoConfirm').checked:null;
     $('setSave').disabled=true;
+    /* V385: the policy is a plain businesses column and set_booking_settings has no parameter
+       for it, so it rides its own update rather than widening that RPC's signature. It is sent
+       FIRST: if the write the owner can see the result of fails, the rules save is not claimed. */
+    const policyV385=$('bp')?($('bp').value.trim()||null):undefined;
+    if(policyV385!==undefined){
+      invalidateBusinessRecordCacheV370();
+      const policyResultV385=await sb.from('businesses').update({booking_policy:policyV385}).eq('id',S.biz.id);
+      if(!isCurrent())return;
+      if(policyResultV385.error){
+        $('setSave').disabled=false;
+        $('setErr').innerHTML=`<div class="err">${esc(humanErrorV295(policyResultV385.error,'Those settings could not be saved.'))}</div>`;return;
+      }
+      S.biz.booking_policy=policyV385;
+    }
     const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:hold,
       p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm,
       p_takes_table_reservations:null});
@@ -28453,7 +28636,12 @@ function customerInterfaceLivePreviewMarkupV326(){
   const reward={name:'Free Facial cream',cost_units:1000,available_now:true,remaining_units:0};
   const actionableCard={loyalty,next_eligible_reward:reward,birthday_benefit:null};
   const merchantExperience=customerMerchantExperienceMarkupV95({
-    presentation,business:{name,slug:S.biz?.slug||'',currency:'SGD'},actionableCard,programmeCards:[],
+    /* V385: the preview reads the LIVE industry controls the same way it reads the live name,
+       so the owner sees their wording as they type it rather than after a save and a reload. */
+    presentation,business:{name,slug:S.biz?.slug||'',currency:'SGD',
+      industry_label:($('bilabel')?.value||'').trim(),
+      industry:INDUSTRIES[$('bi')?.value||S.biz.industry]?.label||S.biz.industry||''},
+    actionableCard,programmeCards:[],
     bookingEnabled:true,offersStatus:'ready',rewardsHost:false,
     collapsedHeaderV339:true,
     programmeCapabilities:{
@@ -28513,9 +28701,14 @@ function customerInterfacePreviewCardHtmlV243(){
 }
 function wireCustomerInterfacePreviewV243(){
   refreshCustomerInterfaceLivePreviewV326();
-  ['bn','bc','bp','bbio'].forEach(id=>{
+  /* V385: the industry select and its customer-facing wording feed the identity line under the
+     business name, so both refresh the preview. 'change' as well as 'input' — a <select> on
+     WebKit does not always fire input on a pick. */
+  ['bn','bc','bp','bbio','bilabel','bi'].forEach(id=>{
     const el=$(id);
-    if(el)el.addEventListener('input',refreshCustomerInterfaceLivePreviewV326);
+    if(!el)return;
+    el.addEventListener('input',refreshCustomerInterfaceLivePreviewV326);
+    if(el.tagName==='SELECT')el.addEventListener('change',refreshCustomerInterfaceLivePreviewV326);
   });
 }
 /* V269 (owner drew the target shape: Customer Interface → Workspace & Brand / Customer Programme

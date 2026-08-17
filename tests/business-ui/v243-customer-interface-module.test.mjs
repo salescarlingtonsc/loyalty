@@ -116,7 +116,13 @@ test('V259 Workspace & brand moved to Customer Interface as ONE form with ONE sa
   /* V375 (owner, photo 17: "remove"): the brand colour picker is gone from the form. The form is
      still ONE form with ONE save, which is what this test guards; the booking policy field is the
      marker that it travelled whole. */
-  assert.match(app, /<label for="bp">Booking policy \(shown on your portal\)<\/label>/);
+  /* V385 (owner, photo 12): the booking policy moved to Appointment Setting, so it is no longer
+     this form's marker. The registered company name is — it is the field V259 kept here on the
+     "one interleaved form, one save" reasoning, and it is still behind the same single #bsave. */
+  assert.match(app, /<label for="blegal">Registered company name \(for receipts\)<\/label>/);
+  assert.doesNotMatch(app, /<label for="bp">Booking policy \(shown on your portal\)<\/label>/,
+    'the booking policy belongs to Appointment Setting now');
+  assert.equal((app.match(/id="bp"/g) || []).length, 1, 'exactly one booking policy field, on one page');
   assert.doesNotMatch(app, /<label for="bc">Brand colour/);
   assert.equal((app.match(/id="bsave"/g) || []).length, 1, 'exactly one Workspace & brand form');
   assert.equal((app.match(/\$\('bsave'\)\.onclick=/g) || []).length, 1, 'exactly one save handler');
@@ -162,7 +168,9 @@ test('V326 the preview renders customer-facing markup inline — no iframe, no C
 test('V326 the live preview reflects the CURRENT form values, not last-saved state', () => {
   const wire = section(app, 'function wireCustomerInterfacePreviewV243(', 'function customerInterfaceSectionsHtmlV243(');
   assert.match(wire, /refreshCustomerInterfaceLivePreviewV326\(\);/);
-  assert.match(wire, /\['bn','bc','bp','bbio'\]\.forEach\(id=>\{/);
+  /* V385: the industry select and its customer-facing wording feed the identity line under the
+     business name in the preview, so they refresh it too. */
+  assert.match(wire, /\['bn','bc','bp','bbio','bilabel','bi'\]\.forEach\(id=>\{/);
   assert.match(wire, /el\.addEventListener\('input',refreshCustomerInterfaceLivePreviewV326\)/);
   const markup = section(app, 'function customerInterfaceLivePreviewMarkupV326(', 'function refreshCustomerInterfaceLivePreviewV326(');
   // Reads the live input value, falling back to saved state only when the field isn't on screen.
