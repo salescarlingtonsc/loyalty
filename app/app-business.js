@@ -440,6 +440,30 @@ function programmeSwitchSetV314(selection,{paused=false}={}){
    ten production programmes still read 'classic' and the check constraint still permits it — so
    every read normalises it to the catalogue model instead, which is what those firms now get. */
 const normaliseLoyaltyModelV375=value=>String(value||'')==='classic'?'points_tiers':String(value||'');
+/* V378 (owner, photos 1 and 2: "off point rewards and switched to stamps should reflect stamps
+   instead of points"). The unit a balance is counted in follows the LIVE accruing programme, the
+   same rule nestly_v378 applies server-side when it picks which pot to read. Falls back to points
+   only when the spine has not been read — never to a guess about which one is running. */
+function liveBalanceUnitV378(){
+  return programmeSpineOnV314('stamps')===true?'stamps':'points';
+}
+/* V378 (owner: "i still do not see a column to record transactions of points/stamp collected").
+   V375 put what a sale earned in a NOTE under the item, and hid it whenever nothing was earned —
+   so on a screen of zero-value sales and appointments there was nothing to see. It is a column of
+   its own now: every row has a cell, a row that earned nothing says so with a dash, and the
+   heading names the unit the firm is actually running. */
+function activityEarnedHeadV378(){return liveBalanceUnitV378()==='stamps'?'Stamps':'Points'}
+function activityEarnedCellV378(units){
+  const n=Number(units)||0;
+  if(!n)return '';
+  const unit=liveBalanceUnitV378();
+  const word=unit==='stamps'?(Math.abs(n)===1?'stamp':'stamps'):(Math.abs(n)===1?'point':'points');
+  return `<span class="c360-act-earned-v375${n<0?' is-spent-v378':''}">${n>0?'+':'\u2212'}${esc(String(Math.abs(n)))} ${esc(word)}</span>`;
+}
+function directoryUnitLabelV378(){return liveBalanceUnitV378()==='stamps'?'Stamps':'Points'}
+function directoryUnitWordV378(count){
+  return liveBalanceUnitV378()==='stamps'?(count===1?'stamp':'stamps'):'pts';
+}
 function programmeSpineOnV314(kind){
   const rows=programmeSpineRowsV314();
   return rows?rows.some(row=>row&&row.kind===kind&&row.active===true):null;
@@ -3719,7 +3743,7 @@ async function clientsPage(){
          only the first was ever read by getElementById, so the second was dead UI. One bar now
          renders, carrying the union of both bars' inactivity buckets (incl. all_inactive, which
          the dashboard drill targets). -->
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -3942,10 +3966,10 @@ async function clientsPage(){
     const loyaltyAvailable=customerDirectoryLoyaltyAvailableV248(result);
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     const sortGlyph='↕';
-    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">Points ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="consent_desc">Consent ${sortGlyph}</button></th></tr>
+    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">${esc(directoryUnitLabelV378())} ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="consent_desc">Consent ${sortGlyph}</button></th></tr>
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
-        <td>${loyaltyAvailable?`${Number(c.points)||0} pts`:'Unavailable'}</td>
+        <td>${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
         <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
@@ -5181,18 +5205,14 @@ function renderHistPage(history,n){
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
       const amount=Number(activityAmountCentsV267(h)||0);
-      /* V375: what this sale actually awarded, straight off the ledger. A sale that earned
-         nothing — a membership, a gift card, a reversal — simply says nothing, rather than
-         printing a zero that would read as a mistake. */
+      /* V375/V378: what this sale actually awarded, straight off the ledger — its own column now,
+         so a sale that earned nothing shows a dash rather than disappearing. */
       const earnedV375=Number(activityEarnedBySaleV375.get(String(h.id)))||0;
-      const earnedUnitV375=earnedV375===1?activityEarnUnitV375.replace(/s$/,''):activityEarnUnitV375;
-      const earnedNoteV375=earnedV375>0
-        ?`<span class="c360-act-earned-v375">+${esc(String(earnedV375))} ${esc(earnedUnitV375)} earned</span>`:'';
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
         type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
+        earned:activityEarnedCellV378(earnedV375),
         notes:[relation,
-          earnedNoteV375,
           h.note?esc(h.note):'',
           h.is_package_session?'Package session · reversal restores one session with no payment refund':'',
           h.reversal_sale_id?`Net ${money(Number(h.net_amount_cents||0))}`:'',
@@ -5206,7 +5226,8 @@ function renderHistPage(history,n){
       const redemptionAmountV267=activityAmountCentsV267(h);
       return {tone:'reward',icon:'redeem',type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc(h.reward_name||'Loyalty reward')}</span>`,
-        notes:[relation,`${Number(h.points_spent||0)} points spent`,action],
+        earned:activityEarnedCellV378(-(Number(h.points_spent)||0)),
+        notes:[relation,action],
         amount:redemptionAmountV267!=null?money(redemptionAmountV267):'',staff:''};
     }
     if(h.kind==='grant'){
@@ -5243,13 +5264,14 @@ function renderHistPage(history,n){
       notes:[`<span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span>`],
       amount:'',staff:h.staff?esc(h.staff):''};
   };
-  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr>${sortHeadV267('date','Date')}<th>Type</th><th>Item</th>${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}</tr></thead><tbody>${rows.map(h=>{
+  return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr>${sortHeadV267('date','Date')}<th>Type</th><th>Item</th><th>${esc(activityEarnedHeadV378())}</th>${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}</tr></thead><tbody>${rows.map(h=>{
     const cell=cellsV252(h);
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
     return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
       <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
       <td data-label="Item">${cell.item}${notes}</td>
+      <td data-label="${esc(activityEarnedHeadV378())}" class="c360-act-earned-cell-v378">${cell.earned||DASH_V252}</td>
       <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
       <td data-label="Staff">${cell.staff||DASH_V252}</td>
     </tr>`;
@@ -6315,7 +6337,9 @@ async function tillPage(){
       <div class="till-head-id-v373"><b class="till-head-name-v373" data-merchant-content>${esc(cust.full_name)}</b>
         ${standing?`<p class="small till-head-standing-v373" data-merchant-content style="margin:2px 0 0">${standing}</p>`:''}
         ${contextLine?`<p class="muted small" style="margin:2px 0 0" data-merchant-content>${contextLine}</p>`:''}
-        <p class="muted small" style="margin:2px 0 0">Member since: ${esc(formatCustomerJoinedDateV141(cust.created_at))} · Last visit: ${cust.last_visit_at?esc(formatCustomerJoinedDateV141(cust.last_visit_at)):'Never visited'}</p></div>
+        ${/* V378 (owner, photo 4: this line struck through). "Member since / Last visit" is history,
+             and the counter is mid-sale — the card keeps only what identifies the person in front
+             of them. Both facts stay one tap away on the customer profile. */''}</div>
       <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>
     </div>${pickers}`;
   }
@@ -8272,7 +8296,7 @@ async function bookingsPage(){
       return;
     }
     list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
-      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
+      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"${b.appointment_id?` class="booking-row-openable-v378" data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:15})} ${esc(b.phone)}</a>`
         : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
@@ -8283,6 +8307,26 @@ async function bookingsPage(){
       ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div>`
       :CUI.emptyState({iconName:'appointments',title:'No booking requests yet',body:'Customer booking requests will appear here after customers use your booking link.'});
     focusNotifiedBookingV206(list);
+    /* V378 (owner: "when clicked into customer's booking should pop up [the appointment detail]").
+       A confirmed request carries the appointment it produced, so the row hands off to the ONE
+       surface that owns that dialog — the same '?appointment=' door the Dashboard's schedule uses
+       — rather than growing a second copy of it here. Clicks on the row's own buttons (Call,
+       Confirm, Decline) are left alone. A request with no appointment yet is not a link. */
+    const openBookingAppointmentV378=row=>{
+      const id=row?.dataset?.bookingAppointmentV378;
+      if(id)nav(`#/appointments?appointment=${encodeURIComponent(id)}`);
+    };
+    list.querySelectorAll('[data-booking-appointment-v378]').forEach(row=>{
+      row.onclick=event=>{
+        if(event.target.closest('a,button'))return;
+        openBookingAppointmentV378(row);
+      };
+      row.onkeydown=event=>{
+        if(event.key!=='Enter'&&event.key!==' ')return;
+        if(event.target.closest('a,button'))return;
+        event.preventDefault();openBookingAppointmentV378(row);
+      };
+    });
   }
   async function loadCr(){
     const {data:cr,error}=await sb.from('change_requests').select('*, appointments(starts_at, clients(full_name))')
@@ -8700,7 +8744,23 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   if(!isLoyaltyCurrent())return;
   if(brError||svError||prError)throw brError||svError||prError;
   if(draftVersionId){
-    const {data:draft,error:draftError}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId});
+    /* PERF (2026-08-17): these three reads all key off draftVersionId, which is known before any
+       of them runs, and none consumes another's result — but they were awaited one at a time,
+       costing three sequential round trips to open a draft. The live branch below has always
+       issued its six reads together; this branch was the inconsistency. Started together, then
+       awaited and error-handled in exactly the original order, so the draft error card still
+       wins over the branch-override one and both read identically.
+
+       The `.then(r=>r)` on each is LOAD-BEARING, not noise: a PostgREST builder is a lazy
+       thenable, so `const q=sb.rpc(...)` sends nothing until it is awaited. Verified against
+       production — a bare assignment fires 0 requests, the same call with .then() fires
+       immediately. Without it these three would still run one after another. */
+    const loyaltyDraftRequestV379=sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId}).then(r=>r);
+    const branchOverridesRequest=sb.from('loyalty_branch_overrides')
+      .select('branch_id,active,earn_points_per_dollar,stamp_per_cents,expiry_mode,expiry_days')
+      .eq('business_id',S.biz.id).eq('config_version_id',draftVersionId).then(r=>r);
+    const birthdayDraftRequest=sb.rpc('get_birthday_program_draft',{p_config_version:draftVersionId}).then(r=>r);
+    const {data:draft,error:draftError}=await loyaltyDraftRequestV379;
     if(!isLoyaltyCurrent())return;
     if(draftError){
       routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div>
@@ -8715,9 +8775,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     rb=(rw||[]).flatMap(r=>(r.eligibility?.branches||[]).map(branch_id=>({reward_id:r.reward_id||r.id,branch_id})));
     rs=(rw||[]).flatMap(r=>(r.eligibility?.services||[]).map(service_id=>({reward_id:r.reward_id||r.id,service_id})));
     rp=(rw||[]).flatMap(r=>(r.eligibility?.products||[]).map(product_id=>({reward_id:r.reward_id||r.id,product_id})));
-    const {data:branchOverrides,error:boError}=await sb.from('loyalty_branch_overrides')
-      .select('branch_id,active,earn_points_per_dollar,stamp_per_cents,expiry_mode,expiry_days')
-      .eq('business_id',S.biz.id).eq('config_version_id',draftVersionId);
+    const {data:branchOverrides,error:boError}=await branchOverridesRequest;
     if(!isLoyaltyCurrent())return;
     if(boError){
       routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div>
@@ -8726,7 +8784,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       return;
     }
     bo=branchOverrides||[];
-    const {data:birthdayDraft}=await sb.rpc('get_birthday_program_draft',{p_config_version:draftVersionId});
+    const {data:birthdayDraft}=await birthdayDraftRequest;
     if(!isLoyaltyCurrent())return;
     birthdayPrograms=Array.isArray(birthdayDraft?.programs)?birthdayDraft.programs:[];
   }else{
@@ -12055,6 +12113,50 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
   if(!quiet)outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
+  /* PERF (2026-08-17). The reads below are independent: none of them consumes the snapshot or
+     each other's result, they only need canRewards/canWinback and S.biz.id, all resolved above.
+     They were nevertheless awaited one at a time, so opening Programmes cost six sequential
+     round trips before anything painted. Measured against production: six sequential calls take
+     ~580ms, the same six issued together take ~135ms — the wire, not the database, which is at
+     100% cache hit and ~4% CPU. They are STARTED here, overlapping the snapshot, and still
+     AWAITED at their original sites below, so the order values are consumed in, the per-read
+     fail-soft handlers and every isGrowCurrent() guard are all unchanged. Each promise carries
+     its own .catch, so abandoning them on an early return cannot raise an unhandled rejection. */
+  const welcomeOfferRequestV215=canRewards
+    ?sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
+    :Promise.resolve(null);
+  const loyaltyTiersRequestV229=canRewards
+    ?sb.from('loyalty_tiers')
+      .select('id,name,threshold,points_multiplier,perk_note,sort,paused,deleted_at,effective_from,expires_at')
+      .eq('business_id',S.biz.id).order('threshold')
+      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :Promise.resolve([]);
+  const growBbCampaignsRequestV361=canWinback
+    ?sb.from('bringback_campaigns_v361')
+      .select('id,name,reward_label,away_days,expiry_days,active,created_at')
+      .eq('business_id',S.biz.id).is('deleted_at',null).order('away_days')
+      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :Promise.resolve([]);
+  const growTierBenefitsRequestV365=canRewards
+    ?sb.from('tier_benefits_v365')
+      .select('id,tier_id,label,limit_count,limit_period,sort,benefit_kind,discount_percent,product_id,item_label')
+      .eq('business_id',S.biz.id).is('deleted_at',null).eq('active',true).order('sort')
+      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :Promise.resolve([]);
+  const growBenefitProductsRequestV369=canRewards
+    ?sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+      .then(r=>r.error?[]:(r.data||[])).catch(()=>[])
+    :Promise.resolve([]);
+  /* Already a Promise.all, but it was CREATED after the five awaits above had each finished, so
+     it could never overlap them. Creating it here is the whole of its change. */
+  const growProgrammeReadsRequestV271=Promise.all([
+    canRewards?sb.rpc('business_programme_usage_v271',{p_business:S.biz.id})
+      .then(result=>result.error?null:(result.data||null)).catch(()=>null):Promise.resolve(null),
+    canRewards?sb.from('firm_config_versions').select('published_at').eq('business_id',S.biz.id)
+      .not('published_at','is',null).order('published_at',{ascending:true}).limit(1)
+      .then(result=>result.error?null:((result.data||[])[0]?.published_at||null)).catch(()=>null)
+      :Promise.resolve(null)
+  ]);
   const snapshot=await growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules,isCurrent:isGrowCurrent});
   if(!snapshot||!isGrowCurrent())return;
   let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
@@ -12065,9 +12167,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   /* v215: the welcome offer is a reward, so it belongs in this list rather than buried in
      Settings. Read separately: a failure here must not blank the whole programme overview. */
-  const welcomeOfferStatusV215=canRewards
-    ?await sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
-    :null;
+  const welcomeOfferStatusV215=await welcomeOfferRequestV215;
   if(!isGrowCurrent())return;
   /* V229: the Tiered membership tile needs the ladder, and the whole page needs the firm's
      one choice for what points are FOR. tier_basis measures LIFETIME earn, so redemption never
@@ -12087,40 +12187,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      back the same way. Fixed in passing while wiring the new Tiers page onto this same read:
      paused/deleted_at replace the never-real active column, and the Published/History split for
      the new page reads them directly off this same snapshot. */
-  const loyaltyTiersV229=canRewards
-    ?await sb.from('loyalty_tiers')
-      .select('id,name,threshold,points_multiplier,perk_note,sort,paused,deleted_at,effective_from,expires_at')
-      .eq('business_id',S.biz.id).order('threshold')
-      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
-    :[];
+  const loyaltyTiersV229=await loyaltyTiersRequestV229;
   if(!isGrowCurrent())return;
   /* V361: the Bring-back module's campaigns. Read via PostgREST under the SELECT-only policy the
      migration installs; every write goes through its definer RPCs. Soft-deleted rows are excluded
      here rather than filtered later, so nothing downstream has to remember to. */
-  const growBbCampaignsV361=canWinback
-    ?await sb.from('bringback_campaigns_v361')
-      .select('id,name,reward_label,away_days,expiry_days,active,created_at')
-      .eq('business_id',S.biz.id).is('deleted_at',null).order('away_days')
-      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
-    :[];
+  const growBbCampaignsV361=await growBbCampaignsRequestV361;
   if(!isGrowCurrent())return;
   /* V365: the tier BENEFIT rows behind each ladder rung (label + its usage limit). Fail-soft in
      the same shape as the reads above — a workspace whose database has not had the v365 migration
      applied yet reads null here, and the editor then falls back to the perk_note lines it has
      always used, so the page never breaks on a missing table. */
-  const growTierBenefitsV365=canRewards
-    ?await sb.from('tier_benefits_v365')
-      .select('id,tier_id,label,limit_count,limit_period,sort,benefit_kind,discount_percent,product_id,item_label')
-      .eq('business_id',S.biz.id).is('deleted_at',null).eq('active',true).order('sort')
-      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
-    :[];
+  const growTierBenefitsV365=await growTierBenefitsRequestV365;
   if(!isGrowCurrent())return;
   /* V369 (owner: "pull from existing products (drop down selection)"). The catalogue the free-item
      benefit picks from. Fail-soft: no products simply means the owner types the item instead. */
-  const growBenefitProductsV369=canRewards
-    ?await sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
-      .then(r=>r.error?[]:(r.data||[])).catch(()=>[])
-    :[];
+  const growBenefitProductsV369=await growBenefitProductsRequestV369;
   if(!isGrowCurrent())return;
   /* V331: Published/History split for the new #/grow/tiers page and every existing tile/summary
      reader that used to (wrongly) rely on a nonexistent `active` column. Sorted by threshold —
@@ -12138,14 +12220,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      limit clipped the result. The earliest published config version is when this firm's programme
      configuration first reached a customer, which is the point system's real start date.
      Both are fail-soft and NEITHER is ever replaced by a zero — see growCountCellV271. */
-  const growProgrammeReadsV271=await Promise.all([
-    canRewards?sb.rpc('business_programme_usage_v271',{p_business:S.biz.id})
-      .then(result=>result.error?null:(result.data||null)).catch(()=>null):Promise.resolve(null),
-    canRewards?sb.from('firm_config_versions').select('published_at').eq('business_id',S.biz.id)
-      .not('published_at','is',null).order('published_at',{ascending:true}).limit(1)
-      .then(result=>result.error?null:((result.data||[])[0]?.published_at||null)).catch(()=>null)
-      :Promise.resolve(null)
-  ]);
+  const growProgrammeReadsV271=await growProgrammeReadsRequestV271;
   if(!isGrowCurrent())return;
   const growUsageV271=growProgrammeReadsV271[0];
   const growFirstPublishedV271=growProgrammeReadsV271[1];
@@ -20908,7 +20983,12 @@ async function appointmentsPage(){
           Copy portal link button that shares the same `portal` value. */''}
     <div class="card" data-appointments-shell="portal" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
-      <p class="small portal-link-row"><a class="portal-link" href="${appointmentsPortalLinkV375}" target="_blank" rel="noopener noreferrer">${appointmentsPortalLinkV375}</a></p></div>
+      <p class="small portal-link-row"><a class="portal-link" href="${appointmentsPortalLinkV375}" target="_blank" rel="noopener noreferrer">${appointmentsPortalLinkV375}</a>
+        ${/* V378 (owner, photo 7: "add a Generate Qrcode beside the link"). Same booking URL the
+             link points at, drawn on demand rather than on every page load — the QR library is a
+             CDN script, so it is fetched only when the owner actually asks for a code. */''}
+        <button type="button" class="btn ghost sm" id="apptPortalQrV378">${CUI.icon('scan',{size:15})} Generate QR code</button></p>
+      <div id="apptPortalQrHostV378" class="appt-portal-qr-v378" hidden></div></div>
     ${!visibleBranches.length?CUI.card({title:'No appointment access',description:'This account has no active branch where Appointments is enabled.'}):`
     <div class="appointment-layout" id="appointmentLayout">
       ${canWrite?`<section class="card appointment-form-card" id="appointmentFormCard" aria-labelledby="newAppointmentTitle" hidden><div class="row"><h2 id="newAppointmentTitle" style="font-size:17px">New appointment</h2><span class="spacer"></span><button class="btn ghost sm" type="button" id="closeAppointmentForm">Close</button></div>
@@ -20949,6 +21029,31 @@ async function appointmentsPage(){
   /* V269: the count is fetched after paint so a slow or failing count never delays the calendar,
      which is what this page is actually for. The button is always usable — an unreadable count
      degrades to "no number", never to a missing way in, and never to a fabricated zero. */
+  /* V378: the QR is drawn once, then the button toggles it. A CDN that will not load says so and
+     leaves the link — which is the thing that actually matters — untouched above it. */
+  const apptPortalQrButtonV378=$('apptPortalQrV378');
+  if(apptPortalQrButtonV378)apptPortalQrButtonV378.onclick=()=>{
+    const host=$('apptPortalQrHostV378');
+    if(!host)return;
+    if(host.dataset.drawnV378==='1'){
+      host.hidden=!host.hidden;
+      apptPortalQrButtonV378.innerHTML=`${CUI.icon('scan',{size:15})} ${host.hidden?'Generate QR code':'Hide QR code'}`;
+      return;
+    }
+    host.hidden=false;host.innerHTML='<p class="muted small" role="status">Drawing the code…</p>';
+    const portalUrl=portalUrlV375(S.biz.slug);
+    void loadQrLibrary().then(()=>{
+      if(!host.isConnected)return;
+      host.innerHTML='';
+      new QRCode(host,{text:portalUrl,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+      host.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:8px">Customers scan this to reach your booking page.</p>`);
+      host.dataset.drawnV378='1';
+      apptPortalQrButtonV378.innerHTML=`${CUI.icon('scan',{size:15})} Hide QR code`;
+    }).catch(()=>{
+      if(!host.isConnected)return;
+      host.innerHTML=`<p class="muted small">The QR code could not be drawn. Share the link above instead.</p>`;
+    });
+  };
   const bookingRequestsButtonV269=$('apptBookingRequestsV269');
   if(bookingRequestsButtonV269){
     bookingRequestsButtonV269.onclick=()=>nav('#/bookings');

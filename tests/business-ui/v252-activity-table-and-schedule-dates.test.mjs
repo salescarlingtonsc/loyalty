@@ -26,13 +26,15 @@ const scheduleLoader = (() => {
   return app.slice(i, i + 3600);
 })();
 
-test('activity history renders a table with the five owner-approved headers in order', () => {
+test('V378 activity history renders six headers in order, Earned among them', () => {
   assert.ok(historyTable.includes('cui-table-wrap'), 'must reuse the app table wrap');
   assert.ok(historyTable.includes('aria-label="Activity history"'));
   /* V267 (owner: sort arrows drawn beside AMOUNT and STAFF) superseded the plain-<th> literal —
      Date, Amount and Staff are now sort buttons. The five columns and their order still bind. */
-  const headers = `<thead><tr>${"${sortHeadV267('date','Date')}"}<th>Type</th><th>Item</th>${"${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}"}</tr></thead>`;
-  assert.ok(historyTable.includes(headers), 'DATE / TYPE / ITEM / AMOUNT / STAFF, in that order');
+  /* V378 (owner: "i still do not see a column to record transactions of points/stamp collected"):
+     Earned joins them, between ITEM and AMOUNT, and its heading names the live unit. */
+  const headers = `<thead><tr>${"${sortHeadV267('date','Date')}"}<th>Type</th><th>Item</th><th>${"${esc(activityEarnedHeadV378())}"}</th>${"${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}"}</tr></thead>`;
+  assert.ok(historyTable.includes(headers), 'DATE / TYPE / ITEM / EARNED / AMOUNT / STAFF, in that order');
   // The wrap is what makes the table scroll horizontally on a 390px phone instead of
   // forcing the whole page sideways; data-responsive drives the stacked mobile layout.
   assert.ok(historyTable.includes('data-responsive="true"'));

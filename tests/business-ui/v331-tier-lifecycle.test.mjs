@@ -33,7 +33,10 @@ function slice(startMarker, endMarker) {
 test('V331 the tiers query selects paused,deleted_at, not the never-real active column', () => {
   assert.match(app,
     /\.select\('id,name,threshold,points_multiplier,perk_note,sort,paused,deleted_at,effective_from,expires_at'\)/);
-  const querySite = slice("const loyaltyTiersV229=canRewards", ".catch(()=>null)\n    :[];");
+  /* The tiers read was hoisted into growPage's parallel request batch (a separate performance
+     change), so the query now lives under loyaltyTiersRequestV229 and is awaited later. The
+     column list — which is what this test actually protects — is unchanged. */
+  const querySite = slice("const loyaltyTiersRequestV229=canRewards", ".catch(()=>null)\n    :Promise.resolve([]);");
   assert.doesNotMatch(querySite, /'id,name,threshold,points_multiplier,active/,
     'the fixed active-column bug must not resurface');
 });

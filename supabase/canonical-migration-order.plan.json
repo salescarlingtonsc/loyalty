@@ -2110,6 +2110,12 @@
       "version": "20260817000013",
       "name": "nestly_v380_promotion_breaker_bigint_overloads",
       "sourcePath": "db/migrations/20260817_nestly_v380_promotion_breaker_bigint_overloads.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000014",
+      "name": "nestly_v381_balance_follows_live_programme",
+      "sourcePath": "db/migrations/20260817_nestly_v381_balance_follows_live_programme.sql"
     }
   ]
 }

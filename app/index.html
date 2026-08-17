@@ -1814,7 +1814,16 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 /* V375: the one-off amount field, on the first Record sale screen. */
 .till-manual-amount-v375{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:#fff}
 /* V375: what a sale awarded, stated on the row it was awarded by. */
-.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px}
+.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px;white-space:nowrap}
+/* V378: a redemption spends the balance rather than adding to it. */
+.c360-act-earned-v375.is-spent-v378{background:#FBEAE7;color:#9B3B2B}
+.c360-act-earned-cell-v378{font-variant-numeric:tabular-nums}
+/* V378: a booking request that became an appointment is a door to it. */
+/* V378: the on-demand booking QR under the portal link. */
+.appt-portal-qr-v378{margin-top:12px}
+.appt-portal-qr-v378 img,.appt-portal-qr-v378 canvas{display:block}
+.booking-row-openable-v378{cursor:pointer}
+.booking-row-openable-v378:hover,.booking-row-openable-v378:focus-visible{background:#FBF4F1;outline:none}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 /* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
@@ -2909,7 +2918,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=df417d3170b2","business":"/app-business.js?b=af4988dc8c83","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=df417d3170b2","business":"/app-business.js?b=30d9ca3a7bd8","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

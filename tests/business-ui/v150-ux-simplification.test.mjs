@@ -62,8 +62,10 @@ test('V150 customers has mutually exclusive inactivity summaries and sortable cu
 
 test('V150 record sale highlights found customer context and interactive selectable items', () => {
   assert.match(tillBlock, /till-found-card/);
-  assert.match(tillBlock, /Member since:/);
-  assert.match(tillBlock, /Last visit:/);
+  assert.match(tillBlock, /Change branch or teammate/);
+  /* V378 (owner, photo 4: the "Member since / Last visit" line struck through). The card keeps
+     what identifies the person in front of the counter; their history is on the profile. */
+  assert.doesNotMatch(tillBlock, /Last visit:|Member since:/);
   assert.match(tillBlock, /choice-button/);
 });
 

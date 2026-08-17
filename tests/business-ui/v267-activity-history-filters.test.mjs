@@ -21,6 +21,18 @@ const shell = readFileSync(join(root, 'app', 'index.html'), 'utf8');
 
 const clientDetail = app.slice(app.indexOf('async function clientDetail(id){'), app.indexOf('function activityTypeOfV267'));
 const activityModule = app.slice(app.indexOf('const ACTIVITY_STAFF_NONE_V267='), app.indexOf('/* ---------- quick earn'));
+/* V378: the row builder now prints an Earned column, whose unit comes from the live programme
+   spine. Those three helpers are taken out of the SAME source rather than stubbed, so a change to
+   them is a change to what this harness executes. The spine reader is the one thing stubbed —
+   it reads global session state (S.programmes), which no source slice can supply. */
+const earnedHelpersV378 = [
+  'function activityEarnedHeadV378(',
+  'function activityEarnedCellV378(',
+].map((start) => {
+  const from = app.indexOf(start);
+  return app.slice(from, app.indexOf('\n}', from) + 2);
+}).join('\n');
+const spineStubV378 = "function liveBalanceUnitV378(){return 'points'}\n";
 
 /* ---- executable harness: the real helpers, with the app's own esc/money/sgt/sgIso ---- */
 const controls = {};
@@ -43,7 +55,8 @@ const workspaceTemplateAttributeV97 = (attribute, key, values = {}) => {
   return `data-workspace-i18n ${attribute}="${esc(text)}"`;
 };
 
-const A = new Function('$', 'esc', 'money', 'sgt', 'sgIso', 'CUI', 'campaignEntitlementDisplayV99', 'workspaceTemplateAttributeV97', `${activityModule}
+const A = new Function('$', 'esc', 'money', 'sgt', 'sgIso', 'CUI', 'campaignEntitlementDisplayV99', 'workspaceTemplateAttributeV97', `${spineStubV378}${earnedHelpersV378}
+  ${activityModule}
   return {renderHistPage,activityFilteredRowsV267,activityFilterStateV267,activityTypeOfV267,
     activityAmountCentsV267,activityRangeBoundV267,activityItemTextV267,activityWhenTextV267,
     ACTIVITY_SORTS_V267,ACTIVITY_SORT_DEFAULT_V267,ACTIVITY_STAFF_NONE_V267};`)(
