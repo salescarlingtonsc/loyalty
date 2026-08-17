@@ -822,6 +822,14 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .birthday-gift-modal-v366 fieldset{margin-top:16px!important}
 .birthday-gift-modal-v366 legend.small{margin-bottom:2px}
 .birthday-gift-modal-v366 .birthday-days-v366 input{width:96px;min-width:96px}
+/* V382 (owner: "when i select birthday month why am i still able to edit the days?"). The days
+   row also carries .row, whose display:flex outranks [hidden]'s UA display:none — so hiding it
+   from JS did nothing and the fields stayed editable in month mode. Same fix as
+   .grow-programme-row[hidden] and .appointment-list-filters[hidden] above. */
+.birthday-days-v366[hidden]{display:none!important}
+/* V382: with the gift switched off, nothing below the switch is editable. */
+.birthday-gift-modal-v366 [data-birthday-config-v382][aria-disabled="true"]{opacity:.55}
+.birthday-gift-modal-v366 [data-birthday-config-v382][aria-disabled="true"] *{pointer-events:none}
 .birthday-gift-modal-v366 .grow-secondary{margin-top:14px}
 .birthday-gift-modal-v366 .grow-secondary summary{font-size:14px}
 .birthday-gift-modal-v366 label{margin-top:12px}
@@ -1820,6 +1828,11 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-act-earned-cell-v378{font-variant-numeric:tabular-nums}
 /* V378: a booking request that became an appointment is a door to it. */
 /* V378: the on-demand booking QR under the portal link. */
+/* V382 (owner, photo 4): a module a teammate holds reads green, one they do not reads red. The
+   colour follows the select's own value, never a second source of truth. */
+.module-perm-select-v382[data-perm-state-v382="on"]{border-color:#1F6F43;color:#1F6F43;font-weight:700;background:#EAF6EE}
+.module-perm-select-v382[data-perm-state-v382="off"]{border-color:#9B3B2B;color:#9B3B2B;font-weight:700;background:#FBEAE7}
+.module-perm-select-v382:disabled{opacity:.55}
 .appt-portal-qr-v378{margin-top:12px}
 .appt-portal-qr-v378 img,.appt-portal-qr-v378 canvas{display:block}
 .booking-row-openable-v378{cursor:pointer}
@@ -2918,7 +2931,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=df417d3170b2","business":"/app-business.js?b=30d9ca3a7bd8","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=df417d3170b2","business":"/app-business.js?b=95655468334e","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

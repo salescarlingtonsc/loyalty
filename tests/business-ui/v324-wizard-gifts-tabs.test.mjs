@@ -181,7 +181,7 @@ test('V326/V331 the Points, Stamp card AND Tiered membership tiles no longer arm
   assert.ok(pointsBranch, 'the points/stamps tiles must still be handled before tiers');
   assert.match(pointsBranch, /nav\('#\/grow\/points'\)/);
   assert.doesNotMatch(pointsBranch, /nav\('#\/grow\/(?!points')/);
-  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='tiers'\)return nav\('#\/grow\/tiers'\);/);
+  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='tiers'\)\{[\s\S]{0,220}?return nav\('#\/grow\/tiers'\);/);
   // growSetupEntryV301 (the wizard-entry gate) is no longer consulted anywhere in this handler —
   // every key it would ever return true for (points/stamps/tiers) is handled explicitly above it.
   assert.doesNotMatch(handler, /growSetupEntryV301\(tile\.dataset\.growTopicV229\)/,

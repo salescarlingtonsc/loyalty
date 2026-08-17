@@ -52,7 +52,7 @@ test('V250 (a) Programmes is one flat nav group and both sub-rows are gone', () 
      They were separate lists and drifted — V366 added 'bringback' to the resolver but not to the
      guard, so opening the Bring-back page also mounted a deep editor surface with a view name
      where a draft id belongs. Assert the constant and that both readers use it. */
-  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup'\]\);/);
+  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','birthday','ongoing','available','settings','setup'\]\);/);
   assert.match(app, /const programmeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
   assert.match(app, /const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/);
 });

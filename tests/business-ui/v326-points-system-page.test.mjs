@@ -59,7 +59,7 @@ test('V326/V331 the points, stamps AND tiers tiles each navigate straight to the
   assert.ok(pointsBranch, 'the points/stamps tiles must still be handled before tiers');
   assert.match(pointsBranch, /nav\('#\/grow\/points'\)/);
   assert.doesNotMatch(pointsBranch, /nav\('#\/grow\/(?!points')/);
-  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='tiers'\)return nav\('#\/grow\/tiers'\);/);
+  assert.match(handler, /if\(tile\.dataset\.growTopicV229==='tiers'\)\{[\s\S]{0,220}?return nav\('#\/grow\/tiers'\);/);
   // V331: tiers joined points/stamps in getting its own page, so growSetupEntryV301's whole
   // ['points','stamps','tiers'] list now returns explicitly above — the wizard-entry fallback this
   // handler used to reach for tiers is gone, not merely reordered after these checks.

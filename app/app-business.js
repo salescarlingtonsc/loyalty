@@ -535,6 +535,18 @@ function programmeSwitchesForPublishV314(loyaltyModel){
 const PROGRAMME_ACCRUAL_EXCLUSIVE_V322=Object.freeze({stamps:['points','tiers'],points:['stamps'],tiers:['stamps']});
 /* Which kinds a pick of `kind` forces off. Empty for referral, which is why referral can never
    turn anything off and nothing can turn it off. */
+/* V382: "opening <kind> would switch these off" — the single question the tile handlers ask,
+   whichever accrual programme is being opened. Returns true when a warning was shown, so the
+   caller stops; false when there is nothing to warn about and it should just proceed. */
+const PROGRAMME_OPEN_NAMES_V382=Object.freeze({points:'the Point system',stamps:'the Stamp card',tiers:'Tier membership'});
+function growExclusivityWarnV382(kind,onProceed){
+  const losing=programmeExclusionsV322(kind)
+    .filter(other=>programmeSpineOnV314(other)===true)
+    .map(other=>({points:'Point system',stamps:'Stamp card',tiers:'Tier membership'})[other]||other);
+  if(!losing.length)return false;
+  openStampsExclusivityPopupV363(losing,onProceed,PROGRAMME_OPEN_NAMES_V382[kind]||'this programme');
+  return true;
+}
 function programmeExclusionsV322(kind){
   return PROGRAMME_ACCRUAL_EXCLUSIVE_V322[kind]||[];
 }
@@ -2134,13 +2146,13 @@ async function openBookingRequestPopupV329ById(id){
    Deliberately a plain confirm and nothing more: choosing "Yes, set up Stamp card" only OPENS the
    page. Nothing is written here — the actual switch (and its own confirmation, which states the
    same consequence at the moment it becomes true) still lives on that page's Turn-on control. */
-function openStampsExclusivityPopupV363(losingNames,onProceed){
+function openStampsExclusivityPopupV363(losingNames,onProceed,openingName='the Stamp card'){
   if($('stampsExclusivityPopupV363'))return;
   const names=(losingNames||[]).filter(Boolean);
   const list=names.length>1?`${names.slice(0,-1).join(', ')} and ${names[names.length-1]}`:(names[0]||'your other programmes');
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="stampsExclusivityPopupV363" role="dialog" aria-modal="true" aria-labelledby="stampsExclusivityTitleV363" tabindex="-1"><div class="modal-card" style="max-width:460px">
-    <h2 id="stampsExclusivityTitleV363">Set up the Stamp card?</h2>
-    <p class="muted" style="margin-top:8px">The Stamp card runs on its own. Turning it on will switch ${esc(list)} off for your customers.</p>
+    <h2 id="stampsExclusivityTitleV363">Set up ${esc(openingName)}?</h2>
+    <p class="muted" style="margin-top:8px">${esc(openingName.charAt(0).toUpperCase()+openingName.slice(1))} runs on its own. Turning it on will switch ${esc(list)} off for your customers.</p>
     <p class="muted small" style="margin-top:8px">Nothing changes yet — everything ${names.length>1?'they have':'it has'} collected stays saved, and you can come back at any time.</p>
     <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
       <button class="btn" id="stampsExclusivityYesV363" type="button">Yes, continue</button>
@@ -10867,6 +10879,11 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
       </div>
       <button type="button" class="btn ghost sm welcome-offer-close-v350" id="birthdayCloseV364" aria-label="Close birthday gift">Close</button>
       <label class="welcome-offer-togglerow-v350" style="margin-top:18px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('loyalty',{size:16})}</span><b>Give customers a birthday gift</b><input type="checkbox" id="birthdayActiveV364" ${current?.active?'checked':''}></label>
+      ${/* V382 (owner: "why i need to select the box and still can select dropdown of free item /
+           percentage discount?"). The switch is the decision; everything below it is the detail of
+           a gift that is being given. With the switch off the detail is inert rather than
+           half-editable, so the screen only ever offers one thing to decide at a time. */''}
+      <div data-birthday-config-v382>
       <label for="birthdayKindV364" style="margin-top:18px">What do they get?</label>
       <select id="birthdayKindV364">
         <option value="free_item" ${kindNow==='free_item'?'selected':''}>A free item</option>
@@ -10893,7 +10910,8 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
            birthday_program_versions). They are prefilled from the benefit rather than left blank
            so the owner is never stopped by a required field they did not know existed — but they
            stay visible and editable, because this is the wording the customer reads. */''}
-      <details class="grow-secondary" style="margin-top:16px"><summary>Wording customers see</summary><div style="padding-top:10px">
+      </div>
+      <details class="grow-secondary" style="margin-top:16px" data-birthday-config-v382><summary>Wording customers see</summary><div style="padding-top:10px">
         <label for="birthdayLabelV364" class="muted small">Name</label>
         <input id="birthdayLabelV364" maxlength="120" placeholder="e.g. Birthday treat" value="${esc(current?.customer_label||'')}">
         <label for="birthdayDescriptionV364" class="muted small" style="margin-top:10px">Description</label>
@@ -10929,6 +10947,18 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
   };
   dialog.querySelectorAll('input[name="birthdayWindowV364"]').forEach(radio=>{radio.onchange=syncWindow});
   syncWindow();
+  /* V382: aria-disabled + a real `disabled` on every control, so the block is inert to the
+     keyboard and to assistive tech as well as to the mouse. Values are left untouched — switching
+     the gift back on restores exactly what was typed. */
+  const syncActiveV382=()=>{
+    const on=$('birthdayActiveV364').checked;
+    dialog.querySelectorAll('[data-birthday-config-v382]').forEach(block=>{
+      block.setAttribute('aria-disabled',String(!on));
+      block.querySelectorAll('input,select,textarea,button').forEach(control=>{control.disabled=!on});
+    });
+  };
+  $('birthdayActiveV364').onchange=syncActiveV382;
+  syncActiveV382();
   $('birthdaySaveV364').onclick=async()=>{
     if(busy)return;
     const kind=$('birthdayKindV364').value;
@@ -12078,7 +12108,7 @@ async function promotionsPage(selectedPromotionId=null){
    #/grow/bringback resolved as a view AND fell through to mountGrowSurface with
    draftOverride:'bringback' — a deep editor surface the owner never asked for, mounted on top of
    the Bring-back page with a view name where a draft id belongs. One list, two readers. */
-const GROW_PROGRAMME_VIEWS_V371=Object.freeze(['overview','history','offers','points','tiers','bringback','ongoing','available','settings','setup']);
+const GROW_PROGRAMME_VIEWS_V371=Object.freeze(['overview','history','offers','points','tiers','bringback','birthday','ongoing','available','settings','setup']);
 async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false,quiet=false}={}){
   /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
      pushing no hash — so the topic outlived the page. An owner who drilled into Points, went to
@@ -12578,7 +12608,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      its page; with no drilled topic and no tiles, topicOnV229 fell through to its "answer TRUE for
      every key" branch and rendered every other programme category below the bring-back module —
      the same trap V319 fixed for Limited Offer and V326 for the points page, one page later. */
-  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers','bringback'].includes(programmeView);
+  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers','bringback','birthday'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -13079,9 +13109,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      before the From date but ended inside it is exactly what "what ended in this period" means.
      A row with no dates at all is never hidden: the filter must not silently swallow a programme
      whose dates were simply never tracked. */
+  /* V382 (owner: "show the last 1 month, and hide the rest, if not very messy"). With no filter
+     typed, the page defaults to the last month rather than to everything. Typing either date
+     replaces that default outright, so the filter can still reach any row ever recorded — the
+     default narrows the FIRST view, it is not a cap. */
+  const growHistoryDefaultFromV382=(()=>{const d=new Date();d.setMonth(d.getMonth()-1);return d.getTime()})();
   const growHistoryInWindowV375=row=>{
-    const from=growHistoryFromV375?Date.parse(`${growHistoryFromV375}T00:00:00+08:00`):null;
+    const typedFrom=growHistoryFromV375?Date.parse(`${growHistoryFromV375}T00:00:00+08:00`):null;
     const to=growHistoryToV375?Date.parse(`${growHistoryToV375}T23:59:59+08:00`):null;
+    const usingDefaultV382=!Number.isFinite(typedFrom)&&!Number.isFinite(to);
+    const from=usingDefaultV382?growHistoryDefaultFromV382:typedFrom;
     if(!Number.isFinite(from)&&!Number.isFinite(to))return true;
     const started=Date.parse(row?.started||''),ended=Date.parse(row?.ended||'');
     if(!Number.isFinite(started)&&!Number.isFinite(ended))return true;
@@ -13145,7 +13182,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div><label for="growHistoryFromV375">From</label><input type="date" id="growHistoryFromV375" value="${esc(growHistoryFromV375)}"></div>
     <div><label for="growHistoryToV375">To</label><input type="date" id="growHistoryToV375" value="${esc(growHistoryToV375)}"></div>
     <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="growHistoryApplyV375">Apply</button><button type="button" class="btn ghost sm" id="growHistoryClearV375">Clear</button></div>
-    ${growHistoryHiddenCountV375>0?`<p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growHistoryHiddenCountV375} ${growHistoryHiddenCountV375===1?'programme is':'programmes are'} outside this date range. Clear the filter to see everything.</p>`:''}
+    ${growHistoryHiddenCountV375>0?`<p class="muted small" style="flex-basis:100%;margin:6px 0 0">Showing the last month. ${growHistoryHiddenCountV375} older ${growHistoryHiddenCountV375===1?'programme is':'programmes are'} hidden — set a From date to reach ${growHistoryHiddenCountV375===1?'it':'them'}. Nothing is deleted.</p>`:''}
   </div>`;
   const growHistoryTableV271=`${growHistoryFilterBarV375}${growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false})}`;
   /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3 ==========================
@@ -13409,6 +13446,43 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     ${growBbErrorV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-bb-cancel-v361="1">Cancel</button><button type="button" class="btn sm" data-grow-bb-save-v361="1"${growBbBusyV361?' disabled':''}>${growBbEditingV361?'Save changes':'Add campaign'}</button></div>
   </li>`:'';
+  /* V382 (owner: "i need a landing page for birthday gift > then leads to [the editor] when i
+     press edit"). A page that STATES what is saved, so opening the module is a read; the editor
+     opens only on Edit. Everything shown is read off snapshot.birthday — the ACTIVE programme row
+     from get_active_birthday_program — so this page and the editor can never disagree. */
+  const growBirthdayV382=snapshot.birthday||null;
+  const growBirthdayBenefitTextV382=!growBirthdayV382?''
+    :growBirthdayV382.fulfillment_kind==='discount_pct'
+      ?`${Number(growBirthdayV382.discount_percent)||0}% off`
+      :(growBirthdayV382.manual_item||'A free item');
+  const growBirthdayWindowTextV382=!growBirthdayV382?''
+    :(growBirthdayV382.window_mode||'month')!=='days'
+      ?'Their whole birthday month'
+      :`${Number(growBirthdayV382.window_days_before)||0} days before to ${Number(growBirthdayV382.window_days_after)||0} days after their birthday`;
+  const growBirthdayPageV382=!canRewards
+    ?CUI.emptyState({iconName:'loyalty',title:'Loyalty is not included',
+        body:'This workspace does not include the loyalty module, so there is no birthday gift to set up.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
+    :`<div class="grow-tiers-page-v343">
+      <div class="grow-tier-basis-card-v343"><span><b>Birthday gift</b>
+        <p class="muted small" style="margin-top:4px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></span>
+        ${canSetupGrow?`<button type="button" class="btn sm" id="growBirthdayEditV382">Edit</button>`:''}</div>
+      ${growBirthdayV382?`<section class="card" style="margin-top:14px">
+        <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:min(100%,220px)"><b data-merchant-content>${esc(growBirthdayV382.customer_label||'Birthday treat')}</b>
+            ${growBirthdayV382.customer_description?`<p class="muted small" style="margin-top:4px" data-merchant-content>${esc(growBirthdayV382.customer_description)}</p>`:''}</div>
+          <span class="pill ${growBirthdayV382.active?'on':'off'}">${growBirthdayV382.active?'Live':'Paused'}</span>
+        </div>
+        <dl class="appointment-detail-list" style="margin-top:12px">
+          <div><dt>What they get</dt><dd data-merchant-content>${esc(growBirthdayBenefitTextV382)}</dd></div>
+          <div><dt>When they can use it</dt><dd>${esc(growBirthdayWindowTextV382)}</dd></div>
+          <div><dt>Terms</dt><dd data-merchant-content>${esc(growBirthdayV382.customer_terms||'None recorded')}</dd></div>
+        </dl>
+      </section>`
+      :CUI.emptyState({iconName:'loyalty',title:'No birthday gift yet',
+        body:'Set one up and every customer whose birthday you hold gets it in their birthday month.',
+        actionHtml:canSetupGrow?'<button type="button" class="btn sm" id="growBirthdaySetupV382">Set up the birthday gift</button>':''})}
+    </div>`;
   const growBbPageV361=!canWinback
     ?CUI.emptyState({iconName:'retention',title:'Retention is not included',
         body:'This workspace does not include the retention module, so there are no bring-back rewards to manage.',
@@ -14011,6 +14085,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${programmeView==='history'?growHistoryTableV271:''}
       ${programmeView==='points'?(growPointsIsStampsV326?growStampsPageV350:growPointsManageV326):''}
       ${programmeView==='bringback'?growBbPageV361:''}
+      ${programmeView==='birthday'?growBirthdayPageV382:''}
       ${programmeView==='tiers'?growTiersManageV331:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
@@ -14616,15 +14691,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          stay a read-only act — the write still belongs to the Turn-on control on that page, which
          keeps its own confirmation. */
       const openStampsV363=()=>{growPointsViewKindV350=tile.dataset.growTopicV229;nav('#/grow/points')};
-      if(tile.dataset.growTopicV229==='stamps'){
-        const losingV363=programmeExclusionsV322('stamps')
-          .filter(other=>programmeSpineOnV314(other)===true)
-          .map(other=>({points:'Point system',tiers:'Tier membership'})[other]||other);
-        if(losingV363.length)return openStampsExclusivityPopupV363(losingV363,openStampsV363);
-      }
+      /* V382 (owner: "when click into stamp (when points or tier is on) there is a pop up. vice
+         versa must be true. because now stamp is on but pressing points/tier has no pop up").
+         PROGRAMME_ACCRUAL_EXCLUSIVE_V322 was already symmetric — points and tiers each exclude
+         stamps — but only the stamps tile asked. The warning is the same one, driven by the same
+         map, so it can never be right in one direction and missing in the other. */
+      if(growExclusivityWarnV382(tile.dataset.growTopicV229,openStampsV363))return;
       return openStampsV363();
     }
-    if(tile.dataset.growTopicV229==='tiers')return nav('#/grow/tiers');
+    if(tile.dataset.growTopicV229==='tiers'){
+      if(growExclusivityWarnV382('tiers',()=>nav('#/grow/tiers')))return;
+      return nav('#/grow/tiers');
+    }
     /* V358: the three ex-Lifestyle tiles are peers now, so each opens its OWN editor directly
        rather than drilling into a grouping view that no longer exists. Welcome gift owns a modal;
        birthday reuses the rewards editor's existing birthday focus target; bring-back has its own
@@ -14636,12 +14714,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     }
     if(tile.dataset.growTopicV229==='birthday'){
       if(!canSetupGrow)return;
-      /* V364 (owner, photo 1: "straightaway pop up birthday gift setting. SKIP HERE"): the tile
-         opens the setting itself now, not the deep Loyalty editor that held it. snapshot.birthday
-         is the ACTIVE programme row (get_active_birthday_program), which is exactly the state
-         this popup edits. */
-      return openBirthdayBenefitEditorV364(snapshot.birthday||null,
-        ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+      /* V364 sent this tile straight into the editor ("straightaway pop up birthday gift setting").
+         V382 reverses that at the owner's request: "i need a landing page for birthday gift > then
+         leads to [the editor] when i press edit ... if not birthday rewards that are saved can be
+         visible when clicked into the module". The tile now opens a page that STATES the saved
+         gift; the editor is one deliberate press away, so opening the module is a read again. */
+      return nav('#/grow/birthday');
     }
     if(tile.dataset.growTopicV229==='bringback')return nav('#/grow/bringback');
     /* V331: growSetupEntryV301's ['points','stamps','tiers'] list has no card left that reaches
@@ -14748,6 +14826,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   /* V375: the History date window. Apply/Clear write the module-scoped state and re-render
      through the same quiet path every other grow filter uses. */
+  /* V382: the landing page's one door into the editor, on both the Edit button and the empty
+     state's Set up. Reuses the SAME openBirthdayBenefitEditorV364 the tile used to open, so there
+     is still exactly one birthday editor and one save path. */
+  const growBirthdayOpenEditorV382=()=>openBirthdayBenefitEditorV364(snapshot.birthday||null,
+    ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+  const growBirthdayEditV382=$('growBirthdayEditV382');
+  if(growBirthdayEditV382)growBirthdayEditV382.onclick=growBirthdayOpenEditorV382;
+  const growBirthdaySetupV382=$('growBirthdaySetupV382');
+  if(growBirthdaySetupV382)growBirthdaySetupV382.onclick=growBirthdayOpenEditorV382;
   const growHistoryApplyV375=$('growHistoryApplyV375');
   if(growHistoryApplyV375)growHistoryApplyV375.onclick=()=>{
     growHistoryFromV375=$('growHistoryFromV375')?.value||'';
@@ -27004,7 +27091,7 @@ async function settingsPage(){
       const value=financeDisabled?'off':(sel.perms[module]||'off');
       return `<div class="row" style="padding:7px 0;border-bottom:1px solid var(--hair)">
         <label for="modulePerm-${s.id}-${module}" style="margin:0;display:flex;align-items:center;gap:7px;color:var(--ink)">${CUI.icon(MODULES[module][0],{size:16})}<span>${MODULES[module][1]}</span></label>
-        <span class="spacer"></span><select id="modulePerm-${s.id}-${module}" data-staff-module="${module}" onchange="setModulePermissionV74('${s.id}','${module}',this.value)" ${sel.mode==='inherit'||financeDisabled?'disabled':''} style="width:auto;min-width:105px;padding:7px 30px 7px 10px">
+        <span class="spacer"></span><select id="modulePerm-${s.id}-${module}" data-staff-module="${module}" data-perm-state-v382="${value==='off'?'off':'on'}" class="module-perm-select-v382" onchange="setModulePermissionV74('${s.id}','${module}',this.value)" ${sel.mode==='inherit'||financeDisabled?'disabled':''} style="width:auto;min-width:105px;padding:7px 30px 7px 10px">
           <option value="off" ${value==='off'?'selected':''}>Off</option><option value="r" ${value==='r'?'selected':''}>Read</option><option value="rw" ${value==='rw'?'selected':''}>Edit</option>
         </select>
         ${financeDisabled?`<span class="muted small" style="flex-basis:100%">Unavailable for ${esc(ROLE_LABELS[s.role]||s.role)}: Expenses, P&amp;L and Staff performance require a finance-capable role.</span>`:''}
@@ -27042,6 +27129,16 @@ async function settingsPage(){
         <input type="radio" name="modmode-${s.id}" style="width:auto" ${sel.mode==='inherit'?'checked':''} onchange="setModModeV74('${s.id}','inherit')"> Inherit all enabled modules</label>
       <label class="settings-choice" style="font-size:13.5px">
         <input type="radio" name="modmode-${s.id}" style="width:auto" ${sel.mode==='explicit'?'checked':''} onchange="setModModeV74('${s.id}','explicit')"> Set Off / Read / Edit explicitly</label>
+      ${/* V382 (owner: "i need a button to switch on/off all modules, then i manually on those i
+           want, because now default is turn on"). Two buttons rather than one toggle, because the
+           owner's actual move is "clear everything, then add back what I want" — a single toggle
+           would make them guess which way it will go. Neither writes: they set the pending
+           selection, and Save below is still the only thing that reaches the server. */''}
+      <div class="row" style="margin:10px 0 0;gap:8px;flex-wrap:wrap"${sel.mode==='inherit'?' hidden':''} data-perm-bulk-v382>
+        <button type="button" class="btn ghost sm" onclick="setAllModulePermissionsV382('${s.id}','off')">Turn all off</button>
+        <button type="button" class="btn ghost sm" onclick="setAllModulePermissionsV382('${s.id}','rw')">Give all Edit</button>
+        <span class="muted small">Then set the ones you want.</span>
+      </div>
       <div id="modgrid-${s.id}" style="margin:10px 0;padding:10px;background:#fff;border:1px solid var(--line);border-radius:10px">
         ${modulePermissionGridHtml(s,sel)}
       </div>
@@ -27397,10 +27494,31 @@ async function settingsPage(){
     toast('Profile saved');openProfileId=null;await loadTeam();
   };
   window.toggleModPanel=(staffId)=>{openModId=(openModId===staffId)?null:staffId;loadTeam();};
+  /* V382 (owner: "those enabled - i need it green while disabled will be red"). The colour is
+     driven off the select's own value through one data attribute, so it cannot drift from what
+     the control says — and it is repainted by the same setter every change already goes through. */
+  const paintModulePermV382=select=>{
+    if(select)select.dataset.permStateV382=select.value==='off'?'off':'on';
+  };
   window.setModulePermissionV74=(staffId,module,value)=>{
     const sel=panelSel[staffId];if(!sel)return;
     if(value==='off')delete sel.perms[module];
     else if(value==='r'||value==='rw')sel.perms[module]=value;
+    paintModulePermV382(document.querySelector(`#modulePerm-${CSS.escape(staffId)}-${CSS.escape(module)}`));
+  };
+  /* V382: "a button to switch on/off all modules, then i manually on those i want". Sets the
+     pending selection for every module this role may actually hold — a finance module a role
+     cannot use is skipped rather than silently granted — and repaints. Save is still the only
+     writer; nothing here reaches the server. */
+  window.setAllModulePermissionsV382=(staffId,value)=>{
+    const sel=panelSel[staffId],staff=teamRowsById.get(staffId);if(!sel||!staff)return;
+    if(sel.mode!=='explicit')return;
+    document.querySelectorAll(`#modgrid-${CSS.escape(staffId)} select[data-staff-module]`).forEach(select=>{
+      const module=select.dataset.staffModule;
+      if(!roleCanUseModule(staff.role,module))return;
+      select.value=value;
+      window.setModulePermissionV74(staffId,module,value);
+    });
   };
   window.setModModeV74=(staffId,mode)=>{
     const sel=panelSel[staffId],staff=teamRowsById.get(staffId);if(!sel||!staff)return;
@@ -27410,6 +27528,7 @@ async function settingsPage(){
       const financeDisabled=!roleCanUseModule(staff.role,select.dataset.staffModule);
       select.disabled=mode==='inherit'||financeDisabled;
     });
+    document.querySelectorAll('[data-perm-bulk-v382]').forEach(row=>{row.hidden=mode==='inherit'});
   };
   window.saveStaffModules=async(staffId)=>{
     const sel=panelSel[staffId];if(!sel)return;

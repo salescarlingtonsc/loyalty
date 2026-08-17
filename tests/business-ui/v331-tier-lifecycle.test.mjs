@@ -169,7 +169,7 @@ test('V331 the Setup CTA turns tiers on in place — it no longer bounces the ow
 });
 
 test('V331 the tile click handler routes to #/grow/tiers and the dead growSetupEntryV301 branch is gone', () => {
-  assert.match(app, /if\(tile\.dataset\.growTopicV229==='tiers'\)return nav\('#\/grow\/tiers'\);/);
+  assert.match(app, /if\(tile\.dataset\.growTopicV229==='tiers'\)\{[\s\S]{0,220}?return nav\('#\/grow\/tiers'\);/);
   assert.doesNotMatch(app,
     /if\(growSetupEntryV301\(tile\.dataset\.growTopicV229\)\)\{pendingGrowSetupModelV303=/,
     'the tile handler branch that used to route tiers into the wizard directly must be removed now that the page owns that click');
