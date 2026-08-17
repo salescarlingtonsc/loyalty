@@ -2086,6 +2086,12 @@
       "version": "20260817000009",
       "name": "nestly_v376_no_classic_redemption_offer",
       "sourcePath": "db/migrations/20260817_nestly_v376_no_classic_redemption_offer.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000010",
+      "name": "nestly_v377_no_credit_reward_types",
+      "sourcePath": "db/migrations/20260817_nestly_v377_no_credit_reward_types.sql"
     }
   ]
 }

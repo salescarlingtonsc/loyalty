@@ -2091,6 +2091,12 @@
       "path": "db/migrations/20260817_nestly_v376_no_classic_redemption_offer.sql",
       "semanticVersion": "v376",
       "proposedDeployVersion": "20260817000009"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v377_no_credit_reward_types.sql",
+      "semanticVersion": "v377",
+      "proposedDeployVersion": "20260817000010"
     }
   ]
 }
